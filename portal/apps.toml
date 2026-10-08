@@ -1,0 +1,103 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# The apps of this portal release: one tested combination. Each [apps.<name>] pins one release tag of that app.
+#
+# Rules (CI, tools/check_manifest.py):
+#  * a change to this file needs a portal/VERSION bump at least as large as the largest app bump it pins
+#    (an app patch release -> at least a portal patch release, an app minor -> at least a portal minor, ...);
+#  * every tag must exist when the portal is released; on main a tag may be one that is about to be released
+#    (its version equals that app's VERSION).
+#
+# Fields:
+#   name, summary   shown on the pill
+#   tag             the pinned release: <name>-v<x.y.z>; asset <tag>.tar.gz with SHA256SUMS on the suite release
+#   sha256          of <tag>.tar.gz; filled in when the tag is released (empty: checked against SHA256SUMS only)
+#   required        installed with the portal and always listed first (only bazzite-test)
+#   changes_board   true: the portal warns before installing or opening it
+#   install         shell commands run in a terminal from the extracted release folder, in order
+#   uninstall       idem, for removal
+#   detect          paths whose existence means "installed" (any of them)
+#   launch          [[label, command]] to open the app; none for apps that are not programs
+
+[apps.bazzite-test]
+name = "BC-250 Bazzite Test"
+summary = "Read-only diagnostics, stress test and benchmarks. Always installed."
+tag = "bazzite-test-v0.1.0"
+sha256 = ""
+required = true
+changes_board = false
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-bazzite-test"]
+launch = [["Open", "~/.local/bin/bc250-bazzite-test"]]
+
+[apps.governor]
+name = "BC-250 GPU Governor Manager"
+summary = "Manage the cyan-skillfish GPU governor: tuning, safe points, profiles, backups."
+tag = "governor-v0.1.0"
+sha256 = ""
+required = false
+changes_board = true
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-governor-manager"]
+launch = [["Open", "~/.local/bin/bc250-governor-manager"]]
+
+[apps.helixsr]
+name = "BC-250 HelixSR Manager"
+summary = "Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games."
+tag = "helixsr-v0.1.0"
+sha256 = ""
+required = false
+changes_board = false
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-bazzite-helixsr-gui"]
+launch = [["Open", "~/.local/bin/bc250-bazzite-helixsr-gui"]]
+
+[apps.cu-bisect]
+name = "BC-250 CU Bisect"
+summary = "Tell bad CUs apart from an unstable CU unlock, and apply a tested unlock."
+tag = "cu-bisect-v0.1.0"
+sha256 = ""
+required = false
+changes_board = true
+install = ["bash packaging/bazzite/install-bisect-gui.sh", "bash packaging/bazzite/install-gui.sh"]
+uninstall = ["bash packaging/bazzite/uninstall-bisect-gui.sh", "bash packaging/bazzite/uninstall-gui.sh"]
+detect = ["~/.local/bin/bc250-bisect-gui", "~/.local/bin/bc250-unlock-cu-gui"]
+launch = [["Bisect", "~/.local/bin/bc250-bisect-gui"], ["Unlock", "~/.local/bin/bc250-unlock-cu-gui"]]
+
+[apps.cores-bisect]
+name = "BC-250 Cores Bisect"
+summary = "Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock."
+tag = "cores-bisect-v0.1.0"
+sha256 = ""
+required = false
+changes_board = true
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-cores-bisect-gui", "~/.local/bin/bc250-cores-unlock-gui"]
+launch = [["Bisect", "~/.local/bin/bc250-cores-bisect-gui"], ["Unlock", "~/.local/bin/bc250-cores-unlock-gui"]]
+
+[apps.gpu-oc-bisect]
+name = "BC-250 GPU OC Bisect"
+summary = "Find your board's safe GPU overclock and undervolt, one step at a time."
+tag = "gpu-oc-bisect-v0.1.0"
+sha256 = ""
+required = false
+changes_board = true
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-gpu-oc-bisect-gui"]
+launch = [["Open", "~/.local/bin/bc250-gpu-oc-bisect-gui"]]
+
+[apps.persistent-acpi]
+name = "BC-250 Persistent ACPI"
+summary = "CPU C-states and frequency scaling through a persistent ACPI override (GRUB early initrd)."
+tag = "persistent-acpi-v0.1.0"
+sha256 = ""
+required = false
+changes_board = true
+install = ["sudo bash install.sh"]
+uninstall = ["sudo bash uninstall.sh"]
+detect = ["/boot/acpi_override.cpio"]
+launch = []

@@ -1,0 +1,46 @@
+Changelog: 08-10-2026 04:17:40
+
+Designed a new icon.
+Changelog got another look.
+
+Changelog: 07-10-2026 12:59:27
+
+The interface is now translatable and ships in nine languages: English, German, Spanish, French, Italian, Polish,
+Russian, Simplified Chinese and Japanese (303 strings each, including the whole Help page and the
+backend status/error messages). The language follows the system locale; the Help page has a picker that is saved
+and applied at the next start, and `--lang CODE` overrides it for one run. Qt's own dialog buttons are translated
+via the qtbase catalogs. New tooling: `tools/update_translations.sh` (pylupdate6 extraction) and
+`tools/compile_translations.py`, a pure-Python .ts to .qm compiler so no release is needed; the release workflow
+recompiles the .qm files. Tests check every shipped translation for completeness, preserved placeholders and a
+loadable .qm, and that switching the language actually changes the UI text.
+
+Changelog: 07-10-2026 12:21:16
+
+Deploy: the Steam library box no longer jumps back to "pick a game" after Scan or a library rescan
+(the lookup compared Path objects by identity). Setup: answering No to "Download and build again?" now says so on the
+page instead of doing nothing silently. Tooltips are parented to the window they belong to, which stops Wayland's
+"Failed to create popup" messages on every hover.
+
+Changelog: 07-10-2026 11:59:56
+
+New Setup page: one click downloads the latest HelixSR release, parses the URLs and SHA-256 sums its setup scripts pin,
+fetches NVIDIA's DLSS DLL, Microsoft's DXC and (on read-only systems) the portable Python in parallel with checksum
+verification, runs `helixsr-setup.sh --yes` with its output streamed to the page, deletes the DLSS DLL and imports
+the built release as the payload. A DLSS 310.7.0 DLL already on the PC can be used instead (*Find in Steam* compares
+checksums). Update checks for the HelixSR payload and for this app against GitHub's latest releases, at start
+(switchable) and on demand, with a hint on the Overview when a newer HelixSR exists.
+New CLI flags `--work DIR` and `--no-update-check`. Help and README describe the flow; 15 new tests run the whole
+setup against a fake script over `file://`.
+
+Changelog: 07-10-2026 07:18:40
+
+Rewrite of the app around how HelixSR actually works. 
+HelixSR replaces a game's `amd_fidelityfx_upscaler_dx12.dll` / `amd_fidelityfx_dx12.dll` 
+(kept as `*.original.dll`) and needs its two network files next to it; 
+the previous version treated it as an nvngx/dxgi injector with DLSS presets and launch options, 
+none of which apply. New: payload import from the extracted release or zip (network files are never shipped), 
+Steam library discovery, DLL scan with per-file status, replace mode and stand-alone OptiScaler 
+folder mode with the `OptiScaler.ini` snippet, reversible remove, a deployment list with live state, 
+a full `helixsr.ini` editor that keeps the upstream comments, and a Help page. 
+Packaging fixed: working `install.sh` (keeps the payload on uninstall), desktop entry, icon, GitHub workflows for 
+tests and releases, and a pytest suite. Layout, widgets and installer mirror bc250-governor-manager.

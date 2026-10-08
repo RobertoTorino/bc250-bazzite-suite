@@ -1,0 +1,28 @@
+Changelog: 06-10-2026 07:49:53
+
+Initial release 0.1.0. bc250-gpu-oc-bisect.sh sweeps the top [[safe-points]] entry of the
+cyan-skillfish-governor-smu config: a control step (your own top point, unchanged), an OC ladder
+(default +50 MHz steps up to 2200 MHz at a fixed voltage) and a UV ladder (default -25 mV steps
+down to 850 mV at the stock top frequency). Each attempt swaps in a temporary governor config,
+restarts the governor, runs a verified GPU load (memtest_vulkan, with vkpeak/vkmark/glmark2 as
+fallbacks), watches temperature, clock and busy% (97 degC abort, NO-REACH detection when the GPU
+never gets near the requested clock) and restores your own config afterwards. The ladder is walked
+depth-first - all rounds of a step finish before the next step is attempted - and steps beyond a
+step that fails every time are skipped. Crash-safe: a marker file records the attempt in flight, so
+after a freeze a cold boot plus re-run restores the config, records the crash and resumes. Hard
+rails that cannot be overridden: 2500 MHz, 1100 mV ceiling, 700 mV floor. --install writes the
+margin pick (one step back from the best passing step) into the real config with a backup at
+config.toml.pre-oc-bisect; --uninstall restores it. Results in ~/.local/share/bc250-gpu-oc-bisect/
+(runs.tsv plus per-attempt logs), report written to the Desktop.
+
+Also included: bc250_gpu_oc_gui, a PyQt6 menu-driven launcher in the same style as
+bc250_bisect_gui from bc250-cu-bisect. Lets you pick load time, rounds, overclock and/or
+undervolt sweep, max frequency, min voltage, ladder steps and OC voltage (all spin boxes capped
+at the script's hard rails), plus --per-boot, then click "Start GPU OC Bisect": the window closes
+and the real sweep continues in a detected terminal emulator, exactly as if typed by hand. Extra
+buttons: "Show status" (--status), "Install result" (--install, with a confirmation popup before
+handing off), "Uninstall" (--uninstall) and a red "Reset" (--reset, with a confirmation popup
+warning that all saved results and logs will be permanently deleted). A "Help" button shows the
+script's own --help text so the GUI never drifts out of sync. Bazzite-purple (#8b4fd8) hover
+accent app-wide, same as the other project GUIs. Start: pip install -r requirements.txt, then
+python -m bc250_gpu_oc_gui.

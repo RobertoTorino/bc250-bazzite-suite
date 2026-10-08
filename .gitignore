@@ -1,0 +1,31 @@
+# Each app (and core/, portal/) has its own .gitignore for what is specific to it; this one covers the whole repo.
+__pycache__/
+*.pyc
+.pytest_cache/
+/.idea/
+.vscode/
+*.log
+
+# Local venvs: per app (python/, _python/ as in the old repos) and the suite-wide one. A venv only works on the
+# OS that created it (bin/ on Linux, Scripts/ on Windows), so never share one between Linux and Windows.
+python/
+_python/
+/.venv/
+/.venv-*/
+
+# MkDocs output
+/site/
+
+# Planning notes, kept local
+/bc250-suite-proposal.md
+
+# OS and editor droppings (Linux/KDE, Windows, macOS)
+*~
+*.swp
+.directory
+.Trash-*/
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+.DS_Store

@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bc250-core"
+version = "0.1.0"                     # = VERSION; tools/check_versions.py keeps them equal
+description = "Shared code of the BC250 Bazzite Suite apps"
+license = "GPL-3.0-or-later"
+requires-python = ">=3.11"
+dependencies = ["PyQt6>=6.11,<7"]
+
+[tool.setuptools]
+packages = ["bc250_core"]
+
+[tool.setuptools.package-data]
+bc250_core = ["fonts/*", "translations/*.qm"]

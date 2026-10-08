@@ -1,0 +1,19 @@
+# The repo is worked on from both Linux and Windows. Every text file is LF in the repository and in the working tree
+# on both systems, whatever core.autocrlf says (Git for Windows sets it to true): scripts, units and .desktop files
+# must reach the board with LF, and nothing shows up as changed only because the checkout moved between systems.
+* text=auto eol=lf
+
+# Windows-only files keep CRLF (none yet; listed so a future one does the right thing).
+*.bat               text eol=crlf
+*.cmd               text eol=crlf
+*.ps1               text eol=crlf
+
+# Never touch these. .ts files are Qt XML, not TypeScript; .qm are compiled translations.
+*.qm                binary
+*.ts                text eol=lf linguist-language=XML
+*.ttf               binary
+*.png               binary
+*.jpg               binary
+*.ico               binary
+*.cpio              binary
+*.aml               binary

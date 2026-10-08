@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Entry point: python -m bc250_gui [--script PATH] [--no-sudo]"""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+from PyQt6.QtWidgets import QMessageBox
+
+from bc250_core.app import create_app, exec_app
+
+from . import APP_NAME, INFO, ROOT, __version__
+from .main_window import MainWindow
+from .runner import TestRunner
+
+DEFAULT_SCRIPT = ROOT / "test-bazzite.sh"
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(prog="bc250_gui", description=f"{APP_NAME} {__version__}")
+    parser.add_argument("--script", default=str(DEFAULT_SCRIPT), help="path to test-bazzite.sh")
+    parser.add_argument("--no-sudo", action="store_true",
+                        help="run the script without sudo (development with development/tools/fake-test-bazzite.sh)")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    args, qt_args = parser.parse_known_args()
+
+    # Names, Fusion style, rounded tooltips and the window icon. English only so far, Qt's own dialog buttons
+    # included (lang="en"), as before the move to bc250_core.
+    app = create_app(INFO, qt_args, lang="en")
+
+    script = Path(args.script).resolve()
+    if not script.is_file():
+        QMessageBox.critical(None, APP_NAME, f"Test engine not found:\n{script}\n\nReinstall the app to restore it.")
+        return 1
+
+    window = MainWindow(TestRunner(str(script), use_sudo=not args.no_sudo))
+    # Logout or SIGTERM/SIGINT end the app without a close event: stop a running test cleanly first.
+    app.aboutToQuit.connect(window.shutdown)
+    window.show()
+    return exec_app(app)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

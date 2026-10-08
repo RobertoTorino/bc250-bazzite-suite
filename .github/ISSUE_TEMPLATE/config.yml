@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+blank_issues_enabled: false
+contact_links:
+  - name: Security problem
+    url: https://github.com/RobertoTorino/bc250-bazzite-suite/security/advisories/new
+    about: Report security problems privately, not as an issue.

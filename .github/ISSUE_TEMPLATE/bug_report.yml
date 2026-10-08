@@ -1,0 +1,75 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: Bug report
+description: Something in one of the apps doesn't work, or a value or test result looks wrong.
+labels: [bug]
+body:
+  - type: dropdown
+    id: app
+    attributes:
+      label: App
+      options:
+        - portal
+        - bazzite-test
+        - governor
+        - helixsr
+        - cu-bisect
+        - cores-bisect
+        - gpu-oc-bisect
+        - persistent-acpi
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: The app's About or Help page, or `--version`.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: bazzite
+    attributes:
+      label: Bazzite version
+      description: Run `rpm-ostree status` in a terminal and copy the Version line of the deployment marked ●.
+      placeholder: "42.20261001.0 (2026-10-01T04:43:45Z)"
+    validations:
+      required: true
+  - type: input
+    id: governor
+    attributes:
+      label: Governor version (governor and gpu-oc-bisect)
+      description: Run `rpm -q cyan-skillfish-governor-smu` in a terminal.
+      placeholder: "cyan-skillfish-governor-smu-0.4.13-1.fc42.x86_64"
+  - type: dropdown
+    id: unlock
+    attributes:
+      label: Board configuration
+      options:
+        - Stock (24 CUs, 6 cores)
+        - CU unlock
+        - Core unlock
+        - CU and core unlock
+        - Don't know
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Report, diagnostics or log
+      description: >-
+        bazzite-test: Show Logs → the full report of the run. governor: Service page → "Export diagnostics…".
+        Bisect apps: the results folder under ~/.local/share/. Drag the file here or paste the relevant part.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy
+      options:
+        - label: I read what I attached and removed anything I don't want to share.
+          required: true

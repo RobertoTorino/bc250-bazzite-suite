@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: Idea or feature request
+description: A setting, a test, a control or an improvement you'd like to see.
+labels: [enhancement]
+body:
+  - type: input
+    id: app
+    attributes:
+      label: App
+      description: Which app is this about? Leave empty for the suite as a whole.
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What should the app do, and what would it help you with?
+    validations:
+      required: true

@@ -1,0 +1,17 @@
+site_name: BC250 Bazzite Suite
+docs_dir: docs
+strict: true
+theme:
+  name: material
+  features:
+    - navigation.sections
+nav:
+  - Home: index.md
+  - Apps:
+      - bazzite-test: apps/bazzite-test.md
+      - governor: apps/governor.md
+      - helixsr: apps/helixsr.md
+      - cu-bisect: apps/cu-bisect.md
+      - cores-bisect: apps/cores-bisect.md
+      - gpu-oc-bisect: apps/gpu-oc-bisect.md
+      - persistent-acpi: apps/persistent-acpi.md
