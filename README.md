@@ -1,3 +1,5 @@
+[![CI](https://github.com/RobertoTorino/bc250-bazzite-suite/actions/workflows/ci.yml/badge.svg)](https://github.com/RobertoTorino/bc250-bazzite-suite/actions/workflows/ci.yml)
+
 # BC250 Bazzite Suite
 
 Tools for the AMD BC-250 running Bazzite, in one repository. The **portal** installs and starts them:
