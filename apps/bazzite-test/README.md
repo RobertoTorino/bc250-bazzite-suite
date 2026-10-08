@@ -13,25 +13,26 @@ writes one temporary file and removes it.
 
 ## Download and install
 
-Releases are published on the [Releases](https://github.com/RobertoTorino/bc250-bazzite-test/releases)
-page as `bc250-bazzite-test-v<version>.tar.gz` with a `.sha256` checksum file. To be notified of new
-releases, click **Watch → Custom → Releases** at the top of this page.
+BC-250 Bazzite Test is part of the [BC250 Bazzite Suite](https://github.com/RobertoTorino/bc250-bazzite-suite) and is always installed with it: install
+the suite's **portal** (see the suite README), and this app comes along. It can also be installed on its own from
+its release on the suite's [Releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases) page: `bazzite-test-v<version>.tar.gz` with a
+`SHA256SUMS` file. To be notified of new releases, click **Watch → Custom → Releases** on the suite page.
 
 Nothing is layered with `rpm-ostree` for the app itself: the test engine goes to `/opt`, the GUI's
-Python packages go into a venv in your home directory.
+Python packages go into the suite's shared venv in your home directory.
 
 **1. Download and verify.** Get both files from the Releases page, then in the download folder:
 
 ```shell
-sha256sum -c bc250-bazzite-test-v*.tar.gz.sha256
+sha256sum --check --ignore-missing SHA256SUMS
 ```
 
 **2. Extract and run the installer** as your own user (not with `sudo`; it asks for the password
 only to copy the app to `/opt`):
 
 ```shell
-tar -xzf bc250-bazzite-test-v*.tar.gz
-cd bc250-bazzite-test-v*/
+tar -xzf bazzite-test-v*.tar.gz
+cd bazzite-test-v*/
 ./install.sh
 ```
 
@@ -40,10 +41,11 @@ cd bc250-bazzite-test-v*/
 
 What `install.sh` does:
 
-* copies the app to `/opt/bc250-bazzite-test-v<version>` (root-owned), points `/opt/bc250-bazzite-test`
-  at it and removes older versions;
-* creates the venv `~/.local/share/bc250-bazzite-test/venv` with PyQt6 (the wheels bundle Qt, nothing
-  else is needed; ~100 MB download the first time);
+* copies the app, with the `bc250_core` it was released with, to `/opt/bc250-bazzite-test-v<version>`
+  (root-owned), points `/opt/bc250-bazzite-test` at it and removes older versions;
+* uses the suite's shared venv `~/.local/share/bc250-bazzite-suite/venv` with PyQt6 (created on first use;
+  the wheels bundle Qt, nothing else is needed; ~100 MB download the first time). The venv is removed with
+  the last suite app that uses it;
 * adds the launcher `~/.local/bin/bc250-bazzite-test`, an app menu entry and a Desktop icon
   (`./install.sh --no-desktop-shortcut` skips the Desktop icon).
 
@@ -56,10 +58,10 @@ it says what each group is for and asks per group.
 > root only, and the file matches the SHA-256 recorded when the release was built. A copy in your
 > home directory fails that check on purpose.
 
-**Update:** download, verify and extract the new release and run its `./install.sh` again. It replaces
-the old version; the venv, your settings and the history are kept — they live in your home directory.
+**Update:** from the portal, or download, verify and extract the new release and run its `./install.sh` again.
+It replaces the old version; your settings and the history are kept — they live in your home directory.
 
-**Uninstall:**
+**Uninstall:** uninstalling the portal removes this app too. On its own:
 
 ```shell
 /opt/bc250-bazzite-test/install.sh --uninstall           # keeps settings, history and reports
@@ -68,7 +70,7 @@ the old version; the venv, your settings and the history are kept — they live 
 
 ## Reporting problems
 
-Open an [issue](https://github.com/RobertoTorino/bc250-bazzite-test/issues/new/choose) and add the
+Open an [issue](https://github.com/RobertoTorino/bc250-bazzite-suite/issues/new/choose) (app: bazzite-test) and add the
 app version (*Settings → About*) and the full report of the run (*Show Logs*). The report contains details
 about your system: read it before you post it. Security problems: see [SECURITY.md](SECURITY.md).
 
@@ -699,7 +701,7 @@ ujust regenerate-grub   # then reboot
 ```
 
 Or use the guided installer from
-[RobertoTorino/bc250-persistent-acpi](https://github.com/RobertoTorino/bc250-persistent-acpi):
+[persistent-acpi](https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/persistent-acpi) (a suite app, installed from the portal):
 it bundles the tables, checks for a BC-250 and a modded BIOS, installs idempotently and has an
 uninstaller. The fix is persistent — the blscfg GRUB module applies the early initrd to every
 BLS boot entry, so it survives kernel and rpm-ostree image updates.
@@ -718,7 +720,7 @@ Verify with `sudo dmesg | grep -iE 'ACPI.*(SSDT|Table Upgrade)'` — or just rer
 - Known side effect: `pp_dpm_sclk` reports nonsense clocks afterwards — tests 19/40 would
   flag that.
 
-Or use [RobertoTorino/bc250-cores-bisect](https://github.com/RobertoTorino/bc250-cores-bisect),
+Or use [cores-bisect](https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/cores-bisect) (a suite app),
 which does its own unlock and also makes it **persistent**:
 
 1. **Test first:** `bc250-cores-bisect.sh` runs a control on the stock cores, unlocks, then tests each
@@ -731,7 +733,7 @@ which does its own unlock and also makes it **persistent**:
 3. **Undo:** `sudo ./bc250-cores-unlock.sh --uninstall`, then a full power off: stock 6C/12T returns.
 
 **For the extra CUs without flashing:**
-[RobertoTorino/bc250-cu-bisect](https://github.com/RobertoTorino/bc250-cu-bisect) unlocks CUs at runtime
+[cu-bisect](https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/cu-bisect) (a suite app) unlocks CUs at runtime
 by writing the GPU's WGP mask registers with `umr`, and keeps a validated unlock across reboots:
 
 1. **Test first:** `bc250-cu-bisect.sh` tests every locked WGP (2 CUs) on its own over several rounds and
@@ -770,7 +772,7 @@ Minor caveats, not performance losses:
 - A CMOS reset/battery pull would revert the `bc250_memcfg` split — just rerun it.
 - Validate cores/CUs with the bisect tools first; silicon quality is per board, independent of BIOS.
 
-Going beyond stock: [RobertoTorino/bc250-gpu-oc-bisect](https://github.com/RobertoTorino/bc250-gpu-oc-bisect)
+Going beyond stock: [gpu-oc-bisect](https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect) (a suite app)
 sweeps the governor's top GPU safe-point (clock up, voltage down) the same bisect way, to find the
 safe overclock or undervolt for your specific board — no BIOS involved either.
 
@@ -792,8 +794,8 @@ BC-250 Bazzite Test is free software: you can redistribute it and/or modify it u
 later version. It is distributed in the hope that it will be useful, but **without any warranty**; without
 even the implied warranty of merchantability or fitness for a particular purpose.
 
-The complete source code of every release is attached to that release as
-`bc250-bazzite-test-<version>-source.tar.gz`.
+The release tarball `bazzite-test-v<version>.tar.gz` is the complete source of that release (Python and shell,
+nothing is compiled); GitHub also attaches the source of the whole suite at that tag.
 
 Third-party components: Qt 6 (LGPL v3), PyQt6 (GPL v3), the Inter font (SIL Open Font License 1.1).
 

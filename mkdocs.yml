@@ -7,6 +7,7 @@ theme:
     - navigation.sections
 nav:
   - Home: index.md
+  - Portal: portal.md
   - Apps:
       - bazzite-test: apps/bazzite-test.md
       - governor: apps/governor.md

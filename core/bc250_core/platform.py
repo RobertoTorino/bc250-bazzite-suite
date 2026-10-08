@@ -11,7 +11,7 @@ import os
 import shlex
 import shutil
 import subprocess
-from pathlib import Path
+from pathlib import Path, PurePath
 
 # (binary, args-builder) in order of preference. Each builder takes the shell command string
 # (already quoted for `bash -lc`) and returns the full argv to exec that terminal with.
@@ -66,7 +66,7 @@ def find_terminal() -> str | None:
     return None
 
 
-def terminal_command(shell_command: str, *, keep_open: bool = True, exit_file: Path | None = None) -> str:
+def terminal_command(shell_command: str, *, keep_open: bool = True, exit_file: PurePath | None = None) -> str:
     """The shell line launch_in_terminal() runs: the command, its exit status written to *exit_file*, and a
     "Press Enter" pause so the window stays readable after the command ends (success, error or Ctrl+C)."""
     line = shell_command
@@ -78,7 +78,7 @@ def terminal_command(shell_command: str, *, keep_open: bool = True, exit_file: P
     return line
 
 
-def launch_in_terminal(shell_command: str, *, keep_open: bool = True, exit_file: Path | None = None) -> None:
+def launch_in_terminal(shell_command: str, *, keep_open: bool = True, exit_file: PurePath | None = None) -> None:
     """Runs ``shell_command`` (a single already-quoted shell command line) in a new terminal window, detached from
     this process so closing the GUI doesn't touch it.
 

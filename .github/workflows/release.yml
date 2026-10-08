@@ -1,0 +1,67 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: Release
+
+# One GitHub release per tag. Tags are made by hand, one per app: <app>-v<x.y.z> (bazzite-test-v0.1.0,
+# governor-v0.4.0, ...) or portal-v<x.y.z>. The tag's version must equal that app's VERSION file.
+#
+# The assets are <tag>.tar.gz, SHA256SUMS and the notes, all built by tools/build_release.py, so a local build
+# gives the same files. A portal release bundles the bazzite-test release that portal/apps.toml pins (downloaded
+# from its own release and checked against the pin) and requires every pinned tag to exist.
+#
+# After an app release: python3 tools/pin_app.py <tag>, bump portal/VERSION as tools/check_manifest.py asks, and
+# tag the portal when the combination is tested.
+
+on:
+  push:
+    tags: ["*-v[0-9]*.[0-9]*.[0-9]*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0                # tags, for check_manifest and the reproducible mtime
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Checks
+        run: |
+          python tools/check_versions.py
+          case "$TAG" in
+            portal-v*) python tools/check_manifest.py --require-tags ;;
+            *)         python tools/check_manifest.py ;;
+          esac
+
+      - name: Bundled Bazzite Test (portal releases)
+        if: startsWith(github.ref_name, 'portal-v')
+        run: |
+          bt=$(python -c 'import tomllib; print(tomllib.load(open("portal/apps.toml", "rb"))["apps"]["bazzite-test"]["tag"])')
+          mkdir -p bundle
+          gh release download "$bt" --pattern "$bt.tar.gz" --pattern SHA256SUMS --dir bundle
+
+      - name: Build
+        run: |
+          args=()
+          [ -d bundle ] && args+=(--bundle bundle)
+          python tools/build_release.py "$TAG" dist "${args[@]}"
+          cat dist/SHA256SUMS
+
+      - name: Publish
+        run: |
+          app=${TAG%-v*}
+          title="$app ${TAG##*-v}"
+          gh release create "$TAG" "dist/$TAG.tar.gz" dist/SHA256SUMS \
+            --title "$title" --notes-file dist/notes.md --verify-tag

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Runs every test suite in the repo (core and each app with a tests/ folder), offscreen.
+# Runs every test suite in the repo (core, portal, tools and each app with a tests/ folder), offscreen.
 # Extra arguments go to pytest, e.g. ./test.sh -k profile  or  ./test.sh -x -vv
 #
 # Interpreter: $PYTHON if set, else the venv for this OS. A venv only runs on the OS that made it, so a checkout
@@ -29,7 +29,7 @@ fi
 export QT_QPA_PLATFORM=offscreen
 export PYTHONDONTWRITEBYTECODE=1
 rc=0
-for dir in core apps/*; do
+for dir in core portal tools apps/*; do
     [[ -d "$dir/tests" ]] || continue
     echo "== $dir"
     (cd "$dir" && "$PY" -m pytest -q -p no:cacheprovider tests "$@") || rc=1

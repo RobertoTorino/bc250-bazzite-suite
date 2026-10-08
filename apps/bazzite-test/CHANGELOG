@@ -1,3 +1,21 @@
+Changelog: 08-10-2026 22:26:29
+
+Moved into the BC250 Bazzite Suite: version 0.1.0, released on the suite's own bazzite-test-v* tags.
+
+The app now uses the suite's shared bc250_core for its palette, Inter font, rounded tooltips, logo, settings
+store, help view and start-up. The window looks the same: an offscreen render matches the previous version
+pixel for pixel, apart from the version number. Two differences:
+- Chart tooltips now open relative to the graph window, like every other tooltip, which is what Wayland needs.
+- The app's own copy of the Inter font is gone; core ships the same files.
+
+install.sh copies the bc250_core the release was built with into the root-owned /opt folder and uses the suite's
+shared venv in ~/.local/share/bc250-bazzite-suite/venv instead of its own. A venv from an earlier version is
+removed. The shared venv is removed with the last suite app that uses it. Settings stay in
+~/.config/bc250-bazzite-test/bc250-bazzite-test.ini.
+
+Removed development/tools/release.sh: releases are made by the suite's release workflow. Added offscreen smoke
+tests (tests/).
+
 Changelog: 07-10-2026 04:45:00
 
 Game details page: more is measured while a game runs, and the page now judges the session instead of

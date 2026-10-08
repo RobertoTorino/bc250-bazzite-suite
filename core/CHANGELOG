@@ -1,0 +1,13 @@
+Changelog: 08-10-2026 22:26:29
+
+Initial version 0.1.0 of bc250_core, the code the suite's apps share. It is bundled into each app release.
+- appinfo: AppInfo.
+- theme: the palette and Inter font.
+- text: fmt, fill, plain_tooltip, window_title.
+- widgets: StatusPill, MetricBox, ClickableLogo, Terminal, TextDialog, RoundedToolTip with show/hide_tooltip,
+  page_header, hint_label, accent_button, set_button_active.
+- app: create_app, run_app, exec_app.
+- settings: open_settings at each app's existing file, geometry helpers, SettingsStore.
+- help: HelpView, HelpPage.
+- updates: latest_release with a tag prefix for the suite's per-app tags, UpdateStatus, UpdateChecker.
+- platform: XDG folders, xdg_open, launch_in_terminal with an exit file.

@@ -1,0 +1,17 @@
+Changelog: 08-10-2026 22:26:29
+
+Initial release 0.1.0 of the BC250 Bazzite Suite portal.
+
+One window for the suite's apps. BC-250 Bazzite Test comes first and is always installed. The other apps
+(governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi) are cards with Install, Open and
+Uninstall:
+- Each runs the app's own installer in a terminal window and watches for its result.
+- Apps that change how the board runs are marked, and the portal asks for confirmation before installing or
+  opening them.
+
+apps.toml pins one release of each app. The portal downloads exactly that tarball from the suite's releases,
+checks it against the pinned SHA-256 (or the release's SHA256SUMS) and unpacks it safely. Run from a checkout,
+it installs apps from the local source instead.
+
+install.sh installs the portal root-owned to /opt/bc250-bazzite-suite, sets up the suite's shared venv and
+installs the bundled BC-250 Bazzite Test release.

@@ -3,14 +3,25 @@
 Tools for the AMD BC-250 running Bazzite, in one repository. The **portal** installs and starts them:
 `bazzite-test` is always installed, every other app is an optional pill.
 
-> **Status: migration step 2 of 8.** The seven apps live under `apps/` and still install and run exactly as they
-> did from their own repositories. `core/` holds the shared `bc250_core` foundation (no app uses it yet; bazzite-test
-> moves onto it in step 3). `portal/` is still a placeholder.
+> **Status: migration step 3 of 8.** The portal works, and bazzite-test runs on the shared `bc250_core`. The other
+> six apps still install and run as they did from their own repositories; they move onto core in steps 5 and 6.
+
+## Install
+
+Download `portal-v<version>.tar.gz` and `SHA256SUMS` from [Releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases), then:
+
+```bash
+sha256sum --check --ignore-missing SHA256SUMS
+tar -xzf portal-v*.tar.gz && cd portal-v*/ && ./install.sh
+```
+
+This installs the portal and BC-250 Bazzite Test. Install the other apps from the portal. Details, uninstalling
+and what goes where: [portal/README.md](portal/README.md).
 
 | App | Folder | What it does |
 |---|---|---|
 | bazzite-test | [`apps/bazzite-test`](apps/bazzite-test) | Read-only diagnostics, stress test and benchmarks (always installed) |
-| governor | [`apps/governor`](apps/governor) | GPU governor manager |
+| governor | [`apps/governor`](apps/governor) | GPU governor manager — **changes the board** |
 | helixsr | [`apps/helixsr`](apps/helixsr) | Deploys HelixSR (FSR 3.1 drop-in upscaler) into games |
 | cu-bisect | [`apps/cu-bisect`](apps/cu-bisect) | Tells bad CUs apart from an unstable CU unlock — **changes the board** |
 | cores-bisect | [`apps/cores-bisect`](apps/cores-bisect) | Tells bad CPU cores apart from an unstable core unlock — **changes the board** |
@@ -21,12 +32,12 @@ Tools for the AMD BC-250 running Bazzite, in one repository. The **portal** inst
 
 ```
 core/bc250_core/   shared Python package, see core/README.md
-portal/            the portal app and apps.toml (step 3)
+portal/            the portal: app, apps.toml (the pinned app releases) and install.sh
 apps/<name>/       one folder per app, each with its own VERSION and CHANGELOG
 lib/sh/            shared shell helpers, inlined into the scripts at build time (step 7)
-tools/             check_versions.py, fix-modes.sh; i18n/ becomes the single translation pipeline (step 6)
+tools/             release and CI tools (build_release, stage_app, pin_app, check_*), installer tests;
+                   i18n/ becomes the single translation pipeline (step 6)
 docs/ mkdocs.yml   the manual (MkDocs Material)
-packaging/         portal installer, shared venv, .desktop templates (step 3)
 test.sh            runs every test suite (core and each app with tests/)
 ```
 
@@ -62,9 +73,16 @@ The repo is used from both systems, so it is set up to behave the same on each:
 
 ## Where things are installed
 
-Filled in at step 3. Planned: the portal and the bazzite-test engine in root-owned `/opt` (as
-bazzite-test does today), the GUIs and `bc250_core` in one shared venv under
-`~/.local/share/bc250-bazzite-suite/`.
+A deliberate mix (owner decision 3):
+
+- **Root-owned `/opt`:** the portal (`/opt/bc250-bazzite-suite`) and every app that runs code as root
+  (bazzite-test's engine, the bisect and unlock scripts). A normal user cannot change code that sudo runs.
+- **Your home folder:** the shared venv `~/.local/share/bc250-bazzite-suite/venv` (PyQt6, used by all suite
+  GUIs and removed with the last of them), plus each app's settings, results and launchers.
+- **`bc250_core` per app:** each app's release carries the `bc250_core` it was tested with, next to its own code.
+  Apps with different release tags never share a core version they were not tested with.
+
+[portal/README.md](portal/README.md) has the full table.
 
 ## Versions and tags
 
@@ -72,8 +90,10 @@ bazzite-test does today), the GUIs and `bc250_core` in one shared venv under
 also written in a script or package (`VERSION="…"`, `__version__ = "…"`, pyproject `version`) must match it, which
 CI checks with `tools/check_versions.py`. Everything started at 0.1.0 with the suite.
 
-Each app has its own tag (`bazzite-test-v1.2.0`, `governor-v0.4.0`, …). The portal has `portal-vX.Y.Z`,
-which also moves whenever `portal/apps.toml` pins a new app tag.
+Each app is released on its own tag (`bazzite-test-v0.1.0`, `governor-v0.4.0`, …); the release workflow builds
+`<tag>.tar.gz` and `SHA256SUMS`. The portal has `portal-vX.Y.Z` and pins one release of every app in
+`portal/apps.toml`; a change there needs a portal version bump at least as large as the largest app bump.
+The release steps are in [portal/README.md](portal/README.md#appstoml-and-releases).
 
 ## License
 
