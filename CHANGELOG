@@ -1,0 +1,28 @@
+Changelog: 08-10-2026 22:35:00
+
+Suite-wide changes: the repository, CI, release tooling and the shared code. Each app, core/ and portal/ keep
+their own CHANGELOG for their own changes; this file covers what is not part of any one of them.
+
+Migration step 3: the portal and the release tooling.
+- Releases: one per tag, <app>-v<x.y.z> or portal-v<x.y.z>, built by .github/workflows/release.yml with
+  tools/build_release.py. Each release is a reproducible <tag>.tar.gz plus SHA256SUMS. A portal release bundles
+  the bazzite-test release it pins.
+- portal/apps.toml pins one release of every app. tools/pin_app.py records a released app's tag and checksum;
+  tools/check_manifest.py (CI) requires every app to be listed and a portal version bump at least as large as
+  the largest app bump it pins.
+- tools/stage_app.py builds an app's install tree. Each app ships the bc250_core it was tested with.
+- tools/installer-tests/ run the portal and bazzite-test installers and the release flow end to end on Linux
+  without root (fakeroot); they run in CI.
+- CI: the portal manifest rule, tests for core, portal, tools and bazzite-test, shellcheck at warning level for
+  the suite's own scripts, and the installer tests.
+
+Migration step 2: bc250_core, the code the apps share (see core/CHANGELOG).
+
+Migration step 1: the suite repository.
+- The seven apps moved in under apps/, each with its own VERSION (all 0.1.0), LICENSE, .gitignore and
+  CHANGELOG. Their old per-repo GitHub workflows were removed in favour of the root .github/.
+- LF line endings everywhere, also on Windows (.gitattributes). Scripts are executable in git
+  (tools/fix-modes.sh, checked in CI).
+- tools/check_versions.py (CI) keeps every hard-coded version equal to its VERSION file.
+- test.sh runs all test suites, with one venv per OS (.venv-linux, .venv-windows).
+- MkDocs manual skeleton in docs/, built with --strict in CI.

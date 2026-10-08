@@ -55,7 +55,7 @@ jobs:
       - name: Test
         env:
           QT_QPA_PLATFORM: offscreen
-        run: python -m pytest -q tests
+        run: python -X faulthandler -m pytest -v tests        # -v: a crash log names the test
 
   shell:
     runs-on: ubuntu-latest
@@ -93,13 +93,16 @@ jobs:
             echo "::error::not executable in git (run tools/fix-modes.sh):"; echo "$missing"; exit 1
           fi
 
-      - name: Every former repo has its LICENSE and .gitignore
+      - name: Every former repo has its LICENSE, .gitignore, VERSION and CHANGELOG
         run: |
           rc=0
           for d in core portal apps/*; do
-            for f in LICENSE .gitignore VERSION; do
+            for f in LICENSE .gitignore VERSION CHANGELOG; do
               [ -f "$d/$f" ] || { echo "::error::$d/$f missing"; rc=1; }
             done
+          done
+          for f in LICENSE .gitignore CHANGELOG README.md; do
+            [ -f "$f" ] || { echo "::error::$f missing at the repo root"; rc=1; }
           done
           exit $rc
 

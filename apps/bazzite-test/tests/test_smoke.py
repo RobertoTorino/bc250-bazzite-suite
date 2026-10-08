@@ -30,6 +30,10 @@ def test_settings_file_unchanged(sandbox):
 
 
 def test_main_window_builds(sandbox, qapp):
+    import gc
+
+    from PyQt6.QtCore import QCoreApplication, QEvent
+
     from bc250_core.app import create_app
     from bc250_gui import INFO
     from bc250_gui.main_window import MainWindow
@@ -37,7 +41,14 @@ def test_main_window_builds(sandbox, qapp):
     create_app(INFO, lang="en")
     window = MainWindow(TestRunner(str(ENGINE), use_sudo=False))
     window.show()
-    qapp.processEvents()
+    qapp.processEvents()                        # runs the deferred history load
     assert window.windowTitle() == INFO.display_name
     window.shutdown()
     window.close()
+    # Dispose of the window here, while the event loop is alive, instead of leaving it to whenever Python's garbage
+    # collector gets to it (the app itself keeps its window until it quits). A crash then shows up in this test.
+    window.deleteLater()
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete.value)
+    qapp.processEvents()
+    del window
+    gc.collect()
