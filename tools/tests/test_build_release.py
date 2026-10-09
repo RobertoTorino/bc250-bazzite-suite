@@ -57,6 +57,8 @@ def test_bazzite_test_layout(bt_release):
     engine = read(archive, f"{top}/test-bazzite.sh")
     info = read(archive, f"{top}/bc250_gui/_build_info.py").decode()
     assert hashlib.sha256(engine).hexdigest() in info              # release build: engine hash recorded
+    manual = (TOOLS.parent / "docs" / "apps" / "bazzite-test.md").read_bytes()
+    assert read(archive, f"{top}/MANUAL.md") == manual                # its chapter of the manual
 
 
 def test_modes_and_owner(bt_release):

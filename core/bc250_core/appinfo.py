@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 SUITE_REPO_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite"
+SUITE_MANUAL_URL = "https://robertotorino.github.io/bc250-bazzite-suite/"     # one chapter per app: apps/<key>/
 
 # Endonyms, in the order the language pickers show them. "en" is the source language.
 DEFAULT_LANGUAGES: dict[str, str] = {

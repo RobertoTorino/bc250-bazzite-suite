@@ -29,7 +29,7 @@ class Flashrom:
 
 
 def candidates(home: Path) -> list[Flashrom]:
-    """Where flashrom may be: unpacked in ~/flashrom (as the README describes), then on PATH, then /usr/sbin."""
+    """Where flashrom may be: unpacked in ~/flashrom (as the manual describes), then on PATH, then /usr/sbin."""
     out = []
     unpacked = home / "flashrom" / "usr" / "bin" / "flashrom"
     if unpacked.is_file():

@@ -88,7 +88,7 @@ done
 [[ -z $ROUNDS_OPT || $ROUNDS_OPT =~ ^[2-9]$ ]] || die "--rounds needs a number from 2 to 9."
 [[ $MAX_FREQ =~ ^[0-9]+$ ]] && (( MAX_FREQ <= HARD_MAX_FREQ )) || die "--max-freq must be a number up to $HARD_MAX_FREQ MHz."
 [[ $MIN_VOLT =~ ^[0-9]+$ ]] && (( MIN_VOLT >= HARD_MIN_VOLT )) || die "--min-volt must be a number of $HARD_MIN_VOLT mV or more."
-[[ -z $OC_VOLT_OPT ]] || { [[ $OC_VOLT_OPT =~ ^[0-9]+$ ]] && (( OC_VOLT_OPT <= HARD_MAX_VOLT )); } || die "--oc-volt must be a number up to $HARD_MAX_VOLT mV. Hard ceiling; see the README."
+[[ -z $OC_VOLT_OPT ]] || { [[ $OC_VOLT_OPT =~ ^[0-9]+$ ]] && (( OC_VOLT_OPT <= HARD_MAX_VOLT )); } || die "--oc-volt must be a number up to $HARD_MAX_VOLT mV. Hard ceiling; see the manual."
 [[ $FREQ_STEP =~ ^[0-9]+$ ]] && (( FREQ_STEP >= 25 )) || die "--freq-step must be 25 MHz or more."
 [[ $VOLT_STEP =~ ^[0-9]+$ ]] && (( VOLT_STEP >= 5 )) || die "--volt-step must be 5 mV or more."
 SWEEP_OPT=$SWEEP
@@ -306,7 +306,7 @@ if [[ $MODE == reset ]]; then
 fi
 
 (( EUID != 0 )) || die "run this as your normal desktop user, not as root; it uses sudo where needed."
-[[ -r $GOV_CONF ]] || die "$GOV_CONF not found. Install cyan-skillfish-governor-smu first (see the README)."
+[[ -r $GOV_CONF ]] || die "$GOV_CONF not found. Install cyan-skillfish-governor-smu first (see the manual)."
 lspci -nn 2>/dev/null | grep -qi '1002:13fe' || die "no BC-250 GPU (1002:13fe) found."
 
 say "The governor config and service need root. sudo may ask for your password once."

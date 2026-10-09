@@ -145,7 +145,7 @@ class MainWindow(QWidget):
         self.auto_check = QCheckBox(self.tr("Unattended (no prompts, auto-reboot, resumes after login)"))
         self.auto_check.setToolTip(self.tr(
             "--auto: don't ask anything, reboot on its own, and keep going after every login until "
-            "every item is done. Needs passwordless sudo for setpci and journalctl - see README."))
+            "every item is done. Needs passwordless sudo for setpci and journalctl - see the manual."))
         self.auto_check.toggled.connect(self._on_auto_toggled)
         grid.addWidget(self.auto_check, row, 0, 1, 3)
         row += 1
@@ -154,7 +154,7 @@ class MainWindow(QWidget):
             "Also install the auto-resume login service (recommended with Unattended)"))
         self.autostart_check.setToolTip(self.tr(
             "Writes and enables ~/.config/systemd/user/bc250-cores-bisect-auto.service, so the run "
-            "relaunches itself after every reboot/login, same as the README's --auto checklist. "
+            "relaunches itself after every reboot/login, same as the manual's --auto checklist. "
             "The script removes it again once every item is done."))
         self.autostart_check.setEnabled(False)
         grid.addWidget(self.autostart_check, row, 0, 1, 3)
@@ -283,7 +283,7 @@ class MainWindow(QWidget):
             except Exception as exc:  # noqa: BLE001 - surfaced to the user, not fatal to starting
                 QMessageBox.warning(self, APP_NAME, self.tr(
                     "Could not install the auto-resume login service:\n{0}\n\n"
-                    "The run will still start now; see the README's --auto checklist to set it up "
+                    "The run will still start now; see the manual's --auto checklist to set it up "
                     "by hand.").format(exc))
 
         if not self._run_script(*opts.to_args()):

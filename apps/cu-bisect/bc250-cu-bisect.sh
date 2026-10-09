@@ -33,7 +33,7 @@
 #       --same-boot       don't reboot between attempts; restore the baseline live instead
 #                         (faster, but every attempt then inherits the previous one's state)
 #       --auto            don't ask anything; auto-reboot after each attempt and keep going on
-#                         its own after every login (needs the autostart unit, see README) until
+#                         its own after every login (needs the autostart unit, see the manual) until
 #                         every item is done. Still one attempt per boot: no loss of isolation.
 #       --no-watch        don't read the registers back during the load
 #       --status          show the results so far and write the report, then exit

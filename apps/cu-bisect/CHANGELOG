@@ -1,3 +1,7 @@
+Changelog: 09-10-2026 22:59:08
+
+README: only the app's name, what it does and its license, with a link to its chapter of the manual; the rest moved into the manual (docs/apps/cu-bisect.md). The bisect GUI's texts that said "see README" now say the manual; the unlock GUI's mask preview tooltip still mentions the README, because it is translated.
+
 Changelog: 09-10-2026 22:09:22
 
 The CU Unlock GUI has its own icon, images/bc250-cu-bisect-unlock.png: in its window, its menu entry and its

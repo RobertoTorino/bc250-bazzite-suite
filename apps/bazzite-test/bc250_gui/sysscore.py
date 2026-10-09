@@ -31,7 +31,7 @@ DEFAULT_NVME_READ_MBPS = 850      # PCIe 2.0 slot, ~1000 MB/s raw ceiling; a goo
 DEFAULT_NVME_BYTES = 500e9        # the "512 GB class": 480/500/512 GB drives all count as the default
 MIN_FULL_NVME_BYTES = 480e9
 DEFAULT_LINK_MBPS = 1000
-RECOMMENDED_VRAM_MIB = 6144       # README: the split with a documented fix for framebuffer pin failures
+RECOMMENDED_VRAM_MIB = 6144       # manual: the split with a documented fix for framebuffer pin failures
 VRAM_TOLERANCE_MIB = 64
 OTHER_VRAM_SHARE = 0.5            # another split works, but is not the recommended one
 LOG_BONUS = 0.25                  # Extended: +25% of the weight per doubling above the default
@@ -259,7 +259,7 @@ def compute(history: History | None, health: int | None, sys_root: Path = Path("
                 None if vram is None else 1.0 if vram_ok else OTHER_VRAM_SHARE, "none",
                 "The recommended split." if vram_ok else
                 "6 GB is the split with a documented fix for framebuffer pin failures: "
-                "sudo ./bc250memcfg UMA_SIZE 6144 (see test 37 and the README).", CONFIGURATION),
+                "sudo ./bc250memcfg UMA_SIZE 6144 (see test 37 and the manual).", CONFIGURATION),
         _factor("CPU mitigations", 5, ("off" if mitig else "on") if mitig is not None else "", "off",
                 None if mitig is None else float(mitig), "none",
                 "mitigations=off is on the kernel command line (test 24)." if mitig else

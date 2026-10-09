@@ -10,7 +10,7 @@ keeps in ~/.local/share/bc250-cu-bisect/. A mask is only accepted once that stat
   - the 4 shader-array rows are unlocked evenly, at one of the three real levels: 3 WGPs per row
     (24 CUs, stock), 4 per row (32 CUs) or 5 per row (40 CUs, max). The GPU feeds all 4 arrays in
     lockstep, so anything in between performs like its smallest row while drawing the extra power
-    (see the bc250-cu-bisect.sh README).
+    (see the CU Bisect manual).
 
 This mirrors the "retest the combination" step bc250-cu-bisect.sh's own summary suggests
 (--reset && --baseline <masks> --control-only --rounds N) - the GUI just checks that step was actually

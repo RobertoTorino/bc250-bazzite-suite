@@ -48,7 +48,7 @@
 #       --rasdaemon       also count hardware errors with ras-mc-ctl (needs rasdaemon)
 #       --same-boot       don't reboot between bisect attempts (faster, less isolation)
 #       --auto            no prompts; auto-reboot after each attempt and continue after every
-#                         login (needs the autostart unit, see README) until all items are done
+#                         login (needs the autostart unit, see the manual) until all items are done
 #       --status          show the results so far and write the report, then exit
 #       --reset           delete the results and start over
 #   -V, --version         show the version
@@ -531,7 +531,7 @@ if [[ $LOAD_TOOL == mprime || $LOAD_TOOL == both ]]; then
              [[ -x $p ]] && { MPRIME_BIN=$p; break; }
            done; }
   fi
-  [[ -n $MPRIME_BIN && -x $MPRIME_BIN ]] || die "mprime not found. Install it (or pass --mprime-bin PATH); see README. Prime95/mprime is a separate download from mersenne.org."
+  [[ -n $MPRIME_BIN && -x $MPRIME_BIN ]] || die "mprime not found. Install it (or pass --mprime-bin PATH); see the manual. Prime95/mprime is a separate download from mersenne.org."
   command -v timeout >/dev/null 2>&1 || die "timeout not found (coreutils); it is what stops mprime after --time seconds."
   cfg_set MPRIME_BIN "$MPRIME_BIN"
 fi

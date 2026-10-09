@@ -2099,7 +2099,7 @@ if [ -r "$GOV_CONF" ]; then
     else
         log_result "INFO: fix-metrics is off, so MangoHud / the Steam overlay show 0% (or 655%) GPU load."
         log_result "NOTE: To show the real load, set fix-metrics = true under [gpu-usage] in $GOV_CONF,"
-        log_result "NOTE: then: sudo systemctl restart $GOV_FOUND   (see README: \"Fix: GPU load shows 0%\")."
+        log_result "NOTE: then: sudo systemctl restart $GOV_FOUND   (see the manual: \"Fix: GPU load shows 0%\")."
     fi
 else
     log_result "INFO: $GOV_CONF not present."
@@ -3282,7 +3282,7 @@ if [ "$VRAM_B" -gt 0 ]; then
     log_result "INFO: VRAM carveout: ${VRAM_G} GiB (plus GTT spill from shared memory)."
     if [ "$VRAM_G" -lt 8 ]; then
         log_result "NOTE: Modern AAA titles recommend 8 GiB+ of VRAM. On this unified-memory board the carveout is"
-        log_result "NOTE: adjustable: see the README section on bc250_memcfg (a larger split also fixes pin failures)."
+        log_result "NOTE: adjustable: see the manual section on bc250_memcfg (a larger split also fixes pin failures)."
     else
         log_result "SUCCESS: The ${VRAM_G} GiB carveout meets the common 8 GiB recommendation of current AAA titles."
     fi

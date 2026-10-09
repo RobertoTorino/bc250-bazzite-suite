@@ -1,20 +1,75 @@
 site_name: BC250 Bazzite Suite
+site_description: Tools for the AMD BC-250 running Bazzite
+site_url: https://robertotorino.github.io/bc250-bazzite-suite/
+repo_url: https://github.com/RobertoTorino/bc250-bazzite-suite
+repo_name: RobertoTorino/bc250-bazzite-suite
+edit_uri: edit/main/docs/
 docs_dir: docs
 strict: true
+hooks:
+  - tools/mkdocs/hooks.py
 theme:
   name: material
+  logo: assets/logo.png
+  favicon: assets/logo.png
+  font:
+    text: Inter
+    code: JetBrains Mono
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
   features:
     - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - toc.follow
+    - search.highlight
+    - content.code.copy
+extra_css:
+  - stylesheets/suite.css
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify {kwds: {case: lower}}   # GitHub's anchors
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
 nav:
   - Home: index.md
   - Portal: portal.md
   - Apps:
-      - bazzite-test: apps/bazzite-test.md
-      - governor: apps/governor.md
-      - helixsr: apps/helixsr.md
-      - cu-bisect: apps/cu-bisect.md
-      - cores-bisect: apps/cores-bisect.md
-      - gpu-oc-bisect: apps/gpu-oc-bisect.md
-      - persistent-acpi: apps/persistent-acpi.md
-      - system-overlay: apps/system-overlay.md
-      - bios-reader: apps/bios-reader.md
+      - BC-250 Bazzite Test: apps/bazzite-test.md
+      - BC-250 GPU Governor Manager: apps/governor.md
+      - BC-250 HelixSR Manager: apps/helixsr.md
+      - BC-250 CU Bisect: apps/cu-bisect.md
+      - BC-250 Cores Bisect: apps/cores-bisect.md
+      - BC-250 GPU OC Bisect: apps/gpu-oc-bisect.md
+      - BC-250 Persistent ACPI: apps/persistent-acpi.md
+      - BC-250 System Overlay: apps/system-overlay.md
+      - BC-250 BIOS Reader: apps/bios-reader.md
+  - Development:
+      - development/index.md
+      - Bazzite Test script: development/bazzite-test.md
+      - Bazzite Test internals: development/bazzite-test-internals.md
+      - Bazzite Test test plan: development/bazzite-test-plan.md
+  - Security: SECURITY.md
+validation:
+  links:
+    anchors: warn

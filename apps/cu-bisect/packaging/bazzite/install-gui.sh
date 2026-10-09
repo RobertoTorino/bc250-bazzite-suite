@@ -2,7 +2,7 @@
 # Self-install for Bazzite (and any other immutable/rpm-ostree-based desktop): sets up
 # bc250_unlock_gui in a private venv under ~/.local, with a launcher, .desktop entry and icon.
 # Nothing here touches rpm-ostree or needs root - only "Install"/"Uninstall" inside the GUI itself
-# run bc250-cu-unlock.sh through sudo, same as the manual venv steps in the README.
+# run bc250-cu-unlock.sh through sudo, same as the venv steps done by hand in the manual.
 #
 # Usage: run from inside a clone of this repo:
 #   bash packaging/bazzite/install-gui.sh                         # menu entry and Desktop icon

@@ -226,7 +226,7 @@ saved by an older version is moved there on the next benchmark run.</li>
 <li><b>CPU time per phase</b> — seconds per stress-ng phase (default 20). Keep it the same between runs you compare.</li>
 <li><b>Benchmark history</b> — every run with its configuration and scores against the current baseline;
 <b>Show graph</b> shows the same runs as bar charts.</li>
-<li>Close games and other heavy apps first. Needs <code>stress-ng</code> and <code>vkpeak</code> (see README).</li>
+<li>Close games and other heavy apps first. Needs <code>stress-ng</code> and <code>vkpeak</code> (see the Manual page).</li>
 </ul>
 
 <h2>NVMe checks (test 10) and disk speed test (test {DISK_TEST_ID})</h2>

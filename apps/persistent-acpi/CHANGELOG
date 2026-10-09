@@ -1,3 +1,7 @@
+Changelog: 09-10-2026 22:59:08
+
+README: only the app's name, what it does and its license, with a link to its chapter of the manual; the rest moved into the manual (docs/apps/persistent-acpi.md).
+
 Changelog: 09-10-2026 21:24:58
 
 Tests: the window test waits for the status run to finish before it checks the idle states line; on a slow

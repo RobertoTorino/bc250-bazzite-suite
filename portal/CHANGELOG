@@ -1,3 +1,7 @@
+Changelog: 09-10-2026 22:59:08
+
+README: short, with a link to the manual; the rest moved into the manual (docs/portal.md).
+
 Changelog: 09-10-2026 22:34:49
 
 Every app card shows the app's icon in front of its name: images/apps/<key>.png (128x128, the key from

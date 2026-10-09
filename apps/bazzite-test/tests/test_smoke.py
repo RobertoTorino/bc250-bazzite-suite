@@ -52,3 +52,32 @@ def test_main_window_builds(sandbox, qapp):
     qapp.processEvents()
     del window
     gc.collect()
+
+
+def test_manual_is_the_chapter(tmp_path):
+    from bc250_gui import readme
+    assert readme.manual_path() == readme.DOCS_DIR.parents[1] / "docs" / "apps" / "bazzite-test.md"   # checkout
+    (tmp_path / "MANUAL.md").write_text("# shipped\n")                                               # release
+    assert readme.manual_path(tmp_path) == tmp_path / "MANUAL.md"
+
+
+def test_manual_markdown_for_qt(tmp_path):
+    from bc250_gui import readme
+    text = readme.manual_markdown("![logo](../assets/bazzite-test/x.png){ .app-logo }\n", tmp_path)
+    assert text == f"![logo]({(tmp_path / 'images').as_posix()}/x.png)\n"
+
+
+def test_other_chapters_open_online():
+    from bc250_gui import readme
+    base = readme.SUITE_MANUAL_URL
+    assert readme.online_url("cu-bisect.md") == base + "apps/cu-bisect/"
+    assert readme.online_url("../SECURITY.md#verifying-a-download") == base + "SECURITY/#verifying-a-download"
+    assert readme.online_url("../development/index.md") == base + "development/"
+    assert readme.online_url("../index.md") == base
+
+
+def test_manual_view_shows_the_chapter(qapp):
+    from bc250_gui.readme import ReadmeView
+    view = ReadmeView()
+    assert "Read-only diagnostics" in view.browser.toPlainText() and "{ .app-logo }" not in view.browser.toPlainText()
+    view.close()

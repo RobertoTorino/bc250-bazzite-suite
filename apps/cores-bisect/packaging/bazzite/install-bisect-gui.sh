@@ -2,7 +2,7 @@
 # Self-install for Bazzite (and any other immutable/rpm-ostree-based desktop): sets up
 # bc250_cores_bisect_gui in a private venv under ~/.local, with a launcher, .desktop entry and
 # icon. Nothing here touches rpm-ostree or needs root - the GUI itself only assembles a command
-# line and starts bc250-cores-bisect.sh in a terminal, same as running it by hand (see README).
+# line and starts bc250-cores-bisect.sh in a terminal, same as running it by hand (see the manual).
 #
 # Names are distinct from the unlock GUI (bc250-cores-unlock-gui), so both can be installed.
 #

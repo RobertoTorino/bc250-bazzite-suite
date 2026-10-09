@@ -6,7 +6,8 @@
 
 <dest-dir> gets the app's own files without development leftovers (tests, venvs, caches) and, when the app imports
 bc250_core, a copy of core/bc250_core beside its package: each app ships the core it was tested with, and its
-launcher starts from that folder so this copy is the one Python imports.
+launcher starts from that folder so this copy is the one Python imports. An app also gets its chapter of the
+manual (docs/apps/<app>.md) as MANUAL.md, so it can be read without a network.
 
 The release workflow tars this tree; the portal uses the same function to install from a local checkout."""
 
@@ -40,12 +41,21 @@ def source_dir(name: str, suite: Path = SUITE) -> Path:
     return src
 
 
+def manual_chapter(name: str, suite: Path = SUITE) -> Path | None:
+    chapter = suite / "docs" / "apps" / f"{name}.md"
+    return chapter if name != "portal" and chapter.is_file() else None
+
+
 def stage(name: str, dest: Path, suite: Path = SUITE) -> Path:
-    """Copy app *name* into *dest* (created; must not exist yet) and bundle bc250_core when the app uses it."""
+    """Copy app *name* into *dest* (created; must not exist yet), bundle bc250_core when the app uses it and add
+    the app's chapter of the manual as MANUAL.md."""
     src = source_dir(name, suite)
     shutil.copytree(src, dest, ignore=_ignore)
     if uses_core(src):
         shutil.copytree(suite / "core" / "bc250_core", dest / "bc250_core", ignore=_ignore)
+    chapter = manual_chapter(name, suite)
+    if chapter is not None:
+        shutil.copyfile(chapter, dest / "MANUAL.md")
     return dest
 
 

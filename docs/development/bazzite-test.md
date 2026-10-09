@@ -1,6 +1,4 @@
-# bc250-bazzite-test
-
-![bc250-bazzite-test.png](../images/bc250-bazzite-test.png)
+# Bazzite Test: the script
 
 Diagnostic script for **Bazzite** (Fedora Atomic / rpm-ostree) running on an **AMD BC-250** board (Cyan Skillfish APU,
 `gfx1013`, PCI `1002:13fe`).
@@ -43,7 +41,7 @@ sudo ./test-bazzite.sh --help                 # show options
 | `--gui`              | Word the how-to-run hints for the GUI instead of these options (used by the GUI). |
 | `-h`, `--help`       | Show usage and exit.                                                       |
 
-The GUI is described in [DEVELOPMENT.md](DEVELOPMENT.md) (developers) and [README.md](../README.md) (users).
+The GUI is described in [Bazzite Test internals](bazzite-test-internals.md) (developers) and [BC-250 Bazzite Test](../apps/bazzite-test.md) (users).
 
 ### Output
 
@@ -572,7 +570,7 @@ ujust regenerate-grub   # then reboot
 ```
 
 Or use the guided installer from
-[persistent-acpi](../../persistent-acpi) (a suite app):
+[persistent-acpi](../apps/persistent-acpi.md) (a suite app):
 it bundles the tables, checks for a BC-250 and a modded BIOS, installs idempotently and has an
 uninstaller. The fix is persistent — the blscfg GRUB module applies the early initrd to every
 BLS boot entry, so it survives kernel and rpm-ostree image updates.
@@ -592,7 +590,7 @@ script (test 26 reports whether the ACPI tables came from the initrd override or
   flag that.
 
 **For the extra CUs without flashing:**
-[cu-bisect](../../cu-bisect) (a suite app) unlocks CUs at runtime
+[cu-bisect](../apps/cu-bisect.md) (a suite app) unlocks CUs at runtime
 by writing the GPU's WGP mask registers with `umr`, and keeps a validated unlock across reboots:
 
 1. **Test first:** `bc250-cu-bisect.sh` tests every locked WGP (2 CUs) on its own over several rounds and
@@ -624,7 +622,7 @@ without flashing; the BIOS route is the alternative.
 
 Every BC-250 die differs: AMD fuses off WGPs that failed validation. But a crash after a CU unlock
 doesn't have to mean a bad WGP: the runtime unlock itself, power or heat can cause it too.
-[bc250-cu-bisect](../../cu-bisect) separates these causes: it does its
+[bc250-cu-bisect](../apps/cu-bisect.md) separates these causes: it does its
 own unlock with umr, tests a control (same register writes, no extra CUs) and every locked WGP on its own
 over several rounds, and tells you per WGP whether it's good, fails every time (likely bad) or fails at
 random (likely the unlock, power or heat). Once a mask passes, `bc250-cu-unlock.sh` or the BC Unlock GUI

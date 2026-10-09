@@ -13,7 +13,7 @@ from PyQt6.QtGui import QCloseEvent, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QCheckBox, QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout, QLabel, QMainWindow,
                              QMessageBox, QPushButton, QVBoxLayout, QWidget)
 
-from bc250_core import window_title
+from bc250_core import SUITE_MANUAL_URL, window_title
 from bc250_core.platform import data_home
 from bc250_core.settings import SettingsStore
 from bc250_core.widgets import ClickableLogo, StatusPill, Terminal, accent_button, hint_label, page_header
@@ -23,7 +23,7 @@ from . import bios as biosmod
 from . import dump, table
 from .screen import BiosScreen
 
-README_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/bios-reader#reading-the-bios-flash-chip-optional"
+MANUAL_URL = f"{SUITE_MANUAL_URL}apps/bios-reader/#reading-the-bios-flash-chip-optional"
 VERDICT_COLOURS = {"stock": "ok", "modded": "warn", "unknown": "neutral"}
 
 
@@ -155,7 +155,7 @@ class MainWindow(QMainWindow):
             box.setTextFormat(Qt.TextFormat.RichText)
             box.setInformativeText(
                 "Homebrew's flashrom cannot (it has no <i>internal</i> programmer). Unpack Fedora's flashrom into "
-                f"~/flashrom as the <a href='{README_URL}'>README</a> describes, then try again.")
+                f"~/flashrom as the <a href='{MANUAL_URL}'>manual</a> describes, then try again.")
             box.exec()
             return
         folder = dumps_dir()

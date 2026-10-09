@@ -4,8 +4,8 @@ the update-check mechanism. Each app passes its constants in as an AppInfo; noth
 
 __version__ = "0.1.0"
 
-from .appinfo import DEFAULT_LANGUAGES, SUITE_REPO_URL, AppInfo
+from .appinfo import DEFAULT_LANGUAGES, SUITE_MANUAL_URL, SUITE_REPO_URL, AppInfo
 from .text import fill, fmt, plain_tooltip, window_title
 
-__all__ = ["AppInfo", "DEFAULT_LANGUAGES", "SUITE_REPO_URL", "fill", "fmt", "plain_tooltip", "window_title",
-           "__version__"]
+__all__ = ["AppInfo", "DEFAULT_LANGUAGES", "SUITE_MANUAL_URL", "SUITE_REPO_URL", "fill", "fmt", "plain_tooltip",
+           "window_title", "__version__"]

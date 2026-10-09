@@ -1,8 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""README viewer: renders README.md, the user guide (and the other .md files it links to) inside the app."""
+"""Manual viewer: renders the app's chapter of the suite manual (and the other .md files it links to) inside the app.
+
+A release ships the chapter as MANUAL.md (tools/stage_app.py copies docs/apps/bazzite-test.md); in the checkout
+the chapter itself is read. Links to other chapters of the manual open the published manual in the browser."""
 
 from __future__ import annotations
 
+import posixpath
 import re
 from pathlib import Path
 
@@ -10,8 +14,37 @@ from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QDesktopServices, QTextCursor, QTextDocument
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QTextBrowser, QVBoxLayout, QWidget
 
+from bc250_core import SUITE_MANUAL_URL
+
 DOCS_DIR = Path(__file__).resolve().parent.parent
-README_PATH = DOCS_DIR / "README.md"
+MANUAL_PAGE = "apps/bazzite-test.md"                # the chapter, under the suite's docs/
+_ATTR_LIST = re.compile(r"\{\s*[.#][^}]*\}")         # MkDocs' { .class } after an image
+
+
+def manual_path(app_dir: Path = DOCS_DIR) -> Path:
+    """MANUAL.md of a release or an installed copy, the chapter in the checkout, else the README."""
+    for path in (app_dir / "MANUAL.md", app_dir.parent.parent / "docs" / MANUAL_PAGE):
+        if path.is_file():
+            return path
+    return app_dir / "README.md"
+
+
+def manual_markdown(text: str, app_dir: Path = DOCS_DIR) -> str:
+    """The chapter as Qt can show it: no MkDocs attribute lists, and its pictures from the app's images/."""
+    text = _ATTR_LIST.sub("", text)
+    return text.replace("](../assets/bazzite-test/", f"]({(app_dir / 'images').as_posix()}/")
+
+
+def online_url(link: str) -> str:
+    """A relative link of the chapter as the address of that page in the published manual."""
+    path, _, fragment = link.partition("#")
+    page = posixpath.normpath(posixpath.join(posixpath.dirname(MANUAL_PAGE), path))
+    if page == "index.md" or page.endswith("/index.md"):
+        page = page.removesuffix("index.md")
+    else:
+        page = page.removesuffix(".md") + "/"
+    return SUITE_MANUAL_URL + page + (f"#{fragment}" if fragment else "")
+
 
 # Qt's Markdown import gives tables no borders and code no background; this restyles the HTML it produces.
 _CSS = """
@@ -26,7 +59,7 @@ code { background: rgba(127,127,127,0.18); font-family: monospace; }
 
 
 class ReadmeView(QWidget):
-    def __init__(self, path: Path = README_PATH, parent: QWidget | None = None):
+    def __init__(self, path: Path | None = None, parent: QWidget | None = None):
         super().__init__(parent)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -49,6 +82,8 @@ class ReadmeView(QWidget):
         self.back.setEnabled(False)
         layout.addWidget(self.browser, 1)
         self._history: list[Path] = []
+        path = path or manual_path()
+        self._manual = path
         self._current = path
         self.load(path)
 
@@ -64,6 +99,8 @@ class ReadmeView(QWidget):
         doc = QTextDocument(self.browser)
         doc.setMetaInformation(QTextDocument.MetaInformation.DocumentUrl, QUrl.fromLocalFile(str(path)).toString())
         doc.setBaseUrl(QUrl.fromLocalFile(str(path.parent) + "/"))
+        if path == self._manual:
+            text = manual_markdown(text)
         doc.setMarkdown(text, QTextDocument.MarkdownFeature.MarkdownDialectGitHub)
         html = doc.toHtml()
         doc.setDefaultStyleSheet(_CSS)
@@ -83,6 +120,10 @@ class ReadmeView(QWidget):
             self.load(target, push=True)
         elif target.exists():
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(target)))
+        elif self._current == self._manual and not url.isLocalFile():
+            # Another chapter of the manual, which the app does not ship.
+            link = url.path() + (f"#{url.fragment()}" if url.fragment() else "")
+            QDesktopServices.openUrl(QUrl(online_url(link)))
 
     def _scroll_to_heading(self, fragment: str) -> None:
         """GitHub-style #anchor -> the heading with that slug (Qt's Markdown import adds no anchors)."""

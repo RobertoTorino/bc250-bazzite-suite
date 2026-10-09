@@ -23,6 +23,7 @@ check "portal symlink" "[ \"\$(readlink $T/opt/bc250-bazzite-suite)\" = bc250-ba
 check "core bundled with portal" "[ -f $T/opt/bc250-bazzite-suite/bc250_core/platform.py ]"
 check "no tests in /opt" "[ ! -d $T/opt/bc250-bazzite-suite/tests ]"
 check "bazzite-test installed too" "[ -f $T/opt/bc250-bazzite-test/test-bazzite.sh ] && [ -x $HOME/.local/bin/bc250-bazzite-test ]"
+check "bazzite-test has its manual" "cmp -s $SUITE/docs/apps/bazzite-test.md $T/opt/bc250-bazzite-test/MANUAL.md"
 check "both venv users" "[ -f $D/bc250-bazzite-suite/venv-users/bc250-bazzite-suite ] && [ -f $D/bc250-bazzite-suite/venv-users/bc250-bazzite-test ]"
 check "portal launcher" "grep -qF 'm bc250_portal' $HOME/.local/bin/bc250-bazzite-suite"
 check "desktop icons" "[ -x $HOME/Desktop/bc250-bazzite-suite.desktop ] && [ -x $HOME/Desktop/bc250-bazzite-test.desktop ]"

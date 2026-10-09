@@ -1,3 +1,7 @@
+Changelog: 09-10-2026 22:59:08
+
+README: only the app's name, what it does and its license, with a link to its chapter of the manual; the rest moved into the manual (docs/apps/governor.md). The hardware checklist (docs/HARDWARE-CHECKLIST.md) is now part of that chapter.
+
 Changelog: 09-10-2026 18:32:48
 
 README and hardware checklist: install from the portal or the suite's releases (governor-v<version>.tar.gz with

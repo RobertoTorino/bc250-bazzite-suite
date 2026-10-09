@@ -1,7 +1,7 @@
 """Optional helper: installs the systemd --user unit that resumes an ``--auto`` bisect run after
-every reboot/login (see bc250-cu-bisect-auto.service.example and the README's "--auto checklist").
+every reboot/login (see bc250-cu-bisect-auto.service.example and the manual's "--auto checklist").
 The launcher GUI only offers this as a convenience for the unattended path; everything it does here
-is exactly what that README section tells you to do by hand."""
+is exactly what that manual section tells you to do by hand."""
 
 from __future__ import annotations
 
@@ -44,6 +44,6 @@ def install(script_path: str, time_secs: int, rounds: int) -> None:
     path.write_text(_unit_contents(script_path, time_secs, rounds))
 
     if not shutil.which("systemctl"):
-        raise RuntimeError("systemctl not found; install the unit manually (see README).")
+        raise RuntimeError("systemctl not found; install the unit manually (see the manual).")
     subprocess.run(["systemctl", "--user", "daemon-reload"], check=True)
     subprocess.run(["systemctl", "--user", "enable", "--now", UNIT_NAME], check=True)

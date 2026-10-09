@@ -5,7 +5,7 @@
 #   - passed with the control (no crashes with just the baseline masks), and
 #   - came back GOOD for every WGP in the combined mask, on its own, and
 #   - were then tested together as the combined mask itself (WGPs that pass alone can still fail
-#     combined - more power at the same voltage; see the bc250-cu-bisect.sh README), and
+#     combined - more power at the same voltage; see the CU Bisect manual), and
 #   - unlock the same number of WGPs on all 4 shader arrays (SE0.SH0, SE0.SH1, SE1.SH0, SE1.SH1):
 #     the GPU splits work across all 4 in lockstep, so an uneven unlock only ever runs as fast as
 #     its smallest row while still drawing the extra power - this script refuses to install one.

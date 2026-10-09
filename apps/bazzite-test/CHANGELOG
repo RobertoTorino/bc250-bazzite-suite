@@ -1,3 +1,9 @@
+Changelog: 09-10-2026 22:59:08
+
+README: only the app's name, what it does and its license, with a link to its chapter of the manual; the rest moved into the manual (docs/apps/bazzite-test.md). SECURITY.md and development/*.md moved into the manual too.
+
+The Readme page is now Manual: it shows the app's chapter of the manual (MANUAL.md in a release, the chapter itself in the checkout); links to other chapters open the online manual. install.sh copies the chapter as MANUAL.md when it installs from the suite checkout. Texts that said "see README" (help, the configuration hint, two engine notes) now say the manual.
+
 Changelog: 09-10-2026 18:32:48
 
 Docs: links to the old stand-alone repositories (which no longer exist) now point at the apps' folders in the

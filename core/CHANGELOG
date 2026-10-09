@@ -1,3 +1,7 @@
+Changelog: 09-10-2026 22:59:08
+
+SUITE_MANUAL_URL: the address of the suite manual on GitHub Pages. README: short, with a link to the manual.
+
 Changelog: 09-10-2026 18:22:39
 
 MetricBox has an optional centred=True that centres the value and caption (helixsr's header uses it); the default

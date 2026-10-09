@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Test catalogue, grouped the same way as the categories in README.md."""
+"""Test catalogue, grouped the same way as the categories in the manual."""
 
 from __future__ import annotations
 

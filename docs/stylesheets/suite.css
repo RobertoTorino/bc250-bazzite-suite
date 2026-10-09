@@ -1,0 +1,69 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* The apps' look: Bazzite purple, and Inter with heavy titles like the apps' header_font(). */
+:root {
+  --suite-primary: #5835CE;
+  --suite-secondary: #8A2BE2;
+}
+
+[data-md-color-primary="custom"] {
+  --md-primary-fg-color: var(--suite-primary);
+  --md-primary-fg-color--light: #7a5ce0;
+  --md-primary-fg-color--dark: #4426a8;
+  --md-primary-bg-color: #ffffff;
+  --md-primary-bg-color--light: #ffffffb3;
+}
+
+[data-md-color-accent="custom"] {
+  --md-accent-fg-color: var(--suite-secondary);
+  --md-accent-fg-color--transparent: #8a2be21a;
+  --md-accent-bg-color: #ffffff;
+  --md-accent-bg-color--light: #ffffffb3;
+}
+
+[data-md-color-scheme="default"] {
+  --md-typeset-a-color: var(--suite-primary);
+}
+
+[data-md-color-scheme="slate"] {
+  --md-typeset-a-color: #a98bff;
+  --md-default-bg-color: #17151f;
+}
+
+.md-header, .md-tabs {
+  background: linear-gradient(90deg, var(--suite-primary), var(--suite-secondary));
+}
+
+.md-typeset h1, .md-typeset h2 {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.md-typeset h1 {
+  color: var(--md-default-fg-color);
+}
+
+.md-typeset h3, .md-typeset h4 {
+  font-weight: 700;
+}
+
+/* The small app icon in front of a name, as on the portal's cards. */
+.md-typeset img.app-icon {
+  width: 1.6em;
+  height: 1.6em;
+  vertical-align: middle;
+  margin-right: 0.35em;
+  border-radius: 0.3em;
+}
+
+/* An app's own icon at the top of its chapter. */
+.md-typeset img.app-logo {
+  width: 128px;
+  float: right;
+  margin: 0 0 1em 1em;
+  border-radius: 1.2em;
+}
+
+.md-typeset table:not([class]) th {
+  background-color: var(--suite-primary);
+  color: #ffffff;
+}
