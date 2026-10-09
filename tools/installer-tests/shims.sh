@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Shims for running the suite installers without root or network (CI, WSL). Usage: source shims.sh <root>
 # sudo becomes fakeroot (chown root:root is faked); python3 -m venv makes a stub venv whose pip does nothing.
-# Needs fakeroot. Everything happens under <root>: HOME, XDG folders and the /opt replacement.
+# Needs fakeroot. Everything happens under <root>: HOME, XDG folders and the /opt and /var/log replacements.
 set -e
 ROOT=$1
 rm -rf "$ROOT"; mkdir -p "$ROOT/shims" "$ROOT/home/Desktop" "$ROOT/opt"
@@ -28,4 +28,4 @@ exec /usr/bin/python3 "$@"
 X
 chmod +x "$ROOT/shims/"*
 export PATH="$ROOT/shims:$PATH" HOME="$ROOT/home" XDG_DATA_HOME="$ROOT/home/.local/share" \
-       XDG_CONFIG_HOME="$ROOT/home/.config" BC250_OPT_DIR="$ROOT/opt"
+       XDG_CONFIG_HOME="$ROOT/home/.config" BC250_OPT_DIR="$ROOT/opt" BC250_LOG_DIR="$ROOT/log"

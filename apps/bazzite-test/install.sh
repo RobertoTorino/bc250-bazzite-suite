@@ -21,6 +21,7 @@ set -euo pipefail
 APP_ID="bc250-bazzite-test"
 APP_NAME="BC-250 Bazzite Test"
 OPT_DIR="${BC250_OPT_DIR:-/opt}"            # override only for testing
+LOG_DIR="${BC250_LOG_DIR:-/var/log}"        # override only for testing
 DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 SUITE_DIR="$DATA_DIR/bc250-bazzite-suite"
@@ -84,7 +85,7 @@ if $UNINSTALL; then
     if $PURGE; then
         info "Removing settings, history, GUI logs and reports"
         rm -rf "${DATA_DIR:?}/$APP_ID" "${CONFIG_DIR:?}/$APP_ID" "${DESKTOP_DIR:?}/$APP_ID"
-        as_root rm -rf "/var/log/$APP_ID"
+        as_root rm -rf "${LOG_DIR:?}/$APP_ID"
     fi
     info "$APP_NAME is uninstalled."
     exit 0

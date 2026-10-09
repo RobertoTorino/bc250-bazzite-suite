@@ -32,6 +32,10 @@ describe only what exists.
   (a) fix it in the engine, so test 42 reads the live WGP masks itself when test 21 did not run (recommended;
   changes the root-run, checksummed `test-bazzite.sh`, so it needs a board check), or (b) in the GUI only, by not
   letting a probe-time count override a live one.
+- **sudo warning on the board:** during the portal and bazzite-test installs every `sudo` printed
+  `/etc/sudoers.d/bc250-bisect:2:29: unknown defaults entry "verifytype"`. No code in the suite writes that file;
+  `apps/cores-bisect/README.md` tells the user to create it with one line, so line 2 is likely a local edit. Check
+  the file on the board (`sudo visudo -cf /etc/sudoers.d/bc250-bisect`) before changing anything in the suite.
 - **Portal icon:** a copy of bazzite-test's for now.
 - **QR codes** in the app READMEs and About boxes still point to the old repositories.
 

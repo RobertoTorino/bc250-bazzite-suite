@@ -50,9 +50,11 @@ check "state kept without --purge" "[ -f $D/bc250-bazzite-suite/portal/installed
 
 echo "== 4. reinstall and purge as the last user"
 rm "$D/bc250-bazzite-suite/venv-users/bc250-governor-manager"
+mkdir -p "$T/log/bc250-bazzite-test" && touch "$T/log/bc250-bazzite-test/bc250-test-results-20260101-000000.log"
 bash "$R/install.sh" > "$T/log4" 2>&1 && bash "$T/opt/bc250-bazzite-suite/install.sh" --uninstall --purge >> "$T/log4" 2>&1; rc=$?; logs+=("$T/log4")
 check "exit 0" "[ $rc -eq 0 ]"
 check "suite data dir gone" "[ ! -e $D/bc250-bazzite-suite ]"
+check "bazzite-test results gone" "[ ! -e $T/log/bc250-bazzite-test ]"
 check "/opt empty" "[ -z \"\$(ls $T/opt)\" ]"
 
 [ $fail -eq 0 ] && echo "ALL OK" || for l in "${logs[@]}"; do echo "--- $l"; cat "$l"; done

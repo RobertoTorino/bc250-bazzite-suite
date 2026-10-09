@@ -1,3 +1,9 @@
+Changelog: 09-10-2026 11:51:07
+
+install.sh: BC250_LOG_DIR overrides /var/log for testing, like BC250_OPT_DIR for /opt. Without it nothing
+changes: --uninstall --purge still removes /var/log/bc250-bazzite-test. The installer tests used to reach the real
+folder there, so on a board with results the purge step tried to delete them.
+
 Changelog: 08-10-2026 22:26:29
 
 Moved into the BC250 Bazzite Suite: version 0.1.0, released on the suite's own bazzite-test-v* tags.

@@ -1,3 +1,13 @@
+Changelog: 09-10-2026 11:51:07
+
+Installer tests: the shims point BC250_LOG_DIR into the test folder, so the purge step no longer reaches the
+board's real /var/log/bc250-bazzite-test. portal.sh now checks that purge removes bazzite-test's results.
+
+Changelog: 09-10-2026 11:44:51
+
+Local checks now match CI, including the shellcheck error and bash -n passes and check_manifest's --base;
+changelog times are CEST on both systems; the commands to create the development venv on each system;
+
 Changelog: 09-10-2026 11:20:42
 
 READMEs and the manual describe only what exists: migration status, plans and decisions moved to MIGRATION.md,

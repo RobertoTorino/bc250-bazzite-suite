@@ -80,5 +80,6 @@ sudo rpm-ostree rebase ostree-unverified-image:containers-storage:localhost/bazz
    The tarball ships `install.sh` at its root: run as the user, it copies the tree root-owned to
    `/opt/bc250-bazzite-test-v<version>` (symlink `/opt/bc250-bazzite-test`), creates the PyQt6 venv in
    `~/.local/share/bc250-bazzite-test/venv` and adds a launcher (`~/.local/bin/bc250-bazzite-test`), an app
-   menu entry and a Desktop icon; `--uninstall [--purge]` reverses it. `BC250_OPT_DIR` overrides `/opt` for testing.
+   menu entry and a Desktop icon; `--uninstall [--purge]` reverses it. `BC250_OPT_DIR` overrides `/opt` and
+   `BC250_LOG_DIR` overrides `/var/log` for testing.
 3. Translations: es, fr, de, zh, ja, it, pl, ru (Qt Linguist .ts files).
