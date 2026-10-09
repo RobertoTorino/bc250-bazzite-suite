@@ -65,6 +65,19 @@ def test_bazzite_test_first_without_uninstall(window):
     assert window.cards["cu-bisect"].open_button.menu() is not None        # Bisect / Unlock
 
 
+def test_every_card_has_its_icon(window):
+    for key, card in window.cards.items():
+        assert (mw.APP_ICONS / f"{key}.png").is_file(), key
+        assert not card.icon.isHidden() and card.icon.pixmap().width() == mw.ICON_PX, key
+
+
+def test_card_without_icon_file_shows_none(qapp, home, settings_dir, tmp_path, launched, monkeypatch):
+    monkeypatch.setattr(mw, "APP_ICONS", tmp_path / "no-icons")
+    w = mw.MainWindow(load(MANIFEST), FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
+    assert all(card.icon.isHidden() for card in w.cards.values())
+    w.close()
+
+
 def test_no_open_button_without_launch(qapp, home, settings_dir, tmp_path, launched):
     entries = [replace(e, launch=()) if e.key == "governor" else e for e in load(MANIFEST)]
     w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))

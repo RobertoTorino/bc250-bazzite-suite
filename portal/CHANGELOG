@@ -1,3 +1,8 @@
+Changelog: 09-10-2026 22:34:49
+
+Every app card shows the app's icon in front of its name: images/apps/<key>.png (128x128, the key from
+apps.toml), shipped with the portal. A card without an icon file shows the name only.
+
 Changelog: 09-10-2026 22:04:32
 
 The portal icon is images/bc250-bazzite-suite.png again, the name install.sh (menu entry, Desktop icon) and the

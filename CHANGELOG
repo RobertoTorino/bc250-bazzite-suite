@@ -1,3 +1,9 @@
+Changelog: 09-10-2026 22:34:49
+
+The small app icons moved from images/all-apps/ to portal/images/apps/, named by their apps.toml key, so the
+portal ships them for its cards; the README gallery links them there. CU Bisect and Cores Bisect got 128x128
+icons scaled from their 512x512 ones.
+
 Changelog: 09-10-2026 22:04:32
 
 Tests: tools/tests/test_icons.py checks that every installer that points its menu entry at images/$APP_ID.png

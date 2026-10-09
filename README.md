@@ -21,15 +21,17 @@ To test from a clone of this repository instead, run `./install.sh` in its root.
 app from the clone, so keep it where it is. `./install.sh --uninstall` removes it again, and asks about each
 other installed app.
 
-![bc250-bazzite-helixsr-gui.png](images/all-apps/bc250-bazzite-helixsr-gui.png)
-![bc250-bazzite-portal.png](images/all-apps/bc250-bazzite-portal.png)
-![bc250-bazzite-test.png](images/all-apps/bc250-bazzite-test.png)
-![bc250-bios-reader.png](images/all-apps/bc250-bios-reader.png)
-![bc250-governor-manager.png](images/all-apps/bc250-governor-manager.png)
-![bc250-gpu-oc-bisect.png](images/all-apps/bc250-gpu-oc-bisect.png)
-![bc250-persistent-acpi.png](images/all-apps/bc250-persistent-acpi.png)
-![bc250-system-overlay.png](images/all-apps/bc250-system-overlay.png)
-![bc250-unlock-gui.png](images/all-apps/bc250-unlock-gui.png)
+![helixsr](portal/images/apps/helixsr.png)
+![portal](portal/images/apps/portal.png)
+![bazzite-test](portal/images/apps/bazzite-test.png)
+![bios-reader](portal/images/apps/bios-reader.png)
+![governor](portal/images/apps/governor.png)
+![gpu-oc-bisect](portal/images/apps/gpu-oc-bisect.png)
+![persistent-acpi](portal/images/apps/persistent-acpi.png)
+![system-overlay](portal/images/apps/system-overlay.png)
+![cu-bisect](portal/images/apps/cu-bisect.png)
+![cu-unlock](portal/images/apps/cu-unlock.png)
+![cores-bisect](portal/images/apps/cores-bisect.png)
 
 | App             | Folder                                         | What it does                                                                       |
 |-----------------|------------------------------------------------|------------------------------------------------------------------------------------|

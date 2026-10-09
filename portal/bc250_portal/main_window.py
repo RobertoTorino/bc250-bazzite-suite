@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path, PurePath
 
 from PyQt6.QtCore import QTimer, Qt, QUrl, pyqtSignal
-from PyQt6.QtGui import QDesktopServices
+from PyQt6.QtGui import QDesktopServices, QPixmap
 from PyQt6.QtWidgets import (
     QFrame, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea, QVBoxLayout, QWidget,
 )
@@ -30,11 +30,12 @@ from bc250_core.theme import ORANGE, RED, header_font
 from bc250_core.updates import ReleaseInfo, UpdateChecker, version_tuple
 from bc250_core.widgets import ClickableLogo, StatusPill, accent_button, hint_label
 
-from . import APP_NAME, INFO, LOGO_PATH, __version__
+from . import APP_ICONS, APP_NAME, INFO, LOGO_PATH, __version__
 from .manifest import AppEntry
 from .sources import Records, SourceError, Sources, is_installed
 
 POLL_MS = 1000
+ICON_PX = 24                    # the app icon in front of the name on its card
 
 BOARD_WARNING = (
     "<p><b>{name} changes how your BC-250 runs</b> (clocks, voltages, unlocked units or firmware tables).</p>"
@@ -81,9 +82,20 @@ class AppCard(QFrame):
         row = QHBoxLayout(self)
         row.setContentsMargins(14, 10, 14, 10)
         text = QVBoxLayout()
+        title_row = QHBoxLayout()
+        title_row.setSpacing(8)
+        self.icon = QLabel()
+        icon = APP_ICONS / f"{entry.key}.png"
+        if icon.is_file():
+            self.icon.setPixmap(QPixmap(str(icon)).scaled(
+                ICON_PX, ICON_PX, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+        self.icon.setVisible(not self.icon.pixmap().isNull())
+        title_row.addWidget(self.icon)
         title = QLabel(entry.name)
         title.setStyleSheet(header_font() + "font-size:16px; font-weight:700;")
-        text.addWidget(title)
+        title_row.addWidget(title)
+        title_row.addStretch(1)
+        text.addLayout(title_row)
         text.addWidget(hint_label(entry.summary))
         badges = [entry.tag]
         if entry.required:

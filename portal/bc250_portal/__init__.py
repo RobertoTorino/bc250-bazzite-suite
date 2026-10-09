@@ -3,7 +3,7 @@
 
 APP_NAME = "BC250 Bazzite Suite"
 APP_ID = "bc250-bazzite-suite"
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 from pathlib import Path
 
@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parent.parent           # portal/ in the checkou
 CHECKOUT_FILE = "suite-checkout"                        # in ROOT, written by install.sh when installed from a checkout
 MANIFEST = ROOT / "apps.toml"
 LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
+APP_ICONS = ROOT / "images" / "apps"                    # <key>.png: the small icon on each app's card
 INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="portal-v",
                settings_app="bc250-bazzite-suite-portal", languages={"en": "English"})
 
