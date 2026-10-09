@@ -1,3 +1,9 @@
+Changelog: 09-10-2026 11:20:42
+
+READMEs and the manual describe only what exists: migration status, plans and decisions moved to MIGRATION.md,
+which neither links to. Removed the empty placeholder folders lib/sh and tools/i18n. The portal README's
+development command now uses the development venv, since Bazzite's own python3 has no PyQt6.
+
 Changelog: 08-10-2026 22:35:00
 
 Suite-wide changes: the repository, CI, release tooling and the shared code. Each app, core/ and portal/ keep

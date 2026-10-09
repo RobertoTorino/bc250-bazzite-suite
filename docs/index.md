@@ -15,5 +15,3 @@ tar -xzf portal-v*.tar.gz && cd portal-v*/ && ./install.sh
 
 Then install the other apps from the portal. Apps marked **changes the board** (unlocks, GPU governor, GPU
 overclocking, the ACPI override) change how the BC-250 runs: read their page first.
-
-Each app gets its own section here; until step 8 of the migration, each page points to the app's README.

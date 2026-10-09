@@ -5,9 +5,6 @@
 Tools for the AMD BC-250 running Bazzite, in one repository. The **portal** installs and starts them:
 `bazzite-test` is always installed, every other app is an optional pill.
 
-> **Status: migration step 3 of 8.** The portal works, and bazzite-test runs on the shared `bc250_core`. The other
-> six apps still install and run as they did from their own repositories; they move onto core in steps 5 and 6.
-
 ## Install
 
 Download `portal-v<version>.tar.gz` and `SHA256SUMS` from [Releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases), then:
@@ -36,11 +33,9 @@ and what goes where: [portal/README.md](portal/README.md).
 core/bc250_core/   shared Python package, see core/README.md
 portal/            the portal: app, apps.toml (the pinned app releases) and install.sh
 apps/<name>/       one folder per app, each with its own VERSION and CHANGELOG
-lib/sh/            shared shell helpers, inlined into the scripts at build time (step 7)
-tools/             release and CI tools (build_release, stage_app, pin_app, check_*), installer tests;
-                   i18n/ becomes the single translation pipeline (step 6)
+tools/             release and CI tools (build_release, stage_app, pin_app, check_*), installer tests
 docs/ mkdocs.yml   the manual (MkDocs Material)
-test.sh            runs every test suite (core and each app with tests/)
+test.sh            runs every test suite (core, portal, tools and each app with tests/)
 ```
 
 ## Development
@@ -75,10 +70,8 @@ The repo is used from both systems, so it is set up to behave the same on each:
 
 ## Where things are installed
 
-A deliberate mix (owner decision 3):
-
-- **Root-owned `/opt`:** the portal (`/opt/bc250-bazzite-suite`) and every app that runs code as root
-  (bazzite-test's engine, the bisect and unlock scripts). A normal user cannot change code that sudo runs.
+- **Root-owned `/opt`:** the portal (`/opt/bc250-bazzite-suite`), bazzite-test, cores-bisect and gpu-oc-bisect,
+  whose scripts run as root: a normal user cannot change code that sudo runs.
 - **Your home folder:** the shared venv `~/.local/share/bc250-bazzite-suite/venv` (PyQt6, used by all suite
   GUIs and removed with the last of them), plus each app's settings, results and launchers.
 - **`bc250_core` per app:** each app's release carries the `bc250_core` it was tested with, next to its own code.

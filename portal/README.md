@@ -42,11 +42,12 @@ there first.
 ## Development
 
 Run the portal straight from the checkout. Apps then install from the local source, staged exactly as the
-release workflow stages them, so everything can be tried before anything is released:
+release workflow stages them, so everything can be tried before anything is released. It needs PyQt6, so use the
+development venv from the main README (Bazzite's own `python3` has no PyQt6):
 
 ```shell
 cd portal
-PYTHONPATH=../core python3 -m bc250_portal          # --source release to use the pinned GitHub releases instead
+PYTHONPATH=../core ../.venv-linux/bin/python -m bc250_portal    # --source release: the pinned GitHub releases
 ```
 
 `./install.sh` from the checkout also works: it bundles `../core` and installs `../apps/bazzite-test`.

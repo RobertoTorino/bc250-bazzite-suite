@@ -14,8 +14,6 @@ Code shared by the suite's apps. Nothing in it imports an app: each app passes i
 | `updates` | `latest_release()` (with a tag prefix for the suite's per-app tags), `UpdateStatus`, `UpdateChecker` (any job, off the GUI thread) | helixsr + governor |
 | `platform` | XDG folders, `xdg_open()`, `launch_in_terminal()` (with an exit file the caller can watch) | the bisect GUIs' `terminal.py` |
 
-Still to come: `dialogs`, `runner`, `systemd` and `bisect/` (migration step 6).
-
 Core is **bundled per app**: `tools/stage_app.py` copies `bc250_core/` next to the package of every app that
 imports it, so each release runs on the core it was tested with.
 
