@@ -1,3 +1,8 @@
+Changelog: 09-10-2026 19:27:27
+
+CI runs the test suites of persistent-acpi, system-overlay and bios-reader too: the pytest matrix listed only
+some of the folders with tests.
+
 Changelog: 09-10-2026 19:22:06
 
 bios-reader joins CI: its install.sh is shellchecked at warning level and tools/installer-tests/bios-reader.sh tests

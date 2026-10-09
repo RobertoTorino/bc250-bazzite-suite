@@ -31,7 +31,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [core, portal, tools, apps/bazzite-test, apps/governor, apps/helixsr]   # every folder with tests/
+        dir: [core, portal, tools, apps/bazzite-test, apps/governor, apps/helixsr, apps/persistent-acpi,
+              apps/system-overlay, apps/bios-reader]   # every folder with tests/
     defaults:
       run:
         working-directory: ${{ matrix.dir }}
