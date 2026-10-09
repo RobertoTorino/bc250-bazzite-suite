@@ -13,7 +13,7 @@ WINDOW_ICON_PATH = LOGO_PATH
 FONT_DIR = Path(__file__).resolve().parent / "fonts"
 TRANSLATIONS_DIR = Path(__file__).resolve().parent / "translations"
 DISPLAY_NAME = f"{APP_NAME} {__version__}"
-REPO_URL = "https://github.com/RobertoTorino/bc250-governor-manager"
+REPO_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/governor"
 GOVERNOR_URL = "https://github.com/filippor/cyan-skillfish-governor/tree/smu"
 
 

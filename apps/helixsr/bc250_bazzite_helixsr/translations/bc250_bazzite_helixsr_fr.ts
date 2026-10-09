@@ -865,6 +865,14 @@ et renommer la .original.dll du jeu ?</translation>
         <source>Downloading: {0}</source>
         <translation>Téléchargement : {0}</translation>
     </message>
+    <message>
+        <source>{0} — {1}:{2:02d} elapsed</source>
+        <translation>{0} — {1}:{2:02d} écoulé</translation>
+    </message>
+    <message>
+        <source>{0} — took {1}:{2:02d}</source>
+        <translation>{0} — durée {1}:{2:02d}</translation>
+    </message>
 </context><context>
     <name>StatusPill</name>
     <message>
@@ -994,8 +1002,8 @@ et renommer la .original.dll du jeu ?</translation>
         <translation>Python portable décompressé vers {0}</translation>
     </message>
     <message>
-        <source>Building the network files (this takes a few minutes)</source>
-        <translation>Construction des fichiers réseau (cela prend quelques minutes)</translation>
+        <source>Building the network files (about 5-6 minutes on a BC-250)</source>
+        <translation>Construction des fichiers réseau (environ 5 à 6 minutes sur une BC-250)</translation>
     </message>
     <message>
         <source>Could not start {0}: {1}</source>
@@ -1012,6 +1020,10 @@ et renommer la .original.dll du jeu ?</translation>
     <message>
         <source>The setup finished but did not produce {0}</source>
         <translation>La configuration s’est terminée mais n’a pas produit {0}</translation>
+    </message>
+    <message>
+        <source>no release tagged {0} yet</source>
+        <translation>aucune version étiquetée {0} pour l&apos;instant</translation>
     </message>
 </context><context>
     <name>backend</name>
@@ -1134,8 +1146,8 @@ et renommer la .original.dll du jeu ?</translation>
         <translation>&lt;h2&gt;Configuration&lt;/h2&gt;</translation>
     </message>
     <message>
-        <source>&lt;p&gt;&lt;b&gt;Download and build&lt;/b&gt; does the HelixSR README's setup for you: it fetches the latest release zip from &lt;a href="{releases_url}"&gt;GitHub&lt;/a&gt; (2 MB), reads the exact sources and SHA-256 sums the release's own setup scripts pin, downloads what this PC still needs &lt;i&gt;in parallel&lt;/i&gt; and verifies each file: NVIDIA's DLSS 310.7.0 DLL (59 MB, from NVIDIA's GitHub under NVIDIA's license), Microsoft's DirectX Shader Compiler (25 MB) and, on read-only systems such as Bazzite, a portable Python (67 MB, numpy is added by the script). Then it runs &lt;code&gt;helixsr-setup.sh --yes&lt;/code&gt; with its output on the page: the script builds &lt;code&gt;{weights}&lt;/code&gt; and &lt;code&gt;{kernels}&lt;/code&gt; (2-3 minutes, the shader compiler runs through your Proton) and the result is imported as the payload. The DLSS DLL is deleted afterwards. Everything is downloaded into &lt;code&gt;{work_dir}&lt;/code&gt; and &lt;code&gt;~/.local/share/HelixSR&lt;/code&gt; (the script's own cache, reused next time).&lt;/p&gt;</source>
-        <translation>&lt;p&gt;&lt;b&gt;Télécharger et construire&lt;/b&gt; effectue pour vous la configuration du README HelixSR : il récupère le zip de la dernière release depuis &lt;a href="{releases_url}"&gt;GitHub&lt;/a&gt; (2 MB), lit les sources exactes et les sommes SHA-256 que les scripts de configuration de la release épinglent, télécharge &lt;i&gt;en parallèle&lt;/i&gt; ce qui manque encore à ce PC et vérifie chaque fichier : la DLL DLSS 310.7.0 de NVIDIA (59 MB, depuis le GitHub de NVIDIA sous licence NVIDIA), le DirectX Shader Compiler de Microsoft (25 MB) et, sur les systèmes en lecture seule comme Bazzite, un Python portable (67 MB, numpy est ajouté par le script). Puis il exécute &lt;code&gt;helixsr-setup.sh --yes&lt;/code&gt; avec sa sortie affichée sur la page : le script construit &lt;code&gt;{weights}&lt;/code&gt; et &lt;code&gt;{kernels}&lt;/code&gt; (2-3 minutes, le compilateur de shaders passe par votre Proton) et le résultat est importé comme contenu local. La DLL DLSS est ensuite supprimée. Tout est téléchargé dans &lt;code&gt;{work_dir}&lt;/code&gt; et &lt;code&gt;~/.local/share/HelixSR&lt;/code&gt; (le cache propre au script, réutilisé la fois suivante).&lt;/p&gt;</translation>
+        <source>&lt;p&gt;&lt;b&gt;Download and build&lt;/b&gt; does the HelixSR README's setup for you: it fetches the latest release zip from &lt;a href="{releases_url}"&gt;GitHub&lt;/a&gt; (2 MB), reads the exact sources and SHA-256 sums the release's own setup scripts pin, downloads what this PC still needs &lt;i&gt;in parallel&lt;/i&gt; and verifies each file: NVIDIA's DLSS 310.7.0 DLL (59 MB, from NVIDIA's GitHub under NVIDIA's license), Microsoft's DirectX Shader Compiler (25 MB) and, on read-only systems such as Bazzite, a portable Python (67 MB, numpy is added by the script). Then it runs &lt;code&gt;helixsr-setup.sh --yes&lt;/code&gt; with its output on the page: the script builds &lt;code&gt;{weights}&lt;/code&gt; and &lt;code&gt;{kernels}&lt;/code&gt; (5-6 minutes, the shader compiler runs through your Proton) and the result is imported as the payload. The DLSS DLL is deleted afterwards. Everything is downloaded into &lt;code&gt;{work_dir}&lt;/code&gt; and &lt;code&gt;~/.local/share/HelixSR&lt;/code&gt; (the script's own cache, reused next time).&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;Télécharger et construire&lt;/b&gt; effectue pour vous la configuration du README HelixSR : il récupère le zip de la dernière release depuis &lt;a href="{releases_url}"&gt;GitHub&lt;/a&gt; (2 MB), lit les sources exactes et les sommes SHA-256 que les scripts de configuration de la release épinglent, télécharge &lt;i&gt;en parallèle&lt;/i&gt; ce qui manque encore à ce PC et vérifie chaque fichier : la DLL DLSS 310.7.0 de NVIDIA (59 MB, depuis le GitHub de NVIDIA sous licence NVIDIA), le DirectX Shader Compiler de Microsoft (25 MB) et, sur les systèmes en lecture seule comme Bazzite, un Python portable (67 MB, numpy est ajouté par le script). Puis il exécute &lt;code&gt;helixsr-setup.sh --yes&lt;/code&gt; avec sa sortie affichée sur la page : le script construit &lt;code&gt;{weights}&lt;/code&gt; et &lt;code&gt;{kernels}&lt;/code&gt; (5-6 minutes, le compilateur de shaders passe par votre Proton) et le résultat est importé comme contenu local. La DLL DLSS est ensuite supprimée. Tout est téléchargé dans &lt;code&gt;{work_dir}&lt;/code&gt; et &lt;code&gt;~/.local/share/HelixSR&lt;/code&gt; (le cache propre au script, réutilisé la fois suivante).&lt;/p&gt;</translation>
     </message>
     <message>
         <source>&lt;p&gt;If a game you own already ships DLSS 310.7.0, tick &lt;b&gt;Use a nvngx_dlss.dll already on this PC&lt;/b&gt; and let &lt;b&gt;Find in Steam&lt;/b&gt; locate it (checksums are compared, only the exact build HelixSR pins is offered): that skips NVIDIA's download. The downloads are not what takes time; the build is.&lt;/p&gt;</source>

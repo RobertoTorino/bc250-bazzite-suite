@@ -866,6 +866,14 @@ and rename the game's .original.dll back?</source>
         <source>Downloading: {0}</source>
         <translation>ダウンロード中：{0}</translation>
     </message>
+    <message>
+        <source>{0} — {1}:{2:02d} elapsed</source>
+        <translation>{0} — 経過 {1}:{2:02d}</translation>
+    </message>
+    <message>
+        <source>{0} — took {1}:{2:02d}</source>
+        <translation>{0} — 所要時間 {1}:{2:02d}</translation>
+    </message>
 </context><context>
     <name>StatusPill</name>
     <message>
@@ -995,8 +1003,8 @@ and rename the game's .original.dll back?</source>
         <translation>ポータブル Python を {0} に展開しました</translation>
     </message>
     <message>
-        <source>Building the network files (this takes a few minutes)</source>
-        <translation>ネットワークファイルをビルド中（数分かかります）</translation>
+        <source>Building the network files (about 5-6 minutes on a BC-250)</source>
+        <translation>ネットワークファイルをビルド中（BC-250 で約 5〜6 分）</translation>
     </message>
     <message>
         <source>Could not start {0}: {1}</source>
@@ -1013,6 +1021,10 @@ and rename the game's .original.dll back?</source>
     <message>
         <source>The setup finished but did not produce {0}</source>
         <translation>セットアップは完了しましたが、{0} が作成されませんでした</translation>
+    </message>
+    <message>
+        <source>no release tagged {0} yet</source>
+        <translation>{0} のタグが付いたリリースはまだありません</translation>
     </message>
 </context><context>
     <name>backend</name>
@@ -1135,8 +1147,8 @@ and rename the game's .original.dll back?</source>
         <translation>&lt;h2&gt;セットアップ&lt;/h2&gt;</translation>
     </message>
     <message>
-        <source>&lt;p&gt;&lt;b&gt;Download and build&lt;/b&gt; does the HelixSR README's setup for you: it fetches the latest release zip from &lt;a href="{releases_url}"&gt;GitHub&lt;/a&gt; (2 MB), reads the exact sources and SHA-256 sums the release's own setup scripts pin, downloads what this PC still needs &lt;i&gt;in parallel&lt;/i&gt; and verifies each file: NVIDIA's DLSS 310.7.0 DLL (59 MB, from NVIDIA's GitHub under NVIDIA's license), Microsoft's DirectX Shader Compiler (25 MB) and, on read-only systems such as Bazzite, a portable Python (67 MB, numpy is added by the script). Then it runs &lt;code&gt;helixsr-setup.sh --yes&lt;/code&gt; with its output on the page: the script builds &lt;code&gt;{weights}&lt;/code&gt; and &lt;code&gt;{kernels}&lt;/code&gt; (2-3 minutes, the shader compiler runs through your Proton) and the result is imported as the payload. The DLSS DLL is deleted afterwards. Everything is downloaded into &lt;code&gt;{work_dir}&lt;/code&gt; and &lt;code&gt;~/.local/share/HelixSR&lt;/code&gt; (the script's own cache, reused next time).&lt;/p&gt;</source>
-        <translation>&lt;p&gt;&lt;b&gt;ダウンロードしてビルド&lt;/b&gt;は、HelixSR README のセットアップを代わりに実行します。&lt;a href=&quot;{releases_url}&quot;&gt;GitHub&lt;/a&gt; から最新リリース zip（2 MB）を取得し、リリース付属のセットアップスクリプトが固定している正確なソースと SHA-256 を読み取り、この PC にまだ必要なものを&lt;i&gt;並行して&lt;/i&gt;ダウンロードして各ファイルを検証します。NVIDIA の DLSS 310.7.0 DLL（59 MB、NVIDIA の GitHub から NVIDIA のライセンスの下で取得）、Microsoft の DirectX Shader Compiler（25 MB）、Bazzite のような読み取り専用システムではポータブル Python（67 MB、numpy はスクリプトが追加）です。次にページへ出力を表示しながら &lt;code&gt;helixsr-setup.sh --yes&lt;/code&gt; を実行します。スクリプトは &lt;code&gt;{weights}&lt;/code&gt; と &lt;code&gt;{kernels}&lt;/code&gt; をビルドし（2〜3 分、shader compiler は Proton 経由で実行）、結果をペイロードとしてインポートします。DLSS DLL は後で削除されます。すべて &lt;code&gt;{work_dir}&lt;/code&gt; と &lt;code&gt;~/.local/share/HelixSR&lt;/code&gt;（スクリプト自身のキャッシュ。次回再利用）へダウンロードされます。&lt;/p&gt;</translation>
+        <source>&lt;p&gt;&lt;b&gt;Download and build&lt;/b&gt; does the HelixSR README's setup for you: it fetches the latest release zip from &lt;a href="{releases_url}"&gt;GitHub&lt;/a&gt; (2 MB), reads the exact sources and SHA-256 sums the release's own setup scripts pin, downloads what this PC still needs &lt;i&gt;in parallel&lt;/i&gt; and verifies each file: NVIDIA's DLSS 310.7.0 DLL (59 MB, from NVIDIA's GitHub under NVIDIA's license), Microsoft's DirectX Shader Compiler (25 MB) and, on read-only systems such as Bazzite, a portable Python (67 MB, numpy is added by the script). Then it runs &lt;code&gt;helixsr-setup.sh --yes&lt;/code&gt; with its output on the page: the script builds &lt;code&gt;{weights}&lt;/code&gt; and &lt;code&gt;{kernels}&lt;/code&gt; (5-6 minutes, the shader compiler runs through your Proton) and the result is imported as the payload. The DLSS DLL is deleted afterwards. Everything is downloaded into &lt;code&gt;{work_dir}&lt;/code&gt; and &lt;code&gt;~/.local/share/HelixSR&lt;/code&gt; (the script's own cache, reused next time).&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;ダウンロードしてビルド&lt;/b&gt;は、HelixSR README のセットアップを代わりに実行します。&lt;a href=&quot;{releases_url}&quot;&gt;GitHub&lt;/a&gt; から最新リリース zip（2 MB）を取得し、リリース付属のセットアップスクリプトが固定している正確なソースと SHA-256 を読み取り、この PC にまだ必要なものを&lt;i&gt;並行して&lt;/i&gt;ダウンロードして各ファイルを検証します。NVIDIA の DLSS 310.7.0 DLL（59 MB、NVIDIA の GitHub から NVIDIA のライセンスの下で取得）、Microsoft の DirectX Shader Compiler（25 MB）、Bazzite のような読み取り専用システムではポータブル Python（67 MB、numpy はスクリプトが追加）です。次にページへ出力を表示しながら &lt;code&gt;helixsr-setup.sh --yes&lt;/code&gt; を実行します。スクリプトは &lt;code&gt;{weights}&lt;/code&gt; と &lt;code&gt;{kernels}&lt;/code&gt; をビルドし（5〜6 分、shader compiler は Proton 経由で実行）、結果をペイロードとしてインポートします。DLSS DLL は後で削除されます。すべて &lt;code&gt;{work_dir}&lt;/code&gt; と &lt;code&gt;~/.local/share/HelixSR&lt;/code&gt;（スクリプト自身のキャッシュ。次回再利用）へダウンロードされます。&lt;/p&gt;</translation>
     </message>
     <message>
         <source>&lt;p&gt;If a game you own already ships DLSS 310.7.0, tick &lt;b&gt;Use a nvngx_dlss.dll already on this PC&lt;/b&gt; and let &lt;b&gt;Find in Steam&lt;/b&gt; locate it (checksums are compared, only the exact build HelixSR pins is offered): that skips NVIDIA's download. The downloads are not what takes time; the build is.&lt;/p&gt;</source>

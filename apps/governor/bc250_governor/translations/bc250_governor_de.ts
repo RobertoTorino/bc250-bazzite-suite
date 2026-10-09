@@ -2551,7 +2551,7 @@ frequencies, voltage never dropping as frequency rises) and the hard rails share
 (700–1100 mV, up to 2500 MHz). Above 2000 MHz or 1000 mV, or when a change raises the top frequency or lowers an
 existing voltage, you get a warning: an unstable point freezes the board under load. Apply makes a backup and
 asks for your password; finding a board's own ceiling safely is the job of
-&lt;a href="https://github.com/RobertoTorino/bc250-gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
+&lt;a href="https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;Test a point before saving it&lt;/b&gt; uses the governor's root-only &lt;code&gt;TestMode&lt;/code&gt; D-Bus interface
 (one &lt;code&gt;pkexec&lt;/code&gt; prompt): the GPU is pinned to the frequency and voltage you enter and the automatic
 scaling stops, while thermal throttling stays active. Nothing is written to &lt;code&gt;config.toml&lt;/code&gt;. The
@@ -2756,7 +2756,7 @@ Frequenzen, Spannung fällt nie mit steigender Frequenz) sowie die harten Grenze
 (700–1100 mV, bis zu 2500 MHz). Über 2000 MHz oder 1000 mV, oder wenn eine Änderung die Spitzenfrequenz anhebt oder eine
 vorhandene Spannung senkt, erhalten Sie eine Warnung: ein instabiler Punkt lässt das Board unter Last einfrieren. Anwenden erstellt ein Backup und
 fragt nach Ihrem Passwort; die eigene Belastungsgrenze eines Boards sicher herauszufinden ist die Aufgabe von
-&lt;a href="https://github.com/RobertoTorino/bc250-gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
+&lt;a href="https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;Einen Punkt vor dem Speichern testen&lt;/b&gt; verwendet die nur für Root zugängliche &lt;code&gt;TestMode&lt;/code&gt;-D-Bus-Schnittstelle des Governors
 (eine &lt;code&gt;pkexec&lt;/code&gt;-Abfrage): Die GPU wird auf die von Ihnen eingegebene Frequenz und Spannung festgelegt, und die automatische
 Skalierung stoppt, während die thermische Drosselung aktiv bleibt. Es wird nichts in &lt;code&gt;config.toml&lt;/code&gt; geschrieben. Die

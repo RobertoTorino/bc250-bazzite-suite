@@ -1,3 +1,11 @@
+Changelog: 09-10-2026 18:22:39
+
+MetricBox has an optional centred=True that centres the value and caption (helixsr's header uses it); the default
+renders as before. The parity test covers the centred box against helixsr's copy.
+
+tests/test_instance.py deletes its server and window explicitly: left to Python's collection at exit, they made the
+interpreter crash after the last test in about half of the runs (the tests themselves passed).
+
 Changelog: 09-10-2026 17:51:51
 
 New module bc250_core.instance: one running instance per app and user over a local socket (after the

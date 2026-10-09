@@ -1,3 +1,16 @@
+Changelog: 09-10-2026 18:20:11
+
+The app's own update check asked the old stand-alone repository, which no longer exists, so it reported "GitHub
+answered 404". It now searches the BC250 Bazzite Suite releases for this app's tag (helixsr-v*), and says "no release
+tagged helixsr-v* yet" until the first one. The Help page's source link opens the app's folder in the suite
+repository, and the README's install steps use the suite's releases and repository.
+
+Build time: the network build takes about 5-6 minutes on a BC-250 (HelixSR's setup compiles its shaders for both wave
+sizes), not 2-3: the Setup page, Help and README say so, and the Setup page's stage line shows the elapsed time
+while a job runs and how long it took afterwards. The header boxes (payload, network files, deployments, Steam
+games) centre their text. All languages updated; the .qm files are rebuilt with tools/compile_translations.py,
+which reproduces the previous ones byte for byte.
+
 Changelog: 09-10-2026 17:51:51
 
 Only one instance runs per user: starting the app again brings the running window to the front instead of opening a second one (bc250_core's instance module, copied into the package until the app moves onto core).

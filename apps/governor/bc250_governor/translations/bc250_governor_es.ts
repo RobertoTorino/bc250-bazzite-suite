@@ -2551,7 +2551,7 @@ frequencies, voltage never dropping as frequency rises) and the hard rails share
 (700–1100 mV, up to 2500 MHz). Above 2000 MHz or 1000 mV, or when a change raises the top frequency or lowers an
 existing voltage, you get a warning: an unstable point freezes the board under load. Apply makes a backup and
 asks for your password; finding a board's own ceiling safely is the job of
-&lt;a href="https://github.com/RobertoTorino/bc250-gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
+&lt;a href="https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;Test a point before saving it&lt;/b&gt; uses the governor's root-only &lt;code&gt;TestMode&lt;/code&gt; D-Bus interface
 (one &lt;code&gt;pkexec&lt;/code&gt; prompt): the GPU is pinned to the frequency and voltage you enter and the automatic
 scaling stops, while thermal throttling stays active. Nothing is written to &lt;code&gt;config.toml&lt;/code&gt;. The
@@ -2756,7 +2756,7 @@ de que se habilite &lt;b&gt;Aplicar safe points&lt;/b&gt;, la lista debe superar
 (700–1100 mV, hasta 2500 MHz). Por encima de 2000 MHz o 1000 mV, o cuando un cambio eleva la frecuencia máxima o reduce un
 voltaje existente, aparece una advertencia: un punto inestable bloquea la placa bajo carga. Aplicar hace una copia de seguridad y
 pide su contraseña; encontrar con seguridad el límite propio de una placa es tarea de
-&lt;a href="https://github.com/RobertoTorino/bc250-gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
+&lt;a href="https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;Probar un punto antes de guardarlo&lt;/b&gt; usa la interfaz D-Bus &lt;code&gt;TestMode&lt;/code&gt; del governor, exclusiva de root
 (una solicitud de &lt;code&gt;pkexec&lt;/code&gt;): la GPU se fija a la frecuencia y el voltaje que introduzca y el escalado
 automático se detiene, mientras la limitación térmica sigue activa. No se escribe nada en &lt;code&gt;config.toml&lt;/code&gt;. Los

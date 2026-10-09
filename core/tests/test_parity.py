@@ -43,6 +43,8 @@ CASES = {
     "status_pill": lambda m: (lambda p: (p.set_status("Active", "ok"), p)[1])(m.StatusPill("Active")),
     "status_pill_default": lambda m: m.StatusPill(),
     "metric_box": lambda m: (lambda b: (b.set_value("1800 MHz"), b)[1])(m.MetricBox("GPU clock", "#6a1b9a")),
+    "metric_box_centred": lambda m: (lambda b: (b.set_value("1.4.3"), b)[1])(m.MetricBox("HelixSR payload", "#6a1b9a",
+                                                                                         centred=True)),
     "accent_button": lambda m: m.accent_button("Apply"),
     "hint_label": lambda m: m.hint_label("Takes effect after a restart of the governor service."),
     "page_header": lambda m: (lambda w: (w.setLayout(m.page_header("Tuning")[0]), w)[1])(QWidget()),
@@ -55,6 +57,8 @@ CASES = {
 def test_renders_like_app(qapp, app, case):
     if app == "governor" and case == "status_pill_default":
         pytest.skip("core takes helixsr's StatusPill(); governor's differs only for text=None, which it never passes")
+    if app == "governor" and case == "metric_box_centred":
+        pytest.skip("centred header boxes are helixsr's; governor's MetricBox has no such option")
     old = _app_widgets(app)
     make = CASES[case]
     assert _pixels(make(old)) == _pixels(make(core))

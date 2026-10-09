@@ -2551,7 +2551,7 @@ frequencies, voltage never dropping as frequency rises) and the hard rails share
 (700–1100 mV, up to 2500 MHz). Above 2000 MHz or 1000 mV, or when a change raises the top frequency or lowers an
 existing voltage, you get a warning: an unstable point freezes the board under load. Apply makes a backup and
 asks for your password; finding a board's own ceiling safely is the job of
-&lt;a href="https://github.com/RobertoTorino/bc250-gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
+&lt;a href="https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;Test a point before saving it&lt;/b&gt; uses the governor's root-only &lt;code&gt;TestMode&lt;/code&gt; D-Bus interface
 (one &lt;code&gt;pkexec&lt;/code&gt; prompt): the GPU is pinned to the frequency and voltage you enter and the automatic
 scaling stops, while thermal throttling stays active. Nothing is written to &lt;code&gt;config.toml&lt;/code&gt;. The
@@ -2756,7 +2756,7 @@ częstotliwości, napięcie nigdy nie spadające wraz ze wzrostem częstotliwoś
 (700–1100 mV, do 2500 MHz). Powyżej 2000 MHz lub 1000 mV, lub gdy zmiana podnosi szczytową częstotliwość albo obniża
 istniejące napięcie, pojawia się ostrzeżenie: niestabilny punkt zawiesza płytkę pod obciążeniem. Zastosuj tworzy kopię zapasową i
 prosi o hasło; bezpieczne znalezienie własnej granicy płytki jest zadaniem dla
-&lt;a href="https://github.com/RobertoTorino/bc250-gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
+&lt;a href="https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;Testuj punkt przed zapisaniem&lt;/b&gt; używa dostępnego tylko dla roota interfejsu D-Bus &lt;code&gt;TestMode&lt;/code&gt; governora
 (jedno pytanie &lt;code&gt;pkexec&lt;/code&gt;): GPU zostaje przypięte do podanej częstotliwości i napięcia, a automatyczne
 skalowanie się zatrzymuje, podczas gdy ograniczanie termiczne pozostaje aktywne. Nic nie jest zapisywane do &lt;code&gt;config.toml&lt;/code&gt;. Pola

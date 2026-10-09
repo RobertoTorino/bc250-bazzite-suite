@@ -2551,7 +2551,7 @@ frequencies, voltage never dropping as frequency rises) and the hard rails share
 (700–1100 mV, up to 2500 MHz). Above 2000 MHz or 1000 mV, or when a change raises the top frequency or lowers an
 existing voltage, you get a warning: an unstable point freezes the board under load. Apply makes a backup and
 asks for your password; finding a board's own ceiling safely is the job of
-&lt;a href="https://github.com/RobertoTorino/bc250-gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
+&lt;a href="https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;Test a point before saving it&lt;/b&gt; uses the governor's root-only &lt;code&gt;TestMode&lt;/code&gt; D-Bus interface
 (one &lt;code&gt;pkexec&lt;/code&gt; prompt): the GPU is pinned to the frequency and voltage you enter and the automatic
 scaling stops, while thermal throttling stays active. Nothing is written to &lt;code&gt;config.toml&lt;/code&gt;. The
@@ -2753,7 +2753,7 @@ sampleの10倍、normalの1 / 200倍、オフ、10。出荷時ファイルは250
 (700–1100 mV、最大2500 MHz)を満たす必要があります。2000 MHzまたは1000 mVを超える場合、あるいは変更が最高周波数を
 引き上げる場合や既存の電圧を下げる場合は、警告が表示されます:不安定なポイントは負荷時にボードをフリーズさせます。適用時には
 バックアップを作成し、パスワードを求めます。ボード自身の上限を安全に見つけるのは
-&lt;a href="https://github.com/RobertoTorino/bc250-gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;の仕事です。&lt;/p&gt;
+&lt;a href="https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;の仕事です。&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;保存前にポイントをテストする&lt;/b&gt;は、ガバナーのroot専用&lt;code&gt;TestMode&lt;/code&gt; D-Busインターフェースを使用します
 (&lt;code&gt;pkexec&lt;/code&gt;プロンプトが1回表示されます)。入力した周波数と電圧にGPUを固定し、自動スケーリングは停止しますが、
 サーマルスロットリングは有効なままです。&lt;code&gt;config.toml&lt;/code&gt;への書き込みは行われません。フィールドには

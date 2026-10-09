@@ -6,10 +6,18 @@ from __future__ import annotations
 import os
 import time
 
-from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtCore import QCoreApplication, QEvent, QObject
 from PyQt6.QtWidgets import QWidget
 
 from bc250_core import instance
+
+
+def dispose(*objects: QObject) -> None:
+    """Delete Qt objects now, not when Python collects them at exit (that order can crash the interpreter)."""
+    for obj in objects:
+        obj.deleteLater()
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete.value)
+    QCoreApplication.processEvents()
 
 
 def pump_until(predicate, seconds: float = 10) -> bool:
@@ -39,6 +47,7 @@ def test_forward_reaches_listener(qapp):
     assert pump_until(lambda: len(got) == 2)
     assert got == ["show", "show token-1"]
     server.close()
+    dispose(server)
 
 
 def test_second_launch_raises_the_window(qapp, monkeypatch):
@@ -53,3 +62,4 @@ def test_second_launch_raises_the_window(qapp, monkeypatch):
     assert os.environ["XDG_ACTIVATION_TOKEN"] == "abc"         # handed on for Wayland's activation
     server.close()
     window.close()
+    dispose(window)                                            # the server is the window's child

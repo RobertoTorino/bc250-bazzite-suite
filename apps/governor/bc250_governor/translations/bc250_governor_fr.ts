@@ -2551,7 +2551,7 @@ frequencies, voltage never dropping as frequency rises) and the hard rails share
 (700–1100 mV, up to 2500 MHz). Above 2000 MHz or 1000 mV, or when a change raises the top frequency or lowers an
 existing voltage, you get a warning: an unstable point freezes the board under load. Apply makes a backup and
 asks for your password; finding a board's own ceiling safely is the job of
-&lt;a href="https://github.com/RobertoTorino/bc250-gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
+&lt;a href="https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;Test a point before saving it&lt;/b&gt; uses the governor's root-only &lt;code&gt;TestMode&lt;/code&gt; D-Bus interface
 (one &lt;code&gt;pkexec&lt;/code&gt; prompt): the GPU is pinned to the frequency and voltage you enter and the automatic
 scaling stops, while thermal throttling stays active. Nothing is written to &lt;code&gt;config.toml&lt;/code&gt;. The
@@ -2756,7 +2756,7 @@ uniques, tension ne baissant jamais quand la fréquence augmente) et les limites
 (700–1100 mV, jusqu'à 2500 MHz). Au-dessus de 2000 MHz ou 1000 mV, ou quand un changement augmente la fréquence maximale ou abaisse une
 tension existante, un avertissement apparaît : un point instable fige la carte sous charge. Appliquer effectue une sauvegarde et
 demande votre mot de passe ; trouver en toute sécurité le plafond propre d'une carte est le travail de
-&lt;a href="https://github.com/RobertoTorino/bc250-gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
+&lt;a href="https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;Tester un point avant de l'enregistrer&lt;/b&gt; utilise l'interface D-Bus &lt;code&gt;TestMode&lt;/code&gt; du gouverneur, réservée au superutilisateur
 (une demande &lt;code&gt;pkexec&lt;/code&gt;) : le GPU est fixé à la fréquence et à la tension que vous saisissez, et la mise à l'échelle
 automatique s'arrête, tandis que la limitation thermique reste active. Rien n'est écrit dans &lt;code&gt;config.toml&lt;/code&gt;. Les

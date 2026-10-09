@@ -30,12 +30,15 @@ from typing import Callable
 
 from PyQt6.QtCore import QCoreApplication, QObject, QThread, pyqtSignal
 
-from . import APP_ID, DATA_HOME, HELIXSR_RELEASES_URL, REPO_URL, __version__
+from . import APP_ID, DATA_HOME, HELIXSR_RELEASES_URL, SUITE_URL, __version__
 from .backend import HELIXSR_DLL, KERNELS, WEIGHTS, HelixError, file_digest
 
 HELIXSR_API = "https://api.github.com/repos/lonewolf0622/HelixSR/releases/latest"
-APP_API = "https://api.github.com/repos/RobertoTorino/bc250-bazzite-helixsr-gui/releases/latest"
-APP_RELEASES_URL = f"{REPO_URL}/releases"
+# Every suite app has its own tags in one repository, so /releases/latest would answer with whichever app released
+# last: the release list is searched for this app's tag prefix instead.
+APP_API = "https://api.github.com/repos/RobertoTorino/bc250-bazzite-suite/releases?per_page=100"
+APP_TAG_PREFIX = "helixsr-v"
+APP_RELEASES_URL = f"{SUITE_URL}/releases"
 HELIXSR_DATA_DIR = DATA_HOME / "HelixSR"            # where helixsr-setup.sh keeps its Python and DXC
 WORK_DIR = DATA_HOME / APP_ID / "work"              # downloaded releases live here until imported
 SETUP_SCRIPT = "helixsr-setup.sh"
@@ -70,10 +73,23 @@ def _get_json(url: str, timeout: int = TIMEOUT) -> dict:
         return json.load(response)
 
 
-def latest_release(api_url: str, page_url: str) -> ReleaseInfo:
-    """The latest release of a GitHub repository; never raises, errors land in .error."""
+def latest_release(api_url: str, page_url: str, tag_prefix: str = "") -> ReleaseInfo:
+    """The latest release of a GitHub repository; never raises, errors land in .error. With *tag_prefix*, *api_url*
+    is the release list and the newest release whose tag starts with the prefix counts (drafts and pre-releases
+    are skipped)."""
     try:
         data = _get_json(api_url)
+        if tag_prefix:
+            if not isinstance(data, list):
+                raise ValueError("not a release list")
+            candidates = [(version_tuple(str(item.get("tag_name", ""))[len(tag_prefix):]), item) for item in data
+                          if str(item.get("tag_name", "")).startswith(tag_prefix)
+                          and not item.get("draft") and not item.get("prerelease")]
+            candidates = [(v, item) for v, item in candidates if v]
+            if not candidates:
+                return ReleaseInfo(url=page_url, error=QCoreApplication.translate(
+                    "acquire", "no release tagged {0} yet").format(tag_prefix + "*"))
+            data = max(candidates, key=lambda c: c[0])[1]
     except urllib.error.HTTPError as exc:
         return ReleaseInfo(url=page_url, error=QCoreApplication.translate("acquire", "GitHub answered {0}").format(exc.code))
     except (urllib.error.URLError, OSError, ValueError) as exc:
@@ -131,7 +147,7 @@ class UpdateStatus:
 def check_updates(payload_version: str) -> dict[str, UpdateStatus]:
     return {
         "helixsr": UpdateStatus("HelixSR", payload_version, latest_release(HELIXSR_API, HELIXSR_RELEASES_URL)),
-        "app": UpdateStatus("This app", __version__, latest_release(APP_API, APP_RELEASES_URL)),
+        "app": UpdateStatus("This app", __version__, latest_release(APP_API, APP_RELEASES_URL, APP_TAG_PREFIX)),
     }
 
 
@@ -470,7 +486,7 @@ class SetupWorker(QThread):
         command = ["bash", str(release_dir / SETUP_SCRIPT), "--yes", *req.extra_args]
         if dlss is not None:
             command += ["--dlss", str(dlss)]
-        self.stage.emit(QCoreApplication.translate("acquire", "Building the network files (this takes a few minutes)"))
+        self.stage.emit(QCoreApplication.translate("acquire", "Building the network files (about 5-6 minutes on a BC-250)"))
         self._say("$ " + " ".join(command))
         env = {**os.environ, **req.script_env}
         env.setdefault("XDG_DATA_HOME", str(req.helix_data.parent))

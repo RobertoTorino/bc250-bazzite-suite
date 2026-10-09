@@ -16,7 +16,9 @@ TRANSLATIONS_DIR = Path(__file__).resolve().parent / "translations"
 LANGUAGES = {"en": "English", "de": "Deutsch", "es": "Español", "fr": "Français", "it": "Italiano", "pl": "Polski",
              "ru": "Русский", "zh": "中文（简体）", "ja": "日本語"}
 DISPLAY_NAME = f"{APP_NAME} {__version__}"
-REPO_URL = "https://github.com/RobertoTorino/bc250-bazzite-helixsr-gui"
+# The app lives in the BC250 Bazzite Suite repository; its releases are tagged helixsr-v<x.y.z> there.
+SUITE_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite"
+REPO_URL = f"{SUITE_URL}/tree/main/apps/helixsr"
 HELIXSR_URL = "https://github.com/lonewolf0622/HelixSR"
 HELIXSR_RELEASES_URL = f"{HELIXSR_URL}/releases"
 OPTISCALER_URL = "https://github.com/OptiScaler/OptiScaler"

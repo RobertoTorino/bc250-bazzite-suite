@@ -2551,7 +2551,7 @@ frequencies, voltage never dropping as frequency rises) and the hard rails share
 (700–1100 mV, up to 2500 MHz). Above 2000 MHz or 1000 mV, or when a change raises the top frequency or lowers an
 existing voltage, you get a warning: an unstable point freezes the board under load. Apply makes a backup and
 asks for your password; finding a board's own ceiling safely is the job of
-&lt;a href="https://github.com/RobertoTorino/bc250-gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
+&lt;a href="https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;Test a point before saving it&lt;/b&gt; uses the governor's root-only &lt;code&gt;TestMode&lt;/code&gt; D-Bus interface
 (one &lt;code&gt;pkexec&lt;/code&gt; prompt): the GPU is pinned to the frequency and voltage you enter and the automatic
 scaling stops, while thermal throttling stays active. Nothing is written to &lt;code&gt;config.toml&lt;/code&gt;. The
@@ -2750,7 +2750,7 @@ governor 会沿此曲线调节，且永远不会超出其范围；&lt;code&gt;[f
 的硬性边界（700–1100 mV，最高 2500 MHz）。高于 2000 MHz 或 1000 mV 时，或当某项更改提高了最高频率或
 降低了现有电压时，会出现警告：不稳定的点会在负载下导致主板死机。应用时会进行备份并要求输入密码；安全地
 探明主板自身的极限是
-&lt;a href="https://github.com/RobertoTorino/bc250-gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt; 的工作。&lt;/p&gt;
+&lt;a href="https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt; 的工作。&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;保存前先测试一个点&lt;/b&gt; 使用 governor 仅限 root 的 &lt;code&gt;TestMode&lt;/code&gt; D-Bus 接口（需一次
 &lt;code&gt;pkexec&lt;/code&gt; 提示）：GPU 会被固定为您输入的频率和电压，自动调节随之停止，而热降频仍保持生效。
 不会写入 &lt;code&gt;config.toml&lt;/code&gt;。字段会根据所选行预先填充；当高于 2000 MHz / 1000 mV，或电压低于上方

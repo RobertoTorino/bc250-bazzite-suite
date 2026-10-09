@@ -1,5 +1,10 @@
 # Changelog
 
+Changelog: 09-10-2026 18:20:11
+
+Bisect and Unlock windows: about box: the project link pointed at the old stand-alone repository, which no longer exists (GitHub answers
+404); it now opens the app's folder in the BC250 Bazzite Suite repository.
+
 Changelog: 09-10-2026 17:51:51
 
 Bisect and Unlock windows: only one instance of each runs per user. Starting one again brings its running

@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 LOGO_PATH = ROOT / "images" / "bc250-gpu-oc-bisect.png"
 WINDOW_ICON_PATH = LOGO_PATH
 TRANSLATIONS_DIR = Path(__file__).resolve().parent / "translations"
-REPO_URL = "https://github.com/RobertoTorino/bc250-gpu-oc-bisect"
+REPO_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect"
 
 # Bazzite purple, the accent used across the project's GUIs. Applied app-wide (see __main__.py)
 # so every window gets it, including popups/dialogs (About, Help, confirmation message boxes),

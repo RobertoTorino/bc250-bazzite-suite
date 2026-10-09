@@ -56,7 +56,7 @@ def help_html(payload_dir: str, deployments_file: str,
             "each file: NVIDIA's DLSS 310.7.0 DLL (59 MB, from NVIDIA's GitHub under NVIDIA's license), "
             "Microsoft's DirectX Shader Compiler (25 MB) and, on read-only systems such as Bazzite, a portable "
             'Python (67 MB, numpy is added by the script). Then it runs <code>helixsr-setup.sh --yes</code> with '
-            'its output on the page: the script builds <code>{weights}</code> and <code>{kernels}</code> (2-3 '
+            'its output on the page: the script builds <code>{weights}</code> and <code>{kernels}</code> (5-6 '
             'minutes, the shader compiler runs through your Proton) and the result is imported as the payload. '
             'The DLSS DLL is deleted afterwards. Everything is downloaded into <code>{work_dir}</code> and '
             "<code>~/.local/share/HelixSR</code> (the script's own cache, reused next time).</p>"),

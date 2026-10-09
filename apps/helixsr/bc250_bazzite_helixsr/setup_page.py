@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PyQt6.QtCore import QCoreApplication, Qt, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, QElapsedTimer, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QProgressBar, QPushButton, QVBoxLayout,
     QWidget,
@@ -135,6 +135,11 @@ class SetupPage(QWidget):
         layout.addWidget(box, 1)
         self._lines: list[str] = []
         self._progress: dict[str, tuple[int, int]] = {}
+        # While a job runs, the stage line also shows the time since it started: the build alone takes minutes.
+        self._stage_text = self.stage.text()
+        self._elapsed = QElapsedTimer()
+        self._clock = QTimer(self, interval=1000)
+        self._clock.timeout.connect(self._show_stage)
         self._update_buttons()
 
     # ------------------------------------------------------------ releases
@@ -203,14 +208,28 @@ class SetupPage(QWidget):
             self.progress.setRange(0, 0)
             self.progress.setFormat("")
             self.built = None
+            self._elapsed.start()
+            self._clock.start()
         else:
             self.progress.setRange(0, 1)
             self.progress.setValue(1 if self.built else 0)
+            self._clock.stop()
+            if self._elapsed.isValid():         # keep how long the job took on the stage line
+                seconds = self._elapsed.elapsed() // 1000
+                self.stage.setText(self.tr("{0} \u2014 took {1}:{2:02d}").format(self._stage_text, seconds // 60, seconds % 60))
         self._update_buttons()
 
     def set_stage(self, text: str) -> None:
-        self.stage.setText(text)
+        self._stage_text = text
+        self._show_stage()
         self.append(f"== {text}")
+
+    def _show_stage(self) -> None:
+        if self._clock.isActive() and self._elapsed.isValid():
+            seconds = self._elapsed.elapsed() // 1000
+            self.stage.setText(self.tr("{0} \u2014 {1}:{2:02d} elapsed").format(self._stage_text, seconds // 60, seconds % 60))
+        else:
+            self.stage.setText(self._stage_text)
 
     def set_progress(self, name: str, done: int, total: int) -> None:
         self._progress[name] = (done, total)
@@ -226,7 +245,8 @@ class SetupPage(QWidget):
             self.progress.setFormat(self.tr("{done} / {total}  (%p%)").format(done=_size(done_all), total=_size(total_all)))
         active = [f"{n} {_size(d)}" + (f"/{_size(t)}" if t else "") for n, (d, t) in self._progress.items() if d < t or not t]
         if active:
-            self.stage.setText(self.tr("Downloading: {0}").format(", ".join(active)))
+            self._stage_text = self.tr("Downloading: {0}").format(", ".join(active))
+            self._show_stage()
 
     def append(self, line: str) -> None:
         self._lines.append(line)

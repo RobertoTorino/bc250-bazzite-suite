@@ -21,8 +21,9 @@ app does exactly that, reversibly, and nothing else on the system is touched. No
   (NVIDIA's DLSS 310.7.0 DLL, 59 MB; Microsoft's DirectX Shader Compiler, 25 MB; on Bazzite a portable Python,
   67 MB), runs `helixsr-setup.sh --yes` with live output and imports the result as the payload. The DLSS DLL is
   deleted afterwards. A DLSS 310.7.0 DLL from a game you own can be used instead (*Find in Steam* compares
-  checksums), which skips NVIDIA's download. The build itself (2–3+ minutes, shaders compiled through Proton)
-  is HelixSR's own script, unchanged.
+  checksums), which skips NVIDIA's download. The build itself is HelixSR's own script, unchanged: about 5–6 minutes on a
+  BC-250, because it compiles the network's shaders for both wave sizes through Proton. The Setup page shows the
+  elapsed time.
 - **Update checks** – at start (can be turned off) or on demand: the payload against the latest HelixSR release
   and this app against its latest release on GitHub. A newer HelixSR is flagged on the Overview; building again
   updates the payload and deployed games show *Older build* until redeployed.
@@ -63,12 +64,12 @@ the network files built by its `helixsr-setup.sh`; see the
 
 ## Install on Bazzite
 
-Download the latest `bc250-bazzite-helixsr-gui-vX.Y.Z.tar.gz` from the
-[releases](https://github.com/RobertoTorino/bc250-bazzite-helixsr-gui/releases), unpack it and run the installer:
+Install it from the BC250 Bazzite Suite portal. Or download `helixsr-v<version>.tar.gz` from the suite's
+[releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases), unpack it and run the installer:
 
 ```shell
-tar -xzf bc250-bazzite-helixsr-gui-v*.tar.gz
-cd bc250-bazzite-helixsr-gui-v*/
+tar -xzf helixsr-v*.tar.gz
+cd helixsr-v*/
 ./install.sh
 ```
 
@@ -82,8 +83,8 @@ update, `./install.sh --uninstall` to remove it; the imported payload and the de
 ## Run from the repository
 
 ```shell
-git clone https://github.com/RobertoTorino/bc250-bazzite-helixsr-gui.git
-cd bc250-bazzite-helixsr-gui
+git clone https://github.com/RobertoTorino/bc250-bazzite-suite.git
+cd bc250-bazzite-suite/apps/helixsr
 python3 -m venv python && python/bin/pip install -r requirements.txt && python/bin/python -m bc250_bazzite_helixsr
 ```
 

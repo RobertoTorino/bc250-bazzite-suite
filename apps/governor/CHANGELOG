@@ -1,3 +1,10 @@
+Changelog: 09-10-2026 18:20:11
+
+Links to the app's own repository and to gpu-oc-bisect pointed at the old stand-alone repositories, which no longer
+exist; they now open the apps' folders in the BC250 Bazzite Suite repository, in every language (catalogues in
+tools/i18n updated, translations rebuilt with tools/i18n/build.py, which reproduces the previous files). en.ts also
+picks up the line numbers of the earlier gpu_metrics change.
+
 Changelog: 09-10-2026 17:51:51
 
 GPU load from the governor's patched gpu_metrics table: average_gfx_activity is in hundredths of a

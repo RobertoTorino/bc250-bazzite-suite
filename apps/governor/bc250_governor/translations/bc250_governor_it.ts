@@ -2551,7 +2551,7 @@ frequencies, voltage never dropping as frequency rises) and the hard rails share
 (700–1100 mV, up to 2500 MHz). Above 2000 MHz or 1000 mV, or when a change raises the top frequency or lowers an
 existing voltage, you get a warning: an unstable point freezes the board under load. Apply makes a backup and
 asks for your password; finding a board's own ceiling safely is the job of
-&lt;a href="https://github.com/RobertoTorino/bc250-gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
+&lt;a href="https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;Test a point before saving it&lt;/b&gt; uses the governor's root-only &lt;code&gt;TestMode&lt;/code&gt; D-Bus interface
 (one &lt;code&gt;pkexec&lt;/code&gt; prompt): the GPU is pinned to the frequency and voltage you enter and the automatic
 scaling stops, while thermal throttling stays active. Nothing is written to &lt;code&gt;config.toml&lt;/code&gt;. The
@@ -2757,7 +2757,7 @@ univoche, tensione mai in calo all'aumentare della frequenza) e i limiti rigidi 
 (700–1100 mV, fino a 2500 MHz). Sopra i 2000 MHz o i 1000 mV, oppure quando una modifica alza la frequenza massima o abbassa una
 tensione esistente, viene mostrato un avviso: un punto instabile blocca la scheda sotto carico. Applica crea un backup e
 richiede la password; trovare in sicurezza il limite proprio di una scheda è il compito di
-&lt;a href="https://github.com/RobertoTorino/bc250-gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
+&lt;a href="https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;Testa un punto prima di salvarlo&lt;/b&gt; usa l'interfaccia D-Bus &lt;code&gt;TestMode&lt;/code&gt; del governor, riservata a root
 (una richiesta &lt;code&gt;pkexec&lt;/code&gt;): la GPU viene fissata alla frequenza e tensione inserite e la scalatura
 automatica si interrompe, mentre il throttling termico resta attivo. Non viene scritto nulla in &lt;code&gt;config.toml&lt;/code&gt;. I

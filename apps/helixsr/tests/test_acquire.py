@@ -273,3 +273,24 @@ def test_setup_worker_release_error(qapp, tmp_path):
     outcome, _ = run_worker(qapp, SetupRequest(ReleaseInfo(error="no connection (x)"), tmp_path / "work",
                                                tmp_path / "data"))
     assert not outcome.ok and "no connection" in outcome.message
+
+
+def test_latest_release_with_a_tag_prefix_picks_this_apps_newest():
+    releases = [{"tag_name": "governor-v0.9.0", "html_url": "g"},
+                {"tag_name": "helixsr-v0.2.0", "html_url": "h2", "published_at": "2026-11-02T10:00:00Z"},
+                {"tag_name": "helixsr-v0.10.0", "html_url": "h10", "prerelease": True},
+                {"tag_name": "helixsr-v0.1.5", "html_url": "h15"}]
+    with mock.patch.object(acquire, "_get_json", return_value=releases):
+        info = latest_release("api", "page", "helixsr-v")
+    assert (info.version, info.tag, info.url, info.published) == ("0.2.0", "helixsr-v0.2.0", "h2", "2026-11-02")
+
+
+def test_latest_release_with_a_tag_prefix_and_none_released():
+    with mock.patch.object(acquire, "_get_json", return_value=[{"tag_name": "portal-v0.1.0"}]):
+        info = latest_release("api", "page", "helixsr-v")
+    assert info.version == "" and "helixsr-v*" in info.error and info.url == "page"
+
+
+def test_app_check_uses_the_suite_repository():
+    assert acquire.APP_API.startswith("https://api.github.com/repos/RobertoTorino/bc250-bazzite-suite/releases")
+    assert acquire.APP_TAG_PREFIX == "helixsr-v"

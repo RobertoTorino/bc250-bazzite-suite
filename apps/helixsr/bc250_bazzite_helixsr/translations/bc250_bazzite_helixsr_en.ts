@@ -1073,6 +1073,14 @@ and rename the game's .original.dll back?</source>
         <source>Downloading: {0}</source>
         <translation type="unfinished" />
     </message>
+    <message>
+        <source>{0} — {1}:{2:02d} elapsed</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>{0} — took {1}:{2:02d}</source>
+        <translation type="unfinished" />
+    </message>
 </context><context>
     <name>StatusPill</name>
     <message>
@@ -1234,7 +1242,7 @@ and rename the game's .original.dll back?</source>
     </message>
     <message>
         <location filename="../acquire.py" line="473" />
-        <source>Building the network files (this takes a few minutes)</source>
+        <source>Building the network files (about 5-6 minutes on a BC-250)</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -1255,6 +1263,10 @@ and rename the game's .original.dll back?</source>
     <message>
         <location filename="../acquire.py" line="496" />
         <source>The setup finished but did not produce {0}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>no release tagged {0} yet</source>
         <translation type="unfinished" />
     </message>
 </context><context>
@@ -1411,7 +1423,7 @@ and rename the game's .original.dll back?</source>
     </message>
     <message>
         <location filename="../help.py" line="52" />
-        <source>&lt;p&gt;&lt;b&gt;Download and build&lt;/b&gt; does the HelixSR README's setup for you: it fetches the latest release zip from &lt;a href="{releases_url}"&gt;GitHub&lt;/a&gt; (2 MB), reads the exact sources and SHA-256 sums the release's own setup scripts pin, downloads what this PC still needs &lt;i&gt;in parallel&lt;/i&gt; and verifies each file: NVIDIA's DLSS 310.7.0 DLL (59 MB, from NVIDIA's GitHub under NVIDIA's license), Microsoft's DirectX Shader Compiler (25 MB) and, on read-only systems such as Bazzite, a portable Python (67 MB, numpy is added by the script). Then it runs &lt;code&gt;helixsr-setup.sh --yes&lt;/code&gt; with its output on the page: the script builds &lt;code&gt;{weights}&lt;/code&gt; and &lt;code&gt;{kernels}&lt;/code&gt; (2-3 minutes, the shader compiler runs through your Proton) and the result is imported as the payload. The DLSS DLL is deleted afterwards. Everything is downloaded into &lt;code&gt;{work_dir}&lt;/code&gt; and &lt;code&gt;~/.local/share/HelixSR&lt;/code&gt; (the script's own cache, reused next time).&lt;/p&gt;</source>
+        <source>&lt;p&gt;&lt;b&gt;Download and build&lt;/b&gt; does the HelixSR README's setup for you: it fetches the latest release zip from &lt;a href="{releases_url}"&gt;GitHub&lt;/a&gt; (2 MB), reads the exact sources and SHA-256 sums the release's own setup scripts pin, downloads what this PC still needs &lt;i&gt;in parallel&lt;/i&gt; and verifies each file: NVIDIA's DLSS 310.7.0 DLL (59 MB, from NVIDIA's GitHub under NVIDIA's license), Microsoft's DirectX Shader Compiler (25 MB) and, on read-only systems such as Bazzite, a portable Python (67 MB, numpy is added by the script). Then it runs &lt;code&gt;helixsr-setup.sh --yes&lt;/code&gt; with its output on the page: the script builds &lt;code&gt;{weights}&lt;/code&gt; and &lt;code&gt;{kernels}&lt;/code&gt; (5-6 minutes, the shader compiler runs through your Proton) and the result is imported as the payload. The DLSS DLL is deleted afterwards. Everything is downloaded into &lt;code&gt;{work_dir}&lt;/code&gt; and &lt;code&gt;~/.local/share/HelixSR&lt;/code&gt; (the script's own cache, reused next time).&lt;/p&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>

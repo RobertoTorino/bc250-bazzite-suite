@@ -1619,22 +1619,22 @@ Restarting the governor on the Service page also ends test mode.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="357" />
+        <location filename="../pages.py" line="358" />
         <source>none</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="363" />
+        <location filename="../pages.py" line="364" />
         <source>Table as published by the governor (fix-metrics): the GFX activity is its own measurement.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="366" />
+        <location filename="../pages.py" line="367" />
         <source>Raw kernel table: the GFX activity is the broken firmware value (the 655% bug); enable fix-metrics to get a real one.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="369" />
+        <location filename="../pages.py" line="370" />
         <source>Raw kernel table.</source>
         <translation type="unfinished" />
     </message>
@@ -1701,7 +1701,7 @@ Restarting the governor on the Service page also ends test mode.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../performance_page.py" line="229" />
+        <location filename="../performance_page.py" line="230" />
         <location filename="../performance_page.py" line="200" />
         <location filename="../performance_page.py" line="79" />
         <source>Performance mode: off</source>
@@ -1864,62 +1864,62 @@ Restarting the governor on the Service page also ends test mode.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../performance_page.py" line="204" />
+        <location filename="../performance_page.py" line="205" />
         <source>%1 % / %2 %</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../performance_page.py" line="206" />
+        <location filename="../performance_page.py" line="207" />
         <source>%1 °C</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../performance_page.py" line="206" />
+        <location filename="../performance_page.py" line="207" />
         <source>not set</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../performance_page.py" line="207" />
+        <location filename="../performance_page.py" line="208" />
         <source>%1 °C / %2</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../performance_page.py" line="226" />
+        <location filename="../performance_page.py" line="227" />
         <source>Unreachable</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../performance_page.py" line="227" />
+        <location filename="../performance_page.py" line="228" />
         <source>Unknown</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../performance_page.py" line="233" />
+        <location filename="../performance_page.py" line="234" />
         <source>The governor service is not running (Service page).</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../performance_page.py" line="235" />
+        <location filename="../performance_page.py" line="236" />
         <source>D-Bus is off in config.toml: enable it on the Tuning page and apply with a restart.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../performance_page.py" line="238" />
+        <location filename="../performance_page.py" line="239" />
         <source>The governor did not answer on the system bus.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../performance_page.py" line="239" />
+        <location filename="../performance_page.py" line="240" />
         <source>Controls are disabled: %1</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../performance_page.py" line="248" />
+        <location filename="../performance_page.py" line="249" />
         <source>the lower load target must be below the upper one</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../performance_page.py" line="252" />
+        <location filename="../performance_page.py" line="253" />
         <source>recovery must be below the throttling temperature (or Not set)</source>
         <translation type="unfinished" />
     </message>
@@ -2235,151 +2235,151 @@ Restarting the governor on the Service page also ends test mode.</source>
 </context><context>
     <name>ServicePage</name>
     <message>
-        <location filename="../pages.py" line="419" />
+        <location filename="../pages.py" line="420" />
         <source>Service</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="505" />
-        <location filename="../pages.py" line="420" />
+        <location filename="../pages.py" line="506" />
+        <location filename="../pages.py" line="421" />
         <source>Check for updates</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="421" />
+        <location filename="../pages.py" line="422" />
         <source>Compare the installed RPM with the latest release on GitHub.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="424" />
+        <location filename="../pages.py" line="425" />
         <source>Export diagnostics…</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="425" />
+        <location filename="../pages.py" line="426" />
         <source>Save versions, config.toml, service status, journal and the raw gpu_metrics table to a text file for a bug report.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="429" />
+        <location filename="../pages.py" line="430" />
         <source>Refresh</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="439" />
+        <location filename="../pages.py" line="440" />
         <source>Unit found</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="439" />
+        <location filename="../pages.py" line="440" />
         <source>Active</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="440" />
+        <location filename="../pages.py" line="441" />
         <source>Enabled at boot</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="441" />
+        <location filename="../pages.py" line="442" />
         <source>gpu_metrics override</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="442" />
+        <location filename="../pages.py" line="443" />
         <source>Version</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="453" />
+        <location filename="../pages.py" line="454" />
         <source>Start</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="454" />
+        <location filename="../pages.py" line="455" />
         <source>Stop</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="455" />
+        <location filename="../pages.py" line="456" />
         <source>Restart</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="457" />
+        <location filename="../pages.py" line="458" />
         <source>Enable at boot</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="458" />
+        <location filename="../pages.py" line="459" />
         <source>Disable at boot</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="460" />
+        <location filename="../pages.py" line="461" />
         <source>%1 %2 (asks for your password).</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="467" />
+        <location filename="../pages.py" line="468" />
         <source>systemctl status</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="473" />
+        <location filename="../pages.py" line="474" />
         <source>Journal (live)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="492" />
-        <location filename="../pages.py" line="486" />
+        <location filename="../pages.py" line="493" />
+        <location filename="../pages.py" line="487" />
         <source>Yes</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="487" />
-        <source>No — %1</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="../pages.py" line="490" />
         <location filename="../pages.py" line="488" />
-        <source>Yes (%1)</source>
+        <source>No — %1</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="../pages.py" line="491" />
         <location filename="../pages.py" line="489" />
-        <source>No (%1)</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="../pages.py" line="489" />
-        <source>not loaded</source>
+        <source>Yes (%1)</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="../pages.py" line="492" />
+        <location filename="../pages.py" line="490" />
+        <source>No (%1)</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../pages.py" line="490" />
+        <source>not loaded</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../pages.py" line="493" />
         <source>No</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="509" />
+        <location filename="../pages.py" line="510" />
         <source>release notes</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="511" />
+        <location filename="../pages.py" line="512" />
         <source>releases</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="513" />
+        <location filename="../pages.py" line="514" />
         <source>Package not installed</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="517" />
+        <location filename="../pages.py" line="518" />
         <source>Checking…</source>
         <translation type="unfinished" />
     </message>
@@ -3027,7 +3027,7 @@ frequencies, voltage never dropping as frequency rises) and the hard rails share
 (700–1100 mV, up to 2500 MHz). Above 2000 MHz or 1000 mV, or when a change raises the top frequency or lowers an
 existing voltage, you get a warning: an unstable point freezes the board under load. Apply makes a backup and
 asks for your password; finding a board's own ceiling safely is the job of
-&lt;a href="https://github.com/RobertoTorino/bc250-gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
+&lt;a href="https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect"&gt;bc250-gpu-oc-bisect&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;Test a point before saving it&lt;/b&gt; uses the governor's root-only &lt;code&gt;TestMode&lt;/code&gt; D-Bus interface
 (one &lt;code&gt;pkexec&lt;/code&gt; prompt): the GPU is pinned to the frequency and voltage you enter and the automatic
 scaling stops, while thermal throttling stays active. Nothing is written to &lt;code&gt;config.toml&lt;/code&gt;. The
@@ -3387,44 +3387,44 @@ Nothing is layered with rpm-ostree and the governor's config is never touched.&l
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="374" />
+        <location filename="../pages.py" line="375" />
         <source>%1 min %2 s</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="375" />
+        <location filename="../pages.py" line="376" />
         <source>%1 s</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="385" />
+        <location filename="../pages.py" line="386" />
         <source>%1 W (raw %2)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="393" />
+        <location filename="../pages.py" line="394" />
         <source>%1 % (invalid)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="403" />
+        <location filename="../pages.py" line="404" />
         <source>%1× %2–%3 MHz</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../pages.py" line="406" />
+        <location filename="../pages.py" line="407" />
         <source>%1 °C max</source>
         <translation type="unfinished" />
     </message>
 </context><context>
     <name>performance_page</name>
     <message>
-        <location filename="../performance_page.py" line="265" />
+        <location filename="../performance_page.py" line="266" />
         <source>no limit</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../performance_page.py" line="266" />
+        <location filename="../performance_page.py" line="267" />
         <source>%1 – %2 MHz</source>
         <translation type="unfinished" />
     </message>
