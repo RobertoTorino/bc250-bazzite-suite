@@ -1,3 +1,7 @@
+Changelog: 09-10-2026 21:53:42
+
+Installer tests: the portal test covers the per-app questions of --uninstall (cancel, skip, uninstall).
+
 Changelog: 09-10-2026 21:44:54
 
 Installer tests: the portal test reads the portal's version from portal/VERSION instead of assuming 0.1.0,

@@ -1,3 +1,9 @@
+Changelog: 09-10-2026 21:53:42
+
+install.sh --uninstall now asks about each other suite app that is installed before it removes anything: y
+uninstalls it with its own uninstaller (from the release the portal kept, or staged from the checkout), s skips
+it, c cancels the whole uninstall. Without a terminal nothing is asked and those apps stay, as before.
+
 Changelog: 09-10-2026 21:33:27
 
 BC-250 BIOS Reader is now a card in the portal (bios-reader-v0.1.0, read-only, no board warning).

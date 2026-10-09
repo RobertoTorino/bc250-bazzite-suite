@@ -18,7 +18,8 @@ This installs the portal and BC-250 Bazzite Test. Install the other apps from th
 and what goes where: [portal/README.md](portal/README.md).
 
 To test from a clone of this repository instead, run `./install.sh` in its root. The portal then installs every
-app from the clone, so keep it where it is. `./install.sh --uninstall` removes it again.
+app from the clone, so keep it where it is. `./install.sh --uninstall` removes it again, and asks about each
+other installed app.
 
 ![bc250-bazzite-helixsr-gui.png](images/all-apps/bc250-bazzite-helixsr-gui.png)
 ![bc250-bazzite-portal.png](images/all-apps/bc250-bazzite-portal.png)

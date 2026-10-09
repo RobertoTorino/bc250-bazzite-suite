@@ -40,8 +40,9 @@ What it installs:
 | Launcher, menu entry, Desktop icon | `~/.local/bin/bc250-bazzite-suite`, `~/.local/share/applications/`, the Desktop | |
 
 Uninstall: `/opt/bc250-bazzite-suite/install.sh --uninstall`. This removes the portal and Bazzite Test and
-keeps settings; add `--purge` to remove those too. Apps installed from the portal stay until you uninstall them
-there first.
+keeps settings; add `--purge` to remove those too. First it asks about each other suite app that is installed:
+`y` uninstalls it, `s` skips it (it stays installed), `c` cancels the whole uninstall before anything is removed.
+Those apps keep their own settings, also with `--purge`.
 
 ## Development
 
@@ -98,3 +99,8 @@ Run all the checks and hand over.
 8. Tag portal-v<x.y.z>. The portal release checks with --require-tags that every pinned tag exists, then publishes.             
 
 Users then see the new card, and installed apps whose version differs from the pinned one get the red update dot.                 
+
+#### New Version
+- Change portal/VERSION from 0.1.0 to 0.2.0.
+- Change __version__ in portal/bc250_portal/init.py:6 to the same number.
+

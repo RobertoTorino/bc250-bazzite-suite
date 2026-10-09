@@ -6,7 +6,8 @@
 #
 #   ./install.sh                         # install or update
 #   ./install.sh --no-desktop-shortcut   # app menu entries only, no icons on the Desktop
-#   ./install.sh --uninstall             # remove the portal and Bazzite Test; keeps settings and results
+#   ./install.sh --uninstall             # remove the portal, Bazzite Test and (asked per app) the other apps;
+#                                        # keeps settings and results
 #   ./install.sh --uninstall --purge     # also remove settings, history and results
 set -euo pipefail
 exec bash "$(dirname "${BASH_SOURCE[0]}")/portal/install.sh" "$@"

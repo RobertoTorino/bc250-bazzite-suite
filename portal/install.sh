@@ -4,7 +4,8 @@
 #
 #   ./install.sh                         # install or update
 #   ./install.sh --no-desktop-shortcut   # app menu entries only, no icons on the Desktop
-#   ./install.sh --uninstall             # remove the portal and Bazzite Test; keeps settings and results
+#   ./install.sh --uninstall             # remove the portal, Bazzite Test and (asked per app) the other apps;
+#                                        # keeps settings and results
 #   ./install.sh --uninstall --purge     # also remove settings, history and results
 #
 # Run it as your own user, not with sudo: only the copies to /opt ask for the sudo password.
@@ -50,7 +51,7 @@ as_root() {
     if [ "$(id -u)" -eq 0 ]; then "$@"; else sudo "$@"; fi
 }
 
-usage() { sed -n '3,8p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '3,9p' "$0" | sed 's/^# \{0,1\}//'; }
 
 DESKTOP_SHORTCUT=true
 UNINSTALL=false
@@ -84,7 +85,102 @@ release_venv() {
     fi
 }
 
+# The other suite apps that are installed, one per line: key, name, the folder its uninstaller runs in (empty when
+# there is none) and its uninstall commands, tab-separated. Read from the installed portal's apps.toml, the one
+# that installed them; the folder is the release the portal kept, or the app staged afresh from the checkout.
+installed_apps() {
+    local manifest="$SRC/apps.toml" checkout=""
+    [ -f "$LINK/apps.toml" ] && manifest="$LINK/apps.toml"
+    if [ -f "$LINK/suite-checkout" ]; then checkout=$(cat "$LINK/suite-checkout")
+    elif [ -f "$SRC/../tools/stage_app.py" ]; then checkout=$(cd "$SRC/.." && pwd -P); fi
+    python3 - "$manifest" "$STATE_DIR" "$checkout" "$1" <<'PY'
+import json, os, subprocess, sys, tomllib
+from pathlib import Path
+manifest, state, checkout, staging = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3], Path(sys.argv[4])
+apps = tomllib.loads(manifest.read_text(encoding="utf-8")).get("apps", {})
+try:
+    records = json.loads((state / "installed.json").read_text(encoding="utf-8"))
+except (OSError, ValueError):
+    records = {}
+for key, app in apps.items():
+    if app.get("required") or not any(Path(os.path.expandvars(os.path.expanduser(p))).exists()
+                                      for p in app.get("detect", [])):
+        continue
+    # The portal keeps releases/<tag> (from a release) or releases/local-<key> (from the checkout).
+    kept = [state / "releases" / name for name in (records.get(key, ""), "local-" + key, app.get("tag", ""))
+            if name and name != "local"]
+    folder = next((str(f) for f in kept if f.is_dir()), "")
+    if not folder and checkout and (Path(checkout) / "apps" / key).is_dir():
+        dest = staging / key
+        if subprocess.run([sys.executable, str(Path(checkout) / "tools" / "stage_app.py"), key, str(dest)],
+                          capture_output=True).returncode == 0:
+            folder = str(dest)
+    print("\t".join((key, app.get("name", key), folder, " && ".join(app.get("uninstall", [])))))
+PY
+}
+
+# Asks about every other installed suite app before anything is removed: uninstall it, skip it, or cancel the
+# whole uninstall. Without a terminal nothing is asked and the apps stay, as they are named at the end.
+uninstall_other_apps() {
+    local staging list key name folder commands answer
+    local -a chosen=() failed=()
+    staging=$(mktemp -d)
+    list=$(installed_apps "$staging") || die "Could not read the list of installed apps."
+    if [ -n "$list" ] && { [ -t 0 ] || [ -n "${BC250_INTERACTIVE:-}" ]; }; then   # BC250_INTERACTIVE: tests only
+        info "Other suite apps are installed. For each: y = uninstall it, s = skip it (keep it), c = cancel."
+        while IFS=$'\t' read -r key name folder commands <&3; do
+            while true; do
+                printf "Uninstall %s? [y/s/c] " "$name"
+                read -r answer || answer=c
+                case "${answer,,}" in
+                    y|yes) chosen+=("$key"); break ;;
+                    s|skip) break ;;
+                    c|cancel) rm -rf "$staging"; info "Cancelled: nothing was uninstalled."; exit 1 ;;
+                esac
+            done
+        done 3<<<"$list"
+    fi
+    while IFS=$'\t' read -r key name folder commands; do
+        [ -n "$key" ] && [[ " ${chosen[*]} " == *" $key "* ]] || continue
+        if [ -z "$folder" ]; then
+            info "No uninstaller found for $name: remove it with its own install.sh --uninstall."
+            failed+=("$name")
+            continue
+        fi
+        info "Uninstalling $name"
+        if (cd "$folder" && bash -c "$commands"); then
+            forget_app "$key" "$folder"
+        else
+            info "The uninstall of $name failed; see above."
+            failed+=("$name")
+        fi
+    done <<<"$list"
+    rm -rf "$staging"
+    [ ${#failed[@]} -eq 0 ] || info "Not uninstalled: ${failed[*]}"
+    $PURGE && [ ${#chosen[@]} -gt 0 ] && info "Their own settings are kept: --purge applies to the portal and Bazzite Test." || true
+}
+
+# Like the portal after an uninstall: drop the app from installed.json and the release folder it kept.
+forget_app() {
+    case "$2" in "$STATE_DIR"/releases/*) rm -rf "$2" ;; esac
+    [ -f "$STATE_DIR/installed.json" ] || return 0
+    python3 - "$STATE_DIR/installed.json" "$1" <<'PY'
+import json, sys
+from pathlib import Path
+path, key = Path(sys.argv[1]), sys.argv[2]
+try:
+    data = json.loads(path.read_text(encoding="utf-8"))
+except (OSError, ValueError):
+    sys.exit(0)
+if isinstance(data, dict) and data.pop(key, None) is not None:
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    tmp.replace(path)
+PY
+}
+
 if $UNINSTALL; then
+    uninstall_other_apps
     if [ -f "$OPT_DIR/$BT_ID/install.sh" ]; then
         info "Uninstalling BC-250 Bazzite Test"
         bt_args=(--uninstall)
