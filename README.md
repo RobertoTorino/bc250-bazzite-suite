@@ -20,16 +20,26 @@ and what goes where: [portal/README.md](portal/README.md).
 To test from a clone of this repository instead, run `./install.sh` in its root. The portal then installs every
 app from the clone, so keep it where it is. `./install.sh --uninstall` removes it again.
 
-| App | Folder | What it does |
-|---|---|---|
-| bazzite-test | [`apps/bazzite-test`](apps/bazzite-test) | Read-only diagnostics, stress test and benchmarks (always installed) |
-| governor | [`apps/governor`](apps/governor) | GPU governor manager — **changes the board** |
-| helixsr | [`apps/helixsr`](apps/helixsr) | Deploys HelixSR (FSR 3.1 drop-in upscaler) into games |
-| cu-bisect | [`apps/cu-bisect`](apps/cu-bisect) | Tells bad CUs apart from an unstable CU unlock — **changes the board** |
-| cores-bisect | [`apps/cores-bisect`](apps/cores-bisect) | Tells bad CPU cores apart from an unstable core unlock — **changes the board** |
-| gpu-oc-bisect | [`apps/gpu-oc-bisect`](apps/gpu-oc-bisect) | Finds a safe GPU overclock and undervolt, step by step — **changes the board** |
+![bc250-bazzite-helixsr-gui.png](images/all-apps/bc250-bazzite-helixsr-gui.png)
+![bc250-bazzite-portal.png](images/all-apps/bc250-bazzite-portal.png)
+![bc250-bazzite-test.png](images/all-apps/bc250-bazzite-test.png)
+![bc250-bios-reader.png](images/all-apps/bc250-bios-reader.png)
+![bc250-governor-manager.png](images/all-apps/bc250-governor-manager.png)
+![bc250-gpu-oc-bisect.png](images/all-apps/bc250-gpu-oc-bisect.png)
+![bc250-persistent-acpi.png](images/all-apps/bc250-persistent-acpi.png)
+![bc250-system-overlay.png](images/all-apps/bc250-system-overlay.png)
+![bc250-unlock-gui.png](images/all-apps/bc250-unlock-gui.png)
+
+| App             | Folder                                         | What it does                                                                       |
+|-----------------|------------------------------------------------|------------------------------------------------------------------------------------|
+| bazzite-test    | [`apps/bazzite-test`](apps/bazzite-test)       | Read-only diagnostics, stress test and benchmarks (always installed)               |
+| governor        | [`apps/governor`](apps/governor)               | GPU governor manager — **changes the board**                                       |
+| helixsr         | [`apps/helixsr`](apps/helixsr)                 | Deploys HelixSR (FSR 3.1 drop-in upscaler) into games                              |
+| cu-bisect       | [`apps/cu-bisect`](apps/cu-bisect)             | Tells bad CUs apart from an unstable CU unlock — **changes the board**             |
+| cores-bisect    | [`apps/cores-bisect`](apps/cores-bisect)       | Tells bad CPU cores apart from an unstable core unlock — **changes the board**     |
+| gpu-oc-bisect   | [`apps/gpu-oc-bisect`](apps/gpu-oc-bisect)     | Finds a safe GPU overclock and undervolt, step by step — **changes the board**     |
 | persistent-acpi | [`apps/persistent-acpi`](apps/persistent-acpi) | Persistent ACPI fix for CPU C-states and frequency scaling — **changes the board** |
-| system-overlay | [`apps/system-overlay`](apps/system-overlay) | CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top |
+| system-overlay  | [`apps/system-overlay`](apps/system-overlay)   | CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top   |
 
 ## Layout
 
