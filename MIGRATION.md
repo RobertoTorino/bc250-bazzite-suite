@@ -32,6 +32,12 @@ describe only what exists.
   release everything as it is on main (c7646ce, CI green); no version bumps are needed before that.
 - **Copies of bc250_core.instance** in helixsr, the cu/cores bisect and unlock GUIs, gpu-oc-bisect and
   persistent-acpi (MIT: the owner's own code, copied under MIT there); fold them into core in step 6.
+- **Governor performance mode runs hot (09-10-2026), owner tests on the board first:** no app controls the fan
+  (it follows the BIOS/SuperIO curve or runs at full speed off the PSU), and the Governor's alerts (GPU 80 °C,
+  throttling) only work while the app runs, watch only the GPU and only notify. To collect: GPU and CPU
+  temperatures and fan RPM with performance mode on, how the fan is connected, and the warn/throttle/shutdown limits
+  wanted. Proposal: a background guard that warns, turns performance mode off, and shuts down cleanly at a critical
+  limit (new app or part of the Governor: owner decides).
 - **Later: system overlay in Game Mode.** gamescope only composites the focused game, Steam and windows with the
   X11 property `GAMESCOPE_EXTERNAL_OVERLAY` (how mangoapp shows MangoHud). Possible route: set that property on
   the overlay's XWayland window. Open: how to start it inside the gamescope session (check how Bazzite starts
