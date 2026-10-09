@@ -164,8 +164,3 @@ GPL-3.0-or-later, see [LICENSE](LICENSE). The bundled Inter font is under the SI
 (`bc250_bazzite_helixsr/fonts/Inter-LICENSE.txt`). HelixSR is a separate project under its own license; its
 network files are derived from NVIDIA's DLSS and are never distributed by this app.
 
----
-
-![qrcode-gh.png](images/qrcode-gh.png)
-
-**[RobertoTorino](https://github.com/RobertoTorino)**

@@ -587,9 +587,3 @@ Bazzite. Its test number 21 reads the live CU masks from the same registers (rea
 GNU GPLv3, see [LICENSE](LICENSE). This keeps the project (and any forks or redistributions of it) free
 and open source: anyone can use, study, and modify it, but a closed-source/proprietary fork isn't
 allowed — derivatives must stay under the same license and keep their source available too.
-
----
-
-![qrcode-gh.png](images/qrcode-gh.png)
-
-**[RobertoTorino](https://github.com/RobertoTorino)**   

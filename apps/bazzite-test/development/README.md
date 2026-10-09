@@ -634,4 +634,4 @@ from the same repository keeps it across reboots (see *For the extra CUs without
 
 ![qrcode-gh.png](../images/qrcode-gh.png)
 
-**[RobertoTorino](https://github.com/RobertoTorino)**     
+  

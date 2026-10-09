@@ -413,9 +413,3 @@ methodology, crash-safe multi-boot state, and reversible persistence.
 ## License
 
 GNU GPLv3, see [LICENSE](LICENSE).
-
----
-
-![qrcode-gh.png](images/qrcode-gh.png)    
-
-**[RobertoTorino](https://github.com/RobertoTorino)**   

@@ -798,7 +798,3 @@ The release tarball `bazzite-test-v<version>.tar.gz` is the complete source of t
 nothing is compiled); GitHub also attaches the source of the whole suite at that tag.
 
 Third-party components: Qt 6 (LGPL v3), PyQt6 (GPL v3), the Inter font (SIL Open Font License 1.1).
-
----
-![qrcode-gh.png](images/qrcode-gh.png)
-**[RobertoTorino](https://github.com/RobertoTorino)**

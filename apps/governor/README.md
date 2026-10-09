@@ -299,9 +299,3 @@ added behind the same protocol.
 
 GPL-3.0-or-later, see [LICENSE](LICENSE). The bundled Inter font is under the SIL Open Font License
 (`bc250_governor/fonts/Inter-LICENSE.txt`).
-
----
-
-![qrcode-gh.png](images/qrcode-gh.png)      
-
-**[RobertoTorino](https://github.com/RobertoTorino)**   
