@@ -26,6 +26,9 @@ from PyQt6.QtCore import QCoreApplication
 HELIXSR_DLL = "amd_fidelityfx_dx12.dll"
 UPSCALER_DLL = "amd_fidelityfx_upscaler_dx12.dll"
 GAME_DLLS = (UPSCALER_DLL, HELIXSR_DLL)             # what a game ships, and what HelixSR replaces
+# A second FidelityFX upscaler (e.g. AMD's FSR 4) next to HelixSR in a stand-alone folder, under the name HelixSR's
+# README uses; helixsr.ini's [Forwarding] UpscalerDll points at it, and OptiScaler lists its upscalers after HelixSR.
+SECOND_UPSCALER_DLL = "amd_fidelityfx_upscaler_dx12.amd.dll"
 WEIGHTS = "helixsr_weights.bin"
 KERNELS = "helixsr_kernels.pak"
 NETWORK_FILES = (WEIGHTS, KERNELS)                  # built by helixsr-setup.sh, NVIDIA's property: never shipped
@@ -335,15 +338,40 @@ def remove(target: Path, payload_dir: Path) -> list[Path]:
     return removed
 
 
-def deploy_folder(folder: Path, payload_dir: Path, ini_text: str | None = None) -> list[Path]:
+def deploy_folder(folder: Path, payload_dir: Path, ini_text: str | None = None,
+                  second_upscaler: Path | None = None) -> list[Path]:
     """Stand-alone HelixSR folder for OptiScaler: the DLL under both FidelityFX names (OptiScaler reads
-    FfxDx12Path and FfxDx12SRPath), the network files and the ini."""
+    FfxDx12Path and FfxDx12SRPath), the network files and the ini. With *second_upscaler* (another FidelityFX
+    upscaler DLL, e.g. AMD's with FSR 4) that DLL is copied in as SECOND_UPSCALER_DLL and the ini's UpscalerDll
+    points at it; without, a second upscaler left from an earlier deploy is removed (and UpscalerDll cleared when
+    it named it)."""
     _require_ready(payload_dir)
+    if second_upscaler is not None:
+        if not second_upscaler.is_file():
+            raise HelixError(QCoreApplication.translate("backend", "{0} does not exist.").format(second_upscaler))
+        if same_file(second_upscaler, payload_dir / HELIXSR_DLL):
+            raise HelixError(QCoreApplication.translate(
+                "backend", "{0} is HelixSR itself; pick another FidelityFX upscaler DLL, e.g. AMD's with FSR 4.")
+                .format(second_upscaler))
+        settings = parse_ini(ini_text if ini_text is not None else ini_template(payload_dir))
+        settings.upscaler_dll = SECOND_UPSCALER_DLL
+        ini_text = render_ini(settings, ini_text if ini_text is not None else ini_template(payload_dir))
+    elif ini_text is not None and parse_ini(ini_text).upscaler_dll == SECOND_UPSCALER_DLL:
+        settings = parse_ini(ini_text)          # the second upscaler goes: do not leave the ini pointing at it
+        settings.upscaler_dll = ""
+        ini_text = render_ini(settings, ini_text)
     folder.mkdir(parents=True, exist_ok=True)
     written = []
     for name in GAME_DLLS:
         shutil.copy2(payload_dir / HELIXSR_DLL, folder / name)
         written.append(folder / name)
+    second = folder / SECOND_UPSCALER_DLL
+    if second_upscaler is not None:
+        if second_upscaler.resolve() != second.resolve():
+            shutil.copy2(second_upscaler, second)
+        written.append(second)
+    elif second.exists():
+        second.unlink()
     return [*written, *_copy_support_files(folder, payload_dir, ini_text)]
 
 
@@ -360,7 +388,7 @@ def remove_folder(folder: Path, payload_dir: Path) -> list[Path]:
             raise HelixError(QCoreApplication.translate("backend", "{0} is not HelixSR; nothing was changed.")
                              .format(dll))
     removed = []
-    for name in (*GAME_DLLS, *NETWORK_FILES, INI, LOG):
+    for name in (*GAME_DLLS, SECOND_UPSCALER_DLL, *NETWORK_FILES, INI, LOG):
         path = folder / name
         if path.exists():
             path.unlink()

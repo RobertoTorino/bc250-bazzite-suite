@@ -8,8 +8,8 @@ more. The only honest answer is empirical: raise the clock (or lower the voltage
 the GPU with a load that verifies its results, and see where your board stops being stable.
 
 `bc250-gpu-oc-bisect.sh` does exactly that, in the same way its sibling projects bisect
-[CUs](https://github.com/RobertoTorino/bc250-cu-bisect) and
-[CPU cores](https://github.com/RobertoTorino/bc250-cores-bisect).
+[CUs](../cu-bisect) and
+[CPU cores](../cores-bisect).
 
 In plain words: an **overclock** (OC) gives more performance at the same voltage, an **undervolt**
 (UV) gives the same performance with less heat and power. The script finds how far your board can
@@ -149,9 +149,9 @@ governor config. `--status` (and a finished run) writes a readable report to you
 
 ## Related projects
 
-- [bc250-cu-bisect](https://github.com/RobertoTorino/bc250-cu-bisect) - CU unlock and bisect
-- [bc250-cores-bisect](https://github.com/RobertoTorino/bc250-cores-bisect) - CPU cores unlock and bisect
-- [bc250-bazzite-test](https://github.com/RobertoTorino/bc250-bazzite-test) - health-check test suite
+- [bc250-cu-bisect](../cu-bisect) - CU unlock and bisect
+- [bc250-cores-bisect](../cores-bisect) - CPU cores unlock and bisect
+- [bc250-bazzite-test](../bazzite-test) - health-check test suite
 - The **CPU** side (voltage/frequency via SMU) is covered by
   [bc250_smu_oc](https://github.com/bc250-collective/bc250_smu_oc) from the BC-250 collective - this
   project deliberately sticks to the GPU curve.

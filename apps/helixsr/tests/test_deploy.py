@@ -115,3 +115,33 @@ def test_deployment_state_detects_problems(game, payload, tmp_path):
     assert kind == "warn" and "Network" in text
     gone = backend.Deployment(str(tmp_path / "gone" / backend.UPSCALER_DLL), backend.MODE_REPLACE, "g", "1")
     assert backend.deployment_state(gone, payload)[0] != "ok"
+
+
+def test_folder_mode_with_a_second_upscaler(payload, tmp_path):
+    folder = tmp_path / "HelixSR"
+    fsr4 = tmp_path / "downloads" / "amd_fidelityfx_upscaler_dx12.dll"
+    fsr4.parent.mkdir()
+    fsr4.write_bytes(b"MZ-amd-fsr4")
+    written = backend.deploy_folder(folder, payload, second_upscaler=fsr4)
+    assert folder / backend.SECOND_UPSCALER_DLL in written
+    assert (folder / backend.SECOND_UPSCALER_DLL).read_bytes() == b"MZ-amd-fsr4"
+    ini = (folder / backend.INI).read_text()
+    assert backend.parse_ini(ini).upscaler_dll == backend.SECOND_UPSCALER_DLL
+    assert "; Optional: another FidelityFX upscaler DLL" in ini or "[Forwarding]" in ini    # comments kept
+
+    # Deploying again without it removes the DLL and clears the ini key that named it.
+    backend.deploy_folder(folder, payload, ini_text=ini)
+    assert not (folder / backend.SECOND_UPSCALER_DLL).exists()
+    assert backend.parse_ini((folder / backend.INI).read_text()).upscaler_dll == ""
+
+    backend.deploy_folder(folder, payload, second_upscaler=fsr4)
+    backend.remove_folder(folder, payload)
+    assert not folder.exists()
+
+
+def test_second_upscaler_must_not_be_helixsr(payload, tmp_path):
+    with pytest.raises(backend.HelixError):
+        backend.deploy_folder(tmp_path / "HelixSR", payload, second_upscaler=payload / backend.HELIXSR_DLL)
+    with pytest.raises(backend.HelixError):
+        backend.deploy_folder(tmp_path / "HelixSR", payload, second_upscaler=tmp_path / "missing.dll")
+    assert not (tmp_path / "HelixSR").exists()                    # refused before anything was written

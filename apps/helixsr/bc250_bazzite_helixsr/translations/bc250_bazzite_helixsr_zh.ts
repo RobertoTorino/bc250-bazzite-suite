@@ -151,6 +151,18 @@
         <source>Replace {0} with HelixSR.</source>
         <translation>将 {0} 替换为 HelixSR。</translation>
     </message>
+    <message>
+        <source>Second upscaler:</source>
+        <translation>第二个超分器：</translation>
+    </message>
+    <message>
+        <source>Optional: AMD&apos;s amd_fidelityfx_upscaler_dx12.dll, e.g. with FSR 4</source>
+        <translation>可选：AMD 的 amd_fidelityfx_upscaler_dx12.dll，例如带 FSR 4 的版本</translation>
+    </message>
+    <message>
+        <source>Copied into the folder as {0}, with UpscalerDll in helixsr.ini pointing at it: OptiScaler&apos;s FFX Upscaler menu then lists its upscalers after HelixSR, and the one you pick runs in that DLL. Empty: HelixSR only.</source>
+        <translation>以 {0} 的名称复制到文件夹中，并让 helixsr.ini 中的 UpscalerDll 指向它：OptiScaler 的“FFX Upscaler”菜单会在 HelixSR 之后列出它的超分器，所选的那个在该 DLL 中运行。留空：仅 HelixSR。</translation>
+    </message>
 </context><context>
     <name>HelpPage</name>
     <message>
@@ -565,6 +577,18 @@ and rename the game's .original.dll back?</source>
     <message>
         <source>Could not open</source>
         <translation>无法打开</translation>
+    </message>
+    <message>
+        <source>Second FidelityFX upscaler DLL (e.g. AMD&apos;s with FSR 4)</source>
+        <translation>第二个 FidelityFX 超分器 DLL（例如 AMD 带 FSR 4 的版本）</translation>
+    </message>
+    <message>
+        <source>DLL files (*.dll)</source>
+        <translation>DLL 文件 (*.dll)</translation>
+    </message>
+    <message>
+        <source>The second upscaler is in the folder as {0}; OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR.</source>
+        <translation>第二个超分器以 {0} 的名称放在文件夹中；OptiScaler 的“FFX Upscaler”菜单会在 HelixSR 之后列出它的超分器。</translation>
     </message>
 </context><context>
     <name>OverviewPage</name>
@@ -1108,6 +1132,10 @@ and rename the game's .original.dll back?</source>
         <source>Older build</source>
         <translation>旧构建</translation>
     </message>
+    <message>
+        <source>{0} is HelixSR itself; pick another FidelityFX upscaler DLL, e.g. AMD&apos;s with FSR 4.</source>
+        <translation>{0} 就是 HelixSR 本身；请选择另一个 FidelityFX 超分器 DLL，例如 AMD 带 FSR 4 的版本。</translation>
+    </message>
 </context><context>
     <name>help</name>
     <message>
@@ -1261,6 +1289,10 @@ and rename the game's .original.dll back?</source>
     <message>
         <source>&lt;p&gt;Source and issues: &lt;a href="{repo_url}"&gt;{repo_url}&lt;/a&gt;. HelixSR itself: &lt;a href="{helixsr_url}"&gt;{helixsr_url}&lt;/a&gt; (HelixSR Freeware License; this app ships none of it).&lt;/p&gt;</source>
         <translation>&lt;p&gt;源码和问题：&lt;a href=&quot;{repo_url}&quot;&gt;{repo_url}&lt;/a&gt;。HelixSR 本身：&lt;a href=&quot;{helixsr_url}&quot;&gt;{helixsr_url}&lt;/a&gt;（HelixSR Freeware License；此应用不随附其中任何内容）。&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;b&gt;Second upscaler&lt;/b&gt; (optional, OptiScaler folder only): pick another FidelityFX upscaler DLL, for example AMD&apos;s &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; with FSR 4. It is copied into the folder as &lt;code&gt;{second}&lt;/code&gt; and &lt;code&gt;UpscalerDll&lt;/code&gt; in its helixsr.ini points at it, so OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR and the one you pick runs in that DLL.&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;第二个超分器&lt;/b&gt;（可选，仅 OptiScaler 文件夹）：选择另一个 FidelityFX 超分器 DLL，例如 AMD 带 FSR 4 的 &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt;。它会以 &lt;code&gt;{second}&lt;/code&gt; 的名称复制到文件夹中，并让其 helixsr.ini 中的 &lt;code&gt;UpscalerDll&lt;/code&gt; 指向它，这样 OptiScaler 的“FFX Upscaler”菜单会在 HelixSR 之后列出它的超分器，所选的那个在该 DLL 中运行。&lt;/p&gt;</translation>
     </message>
 </context><context>
     <name>setup_page</name>

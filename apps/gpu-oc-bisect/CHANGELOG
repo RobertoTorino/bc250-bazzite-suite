@@ -1,3 +1,8 @@
+Changelog: 09-10-2026 18:32:48
+
+Docs: links to the old stand-alone repositories (which no longer exist) now point at the apps' folders in the
+suite repository (README and the script's header comment).
+
 Changelog: 09-10-2026 18:20:11
 
 About box: the project link pointed at the old stand-alone repository, which no longer exists (GitHub answers

@@ -457,7 +457,7 @@ conditions later, boot, run `sudo ./bc250-cu-unlock.sh --uninstall`, and reboot 
 > not all equally trustworthy:
 > - `sudo ./bc250-cu-unlock.sh --status` → **"Live masks now"**: reads the actual GPU registers right
 >   now. This is the ground truth for the current boot.
-> - [bc250-bazzite-test-releases](https://github.com/RobertoTorino/bc250-bazzite-test-releases) test
+> - [bazzite-test](../bazzite-test) test
 >   #21: reads the exact same registers, read-only. Agrees with the line above by construction.
 > - `--status` → **"Configured masks"**: just what's saved in `/etc/bc250-cu-bisect/masks`. This is
 >   what you *asked* to be installed, not proof it's actually active — if `--install` silently failed
@@ -494,7 +494,7 @@ just automated. **Show status** runs `--status` in a terminal without starting a
 Run it straight from a clone (any distro):
 
 ```bash
-cd bc250-cu-bisect
+cd bc250-bazzite-suite/apps/cu-bisect
 python3 -m venv _python && _python/bin/pip install -r requirements.txt && _python/bin/python -m bc250_bisect_gui
 ```
 
@@ -529,7 +529,7 @@ on every boot by the same systemd service, without the GUI (or anything else) ne
 Run it straight from a clone (any distro):
 
 ```bash
-cd bc250-cu-bisect
+cd bc250-bazzite-suite/apps/cu-bisect
 python3 -m venv _python && _python/bin/pip install -r requirements.txt && _python/bin/python -m bc250_unlock_gui
 ```
 
@@ -568,18 +568,19 @@ language.
 
 ## Releases
 
-Every push to `main` publishes a new [GitHub Release](https://github.com/RobertoTorino/bc250-bazzite-suite/releases) with a `bc250-cu-bisect-vX.Y.Z.tar.gz`
-containing the whole toolset — `bc250-cu-bisect.sh`, `bc250-cu-unlock.sh`, `bc250_unlock_gui/`,
-`bc250_bisect_gui/`, `packaging/`, images and docs — plus a matching `.sha256` checksum. Download and
-extract it on the board instead of cloning the repo if you just want to run the scripts/GUI.
+Releases are tagged `cu-bisect-v<x.y.z>` in the suite repository and published on its
+[releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases) page as `cu-bisect-v<x.y.z>.tar.gz`
+with a `SHA256SUMS` file. The tarball holds the whole toolset (`bc250-cu-bisect.sh`, `bc250-cu-unlock.sh`, both
+GUIs, `packaging/`, images and docs). Download and extract it on the board instead of cloning the repository if you
+just want to run the scripts or the GUIs; the portal installs it for you too.
 
 ## Related
 
-[bc250-cores-bisect](https://github.com/RobertoTorino/bc250-cores-bisect): sibling project, the same
+[bc250-cores-bisect](../cores-bisect): sibling project, the same
 strategy for the 2 fused-off CPU cores — control, per-core bisect, verdict, then a reversible
 persistent 8C/16T unlock.
 
-[bc250-bazzite-test-releases](https://github.com/RobertoTorino/bc250-bazzite-test-releases): diagnostics for the BC-250 on
+[bazzite-test](../bazzite-test): diagnostics for the BC-250 on
 Bazzite. Its test number 21 reads the live CU masks from the same registers (read-only).
 
 ## License

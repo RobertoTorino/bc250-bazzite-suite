@@ -151,6 +151,18 @@
         <source>Replace {0} with HelixSR.</source>
         <translation>Заменить {0} на HelixSR.</translation>
     </message>
+    <message>
+        <source>Second upscaler:</source>
+        <translation>Второй апскейлер:</translation>
+    </message>
+    <message>
+        <source>Optional: AMD&apos;s amd_fidelityfx_upscaler_dx12.dll, e.g. with FSR 4</source>
+        <translation>Необязательно: amd_fidelityfx_upscaler_dx12.dll от AMD, например с FSR 4</translation>
+    </message>
+    <message>
+        <source>Copied into the folder as {0}, with UpscalerDll in helixsr.ini pointing at it: OptiScaler&apos;s FFX Upscaler menu then lists its upscalers after HelixSR, and the one you pick runs in that DLL. Empty: HelixSR only.</source>
+        <translation>Копируется в папку как {0}, а UpscalerDll в helixsr.ini указывает на неё: меню «FFX Upscaler» в OptiScaler показывает её апскейлеры после HelixSR, и выбранный работает в этой DLL. Пусто: только HelixSR.</translation>
+    </message>
 </context><context>
     <name>HelpPage</name>
     <message>
@@ -564,6 +576,18 @@ and rename the game's .original.dll back?</source>
     <message>
         <source>Could not open</source>
         <translation>Не удалось открыть</translation>
+    </message>
+    <message>
+        <source>Second FidelityFX upscaler DLL (e.g. AMD&apos;s with FSR 4)</source>
+        <translation>Вторая DLL апскейлера FidelityFX (например, от AMD с FSR 4)</translation>
+    </message>
+    <message>
+        <source>DLL files (*.dll)</source>
+        <translation>Файлы DLL (*.dll)</translation>
+    </message>
+    <message>
+        <source>The second upscaler is in the folder as {0}; OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR.</source>
+        <translation>Второй апскейлер лежит в папке как {0}; меню «FFX Upscaler» в OptiScaler показывает его апскейлеры после HelixSR.</translation>
     </message>
 </context><context>
     <name>OverviewPage</name>
@@ -1107,6 +1131,10 @@ and rename the game's .original.dll back?</source>
         <source>Older build</source>
         <translation>Старая сборка</translation>
     </message>
+    <message>
+        <source>{0} is HelixSR itself; pick another FidelityFX upscaler DLL, e.g. AMD&apos;s with FSR 4.</source>
+        <translation>{0} — это сам HelixSR; выберите другую DLL апскейлера FidelityFX, например от AMD с FSR 4.</translation>
+    </message>
 </context><context>
     <name>help</name>
     <message>
@@ -1260,6 +1288,10 @@ and rename the game's .original.dll back?</source>
     <message>
         <source>&lt;p&gt;Source and issues: &lt;a href="{repo_url}"&gt;{repo_url}&lt;/a&gt;. HelixSR itself: &lt;a href="{helixsr_url}"&gt;{helixsr_url}&lt;/a&gt; (HelixSR Freeware License; this app ships none of it).&lt;/p&gt;</source>
         <translation>&lt;p&gt;Исходный код и ошибки: &lt;a href="{repo_url}"&gt;{repo_url}&lt;/a&gt;. Сам HelixSR: &lt;a href="{helixsr_url}"&gt;{helixsr_url}&lt;/a&gt; (HelixSR Freeware License; это приложение не поставляет его файлы).&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;b&gt;Second upscaler&lt;/b&gt; (optional, OptiScaler folder only): pick another FidelityFX upscaler DLL, for example AMD&apos;s &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; with FSR 4. It is copied into the folder as &lt;code&gt;{second}&lt;/code&gt; and &lt;code&gt;UpscalerDll&lt;/code&gt; in its helixsr.ini points at it, so OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR and the one you pick runs in that DLL.&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;Второй апскейлер&lt;/b&gt; (необязательно, только папка OptiScaler): выберите другую DLL апскейлера FidelityFX, например &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; от AMD с FSR 4. Она копируется в папку как &lt;code&gt;{second}&lt;/code&gt;, а &lt;code&gt;UpscalerDll&lt;/code&gt; в её helixsr.ini указывает на неё, поэтому меню «FFX Upscaler» в OptiScaler показывает её апскейлеры после HelixSR, и выбранный работает в этой DLL.&lt;/p&gt;</translation>
     </message>
 </context><context>
     <name>setup_page</name>

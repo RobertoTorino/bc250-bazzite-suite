@@ -82,7 +82,7 @@ cpupower frequency-info                              # 8 steps, 800 MHz - 3.2 GH
 cpupower idle-info                                   # POLL, C1, C2 (C2 at 0x414)
 ```
 
-Or run test 26 of [bc250-bazzite-test](https://github.com/RobertoTorino/bc250-bazzite-test),
+Or run test 26 of [bc250-bazzite-test](../bazzite-test),
 which reports whether the ACPI tables came from the initrd override or the BIOS.
 
 ## Uninstall

@@ -7,7 +7,7 @@ from PyQt6.QtCore import QCoreApplication, pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QTextBrowser, QVBoxLayout, QWidget
 
 from . import APP_NAME, HELIXSR_RELEASES_URL, HELIXSR_URL, LANGUAGES, OPTISCALER_URL, REPO_URL, __version__
-from .backend import HELIXSR_DLL, INI, KERNELS, UPSCALER_DLL, WEIGHTS
+from .backend import HELIXSR_DLL, INI, KERNELS, SECOND_UPSCALER_DLL, UPSCALER_DLL, WEIGHTS
 
 
 def help_html(payload_dir: str, deployments_file: str,
@@ -17,7 +17,7 @@ def help_html(payload_dir: str, deployments_file: str,
     values = dict(app_name=APP_NAME, version=__version__, helixsr_url=HELIXSR_URL, releases_url=HELIXSR_RELEASES_URL,
                   optiscaler_url=OPTISCALER_URL, repo_url=REPO_URL, upscaler_dll=UPSCALER_DLL, helixsr_dll=HELIXSR_DLL,
                   weights=WEIGHTS, kernels=KERNELS, ini=INI, payload_dir=payload_dir,
-                  deployments_file=deployments_file, work_dir=work_dir)
+                  deployments_file=deployments_file, work_dir=work_dir, second=SECOND_UPSCALER_DLL)
     parts = [
         QCoreApplication.translate("help",
             '<h1>{app_name} <small>v{version}</small></h1>'),
@@ -99,6 +99,11 @@ def help_html(payload_dir: str, deployments_file: str,
             'point OptiScaler there (Windows paths; <code>Z:</code> is the Linux root under Proton). Install '
             'OptiScaler for the game as its documentation describes, paste the lines, and pick <b>FSR HelixSR '
             "(3.1.5)</b> in OptiScaler's FFX Upscaler menu.</p>"),
+        QCoreApplication.translate("help",
+            "<p><b>Second upscaler</b> (optional, OptiScaler folder only): pick another FidelityFX upscaler DLL, for "
+            "example AMD's <code>amd_fidelityfx_upscaler_dx12.dll</code> with FSR 4. It is copied into the folder as "
+            "<code>{second}</code> and <code>UpscalerDll</code> in its helixsr.ini points at it, so OptiScaler's FFX "
+            "Upscaler menu lists its upscalers after HelixSR and the one you pick runs in that DLL.</p>"),
         QCoreApplication.translate("help",
             "<p>Deploying again over an existing deployment updates HelixSR's files and keeps the game's "
             'original.</p>'),

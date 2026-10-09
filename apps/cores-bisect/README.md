@@ -14,7 +14,7 @@ board — and you want to know that before you persist it and let a flaky core c
 
 `bc250-cores-bisect.sh` does its own unlock, so no other tool is involved, and tests in a way that
 separates the possible causes. Sibling project of
-[bc250-cu-bisect](https://github.com/RobertoTorino/bc250-cu-bisect), which does the same for the GPU CUs.
+[bc250-cu-bisect](../cu-bisect), which does the same for the GPU CUs.
 
 > **Warning:** this talks to the SMU and runs heavy CPU load. A bad core can freeze the system or
 > corrupt data. Save your work first. Use at your own risk.
@@ -394,7 +394,7 @@ same language. Terminal output of the two shell scripts stays English.
 After the unlock, `pp_dpm_sclk` and `hwmon` `freq1_input` report nonsense GPU clocks (tens of MHz).
 This is cosmetic — the SMU's own clock getters stay correct — and this script ignores GPU clocks.
 Diagnostics that read those files (e.g. tests 19/40 of
-[bc250-bazzite-test-releases](https://github.com/RobertoTorino/bc250-bazzite-test-releases)) will
+[bazzite-test](../bazzite-test)) will
 flag it; that's expected while the unlock is active.
 
 ## Credits

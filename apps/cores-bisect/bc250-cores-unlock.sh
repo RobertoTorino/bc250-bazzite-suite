@@ -26,7 +26,7 @@
 #        ./bc250-cores-unlock.sh --status       show the mask, threads, service and guard state
 #        ./bc250-cores-unlock.sh --help
 #
-# https://github.com/RobertoTorino/bc250-cores-bisect
+# https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/cores-bisect
 
 set -u
 if (( BASH_VERSINFO[0] < 4 )); then echo "bash 4 or newer is needed." >&2; exit 1; fi

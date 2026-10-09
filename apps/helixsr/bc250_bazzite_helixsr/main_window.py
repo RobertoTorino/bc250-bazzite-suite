@@ -105,6 +105,7 @@ class MainWindow(QMainWindow):
         self.deploy_page = DeployPage()
         self.deploy_page.browse_requested.connect(self._browse_game)
         self.deploy_page.browse_folder_requested.connect(self._browse_folder)
+        self.deploy_page.browse_second_requested.connect(self._browse_second)
         self.deploy_page.scan_requested.connect(self._scan)
         self.deploy_page.deploy_requested.connect(self._deploy)
         self.deploy_page.remove_requested.connect(self._remove_from_deploy_page)
@@ -266,6 +267,13 @@ class MainWindow(QMainWindow):
         if path:
             self.deploy_page.set_folder_path(Path(path))
 
+    def _browse_second(self) -> None:
+        start = self.deploy_page.second_path.text() or self.deploy_page.game_path.text() or str(Path.home())
+        path, _ = QFileDialog.getOpenFileName(self, self.tr("Second FidelityFX upscaler DLL (e.g. AMD's with FSR 4)"), start,
+                                              self.tr("DLL files (*.dll)"))
+        if path:
+            self.deploy_page.set_second_upscaler(Path(path))
+
     def _scan(self, game_dir: Path) -> None:
         if not game_dir.is_dir():
             self.deploy_page.show_found([], game_dir, self.tr("{0} is not a folder.").format(game_dir))
@@ -284,7 +292,8 @@ class MainWindow(QMainWindow):
     def _game_name(self, path: Path) -> str:
         return backend.game_name(path, self.libraries)
 
-    def _deploy(self, info: GameDll | None, mode: str, folder: Path | None, write_ini: bool) -> None:
+    def _deploy(self, info: GameDll | None, mode: str, folder: Path | None, write_ini: bool,
+                second: Path | None = None) -> None:
         if write_ini and not self.ini_page.valid():
             QMessageBox.warning(self, self.tr("helixsr.ini"), self.tr("The helixsr.ini page has invalid values; fix them or untick "
                                 "writing the ini."))
@@ -306,7 +315,7 @@ class MainWindow(QMainWindow):
             else:
                 if folder is None:
                     return
-                written = backend.deploy_folder(folder, self.payload_dir, ini_text)
+                written = backend.deploy_folder(folder, self.payload_dir, ini_text, second)
                 location = folder
         except (HelixError, OSError) as exc:
             QMessageBox.critical(self, self.tr("Deploy failed"), str(exc))
@@ -322,7 +331,10 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, self.tr("HelixSR folder ready"),
                                     self.tr("HelixSR is in\n{folder}\n\nNow point OptiScaler at it: the OptiScaler.ini lines "
                                             "on the Deploy page (Copy button) go into the game's OptiScaler.ini.").format(
-                                                folder=folder))
+                                                folder=folder)
+                                    + ("\n\n" + self.tr("The second upscaler is in the folder as {0}; OptiScaler's FFX Upscaler menu "
+                                                         "lists its upscalers after HelixSR.").format(backend.SECOND_UPSCALER_DLL)
+                                       if second is not None else ""))
 
     def _remove_from_deploy_page(self, info: GameDll | None, mode: str, folder: Path | None) -> None:
         if mode == MODE_REPLACE and info is not None:

@@ -16,7 +16,8 @@ from PyQt6.QtWidgets import (
 
 from . import plain_tooltip
 from .backend import (
-    HELIXSR_DLL, INI, KERNELS, MODE_FOLDER, MODE_REPLACE, NETWORKS, SHARPENING_MODES, WEIGHTS, Deployment,
+    HELIXSR_DLL, INI, KERNELS, MODE_FOLDER, MODE_REPLACE, NETWORKS, SECOND_UPSCALER_DLL, SHARPENING_MODES, WEIGHTS,
+    Deployment,
     GameDll, HelixIni, PayloadStatus, deployment_state, optiscaler_snippet, render_ini, validate_ini,
 )
 from .widgets import STATE_COLORS, StatusPill, Terminal, accent_button, hint_label, page_header
@@ -212,8 +213,10 @@ class OverviewPage(QWidget):
 class DeployPage(QWidget):
     browse_requested = pyqtSignal()
     browse_folder_requested = pyqtSignal()
+    browse_second_requested = pyqtSignal()
     scan_requested = pyqtSignal(object)                             # Path of the game folder
-    deploy_requested = pyqtSignal(object, str, object, bool)        # GameDll | None, mode, folder Path | None, ini
+    # GameDll | None, mode, folder Path | None, write the ini, second upscaler DLL Path | None
+    deploy_requested = pyqtSignal(object, str, object, bool, object)
     remove_requested = pyqtSignal(object, str, object)              # GameDll | None, mode, folder Path | None
     copy_requested = pyqtSignal(str)
 
@@ -288,6 +291,22 @@ class DeployPage(QWidget):
         self.browse_folder.clicked.connect(self.browse_folder_requested)
         folder_row.addWidget(self.browse_folder)
         mode_layout.addLayout(folder_row)
+        second_row = QHBoxLayout()
+        second_row.addSpacing(22)
+        self.second_label = QLabel(self.tr("Second upscaler:"))
+        second_row.addWidget(self.second_label)
+        self.second_path = QLineEdit()
+        self.second_path.setPlaceholderText(self.tr("Optional: AMD's amd_fidelityfx_upscaler_dx12.dll, e.g. with FSR 4"))
+        self.second_path.setToolTip(self.tr(
+            "Copied into the folder as {0}, with UpscalerDll in helixsr.ini pointing at it: OptiScaler's FFX Upscaler "
+            "menu then lists its upscalers after HelixSR, and the one you pick runs in that DLL. Empty: HelixSR only."
+            ).format(SECOND_UPSCALER_DLL))
+        self.second_path.textChanged.connect(lambda *_: self._update_buttons())
+        second_row.addWidget(self.second_path, 1)
+        self.browse_second = QPushButton(self.tr("Browse…"))
+        self.browse_second.clicked.connect(self.browse_second_requested)
+        second_row.addWidget(self.browse_second)
+        mode_layout.addLayout(second_row)
         self.folder_hint = hint_label(self.tr(
             "Install OptiScaler for the game as its documentation describes, then point its OptiScaler.ini at this "
             "folder with the lines below (Copy puts them on the clipboard)."))
@@ -399,6 +418,13 @@ class DeployPage(QWidget):
         text = self.folder_path.text().strip()
         return Path(text).expanduser() if text else None
 
+    def second_upscaler(self) -> Path | None:
+        text = self.second_path.text().strip()
+        return Path(text).expanduser() if text else None
+
+    def set_second_upscaler(self, path: Path) -> None:
+        self.second_path.setText(str(path))
+
     def game_dir(self) -> Path | None:
         text = self.game_path.text().strip()
         return Path(text).expanduser() if text else None
@@ -415,7 +441,8 @@ class DeployPage(QWidget):
 
     def _mode_changed(self) -> None:
         folder = self.mode() == MODE_FOLDER
-        for widget in (self.folder_path, self.browse_folder, self.folder_hint, self.snippet, self.copy_snippet):
+        for widget in (self.folder_path, self.browse_folder, self.folder_hint, self.snippet, self.copy_snippet,
+                       self.second_label, self.second_path, self.browse_second):
             widget.setVisible(folder)
         self._update_snippet()
         self._update_buttons()
@@ -440,7 +467,8 @@ class DeployPage(QWidget):
                                    self.tr("Replace {0} with HelixSR.").format(info.path.name))
 
     def _deploy_clicked(self) -> None:
-        self.deploy_requested.emit(self.selected(), self.mode(), self.folder(), self.write_ini.isChecked())
+        second = self.second_upscaler() if self.mode() == MODE_FOLDER else None
+        self.deploy_requested.emit(self.selected(), self.mode(), self.folder(), self.write_ini.isChecked(), second)
 
     def _remove_clicked(self) -> None:
         self.remove_requested.emit(self.selected(), self.mode(), self.folder())

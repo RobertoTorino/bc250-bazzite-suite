@@ -25,7 +25,7 @@
 #        ./bc250-cu-unlock.sh --status                    show the installed masks, service and live state
 #        ./bc250-cu-unlock.sh --help
 #
-# https://github.com/RobertoTorino/bc250-cu-bisect
+# https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/cu-bisect
 
 set -u
 if (( BASH_VERSINFO[0] < 4 )); then echo "bash 4 or newer is needed." >&2; exit 1; fi

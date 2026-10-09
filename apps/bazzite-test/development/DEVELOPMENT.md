@@ -66,7 +66,7 @@ sudo rpm-ostree rebase ostree-unverified-image:containers-storage:localhost/bazz
 
 
 ### Roadmap
-1. ~~Investigate if persistence ACPI fix, if plausible use the new repo here: https://github.com/RobertoTorino/bc250-persistent-acpi~~
+1. ~~Investigate if persistence ACPI fix, if plausible use the new repo here: ../../persistent-acpi~~
    **Done.** The GRUB early-initrd method is persistent (blscfg applies it to every BLS entry, surviving kernel
    and rpm-ostree updates); the repo now ships the vendored e-tho v1.1.1 tables plus install/uninstall scripts.
 2. ~~Packaging: bc250-bazzite-test through a GitHub workflow for a release.~~

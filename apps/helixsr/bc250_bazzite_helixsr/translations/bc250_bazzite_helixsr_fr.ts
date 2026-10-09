@@ -151,6 +151,18 @@
         <source>Replace {0} with HelixSR.</source>
         <translation>Remplacer {0} par HelixSR.</translation>
     </message>
+    <message>
+        <source>Second upscaler:</source>
+        <translation>Second upscaler :</translation>
+    </message>
+    <message>
+        <source>Optional: AMD&apos;s amd_fidelityfx_upscaler_dx12.dll, e.g. with FSR 4</source>
+        <translation>Facultatif : l&apos;amd_fidelityfx_upscaler_dx12.dll d&apos;AMD, p. ex. avec FSR 4</translation>
+    </message>
+    <message>
+        <source>Copied into the folder as {0}, with UpscalerDll in helixsr.ini pointing at it: OptiScaler&apos;s FFX Upscaler menu then lists its upscalers after HelixSR, and the one you pick runs in that DLL. Empty: HelixSR only.</source>
+        <translation>Copiée dans le dossier sous le nom {0}, avec UpscalerDll dans helixsr.ini pointant dessus : le menu « FFX Upscaler » d&apos;OptiScaler liste alors ses upscalers après HelixSR, et celui que vous choisissez s&apos;exécute dans cette DLL. Vide : HelixSR seul.</translation>
+    </message>
 </context><context>
     <name>HelpPage</name>
     <message>
@@ -564,6 +576,18 @@ et renommer la .original.dll du jeu ?</translation>
     <message>
         <source>Could not open</source>
         <translation>Impossible d’ouvrir</translation>
+    </message>
+    <message>
+        <source>Second FidelityFX upscaler DLL (e.g. AMD&apos;s with FSR 4)</source>
+        <translation>Seconde DLL d&apos;upscaler FidelityFX (p. ex. celle d&apos;AMD avec FSR 4)</translation>
+    </message>
+    <message>
+        <source>DLL files (*.dll)</source>
+        <translation>Fichiers DLL (*.dll)</translation>
+    </message>
+    <message>
+        <source>The second upscaler is in the folder as {0}; OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR.</source>
+        <translation>Le second upscaler est dans le dossier sous le nom {0} ; le menu « FFX Upscaler » d&apos;OptiScaler liste ses upscalers après HelixSR.</translation>
     </message>
 </context><context>
     <name>OverviewPage</name>
@@ -1107,6 +1131,10 @@ et renommer la .original.dll du jeu ?</translation>
         <source>Older build</source>
         <translation>Ancienne version</translation>
     </message>
+    <message>
+        <source>{0} is HelixSR itself; pick another FidelityFX upscaler DLL, e.g. AMD&apos;s with FSR 4.</source>
+        <translation>{0} est HelixSR lui-même ; choisissez une autre DLL d&apos;upscaler FidelityFX, p. ex. celle d&apos;AMD avec FSR 4.</translation>
+    </message>
 </context><context>
     <name>help</name>
     <message>
@@ -1260,6 +1288,10 @@ et renommer la .original.dll du jeu ?</translation>
     <message>
         <source>&lt;p&gt;Source and issues: &lt;a href="{repo_url}"&gt;{repo_url}&lt;/a&gt;. HelixSR itself: &lt;a href="{helixsr_url}"&gt;{helixsr_url}&lt;/a&gt; (HelixSR Freeware License; this app ships none of it).&lt;/p&gt;</source>
         <translation>&lt;p&gt;Source et tickets : &lt;a href="{repo_url}"&gt;{repo_url}&lt;/a&gt;. HelixSR lui-même : &lt;a href="{helixsr_url}"&gt;{helixsr_url}&lt;/a&gt; (HelixSR Freeware License ; cette application n’en livre aucune partie).&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;b&gt;Second upscaler&lt;/b&gt; (optional, OptiScaler folder only): pick another FidelityFX upscaler DLL, for example AMD&apos;s &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; with FSR 4. It is copied into the folder as &lt;code&gt;{second}&lt;/code&gt; and &lt;code&gt;UpscalerDll&lt;/code&gt; in its helixsr.ini points at it, so OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR and the one you pick runs in that DLL.&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;Second upscaler&lt;/b&gt; (facultatif, dossier OptiScaler uniquement) : choisissez une autre DLL d&apos;upscaler FidelityFX, par exemple l&apos;&lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; d&apos;AMD avec FSR 4. Elle est copiée dans le dossier sous le nom &lt;code&gt;{second}&lt;/code&gt; et &lt;code&gt;UpscalerDll&lt;/code&gt; dans son helixsr.ini pointe dessus : le menu « FFX Upscaler » d&apos;OptiScaler liste alors ses upscalers après HelixSR, et celui que vous choisissez s&apos;exécute dans cette DLL.&lt;/p&gt;</translation>
     </message>
 </context><context>
     <name>setup_page</name>

@@ -1,3 +1,9 @@
+Changelog: 09-10-2026 18:32:48
+
+README and hardware checklist: install from the portal or the suite's releases (governor-v<version>.tar.gz with
+SHA256SUMS), run from the suite repository, tests from the suite's ./test.sh and CI, releases tagged
+governor-v<x.y.z>; the badge shows the suite's CI. They pointed at the old stand-alone repository.
+
 Changelog: 09-10-2026 18:20:11
 
 Links to the app's own repository and to gpu-oc-bisect pointed at the old stand-alone repositories, which no longer

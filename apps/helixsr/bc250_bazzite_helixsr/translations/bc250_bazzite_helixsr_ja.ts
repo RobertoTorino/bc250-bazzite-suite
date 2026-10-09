@@ -151,6 +151,18 @@
         <source>Replace {0} with HelixSR.</source>
         <translation>{0} を HelixSR に置き換えます。</translation>
     </message>
+    <message>
+        <source>Second upscaler:</source>
+        <translation>2 つ目のアップスケーラー:</translation>
+    </message>
+    <message>
+        <source>Optional: AMD&apos;s amd_fidelityfx_upscaler_dx12.dll, e.g. with FSR 4</source>
+        <translation>任意: AMD の amd_fidelityfx_upscaler_dx12.dll（例: FSR 4 入り）</translation>
+    </message>
+    <message>
+        <source>Copied into the folder as {0}, with UpscalerDll in helixsr.ini pointing at it: OptiScaler&apos;s FFX Upscaler menu then lists its upscalers after HelixSR, and the one you pick runs in that DLL. Empty: HelixSR only.</source>
+        <translation>{0} としてフォルダーにコピーされ、helixsr.ini の UpscalerDll がそれを指します。OptiScaler の「FFX Upscaler」メニューでは HelixSR の後にそのアップスケーラーが並び、選んだものはその DLL で動作します。空欄: HelixSR のみ。</translation>
+    </message>
 </context><context>
     <name>HelpPage</name>
     <message>
@@ -565,6 +577,18 @@ and rename the game's .original.dll back?</source>
     <message>
         <source>Could not open</source>
         <translation>開けませんでした</translation>
+    </message>
+    <message>
+        <source>Second FidelityFX upscaler DLL (e.g. AMD&apos;s with FSR 4)</source>
+        <translation>2 つ目の FidelityFX アップスケーラー DLL（例: AMD の FSR 4 入り）</translation>
+    </message>
+    <message>
+        <source>DLL files (*.dll)</source>
+        <translation>DLL ファイル (*.dll)</translation>
+    </message>
+    <message>
+        <source>The second upscaler is in the folder as {0}; OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR.</source>
+        <translation>2 つ目のアップスケーラーは {0} としてフォルダーにあります。OptiScaler の「FFX Upscaler」メニューでは HelixSR の後に並びます。</translation>
     </message>
 </context><context>
     <name>OverviewPage</name>
@@ -1108,6 +1132,10 @@ and rename the game's .original.dll back?</source>
         <source>Older build</source>
         <translation>旧ビルド</translation>
     </message>
+    <message>
+        <source>{0} is HelixSR itself; pick another FidelityFX upscaler DLL, e.g. AMD&apos;s with FSR 4.</source>
+        <translation>{0} は HelixSR そのものです。別の FidelityFX アップスケーラー DLL（例: AMD の FSR 4 入り）を選んでください。</translation>
+    </message>
 </context><context>
     <name>help</name>
     <message>
@@ -1261,6 +1289,10 @@ and rename the game's .original.dll back?</source>
     <message>
         <source>&lt;p&gt;Source and issues: &lt;a href="{repo_url}"&gt;{repo_url}&lt;/a&gt;. HelixSR itself: &lt;a href="{helixsr_url}"&gt;{helixsr_url}&lt;/a&gt; (HelixSR Freeware License; this app ships none of it).&lt;/p&gt;</source>
         <translation>&lt;p&gt;ソースと issue：&lt;a href=&quot;{repo_url}&quot;&gt;{repo_url}&lt;/a&gt;。HelixSR 本体：&lt;a href=&quot;{helixsr_url}&quot;&gt;{helixsr_url}&lt;/a&gt;（HelixSR Freeware License。このアプリには同梱されていません）。&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;b&gt;Second upscaler&lt;/b&gt; (optional, OptiScaler folder only): pick another FidelityFX upscaler DLL, for example AMD&apos;s &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; with FSR 4. It is copied into the folder as &lt;code&gt;{second}&lt;/code&gt; and &lt;code&gt;UpscalerDll&lt;/code&gt; in its helixsr.ini points at it, so OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR and the one you pick runs in that DLL.&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;2 つ目のアップスケーラー&lt;/b&gt;（任意、OptiScaler フォルダーのみ）: 別の FidelityFX アップスケーラー DLL（例: FSR 4 入りの AMD の &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt;）を選びます。&lt;code&gt;{second}&lt;/code&gt; としてフォルダーにコピーされ、その helixsr.ini の &lt;code&gt;UpscalerDll&lt;/code&gt; がそれを指すので、OptiScaler の「FFX Upscaler」メニューでは HelixSR の後にそのアップスケーラーが並び、選んだものはその DLL で動作します。&lt;/p&gt;</translation>
     </message>
 </context><context>
     <name>setup_page</name>

@@ -42,6 +42,9 @@ app does exactly that, reversibly, and nothing else on the system is touched. No
   - *Stand-alone folder for OptiScaler* – for games without FSR 3.1: writes a folder with the DLL under both
     FidelityFX names, the network files and the ini, and gives you the `OptiScaler.ini` lines
     (`Dx12Upscaler=fsr31`, `FfxDx12Path`, `FfxDx12SRPath` as `Z:\` paths) to paste.
+    Optionally it adds a second upscaler, for example AMD's `amd_fidelityfx_upscaler_dx12.dll` with FSR 4: it
+    goes into the folder as `amd_fidelityfx_upscaler_dx12.amd.dll` with `UpscalerDll` pointing at it, and
+    OptiScaler's FFX Upscaler menu lists its upscalers after HelixSR.
 - **helixsr.ini** – a form over every key HelixSR reads (`[Sharpening]`, `[ModelE]`, `[Log]`, `[Forwarding]`)
   with validation and a live preview that keeps the upstream comments. Save it as the default for new
   deployments or push it to an existing one.
@@ -146,16 +149,16 @@ tests/              pytest suite (offscreen Qt, temporary payload and game folde
 test.sh             runs it with the project venv
 ```
 
-Tests: `./test.sh` (uses the `python/` venv, installs pytest there on first use; extra arguments go to pytest,
-e.g. `./test.sh -k ini`). Without the venv: `pip install -r requirements-dev.txt` then
+Tests: `./test.sh` in the suite's root runs every test suite, this one included (extra arguments go to pytest,
+e.g. `./test.sh -k ini`). For this app alone: `pip install -r requirements-dev.txt` then
 `QT_QPA_PLATFORM=offscreen python -m pytest -q tests`. They cover the `helixsr.ini` round-trip against the
 upstream file, payload import from folders and zips, DLL discovery, deploy/remove in both modes (including
 re-deploy over an older build and refusing foreign DLLs), the deployment store, Steam library parsing, the
 release lookup and the whole Setup run (downloads over `file://` URLs against a fake `helixsr-setup.sh`, checksum
 and script failures, a local DLSS DLL), the main window driven through its page signals and the translations
-(compiler round-trip through `QTranslator`, completeness of every shipped language). `.github/workflows/tests.yml` runs the same on every push and
-pull request; every push to `main` builds a release tarball (`.github/workflows/release.yml`), tags it and
-publishes it on GitHub.
+(compiler round-trip through `QTranslator`, completeness of every shipped language). The suite's CI
+(`.github/workflows/ci.yml`) runs them on every push and pull request. Releases are tagged `helixsr-v<x.y.z>` in
+the suite repository; `.github/workflows/release.yml` then builds the tarball and publishes it on GitHub.
 
 The backend has no Qt dependency so it can be exercised from the command line or reused.
 

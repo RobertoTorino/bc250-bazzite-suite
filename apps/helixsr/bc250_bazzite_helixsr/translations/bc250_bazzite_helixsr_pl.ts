@@ -151,6 +151,18 @@
         <source>Replace {0} with HelixSR.</source>
         <translation>Zastąp {0} przez HelixSR.</translation>
     </message>
+    <message>
+        <source>Second upscaler:</source>
+        <translation>Drugi upscaler:</translation>
+    </message>
+    <message>
+        <source>Optional: AMD&apos;s amd_fidelityfx_upscaler_dx12.dll, e.g. with FSR 4</source>
+        <translation>Opcjonalnie: amd_fidelityfx_upscaler_dx12.dll od AMD, np. z FSR 4</translation>
+    </message>
+    <message>
+        <source>Copied into the folder as {0}, with UpscalerDll in helixsr.ini pointing at it: OptiScaler&apos;s FFX Upscaler menu then lists its upscalers after HelixSR, and the one you pick runs in that DLL. Empty: HelixSR only.</source>
+        <translation>Kopiowana do folderu jako {0}, a UpscalerDll w helixsr.ini wskazuje na nią: menu „FFX Upscaler” OptiScalera pokazuje wtedy jej upscalery po HelixSR, a wybrany działa w tej DLL. Puste: tylko HelixSR.</translation>
+    </message>
 </context><context>
     <name>HelpPage</name>
     <message>
@@ -564,6 +576,18 @@ i przywrócić nazwę .original.dll gry?</translation>
     <message>
         <source>Could not open</source>
         <translation>Nie można otworzyć</translation>
+    </message>
+    <message>
+        <source>Second FidelityFX upscaler DLL (e.g. AMD&apos;s with FSR 4)</source>
+        <translation>Druga DLL upscalera FidelityFX (np. od AMD z FSR 4)</translation>
+    </message>
+    <message>
+        <source>DLL files (*.dll)</source>
+        <translation>Pliki DLL (*.dll)</translation>
+    </message>
+    <message>
+        <source>The second upscaler is in the folder as {0}; OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR.</source>
+        <translation>Drugi upscaler jest w folderze jako {0}; menu „FFX Upscaler” OptiScalera pokazuje jego upscalery po HelixSR.</translation>
     </message>
 </context><context>
     <name>OverviewPage</name>
@@ -1107,6 +1131,10 @@ i przywrócić nazwę .original.dll gry?</translation>
         <source>Older build</source>
         <translation>Starsza kompilacja</translation>
     </message>
+    <message>
+        <source>{0} is HelixSR itself; pick another FidelityFX upscaler DLL, e.g. AMD&apos;s with FSR 4.</source>
+        <translation>{0} to sam HelixSR; wybierz inną DLL upscalera FidelityFX, np. od AMD z FSR 4.</translation>
+    </message>
 </context><context>
     <name>help</name>
     <message>
@@ -1260,6 +1288,10 @@ i przywrócić nazwę .original.dll gry?</translation>
     <message>
         <source>&lt;p&gt;Source and issues: &lt;a href="{repo_url}"&gt;{repo_url}&lt;/a&gt;. HelixSR itself: &lt;a href="{helixsr_url}"&gt;{helixsr_url}&lt;/a&gt; (HelixSR Freeware License; this app ships none of it).&lt;/p&gt;</source>
         <translation>&lt;p&gt;Źródła i zgłoszenia: &lt;a href="{repo_url}"&gt;{repo_url}&lt;/a&gt;. Sam HelixSR: &lt;a href="{helixsr_url}"&gt;{helixsr_url}&lt;/a&gt; (HelixSR Freeware License; ta aplikacja go nie zawiera).&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;b&gt;Second upscaler&lt;/b&gt; (optional, OptiScaler folder only): pick another FidelityFX upscaler DLL, for example AMD&apos;s &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; with FSR 4. It is copied into the folder as &lt;code&gt;{second}&lt;/code&gt; and &lt;code&gt;UpscalerDll&lt;/code&gt; in its helixsr.ini points at it, so OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR and the one you pick runs in that DLL.&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;Drugi upscaler&lt;/b&gt; (opcjonalnie, tylko folder OptiScalera): wybierz inną DLL upscalera FidelityFX, na przykład &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; od AMD z FSR 4. Zostanie skopiowana do folderu jako &lt;code&gt;{second}&lt;/code&gt;, a &lt;code&gt;UpscalerDll&lt;/code&gt; w jego helixsr.ini wskaże na nią, więc menu „FFX Upscaler” OptiScalera pokaże jej upscalery po HelixSR, a wybrany będzie działał w tej DLL.&lt;/p&gt;</translation>
     </message>
 </context><context>
     <name>setup_page</name>

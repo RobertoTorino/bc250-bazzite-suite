@@ -1,3 +1,14 @@
+Changelog: 09-10-2026 18:32:48
+
+Deploy page, OptiScaler folder mode: an optional second upscaler. Pick another FidelityFX upscaler DLL (for example
+AMD's amd_fidelityfx_upscaler_dx12.dll with FSR 4) and it is copied into the folder as
+amd_fidelityfx_upscaler_dx12.amd.dll, with [Forwarding] UpscalerDll in the folder's helixsr.ini pointing at it, so
+OptiScaler's FFX Upscaler menu lists its upscalers after HelixSR (as HelixSR's README describes). Deploying again
+without one removes it and clears UpscalerDll when it named it; removing the folder removes it too. HelixSR itself
+is refused as the second upscaler. Help and README describe it; all languages updated.
+
+README: tests run from the suite's ./test.sh and its CI, releases are tagged helixsr-v<x.y.z> in the suite.
+
 Changelog: 09-10-2026 18:20:11
 
 The app's own update check asked the old stand-alone repository, which no longer exists, so it reported "GitHub

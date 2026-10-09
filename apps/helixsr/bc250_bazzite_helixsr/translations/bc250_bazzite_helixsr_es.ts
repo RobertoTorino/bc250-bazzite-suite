@@ -151,6 +151,18 @@
         <source>Replace {0} with HelixSR.</source>
         <translation>Sustituye {0} por HelixSR.</translation>
     </message>
+    <message>
+        <source>Second upscaler:</source>
+        <translation>Segundo escalador:</translation>
+    </message>
+    <message>
+        <source>Optional: AMD&apos;s amd_fidelityfx_upscaler_dx12.dll, e.g. with FSR 4</source>
+        <translation>Opcional: la amd_fidelityfx_upscaler_dx12.dll de AMD, p. ej. con FSR 4</translation>
+    </message>
+    <message>
+        <source>Copied into the folder as {0}, with UpscalerDll in helixsr.ini pointing at it: OptiScaler&apos;s FFX Upscaler menu then lists its upscalers after HelixSR, and the one you pick runs in that DLL. Empty: HelixSR only.</source>
+        <translation>Se copia en la carpeta como {0}, con UpscalerDll en helixsr.ini apuntando a ella: el menú «FFX Upscaler» de OptiScaler muestra entonces sus escaladores después de HelixSR, y el que elijas se ejecuta en esa DLL. Vacío: solo HelixSR.</translation>
+    </message>
 </context>
 <context>
     <name>HelpPage</name>
@@ -567,6 +579,18 @@ y devolver su nombre a la .original.dll del juego?</translation>
     <message>
         <source>Could not open</source>
         <translation>No se pudo abrir</translation>
+    </message>
+    <message>
+        <source>Second FidelityFX upscaler DLL (e.g. AMD&apos;s with FSR 4)</source>
+        <translation>Segunda DLL de escalador FidelityFX (p. ej. la de AMD con FSR 4)</translation>
+    </message>
+    <message>
+        <source>DLL files (*.dll)</source>
+        <translation>Archivos DLL (*.dll)</translation>
+    </message>
+    <message>
+        <source>The second upscaler is in the folder as {0}; OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR.</source>
+        <translation>El segundo escalador está en la carpeta como {0}; el menú «FFX Upscaler» de OptiScaler muestra sus escaladores después de HelixSR.</translation>
     </message>
 </context>
 <context>
@@ -1115,6 +1139,10 @@ y devolver su nombre a la .original.dll del juego?</translation>
         <source>Older build</source>
         <translation>Compilación antigua</translation>
     </message>
+    <message>
+        <source>{0} is HelixSR itself; pick another FidelityFX upscaler DLL, e.g. AMD&apos;s with FSR 4.</source>
+        <translation>{0} es el propio HelixSR; elige otra DLL de escalador FidelityFX, p. ej. la de AMD con FSR 4.</translation>
+    </message>
 </context>
 <context>
     <name>help</name>
@@ -1269,6 +1297,10 @@ y devolver su nombre a la .original.dll del juego?</translation>
     <message>
         <source>&lt;p&gt;Source and issues: &lt;a href="{repo_url}"&gt;{repo_url}&lt;/a&gt;. HelixSR itself: &lt;a href="{helixsr_url}"&gt;{helixsr_url}&lt;/a&gt; (HelixSR Freeware License; this app ships none of it).&lt;/p&gt;</source>
         <translation>&lt;p&gt;Código fuente e incidencias: &lt;a href="{repo_url}"&gt;{repo_url}&lt;/a&gt;. HelixSR en sí: &lt;a href="{helixsr_url}"&gt;{helixsr_url}&lt;/a&gt; (HelixSR Freeware License; esta aplicación no incluye nada de él).&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;b&gt;Second upscaler&lt;/b&gt; (optional, OptiScaler folder only): pick another FidelityFX upscaler DLL, for example AMD&apos;s &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; with FSR 4. It is copied into the folder as &lt;code&gt;{second}&lt;/code&gt; and &lt;code&gt;UpscalerDll&lt;/code&gt; in its helixsr.ini points at it, so OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR and the one you pick runs in that DLL.&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;Segundo escalador&lt;/b&gt; (opcional, solo carpeta de OptiScaler): elige otra DLL de escalador FidelityFX, por ejemplo la &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; de AMD con FSR 4. Se copia en la carpeta como &lt;code&gt;{second}&lt;/code&gt; y &lt;code&gt;UpscalerDll&lt;/code&gt; en su helixsr.ini apunta a ella, así que el menú «FFX Upscaler» de OptiScaler muestra sus escaladores después de HelixSR y el que elijas se ejecuta en esa DLL.&lt;/p&gt;</translation>
     </message>
 </context>
 <context>

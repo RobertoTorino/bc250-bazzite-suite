@@ -1,4 +1,4 @@
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Release](https://github.com/RobertoTorino/bc250-governor-manager/actions/workflows/release.yml/badge.svg)](https://github.com/RobertoTorino/bc250-governor-manager/actions/workflows/release.yml) 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![CI](https://github.com/RobertoTorino/bc250-bazzite-suite/actions/workflows/ci.yml/badge.svg)](https://github.com/RobertoTorino/bc250-bazzite-suite/actions/workflows/ci.yml) 
 
 ---
 
@@ -85,12 +85,12 @@ The PyQt6 wheels bundle Qt; nothing is layered with `rpm-ostree`.
 
 ## Install on Bazzite
 
-Download the latest `bc250-governor-manager-vX.Y.Z.tar.gz` from the
-[releases](https://github.com/RobertoTorino/bc250-governor-manager/releases), unpack it and run the installer:
+Install it from the BC250 Bazzite Suite portal. Or download `governor-v<version>.tar.gz` from the suite's
+[releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases), unpack it and run the installer:
 
 ```shell
-tar -xzf bc250-governor-manager-v*.tar.gz
-cd bc250-governor-manager-v*/
+tar -xzf governor-v*.tar.gz
+cd governor-v*/
 ./install.sh
 ```
 
@@ -104,8 +104,8 @@ release to update, `./install.sh --uninstall` to remove it; the governor's `conf
 ## Run from the repository
 
 ```shell
-git clone https://github.com/RobertoTorino/bc250-governor-manager.git
-cd bc250-governor-manager
+git clone https://github.com/RobertoTorino/bc250-bazzite-suite.git
+cd bc250-bazzite-suite/apps/governor
 python3 -m venv python && python/bin/pip install -r requirements.txt && python/bin/python -m bc250_governor
 ```
 
@@ -280,17 +280,17 @@ tests/              pytest suite (offscreen Qt; bus, systemd and pkexec mocked)
 test.sh             runs it with the project venv
 ```
 
-Tests: `./test.sh` (uses the `python/` venv, installs pytest there on first use; extra arguments go to pytest,
-e.g. `./test.sh -k profile`). Without the venv: `pip install -r requirements-dev.txt` then
+Tests: `./test.sh` in the suite's root runs every test suite, this one included (extra arguments go to pytest,
+e.g. `./test.sh -k profile`). For this app alone: `pip install -r requirements-dev.txt` then
 `QT_QPA_PLATFORM=offscreen python -m pytest -q tests`. They
 cover the config.toml schema round-trip (both governors), safe-point parsing/rendering, the alert monitor, the
 telemetry history and CSV export, profiles, the load-tool runner and the main window's TestMode, profile and
 Performance-page state machines, all without a BC-250: D-Bus, systemd and pkexec are mocked.
-`.github/workflows/tests.yml` runs the same on every push and pull request. What the mocks cannot prove is
+The suite's CI (`.github/workflows/ci.yml`) runs them on every push and pull request. What the mocks cannot prove is
 covered by the manual pass in `docs/HARDWARE-CHECKLIST.md`, meant to be run on a BC-250 after each release.
 
-Every push to `main` builds a release tarball (`.github/workflows/release.yml`) with the version stamped in,
-tags it and publishes it on GitHub; the tarball contains the installer.
+Releases are tagged `governor-v<x.y.z>` in the suite repository; `.github/workflows/release.yml` then builds the
+tarball (it contains the installer) and publishes it on GitHub.
 
 The backend is separate from the Qt UI so other governors (for example `cyan-skillfish-governor-tt`) can be
 added behind the same protocol.

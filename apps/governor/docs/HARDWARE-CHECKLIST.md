@@ -21,8 +21,9 @@ watch -n1 busctl --system introspect com.cyanskillfish.Governor /com/cyanskillfi
 
 ## 1. Install
 
-- [ ] Download the tarball + `.sha256` from the release, `sha256sum -c` passes.
-- [ ] `./install.sh` finishes without errors; the desktop entry and icon appear in the launcher.
+- [ ] Download `governor-v<version>.tar.gz` and `SHA256SUMS` from the suite's release;
+      `sha256sum --check --ignore-missing SHA256SUMS` passes (or install from the portal).
+- [ ] `./install.sh` finishes without errors; the desktop entry, the icon and the Desktop icon appear.
 - [ ] Help page shows the released version number (not `0.x.0-dev` / the repository value).
 - [ ] Tarball contains no `tests/`, `.github/`, `requirements-dev.txt`.
 - [ ] `./install.sh --uninstall` removes launcher, venv and desktop entry; reinstall afterwards.

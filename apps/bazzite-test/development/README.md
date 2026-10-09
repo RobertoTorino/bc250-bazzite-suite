@@ -572,7 +572,7 @@ ujust regenerate-grub   # then reboot
 ```
 
 Or use the guided installer from
-[RobertoTorino/bc250-persistent-acpi](https://github.com/RobertoTorino/bc250-persistent-acpi):
+[persistent-acpi](../../persistent-acpi) (a suite app):
 it bundles the tables, checks for a BC-250 and a modded BIOS, installs idempotently and has an
 uninstaller. The fix is persistent — the blscfg GRUB module applies the early initrd to every
 BLS boot entry, so it survives kernel and rpm-ostree image updates.
@@ -592,7 +592,7 @@ script (test 26 reports whether the ACPI tables came from the initrd override or
   flag that.
 
 **For the extra CUs without flashing:**
-[RobertoTorino/bc250-cu-bisect](https://github.com/RobertoTorino/bc250-cu-bisect) unlocks CUs at runtime
+[cu-bisect](../../cu-bisect) (a suite app) unlocks CUs at runtime
 by writing the GPU's WGP mask registers with `umr`, and keeps a validated unlock across reboots:
 
 1. **Test first:** `bc250-cu-bisect.sh` tests every locked WGP (2 CUs) on its own over several rounds and
@@ -624,7 +624,7 @@ without flashing; the BIOS route is the alternative.
 
 Every BC-250 die differs: AMD fuses off WGPs that failed validation. But a crash after a CU unlock
 doesn't have to mean a bad WGP: the runtime unlock itself, power or heat can cause it too.
-[bc250-cu-bisect](https://github.com/RobertoTorino/bc250-cu-bisect) separates these causes: it does its
+[bc250-cu-bisect](../../cu-bisect) separates these causes: it does its
 own unlock with umr, tests a control (same register writes, no extra CUs) and every locked WGP on its own
 over several rounds, and tells you per WGP whether it's good, fails every time (likely bad) or fails at
 random (likely the unlock, power or heat). Once a mask passes, `bc250-cu-unlock.sh` or the BC Unlock GUI
