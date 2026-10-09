@@ -1,3 +1,7 @@
+Changelog: 09-10-2026 21:33:27
+
+BC-250 BIOS Reader is now a card in the portal (bios-reader-v0.1.0, read-only, no board warning).
+
 Changelog: 09-10-2026 17:59:08
 
 Update notices: a red dot on every card whose installed app differs from the version this portal pins (the Update

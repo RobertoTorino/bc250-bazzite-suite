@@ -1,3 +1,8 @@
+Changelog: 09-10-2026 21:24:58
+
+Tests: the window test waits for the status run to finish before it checks the idle states line; on a slow
+runner the banner could change before that line had arrived.
+
 Changelog: 09-10-2026 18:32:48
 
 Docs: links to the old stand-alone repositories (which no longer exist) now point at the apps' folders in the

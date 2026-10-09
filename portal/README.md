@@ -78,3 +78,23 @@ Releasing an app and pinning it in the portal:
 4. Bump `portal/VERSION` as `tools/check_manifest.py` asks, and list the app release in the portal CHANGELOG.
 5. Once the combination is tested on a BC-250, tag `portal-v<x.y.z>`. That release bundles the pinned
    bazzite-test release.
+
+---
+
+### a new app gets into the portal
+#### Code
+
+Create apps/<name>/ with VERSION 0.1.0, a CHANGELOG, a LICENSE and a .gitignore.        
+Add an install.sh that supports --uninstall and puts a launcher in ~/.local/bin/, plus tests under tests/.        
+Add the app to ./test.sh, the CI shellcheck list and an installer test in tools/installer-tests/.       
+Add its [apps.<name>] card to portal/apps.toml: name, summary, changes_board, install/uninstall/detect/launch,          
+and tag = "<name>-v<VERSION>" with sha256 left empty. CI accepts a tag that doesn't exist yet as long as it matches the app's VERSION.        
+Run all the checks and hand over.
+
+#### Release:
+5. Commit and push. CI asks for a portal version bump: minor for a new app; for an app update, at least as big as the app's bump.             
+6. Tag <name>-v0.1.0. release.yml builds the tarball and SHA256SUMS and publishes the release.              
+7. Run python3 tools/pin_app.py <name>-v0.1.0, which fills in the sha256.             
+8. Tag portal-v<x.y.z>. The portal release checks with --require-tags that every pinned tag exists, then publishes.             
+
+Users then see the new card, and installed apps whose version differs from the pinned one get the red update dot.                 

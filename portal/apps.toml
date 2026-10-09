@@ -113,3 +113,15 @@ install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-system-overlay"]
 launch = [["Open", "~/.local/bin/bc250-system-overlay"]]
+
+[apps.bios-reader]
+name = "BC-250 BIOS Reader"
+summary = "The BIOS settings as the setup screen shows them, hidden menus included. Stock or modded BIOS. Read-only."
+tag = "bios-reader-v0.1.0"
+sha256 = ""
+required = false
+changes_board = false
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-bios-reader"]
+launch = [["Open", "~/.local/bin/bc250-bios-reader"]]
