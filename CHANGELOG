@@ -1,3 +1,11 @@
+Changelog: 09-10-2026 23:21:16
+
+Manual: the plan sentence is gone from the Bazzite Test test plan page.
+
+Changelog: 09-10-2026 23:15:18
+
+Manual: the suite icon in the header is larger (2.8rem), and the roadmap is gone from Bazzite Test internals.
+
 Changelog: 09-10-2026 22:59:08
 
 Docs: the manual (MkDocs Material) holds everything the READMEs held: one chapter per app, the portal, a Development chapter (the root README's layout, development, install locations and versions sections, core's README and Bazzite Test's development notes) and Security (docs/SECURITY.md, which GitHub also shows as the security policy). It has the apps' look: Bazzite purple (#5835CE, #8A2BE2), Inter, a light and a dark mode, and the suite icon. tools/mkdocs/hooks.py serves the app icons and screenshots from where they live. The root README is a short description with one line and the small icon per app.

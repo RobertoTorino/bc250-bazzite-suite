@@ -168,7 +168,6 @@ Then run `--only=44 --speedtest`
 ---
 
 Do a CLI run with the benchmark, plus --speedtest, to confirm stress-ng, vkpeak and speedtest still give results when they run as your user.
-The next planned step is picking a past test date to view its results, and later comparing two runs.
 
 ```bash
 sudo ./test-bazzite.sh --bench --speedtest

@@ -406,12 +406,6 @@ The SMU quirk (queue-3 message `0x98` → `0xFF` at SMN `0x5A870`) was discovere
 is an independent implementation built around those hardware facts, adding the control/bisect/verdict
 methodology, crash-safe multi-boot state, and reversible persistence.
 
-## Roadmap
-
-~~- GUI translations (the sibling bc250-cu-bisect GUI has them; this one is English only so far).~~ = done in 0.2.0.
-~~- Optional `mprime`/`rasdaemon` integration for longer burn-in.~~ = done in 0.2.0.
-~~- Packaging beyond the per-user Bazzite installer (e.g. Flatpak/RPM).~~ = dropped.
-
 ## License
 
 GNU GPLv3, see [LICENSE](https://github.com/RobertoTorino/bc250-bazzite-suite/blob/main/apps/cores-bisect/LICENSE).

@@ -63,23 +63,3 @@ sudo rpm-ostree rebase ostree-unverified-image:containers-storage:localhost/bazz
 * **Settings** (last item in the navigation) opens a panel over the window: *Privacy* explains what is stored and what reaches the internet, and has the options *keep a test history*, *store kernel version and mitigation state* (off by default), *mask personal data in saved GUI logs* (on by default) and *run with sudo* / *forget sudo authentication*; *General* has the language (English for now; Spanish, French, German, Chinese, Japanese, Italian, Polish and Russian to follow) and the help; *System overview* shows unlocked CUs (e.g. 36/40), CPU cores and threads (6/8, 12/16), the latest speed test download/upload and the NVMe size and free space and the package count (test 45) as colored boxes, read only when the page is opened; *Logs & history* has **Clean up logs…**; *About* shows version, build date and the repository. Preferences are stored in `~/.config/bc250-bazzite-test/bc250-bazzite-test.ini`.
 * Test 41 only runs when the stress test is requested; otherwise it is left out, not counted as run.
 * Every run is written to `~/.local/share/bc250-bazzite-test/logs/<YYYYmmdd-HHMMSS>_<scope>.log`; open them with **Show Logs**. The script still writes its own report to `/var/log/bc250-bazzite-test/`.
-
-
-### Roadmap
-1. ~~Investigate if persistence ACPI fix, if plausible use the new repo here: ../../persistent-acpi~~
-   **Done.** The GRUB early-initrd method is persistent (blscfg applies it to every BLS entry, surviving kernel
-   and rpm-ostree updates); the repo now ships the vendored e-tho v1.1.1 tables plus install/uninstall scripts.
-2. ~~Packaging: bc250-bazzite-test through a GitHub workflow for a release.~~
-   **Done.** `.github/workflows/release.yml`: every push to main builds a tarball and publishes a GitHub
-   Release. The patch version auto-bumps from `bc250_gui/__init__.py`'s `__version__` or the latest `v*` tag
-   (edit `__version__` only for a major/minor jump); `[skip-version]` in the commit message skips the release.
-   The staged tree gets the released version number and a generated `bc250_gui/_build_info.py` (build date +
-   engine SHA-256), so the download runs as a release build with the engine integrity check active.
-   In the BC250 Bazzite Suite the release flow moves to the suite (per-app `bazzite-test-v*` tags, version in
-   `VERSION`); `development/tools/release.sh` was removed with the old `v*` tag scheme.
-   The tarball ships `install.sh` at its root: run as the user, it copies the tree root-owned to
-   `/opt/bc250-bazzite-test-v<version>` (symlink `/opt/bc250-bazzite-test`), creates the PyQt6 venv in
-   `~/.local/share/bc250-bazzite-test/venv` and adds a launcher (`~/.local/bin/bc250-bazzite-test`), an app
-   menu entry and a Desktop icon; `--uninstall [--purge]` reverses it. `BC250_OPT_DIR` overrides `/opt` and
-   `BC250_LOG_DIR` overrides `/var/log` for testing.
-3. Translations: es, fr, de, zh, ja, it, pl, ru (Qt Linguist .ts files).
