@@ -1,3 +1,13 @@
+Changelog: 09-10-2026 19:22:06
+
+bios-reader joins CI: its install.sh is shellchecked at warning level and tools/installer-tests/bios-reader.sh tests
+its installer (dumps kept on uninstall, removed with --purge). CLAUDE.md lists the app and the new checks; the
+manual has a page for it.
+
+Changelog: 09-10-2026 18:58:03
+
+New app folder apps/bios-reader with its LICENSE (GPL-3.0-or-later), .gitignore, VERSION, CHANGELOG and README.
+
 Changelog: 09-10-2026 17:51:51
 
 tools/tests/test_instance_copies.py: the copies of bc250_core's instance module in the apps not yet on core

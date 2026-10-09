@@ -11,7 +11,7 @@ The **BC250 Bazzite Suite** (exactly that name): tools for the AMD BC-250 on Baz
 **bazzite-test** is always installed and always listed first; every other app is an optional card ("pill").
 
 - `apps/<name>/`: bazzite-test, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
-  system-overlay. Each has its own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT, the rest
+  system-overlay, bios-reader. Each has its own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT, the rest
   GPL-3.0-or-later), .gitignore.
 - `core/bc250_core/`: shared Python code. It is **bundled per app** at release time (`tools/stage_app.py`), so each
   app runs on the core it was tested with; the shared venv `~/.local/share/bc250-bazzite-suite/venv` holds only
@@ -77,9 +77,10 @@ shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/
   apps/cores-bisect/install.sh apps/cores-bisect/packaging/bazzite/*.sh
 shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
 shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh \
-  apps/system-overlay/install.sh
+  apps/system-overlay/install.sh apps/bios-reader/install.sh
 bash tools/installer-tests/bazzite-test.sh; bash tools/installer-tests/portal.sh
 bash tools/installer-tests/persistent-acpi.sh; bash tools/installer-tests/system-overlay.sh
+bash tools/installer-tests/bios-reader.sh
 bash tools/installer-tests/release.sh
 mkdocs build --strict                               # from the venv
 ```

@@ -1,0 +1,19 @@
+Changelog: 09-10-2026 19:22:06
+
+The app itself. It reads a BIOS flash image (firmware volumes, files and sections, LZMA-packed volumes, the AMI
+NVRAM store with variable chains and StdDefaults, the SMBIOS version) and the setup screens in it (HII forms and
+en-US strings, with their SuppressIf, GrayOutIf and DisableIf conditions), with its own parser in Python. The window
+shows them like the BIOS setup screen: tabs, items with their values, help with value, default, options and where
+each value is stored, and the hidden menus and items with the reason they are hidden. Without a dump it shows the
+running board: the setup screens from a built-in table of BIOS P5.00 and the values of the UEFI variables Linux can
+read (AmdSetup). "Read BIOS chip" reads the flash chip twice with flashrom (read-only, through pkexec) and opens the
+dump; "Open dump" opens one made earlier. A badge says whether the BIOS is stock: from a dump by comparing its
+setup screens with those of stock P5.00, otherwise from the version string and the size of AmdSetup. The installer
+keeps the dumps on uninstall unless --purge is given. --build-table makes the table of a stock release from a dump.
+The logo is a placeholder.
+
+Changelog: 09-10-2026 18:58:03
+
+New app bios-reader: reads the BIOS settings of the BC-250 and shows them like the BIOS setup screen. The README
+explains where the settings are stored, how to read the flash chip with flashrom (read-only) and how to unpack a
+dump.
