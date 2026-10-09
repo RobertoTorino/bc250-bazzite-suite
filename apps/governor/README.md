@@ -96,7 +96,8 @@ cd bc250-governor-manager-v*/
 
 It installs the app for your user only, no root and no `rpm-ostree` layering: a private venv with PyQt6 and
 the app under `~/.local/share/bc250-governor-manager`, the launcher `~/.local/bin/bc250-governor-manager`,
-a desktop entry and the icon. **BC-250 GPU Governor Manager** then appears in the application menu (and in
+a desktop entry, the icon and a Desktop icon (`./install.sh --no-desktop-shortcut` leaves the Desktop icon
+out). **BC-250 GPU Governor Manager** then appears in the application menu (and in
 Steam's Game Mode via *Add a Non-Steam Game* if you want it there). Run `./install.sh` again from a newer
 release to update, `./install.sh --uninstall` to remove it; the governor's `config.toml` is never touched.
 

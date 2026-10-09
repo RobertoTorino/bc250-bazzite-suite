@@ -152,9 +152,12 @@ resumes after every login.
    ```bash
    echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/bc250-bisect
    sudo chmod 440 /etc/sudoers.d/bc250-bisect
+   sudo visudo -cf /etc/sudoers.d/bc250-bisect   # must print "parsed OK"
    sudo -k && sudo -n true && echo OK    # must print OK without asking
    ```
    Revert after testing with `sudo rm /etc/sudoers.d/bc250-bisect`.
+   If you edit the file by hand, use `sudo visudo -f /etc/sudoers.d/bc250-bisect`: it refuses to save a broken line.
+   A broken line makes every `sudo` command print a warning, or stops sudo working at all.
 3. **The autostart unit installed** — without it nothing restarts the script after login and you'd
    have to start it manually every boot.
 4. **No credential popups at login (KDE Wallet / ksshaskpass)** — with autologin the KDE Wallet
@@ -333,12 +336,13 @@ puts `--install` behind a verdict gate:
   post-control are clean, and every new core and the combined item passed **every** round. Notes
   (e.g. control ran fewer rounds, or loads changed mid-run) are shown but don't block.
 - **NOT ACCEPTED YET** otherwise, with the reason (unfinished, failing core, random failures, …).
-  Install stays disabled; Uninstall, Refresh status and Re-check always work.
+  Install stays disabled; Uninstall, Refresh status, Status with sudo and Re-check always work.
 - A core map shows the 6 stock cores and the 2 unlocked ones (`ok` / `xx` fails / `??` random /
   `..` not tested).
 
 Install/Uninstall run `bc250-cores-unlock.sh` via sudo; you're only asked for a password when sudo
-actually needs one. Refresh status runs unprivileged (the mask is shown if sudo needs no password).
+actually needs one. Refresh status runs unprivileged (the mask is shown if sudo needs no password);
+Status with sudo runs the same status as root, asking for the password if needed, so the mask is always shown.
 
 **Bazzite (or any desktop, no root or rpm-ostree needed):** per-user alternative to `install.sh`,
 this GUI only:

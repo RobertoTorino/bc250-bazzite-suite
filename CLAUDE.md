@@ -69,13 +69,15 @@ The same checks as CI (`.github/workflows/ci.yml`), from the repo root:
 ./test.sh                                           # every test suite, offscreen
 python3 tools/check_versions.py                     # versions = VERSION
 python3 tools/check_manifest.py --base origin/main  # portal/apps.toml rules, against the last push
-find apps portal tools test.sh -name '*.sh' -print0 | xargs -0 -n1 bash -n
-find apps portal tools -name '*.sh' -print0 | xargs -0 shellcheck -x -S error test.sh
-shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh
+find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 -n1 bash -n
+find apps portal tools -name '*.sh' -print0 | xargs -0 shellcheck -x -S error test.sh install.sh
+shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh
 shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/bc250-cores-unlock.sh \
   apps/cores-bisect/install.sh apps/cores-bisect/packaging/bazzite/*.sh
 shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
-bash tools/installer-tests/bazzite-test.sh; bash tools/installer-tests/portal.sh; bash tools/installer-tests/release.sh
+shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh
+bash tools/installer-tests/bazzite-test.sh; bash tools/installer-tests/portal.sh
+bash tools/installer-tests/persistent-acpi.sh; bash tools/installer-tests/release.sh
 mkdocs build --strict                               # from the venv
 ```
 

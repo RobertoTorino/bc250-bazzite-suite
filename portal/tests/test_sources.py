@@ -130,6 +130,19 @@ def test_checkout_stages_app_with_core(tmp_path):
     assert not (acpi_folder / "bc250_core").exists()                         # shell only: no core
 
 
+def test_suite_checkout(tmp_path, monkeypatch):
+    import bc250_portal
+    assert bc250_portal.suite_checkout() == SUITE                           # running from the checkout
+    installed = tmp_path / "opt" / "bc250-bazzite-suite"
+    installed.mkdir(parents=True)
+    monkeypatch.setattr(bc250_portal, "ROOT", installed)
+    assert bc250_portal.suite_checkout() is None                            # a release install
+    (installed / bc250_portal.CHECKOUT_FILE).write_text(f"{SUITE}\n")
+    assert bc250_portal.suite_checkout() == SUITE                           # installed from the checkout
+    (installed / bc250_portal.CHECKOUT_FILE).write_text(f"{tmp_path}\n")
+    assert bc250_portal.suite_checkout() is None                            # a moved or deleted checkout
+
+
 def test_is_installed(home):
     assert not is_installed(ENTRY)
     (home / ".local" / "bin" / "bc250-bisect-gui").write_text("#!/bin/sh\n")

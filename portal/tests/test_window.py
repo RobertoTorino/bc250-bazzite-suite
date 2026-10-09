@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path, PurePosixPath
 
 import pytest
@@ -59,8 +60,15 @@ def test_bazzite_test_first_without_uninstall(window):
     assert keys[0] == "bazzite-test"
     assert window.cards["bazzite-test"].uninstall_button.isHidden()
     assert not window.cards["governor"].uninstall_button.isHidden()
-    assert window.cards["persistent-acpi"].open_button.isHidden()          # not a program
+    assert not window.cards["persistent-acpi"].open_button.isHidden()
     assert window.cards["cu-bisect"].open_button.menu() is not None        # Bisect / Unlock
+
+
+def test_no_open_button_without_launch(qapp, home, settings_dir, tmp_path, launched):
+    entries = [replace(e, launch=()) if e.key == "governor" else e for e in load(MANIFEST)]
+    w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
+    assert w.cards["governor"].open_button.isHidden()                      # not a program
+    w.close()
 
 
 def test_states_follow_detection_and_records(window, home):

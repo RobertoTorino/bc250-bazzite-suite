@@ -50,7 +50,9 @@ cd portal
 PYTHONPATH=../core ../.venv-linux/bin/python -m bc250_portal    # --source release: the pinned GitHub releases
 ```
 
-`./install.sh` from the checkout also works: it bundles `../core` and installs `../apps/bazzite-test`.
+To install from the checkout, run `./install.sh` in the repository root (or here in `portal/`). It bundles
+`../core` and installs `../apps/bazzite-test`. The installed portal then installs the other apps from the
+checkout too, so keep the checkout where it is.
 
 ## apps.toml and releases
 

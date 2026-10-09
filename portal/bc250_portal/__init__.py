@@ -11,6 +11,7 @@ from bc250_core import AppInfo
 from bc250_core.platform import data_home
 
 ROOT = Path(__file__).resolve().parent.parent           # portal/ in the checkout, /opt/bc250-bazzite-suite installed
+CHECKOUT_FILE = "suite-checkout"                        # in ROOT, written by install.sh when installed from a checkout
 MANIFEST = ROOT / "apps.toml"
 LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
 INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="portal-v",
@@ -24,9 +25,16 @@ def state_dir() -> Path:
 
 
 def suite_checkout() -> Path | None:
-    """The suite repository when the portal runs from a checkout (development): apps then install from the local
-    source instead of a GitHub release."""
-    suite = ROOT.parent
-    if (suite / "apps").is_dir() and (suite / "tools" / "stage_app.py").is_file() and (suite / "core").is_dir():
-        return suite
+    """The suite repository when the portal runs from a checkout, or was installed from one (development): apps
+    then install from the local source instead of a GitHub release."""
+    candidates = [ROOT.parent]
+    try:
+        recorded = (ROOT / CHECKOUT_FILE).read_text(encoding="utf-8").strip()
+    except OSError:
+        recorded = ""
+    if recorded:
+        candidates.append(Path(recorded))
+    for suite in candidates:
+        if (suite / "apps").is_dir() and (suite / "tools" / "stage_app.py").is_file() and (suite / "core").is_dir():
+            return suite
     return None

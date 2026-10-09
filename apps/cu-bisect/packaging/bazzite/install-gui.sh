@@ -5,8 +5,17 @@
 # run bc250-cu-unlock.sh through sudo, same as the manual venv steps in the README.
 #
 # Usage: run from inside a clone of this repo:
-#   bash packaging/bazzite/install-gui.sh
+#   bash packaging/bazzite/install-gui.sh                         # menu entry and Desktop icon
+#   bash packaging/bazzite/install-gui.sh --no-desktop-shortcut   # menu entry only
 set -euo pipefail
+
+DESKTOP_SHORTCUT=true
+for arg in "$@"; do
+  case "$arg" in
+    --no-desktop-shortcut) DESKTOP_SHORTCUT=false ;;
+    *) echo "error: unknown option: $arg" >&2; exit 1 ;;
+  esac
+done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -25,6 +34,8 @@ APP_SRC="$APP_DIR/app"
 VENV_DIR="$APP_DIR/venv"
 LAUNCHER="$BIN_HOME/bc250-unlock-cu-gui"
 DESKTOP_FILE="$DATA_HOME/applications/bc250-cu-unlock.desktop"
+DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
+DESKTOP_ICON="$DESKTOP_DIR/bc250-cu-unlock.desktop"
 ICON_DIR="$DATA_HOME/icons/hicolor/512x512/apps"
 ICON_FILE="$ICON_DIR/bc250-cu-bisect.png"
 
@@ -67,7 +78,7 @@ cd "$APP_SRC" && exec "$VENV_DIR/bin/python" -m bc250_unlock_gui --script "$APP_
 EOF
 chmod +x "$LAUNCHER"
 
-echo "==> Installing desktop entry and icon"
+echo "==> Installing desktop entry, icon and Desktop icon"
 mkdir -p "$(dirname "$DESKTOP_FILE")" "$ICON_DIR"
 cp "$REPO_ROOT/images/bc250-cu-bisect.png" "$ICON_FILE"
 # Use the icon's absolute path rather than the bare theme name: Bazzite's gamescope/Big Picture
@@ -75,6 +86,14 @@ cp "$REPO_ROOT/images/bc250-cu-bisect.png" "$ICON_FILE"
 # icon cache is rebuilt, which otherwise leaves a blank placeholder in the launcher.
 sed -e "s#^Exec=.*#Exec=$LAUNCHER#" -e "s#^Icon=.*#Icon=$ICON_FILE#" \
   "$REPO_ROOT/packaging/common/bc250-cu-unlock.desktop" > "$DESKTOP_FILE"
+if $DESKTOP_SHORTCUT && [ -d "$DESKTOP_DIR" ]; then
+  cp "$DESKTOP_FILE" "$DESKTOP_ICON"
+  # KDE and GNOME only start Desktop launchers that are executable (GNOME also wants them trusted).
+  chmod 755 "$DESKTOP_ICON"
+  command -v gio >/dev/null 2>&1 && gio set "$DESKTOP_ICON" metadata::trusted true 2>/dev/null || true
+else
+  rm -f "$DESKTOP_ICON"
+fi
 
 command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$DATA_HOME/applications" >/dev/null 2>&1 || true
 command -v gtk-update-icon-cache >/dev/null 2>&1 && gtk-update-icon-cache -f -t "$DATA_HOME/icons/hicolor" >/dev/null 2>&1 || true
@@ -87,6 +106,7 @@ Done. BC-250 CU Unlock is installed for your user account only:
   - app + venv: $APP_DIR
   - launcher:   $LAUNCHER
   - menu entry: $DESKTOP_FILE
+$($DESKTOP_SHORTCUT && echo "  - Desktop:    $DESKTOP_ICON")
 
 Launch it from your app menu, or run: $LAUNCHER
 If it ever fails to open (e.g. a bouncing launcher icon that never shows a window), check:

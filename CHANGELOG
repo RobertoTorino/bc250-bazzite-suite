@@ -1,3 +1,19 @@
+Changelog: 09-10-2026 13:56:58
+
+CI: a new installer test, tools/installer-tests/persistent-acpi.sh, and warning-level shellcheck for
+persistent-acpi's scripts. The root requirements-dev.txt includes persistent-acpi's test requirements.
+
+Changelog: 09-10-2026 13:24:51
+
+tools/check_versions.py prints a one-line summary when every version matches, instead of nothing.
+A mismatch is reported as before, and the exit codes are unchanged.
+
+Changelog: 09-10-2026 12:15:17
+
+install.sh in the repository root installs the suite from the checkout, for testing: it runs portal/install.sh
+with the same options. CI's bash -n and shellcheck passes include it, and the portal installer test goes
+through it.
+
 Changelog: 09-10-2026 11:51:07
 
 Installer tests: the shims point BC250_LOG_DIR into the test folder, so the purge step no longer reaches the
@@ -6,7 +22,7 @@ board's real /var/log/bc250-bazzite-test. portal.sh now checks that purge remove
 Changelog: 09-10-2026 11:44:51
 
 Local checks now match CI, including the shellcheck error and bash -n passes and check_manifest's --base;
-changelog times are CEST on both systems; the commands to create the development venv on each system;
+changelog times are CEST on both systems; the commands to create the development venv on each system.
 
 Changelog: 09-10-2026 11:20:42
 

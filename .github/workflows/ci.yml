@@ -66,20 +66,21 @@ jobs:
         run: |
           rc=0
           while IFS= read -r -d '' f; do bash -n "$f" || { echo "::error file=$f::syntax error"; rc=1; }; done \
-            < <(find apps portal tools test.sh -name '*.sh' -print0)
+            < <(find apps portal tools test.sh install.sh -name '*.sh' -print0)
           exit $rc
 
       # shellcheck is preinstalled on ubuntu-latest. Error level for everything; warning level for the scripts
       # that their own release workflows already held to it.
       - name: shellcheck (errors, all scripts)
-        run: find apps portal tools -name '*.sh' -print0 | xargs -0 shellcheck -x -S error test.sh
+        run: find apps portal tools -name '*.sh' -print0 | xargs -0 shellcheck -x -S error test.sh install.sh
 
-      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect and the suite's own scripts)
+      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi and the suite's own scripts)
         run: |
-          shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh             test.sh
+          shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh
           shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/bc250-cores-unlock.sh \
             apps/cores-bisect/install.sh apps/cores-bisect/packaging/bazzite/*.sh
           shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
+          shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh
 
       - name: Line endings
         run: |
@@ -123,6 +124,8 @@ jobs:
         run: bash tools/installer-tests/bazzite-test.sh
       - name: portal installer
         run: bash tools/installer-tests/portal.sh
+      - name: persistent-acpi installer
+        run: bash tools/installer-tests/persistent-acpi.sh
       - name: release tarballs, end to end
         run: bash tools/installer-tests/release.sh
 

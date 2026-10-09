@@ -17,6 +17,9 @@ tar -xzf portal-v*.tar.gz && cd portal-v*/ && ./install.sh
 This installs the portal and BC-250 Bazzite Test. Install the other apps from the portal. Details, uninstalling
 and what goes where: [portal/README.md](portal/README.md).
 
+To test from a clone of this repository instead, run `./install.sh` in its root. The portal then installs every
+app from the clone, so keep it where it is. `./install.sh --uninstall` removes it again.
+
 | App | Folder | What it does |
 |---|---|---|
 | bazzite-test | [`apps/bazzite-test`](apps/bazzite-test) | Read-only diagnostics, stress test and benchmarks (always installed) |

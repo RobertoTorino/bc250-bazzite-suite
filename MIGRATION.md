@@ -33,10 +33,21 @@ describe only what exists.
   changes the root-run, checksummed `test-bazzite.sh`, so it needs a board check), or (b) in the GUI only, by not
   letting a probe-time count override a live one.
 - **sudo warning on the board:** during the portal and bazzite-test installs every `sudo` printed
-  `/etc/sudoers.d/bc250-bisect:2:29: unknown defaults entry "verifytype"`. No code in the suite writes that file;
-  `apps/cores-bisect/README.md` tells the user to create it with one line, so line 2 is likely a local edit. Check
-  the file on the board (`sudo visudo -cf /etc/sudoers.d/bc250-bisect`) before changing anything in the suite.
+  `/etc/sudoers.d/bc250-bisect:2:29: unknown defaults entry "verifytype"`. Cause found: the file had a second,
+  hand-edited copy of the NOPASSWD line with an extra parenthesis (`ALL=(ALL))   NOPASSWD: ALL`); sudo's parser
+  names a setting that isn't in the file. No code in the suite writes or removes sudoers files (the READMEs'
+  `sudo tee` overwrites, so it can't make a duplicate). The owner removed the file. Both bisect READMEs now add a
+  `sudo visudo -cf` check to the setup steps and say to edit the file only with `visudo -f`.
 - **Portal icon:** a copy of bazzite-test's for now.
+- **Persistent ACPI icon:** drawn for the new app window ("ACPI" over eight rising bars, suite purple); replace
+  it if you want a designed one.
+- **Persistent ACPI app, board check open:** install the app from the portal, then Install, reboot, Status with sudo
+  ("override tables loaded this boot"), Uninstall, reboot. Tested only against a fake board (tests and installer
+  test) so far. Its window is standalone (not on core, like the unlock GUIs; core is GPL, the app is MIT).
+- **Untranslated strings:** cores-unlock's "Status with sudo" button and tooltip are English in all languages.
+- **Releases waiting (09-10-2026):** persistent-acpi (app window, new install.sh), cores-bisect (status line, Status
+  with sudo), cu-bisect, governor and helixsr (Desktop icons), and a portal release for the apps.toml change.
+  `check_manifest.py --base origin/main` fails until portal/VERSION is bumped.
 - **QR codes** in the app READMEs and About boxes still point to the old repositories.
 
 ## Details for later steps

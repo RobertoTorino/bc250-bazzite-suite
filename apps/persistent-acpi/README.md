@@ -30,15 +30,29 @@ Works on stock 6-core and unlocked 8-core boards, on all stock BIOS versions
   BLS boot entry at boot time, including kernels installed later. No re-install, no
   regeneration needed after a kernel or image update.
 
-Unlike BIOS flashing it is fully reversible (`./uninstall.sh`, or just delete the file and
-the GRUB line) and carries zero bricking risk.
+Unlike BIOS flashing it is fully reversible (Uninstall in the app,
+`sudo ./bc250-acpi-override.sh --uninstall`, or just delete the file and the GRUB line) and
+carries zero bricking risk.
 
 ## Install (Bazzite / Universal Blue)
 
+Install the app from the BC250 Bazzite Suite portal, or from a clone or release folder, as your
+own user (not with sudo):
+
 ```bash
-git clone https://github.com/RobertoTorino/bc250-persistent-acpi.git
-cd bc250-persistent-acpi
-sudo ./install.sh
+./install.sh                         # app menu entry and Desktop icon
+./install.sh --no-desktop-shortcut   # app menu entry only
+```
+
+Installing the app changes nothing on the board. Open **BC-250 Persistent ACPI** and click
+**Install**, then reboot. The window shows whether the override is installed, the CPU's
+frequency steps and idle states, and (with **Status with sudo**) whether the kernel loaded the
+tables this boot.
+
+From a terminal, without the app:
+
+```bash
+sudo ./bc250-acpi-override.sh --install
 # reboot
 ```
 
@@ -46,7 +60,8 @@ The installer checks for a BC-250 GPU, warns on modded BIOSes (duplicate tables 
 load — do **not** combine this with a modded BIOS that injects its own fixes), verifies
 `CONFIG_ACPI_TABLE_UPGRADE`, installs the cpio, adds the GRUB line idempotently and runs
 `ujust regenerate-grub` (or `grub2-mkconfig` on plain Fedora, where the path in
-`GRUB_EARLY_INITRD_LINUX_CUSTOM` is relative to `/boot/grub2/`).
+`GRUB_EARLY_INITRD_LINUX_CUSTOM` is relative to `/boot/grub2/`). In a terminal a warning asks
+"Continue anyway?"; the app shows the warning in a dialog. `--yes` answers yes to both warnings.
 
 ### Manual install
 
@@ -58,7 +73,10 @@ ujust regenerate-grub   # then reboot
 
 ## Verify
 
+The app's status shows the same information. From a terminal:
+
 ```bash
+./bc250-acpi-override.sh --status                    # installed? frequency steps, idle states
 sudo dmesg | grep -iE 'ACPI.*(SSDT|Table Upgrade)'   # 3 tables loaded as override
 cpupower frequency-info                              # 8 steps, 800 MHz - 3.2 GHz
 cpupower idle-info                                   # POLL, C1, C2 (C2 at 0x414)
@@ -69,10 +87,16 @@ which reports whether the ACPI tables came from the initrd override or the BIOS.
 
 ## Uninstall
 
+Click **Uninstall** in the app and reboot, or from a terminal:
+
 ```bash
-sudo ./uninstall.sh
+sudo ./bc250-acpi-override.sh --uninstall
 # reboot
 ```
+
+To remove the app itself: `./install.sh --uninstall` (add `--purge` to also remove its
+settings). This leaves the override as it is; uninstall the override first if you want the
+board back on the BIOS tables.
 
 ## Vendored artifacts
 

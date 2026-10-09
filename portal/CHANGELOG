@@ -1,3 +1,16 @@
+Changelog: 09-10-2026 13:56:58
+
+apps.toml: Persistent ACPI now installs its app (bash install.sh, no sudo) instead of the ACPI override, is
+detected by its launcher and gets an Open button. The override is installed from the app's window. The portal
+test that used Persistent ACPI as the app without an Open button now uses a changed copy of another entry.
+
+Changelog: 09-10-2026 12:15:17
+
+A portal installed from the suite checkout now installs the other apps from that checkout as well, as it already
+did when run from there. Before, it fell back to the GitHub releases, so the optional apps could not be tried
+before they were released. install.sh records the checkout in /opt/bc250-bazzite-suite/suite-checkout; an install
+from a release has no such file and is unchanged.
+
 Changelog: 08-10-2026 22:26:29
 
 Initial release 0.1.0 of the BC250 Bazzite Suite portal.

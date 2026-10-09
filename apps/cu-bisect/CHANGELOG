@@ -1,3 +1,15 @@
+Changelog: 09-10-2026 13:56:58
+
+install-gui.sh and install-bisect-gui.sh also put an icon on the Desktop; --no-desktop-shortcut leaves
+it out. The uninstall scripts remove it.
+
+Changelog: 09-10-2026 13:17:34
+
+README: the passwordless sudo setup now checks the drop-in with `sudo visudo -cf /etc/sudoers.d/bc250-cu-bisect`,
+which must print "parsed OK", and says to edit it by hand only with `sudo visudo -f`. A malformed line in
+a drop-in makes every sudo command print a warning, or stops sudo working at all. Docs only; the app
+is unchanged.
+
 Changelog: 07-10-2026 07:30:00
 
 Uneven CU unlocks are now impossible, and the README explains the whole process for first-timers.

@@ -141,6 +141,8 @@ else
         as_root mkdir -p "$STAGE/bc250_core"
         (cd "$CORE_SRC" && tar --exclude='__pycache__' -cf - .) |
             as_root tar -xf - -C "$STAGE/bc250_core" --no-same-owner
+        # The installed portal installs the other apps from this checkout too, as when it runs from here.
+        (cd "$SRC/.." && pwd -P) | as_root tee "$STAGE/suite-checkout" >/dev/null
     fi
     as_root chown -R root:root "$STAGE"
     as_root find "$STAGE" -type d -exec chmod 755 {} +

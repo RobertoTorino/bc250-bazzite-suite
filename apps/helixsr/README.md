@@ -74,7 +74,8 @@ cd bc250-bazzite-helixsr-gui-v*/
 
 It installs the app for your user only: a private venv with PyQt6 and the app under
 `~/.local/share/bc250-bazzite-helixsr-gui`, the launcher `~/.local/bin/bc250-bazzite-helixsr-gui`, a
-desktop entry and the icon. **BC-250 HelixSR Manager** then appears in the application menu (and in Steam's
+desktop entry, the icon and a Desktop icon (`./install.sh --no-desktop-shortcut` leaves the Desktop icon out).
+**BC-250 HelixSR Manager** then appears in the application menu (and in Steam's
 Game Mode via *Add a Non-Steam Game* if you want it there). Run `./install.sh` again from a newer release to
 update, `./install.sh --uninstall` to remove it; the imported payload and the deployed games are left alone.
 

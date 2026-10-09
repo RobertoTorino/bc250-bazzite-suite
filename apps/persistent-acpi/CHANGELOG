@@ -1,3 +1,22 @@
+Changelog: 09-10-2026 13:56:58
+
+The app now has a window: BC-250 Persistent ACPI (bc250_acpi_gui, PyQt6) shows whether the override is
+installed, the CPU's frequency steps and idle states, and with Status with sudo whether the kernel loaded the
+tables this boot. Install and Uninstall run the override script through sudo (masked password prompt, never
+stored). A warning that asks "Continue anyway?" (no BC-250 GPU found, a BIOS that looks modded) is shown in a
+dialog, and the install runs again with --yes only after Yes.
+
+The override scripts moved into bc250-acpi-override.sh (--install, --uninstall, --status, --yes); the install
+and uninstall steps are the same as in the old install.sh and uninstall.sh. Without a terminal, a warning stops
+the install with exit code 3 instead of waiting for an answer. uninstall.sh is gone.
+
+install.sh now installs the app like the other suite apps, as your own user: a root-owned copy in
+/opt/bc250-persistent-acpi-v<version>, a venv with PyQt6, the launcher bc250-persistent-acpi-gui, an app menu
+entry and a Desktop icon (--no-desktop-shortcut, --uninstall, --uninstall --purge). Installing the app changes
+nothing on the board. Run as root, it stops and points at sudo ./bc250-acpi-override.sh --install.
+
+New app icon, tests for the override script against a fake board and for the window, and README updated.
+
 Changelog: 06-10-2026 03:50:10
 
 Initial commit.

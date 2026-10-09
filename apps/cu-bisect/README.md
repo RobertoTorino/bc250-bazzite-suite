@@ -259,9 +259,12 @@ systemctl --user status bc250-cu-bisect-auto.service
 ```bash
 echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/bc250-cu-bisect
 sudo chmod 440 /etc/sudoers.d/bc250-cu-bisect
+sudo visudo -cf /etc/sudoers.d/bc250-cu-bisect   # must print "parsed OK"
 sudo -k && sudo -n true && echo OK    # must print OK without asking
 ```
 Revert after testing with `sudo rm /etc/sudoers.d/bc250-cu-bisect`.
+If you edit the file by hand, use `sudo visudo -f /etc/sudoers.d/bc250-cu-bisect`: it refuses to save a broken line.
+A broken line makes every `sudo` command print a warning, or stops sudo working at all.
 
 `systemctl reboot` is tried first with `--no-ask-password` (so it fails instead of popping up a GUI
 auth dialog nobody is there to answer), falling back to `sudo -n systemctl reboot`; if both fail the
@@ -496,7 +499,7 @@ python3 -m venv _python && _python/bin/pip install -r requirements.txt && _pytho
 ```
 
 On Bazzite there's also a self-installer that sets up a private venv under `~/.local`, plus a launcher,
-app-menu entry and icon — no `rpm-ostree` layering, nothing outside your home directory:
+app-menu entry, icon and Desktop icon (`--no-desktop-shortcut` leaves the Desktop icon out) — no `rpm-ostree` layering, nothing outside your home directory:
 
 ```bash
 bash packaging/bazzite/install-bisect-gui.sh    # installs for your user only

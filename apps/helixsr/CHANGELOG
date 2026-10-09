@@ -1,3 +1,8 @@
+Changelog: 09-10-2026 13:56:58
+
+install.sh also puts an icon on the Desktop; --no-desktop-shortcut leaves it out, and --uninstall removes
+it. Options can now be combined, e.g. --run --no-desktop-shortcut.
+
 Changelog: 08-10-2026 04:17:40
 
 Designed a new icon.

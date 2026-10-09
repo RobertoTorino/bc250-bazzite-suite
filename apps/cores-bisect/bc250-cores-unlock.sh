@@ -190,7 +190,13 @@ uninstall_service() {
 }
 
 status() {
-  say "Service: $(systemctl is-enabled "$UNIT_NAME" 2>/dev/null || echo 'not installed'), $(systemctl is-active "$UNIT_NAME" 2>/dev/null || echo inactive)"
+  # is-enabled/is-active print their answer (not-found, disabled, inactive, ...) and also exit non-zero
+  # for most of them, so keep the printed answer and only fall back when there is none.
+  local enabled active
+  enabled=$(systemctl is-enabled "$UNIT_NAME" 2>/dev/null) || true
+  active=$(systemctl is-active "$UNIT_NAME" 2>/dev/null) || true
+  [[ -z $enabled || $enabled == not-found ]] && enabled="not installed"
+  say "Service: $enabled, ${active:-inactive}"
   say "Threads online: $(nthreads)"
   [[ -s $GUARD ]] && say "Reboot guard: SET ($GUARD) - the service re-applied and rebooted but the cores did not come up."
   if (( EUID == 0 )) || sudo -n true 2>/dev/null; then

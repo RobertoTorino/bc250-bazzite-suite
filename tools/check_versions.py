@@ -18,6 +18,7 @@ PATTERNS = {
 
 def main() -> int:
     errors = []
+    checked = 0
     units = [ROOT / "core", ROOT / "portal", *sorted(p for p in (ROOT / "apps").iterdir() if p.is_dir())]
     for unit in units:
         version_file = unit / "VERSION"
@@ -32,11 +33,15 @@ def main() -> int:
             if pattern is None or not path.is_file() or "tests" in path.parts:
                 continue
             for got in pattern.findall(path.read_text(encoding="utf-8")):
+                checked += 1
                 if got != want:
                     errors.append(f"{path.relative_to(ROOT)}: {got} != VERSION {want}")
     for e in errors:
         print(e, file=sys.stderr)
-    return 1 if errors else 0
+    if errors:
+        return 1
+    print(f"OK: {checked} versions in {len(units)} folders match their VERSION file")
+    return 0
 
 
 if __name__ == "__main__":

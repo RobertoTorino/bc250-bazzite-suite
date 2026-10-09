@@ -1,5 +1,21 @@
 # Changelog
 
+Changelog: 09-10-2026 13:56:58
+
+bc250-cores-unlock.sh --status printed each systemctl answer twice when the service was not installed
+("Service: not-found" and "not installed, inactive" and "inactive" on separate lines). It now prints one line,
+e.g. "Service: not installed, inactive".
+
+Cores Unlock window: new Status with sudo button. It runs the status as root, asking for the sudo password when
+needed, so the core presence mask is always shown. The new strings are English in every language for now.
+
+Changelog: 09-10-2026 13:17:34
+
+README: the passwordless sudo setup now checks the drop-in with `sudo visudo -cf /etc/sudoers.d/bc250-bisect`,
+which must print "parsed OK", and says to edit it by hand only with `sudo visudo -f`. A malformed line in
+a drop-in makes every sudo command print a warning, or stops sudo working at all. Docs only; the app
+is unchanged.
+
 ## 0.2.0
 
 The last two roadmap items: optional longer burn-in, and translated GUIs.

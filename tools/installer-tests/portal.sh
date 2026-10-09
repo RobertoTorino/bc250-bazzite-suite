@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Exercise portal/install.sh: from the checkout, from a release-shaped tree, uninstall and purge.
+# Exercise portal/install.sh: from the checkout (through the root install.sh), from a release-shaped tree,
+# uninstall and purge.
 set -u
 SUITE=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 T=/tmp/bc250-portal-test
@@ -11,9 +12,10 @@ check() { if eval "$2"; then echo "  ok   $1"; else echo "  FAIL $1"; fail=1; fi
 D=$XDG_DATA_HOME
 logs=()
 
-echo "== 1. install from the suite checkout"
-bash "$SUITE/portal/install.sh" > "$T/log1" 2>&1; rc=$?; logs+=("$T/log1")
+echo "== 1. install from the suite checkout, with the install.sh at its root"
+bash "$SUITE/install.sh" > "$T/log1" 2>&1; rc=$?; logs+=("$T/log1")
 check "exit 0" "[ $rc -eq 0 ]"
+check "portal installs apps from the checkout" "[ \"\$(cat $T/opt/bc250-bazzite-suite/suite-checkout)\" = \"\$(cd $SUITE && pwd -P)\" ]"
 check "portal in /opt" "[ -f $T/opt/bc250-bazzite-suite/bc250_portal/__main__.py ] && [ -f $T/opt/bc250-bazzite-suite/apps.toml ]"
 check "portal symlink" "[ \"\$(readlink $T/opt/bc250-bazzite-suite)\" = bc250-bazzite-suite-v0.1.0 ]"
 check "core bundled with portal" "[ -f $T/opt/bc250-bazzite-suite/bc250_core/platform.py ]"
@@ -35,6 +37,7 @@ bash "$R/install.sh" --no-desktop-shortcut > "$T/log2" 2>&1; rc=$?; logs+=("$T/l
 check "exit 0" "[ $rc -eq 0 ]"
 check "new portal version, old removed" "[ \"\$(readlink $T/opt/bc250-bazzite-suite)\" = bc250-bazzite-suite-v0.1.1 ] && [ ! -d $T/opt/bc250-bazzite-suite-v0.1.0 ]"
 check "bundled/ not copied to /opt" "[ ! -d $T/opt/bc250-bazzite-suite/bundled ]"
+check "portal installs apps from releases" "[ ! -e $T/opt/bc250-bazzite-suite/suite-checkout ]"
 check "record has the bundled tag" "grep -q '\"bazzite-test\": \"bazzite-test-v0.1.0\"' $D/bc250-bazzite-suite/portal/installed.json"
 check "desktop icons removed" "[ ! -e $HOME/Desktop/bc250-bazzite-suite.desktop ] && [ ! -e $HOME/Desktop/bc250-bazzite-test.desktop ]"
 

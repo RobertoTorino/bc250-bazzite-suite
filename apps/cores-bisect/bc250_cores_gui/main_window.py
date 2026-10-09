@@ -128,11 +128,15 @@ class MainWindow(QWidget):
         self.status_btn = QPushButton(self.tr("Refresh status"))
         self.status_btn.setToolTip(self.tr("Show the core presence mask, threads, service and guard state."))
         self.status_btn.clicked.connect(self._refresh_status)
+        self.sudo_status_btn = QPushButton(self.tr("Status with sudo"))
+        self.sudo_status_btn.setToolTip(self.tr(
+            "Run the status as root (asks for the sudo password), so it also shows the core presence mask."))
+        self.sudo_status_btn.clicked.connect(self._on_sudo_status)
         self.recheck_btn = QPushButton(self.tr("Re-check bisect results"))
         self.recheck_btn.setToolTip(self.tr(
             "Re-read bc250-cores-bisect.sh's recorded results, e.g. after more rounds finished."))
         self.recheck_btn.clicked.connect(self._refresh_gate)
-        for btn in (self.install_btn, self.uninstall_btn, self.status_btn, self.recheck_btn):
+        for btn in (self.install_btn, self.uninstall_btn, self.status_btn, self.sudo_status_btn, self.recheck_btn):
             buttons.addWidget(btn)
         root.addLayout(buttons)
 
@@ -185,7 +189,7 @@ class MainWindow(QWidget):
         self.output.appendPlainText(text)
 
     def _set_busy(self, busy: bool) -> None:
-        for btn in (self.install_btn, self.uninstall_btn, self.status_btn, self.recheck_btn):
+        for btn in (self.install_btn, self.uninstall_btn, self.status_btn, self.sudo_status_btn, self.recheck_btn):
             btn.setEnabled(not busy)
         if busy:
             QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
@@ -269,6 +273,9 @@ class MainWindow(QWidget):
         if answer != QMessageBox.StandardButton.Yes:
             return
         self._run_privileged(["--uninstall"], "uninstall")
+
+    def _on_sudo_status(self) -> None:
+        self._run_privileged(["--status"], "status")
 
     def _refresh_status(self) -> None:
         if self.runner.busy:

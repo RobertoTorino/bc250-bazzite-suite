@@ -7,9 +7,10 @@
 # The imported HelixSR release lives in ~/.local/share/bc250-bazzite-helixsr-gui/payload and is
 # kept across updates and uninstalls (it is never shipped with this app).
 #
-#   ./install.sh              install or update
-#   ./install.sh --uninstall  remove everything it installed
-#   ./install.sh --run        install and start the app
+#   ./install.sh                         install or update
+#   ./install.sh --no-desktop-shortcut   app menu entry only, no icon on the Desktop
+#   ./install.sh --uninstall             remove everything it installed
+#   ./install.sh --run                   install and start the app
 
 set -euo pipefail
 
@@ -22,6 +23,7 @@ APP_DIR="$DATA_HOME/$APP_ID"
 VENV_DIR="$APP_DIR/venv"
 APPS_DIR="$DATA_HOME/applications"
 ICON_DIR="$DATA_HOME/icons/hicolor/512x512/apps"
+DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
 
 say()  { printf '\033[1;35m==>\033[0m %s\n' "$*"; }
 fail() { printf '\033[1;31merror:\033[0m %s\n' "$*" >&2; exit 1; }
@@ -31,7 +33,7 @@ uninstall() {
     rm -rf "$APP_DIR/venv" "$APP_DIR/bc250_bazzite_helixsr" "$APP_DIR/images"
     rm -f "$APP_DIR/requirements.txt" "$APP_DIR/LICENSE" "$APP_DIR/README.md"
     rmdir "$APP_DIR" 2>/dev/null || true
-    rm -f "$BIN_DIR/$APP_ID" "$APPS_DIR/$APP_ID.desktop" "$ICON_DIR/$APP_ID.png"
+    rm -f "$BIN_DIR/$APP_ID" "$APPS_DIR/$APP_ID.desktop" "$ICON_DIR/$APP_ID.png" "$DESKTOP_DIR/$APP_ID.desktop"
     command -v update-desktop-database >/dev/null && update-desktop-database -q "$APPS_DIR" || true
     command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$DATA_HOME/icons/hicolor" 2>/dev/null || true
     if [[ -d "$APP_DIR/payload" ]]; then
@@ -41,12 +43,19 @@ uninstall() {
     fi
 }
 
-case "${1:-}" in
-    --uninstall) uninstall; exit 0 ;;
-    --run|"") ;;
-    -h|--help) sed -n '3,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-    *) fail "unknown option: $1 (try --help)" ;;
-esac
+RUN=false
+DESKTOP_SHORTCUT=true
+UNINSTALL=false
+for arg in "$@"; do
+    case "$arg" in
+        --uninstall) UNINSTALL=true ;;
+        --run) RUN=true ;;
+        --no-desktop-shortcut) DESKTOP_SHORTCUT=false ;;
+        -h|--help) sed -n '3,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) fail "unknown option: $arg (try --help)" ;;
+    esac
+done
+if $UNINSTALL; then uninstall; exit 0; fi
 
 [[ -f "$SRC_DIR/bc250_bazzite_helixsr/__main__.py" ]] || fail "run this script from the unpacked release directory"
 command -v python3 >/dev/null || fail "python3 is required"
@@ -80,16 +89,24 @@ chmod 755 "$BIN_DIR/$APP_ID"
 # is not on PATH of the session that spawns menu entries.
 sed "s|^Exec=.*|Exec=$BIN_DIR/$APP_ID|" "$SRC_DIR/$APP_ID.desktop" > "$APPS_DIR/$APP_ID.desktop"
 chmod 644 "$APPS_DIR/$APP_ID.desktop"
+if $DESKTOP_SHORTCUT && [[ -d "$DESKTOP_DIR" ]]; then
+    cp "$APPS_DIR/$APP_ID.desktop" "$DESKTOP_DIR/$APP_ID.desktop"
+    # KDE and GNOME only start Desktop launchers that are executable (GNOME also wants them trusted).
+    chmod 755 "$DESKTOP_DIR/$APP_ID.desktop"
+    command -v gio >/dev/null && gio set "$DESKTOP_DIR/$APP_ID.desktop" metadata::trusted true 2>/dev/null || true
+else
+    rm -f "$DESKTOP_DIR/$APP_ID.desktop"
+fi
 cp "$SRC_DIR/images/$APP_ID.png" "$ICON_DIR/$APP_ID.png"
 command -v update-desktop-database >/dev/null && update-desktop-database -q "$APPS_DIR" || true
 command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$DATA_HOME/icons/hicolor" 2>/dev/null || true
 
-say "Installed. Find \"BC-250 HelixSR Manager\" in the application menu, or run: $BIN_DIR/$APP_ID"
+say "Installed. Find \"BC-250 HelixSR Manager\" in the application menu$($DESKTOP_SHORTCUT && echo ' or on the Desktop'), or run: $BIN_DIR/$APP_ID"
 case ":$PATH:" in
     *":$BIN_DIR:"*) ;;
     *) echo "    (note: $BIN_DIR is not on your PATH in this shell)" ;;
 esac
 
-if [[ "${1:-}" == "--run" ]]; then
+if $RUN; then
     exec "$BIN_DIR/$APP_ID"
 fi
