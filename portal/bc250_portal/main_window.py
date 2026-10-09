@@ -3,7 +3,10 @@
 
 Install, update and uninstall run the app's own installer in a terminal window (they may ask for the sudo
 password and print what they do); the portal watches for the exit file the terminal writes and then refreshes.
-An app that changes the board (unlocks, governor, ACPI) gets a warning before it is installed or opened."""
+An app that changes the board (unlocks, governor, ACPI) gets a warning before it is installed or opened.
+
+Updates: a red dot marks every card whose installed app differs from the version this portal pins, the header counts
+them, and at start the portal looks for a newer portal release on GitHub (which is how newer app versions arrive)."""
 
 from __future__ import annotations
 
@@ -11,18 +14,20 @@ import shlex
 import subprocess
 import tempfile
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path, PurePath
 
-from PyQt6.QtCore import QTimer, Qt, pyqtSignal
+from PyQt6.QtCore import QTimer, Qt, QUrl, pyqtSignal
+from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
     QFrame, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea, QVBoxLayout, QWidget,
 )
 
 from bc250_core.platform import expand, launch_in_terminal
 from bc250_core.settings import open_settings, restore_geometry, save_geometry
-from bc250_core.theme import ORANGE, header_font
-from bc250_core.updates import UpdateChecker
+from bc250_core.theme import ORANGE, RED, header_font
+from bc250_core.updates import ReleaseInfo, UpdateChecker, version_tuple
 from bc250_core.widgets import ClickableLogo, StatusPill, accent_button, hint_label
 
 from . import APP_NAME, INFO, LOGO_PATH, __version__
@@ -44,6 +49,16 @@ class Pending:
     action: str                 # "install" | "uninstall"
     exit_file: Path
     tag: str
+
+
+def red_dot(tooltip: str = "") -> QLabel:
+    """The small red dot that marks an available update."""
+    dot = QLabel()
+    dot.setFixedSize(10, 10)
+    dot.setStyleSheet(f"background:{RED}; border-radius:5px;")
+    dot.setToolTip(tooltip)
+    dot.hide()
+    return dot
 
 
 def shell_line(folder: PurePath, commands: tuple[str, ...]) -> str:
@@ -80,6 +95,8 @@ class AppCard(QFrame):
         text.addWidget(self.badges)
         row.addLayout(text, 1)
 
+        self.dot = red_dot()
+        row.addWidget(self.dot, 0, Qt.AlignmentFlag.AlignVCenter)
         self.pill = StatusPill()
         row.addWidget(self.pill, 0, Qt.AlignmentFlag.AlignVCenter)
         self.open_button = QPushButton("Open")
@@ -100,10 +117,13 @@ class AppCard(QFrame):
         for button in (self.open_button, self.install_button, self.uninstall_button):
             row.addWidget(button, 0, Qt.AlignmentFlag.AlignVCenter)
 
-    def show_state(self, installed: bool, installed_tag: str, busy: str = "") -> None:
+    def show_state(self, installed: bool, installed_tag: str, busy: str = "") -> bool:
+        """Show the app's state; True when an update is available."""
         entry = self.entry
         # An update needs a known, different tag: an app installed some other way has none recorded.
         update = installed and bool(installed_tag) and installed_tag not in (entry.tag, "local")
+        self.dot.setVisible(update)
+        self.dot.setToolTip(f"Update available: {entry.tag} (installed {installed_tag})." if update else "")
         if busy:
             self.pill.set_status(busy, "info")
         elif not installed:
@@ -117,10 +137,13 @@ class AppCard(QFrame):
         self.install_button.setEnabled(not busy)
         self.uninstall_button.setEnabled(installed and not busy)
         self.open_button.setEnabled(installed and not busy)
+        return update
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, entries: list[AppEntry], sources: Sources, records: Records, parent: QWidget | None = None):
+    def __init__(self, entries: list[AppEntry], sources: Sources, records: Records,
+                 portal_check: Callable[[], ReleaseInfo] | None = None, parent: QWidget | None = None):
+        """*portal_check* returns the newest portal release (run once, off the GUI thread); None: no check."""
         super().__init__(parent)
         self.entries = entries
         self.sources = sources
@@ -141,6 +164,16 @@ class MainWindow(QMainWindow):
         title = QLabel(f"{APP_NAME}  <span style='color:#9aa0a6; font-size:14px;'>v{__version__}</span>")
         title.setStyleSheet(header_font() + "font-size:24px; font-weight:800;")
         header.addWidget(title, 1)
+        self.updates_label = QLabel()
+        self.updates_label.setStyleSheet(f"color:{RED}; font-weight:700;")
+        self.updates_label.hide()
+        header.addWidget(self.updates_label)
+        self.portal_button = QPushButton()
+        self.portal_button.setStyleSheet(f"color:{RED}; font-weight:700;")
+        self.portal_button.clicked.connect(self._open_portal_release)
+        self.portal_button.hide()
+        header.addWidget(self.portal_button)
+        self.portal_release: ReleaseInfo | None = None
         refresh = QPushButton("Refresh")
         refresh.setToolTip("Look again at which apps are installed.")
         refresh.clicked.connect(self._on_refresh)
@@ -175,12 +208,17 @@ class MainWindow(QMainWindow):
         self.poll.timeout.connect(self._check_pending)
         restore_geometry(self, self.settings)
         self.refresh()
+        self.portal_checker = UpdateChecker(self)
+        self.portal_checker.finished.connect(self._portal_checked)
+        if portal_check is not None:
+            self.portal_checker.start(portal_check)
 
     # ------------------------------------------------------------------------------------------- state
     def busy(self) -> bool:
         return self.pending is not None or self._job is not None
 
     def refresh(self) -> None:
+        updates = 0
         for entry in self.entries:
             busy = ""
             if self._job and self._job[0] is entry:
@@ -188,10 +226,30 @@ class MainWindow(QMainWindow):
             elif self.pending and self.pending.entry is entry:
                 busy = "Installing…" if self.pending.action == "install" else "Removing…"
             card = self.cards[entry.key]
-            card.show_state(is_installed(entry), self.records.get(entry.key), busy)
+            updates += card.show_state(is_installed(entry), self.records.get(entry.key), busy)
             if self.busy() and not busy:
                 card.install_button.setEnabled(False)
                 card.uninstall_button.setEnabled(False)
+        self.updates_label.setText(f"\u25cf {updates} update{'s' if updates != 1 else ''}")
+        self.updates_label.setToolTip("Apps whose installed version differs from the one this portal pins; "
+                                      "each has a red dot and an Update button.")
+        self.updates_label.setVisible(updates > 0)
+
+    def _portal_checked(self, release: object) -> None:
+        """A newer portal release brings newer pinned app versions; offer its release page."""
+        if not isinstance(release, ReleaseInfo) or release.error or not release.version:
+            return                                      # offline or no release yet: nothing to announce
+        if version_tuple(release.version) <= version_tuple(__version__):
+            return
+        self.portal_release = release
+        self.portal_button.setText(f"\u25cf Portal {release.version} available")
+        self.portal_button.setToolTip(f"Released {release.published}. A new portal version pins newer app versions; "
+                                      "click to open its release page.")
+        self.portal_button.show()
+
+    def _open_portal_release(self) -> None:
+        if self.portal_release is not None:
+            QDesktopServices.openUrl(QUrl(self.portal_release.url))
 
     # ----------------------------------------------------------------------------------------- actions
     def _confirm_board_change(self, entry: AppEntry, action: str) -> bool:
@@ -307,4 +365,5 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event) -> None:
         save_geometry(self, self.settings)
         self.worker.stop(2000)
+        self.portal_checker.stop(2000)
         super().closeEvent(event)

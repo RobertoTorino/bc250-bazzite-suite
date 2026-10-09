@@ -1,3 +1,10 @@
+Changelog: 09-10-2026 17:59:08
+
+Update notices: a red dot on every card whose installed app differs from the version this portal pins (the Update
+case), a red count in the header ("1 update"), and a check at start for a newer portal release on GitHub (tags
+portal-v*, in the background with bc250_core.updates; nothing shows when offline or when there is none). A newer one
+shows a red "Portal x.y.z available" button that opens its release page. Tests in tests/test_window.py.
+
 Changelog: 09-10-2026 17:51:51
 
 Only one instance runs per user: starting the app again brings the running window to the front instead of opening a second one.

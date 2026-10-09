@@ -14,6 +14,7 @@ from bc250_portal import MANIFEST
 from bc250_portal import main_window as mw
 from bc250_portal.manifest import load
 from bc250_portal.sources import Records, Sources
+from bc250_core.updates import ReleaseInfo
 
 YES, CANCEL = QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.Cancel
 
@@ -153,3 +154,44 @@ def test_closed_terminal_can_be_abandoned(window, launched, monkeypatch):
 def test_shell_line_quotes_folder():
     line = mw.shell_line(PurePosixPath("/tmp/a b"), ("bash x.sh", "bash y.sh"))
     assert line == "cd '/tmp/a b' && bash x.sh && bash y.sh"
+
+
+def test_red_dot_and_count_for_updates(window, home):
+    for name in ("bc250-governor-manager", "bc250-bazzite-helixsr-gui"):
+        (home / ".local" / "bin" / name).write_text("#!/bin/sh\n")
+    window.records.set("governor", "governor-v0.0.9")              # older than the pin: an update
+    window.records.set("helixsr", next(e.tag for e in window.entries if e.key == "helixsr"))   # the pinned one
+    window.refresh()
+    assert not window.cards["governor"].dot.isHidden()
+    assert window.cards["helixsr"].dot.isHidden()
+    assert "governor-v0.0.9" in window.cards["governor"].dot.toolTip()
+    assert not window.updates_label.isHidden() and window.updates_label.text().endswith("1 update")
+    window.records.set("governor", next(e.tag for e in window.entries if e.key == "governor"))
+    window.refresh()
+    assert window.cards["governor"].dot.isHidden() and window.updates_label.isHidden()
+
+
+def portal_window(tmp_path, release):
+    return mw.MainWindow(load(MANIFEST), FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"),
+                         portal_check=lambda: release)
+
+
+def test_newer_portal_release_is_offered(qapp, home, settings_dir, tmp_path, launched, monkeypatch):
+    opened = []
+    monkeypatch.setattr(mw.QDesktopServices, "openUrl", lambda url: opened.append(url.toString()))
+    release = ReleaseInfo(version="99.0.0", tag="portal-v99.0.0", url="https://example.invalid/r", published="2030-01-01")
+    w = portal_window(tmp_path, release)
+    assert wait_for(lambda: not w.portal_button.isHidden())
+    assert w.portal_button.text().endswith("Portal 99.0.0 available")
+    w.portal_button.click()
+    assert opened == ["https://example.invalid/r"]
+    w.close()
+
+
+@pytest.mark.parametrize("release", [ReleaseInfo(version="0.0.1", tag="portal-v0.0.1"),
+                                     ReleaseInfo(error="no connection (offline)"), ReleaseInfo()])
+def test_no_portal_offer_when_not_newer_or_offline(qapp, home, settings_dir, tmp_path, launched, release):
+    w = portal_window(tmp_path, release)
+    assert wait_for(lambda: not w.portal_checker.running, 3000)
+    assert w.portal_button.isHidden()
+    w.close()

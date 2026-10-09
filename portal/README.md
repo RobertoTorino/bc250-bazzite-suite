@@ -12,6 +12,10 @@ card ("pill") with **Install**, **Open** and **Uninstall**.
   exactly those tarballs from the suite's GitHub releases and checks each against the SHA-256 pinned there, or
   against the release's `SHA256SUMS` until one is pinned. Then it unpacks the tarball without ever writing
   outside its folder.
+- **Updates:** a red dot marks every app whose installed version differs from the one this portal pins, and the
+  header counts them; **Update** installs the pinned version. Newer app versions come with a newer portal
+  release: at start the portal looks for one on GitHub and, when there is one, shows a red **Portal x.y.z
+  available** button that opens its release page.
 
 ## Install
 

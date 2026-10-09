@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import QMessageBox
 
 from bc250_core import instance
 from bc250_core.app import create_app, exec_app
+from bc250_core.updates import latest_release, repo_slug
 
 from . import APP_NAME, INFO, MANIFEST, __version__, state_dir, suite_checkout
 from .main_window import MainWindow
@@ -50,7 +51,12 @@ def main() -> int:
     # One instance: a second launch brings the running window to the front and exits.
     if instance.already_running(INFO.app_id):
         return 0
-    window = MainWindow(entries, sources, Records(state_dir() / "installed.json"))
+
+    # The newest portal release on GitHub, checked once in the background; offline it simply finds nothing.
+    def portal_check():
+        return latest_release(repo_slug(INFO.repo_url), INFO.tag_prefix, user_agent=INFO.user_agent)
+
+    window = MainWindow(entries, sources, Records(state_dir() / "installed.json"), portal_check=portal_check)
     window.show()
     server = instance.serve(INFO.app_id, window)  # noqa: F841 (kept alive while the app runs)
     return exec_app(app)
