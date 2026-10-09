@@ -1,3 +1,8 @@
+Changelog: 09-10-2026 22:04:32
+
+Tests: tools/tests/test_icons.py checks that every installer that points its menu entry at images/$APP_ID.png
+has that file.
+
 Changelog: 09-10-2026 21:53:42
 
 Installer tests: the portal test covers the per-app questions of --uninstall (cancel, skip, uninstall).

@@ -10,7 +10,7 @@ APP_DIR="$DATA_HOME/bc250-unlock-cu-gui"
 LAUNCHER="$BIN_HOME/bc250-unlock-cu-gui"
 DESKTOP_FILE="$DATA_HOME/applications/bc250-cu-unlock.desktop"
 DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
-ICON_FILE="$DATA_HOME/icons/hicolor/512x512/apps/bc250-cu-bisect.png"
+ICON_FILE="$DATA_HOME/icons/hicolor/512x512/apps/bc250-cu-bisect-unlock.png"
 
 rm -rf "$APP_DIR"
 rm -f "$LAUNCHER" "$DESKTOP_FILE" "$ICON_FILE" "$DESKTOP_DIR/bc250-cu-unlock.desktop"

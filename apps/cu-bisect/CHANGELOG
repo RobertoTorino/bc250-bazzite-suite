@@ -1,3 +1,10 @@
+Changelog: 09-10-2026 22:09:22
+
+The CU Unlock GUI has its own icon, images/bc250-cu-bisect-unlock.png: in its window, its menu entry and its
+Desktop icon (install-gui.sh, uninstall-gui.sh). It used the bisect GUI's icon before, under the same file name in
+the icon folder, so uninstalling one GUI also removed the other's icon. README: the screenshot links follow the
+renamed images (bc-cu-bisect-gui.png, bc-cu-unlock.png).
+
 Changelog: 09-10-2026 18:32:48
 
 Docs: links to the old stand-alone repositories (which no longer exist) now point at the apps' folders in the

@@ -1,3 +1,9 @@
+Changelog: 09-10-2026 22:04:32
+
+The portal icon is images/bc250-bazzite-suite.png again, the name install.sh (menu entry, Desktop icon) and the
+window's logo look for; renamed to bc250-bazzite-portal.png, the menu entry and the Desktop icon had no picture
+and the window no logo.
+
 Changelog: 09-10-2026 21:53:42
 
 install.sh --uninstall now asks about each other suite app that is installed before it removes anything: y
