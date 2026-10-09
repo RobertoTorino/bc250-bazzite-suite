@@ -1078,30 +1078,19 @@ rpm -qa 2>/dev/null | grep -i "^mesa" | sort | tee -a "$LOG_FILE"
 echo
 
 fi  # TEST 20
-if want 21; then
-log_result "[TEST 21] Compute Unit (CU) Count Test"
-log_result "BC-250 ships with 24 of 40 RDNA2 CUs active; the 40CU unlock re-enables the rest"
-CU_COUNT=""
-CU_SOURCE=""
-CU_LIVE=""
-
 # A runtime CU unlock writes the WGP masks after the driver has probed. The kernel keeps its probe-time
 # topology (active_cu_number; RADV reads the same snapshot), so it never sees the change. The live value
 # is in the GPU registers, which umr reads (read-only, needs root). Per shader array (4 rows, 5 WGPs of
 # 2 CUs): SPI_PG_ENABLE_STATIC_WGP_MASK = WGPs that get work, CC_GC_SHADER_ARRAY_CONFIG bits 16-20 =
 # WGPs marked inactive. A WGP is active when its SPI bit is set and its CC bit is clear.
+# Defined outside test 21 so that test 42 can read the live count when test 21 did not run.
 CU_UMR=""
 for p in /usr/bin/umr /usr/sbin/umr /usr/local/bin/umr; do [ -x "$p" ] && { CU_UMR=$p; break; }; done
-if [ "$(id -u)" != 0 ]; then
-    log_howto "INFO: Live CU masks not read: reading the GPU registers needs root (sudo)." \
-              "INFO: Live CU masks not read: this needs admin privileges (Settings › Privacy)."
-elif [ -z "$CU_UMR" ]; then
-    log_result "INFO: umr is not installed, so the live CU masks can't be read."
-    log_result "HINT: sudo rpm-ostree install umr (then reboot) to see a CU unlock made at runtime."
-elif ! root_safe "$CU_UMR"; then
-    log_result "WARNING: $CU_UMR is not owned by root or is writable by others; not running it as root."
-    WARN_FOUND=true
-else
+
+# read_live_cus: sets CU_LIVE (active CUs), CU_ARRAYS (CUs per shader array) and CU_ROWS (per-array text)
+# from the WGP mask registers; false, with CU_LIVE empty, when umr cannot read them. The caller checks first
+# that it runs as root and that $CU_UMR is set and root_safe.
+read_live_cus() {
     CU_ASIC="cyan_skillfish.gfx1013"
     CU_UMR_I=()
     CU_BDF=$(lspci -Dn -d 1002:13fe 2>/dev/null | awk 'NR==1{print $1}')
@@ -1122,7 +1111,27 @@ else
         CU_ARRAYS+=("$n")
         CU_ROWS+="SE$((r / 2)).SH$((r % 2)) $(printf '0x%02x' "$act") = $n, "
     done
-    if [ -n "$CU_LIVE" ]; then
+    [ -n "$CU_LIVE" ]
+}
+
+if want 21; then
+log_result "[TEST 21] Compute Unit (CU) Count Test"
+log_result "BC-250 ships with 24 of 40 RDNA2 CUs active; the 40CU unlock re-enables the rest"
+CU_COUNT=""
+CU_SOURCE=""
+CU_LIVE=""
+
+if [ "$(id -u)" != 0 ]; then
+    log_howto "INFO: Live CU masks not read: reading the GPU registers needs root (sudo)." \
+              "INFO: Live CU masks not read: this needs admin privileges (Settings › Privacy)."
+elif [ -z "$CU_UMR" ]; then
+    log_result "INFO: umr is not installed, so the live CU masks can't be read."
+    log_result "HINT: sudo rpm-ostree install umr (then reboot) to see a CU unlock made at runtime."
+elif ! root_safe "$CU_UMR"; then
+    log_result "WARNING: $CU_UMR is not owned by root or is writable by others; not running it as root."
+    WARN_FOUND=true
+else
+    if read_live_cus; then
         CU_COUNT="$CU_LIVE"
         CU_SOURCE="GPU registers (live WGP masks via umr)"
         log_result "INFO: Live WGP masks per shader array: ${CU_ROWS%, } CUs."
@@ -2650,8 +2659,14 @@ B_THREADS=$(nproc)
 B_CORES=$(lscpu 2>/dev/null | awk -F: '/^Core\(s\) per socket/ {c=$2} /^Socket\(s\)/ {s=$2} END {gsub(/ /,"",c); gsub(/ /,"",s); if (c && s) print c*s}')
 B_CORES=${B_CORES:-$B_THREADS}
 B_CPU_MODEL=$(awk -F: '/^model name/ {sub(/^ +/, "", $2); print $2; exit}' /proc/cpuinfo)
-# CU count: the value test 21 found (live registers when it could read them), otherwise the probe value.
+# CU count: the value test 21 found (live registers when it could read them). Without test 21 (a
+# benchmark-only run), the live registers are read here, so a runtime CU unlock is scored as such; the
+# kernel's probe value is the last resort, as it stays at 24 after a runtime unlock.
 B_CUS="${CU_COUNT:-}"
+if [ -z "$B_CUS" ] && ! want 21 && [ "$(id -u)" = 0 ] && [ -n "$CU_UMR" ] && root_safe "$CU_UMR" && read_live_cus; then
+    B_CUS="$CU_LIVE"
+    log_result "INFO: CU count from the live WGP masks (umr): $CU_LIVE (${CU_ROWS%, } CUs)."
+fi
 [ -z "$B_CUS" ] && B_CUS=$(journalctl -b -k --no-pager 2>/dev/null | grep -oE "active_cu_number [0-9]+" | tail -1 | grep -oE "[0-9]+")
 B_GOV_MAX=""
 [ -r /etc/cyan-skillfish-governor-smu/config.toml ] && \

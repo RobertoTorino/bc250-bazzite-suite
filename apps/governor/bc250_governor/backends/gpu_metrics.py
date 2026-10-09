@@ -14,6 +14,9 @@ from dataclasses import dataclass, field
 
 UNSUPPORTED = 0xFFFF
 USAGE_OFFSET = 0x1C                 # average_gfx_activity, the field the governor patches
+# average_gfx_activity is in hundredths of a percent, as on other AMD APUs: the governor writes 0..10000 (10000 under
+# full load on the board), and the unpatched 0xFFFF is what MangoHud shows as "655%".
+ACTIVITY_SCALE = 100
 # cyan_skillfish_ppt.c copies the SMU's power readings into the table unconverted: 24.8 fixed-point watts,
 # which is why amdgpu's hwmon code shifts them right by 8 before use. Raw 4000..8000 is 15..31 W.
 POWER_FRACTION_BITS = 8
@@ -80,8 +83,13 @@ class GpuMetrics:
         return power_watts(self.cpu_power)
 
     def gfx_activity_valid(self) -> bool:
-        """The unpatched BC-250 table carries the 655% bug, so only 0..100 counts as a reading."""
-        return self.gfx_activity is not None and 0 <= self.gfx_activity <= 100
+        """The unpatched BC-250 table carries the 655% bug (0xFFFF), so only 0..100 % counts as a reading."""
+        return self.gfx_activity is not None and 0 <= self.gfx_activity <= 100 * ACTIVITY_SCALE
+
+    @property
+    def gfx_activity_percent(self) -> float | None:
+        """average_gfx_activity in percent; None when it is not a valid reading."""
+        return self.gfx_activity / ACTIVITY_SCALE if self.gfx_activity_valid() else None
 
 
 def power_watts(raw: int | None) -> float | None:

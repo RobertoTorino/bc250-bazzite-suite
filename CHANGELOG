@@ -1,3 +1,8 @@
+Changelog: 09-10-2026 17:51:51
+
+tools/tests/test_instance_copies.py: the copies of bc250_core's instance module in the apps not yet on core
+must match it (only the SPDX line may differ).
+
 Changelog: 09-10-2026 16:28:35
 
 New app: apps/system-overlay (BC-250 System Overlay), a small always-on-top window with CPU, GPU, refresh

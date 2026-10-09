@@ -342,7 +342,8 @@ class OverviewPage(QWidget):
             return
         values = {
             "version": f"v{m.version}" + (self.tr(" (patched)") if patched else self.tr(" (raw)")),
-            "gfx_activity": _pct(m.gfx_activity, valid=m.gfx_activity_valid()),
+            "gfx_activity": (f"{m.gfx_activity_percent:.0f} %" if m.gfx_activity_valid()
+                             else _pct(m.gfx_activity, valid=False)),
             "mm_activity": _pct(m.mm_activity, valid=m.mm_activity is not None and m.mm_activity <= 100),
             "temp_gfx": _unit(m.temperature_gfx, "°C"),
             "temp_soc": _unit(m.temperature_soc, "°C"),

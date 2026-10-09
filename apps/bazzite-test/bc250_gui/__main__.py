@@ -9,6 +9,7 @@ from pathlib import Path
 
 from PyQt6.QtWidgets import QMessageBox
 
+from bc250_core import instance
 from bc250_core.app import create_app, exec_app
 
 from . import APP_NAME, INFO, ROOT, __version__
@@ -35,10 +36,14 @@ def main() -> int:
         QMessageBox.critical(None, APP_NAME, f"Test engine not found:\n{script}\n\nReinstall the app to restore it.")
         return 1
 
+    # One instance: a second launch brings the running window to the front and exits.
+    if instance.already_running(INFO.app_id):
+        return 0
     window = MainWindow(TestRunner(str(script), use_sudo=not args.no_sudo))
     # Logout or SIGTERM/SIGINT end the app without a close event: stop a running test cleanly first.
     app.aboutToQuit.connect(window.shutdown)
     window.show()
+    server = instance.serve(INFO.app_id, window)  # noqa: F841 (kept alive while the app runs)
     return exec_app(app)
 
 

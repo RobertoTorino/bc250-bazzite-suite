@@ -17,6 +17,7 @@ from . import (APP_ID, APP_NAME, DEPLOYMENTS_FILE, DISPLAY_NAME, LANGUAGES, PAYL
 from .acquire import WORK_DIR
 from .main_window import MainWindow
 from .widgets import RoundedToolTip
+from . import instance
 
 
 def install_translators(app: QApplication, lang: str | None) -> str:
@@ -61,6 +62,9 @@ def main() -> int:
     if WINDOW_ICON_PATH.is_file():
         app.setWindowIcon(QIcon(str(WINDOW_ICON_PATH)))
 
+    # One instance: a second launch brings the running window to the front and exits.
+    if instance.already_running(APP_ID):
+        return 0
     window = MainWindow(Path(args.payload).expanduser() if args.payload else PAYLOAD_DIR,
                         Path(args.deployments).expanduser() if args.deployments else DEPLOYMENTS_FILE,
                         Path(args.work).expanduser() if args.work else WORK_DIR,
@@ -71,6 +75,7 @@ def main() -> int:
     tick.timeout.connect(lambda: None)      # lets Python handle signals while Qt's event loop runs
     tick.start(500)
     window.show()
+    server = instance.serve(APP_ID, window)  # noqa: F841 (kept alive while the app runs)
     return app.exec()
 
 

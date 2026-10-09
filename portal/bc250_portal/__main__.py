@@ -10,6 +10,7 @@ from pathlib import Path
 
 from PyQt6.QtWidgets import QMessageBox
 
+from bc250_core import instance
 from bc250_core.app import create_app, exec_app
 
 from . import APP_NAME, INFO, MANIFEST, __version__, state_dir, suite_checkout
@@ -46,8 +47,12 @@ def main() -> int:
         QMessageBox.critical(None, APP_NAME, "--source checkout: the portal is not running from a suite checkout.")
         return 1
     sources = Sources(state_dir() / "releases", checkout=checkout, download=http_download(INFO.user_agent))
+    # One instance: a second launch brings the running window to the front and exits.
+    if instance.already_running(INFO.app_id):
+        return 0
     window = MainWindow(entries, sources, Records(state_dir() / "installed.json"))
     window.show()
+    server = instance.serve(INFO.app_id, window)  # noqa: F841 (kept alive while the app runs)
     return exec_app(app)
 
 

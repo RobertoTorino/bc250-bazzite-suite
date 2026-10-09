@@ -523,7 +523,7 @@ class CyanSkillfishBackend:
                 data.metrics_patched = self._is_mount_point(device / "gpu_metrics")
                 # Only the governor's patched table has a sane average_gfx_activity on the BC-250.
                 if data.metrics is not None and data.metrics_patched and data.metrics.gfx_activity_valid():
-                    data.load_percent, data.load_source = float(data.metrics.gfx_activity), "gpu_metrics"
+                    data.load_percent, data.load_source = data.metrics.gfx_activity_percent, "gpu_metrics"
             if data.load_percent is None:
                 value = self._read_number(device / "gpu_busy_percent")
                 if value is not None and 0.0 <= value <= 100.0:

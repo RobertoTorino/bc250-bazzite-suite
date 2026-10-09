@@ -1,3 +1,11 @@
+Changelog: 09-10-2026 17:51:51
+
+GPU load from the governor's patched gpu_metrics table: average_gfx_activity is in hundredths of a
+percent (0..10000; 10000 under full load on the board, and MangoHud's "655%" is the unpatched
+0xFFFF / 100). The app accepted only 0..100 and showed it as percent, so it used the table only below
+1 % load (shown 100x too high) and otherwise showed N/A, as radeontop is usually not installed. It now
+divides by 100, on the Overview and in the gpu_metrics box. Tests in tests/test_gpu_metrics.py.
+
 Changelog: 09-10-2026 13:56:58
 
 install.sh also puts an icon on the Desktop; --no-desktop-shortcut leaves it out, and --uninstall removes

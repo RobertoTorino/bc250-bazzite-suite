@@ -24,31 +24,18 @@ describe only what exists.
 
 ## Known issues to fix
 
-- **bazzite-test: Extended System score drops back to stock after a benchmark-only run.** Test 42 takes its CU
-  count from test 21 of the same run. Run on its own, it falls back to the kernel's probe-time
-  `active_cu_number`, which stays 24 after a runtime CU unlock. That run's "Configuration" line then records 24
-  CUs, the score uses the newest recorded count, and the CU factor (and with it the Extended score) falls back to
-  stock. Present in the original app as well; not caused by the move to core. Open question for the owner:
-  (a) fix it in the engine, so test 42 reads the live WGP masks itself when test 21 did not run (recommended;
-  changes the root-run, checksummed `test-bazzite.sh`, so it needs a board check), or (b) in the GUI only, by not
-  letting a probe-time count override a live one.
-- **Portal icon:** `portal/images/bc250-bazzite-suite.png` is still a copy of bazzite-test's *old* icon (made in
-  step 3); bazzite-test has its own new icon since 09-10-2026. `images/bc250-bazzite-suite.png` at the root is the
-  same file and nothing uses it yet.
-- **Releases waiting (09-10-2026):** persistent-acpi (app window, new install.sh, new icon), cores-bisect (status
-  line, Status with sudo), cu-bisect, governor and helixsr (Desktop icons; helixsr also a new icon), bazzite-test
-  (new icon), system-overlay (first release, 0.1.0 in VERSION), and a portal release for the apps.toml changes.
-  `check_manifest.py --base origin/main` fails until portal/VERSION gets at least a minor bump (a new app was added).
-- **governor: GPU load from gpu_metrics, a code path to check.** `GpuMetrics.gfx_activity_valid()`
-  (`backends/gpu_metrics.py`) accepts raw `average_gfx_activity` 0..100 and `cyan_skillfish.py` shows it as percent.
-  On the board (09-10-2026) the governor's patched table holds hundredths of a percent: 0 at idle, 156 and 313
-  (1.56 % and 3.13 %, steps of 1/64 from busy-flag), which also matches MangoHud reading 0xFFFF as "655 %". So the
-  app would take a load only below 1 %, shown 100x too high, and otherwise fall back to other sources. The system
-  overlay divides by 100. Confirm under load (e.g. 9000 = 90 %) before changing the governor app.
-- **System overlay icon:** drawn as a placeholder in the style of the new icons; replace it if you want.
-- **System overlay, board check open:** install from the portal, open it on the desktop, drag it, try the
-  right-click menu, check it stays on top of a windowed game and reopens where it was left.
-- **QR codes** in the app READMEs and About boxes still point to the old repositories.
+- **bazzite-test score drop, fixed in the engine (09-10-2026), board check open:** with a runtime CU unlock active,
+  run only the benchmark (test 42). Its log should show "CU count from the live WGP masks (umr)" and the
+  Configuration line the unlocked count, and the Extended score should keep its CU factor.
+- **No release tagged yet (09-10-2026):** the portal and all eight apps are at 0.1.0 with no tags, so the first tags
+  release everything as it is on main (c7646ce, CI green); no version bumps are needed before that.
+- **Copies of bc250_core.instance** in helixsr, the cu/cores bisect and unlock GUIs, gpu-oc-bisect and
+  persistent-acpi (MIT: the owner's own code, copied under MIT there); fold them into core in step 6.
+- **Later: system overlay in Game Mode.** gamescope only composites the focused game, Steam and windows with the
+  X11 property `GAMESCOPE_EXTERNAL_OVERLAY` (how mangoapp shows MangoHud). Possible route: set that property on
+  the overlay's XWayland window. Open: how to start it inside the gamescope session (check how Bazzite starts
+  mangoapp), no mouse input there (position and rows from the Desktop-mode settings), and it relies on a gamescope
+  internal.
 
 ## Details for later steps
 

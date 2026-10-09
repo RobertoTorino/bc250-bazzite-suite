@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 
 from . import APP_ID, APP_NAME, HOVER_STYLESHEET, ROOT, TRANSLATIONS_DIR, WINDOW_ICON_PATH, __version__
 from .main_window import MainWindow
+from . import instance
 
 DEFAULT_SCRIPT = ROOT / "bc250-cores-bisect.sh"
 
@@ -54,8 +55,12 @@ def main() -> int:
         QMessageBox.critical(None, APP_NAME, f"bc250-cores-bisect.sh not found:\n{script}")
         return 1
 
+    # One instance: a second launch brings the running window to the front and exits.
+    if instance.already_running(APP_ID):
+        return 0
     window = MainWindow(str(script))
     window.show()
+    server = instance.serve(APP_ID, window)  # noqa: F841 (kept alive while the app runs)
     return app.exec()
 
 

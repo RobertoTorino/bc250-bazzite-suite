@@ -1,5 +1,11 @@
 # Changelog
 
+Changelog: 09-10-2026 17:51:51
+
+Bisect and Unlock windows: only one instance of each runs per user. Starting one again brings its running
+window to the front instead of opening a second one (bc250_core's instance module, copied into each package
+until the apps move onto core).
+
 Changelog: 09-10-2026 16:16:30
 
 Cores Unlock window: the Status with sudo button and its tooltip are translated into German, Spanish, French,

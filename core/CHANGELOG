@@ -1,3 +1,9 @@
+Changelog: 09-10-2026 17:51:51
+
+New module bc250_core.instance: one running instance per app and user over a local socket (after the
+governor's instance.py). A second launch hands its Wayland activation token to the running instance,
+which brings its window to the front. Tests in core/tests/test_instance.py.
+
 Changelog: 08-10-2026 22:26:29
 
 Initial version 0.1.0 of bc250_core, the code the suite's apps share. It is bundled into each app release.

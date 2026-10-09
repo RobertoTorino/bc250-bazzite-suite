@@ -629,9 +629,3 @@ own unlock with umr, tests a control (same register writes, no extra CUs) and ev
 over several rounds, and tells you per WGP whether it's good, fails every time (likely bad) or fails at
 random (likely the unlock, power or heat). Once a mask passes, `bc250-cu-unlock.sh` or the BC Unlock GUI
 from the same repository keeps it across reboots (see *For the extra CUs without flashing* above).
-
----
-
-![qrcode-gh.png](../images/qrcode-gh.png)
-
-  
