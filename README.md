@@ -29,6 +29,7 @@ app from the clone, so keep it where it is. `./install.sh --uninstall` removes i
 | cores-bisect | [`apps/cores-bisect`](apps/cores-bisect) | Tells bad CPU cores apart from an unstable core unlock — **changes the board** |
 | gpu-oc-bisect | [`apps/gpu-oc-bisect`](apps/gpu-oc-bisect) | Finds a safe GPU overclock and undervolt, step by step — **changes the board** |
 | persistent-acpi | [`apps/persistent-acpi`](apps/persistent-acpi) | Persistent ACPI fix for CPU C-states and frequency scaling — **changes the board** |
+| system-overlay | [`apps/system-overlay`](apps/system-overlay) | CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top |
 
 ## Layout
 
@@ -73,8 +74,8 @@ The repo is used from both systems, so it is set up to behave the same on each:
 
 ## Where things are installed
 
-- **Root-owned `/opt`:** the portal (`/opt/bc250-bazzite-suite`), bazzite-test, cores-bisect and gpu-oc-bisect,
-  whose scripts run as root: a normal user cannot change code that sudo runs.
+- **Root-owned `/opt`:** the portal (`/opt/bc250-bazzite-suite`), bazzite-test, cores-bisect, gpu-oc-bisect and
+  persistent-acpi, whose scripts run as root: a normal user cannot change code that sudo runs.
 - **Your home folder:** the shared venv `~/.local/share/bc250-bazzite-suite/venv` (PyQt6, used by all suite
   GUIs and removed with the last of them), plus each app's settings, results and launchers.
 - **`bc250_core` per app:** each app's release carries the `bc250_core` it was tested with, next to its own code.

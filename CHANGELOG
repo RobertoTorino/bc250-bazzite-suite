@@ -1,3 +1,15 @@
+Changelog: 09-10-2026 16:28:35
+
+New app: apps/system-overlay (BC-250 System Overlay), a small always-on-top window with CPU, GPU, refresh
+rate, fan and temperatures. Added to the README, the docs, the bug report form and CLAUDE.md; CI runs its
+tests, a new installer test (tools/installer-tests/system-overlay.sh) and warning-level shellcheck on its
+install.sh. The README's list of apps in /opt now includes persistent-acpi.
+
+Changelog: 09-10-2026 16:10:58
+
+images/bc250-bazzite-suite.png added at the repository root: the suite icon, the same file as the portal's
+portal/images/bc250-bazzite-suite.png.
+
 Changelog: 09-10-2026 13:56:58
 
 CI: a new installer test, tools/installer-tests/persistent-acpi.sh, and warning-level shellcheck for

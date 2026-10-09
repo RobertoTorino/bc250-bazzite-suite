@@ -16,3 +16,4 @@ nav:
       - cores-bisect: apps/cores-bisect.md
       - gpu-oc-bisect: apps/gpu-oc-bisect.md
       - persistent-acpi: apps/persistent-acpi.md
+      - system-overlay: apps/system-overlay.md

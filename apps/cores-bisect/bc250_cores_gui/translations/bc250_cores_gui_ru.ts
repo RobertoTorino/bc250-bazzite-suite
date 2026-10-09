@@ -62,6 +62,14 @@
         <translation>Показывает маску присутствия ядер, потоки, а также состояние службы и guard.</translation>
     </message>
     <message>
+        <source>Status with sudo</source>
+        <translation>Статус с sudo</translation>
+    </message>
+    <message>
+        <source>Run the status as root (asks for the sudo password), so it also shows the core presence mask.</source>
+        <translation>Запускает проверку статуса от root (запрашивает пароль sudo), чтобы показать и маску присутствия ядер.</translation>
+    </message>
+    <message>
         <source>Re-check bisect results</source>
         <translation>Перепроверить результаты бисекции</translation>
     </message>

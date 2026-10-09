@@ -1,3 +1,7 @@
+Changelog: 09-10-2026 16:10:58
+
+New app icon (images/bc250-bazzite-test.png).
+
 Changelog: 09-10-2026 11:51:07
 
 install.sh: BC250_LOG_DIR overrides /var/log for testing, like BC250_OPT_DIR for /opt. Without it nothing

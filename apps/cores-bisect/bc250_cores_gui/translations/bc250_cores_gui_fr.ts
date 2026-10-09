@@ -62,6 +62,14 @@
         <translation>Affiche le masque de présence des cœurs, les threads ainsi que l'état du service et du guard.</translation>
     </message>
     <message>
+        <source>Status with sudo</source>
+        <translation>État avec sudo</translation>
+    </message>
+    <message>
+        <source>Run the status as root (asks for the sudo password), so it also shows the core presence mask.</source>
+        <translation>Exécute l'état en root (demande le mot de passe sudo), pour afficher aussi le masque de présence des cœurs.</translation>
+    </message>
+    <message>
         <source>Re-check bisect results</source>
         <translation>Revérifier les résultats de la bissection</translation>
     </message>

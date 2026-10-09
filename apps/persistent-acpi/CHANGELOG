@@ -1,3 +1,7 @@
+Changelog: 09-10-2026 16:10:58
+
+New app icon (images/bc250-persistent-acpi.png), replacing the drawn one.
+
 Changelog: 09-10-2026 13:56:58
 
 The app now has a window: BC-250 Persistent ACPI (bc250_acpi_gui, PyQt6) shows whether the override is

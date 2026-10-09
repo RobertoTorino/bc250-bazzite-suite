@@ -62,6 +62,14 @@
         <translation>Pokazuje maskę obecności rdzeni, wątki oraz stan usługi i guard.</translation>
     </message>
     <message>
+        <source>Status with sudo</source>
+        <translation>Stan z sudo</translation>
+    </message>
+    <message>
+        <source>Run the status as root (asks for the sudo password), so it also shows the core presence mask.</source>
+        <translation>Uruchamia sprawdzenie stanu jako root (pyta o hasło sudo), dzięki czemu pokazuje też maskę obecności rdzeni.</translation>
+    </message>
+    <message>
         <source>Re-check bisect results</source>
         <translation>Sprawdź ponownie wyniki bisekcji</translation>
     </message>

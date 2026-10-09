@@ -1,5 +1,11 @@
 # Changelog
 
+Changelog: 09-10-2026 16:16:30
+
+Cores Unlock window: the Status with sudo button and its tooltip are translated into German, Spanish, French,
+Italian, Japanese, Polish, Russian and Chinese. The .qm files were rebuilt with pyside6-lrelease, which
+reproduces the previous .qm files byte for byte, so only these two strings changed.
+
 Changelog: 09-10-2026 13:56:58
 
 bc250-cores-unlock.sh --status printed each systemctl answer twice when the service was not installed

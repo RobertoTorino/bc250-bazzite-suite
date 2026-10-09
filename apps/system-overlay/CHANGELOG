@@ -1,0 +1,16 @@
+Changelog: 09-10-2026 16:37:18
+
+New rows: GPU load (from the GPU governor's patched gpu_metrics table, in hundredths of a percent as the kernel
+and MangoHud use it; only with the governor's fix-metrics), the governor's clock range (D-Bus), GPU core voltage,
+VRAM and RAM used, VRM and NVMe temperatures, network download/upload and disk read/write. A Rows submenu in the
+right-click menu shows or hides each row; the choice is remembered and the window resizes to fit.
+
+Changelog: 09-10-2026 16:27:25
+
+First version. BC-250 System Overlay shows CPU (load and clock), GPU (clock and power), the screen's refresh rate,
+the fastest spinning fan and the CPU and GPU temperatures in a small window that stays on top. The window is
+frameless and see-through, with rounded corners and a thin purple border; drag it with the left mouse button, and
+right-click for the background opacity, Always on top and Quit. Its position and choices are remembered. It reads
+/proc and /sys only, without root, and updates every second. On Wayland it runs through XWayland so it can stay on
+top (--native-wayland runs it as a Wayland window instead). Built on bc250_core and the suite's shared venv;
+install.sh installs it in your home folder, without sudo.

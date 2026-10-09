@@ -32,22 +32,22 @@ describe only what exists.
   (a) fix it in the engine, so test 42 reads the live WGP masks itself when test 21 did not run (recommended;
   changes the root-run, checksummed `test-bazzite.sh`, so it needs a board check), or (b) in the GUI only, by not
   letting a probe-time count override a live one.
-- **sudo warning on the board:** during the portal and bazzite-test installs every `sudo` printed
-  `/etc/sudoers.d/bc250-bisect:2:29: unknown defaults entry "verifytype"`. Cause found: the file had a second,
-  hand-edited copy of the NOPASSWD line with an extra parenthesis (`ALL=(ALL))   NOPASSWD: ALL`); sudo's parser
-  names a setting that isn't in the file. No code in the suite writes or removes sudoers files (the READMEs'
-  `sudo tee` overwrites, so it can't make a duplicate). The owner removed the file. Both bisect READMEs now add a
-  `sudo visudo -cf` check to the setup steps and say to edit the file only with `visudo -f`.
-- **Portal icon:** a copy of bazzite-test's for now.
-- **Persistent ACPI icon:** drawn for the new app window ("ACPI" over eight rising bars, suite purple); replace
-  it if you want a designed one.
-- **Persistent ACPI app, board check open:** install the app from the portal, then Install, reboot, Status with sudo
-  ("override tables loaded this boot"), Uninstall, reboot. Tested only against a fake board (tests and installer
-  test) so far. Its window is standalone (not on core, like the unlock GUIs; core is GPL, the app is MIT).
-- **Untranslated strings:** cores-unlock's "Status with sudo" button and tooltip are English in all languages.
-- **Releases waiting (09-10-2026):** persistent-acpi (app window, new install.sh), cores-bisect (status line, Status
-  with sudo), cu-bisect, governor and helixsr (Desktop icons), and a portal release for the apps.toml change.
-  `check_manifest.py --base origin/main` fails until portal/VERSION is bumped.
+- **Portal icon:** `portal/images/bc250-bazzite-suite.png` is still a copy of bazzite-test's *old* icon (made in
+  step 3); bazzite-test has its own new icon since 09-10-2026. `images/bc250-bazzite-suite.png` at the root is the
+  same file and nothing uses it yet.
+- **Releases waiting (09-10-2026):** persistent-acpi (app window, new install.sh, new icon), cores-bisect (status
+  line, Status with sudo), cu-bisect, governor and helixsr (Desktop icons; helixsr also a new icon), bazzite-test
+  (new icon), system-overlay (first release, 0.1.0 in VERSION), and a portal release for the apps.toml changes.
+  `check_manifest.py --base origin/main` fails until portal/VERSION gets at least a minor bump (a new app was added).
+- **governor: GPU load from gpu_metrics, a code path to check.** `GpuMetrics.gfx_activity_valid()`
+  (`backends/gpu_metrics.py`) accepts raw `average_gfx_activity` 0..100 and `cyan_skillfish.py` shows it as percent.
+  On the board (09-10-2026) the governor's patched table holds hundredths of a percent: 0 at idle, 156 and 313
+  (1.56 % and 3.13 %, steps of 1/64 from busy-flag), which also matches MangoHud reading 0xFFFF as "655 %". So the
+  app would take a load only below 1 %, shown 100x too high, and otherwise fall back to other sources. The system
+  overlay divides by 100. Confirm under load (e.g. 9000 = 90 %) before changing the governor app.
+- **System overlay icon:** drawn as a placeholder in the style of the new icons; replace it if you want.
+- **System overlay, board check open:** install from the portal, open it on the desktop, drag it, try the
+  right-click menu, check it stays on top of a windowed game and reopens where it was left.
 - **QR codes** in the app READMEs and About boxes still point to the old repositories.
 
 ## Details for later steps

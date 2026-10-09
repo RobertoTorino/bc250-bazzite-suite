@@ -62,6 +62,14 @@
         <translation>Mostra la maschera di presenza dei core, i thread e lo stato del servizio e del guard.</translation>
     </message>
     <message>
+        <source>Status with sudo</source>
+        <translation>Stato con sudo</translation>
+    </message>
+    <message>
+        <source>Run the status as root (asks for the sudo password), so it also shows the core presence mask.</source>
+        <translation>Esegue lo stato come root (chiede la password sudo), così mostra anche la maschera di presenza dei core.</translation>
+    </message>
+    <message>
         <source>Re-check bisect results</source>
         <translation>Ricontrolla i risultati della bisezione</translation>
     </message>

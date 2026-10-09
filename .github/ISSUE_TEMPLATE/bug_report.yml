@@ -16,6 +16,7 @@ body:
         - cores-bisect
         - gpu-oc-bisect
         - persistent-acpi
+        - system-overlay
     validations:
       required: true
   - type: textarea

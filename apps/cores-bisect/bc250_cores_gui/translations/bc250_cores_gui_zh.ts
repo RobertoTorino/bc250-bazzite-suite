@@ -62,6 +62,14 @@
         <translation>显示核心存在掩码、线程数以及服务和 guard 状态。</translation>
     </message>
     <message>
+        <source>Status with sudo</source>
+        <translation>使用 sudo 查看状态</translation>
+    </message>
+    <message>
+        <source>Run the status as root (asks for the sudo password), so it also shows the core presence mask.</source>
+        <translation>以 root 身份运行状态检查（会要求输入 sudo 密码），这样也会显示核心存在掩码。</translation>
+    </message>
+    <message>
         <source>Re-check bisect results</source>
         <translation>重新检查对分结果</translation>
     </message>

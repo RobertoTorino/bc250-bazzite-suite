@@ -62,6 +62,14 @@
         <translation>コアの存在マスク、スレッド数、サービスと guard の状態を表示します。</translation>
     </message>
     <message>
+        <source>Status with sudo</source>
+        <translation>sudo で状態を表示</translation>
+    </message>
+    <message>
+        <source>Run the status as root (asks for the sudo password), so it also shows the core presence mask.</source>
+        <translation>状態を root で実行します（sudo パスワードを求めます）。コアの存在マスクも表示されます。</translation>
+    </message>
+    <message>
         <source>Re-check bisect results</source>
         <translation>ビセクション結果を再確認</translation>
     </message>

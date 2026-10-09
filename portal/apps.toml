@@ -101,3 +101,15 @@ install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-persistent-acpi-gui"]
 launch = [["Open", "~/.local/bin/bc250-persistent-acpi-gui"]]
+
+[apps.system-overlay]
+name = "BC-250 System Overlay"
+summary = "CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top."
+tag = "system-overlay-v0.1.0"
+sha256 = ""
+required = false
+changes_board = false
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-system-overlay"]
+launch = [["Open", "~/.local/bin/bc250-system-overlay"]]

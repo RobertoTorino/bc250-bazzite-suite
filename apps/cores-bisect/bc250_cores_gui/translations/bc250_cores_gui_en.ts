@@ -75,6 +75,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Status with sudo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run the status as root (asks for the sudo password), so it also shows the core presence mask.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../main_window.py" line="131"/>
         <source>Re-check bisect results</source>
         <translation type="unfinished"></translation>

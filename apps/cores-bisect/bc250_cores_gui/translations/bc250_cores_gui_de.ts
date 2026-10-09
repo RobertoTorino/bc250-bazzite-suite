@@ -62,6 +62,14 @@
         <translation>Zeigt die Kern-Präsenzmaske, die Threads sowie den Dienst- und Guard-Status an.</translation>
     </message>
     <message>
+        <source>Status with sudo</source>
+        <translation>Status mit sudo</translation>
+    </message>
+    <message>
+        <source>Run the status as root (asks for the sudo password), so it also shows the core presence mask.</source>
+        <translation>Führt die Statusabfrage als root aus (fragt nach dem sudo-Passwort), sodass auch die Kern-Präsenzmaske angezeigt wird.</translation>
+    </message>
+    <message>
         <source>Re-check bisect results</source>
         <translation>Bisect-Ergebnisse erneut prüfen</translation>
     </message>

@@ -1,3 +1,7 @@
+Changelog: 09-10-2026 16:10:58
+
+New app icon (images/bc250-bazzite-helixsr-gui.png).
+
 Changelog: 09-10-2026 13:56:58
 
 install.sh also puts an icon on the Desktop; --no-desktop-shortcut leaves it out, and --uninstall removes
