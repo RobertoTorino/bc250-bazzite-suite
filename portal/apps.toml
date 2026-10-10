@@ -125,3 +125,15 @@ install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-bios-reader"]
 launch = [["Open", "~/.local/bin/bc250-bios-reader"]]
+
+[apps.ace-queues]
+name = "BC-250 ACE Queues"
+summary = "Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use."
+tag = "ace-queues-v0.1.0"
+sha256 = ""
+required = false
+changes_board = true
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-ace-queues"]
+launch = [["Open", "~/.local/bin/bc250-ace-queues"]]

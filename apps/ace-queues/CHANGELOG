@@ -1,0 +1,14 @@
+Changelog: 10-10-2026 18:12:32
+
+New app ace-queues: opens the BC-250's dedicated compute (ACE) queues for games. bc250-ace-queues.sh builds a
+patched RADV for the system's Mesa version in a Fedora container (the Mesa source checked against the Mesa release
+maintainers' signature; one patch, mesa/gfx1013-ace-queue.patch, from DryhoppedIPA/bc250-gfx1013-fix as trimmed
+for Bazzite by tri3gubki-ops/bc250-async-compute-bazzite), installs it in /usr/local/lib/bc250-ace-queues beside
+the system Mesa, and runs its own ACE queue test (acetest/: fills, copies, an image round trip and a partial
+dispatch on every queue at once, ten device lifetimes, plus a kernel-log check for ring timeouts). Games use the
+driver through the launch options wrapper bc250-ace-queues-run, which only selects it when the test passed with
+the running kernel and the installed driver. "All apps" (environment.d and profile.d) can only be switched on after
+a passed test; a boot check (bc250-ace-queues-guard.service) switches it off when the kernel or the driver
+changed. The window shows the four steps (build, install, test, use) and runs the root steps through pkexec. The
+installer puts the app root-owned in /opt with its bc250_core and uses the suite's shared venv. The logo is a
+placeholder.

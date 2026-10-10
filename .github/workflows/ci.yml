@@ -32,7 +32,7 @@ jobs:
       fail-fast: false
       matrix:
         dir: [core, portal, tools, apps/bazzite-test, apps/governor, apps/helixsr, apps/persistent-acpi,
-              apps/system-overlay, apps/bios-reader]   # every folder with tests/
+              apps/system-overlay, apps/bios-reader, apps/ace-queues]   # every folder with tests/
     defaults:
       run:
         working-directory: ${{ matrix.dir }}
@@ -75,7 +75,7 @@ jobs:
       - name: shellcheck (errors, all scripts)
         run: find apps portal tools -name '*.sh' -print0 | xargs -0 shellcheck -x -S error test.sh install.sh
 
-      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader and the suite's own scripts)
+      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace-queues and the suite's own scripts)
         run: |
           shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh
           shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/bc250-cores-unlock.sh \
@@ -83,6 +83,8 @@ jobs:
           shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
           shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh
           shellcheck -S warning apps/system-overlay/install.sh apps/bios-reader/install.sh
+          shellcheck -S warning apps/ace-queues/bc250-ace-queues.sh apps/ace-queues/bc250-ace-queues-run \
+            apps/ace-queues/install.sh apps/ace-queues/mesa/build-in-container.sh
 
       - name: Line endings
         run: |
@@ -132,6 +134,8 @@ jobs:
         run: bash tools/installer-tests/system-overlay.sh
       - name: bios-reader installer
         run: bash tools/installer-tests/bios-reader.sh
+      - name: ace-queues installer
+        run: bash tools/installer-tests/ace-queues.sh
       - name: release tarballs, end to end
         run: bash tools/installer-tests/release.sh
 

@@ -35,9 +35,10 @@ installed app.
 | ![](assets/apps/persistent-acpi.png){ .app-icon } [BC-250 Persistent ACPI](apps/persistent-acpi.md) | CPU C-states and frequency scaling through a persistent ACPI override (GRUB early initrd). **Changes the board.** |
 | ![](assets/apps/system-overlay.png){ .app-icon } [BC-250 System Overlay](apps/system-overlay.md) | CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top. |
 | ![](assets/apps/bios-reader.png){ .app-icon } [BC-250 BIOS Reader](apps/bios-reader.md) | The BIOS settings as the setup screen shows them, hidden menus included. Stock or modded BIOS. Read-only. |
+| ![](assets/apps/ace-queues.png){ .app-icon } [BC-250 ACE Queues](apps/ace-queues.md) | Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use. **Changes the board.** |
 
-Apps that **change the board** (unlocks, the GPU governor, GPU overclocking, the ACPI override) change how the
-BC-250 runs. They are software-only and can be undone; the portal asks before it installs or opens them. Read an
+Apps that **change the board** (unlocks, the GPU governor, GPU overclocking, the ACPI override, a patched GPU
+driver) change how the BC-250 runs. They are software-only and can be undone; the portal asks before it installs or opens them. Read an
 app's chapter before you use it.
 
 ## License

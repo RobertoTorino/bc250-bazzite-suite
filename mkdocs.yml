@@ -66,6 +66,7 @@ nav:
       - BC-250 Persistent ACPI: apps/persistent-acpi.md
       - BC-250 System Overlay: apps/system-overlay.md
       - BC-250 BIOS Reader: apps/bios-reader.md
+      - BC-250 ACE Queues: apps/ace-queues.md
   - Development:
       - development/index.md
       - Bazzite Test script: development/bazzite-test.md

@@ -1,3 +1,7 @@
+Changelog: 10-10-2026 18:12:32
+
+New app ace-queues (BC-250 ACE Queues): async compute for games through a patched RADV beside the system Mesa. CI runs its tests and its installer test (tools/installer-tests/ace-queues.sh) and shellchecks its scripts at warning level; the manual has its chapter (docs/apps/ace-queues.md); CLAUDE.md lists its checks.
+
 Changelog: 10-10-2026 13:05:05
 
 Manual: move the Bazzite and BC-250 background pages into a separate History section.
