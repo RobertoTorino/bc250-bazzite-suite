@@ -81,3 +81,58 @@ def test_manual_view_shows_the_chapter(qapp):
     view = ReadmeView()
     assert "Read-only diagnostics" in view.browser.toPlainText() and "{ .app-logo }" not in view.browser.toPlainText()
     view.close()
+
+
+def test_results_preview_shows_image_and_emits_open_paths(qapp, tmp_path):
+    from PyQt6.QtGui import QPixmap
+
+    from bc250_gui.dashboard import ResultsPreview
+
+    image_path = tmp_path / "results.png"
+    pixmap = QPixmap(24, 16)
+    pixmap.fill()
+    assert pixmap.save(str(image_path), "PNG")
+
+    preview = ResultsPreview()
+    opened_images = []
+    opened_folders = []
+    preview.image_requested.connect(opened_images.append)
+    preview.folder_requested.connect(opened_folders.append)
+
+    assert preview.set_image(str(image_path))
+    assert not preview.isHidden()
+    assert preview.folder.text() == f"Folder: {tmp_path}"
+    preview.image.click()
+    preview.open_folder.click()
+    assert opened_images == [str(image_path)]
+    assert opened_folders == [str(tmp_path)]
+
+
+def test_print_results_opens_saved_png_and_shows_preview(sandbox, qapp, tmp_path, monkeypatch):
+    from PyQt6.QtGui import QDesktopServices
+    from PyQt6.QtWidgets import QFileDialog
+
+    from bc250_core.app import create_app
+    from bc250_gui import INFO
+    from bc250_gui.main_window import MainWindow
+    from bc250_gui.runner import TestRunner
+
+    create_app(INFO, lang="en")
+    window = MainWindow(TestRunner(str(ENGINE), use_sudo=False))
+    image_path = tmp_path / "shared results.png"
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *args: (str(image_path), "PNG image (*.png)"))
+    opened_urls = []
+    monkeypatch.setattr(QDesktopServices, "openUrl", lambda url: opened_urls.append(url) or True)
+
+    window._print_results()
+
+    assert image_path.is_file()
+    assert not window.results_preview.isHidden()
+    assert not window.results_preview.image.icon().isNull()
+    assert window.results_preview.folder.text() == f"Folder: {tmp_path}"
+    assert len(opened_urls) == 1
+    assert opened_urls[0].toLocalFile() == str(image_path)
+    window.shutdown()
+    window.close()
+    window.deleteLater()
+    qapp.processEvents()

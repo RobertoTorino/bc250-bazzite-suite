@@ -1,3 +1,8 @@
+Changelog: 10-10-2026 13:33:27
+
+Print results now opens the saved PNG in the system image viewer and keeps a clickable thumbnail with its folder
+in the app header.
+
 Changelog: 09-10-2026 22:59:08
 
 README: only the app's name, what it does and its license, with a link to its chapter of the manual; the rest moved into the manual (docs/apps/bazzite-test.md). SECURITY.md and development/*.md moved into the manual too.

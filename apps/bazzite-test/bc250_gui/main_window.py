@@ -9,8 +9,8 @@ import subprocess
 import time
 from pathlib import Path
 
-from PyQt6.QtCore import QEvent, Qt, QTimer
-from PyQt6.QtGui import QCloseEvent, QHideEvent, QShowEvent
+from PyQt6.QtCore import QEvent, QUrl, Qt, QTimer
+from PyQt6.QtGui import QCloseEvent, QDesktopServices, QHideEvent, QShowEvent
 from PyQt6.QtWidgets import (
     QApplication, QFileDialog, QHBoxLayout, QLabel, QListWidget, QMainWindow, QMessageBox,
     QStackedWidget, QVBoxLayout, QWidget,
@@ -21,7 +21,7 @@ from .bench import BASELINE_NAME, BASELINE_PATH, BenchSettings, load_history, sc
 from .disk import DiskSettings
 from .catalog import (BENCH_TEST_ID, CATEGORIES, CATEGORY_OF, DISK_TEST_ID, SPEEDTEST_TEST_ID, STRESS_TEST_ID,
                       TESTS)
-from .dashboard import ACCENT, ORANGE, RED, Stats, StatsBar, header_font, results_card
+from .dashboard import ACCENT, ORANGE, RED, ResultsPreview, Stats, StatsBar, header_font, results_card
 from .cleanup import CleanupDialog, execute as execute_cleanup
 from .findings import Entry, FindingsDialog
 from .integrity import check_engine
@@ -108,6 +108,11 @@ class MainWindow(QMainWindow):
         header_right.addWidget(self.stats)
         header.addLayout(header_right, 1)
         root.addLayout(header)
+
+        self.results_preview = ResultsPreview()
+        self.results_preview.image_requested.connect(self._open_results_image)
+        self.results_preview.folder_requested.connect(self._open_results_folder)
+        root.addWidget(self.results_preview)
 
         main = QHBoxLayout()
         self.nav = QListWidget()
@@ -325,9 +330,21 @@ class MainWindow(QMainWindow):
         if not path:
             return
         if pix.save(path, "PNG"):
+            if not self.results_preview.set_image(path):
+                QMessageBox.warning(self, "Print results",
+                                    f"The results card was saved to {path}, but its preview could not be loaded.")
             self.statusBar().showMessage(f"Results card saved to {path}", 8000)
+            self._open_results_image(path)
         else:
             QMessageBox.warning(self, "Print results", f"Could not save the card to {path}.")
+
+    def _open_results_image(self, path: str) -> None:
+        if not QDesktopServices.openUrl(QUrl.fromLocalFile(path)):
+            QMessageBox.warning(self, "Print results", f"Could not open the results image:\n{path}")
+
+    def _open_results_folder(self, path: str) -> None:
+        if not QDesktopServices.openUrl(QUrl.fromLocalFile(path)):
+            QMessageBox.warning(self, "Print results", f"Could not open the results folder:\n{path}")
 
     def _update_stats(self) -> None:
         if self.history is None:

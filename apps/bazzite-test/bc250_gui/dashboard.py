@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PyQt6.QtCore import QSize, Qt, pyqtSignal
+from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 # The suite palette and the bundled Inter font (header_font) come from bc250_core; ACCENT is the brighter purple
 # of the logo's circuit lines, PURPLE the logo's own.
@@ -183,13 +185,73 @@ class StatsBar(QWidget):
             box.setToolTip(plain_tooltip(f"{what}\n{base_tip}" + (f"\n\n{detail}" if detail else "")))
 
 
+class ResultsPreview(QFrame):
+    image_requested = pyqtSignal(str)
+    folder_requested = pyqtSignal(str)
+
+    def __init__(self, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.setObjectName("resultsPreview")
+        self.setStyleSheet("#resultsPreview { border:1px solid #3a3f4a; border-radius:8px;"
+                           " background:rgba(255,255,255,0.03); }")
+        self._image_path: str | None = None
+
+        row = QHBoxLayout(self)
+        row.setContentsMargins(10, 8, 10, 8)
+        row.setSpacing(12)
+        self.image = QPushButton()
+        self.image.setObjectName("resultsPreviewImage")
+        self.image.setFixedSize(192, 108)
+        self.image.setIconSize(QSize(184, 100))
+        self.image.setFlat(True)
+        self.image.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.image.setToolTip("Click to open the results image.")
+        self.image.clicked.connect(self._open_image)
+        row.addWidget(self.image)
+
+        details = QVBoxLayout()
+        details.setSpacing(4)
+        title = QLabel("Latest results image")
+        title.setStyleSheet("font-weight:700;")
+        details.addWidget(title)
+        self.folder = QLabel()
+        self.folder.setWordWrap(True)
+        self.folder.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        details.addWidget(self.folder)
+        details.addStretch(1)
+        self.open_folder = QPushButton("Open folder")
+        self.open_folder.clicked.connect(self._open_folder)
+        details.addWidget(self.open_folder, 0, Qt.AlignmentFlag.AlignLeft)
+        row.addLayout(details, 1)
+        self.hide()
+
+    def set_image(self, image_path: str) -> bool:
+        pixmap = QPixmap(image_path)
+        if pixmap.isNull():
+            return False
+        self._image_path = image_path
+        self.image.setIcon(QIcon(pixmap.scaled(
+            self.image.iconSize(), Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation)))
+        self.folder.setText(f"Folder: {Path(image_path).parent}")
+        self.show()
+        return True
+
+    def _open_image(self) -> None:
+        if self._image_path is not None:
+            self.image_requested.emit(self._image_path)
+
+    def _open_folder(self) -> None:
+        if self._image_path is not None:
+            self.folder_requested.emit(str(Path(self._image_path).parent))
+
+
 def results_card(bar: StatsBar) -> "QPixmap":
     """A compact, shareable "BC-250 Bazzite Test Results" card (Settings > General > Print results):
     the logo and title on top, the Base and Extended System scores as two large tiles, the nine stat
     boxes as a readable 3x3 grid below, rendered offscreen."""
     from datetime import datetime
 
-    from PyQt6.QtGui import QPixmap
     from PyQt6.QtWidgets import QGridLayout
 
     from . import APP_NAME, LOGO_PATH, __version__
