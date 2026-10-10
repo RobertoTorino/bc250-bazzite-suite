@@ -29,6 +29,9 @@ python3 tools/check_versions.py    # hard-coded versions = VERSION
 mkdocs build --strict              # from the venv
 ```
 
+To preview the manual locally, run `mkdocs serve` from the repository root with the development venv active,
+then open <http://127.0.0.1:8000/bc250-bazzite-suite/>. Stop the server with Ctrl+C.
+
 ### Working from both Linux and Windows
 
 The repo is used from both systems, so it is set up to behave the same on each:
