@@ -1,3 +1,7 @@
+Changelog: 10-10-2026 12:40:42
+
+Manual: round the rendered tables themselves rather than a wrapper that MkDocs Material does not generate.
+
 Changelog: 10-10-2026 12:35:24
 
 Development manual: add local MkDocs preview instructions.

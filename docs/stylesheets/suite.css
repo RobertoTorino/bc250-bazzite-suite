@@ -69,6 +69,10 @@
   overflow: auto;
 }
 
+.md-typeset table:not([class]) {
+  border-radius: var(--suite-radius-medium);
+}
+
 .md-typeset__table {
   overflow: hidden;
   border: 1px solid var(--md-default-fg-color--lightest);
