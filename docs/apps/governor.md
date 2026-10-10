@@ -126,10 +126,10 @@ timing, frequency thresholds, safe points, backups and the service page work the
 
 ## Pages
 
-<details>
+<details markdown="1">
 <summary>🔽 1 - Overview page </summary>
 
-![Overview](../assets/governor/01-overview.png)
+[![Overview](../assets/governor/01-overview.png)](../assets/governor/01-overview.png)
 
 </details>
 
@@ -137,10 +137,10 @@ timing, frequency thresholds, safe points, backups and the service page work the
   window over the last hour of samples, *Export CSV…* for the whole history, *Compare…* to overlay an earlier
   export dashed with both sessions' averages/peaks, and the `gpu_metrics` table.
 
-<details>
+<details markdown="1">
 <summary>🔽 2 - CPU usage </summary>
 
-![CPU usage](../assets/governor/02-cpu-usage.png)
+[![CPU usage](../assets/governor/02-cpu-usage.png)](../assets/governor/02-cpu-usage.png)
 
 </details>
 
@@ -148,10 +148,10 @@ timing, frequency thresholds, safe points, backups and the service page work the
   file; the window title gets a `*`. The governor reads the file at start only, so it is restarted after
   applying unless you untick that option. *Reload from disk* discards the edits. The raw file is shown below.
 
-<details>
+<details markdown="1">
 <summary>🔽 3 - Tuning </summary>
 
-![Tuning](../assets/governor/03-tuning.png)
+[![Tuning](../assets/governor/03-tuning.png)](../assets/governor/03-tuning.png)
 
 </details>
 
@@ -163,10 +163,10 @@ timing, frequency thresholds, safe points, backups and the service page work the
   deleted; safe points are not part of a profile. *Copy hotkey command* gives the `--profile` command line to
   bind to a desktop shortcut.
 
-<details>
+<details markdown="1">
 <summary>🔽 4 - Safe points </summary>
 
-![Safe points](../assets/governor/04-safe-points.png)
+[![Safe points](../assets/governor/04-safe-points.png)](../assets/governor/04-safe-points.png)
 
 </details>
 
@@ -181,10 +181,10 @@ timing, frequency thresholds, safe points, backups and the service page work the
   clock range, kernel verdict) and *Add to table* to turn a held point into a safe point; closing the app or any
   Performance-page action ends the test too.
 
-<details>
+<details markdown="1">
 <summary>🔽 5 - Performance </summary>
 
-![Performance](../assets/governor/05-performance.png)
+[![Performance](../assets/governor/05-performance.png)](../assets/governor/05-performance.png)
 
 </details>
 
@@ -194,19 +194,19 @@ timing, frequency thresholds, safe points, backups and the service page work the
   Steam `%command%`, Heroic/Lutris or a terminal) with a Copy button. No password needed; runtime changes are lost
   at the next governor restart.
 
-<details>
+<details markdown="1">
 <summary>🔽 6 - Backups </summary>
 
-![Backups](../assets/governor/06-backups.png)
+[![Backups](../assets/governor/06-backups.png)](../assets/governor/06-backups.png)
 
 </details>
 
 * **6 - Backups** — the `config.toml.bak-*` copies with a diff against the current file and one-click restore.
 
-<details>
+<details markdown="1">
 <summary>🔽 7 - Service </summary>
 
-![Service](../assets/governor/07-service.png)
+[![Service](../assets/governor/07-service.png)](../assets/governor/07-service.png)
 
 </details>
 
@@ -214,10 +214,10 @@ timing, frequency thresholds, safe points, backups and the service page work the
   *Export diagnostics…*: one text file (versions, config, status, journal, raw `gpu_metrics`) for bug reports, and
   *Check for updates*: installed RPM versus the latest GitHub release of the governor (also at start, see Settings).
 
-<details>
+<details markdown="1">
 <summary>🔽 8 - Settings </summary>
 
-![Settings](../assets/governor/08-settings.png)
+[![Settings](../assets/governor/08-settings.png)](../assets/governor/08-settings.png)
 
 </details>
 
@@ -227,10 +227,10 @@ timing, frequency thresholds, safe points, backups and the service page work the
   reaches a chosen temperature, when it reaches the governor's throttling temperature, and when the governor
   service stops or fails on its own; edge-triggered with hysteresis and a cooldown).
 
-<details>
+<details markdown="1">
 <summary>🔽 9 - Help </summary>
 
-![Settings](../assets/governor/09-help.png)
+[![Help](../assets/governor/09-help.png)](../assets/governor/09-help.png)
 
 </details>
 

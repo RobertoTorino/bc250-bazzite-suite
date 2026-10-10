@@ -3,6 +3,9 @@
 :root {
   --suite-primary: #5835CE;
   --suite-secondary: #8A2BE2;
+  --suite-radius-small: 6px;
+  --suite-radius-medium: 8px;
+  --suite-radius-large: 12px;
 }
 
 [data-md-color-primary="custom"] {
@@ -46,6 +49,44 @@
   font-weight: 700;
 }
 
+.md-typeset .admonition,
+.md-typeset details,
+.md-typeset .highlight,
+.md-typeset pre,
+.md-typeset__table,
+.md-search__form,
+.md-search__output {
+  border-radius: var(--suite-radius-medium);
+}
+
+.md-typeset .admonition,
+.md-typeset details {
+  overflow: hidden;
+}
+
+.md-typeset .highlight,
+.md-typeset pre {
+  overflow: auto;
+}
+
+.md-typeset__table {
+  overflow: hidden;
+  border: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.md-typeset img:not(.app-icon):not(.app-logo) {
+  border-radius: var(--suite-radius-medium);
+}
+
+.md-typeset a > img {
+  transition: box-shadow 120ms ease, transform 120ms ease;
+}
+
+.md-typeset a:hover > img {
+  box-shadow: 0 0 0 2px var(--md-accent-fg-color);
+  transform: translateY(-1px);
+}
+
 /* The small app icon in front of a name, as on the portal's cards. */
 .md-typeset img.app-icon {
   width: 1.6em;
@@ -60,7 +101,7 @@
   width: 128px;
   float: right;
   margin: 0 0 1em 1em;
-  border-radius: 1.2em;
+  border-radius: var(--suite-radius-large);
 }
 
 .md-typeset table:not([class]) th {

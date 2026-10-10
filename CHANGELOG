@@ -1,3 +1,7 @@
+Changelog: 10-10-2026 12:25:19
+
+Manual: shared content boxes and images now have rounded corners, and the governor page's screenshots link to their full-size images.
+
 Changelog: 10-10-2026 12:13:47
 
 GPL source files, scripts, translations, dependency manifests and Markdown documentation missing SPDX identifiers now carry the project license header.
