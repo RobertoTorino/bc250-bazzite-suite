@@ -1,3 +1,11 @@
+Changelog: 10-10-2026 20:24:08
+
+Release front end: tools/release.sh opens a window for the file edits of a release (tools/release_ui.py on tools/release_plan.py). Step 1 writes the new versions of the ticked apps (VERSION and every copy check_versions.py checks) and a "Release x.y.z." CHANGELOG entry with notes; step 2 pins the released apps in portal/apps.toml (tag and sha256 from the release's SHA256SUMS) and bumps the portal, at least as far as check_manifest.py asks, with a CHANGELOG entry listing the pins. It never commits, tags or pushes; it shows the git commands. check_manifest.py: the bump rule is now also a function of its own (required_bump), with the same results. tools/requirements-dev.txt adds PyQt6 for the window's tests. Manual (docs/portal.md), the development page and CLAUDE.md describe it.
+
+Changelog: 10-10-2026 20:08:52
+
+New app memory-manager (BC-250 Memory Manager): the VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it. CI runs its tests and its installer test (tools/installer-tests/memory-manager.sh) and shellchecks its installer at warning level; the portal lists it (changes_board); the manual has its chapter (docs/apps/memory-manager.md) and an internals page with the CMOS layout and the reads of two boards (docs/development/memory-manager.md); CLAUDE.md lists its checks.
+
 Changelog: 10-10-2026 19:34:00
 Bumped version to 0.8.0
 

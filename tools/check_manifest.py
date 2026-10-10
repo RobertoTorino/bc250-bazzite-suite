@@ -86,9 +86,11 @@ def check_bump(base: str) -> list[str]:
                        (SUITE / "portal" / "VERSION").read_text(encoding="utf-8").strip())
 
 
-def bump_errors(old_text: str, new_text: str, old_portal: str, new_portal: str) -> list[str]:
+def required_bump(old_text: str, new_text: str) -> tuple[int, str]:
+    """The smallest portal bump (LEVELS) the change from *old_text* to *new_text* needs, and why; -1 when an app
+    moves back to an older release."""
     if old_text == new_text:
-        return []
+        return 0, ""
     old = {e.key: e for e in manifest.parse(old_text)}
     new = {e.key: e for e in manifest.parse(new_text)}
     need, why = 1, "apps.toml changed"
@@ -99,9 +101,18 @@ def bump_errors(old_text: str, new_text: str, old_portal: str, new_portal: str) 
             continue
         level = bump_level(old[key].version, new[key].version)
         if level < 0:
-            return [f"{key} moves back from {old[key].tag} to {new[key].tag}"]
+            return -1, f"{key} moves back from {old[key].tag} to {new[key].tag}"
         if level > need:
             need, why = level, f"{key} {old[key].version} -> {new[key].version}"
+    return need, why
+
+
+def bump_errors(old_text: str, new_text: str, old_portal: str, new_portal: str) -> list[str]:
+    need, why = required_bump(old_text, new_text)
+    if need == 0:
+        return []
+    if need < 0:
+        return [why]
     got = bump_level(old_portal, new_portal)
     if got < need:
         return [f"{MANIFEST} changed ({why}): portal/VERSION needs at least a {LEVELS[need]} bump, "

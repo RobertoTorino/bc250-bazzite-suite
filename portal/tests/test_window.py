@@ -208,3 +208,15 @@ def test_no_portal_offer_when_not_newer_or_offline(qapp, home, settings_dir, tmp
     assert wait_for(lambda: not w.portal_checker.running, 3000)
     assert w.portal_button.isHidden()
     w.close()
+
+
+def test_cards_reflow_into_two_columns(window, qapp):
+    window.show()
+    for width, columns in ((1100, 2), (700, 1), (1100, 2)):
+        window.resize(width, 720)
+        qapp.processEvents()
+        assert window.columns == columns, width
+        places = [window.grid.getItemPosition(window.grid.indexOf(card))[:2] for card in window.cards.values()]
+        assert places == [(i // columns, i % columns) for i in range(len(window.cards))]   # file order, by rows
+    assert window.column_count(2 * mw.TILE_MIN_WIDTH + 20) == 2
+    assert window.column_count(2 * mw.TILE_MIN_WIDTH - 1) == 1

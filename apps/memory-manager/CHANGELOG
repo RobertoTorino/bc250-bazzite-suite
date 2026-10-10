@@ -1,0 +1,18 @@
+Changelog: 10-10-2026 20:56:48
+
+Release 0.1.0. Initial release
+
+Changelog: 10-10-2026 20:08:52
+
+New app memory-manager (BC-250 Memory Manager). It shows the memory the kernel got at this boot (the VRAM split,
+the GTT, the system RAM, the TTM limit with a note when GTT is capped at the RAM, the swap layout and swappiness)
+and sets the VRAM split in CMOS with its own CMOS code instead of fanoush/bc250_memcfg. A small root helper
+(cmos.py, standard library only, run by pkexec with the system Python in isolated mode) reads CMOS bank 2 through
+/dev/port and writes only the 28-byte memory block at 0x90-0xAB. It writes only on a BC-250 without kernel
+lockdown, and only a block it can trust (the firmware or Linux tool signature, a matching checksum, every timing in
+range); it changes UMA_SIZE alone, writes the whole block in the same order as bc250_memcfg, and reads it back.
+Splits from 512 MB to 10 GB, 6 GB marked as recommended for games. The window remembers a change with its boot and
+says after the reboot whether the kernel got the new split; Undo writes back the split from before the last
+change. Read CMOS shows the decoded block and all of bank 2 and saves it as a dump. Every change saves the block
+before and after in ~/.local/share/bc250-memory-manager/backups. The tests use the CMOS reads of the owner's two
+boards as fixtures. The logo is a placeholder.

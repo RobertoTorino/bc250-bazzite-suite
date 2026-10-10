@@ -4,12 +4,13 @@
 
 The BC250 Bazzite Suite's front door: one window that installs, opens, updates and removes the suite's apps.
 **BC-250 Bazzite Test** is always installed with the portal and listed first; every other app is an optional
-card ("pill") with **Install**, **Open** and **Uninstall**.
+card ("pill") with **Install**, **Open** and **Uninstall**. The cards stand in two columns, left to right in the
+order of `apps.toml`, and in one column when the window is too narrow for two.
 
 - Install, update and uninstall run **the app's own installer** in a terminal window, because installers may ask
   for the sudo password and print what they do. The portal watches for the result and refreshes.
-- Apps that change how the board runs (CU/core unlocks, the GPU governor, GPU overclocking, the ACPI override)
-  are marked **changes the board**. The portal warns before installing or opening them.
+- Apps that change how the board runs (CU/core unlocks, the GPU governor, GPU overclocking, the ACPI override, the VRAM
+  split, a patched GPU driver) are marked **changes the board**. The portal warns before installing or opening them.
 - Each portal release pins one tested release of every app in [`apps.toml`](https://github.com/RobertoTorino/bc250-bazzite-suite/blob/main/portal/apps.toml). The portal downloads
   exactly those tarballs from the suite's GitHub releases and checks each against the SHA-256 pinned there, or
   against the release's `SHA256SUMS` until one is pinned. Then it unpacks the tarball without ever writing
@@ -81,6 +82,23 @@ Releasing an app and pinning it in the portal:
 4. Bump `portal/VERSION` as `tools/check_manifest.py` asks, and list the app release in the portal CHANGELOG.
 5. Once the combination is tested on a BC-250, tag `portal-v<x.y.z>`. That release bundles the pinned
    bazzite-test release.
+
+### The release front end
+
+`tools/release.sh` opens a window that makes these file edits for you. It never commits, tags or pushes: after
+each step it shows the git commands to run.
+
+- **1. Apps:** tick the apps to release and enter their version. A version that was never tagged (the first
+  release) can be released as it is. **Apply** writes `VERSION`, every copy `tools/check_versions.py` checks and a
+  `Release x.y.z.` CHANGELOG entry with your notes, which become the release notes on GitHub. When `apps.toml`
+  pins a tag of that app that was never released, the pin moves to the new version, and the window says that
+  this push then also needs a portal bump. Then commit, push, and push the app tags (steps 1 and 2 above).
+- **2. Pin and portal:** once GitHub has built the app releases, **Pin** reads each release's `SHA256SUMS` and
+  pins its tag and checksum in `apps.toml` (step 3). The window shows the lowest portal version CI accepts against
+  the last push (`origin/main`); **Bump portal** writes it with a CHANGELOG entry that lists the pinned app
+  releases, and runs `tools/check_manifest.py` (step 4). Then commit, push, test, and tag the portal (step 5).
+
+`python3 tools/release_plan.py` lists every app with its version, its last tag and its pin, without Qt.
 
 ---
 

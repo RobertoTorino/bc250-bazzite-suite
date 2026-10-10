@@ -66,12 +66,14 @@ nav:
       - BC-250 Persistent ACPI: apps/persistent-acpi.md
       - BC-250 System Overlay: apps/system-overlay.md
       - BC-250 BIOS Reader: apps/bios-reader.md
+      - BC-250 Memory Manager: apps/memory-manager.md
       - BC-250 ACE Queues: apps/ace-queues.md
   - Development:
       - development/index.md
       - Bazzite Test script: development/bazzite-test.md
       - Bazzite Test internals: development/bazzite-test-internals.md
       - Bazzite Test test plan: development/bazzite-test-plan.md
+      - Memory Manager internals: development/memory-manager.md
   - Security:
       - Security policy: SECURITY.md
   - History:

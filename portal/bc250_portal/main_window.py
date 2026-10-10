@@ -18,10 +18,11 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path, PurePath
 
-from PyQt6.QtCore import QTimer, Qt, QUrl, pyqtSignal
+from PyQt6.QtCore import QEvent, QTimer, Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QDesktopServices, QPixmap
 from PyQt6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea, QVBoxLayout, QWidget,
+    QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea, QVBoxLayout,
+    QWidget,
 )
 
 from bc250_core.platform import expand, launch_in_terminal
@@ -36,6 +37,7 @@ from .sources import Records, SourceError, Sources, is_installed
 
 POLL_MS = 1000
 ICON_PX = 24                    # the app icon in front of the name on its card
+TILE_MIN_WIDTH = 420            # below two of these side by side, the cards go back to one column
 
 BOARD_WARNING = (
     "<p><b>{name} changes how your BC-250 runs</b> (clocks, voltages, unlocked units or firmware tables).</p>"
@@ -68,7 +70,7 @@ def shell_line(folder: PurePath, commands: tuple[str, ...]) -> str:
 
 
 class AppCard(QFrame):
-    """One app: name, summary, pinned tag, state pill and its buttons."""
+    """One app as a tile: icon and name, summary, pinned tag and badges, then the state pill and its buttons."""
 
     install_clicked = pyqtSignal(object)
     uninstall_clicked = pyqtSignal(object)
@@ -79,9 +81,8 @@ class AppCard(QFrame):
         self.entry = entry
         self.setObjectName("card")
         self.setStyleSheet("QFrame#card { border:1px solid palette(mid); border-radius:8px; }")
-        row = QHBoxLayout(self)
-        row.setContentsMargins(14, 10, 14, 10)
-        text = QVBoxLayout()
+        text = QVBoxLayout(self)
+        text.setContentsMargins(14, 10, 14, 10)
         title_row = QHBoxLayout()
         title_row.setSpacing(8)
         self.icon = QLabel()
@@ -105,12 +106,15 @@ class AppCard(QFrame):
         self.badges = QLabel(" · ".join(badges))
         self.badges.setStyleSheet("color:palette(placeholder-text); font-size:11px;")
         text.addWidget(self.badges)
-        row.addLayout(text, 1)
+        text.addStretch(1)                              # tiles in one grid row share a height: buttons at the bottom
+        row = QHBoxLayout()
+        text.addLayout(row)
 
         self.dot = red_dot()
         row.addWidget(self.dot, 0, Qt.AlignmentFlag.AlignVCenter)
         self.pill = StatusPill()
         row.addWidget(self.pill, 0, Qt.AlignmentFlag.AlignVCenter)
+        row.addStretch(1)
         self.open_button = QPushButton("Open")
         if len(entry.launch) > 1:
             menu = QMenu(self.open_button)
@@ -197,8 +201,9 @@ class MainWindow(QMainWindow):
         root.addWidget(self.source_label)
 
         cards = QWidget()
-        column = QVBoxLayout(cards)
-        column.setContentsMargins(0, 0, 0, 0)
+        self.grid = QGridLayout(cards)
+        self.grid.setContentsMargins(0, 0, 0, 0)
+        self.columns = 0
         self.cards: dict[str, AppCard] = {}
         for entry in entries:
             card = AppCard(entry)
@@ -206,13 +211,14 @@ class MainWindow(QMainWindow):
             card.uninstall_clicked.connect(self.uninstall)
             card.open_clicked.connect(self.open_app)
             self.cards[entry.key] = card
-            column.addWidget(card)
-        column.addStretch(1)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setWidget(cards)
+        self.scroll = scroll
+        scroll.installEventFilter(self)                 # reflow when the scroll area itself gets its new width
         root.addWidget(scroll, 1)
+        self.reflow()
         self.setCentralWidget(central)
 
         self.poll = QTimer(self)
@@ -224,6 +230,34 @@ class MainWindow(QMainWindow):
         self.portal_checker.finished.connect(self._portal_checked)
         if portal_check is not None:
             self.portal_checker.start(portal_check)
+
+    # ------------------------------------------------------------------------------------------- layout
+    def column_count(self, width: int) -> int:
+        spacing = self.grid.horizontalSpacing()
+        return 2 if width >= 2 * TILE_MIN_WIDTH + max(spacing, 0) else 1
+
+    def reflow(self) -> None:
+        """The cards in file order (bazzite-test first), left to right and then down, in as many columns as fit."""
+        # The scroll area's width less a scroll bar, whether one shows or not: a bar that comes and goes cannot
+        # switch the layout back and forth.
+        columns = self.column_count(self.scroll.width() - self.scroll.verticalScrollBar().sizeHint().width())
+        if columns == self.columns:
+            return
+        self.columns = columns
+        while self.grid.count():
+            self.grid.takeAt(0)
+        for i, card in enumerate(self.cards.values()):
+            self.grid.addWidget(card, i // columns, i % columns)
+        for c in range(2):
+            self.grid.setColumnStretch(c, 1 if c < columns else 0)
+        rows = (len(self.cards) + columns - 1) // columns
+        for r in range(len(self.cards) + 1):
+            self.grid.setRowStretch(r, 1 if r == rows else 0)     # an empty last row takes the spare height
+
+    def eventFilter(self, watched, event) -> bool:
+        if watched is self.scroll and event.type() == QEvent.Type.Resize:
+            self.reflow()
+        return super().eventFilter(watched, event)
 
     # ------------------------------------------------------------------------------------------- state
     def busy(self) -> bool:

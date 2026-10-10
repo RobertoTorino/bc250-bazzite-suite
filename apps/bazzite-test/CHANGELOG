@@ -1,3 +1,7 @@
+Changelog: 10-10-2026 20:56:48
+
+Release 0.1.0. Initial release
+
 Changelog: 10-10-2026 19:25:36
 
 TTM hints follow the kernel: amdgpu sizes GTT from ttm.pages_limit and caps it at the system RAM on this APU.

@@ -1,3 +1,11 @@
+Changelog: 10-10-2026 20:35:40
+
+The app cards are tiles in two columns: icon and name, summary, tag and badges, then the state pill and the buttons along the bottom. They read left to right in the order of apps.toml (Bazzite Test first), tiles in one row share a height, and the window goes back to one column below about 860 pixels (two tiles of 420). Nothing else changes: the same cards, buttons, states and update dot.
+
+Changelog: 10-10-2026 20:09:02
+
+BC-250 Memory Manager is now a card in the portal (memory-manager-v0.1.0, changes the board), with its icon images/apps/memory-manager.png (a placeholder).
+
 Changelog: 10-10-2026 18:12:32
 
 BC-250 ACE Queues is now a card in the portal (ace-queues-v0.1.0, changes the board), with its icon images/apps/ace-queues.png (a placeholder).

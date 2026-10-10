@@ -13,7 +13,7 @@ The **BC250 Bazzite Suite** (exactly that name): tools for the AMD BC-250 on Baz
 **bazzite-test** is always installed and always listed first; every other app is an optional card ("pill").
 
 - `apps/<name>/`: bazzite-test, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
-  system-overlay, bios-reader, ace-queues. Each has its own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT, the rest
+  system-overlay, bios-reader, ace-queues, memory-manager. Each has its own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT, the rest
   GPL-3.0-or-later), .gitignore.
 - `core/bc250_core/`: shared Python code. It is **bundled per app** at release time (`tools/stage_app.py`), so each
   app runs on the core it was tested with; the shared venv `~/.local/share/bc250-bazzite-suite/venv` holds only
@@ -27,7 +27,7 @@ The **BC250 Bazzite Suite** (exactly that name): tools for the AMD BC-250 on Baz
   and say what is ready; don't offer to commit.
 - **Releases are the owner's, all of it.** See [Releases](#releases): Claude prepares code, never a release.
 - **Warn before board changes.** Apps that change how the board runs (CU/core unlocks, GPU governor, GPU
-  overclocking, ACPI override, the patched RADV of ace-queues) are marked `changes_board` and the portal asks first. Frame it as standard caution:
+  overclocking, ACPI override, the patched RADV of ace-queues, the VRAM split of memory-manager) are marked `changes_board` and the portal asks first. Frame it as standard caution:
   the apps are software-only and reversible, not "risky".
 - **The current releases are the baseline.** They were tested extensively on two boards. Moving code must not
   change behaviour; a finding in existing code is "a code path to check", not a known failure. Prove "unchanged"
@@ -79,12 +79,13 @@ shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/
   apps/cores-bisect/install.sh apps/cores-bisect/packaging/bazzite/*.sh
 shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
 shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh \
-  apps/system-overlay/install.sh apps/bios-reader/install.sh
+  apps/system-overlay/install.sh apps/bios-reader/install.sh apps/memory-manager/install.sh
 shellcheck -S warning apps/ace-queues/bc250-ace-queues.sh apps/ace-queues/bc250-ace-queues-run \
   apps/ace-queues/install.sh apps/ace-queues/mesa/build-in-container.sh
 bash tools/installer-tests/bazzite-test.sh; bash tools/installer-tests/portal.sh
 bash tools/installer-tests/persistent-acpi.sh; bash tools/installer-tests/system-overlay.sh
 bash tools/installer-tests/bios-reader.sh; bash tools/installer-tests/ace-queues.sh
+bash tools/installer-tests/memory-manager.sh
 bash tools/installer-tests/release.sh
 mkdocs build --strict                               # from the venv
 ```
@@ -104,6 +105,9 @@ The owner does every step of a release; Claude does none of them, and doesn't of
 - building or publishing release assets (`tools/build_release.py`) and the GitHub releases themselves;
 - pinning a release in `portal/apps.toml` (`tools/pin_app.py`, the `tag` and `sha256` lines);
 - the release entries in the CHANGELOGs.
+
+`tools/release.sh` (`release_ui.py` on `release_plan.py`) is the owner's front end for the file edits of a release;
+Claude may change it and its tests, but never uses it on the repository.
 
 Claude may change the release tools and their tests, and runs `tools/installer-tests/release.sh` as a test (it
 works in a temp folder and publishes nothing). When finished work will need a release or a version bump, the
