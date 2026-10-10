@@ -466,7 +466,7 @@ conditions later, boot, run `sudo ./bc250-cu-unlock.sh --uninstall`, and reboot 
 > - `--status` → **"Configured masks"**: just what's saved in `/etc/bc250-cu-bisect/masks`. This is
 >   what you *asked* to be installed, not proof it's actually active — if `--install` silently failed
 >   (see above) this can show 32 CUs while the live registers are back to 24.
-> - Third-party GPU info/monitoring apps (Control Center style tools, `rocm-smi`, Vulkan/OpenCL CU
+> - Third-party GPU info/monitoring apps (`rocm-smi`, Vulkan/OpenCL CU
 >   counts, etc.): these typically read the CU count the `amdgpu` driver cached once when it probed the
 >   GPU at boot/driver-load time, not a live register re-read. If you unlock registers at runtime, or a
 >   persistence service runs after the driver already probed, these can keep showing a stale number
