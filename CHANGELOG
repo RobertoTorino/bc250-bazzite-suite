@@ -1,3 +1,7 @@
+Changelog: 11-10-2026 00:04:34
+
+CI: the pytest jobs check out the full history with its tags (fetch-depth: 0), as the versions job already did. tools/tests checks the shipped apps.toml, and once an app is bumped past its pinned release (step 1 of a release), that pin only passes when its tag exists; the default checkout has no tags, so the test failed in CI while it passed locally.
+
 Changelog: 10-10-2026 21:37:45
 
 Manual: Checking a release (docs/portal.md). A local build of a tag has the same content as the GitHub release, checked for bazzite-test-v0.1.0 and governor-v0.1.0: governor's tar is identical, bazzite-test's differs only in the build time in bc250_gui/_build_info.py. The .tar.gz checksum is not the same, because gzip output differs between zlib builds (Fedora's zlib-ng, Ubuntu's zlib). The build_release.py docstring and a release.yml comment, which said a local build gives the same files, now say this.
