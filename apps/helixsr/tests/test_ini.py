@@ -57,3 +57,8 @@ def test_ini_template_prefers_payload(payload, tmp_path):
     (payload / backend.INI).write_text("[Log]\nEnabled = false\n; mine\n", encoding="utf-8")
     assert "; mine" in backend.ini_template(payload)
     assert backend.ini_template(tmp_path / "nowhere") == DEFAULT_INI_TEXT
+
+
+def test_ini_tuning_ignored_from_1_7_0():
+    assert backend.ini_tuning_ignored("1.7.0") and backend.ini_tuning_ignored("1.10.2")
+    assert not backend.ini_tuning_ignored("1.4.3") and not backend.ini_tuning_ignored("")

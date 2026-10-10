@@ -297,6 +297,10 @@
         <source>Overwrite the helixsr.ini of that deployment with this file.</source>
         <translation>用此文件覆盖该部署的 helixsr.ini。</translation>
     </message>
+    <message>
+        <source>HelixSR {0} behaves like DLSS: it ignores [Sharpening] and the [ModelE] Network setting, so they are greyed out. HelixSR {1} still reads them.</source>
+        <translation>HelixSR {0} 的行为与 DLSS 相同：它会忽略 [Sharpening] 和 [ModelE] 中的 Network 设置，因此这些项显示为灰色。HelixSR {1} 仍会读取它们。</translation>
+    </message>
 </context><context>
     <name>MainWindow</name>
     <message>
@@ -591,6 +595,10 @@ and rename the game's .original.dll back?</source>
     <message>
         <source>The second upscaler is in the folder as {0}; OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR.</source>
         <translation>第二个超分器以 {0} 的名称放在文件夹中；OptiScaler 的“FFX Upscaler”菜单会在 HelixSR 之后列出它的超分器。</translation>
+    </message>
+    <message>
+        <source>HelixSR {version} is out ({published}); the payload has {installed}, the fallback picked on the Setup page.</source>
+        <translation>HelixSR {version} 已发布（{published}）；载荷中为 {installed}，即在“设置”页选择的备用版本。</translation>
     </message>
 </context><context>
     <name>OverviewPage</name>
@@ -900,6 +908,22 @@ and rename the game's .original.dll back?</source>
         <source>{0} — took {1}:{2:02d}</source>
         <translation>{0} — 用时 {1}:{2:02d}</translation>
     </message>
+    <message>
+        <source>Version:</source>
+        <translation>版本：</translation>
+    </message>
+    <message>
+        <source>Latest release</source>
+        <translation>最新 release</translation>
+    </message>
+    <message>
+        <source>{0} (fallback)</source>
+        <translation>{0}（备用）</translation>
+    </message>
+    <message>
+        <source>HelixSR's developer recommends {0} when the latest release does not work for you. Switching builds the network files again; deploy again per game afterwards.</source>
+        <translation>如果最新 release 无法正常工作，HelixSR 的开发者推荐使用 {0}。切换后会重新构建网络文件；之后需要为每个游戏重新部署。</translation>
+    </message>
 </context><context>
     <name>StatusPill</name>
     <message>
@@ -1052,6 +1076,10 @@ and rename the game's .original.dll back?</source>
         <source>no release tagged {0} yet</source>
         <translation>尚无标记为 {0} 的版本</translation>
     </message>
+    <message>
+        <source>Could not look up HelixSR {0}: {1}</source>
+        <translation>无法查询 HelixSR {0}：{1}</translation>
+    </message>
 </context><context>
     <name>backend</name>
     <message>
@@ -1137,6 +1165,10 @@ and rename the game's .original.dll back?</source>
     <message>
         <source>{0} is HelixSR itself; pick another FidelityFX upscaler DLL, e.g. AMD&apos;s with FSR 4.</source>
         <translation>{0} 就是 HelixSR 本身；请选择另一个 FidelityFX 超分器 DLL，例如 AMD 带 FSR 4 的版本。</translation>
+    </message>
+    <message>
+        <source>Newer build</source>
+        <translation>较新构建</translation>
     </message>
 </context><context>
     <name>help</name>
@@ -1295,6 +1327,10 @@ and rename the game's .original.dll back?</source>
     <message>
         <source>&lt;p&gt;&lt;b&gt;Second upscaler&lt;/b&gt; (optional, OptiScaler folder only): pick another FidelityFX upscaler DLL, for example AMD&apos;s &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; with FSR 4. It is copied into the folder as &lt;code&gt;{second}&lt;/code&gt; and &lt;code&gt;UpscalerDll&lt;/code&gt; in its helixsr.ini points at it, so OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR and the one you pick runs in that DLL.&lt;/p&gt;</source>
         <translation>&lt;p&gt;&lt;b&gt;第二个超分器&lt;/b&gt;（可选，仅 OptiScaler 文件夹）：选择另一个 FidelityFX 超分器 DLL，例如 AMD 带 FSR 4 的 &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt;。它会以 &lt;code&gt;{second}&lt;/code&gt; 的名称复制到文件夹中，并让其 helixsr.ini 中的 &lt;code&gt;UpscalerDll&lt;/code&gt; 指向它，这样 OptiScaler 的“FFX Upscaler”菜单会在 HelixSR 之后列出它的超分器，所选的那个在该 DLL 中运行。&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;b&gt;Version&lt;/b&gt; picks what &lt;b&gt;Download and build&lt;/b&gt; gets: the latest HelixSR release, or HelixSR {fallback}, the version HelixSR's developer recommends when the latest one does not work for you (please then open an issue at &lt;a href="{helixsr_url}/issues"&gt;HelixSR&lt;/a&gt; with the &lt;code&gt;helixsr.log&lt;/code&gt; from the game folder). Switching builds the network files for that version and replaces the payload; deploy again per game afterwards (the Overview marks them &lt;i&gt;Older build&lt;/i&gt; or &lt;i&gt;Newer build&lt;/i&gt;). From HelixSR 1.7.0 on, the sharpening and network settings of &lt;code&gt;{ini}&lt;/code&gt; are ignored.&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;版本&lt;/b&gt;决定 &lt;b&gt;下载并构建&lt;/b&gt; 获取的内容：最新的 HelixSR release，或 HelixSR {fallback}——当最新版本无法正常工作时 HelixSR 开发者推荐的版本（此时请在 &lt;a href="{helixsr_url}/issues"&gt;HelixSR&lt;/a&gt; 提交 issue，并附上游戏文件夹中的 &lt;code&gt;helixsr.log&lt;/code&gt;）。切换会为该版本构建网络文件并替换载荷；之后需要为每个游戏重新部署（“概览”会将它们标为 &lt;i&gt;旧构建&lt;/i&gt; 或 &lt;i&gt;较新构建&lt;/i&gt;）。从 HelixSR 1.7.0 起，&lt;code&gt;{ini}&lt;/code&gt; 中的锐化和网络设置会被忽略。&lt;/p&gt;</translation>
     </message>
 </context><context>
     <name>setup_page</name>

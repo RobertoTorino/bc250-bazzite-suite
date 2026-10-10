@@ -294,3 +294,29 @@ def test_latest_release_with_a_tag_prefix_and_none_released():
 def test_app_check_uses_the_suite_repository():
     assert acquire.APP_API.startswith("https://api.github.com/repos/RobertoTorino/bc250-bazzite-suite/releases")
     assert acquire.APP_TAG_PREFIX == "helixsr-v"
+
+
+# HelixSR 1.7's script ends with its game installer, which asks per Steam game and writes manual-install/.
+INSTALLER_SCRIPT = GOOD_SCRIPT + """
+if read -r answer; then echo "[fake-setup] answered: $answer"; else echo "[fake-setup] no input"; fi
+mkdir -p "$HERE/manual-install/HelixSR"
+echo weights > "$HERE/manual-install/HelixSR/helixsr_weights.bin"
+"""
+
+
+def test_setup_worker_gives_the_script_no_input(qapp, tmp_path):
+    release, _ = prepared(tmp_path, INSTALLER_SCRIPT)
+    with mock.patch.object(acquire, "is_immutable_system", return_value=True):
+        outcome, log = run_worker(qapp, SetupRequest(release, tmp_path / "work", tmp_path / "data" / "HelixSR"))
+    assert outcome.ok, outcome.message
+    assert "[fake-setup] no input" in log
+    assert not (outcome.release_dir / acquire.MANUAL_INSTALL).exists()
+    assert (outcome.release_dir / backend.WEIGHTS).is_file()
+
+
+def test_setup_worker_fallback_looks_up_the_pinned_tag(qapp, tmp_path):
+    assert acquire.FALLBACK_TAG == "v1.4.3"
+    with mock.patch.object(acquire, "latest_release", return_value=ReleaseInfo(error="GitHub answered 404")) as lookup:
+        outcome, _ = run_worker(qapp, SetupRequest(None, tmp_path / "work", tmp_path / "data", fallback=True))
+    assert lookup.call_args.args[0] == "https://api.github.com/repos/lonewolf0622/HelixSR/releases/tags/v1.4.3"
+    assert not outcome.ok and "1.4.3" in outcome.message and "404" in outcome.message

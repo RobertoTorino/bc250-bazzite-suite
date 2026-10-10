@@ -1,3 +1,27 @@
+Changelog: 10-10-2026 18:43:44
+
+HelixSR 1.7.0: its helixsr-setup.sh now ends with a game installer that asks about every Steam game, and --yes does not
+answer those questions. The app ran the script with its own input, so started from a terminal the Setup page could
+wait for answers typed there. The script now gets no input: the installer stops at its first question and only the
+network files are built. The manual-install folder it leaves in the work folder (another copy of the network files)
+is deleted afterwards.
+
+Setup page: Version picks the latest HelixSR release (the default) or HelixSR 1.4.3, the version HelixSR's developer
+recommends when the latest one does not work. 1.4.3 is pinned by its tag (FALLBACK_TAG in acquire.py), and the
+choice is saved. With the fallback as the payload, the Overview reports a newer release as information, not as an
+update to install.
+
+Deployments: after switching back to an older release, games deployed with a newer one show Newer build instead of
+Older build. Stand-alone OptiScaler folders now also show Older or Newer build when their DLL is not the payload's.
+
+helixsr.ini page: with HelixSR 1.7.0 or newer as the payload, [Sharpening] and the [ModelE] Network setting are greyed
+out with a note, because those versions ignore them. Their values stay in the file for 1.4.3.
+
+Help and the manual describe the version choice; all languages updated. Tests: the setup script gets no input and
+manual-install is removed, the fallback looks up its tag, Newer build, the greyed-out ini settings and the saved
+version choice. The test fixtures now keep QSettings in a temporary folder, so the tests no longer write to the
+user's own settings (or to the Windows registry).
+
 Changelog: 09-10-2026 22:59:08
 
 README: only the app's name, what it does and its license, with a link to its chapter of the manual; the rest moved into the manual (docs/apps/helixsr.md).

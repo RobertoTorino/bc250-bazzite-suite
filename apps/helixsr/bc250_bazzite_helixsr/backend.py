@@ -43,6 +43,9 @@ MODE_REPLACE, MODE_FOLDER = "replace", "folder"
 
 SHARPENING_MODES = ("off", "game", "override")
 NETWORKS = ("auto", "nvidia", "main", "ultraperformance")
+# From this HelixSR version on the DLL behaves like DLSS and ignores [Sharpening] and [ModelE] Network ("helixsr.ini's
+# sharpening / network settings are ignored" in its log); 1.4.3 and older still read them.
+INI_TUNING_IGNORED_FROM = (1, 7, 0)
 
 # The helixsr.ini HelixSR 1.2.0 ships; used as the template when the payload has none.
 DEFAULT_INI_TEXT = """\
@@ -154,6 +157,18 @@ def payload_version(payload_dir: Path) -> str:
     except OSError:
         return ""
     return match.group(1) if match else ""
+
+
+def version_key(version: str) -> tuple[int, ...]:
+    """The x.y.z in a version text as a tuple, e.g. (1, 4, 3); () when there is none."""
+    match = re.search(r"(\d+)\.(\d+)\.(\d+)", version or "")
+    return tuple(int(p) for p in match.groups()) if match else ()
+
+
+def ini_tuning_ignored(version: str) -> bool:
+    """True when HelixSR *version* ignores the sharpening and network settings of helixsr.ini."""
+    key = version_key(version)
+    return bool(key) and key >= INI_TUNING_IGNORED_FROM
 
 
 def payload_status(payload_dir: Path) -> PayloadStatus:
@@ -598,6 +613,15 @@ class Deployment:
         return self.location if self.mode == MODE_FOLDER else self.location.parent
 
 
+def _other_build(dep: Deployment, payload_dir: Path) -> tuple[str, str]:
+    """A deployment whose DLL is not the payload's: newer when the payload went back to an older release (the
+    fallback on the Setup page), older otherwise."""
+    deployed, payload = version_key(dep.helixsr_version), version_key(payload_version(payload_dir))
+    if deployed and payload and deployed > payload:
+        return "warn", QCoreApplication.translate("backend", "Newer build")
+    return "warn", QCoreApplication.translate("backend", "Older build")
+
+
 def deployment_state(dep: Deployment, payload_dir: Path) -> tuple[str, str]:
     """(kind, text) for a status pill: ok = HelixSR in place, warn = partly, bad = gone / original restored."""
     folder = dep.folder
@@ -607,9 +631,12 @@ def deployment_state(dep: Deployment, payload_dir: Path) -> tuple[str, str]:
         dll = folder / HELIXSR_DLL
         if not dll.is_file():
             return "bad", QCoreApplication.translate("backend", "Removed")
-        network = all((folder / n).is_file() for n in NETWORK_FILES)
-        return (("ok", QCoreApplication.translate("backend", "In place")) if network
-                else ("warn", QCoreApplication.translate("backend", "Network files missing")))
+        if not all((folder / n).is_file() for n in NETWORK_FILES):
+            return "warn", QCoreApplication.translate("backend", "Network files missing")
+        payload_dll = payload_dir / HELIXSR_DLL
+        if payload_dll.is_file() and not same_file(dll, payload_dll):
+            return _other_build(dep, payload_dir)
+        return "ok", QCoreApplication.translate("backend", "In place")
     info = inspect_dll(dep.location, payload_dir) if dep.location.is_file() else None
     if info is None:
         return (("bad", QCoreApplication.translate("backend", "DLL missing")) if not original_path(dep.location).exists()
@@ -618,8 +645,7 @@ def deployment_state(dep: Deployment, payload_dir: Path) -> tuple[str, str]:
         return "bad", QCoreApplication.translate("backend", "Original restored")
     if not info.network_files:
         return "warn", QCoreApplication.translate("backend", "Network files missing")
-    return (("ok", QCoreApplication.translate("backend", "In place")) if info.matches_payload
-            else ("warn", QCoreApplication.translate("backend", "Older build")))
+    return ("ok", QCoreApplication.translate("backend", "In place")) if info.matches_payload else _other_build(dep, payload_dir)
 
 
 class DeploymentStore:

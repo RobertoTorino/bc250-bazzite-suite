@@ -299,6 +299,10 @@
         <source>Overwrite the helixsr.ini of that deployment with this file.</source>
         <translation>Sobrescribe con este archivo el helixsr.ini de esa instalación.</translation>
     </message>
+    <message>
+        <source>HelixSR {0} behaves like DLSS: it ignores [Sharpening] and the [ModelE] Network setting, so they are greyed out. HelixSR {1} still reads them.</source>
+        <translation>HelixSR {0} se comporta como DLSS: ignora [Sharpening] y el ajuste Network de [ModelE], por eso aparecen en gris. HelixSR {1} todavía los lee.</translation>
+    </message>
 </context>
 <context>
     <name>MainWindow</name>
@@ -593,6 +597,10 @@ y devolver su nombre a la .original.dll del juego?</translation>
     <message>
         <source>The second upscaler is in the folder as {0}; OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR.</source>
         <translation>El segundo escalador está en la carpeta como {0}; el menú «FFX Upscaler» de OptiScaler muestra sus escaladores después de HelixSR.</translation>
+    </message>
+    <message>
+        <source>HelixSR {version} is out ({published}); the payload has {installed}, the fallback picked on the Setup page.</source>
+        <translation>HelixSR {version} está disponible ({published}); el paquete tiene {installed}, la alternativa elegida en la página Configuración.</translation>
     </message>
 </context>
 <context>
@@ -904,6 +912,22 @@ y devolver su nombre a la .original.dll del juego?</translation>
         <source>{0} — took {1}:{2:02d}</source>
         <translation>{0} — tardó {1}:{2:02d}</translation>
     </message>
+    <message>
+        <source>Version:</source>
+        <translation>Versión:</translation>
+    </message>
+    <message>
+        <source>Latest release</source>
+        <translation>Última versión</translation>
+    </message>
+    <message>
+        <source>{0} (fallback)</source>
+        <translation>{0} (alternativa)</translation>
+    </message>
+    <message>
+        <source>HelixSR's developer recommends {0} when the latest release does not work for you. Switching builds the network files again; deploy again per game afterwards.</source>
+        <translation>El desarrollador de HelixSR recomienda {0} cuando la última versión no te funciona. Al cambiar se vuelven a compilar los archivos de red; después instala de nuevo en cada juego.</translation>
+    </message>
 </context>
 <context>
     <name>StatusPill</name>
@@ -1058,6 +1082,10 @@ y devolver su nombre a la .original.dll del juego?</translation>
         <source>no release tagged {0} yet</source>
         <translation>aún no hay ninguna versión con la etiqueta {0}</translation>
     </message>
+    <message>
+        <source>Could not look up HelixSR {0}: {1}</source>
+        <translation>No se pudo consultar HelixSR {0}: {1}</translation>
+    </message>
 </context>
 <context>
     <name>backend</name>
@@ -1144,6 +1172,10 @@ y devolver su nombre a la .original.dll del juego?</translation>
     <message>
         <source>{0} is HelixSR itself; pick another FidelityFX upscaler DLL, e.g. AMD&apos;s with FSR 4.</source>
         <translation>{0} es el propio HelixSR; elige otra DLL de escalador FidelityFX, p. ej. la de AMD con FSR 4.</translation>
+    </message>
+    <message>
+        <source>Newer build</source>
+        <translation>Compilación más reciente</translation>
     </message>
 </context>
 <context>
@@ -1303,6 +1335,10 @@ y devolver su nombre a la .original.dll del juego?</translation>
     <message>
         <source>&lt;p&gt;&lt;b&gt;Second upscaler&lt;/b&gt; (optional, OptiScaler folder only): pick another FidelityFX upscaler DLL, for example AMD&apos;s &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; with FSR 4. It is copied into the folder as &lt;code&gt;{second}&lt;/code&gt; and &lt;code&gt;UpscalerDll&lt;/code&gt; in its helixsr.ini points at it, so OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR and the one you pick runs in that DLL.&lt;/p&gt;</source>
         <translation>&lt;p&gt;&lt;b&gt;Segundo escalador&lt;/b&gt; (opcional, solo carpeta de OptiScaler): elige otra DLL de escalador FidelityFX, por ejemplo la &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; de AMD con FSR 4. Se copia en la carpeta como &lt;code&gt;{second}&lt;/code&gt; y &lt;code&gt;UpscalerDll&lt;/code&gt; en su helixsr.ini apunta a ella, así que el menú «FFX Upscaler» de OptiScaler muestra sus escaladores después de HelixSR y el que elijas se ejecuta en esa DLL.&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;b&gt;Version&lt;/b&gt; picks what &lt;b&gt;Download and build&lt;/b&gt; gets: the latest HelixSR release, or HelixSR {fallback}, the version HelixSR's developer recommends when the latest one does not work for you (please then open an issue at &lt;a href="{helixsr_url}/issues"&gt;HelixSR&lt;/a&gt; with the &lt;code&gt;helixsr.log&lt;/code&gt; from the game folder). Switching builds the network files for that version and replaces the payload; deploy again per game afterwards (the Overview marks them &lt;i&gt;Older build&lt;/i&gt; or &lt;i&gt;Newer build&lt;/i&gt;). From HelixSR 1.7.0 on, the sharpening and network settings of &lt;code&gt;{ini}&lt;/code&gt; are ignored.&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;Versión&lt;/b&gt; elige qué obtiene &lt;b&gt;Descargar y compilar&lt;/b&gt;: la última versión de HelixSR o HelixSR {fallback}, la versión que recomienda el desarrollador de HelixSR cuando la última no te funciona (en ese caso abre una incidencia en &lt;a href="{helixsr_url}/issues"&gt;HelixSR&lt;/a&gt; con el &lt;code&gt;helixsr.log&lt;/code&gt; de la carpeta del juego). Al cambiar se compilan los archivos de red de esa versión y se reemplaza el paquete; después instala de nuevo en cada juego (Resumen los marca como &lt;i&gt;Compilación antigua&lt;/i&gt; o &lt;i&gt;Compilación más reciente&lt;/i&gt;). A partir de HelixSR 1.7.0 se ignoran los ajustes de nitidez y de red de &lt;code&gt;{ini}&lt;/code&gt;.&lt;/p&gt;</translation>
     </message>
 </context>
 <context>

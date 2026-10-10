@@ -17,8 +17,8 @@ from PyQt6.QtWidgets import (
 from . import APP_ID, APP_NAME, DEPLOYMENTS_FILE, DISPLAY_NAME, LOGO_PATH, PAYLOAD_DIR, __version__, plain_tooltip
 from . import backend
 from .acquire import (
-    DLSS_DLL, HELIXSR_DATA_DIR, WORK_DIR, DlssFinder, SetupOutcome, SetupRequest, SetupWorker, UpdateChecker,
-    UpdateStatus, latest_work_release, pinned_dlss_sha,
+    DLSS_DLL, FALLBACK_VERSION, HELIXSR_DATA_DIR, WORK_DIR, DlssFinder, SetupOutcome, SetupRequest, SetupWorker,
+    UpdateChecker, UpdateStatus, latest_work_release, pinned_dlss_sha, version_tuple,
 )
 from .backend import MODE_FOLDER, MODE_REPLACE, Deployment, DeploymentStore, GameDll, HelixError
 from .help import HelpPage
@@ -102,6 +102,8 @@ class MainWindow(QMainWindow):
         self.setup_page.open_work_requested.connect(lambda: self._open_folder(self.work_dir))
         self.setup_page.import_requested.connect(self._import)
         self.setup_page.auto_check_changed.connect(lambda on: self.settings.setValue("updates/check_on_start", on))
+        self.setup_page.set_fallback(self.settings.value("setup/fallback", False, type=bool))
+        self.setup_page.fallback_changed.connect(lambda on: self.settings.setValue("setup/fallback", on))
         self.deploy_page = DeployPage()
         self.deploy_page.browse_requested.connect(self._browse_game)
         self.deploy_page.browse_folder_requested.connect(self._browse_folder)
@@ -188,6 +190,7 @@ class MainWindow(QMainWindow):
         self.overview.show_deployments(self.store.items, self.payload_dir)
         self.deploy_page.set_payload_ready(status.ready)
         self.ini_page.set_deployments(self.store.items)
+        self.ini_page.set_helixsr_version(status.version)
 
         self.box_payload.set_value(status.version or (self.tr("Imported") if status.dll else self.tr("Missing")),
                                    plain_tooltip(str(self.payload_dir)))
@@ -396,6 +399,12 @@ class MainWindow(QMainWindow):
         if helix.latest.error:
             self.overview.show_update("", "neutral")
             self.statusBar().showMessage(self.tr("Update check: {0}").format(helix.latest.error), 8000)
+        elif helix.update_available and self.setup_page.fallback() and \
+                version_tuple(helix.installed) == version_tuple(FALLBACK_VERSION):
+            self.overview.show_update(self.tr("HelixSR {version} is out ({published}); the payload has {installed}, "
+                                          "the fallback picked on the Setup page.").format(
+                                              version=helix.latest.version, published=helix.latest.published,
+                                              installed=helix.installed), "info")
         elif helix.update_available:
             self.overview.show_update(self.tr("HelixSR {version} is out ({published}); the payload "
                                           "has {installed}. Get HelixSR… updates it.").format(
@@ -418,10 +427,12 @@ class MainWindow(QMainWindow):
         if dlss_file is not None and not dlss_file.is_file():
             QMessageBox.warning(self, DLSS_DLL, self.tr("{0} does not exist.").format(dlss_file))
             return
+        fallback = self.setup_page.fallback()
         helix = self.updates.get("helixsr")
-        release = helix.latest if helix is not None and helix.latest.asset_url else None
+        release = helix.latest if helix is not None and helix.latest.asset_url and not fallback else None
+        wanted = FALLBACK_VERSION if fallback else release.version if release is not None else ""
         status = backend.payload_status(self.payload_dir)
-        if status.ready and release is not None and not helix.update_available and QMessageBox.question(
+        if status.ready and wanted and version_tuple(status.version) == version_tuple(wanted) and QMessageBox.question(
                 self, self.tr("Payload is current"),
                 self.tr("The payload already has HelixSR {version} with its network files. "
                         "Download and build again anyway?").format(
@@ -431,7 +442,7 @@ class MainWindow(QMainWindow):
                                           version=status.version or ""))
             self.statusBar().showMessage(self.tr("Payload is already current."), 6000)
             return
-        request = SetupRequest(release, self.work_dir, self.helix_data, dlss_file)
+        request = SetupRequest(release, self.work_dir, self.helix_data, dlss_file, fallback=fallback)
         worker = SetupWorker(request, self)
         worker.log.connect(self.setup_page.append)
         worker.stage.connect(self.setup_page.set_stage)

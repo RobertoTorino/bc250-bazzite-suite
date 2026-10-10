@@ -8,12 +8,12 @@ from pathlib import Path
 
 from PyQt6.QtCore import QCoreApplication, QElapsedTimer, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
-    QCheckBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QProgressBar, QPushButton, QVBoxLayout,
-    QWidget,
+    QCheckBox, QComboBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QProgressBar, QPushButton,
+    QVBoxLayout, QWidget,
 )
 
 from . import plain_tooltip
-from .acquire import DLSS_DLL, ReleaseInfo, UpdateStatus
+from .acquire import DLSS_DLL, FALLBACK_VERSION, ReleaseInfo, UpdateStatus
 from .widgets import StatusPill, Terminal, accent_button, hint_label, page_header
 
 
@@ -30,6 +30,7 @@ class SetupPage(QWidget):
     open_work_requested = pyqtSignal()
     import_requested = pyqtSignal(Path)             # import an already built release folder
     auto_check_changed = pyqtSignal(bool)
+    fallback_changed = pyqtSignal(bool)             # the version choice: True = the fallback release
 
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
@@ -80,6 +81,18 @@ class SetupPage(QWidget):
 
         box = QGroupBox(self.tr("Get HelixSR and build the network files"))
         vbox = QVBoxLayout(box)
+        choice = QHBoxLayout()
+        choice.addWidget(QLabel(self.tr("Version:")))
+        self.version = QComboBox()
+        self.version.addItem(self.tr("Latest release"), False)
+        self.version.addItem(self.tr("{0} (fallback)").format(FALLBACK_VERSION), True)
+        self.version.setToolTip(self.tr("HelixSR's developer recommends {0} when the latest release does not work for you. "
+                                "Switching builds the network files again; deploy again per game afterwards.")
+                                .format(FALLBACK_VERSION))
+        self.version.currentIndexChanged.connect(lambda _: self.fallback_changed.emit(self.fallback()))
+        choice.addWidget(self.version)
+        choice.addStretch(1)
+        vbox.addLayout(choice)
         dlss = QHBoxLayout()
         self.use_local = QCheckBox(self.tr("Use a {0} already on this PC:").format(DLSS_DLL))
         self.use_local.setToolTip(self.tr("Skips the 59 MB download from NVIDIA's GitHub. Only DLSS 310.7.0 (the exact "
@@ -184,6 +197,14 @@ class SetupPage(QWidget):
         self.auto_check.blockSignals(False)
 
     # ------------------------------------------------------------ run
+    def fallback(self) -> bool:
+        return bool(self.version.currentData())
+
+    def set_fallback(self, on: bool) -> None:
+        self.version.blockSignals(True)
+        self.version.setCurrentIndex(1 if on else 0)
+        self.version.blockSignals(False)
+
     def dlss_file(self) -> Path | None:
         text = self.dlss_path.text().strip()
         return Path(text).expanduser() if self.use_local.isChecked() and text else None
@@ -263,6 +284,7 @@ class SetupPage(QWidget):
 
     def _update_buttons(self) -> None:
         local = self.use_local.isChecked()
+        self.version.setEnabled(not self._running)
         self.dlss_path.setEnabled(local and not self._running)
         self.browse_dlss.setEnabled(local and not self._running)
         self.find_dlss.setEnabled(local and not self._running)

@@ -25,17 +25,24 @@ app does exactly that, reversibly, and nothing else on the system is touched. No
   deleted afterwards. A DLSS 310.7.0 DLL from a game you own can be used instead (*Find in Steam* compares
   checksums), which skips NVIDIA's download. The build itself is HelixSR's own script, unchanged: about 5–6 minutes on a
   BC-250, because it compiles the network's shaders for both wave sizes through Proton. The Setup page shows the
-  elapsed time.
+  elapsed time. From HelixSR 1.7.0 on, the script ends with its own game installer, which asks about each Steam
+  game; the app gives it no input, so it stops there and only the network files are built.
+- **Version choice** – *Version* on the Setup page picks the latest HelixSR release (the default) or HelixSR
+  1.4.3, the version HelixSR's developer recommends when the latest one does not work for you (please then open
+  an issue at [HelixSR](https://github.com/lonewolf0622/HelixSR/issues) with the game's `helixsr.log`).
+  Switching builds the network files for that version and replaces the payload; deploy again per game
+  afterwards.
 - **Update checks** – at start (can be turned off) or on demand: the payload against the latest HelixSR release
   and this app against its latest release on GitHub. A newer HelixSR is flagged on the Overview; building again
-  updates the payload and deployed games show *Older build* until redeployed.
+  updates the payload and deployed games show *Older build* until redeployed (*Newer build* after switching
+  back to 1.4.3).
 - **Payload** – one imported HelixSR release, kept under `~/.local/share/bc250-bazzite-helixsr-gui/payload`.
   Filled by the Setup page, or by hand: run the release's `helixsr-setup.sh` yourself and import the folder or
   the zip. It builds `helixsr_weights.bin` and `helixsr_kernels.pak` from NVIDIA's DLSS DLL – those files are
   NVIDIA's property, so this app never ships them. Only the known HelixSR files are copied; the payload survives
   updates and `./install.sh --uninstall`.
-- **Deployments** – every place HelixSR was put, with a live status (in place, older build, network files
-  missing, original restored, folder gone), in `~/.config/bc250-bazzite-helixsr-gui/deployments.json`.
+- **Deployments** – every place HelixSR was put, with a live status (in place, older or newer build, network
+  files missing, original restored, folder gone), in `~/.config/bc250-bazzite-helixsr-gui/deployments.json`.
 - **Two deploy modes**
   - *Replace the game's DLL* – for games with native FSR 3.1: pick the game folder (Steam libraries are
     scanned, including `libraryfolders.vdf` and the Flatpak Steam), the app finds every upscaler DLL (Unreal
@@ -49,7 +56,8 @@ app does exactly that, reversibly, and nothing else on the system is touched. No
     OptiScaler's FFX Upscaler menu lists its upscalers after HelixSR.
 - **helixsr.ini** – a form over every key HelixSR reads (`[Sharpening]`, `[ModelE]`, `[Log]`, `[Forwarding]`)
   with validation and a live preview that keeps the upstream comments. Save it as the default for new
-  deployments or push it to an existing one.
+  deployments or push it to an existing one. HelixSR 1.7.0 and newer behave like DLSS and ignore
+  `[Sharpening]` and `[ModelE] Network`; the page greys those out for such a payload.
 
 ## Privilege model
 
@@ -116,8 +124,9 @@ PyQt6 wheels do not ship. The tests check that every shipped translation is comp
 - **Overview** – payload status (version from the release's README, DLL, weights, kernels, ini) with
   *Import folder* / *Import zip* / *Open payload folder*, and the deployment table with *Open folder*,
   *Remove* (restores the original or deletes the stand-alone folder) and *Forget*.
-- **Setup** – release status for HelixSR and this app with *Check now*; *Download and build* with progress,
-  the script's output, *Cancel*, *Import built release* and *Open work folder*; optional local `nvngx_dlss.dll`.
+- **Setup** – release status for HelixSR and this app with *Check now*; the version to get (latest or 1.4.3);
+  *Download and build* with progress, the script's output, *Cancel*, *Import built release* and *Open work
+  folder*; optional local `nvngx_dlss.dll`.
 - **Deploy** – choose a Steam game or browse to any folder, scan for upscaler DLLs, pick the mode, decide
   whether to write the current `helixsr.ini`, deploy or remove. In folder mode the OptiScaler snippet is
   shown with a *Copy* button.

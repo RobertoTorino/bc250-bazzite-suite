@@ -31,9 +31,14 @@ from typing import Callable
 from PyQt6.QtCore import QCoreApplication, QObject, QThread, pyqtSignal
 
 from . import APP_ID, DATA_HOME, HELIXSR_RELEASES_URL, SUITE_URL, __version__
-from .backend import HELIXSR_DLL, KERNELS, WEIGHTS, HelixError, file_digest
+from .backend import HELIXSR_DLL, KERNELS, WEIGHTS, HelixError, file_digest, version_key
 
 HELIXSR_API = "https://api.github.com/repos/lonewolf0622/HelixSR/releases/latest"
+# The release HelixSR's developer points to when the latest one does not work ("If 1.7.0 does not work for you, use
+# HelixSR 1.4.3"): the Setup page offers it next to the latest. Its setup only builds the network files.
+FALLBACK_VERSION = "1.4.3"
+FALLBACK_TAG = f"v{FALLBACK_VERSION}"
+HELIXSR_TAG_API = "https://api.github.com/repos/lonewolf0622/HelixSR/releases/tags/{tag}"
 # Every suite app has its own tags in one repository, so /releases/latest would answer with whichever app released
 # last: the release list is searched for this app's tag prefix instead.
 APP_API = "https://api.github.com/repos/RobertoTorino/bc250-bazzite-suite/releases?per_page=100"
@@ -42,6 +47,7 @@ APP_RELEASES_URL = f"{SUITE_URL}/releases"
 HELIXSR_DATA_DIR = DATA_HOME / "HelixSR"            # where helixsr-setup.sh keeps its Python and DXC
 WORK_DIR = DATA_HOME / APP_ID / "work"              # downloaded releases live here until imported
 SETUP_SCRIPT = "helixsr-setup.sh"
+MANUAL_INSTALL = "manual-install"                   # HelixSR 1.7's setup writes it for hand installs; not used here
 DLSS_DLL = "nvngx_dlss.dll"
 TIMEOUT = 15
 CHUNK = 1 << 18
@@ -49,9 +55,7 @@ _VERSION_RE = re.compile(r"(\d+)\.(\d+)\.(\d+)")
 _USER_AGENT = f"{APP_ID}/{__version__}"
 
 
-def version_tuple(version: str) -> tuple[int, ...]:
-    match = _VERSION_RE.search(version or "")
-    return tuple(int(p) for p in match.groups()) if match else ()
+version_tuple = version_key
 
 
 # ------------------------------------------------------------------------------------------ releases
@@ -142,6 +146,11 @@ class UpdateStatus:
         if self.installed:
             return QCoreApplication.translate("acquire", "{0} (up to date, released {1})").format(installed, latest.published)
         return QCoreApplication.translate("acquire", "{0}; latest release {1} ({2})").format(installed, latest.version, latest.published)
+
+
+def fallback_release() -> ReleaseInfo:
+    """The pinned fallback release (FALLBACK_TAG); never raises, errors land in .error."""
+    return latest_release(HELIXSR_TAG_API.format(tag=FALLBACK_TAG), HELIXSR_RELEASES_URL)
 
 
 def check_updates(payload_version: str) -> dict[str, UpdateStatus]:
@@ -370,6 +379,7 @@ class SetupRequest:
     work_dir: Path = WORK_DIR
     helix_data: Path = HELIXSR_DATA_DIR
     dlss_file: Path | None = None               # a local nvngx_dlss.dll instead of the download
+    fallback: bool = False                      # with release None: the fallback release instead of the latest
     extra_args: list[str] = field(default_factory=list)
     script_env: dict[str, str] = field(default_factory=dict)
 
@@ -424,9 +434,11 @@ class SetupWorker(QThread):
 
     def _run(self) -> tuple[Path, str]:
         req = self.request
-        release = req.release or latest_release(HELIXSR_API, HELIXSR_RELEASES_URL)
+        release = req.release or (fallback_release() if req.fallback else latest_release(HELIXSR_API, HELIXSR_RELEASES_URL))
         if release.error:
-            raise HelixError(QCoreApplication.translate("acquire", "Could not look up the latest HelixSR release: {0}").format(release.error))
+            raise HelixError(QCoreApplication.translate("acquire", "Could not look up the latest HelixSR release: {0}").format(release.error)
+                             if not req.fallback else
+                             QCoreApplication.translate("acquire", "Could not look up HelixSR {0}: {1}").format(FALLBACK_VERSION, release.error))
         if not release.asset_url:
             raise HelixError(QCoreApplication.translate("acquire", "HelixSR {0} has no zip to download; see {1}").format(release.version, release.url))
         req.work_dir.mkdir(parents=True, exist_ok=True)
@@ -483,6 +495,8 @@ class SetupWorker(QThread):
             raise Aborted("cancelled")
 
         dlss = req.dlss_file or downloads.get("dlss")
+        # From HelixSR 1.7 on the script ends with its own game installer, which asks per Steam game (--yes does not
+        # answer those). Without input it stops at the first question, so the setup only builds the network files.
         command = ["bash", str(release_dir / SETUP_SCRIPT), "--yes", *req.extra_args]
         if dlss is not None:
             command += ["--dlss", str(dlss)]
@@ -491,8 +505,8 @@ class SetupWorker(QThread):
         env = {**os.environ, **req.script_env}
         env.setdefault("XDG_DATA_HOME", str(req.helix_data.parent))
         try:
-            self._process = subprocess.Popen(command, cwd=release_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                             text=True, errors="replace", bufsize=1, env=env)
+            self._process = subprocess.Popen(command, cwd=release_dir, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                             stderr=subprocess.STDOUT, text=True, errors="replace", bufsize=1, env=env)
         except OSError as exc:
             raise HelixError(QCoreApplication.translate("acquire", "Could not start {0}: {1}").format(SETUP_SCRIPT, exc)) from exc
         assert self._process.stdout is not None
@@ -503,6 +517,8 @@ class SetupWorker(QThread):
         if "dlss" in downloads:
             downloads["dlss"].unlink(missing_ok=True)         # NVIDIA's DLL is used once and deleted
             self._say(QCoreApplication.translate("acquire", "Deleted the downloaded {0}").format(DLSS_DLL))
+        if (release_dir / MANUAL_INSTALL).is_dir():           # another copy of the network files, for hand installs
+            shutil.rmtree(release_dir / MANUAL_INSTALL, ignore_errors=True)
         if self._cancelled():
             raise Aborted("cancelled")
         if code != 0:

@@ -297,6 +297,10 @@
         <source>Overwrite the helixsr.ini of that deployment with this file.</source>
         <translation>その配置の helixsr.ini をこのファイルで上書きします。</translation>
     </message>
+    <message>
+        <source>HelixSR {0} behaves like DLSS: it ignores [Sharpening] and the [ModelE] Network setting, so they are greyed out. HelixSR {1} still reads them.</source>
+        <translation>HelixSR {0} は DLSS と同じ動作をします。[Sharpening] と [ModelE] の Network 設定は無視されるため、グレー表示になっています。HelixSR {1} ではまだ読み取られます。</translation>
+    </message>
 </context><context>
     <name>MainWindow</name>
     <message>
@@ -591,6 +595,10 @@ and rename the game's .original.dll back?</source>
     <message>
         <source>The second upscaler is in the folder as {0}; OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR.</source>
         <translation>2 つ目のアップスケーラーは {0} としてフォルダーにあります。OptiScaler の「FFX Upscaler」メニューでは HelixSR の後に並びます。</translation>
+    </message>
+    <message>
+        <source>HelixSR {version} is out ({published}); the payload has {installed}, the fallback picked on the Setup page.</source>
+        <translation>HelixSR {version} が公開されています（{published}）。ペイロードは「セットアップ」ページで選んだフォールバックの {installed} です。</translation>
     </message>
 </context><context>
     <name>OverviewPage</name>
@@ -900,6 +908,22 @@ and rename the game's .original.dll back?</source>
         <source>{0} — took {1}:{2:02d}</source>
         <translation>{0} — 所要時間 {1}:{2:02d}</translation>
     </message>
+    <message>
+        <source>Version:</source>
+        <translation>バージョン：</translation>
+    </message>
+    <message>
+        <source>Latest release</source>
+        <translation>最新リリース</translation>
+    </message>
+    <message>
+        <source>{0} (fallback)</source>
+        <translation>{0}（フォールバック）</translation>
+    </message>
+    <message>
+        <source>HelixSR's developer recommends {0} when the latest release does not work for you. Switching builds the network files again; deploy again per game afterwards.</source>
+        <translation>最新リリースが動作しない場合、HelixSR の開発者は {0} を推奨しています。切り替えるとネットワークファイルを再ビルドします。その後、ゲームごとに再配置してください。</translation>
+    </message>
 </context><context>
     <name>StatusPill</name>
     <message>
@@ -1052,6 +1076,10 @@ and rename the game's .original.dll back?</source>
         <source>no release tagged {0} yet</source>
         <translation>{0} のタグが付いたリリースはまだありません</translation>
     </message>
+    <message>
+        <source>Could not look up HelixSR {0}: {1}</source>
+        <translation>HelixSR {0} を確認できませんでした：{1}</translation>
+    </message>
 </context><context>
     <name>backend</name>
     <message>
@@ -1137,6 +1165,10 @@ and rename the game's .original.dll back?</source>
     <message>
         <source>{0} is HelixSR itself; pick another FidelityFX upscaler DLL, e.g. AMD&apos;s with FSR 4.</source>
         <translation>{0} は HelixSR そのものです。別の FidelityFX アップスケーラー DLL（例: AMD の FSR 4 入り）を選んでください。</translation>
+    </message>
+    <message>
+        <source>Newer build</source>
+        <translation>新しいビルド</translation>
     </message>
 </context><context>
     <name>help</name>
@@ -1295,6 +1327,10 @@ and rename the game's .original.dll back?</source>
     <message>
         <source>&lt;p&gt;&lt;b&gt;Second upscaler&lt;/b&gt; (optional, OptiScaler folder only): pick another FidelityFX upscaler DLL, for example AMD&apos;s &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; with FSR 4. It is copied into the folder as &lt;code&gt;{second}&lt;/code&gt; and &lt;code&gt;UpscalerDll&lt;/code&gt; in its helixsr.ini points at it, so OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR and the one you pick runs in that DLL.&lt;/p&gt;</source>
         <translation>&lt;p&gt;&lt;b&gt;2 つ目のアップスケーラー&lt;/b&gt;（任意、OptiScaler フォルダーのみ）: 別の FidelityFX アップスケーラー DLL（例: FSR 4 入りの AMD の &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt;）を選びます。&lt;code&gt;{second}&lt;/code&gt; としてフォルダーにコピーされ、その helixsr.ini の &lt;code&gt;UpscalerDll&lt;/code&gt; がそれを指すので、OptiScaler の「FFX Upscaler」メニューでは HelixSR の後にそのアップスケーラーが並び、選んだものはその DLL で動作します。&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;b&gt;Version&lt;/b&gt; picks what &lt;b&gt;Download and build&lt;/b&gt; gets: the latest HelixSR release, or HelixSR {fallback}, the version HelixSR's developer recommends when the latest one does not work for you (please then open an issue at &lt;a href="{helixsr_url}/issues"&gt;HelixSR&lt;/a&gt; with the &lt;code&gt;helixsr.log&lt;/code&gt; from the game folder). Switching builds the network files for that version and replaces the payload; deploy again per game afterwards (the Overview marks them &lt;i&gt;Older build&lt;/i&gt; or &lt;i&gt;Newer build&lt;/i&gt;). From HelixSR 1.7.0 on, the sharpening and network settings of &lt;code&gt;{ini}&lt;/code&gt; are ignored.&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;バージョン&lt;/b&gt; は &lt;b&gt;ダウンロードしてビルド&lt;/b&gt; で取得するものを選びます。最新の HelixSR リリース、または HelixSR {fallback}（最新版が動作しない場合に HelixSR の開発者が推奨するバージョン）です。その場合は、ゲームフォルダーの &lt;code&gt;helixsr.log&lt;/code&gt; を添えて &lt;a href="{helixsr_url}/issues"&gt;HelixSR&lt;/a&gt; に issue を作成してください。切り替えるとそのバージョンのネットワークファイルをビルドし、ペイロードを置き換えます。その後、ゲームごとに再配置してください（概要では &lt;i&gt;旧ビルド&lt;/i&gt; または &lt;i&gt;新しいビルド&lt;/i&gt; と表示されます）。HelixSR 1.7.0 以降、&lt;code&gt;{ini}&lt;/code&gt; のシャープネスとネットワークの設定は無視されます。&lt;/p&gt;</translation>
     </message>
 </context><context>
     <name>setup_page</name>

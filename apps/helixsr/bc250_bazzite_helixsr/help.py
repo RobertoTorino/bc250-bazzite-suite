@@ -7,6 +7,7 @@ from PyQt6.QtCore import QCoreApplication, pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QTextBrowser, QVBoxLayout, QWidget
 
 from . import APP_NAME, HELIXSR_RELEASES_URL, HELIXSR_URL, LANGUAGES, OPTISCALER_URL, REPO_URL, __version__
+from .acquire import FALLBACK_VERSION
 from .backend import HELIXSR_DLL, INI, KERNELS, SECOND_UPSCALER_DLL, UPSCALER_DLL, WEIGHTS
 
 
@@ -17,7 +18,8 @@ def help_html(payload_dir: str, deployments_file: str,
     values = dict(app_name=APP_NAME, version=__version__, helixsr_url=HELIXSR_URL, releases_url=HELIXSR_RELEASES_URL,
                   optiscaler_url=OPTISCALER_URL, repo_url=REPO_URL, upscaler_dll=UPSCALER_DLL, helixsr_dll=HELIXSR_DLL,
                   weights=WEIGHTS, kernels=KERNELS, ini=INI, payload_dir=payload_dir,
-                  deployments_file=deployments_file, work_dir=work_dir, second=SECOND_UPSCALER_DLL)
+                  deployments_file=deployments_file, work_dir=work_dir, second=SECOND_UPSCALER_DLL,
+                  fallback=FALLBACK_VERSION)
     parts = [
         QCoreApplication.translate("help",
             '<h1>{app_name} <small>v{version}</small></h1>'),
@@ -69,6 +71,13 @@ def help_html(payload_dir: str, deployments_file: str,
             ' release on GitHub, at start (one small request each, can be turned off) or with <b>Check now</b>. A'
             ' newer HelixSR shows on the Overview too; <b>Download and build</b> again updates the payload, then '
             'deploy again per game (the Overview marks them <i>Older build</i>).</p>'),
+        QCoreApplication.translate("help",
+            '<p><b>Version</b> picks what <b>Download and build</b> gets: the latest HelixSR release, or HelixSR '
+            "{fallback}, the version HelixSR's developer recommends when the latest one does not work for you (please"
+            ' then open an issue at <a href="{helixsr_url}/issues">HelixSR</a> with the <code>helixsr.log</code> from '
+            'the game folder). Switching builds the network files for that version and replaces the payload; deploy '
+            'again per game afterwards (the Overview marks them <i>Older build</i> or <i>Newer build</i>). From '
+            'HelixSR 1.7.0 on, the sharpening and network settings of <code>{ini}</code> are ignored.</p>'),
         QCoreApplication.translate("help",
             '<h2>Overview</h2>'),
         QCoreApplication.translate("help",

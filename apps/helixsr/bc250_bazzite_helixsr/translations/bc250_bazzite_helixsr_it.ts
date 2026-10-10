@@ -299,6 +299,10 @@
             <source>Overwrite the helixsr.ini of that deployment with this file.</source>
             <translation>Sovrascrivi l’helixsr.ini di quella distribuzione con questo file.</translation>
         </message>
+    <message>
+        <source>HelixSR {0} behaves like DLSS: it ignores [Sharpening] and the [ModelE] Network setting, so they are greyed out. HelixSR {1} still reads them.</source>
+        <translation>HelixSR {0} si comporta come DLSS: ignora [Sharpening] e l’impostazione Network di [ModelE], che sono quindi disattivati. HelixSR {1} li legge ancora.</translation>
+    </message>
     </context>
     <context>
         <name>MainWindow</name>
@@ -594,6 +598,10 @@ e ripristinare il nome della .original.dll del gioco?</translation>
             <source>The second upscaler is in the folder as {0}; OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR.</source>
             <translation>Il secondo upscaler è nella cartella come {0}; il menu «FFX Upscaler» di OptiScaler elenca i suoi upscaler dopo HelixSR.</translation>
         </message>
+    <message>
+        <source>HelixSR {version} is out ({published}); the payload has {installed}, the fallback picked on the Setup page.</source>
+        <translation>HelixSR {version} è disponibile ({published}); il payload ha {installed}, la versione di ripiego scelta nella pagina Configurazione.</translation>
+    </message>
     </context>
     <context>
         <name>OverviewPage</name>
@@ -904,6 +912,22 @@ e ripristinare il nome della .original.dll del gioco?</translation>
             <source>{0} — took {1}:{2:02d}</source>
             <translation>{0} — durata {1}:{2:02d}</translation>
         </message>
+    <message>
+        <source>Version:</source>
+        <translation>Versione:</translation>
+    </message>
+    <message>
+        <source>Latest release</source>
+        <translation>Ultima release</translation>
+    </message>
+    <message>
+        <source>{0} (fallback)</source>
+        <translation>{0} (ripiego)</translation>
+    </message>
+    <message>
+        <source>HelixSR's developer recommends {0} when the latest release does not work for you. Switching builds the network files again; deploy again per game afterwards.</source>
+        <translation>Lo sviluppatore di HelixSR consiglia {0} quando l’ultima release non funziona. Cambiare ricompila i file di rete; poi ridistribuisci per ogni gioco.</translation>
+    </message>
     </context>
     <context>
         <name>StatusPill</name>
@@ -1058,6 +1082,10 @@ e ripristinare il nome della .original.dll del gioco?</translation>
             <source>no release tagged {0} yet</source>
             <translation>ancora nessuna release con il tag {0}</translation>
         </message>
+    <message>
+        <source>Could not look up HelixSR {0}: {1}</source>
+        <translation>Impossibile cercare HelixSR {0}: {1}</translation>
+    </message>
     </context>
     <context>
         <name>backend</name>
@@ -1145,6 +1173,10 @@ e ripristinare il nome della .original.dll del gioco?</translation>
             <source>{0} is HelixSR itself; pick another FidelityFX upscaler DLL, e.g. AMD&apos;s with FSR 4.</source>
             <translation>{0} è HelixSR stesso; scegli un&apos;altra DLL upscaler FidelityFX, ad es. quella di AMD con FSR 4.</translation>
         </message>
+    <message>
+        <source>Newer build</source>
+        <translation>Build più recente</translation>
+    </message>
     </context>
     <context>
         <name>help</name>
@@ -1304,6 +1336,10 @@ e ripristinare il nome della .original.dll del gioco?</translation>
             <source>&lt;p&gt;&lt;b&gt;Second upscaler&lt;/b&gt; (optional, OptiScaler folder only): pick another FidelityFX upscaler DLL, for example AMD&apos;s &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; with FSR 4. It is copied into the folder as &lt;code&gt;{second}&lt;/code&gt; and &lt;code&gt;UpscalerDll&lt;/code&gt; in its helixsr.ini points at it, so OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR and the one you pick runs in that DLL.&lt;/p&gt;</source>
             <translation>&lt;p&gt;&lt;b&gt;Secondo upscaler&lt;/b&gt; (facoltativo, solo cartella OptiScaler): scegli un&apos;altra DLL upscaler FidelityFX, ad esempio &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; di AMD con FSR 4. Viene copiata nella cartella come &lt;code&gt;{second}&lt;/code&gt; e &lt;code&gt;UpscalerDll&lt;/code&gt; nel suo helixsr.ini punta a essa, così il menu «FFX Upscaler» di OptiScaler elenca i suoi upscaler dopo HelixSR e quello scelto gira in quella DLL.&lt;/p&gt;</translation>
         </message>
+    <message>
+        <source>&lt;p&gt;&lt;b&gt;Version&lt;/b&gt; picks what &lt;b&gt;Download and build&lt;/b&gt; gets: the latest HelixSR release, or HelixSR {fallback}, the version HelixSR's developer recommends when the latest one does not work for you (please then open an issue at &lt;a href="{helixsr_url}/issues"&gt;HelixSR&lt;/a&gt; with the &lt;code&gt;helixsr.log&lt;/code&gt; from the game folder). Switching builds the network files for that version and replaces the payload; deploy again per game afterwards (the Overview marks them &lt;i&gt;Older build&lt;/i&gt; or &lt;i&gt;Newer build&lt;/i&gt;). From HelixSR 1.7.0 on, the sharpening and network settings of &lt;code&gt;{ini}&lt;/code&gt; are ignored.&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;Versione&lt;/b&gt; sceglie cosa ottiene &lt;b&gt;Scarica e compila&lt;/b&gt;: l’ultima release di HelixSR oppure HelixSR {fallback}, la versione che lo sviluppatore di HelixSR consiglia quando l’ultima non funziona (in tal caso apri una segnalazione su &lt;a href="{helixsr_url}/issues"&gt;HelixSR&lt;/a&gt; con il &lt;code&gt;helixsr.log&lt;/code&gt; della cartella del gioco). Cambiare compila i file di rete per quella versione e sostituisce il payload; poi ridistribuisci per ogni gioco (la Panoramica li indica come &lt;i&gt;Build vecchia&lt;/i&gt; o &lt;i&gt;Build più recente&lt;/i&gt;). Da HelixSR 1.7.0 le impostazioni di nitidezza e di rete di &lt;code&gt;{ini}&lt;/code&gt; vengono ignorate.&lt;/p&gt;</translation>
+    </message>
     </context>
     <context>
         <name>setup_page</name>

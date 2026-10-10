@@ -5,6 +5,7 @@ network files are just marker bytes; nothing here needs a GPU, Steam or a real H
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -21,6 +22,27 @@ def qapp():
     from PyQt6.QtWidgets import QApplication
     app = QApplication.instance() or QApplication([])
     yield app
+
+
+@pytest.fixture(autouse=True)
+def settings_dir(tmp_path, monkeypatch):
+    """QSettings files go to tmp_path, never into the user's own settings. On Windows the native format is the
+    registry, which setPath() cannot redirect, so there QSettings(org, app) becomes the same call with IniFormat."""
+    from PyQt6.QtCore import QSettings
+    for fmt in (QSettings.Format.NativeFormat, QSettings.Format.IniFormat):
+        QSettings.setPath(fmt, QSettings.Scope.UserScope, str(tmp_path / "settings"))
+    if sys.platform == "win32":
+        from bc250_bazzite_helixsr import __main__ as main_module, main_window
+
+        class FileSettings(QSettings):
+            def __init__(self, *args):
+                if args and isinstance(args[0], str):
+                    args = (QSettings.Format.IniFormat, QSettings.Scope.UserScope, *args)
+                super().__init__(*args)
+
+        for module in (main_module, main_window):
+            monkeypatch.setattr(module, "QSettings", FileSettings)
+    return tmp_path / "settings"
 
 
 def make_release(folder: Path, *, network: bool = True, ini: bool = True, readme: bool = True) -> Path:

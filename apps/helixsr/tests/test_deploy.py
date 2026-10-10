@@ -145,3 +145,22 @@ def test_second_upscaler_must_not_be_helixsr(payload, tmp_path):
     with pytest.raises(backend.HelixError):
         backend.deploy_folder(tmp_path / "HelixSR", payload, second_upscaler=tmp_path / "missing.dll")
     assert not (tmp_path / "HelixSR").exists()                    # refused before anything was written
+
+
+def test_deployment_state_after_switching_versions(game, payload, tmp_path):
+    """A payload replaced by another release: deployments of an older one are older, of a newer one newer."""
+    target = dll_of(game)
+    backend.deploy(target, payload)
+    folder = tmp_path / "opti" / "HelixSR"
+    backend.deploy_folder(folder, payload)
+    replaced = backend.Deployment(str(target), backend.MODE_REPLACE, "g", helixsr_version="1.7.0")
+    standalone = backend.Deployment(str(folder), backend.MODE_FOLDER, "g", helixsr_version="1.7.0")
+    assert backend.deployment_state(replaced, payload) == ("ok", "In place")
+    assert backend.deployment_state(standalone, payload) == ("ok", "In place")
+    (payload / backend.HELIXSR_DLL).write_bytes(b"MZ-helixsr-1.4.3")
+    (payload / "README.md").write_text("**Version 1.4.3** - fallback\n", encoding="utf-8")
+    assert backend.deployment_state(replaced, payload) == ("warn", "Newer build")
+    assert backend.deployment_state(standalone, payload) == ("warn", "Newer build")
+    replaced.helixsr_version = standalone.helixsr_version = "1.2.0"
+    assert backend.deployment_state(replaced, payload) == ("warn", "Older build")
+    assert backend.deployment_state(standalone, payload) == ("warn", "Older build")

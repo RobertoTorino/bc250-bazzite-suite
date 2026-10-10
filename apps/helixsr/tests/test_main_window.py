@@ -130,3 +130,30 @@ def test_folder_mode_with_a_second_upscaler(window, payload, tmp_path):
         assert backend.SECOND_UPSCALER_DLL in info.call_args.args[2]
     assert (folder / backend.SECOND_UPSCALER_DLL).read_bytes() == b"MZ-amd-fsr4"
     assert backend.parse_ini((folder / backend.INI).read_text()).upscaler_dll == backend.SECOND_UPSCALER_DLL
+
+
+def test_ini_page_greys_out_what_the_version_ignores(window):
+    page = window.ini_page
+    page.set_helixsr_version("1.7.0")
+    assert not page.sharp_box.isEnabled() and not page.network.isEnabled()
+    assert not page.ignored_hint.isHidden() and "1.7.0" in page.ignored_hint.text()
+    assert "Mode = off" in page.text()                     # the values stay in the file for older versions
+    page.set_helixsr_version("1.4.3")
+    assert page.sharp_box.isEnabled() and page.network.isEnabled() and page.ignored_hint.isHidden()
+
+
+def test_setup_page_fallback_choice(window):
+    from bc250_bazzite_helixsr.acquire import ReleaseInfo, UpdateStatus
+    latest = ReleaseInfo("1.7.0", "v1.7.0", "u", "2026-10-10", "HelixSR-1.7.0.zip", "https://x/z.zip", 10)
+    window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.4.3", latest)})
+    assert "1.7.0" in window.overview.update_hint.text() and "Get HelixSR" in window.overview.update_hint.text()
+    window.setup_page.version.setCurrentIndex(1)
+    assert window.setup_page.fallback() and window.settings.value("setup/fallback", type=bool)
+    window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.4.3", latest)})
+    assert "fallback" in window.overview.update_hint.text()
+    with mock.patch("bc250_bazzite_helixsr.main_window.SetupWorker") as worker:
+        window.setup_page.start_requested.emit(None)
+    request = worker.call_args.args[0]
+    assert request.fallback and request.release is None
+    window._setup_worker = None
+    window.setup_page.set_running(False)

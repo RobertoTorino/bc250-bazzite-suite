@@ -15,10 +15,12 @@ from PyQt6.QtWidgets import (
 )
 
 from . import plain_tooltip
+from .acquire import FALLBACK_VERSION
 from .backend import (
     HELIXSR_DLL, INI, KERNELS, MODE_FOLDER, MODE_REPLACE, NETWORKS, SECOND_UPSCALER_DLL, SHARPENING_MODES, WEIGHTS,
     Deployment,
-    GameDll, HelixIni, PayloadStatus, deployment_state, optiscaler_snippet, render_ini, validate_ini,
+    GameDll, HelixIni, PayloadStatus, deployment_state, ini_tuning_ignored, optiscaler_snippet, render_ini,
+    validate_ini,
 )
 from .widgets import STATE_COLORS, StatusPill, Terminal, accent_button, hint_label, page_header
 
@@ -494,10 +496,15 @@ class IniPage(QWidget):
             "Optional settings HelixSR reads from a helixsr.ini next to its DLL; every key has a default. These "
             "values are written on Deploy (when ticked there), can be saved as the payload's default, or pushed to a "
             "game that already has HelixSR.")))
+        self.ignored_hint = QLabel()
+        self.ignored_hint.setWordWrap(True)
+        self.ignored_hint.setStyleSheet(f"color:{STATE_COLORS['warn']}; font-weight:600;")
+        self.ignored_hint.setVisible(False)
+        layout.addWidget(self.ignored_hint)
 
         columns = QHBoxLayout()
         left = QVBoxLayout()
-        sharp = QGroupBox("[Sharpening]")
+        sharp = self.sharp_box = QGroupBox("[Sharpening]")
         form = QFormLayout(sharp)
         self.sharpening_mode = QComboBox()
         self.sharpening_mode.addItems(SHARPENING_MODES)
@@ -606,6 +613,16 @@ class IniPage(QWidget):
         spin.setDecimals(decimals)
         spin.setToolTip(tooltip)
         return spin
+
+    def set_helixsr_version(self, version: str) -> None:
+        """Grey out what this HelixSR version ignores; the values stay in the file for older versions."""
+        ignored = ini_tuning_ignored(version)
+        self.sharp_box.setEnabled(not ignored)
+        self.network.setEnabled(not ignored)
+        self.ignored_hint.setText(self.tr("HelixSR {0} behaves like DLSS: it ignores [Sharpening] and the [ModelE] Network "
+                                          "setting, so they are greyed out. HelixSR {1} still reads them.")
+                                  .format(version, FALLBACK_VERSION) if ignored else "")
+        self.ignored_hint.setVisible(ignored)
 
     # ---------------------------------------------------------------- values
     def load(self, settings: HelixIni, template: str) -> None:

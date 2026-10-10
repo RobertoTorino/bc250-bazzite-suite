@@ -369,6 +369,10 @@
         <source>Overwrite the helixsr.ini of that deployment with this file.</source>
         <translation type="unfinished" />
     </message>
+    <message>
+        <source>HelixSR {0} behaves like DLSS: it ignores [Sharpening] and the [ModelE] Network setting, so they are greyed out. HelixSR {1} still reads them.</source>
+        <translation type="unfinished" />
+    </message>
 </context><context>
     <name>MainWindow</name>
     <message>
@@ -720,6 +724,10 @@ and rename the game's .original.dll back?</source>
     </message>
     <message>
         <source>The second upscaler is in the folder as {0}; OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>HelixSR {version} is out ({published}); the payload has {installed}, the fallback picked on the Setup page.</source>
         <translation type="unfinished" />
     </message>
 </context><context>
@@ -1107,6 +1115,22 @@ and rename the game's .original.dll back?</source>
         <source>{0} — took {1}:{2:02d}</source>
         <translation type="unfinished" />
     </message>
+    <message>
+        <source>Version:</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Latest release</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>{0} (fallback)</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>HelixSR's developer recommends {0} when the latest release does not work for you. Switching builds the network files again; deploy again per game afterwards.</source>
+        <translation type="unfinished" />
+    </message>
 </context><context>
     <name>StatusPill</name>
     <message>
@@ -1295,6 +1319,10 @@ and rename the game's .original.dll back?</source>
         <source>no release tagged {0} yet</source>
         <translation type="unfinished" />
     </message>
+    <message>
+        <source>Could not look up HelixSR {0}: {1}</source>
+        <translation type="unfinished" />
+    </message>
 </context><context>
     <name>backend</name>
     <message>
@@ -1402,6 +1430,10 @@ and rename the game's .original.dll back?</source>
     </message>
     <message>
         <source>{0} is HelixSR itself; pick another FidelityFX upscaler DLL, e.g. AMD&apos;s with FSR 4.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Newer build</source>
         <translation type="unfinished" />
     </message>
 </context><context>
@@ -1598,6 +1630,10 @@ and rename the game's .original.dll back?</source>
     </message>
     <message>
         <source>&lt;p&gt;&lt;b&gt;Second upscaler&lt;/b&gt; (optional, OptiScaler folder only): pick another FidelityFX upscaler DLL, for example AMD&apos;s &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; with FSR 4. It is copied into the folder as &lt;code&gt;{second}&lt;/code&gt; and &lt;code&gt;UpscalerDll&lt;/code&gt; in its helixsr.ini points at it, so OptiScaler&apos;s FFX Upscaler menu lists its upscalers after HelixSR and the one you pick runs in that DLL.&lt;/p&gt;</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;b&gt;Version&lt;/b&gt; picks what &lt;b&gt;Download and build&lt;/b&gt; gets: the latest HelixSR release, or HelixSR {fallback}, the version HelixSR's developer recommends when the latest one does not work for you (please then open an issue at &lt;a href="{helixsr_url}/issues"&gt;HelixSR&lt;/a&gt; with the &lt;code&gt;helixsr.log&lt;/code&gt; from the game folder). Switching builds the network files for that version and replaces the payload; deploy again per game afterwards (the Overview marks them &lt;i&gt;Older build&lt;/i&gt; or &lt;i&gt;Newer build&lt;/i&gt;). From HelixSR 1.7.0 on, the sharpening and network settings of &lt;code&gt;{ini}&lt;/code&gt; are ignored.&lt;/p&gt;</source>
         <translation type="unfinished" />
     </message>
 </context><context>
