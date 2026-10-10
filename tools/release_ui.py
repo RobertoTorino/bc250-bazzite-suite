@@ -293,6 +293,9 @@ class ReleaseWindow(QMainWindow):
 def main() -> int:
     from bc250_core.app import create_app, exec_app
     app = create_app(INFO, sys.argv[1:], lang="en")
+    # No .desktop file is installed for this tool: without a desktop file name Qt does not try to register it with
+    # the desktop portal (which only logs "App info not found").
+    app.setDesktopFileName("")
     window = ReleaseWindow()
     window.show()
     return exec_app(app)

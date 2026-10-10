@@ -1,3 +1,7 @@
+Changelog: 10-10-2026 21:13:04
+
+Release 0.9.0. Initial release
+
 Changelog: 10-10-2026 20:35:40
 
 The app cards are tiles in two columns: icon and name, summary, tag and badges, then the state pill and the buttons along the bottom. They read left to right in the order of apps.toml (Bazzite Test first), tiles in one row share a height, and the window goes back to one column below about 860 pixels (two tiles of 420). Nothing else changes: the same cards, buttons, states and update dot.

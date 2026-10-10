@@ -1,3 +1,7 @@
+Changelog: 10-10-2026 21:09:25
+
+Release front end: no more "Failed to register with host portal" line in the terminal on Wayland. The tool has no .desktop file, so it no longer gives Qt a desktop file name to register.
+
 Changelog: 10-10-2026 20:24:08
 
 Release front end: tools/release.sh opens a window for the file edits of a release (tools/release_ui.py on tools/release_plan.py). Step 1 writes the new versions of the ticked apps (VERSION and every copy check_versions.py checks) and a "Release x.y.z." CHANGELOG entry with notes; step 2 pins the released apps in portal/apps.toml (tag and sha256 from the release's SHA256SUMS) and bumps the portal, at least as far as check_manifest.py asks, with a CHANGELOG entry listing the pins. It never commits, tags or pushes; it shows the git commands. check_manifest.py: the bump rule is now also a function of its own (required_bump), with the same results. tools/requirements-dev.txt adds PyQt6 for the window's tests. Manual (docs/portal.md), the development page and CLAUDE.md describe it.
