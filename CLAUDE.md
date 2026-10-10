@@ -3,7 +3,7 @@
 Instructions for Claude Code in this repository. The owner works on it from both Windows and Bazzite (Linux) and
 talks to Claude on both, so this file, not a local memory, carries the standing rules. Status and plans:
 [MIGRATION.md](MIGRATION.md).
-
+BC250
 ## What this is
 
 The **BC250 Bazzite Suite** (exactly that name): tools for the AMD BC-250 on Bazzite, in one repository,

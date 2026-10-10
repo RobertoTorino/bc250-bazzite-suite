@@ -1,0 +1,67 @@
+Changelog: 10-10-2026 10:37:08
+
+Simple Demo Tool: read the portal's trigger_description for the registered stop shortcut, including keyboard aliases such as End.
+
+Changelog: 10-10-2026 10:28:44
+
+Simple Demo Tool: hide during demos, auto-open the portal after installation, and stop recording with Ctrl+Alt+F12.
+
+Changelog: 10-10-2026 10:09:58
+
+Simple Demo Tool: play selected OBS recordings inside the app with playback controls and visible playback errors.
+
+Changelog: 10-10-2026 10:01:43
+
+Simple Demo Tool: move the recent-recordings list into its own dialog so it no longer compresses the main window.
+
+Changelog: 10-10-2026 09:54:17
+
+Simple Demo Tool: show recent videos from OBS's configured recording folder in the app and open the selected video.
+
+Changelog: 10-10-2026 09:50:03
+
+Simple Demo Tool: trust a successful OBS StopRecord response instead of rejecting the stop when an immediate
+GetRecordStatus query has not caught up yet.
+
+Changelog: 10-10-2026 09:36:59
+
+Simple Demo Tool: trust a successful OBS StartRecord response instead of rejecting recording when an immediate
+GetRecordStatus query has not caught up yet.
+
+Changelog: 10-10-2026 09:24:35
+
+Simple Demo Tool: accept the local suite checkout and its simple-demo-tool subfolder as sources for development
+demos, using the checkout's installer and portal manifest.
+
+Changelog: 10-10-2026 09:11:30
+
+Simple Demo Tool: automatically find the newest extracted portal release in the configured Downloads folder,
+with a rescan button and clearer missing-release guidance.
+
+Changelog: 10-10-2026 09:02:19
+
+Simple Demo Tool: show a clear warning popup when Test connection is clicked while OBS is not running.
+
+Changelog: 10-10-2026 08:57:10
+
+Simple Demo Tool: catch OBS WebSocket connection and timeout errors during Test connection, show an actionable
+message instead of allowing the exception to escape the Qt button handler.
+
+Changelog: 10-10-2026 08:55:05
+
+Simple Demo Tool: the installer completion message now says the app can be started from the Desktop or app menu.
+
+Changelog: 10-10-2026 08:50:33
+
+Simple Demo Tool: add the GPL-3.0-or-later license file and identify the manual with its SPDX license identifier.
+
+Changelog: 10-10-2026 08:45:01
+
+Simple Demo Tool: install the supplied 512px app icon in the app-menu and Desktop launchers, and show the 128px
+image in the Qt window. Always create the Desktop shortcut. Uninstall removes the launchers and bundled icon
+files. `./install --uninstall` is supported as the short install command.
+
+Changelog: 10-10-2026 08:16:37
+
+Simple Demo Tool: a standalone Qt app checks OBS, prepares the OBS WebSocket dependency, and guides a recorded
+portal and optional-app install demo on Bazzite.
