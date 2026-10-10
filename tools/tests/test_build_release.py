@@ -18,6 +18,11 @@ br = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = br
 spec.loader.exec_module(br)
 
+pin_spec = importlib.util.spec_from_file_location("pin_app", TOOLS / "pin_app.py")
+pin_app = importlib.util.module_from_spec(pin_spec)
+sys.modules[pin_spec.name] = pin_app
+pin_spec.loader.exec_module(pin_app)
+
 BT_TAG = f"bazzite-test-v{(TOOLS.parent / 'apps' / 'bazzite-test' / 'VERSION').read_text().strip()}"
 PORTAL_TAG = f"portal-v{(TOOLS.parent / 'portal' / 'VERSION').read_text().strip()}"
 
@@ -34,6 +39,18 @@ def bt_release(tmp_path_factory):
     out = tmp_path_factory.mktemp("bt")
     br.build(BT_TAG, out)
     return out
+
+
+@pytest.fixture
+def pinned(bt_release, tmp_path, monkeypatch):
+    """apps.toml as shipped, but with bazzite-test pinned to the local build: the shipped pin is the checksum of
+    the real release, which a local build (another mtime) never matches."""
+    digest = hashlib.sha256((bt_release / f"{BT_TAG}.tar.gz").read_bytes()).hexdigest()
+    text = (TOOLS.parent / "portal" / "apps.toml").read_text(encoding="utf-8")
+    path = tmp_path / "apps.toml"
+    path.write_text(pin_app.pin(text, "bazzite-test", BT_TAG, digest), encoding="utf-8")
+    monkeypatch.setattr(br, "MANIFEST", path)
+    return path
 
 
 def members(archive: Path) -> dict[str, tarfile.TarInfo]:
@@ -92,7 +109,7 @@ def test_version_must_match(tmp_path):
         br.build("bazzite-test-9.9.9", tmp_path)
 
 
-def test_portal_needs_and_verifies_bundle(bt_release, tmp_path):
+def test_portal_needs_and_verifies_bundle(bt_release, pinned, tmp_path):
     with pytest.raises(SystemExit, match="needs --bundle"):
         br.build(PORTAL_TAG, tmp_path / "a")
     br.build(PORTAL_TAG, tmp_path / "b", bundle=bt_release)
@@ -104,7 +121,14 @@ def test_portal_needs_and_verifies_bundle(bt_release, tmp_path):
     assert BT_TAG in (tmp_path / "b" / "notes.md").read_text()
 
 
-def test_tampered_bundle_refused(bt_release, tmp_path):
+def test_wrong_pin_refused(bt_release, pinned, tmp_path):
+    pinned.write_text(pin_app.pin(pinned.read_text(encoding="utf-8"), "bazzite-test", BT_TAG, "ab" * 32),
+                      encoding="utf-8")
+    with pytest.raises(SystemExit, match="does not match"):
+        br.build(PORTAL_TAG, tmp_path / "out", bundle=bt_release)
+
+
+def test_tampered_bundle_refused(bt_release, pinned, tmp_path):
     bundle = tmp_path / "bundle"
     shutil.copytree(bt_release, bundle)
     data = bytearray((bundle / f"{BT_TAG}.tar.gz").read_bytes())

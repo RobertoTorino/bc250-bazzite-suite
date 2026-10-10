@@ -3,6 +3,8 @@
 # End to end from release tarballs: build the bazzite-test, governor and portal releases with build_release.py,
 # install the portal from its tarball (which installs the bundled bazzite-test release build), and let the
 # portal's release code fetch and verify the governor release the way it would from GitHub.
+# It works on a copy of the checkout in which apps.toml pins bazzite-test and governor to these local builds: the
+# checksums pinned in the repository are those of the real releases, which a local build never matches.
 # Runs with the shims from shims.sh (CI, or WSL on Windows).
 set -u
 SUITE=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
@@ -17,12 +19,16 @@ BT="bazzite-test-v$(ver apps/bazzite-test)"; GOV="governor-v$(ver apps/governor)
 export SOURCE_DATE_EPOCH=1790000000
 
 echo "== 1. build the releases"
-mkdir -p "$T/dist"
+mkdir -p "$T/dist" "$T/suite"
+# The checkout as git sees it (tracked and new files, nothing ignored), without .git.
+(cd "$SUITE" && git ls-files -z --cached --others --exclude-standard | tar --null -T - -cf -) | tar -xf - -C "$T/suite"
+S=$T/suite
 for tag in "$BT" "$GOV"; do
-    /usr/bin/python3 "$SUITE/tools/build_release.py" "$tag" "$T/build-$tag" > "$T/build.log" 2>&1 || { cat "$T/build.log"; fail=1; }
+    /usr/bin/python3 "$S/tools/build_release.py" "$tag" "$T/build-$tag" > "$T/build.log" 2>&1 || { cat "$T/build.log"; fail=1; }
     cp "$T/build-$tag/$tag.tar.gz" "$T/dist/"
+    /usr/bin/python3 "$S/tools/pin_app.py" "$tag" --sha256 "$(cut -d' ' -f1 "$T/build-$tag/SHA256SUMS")" >> "$T/build.log" 2>&1 || fail=1
 done
-/usr/bin/python3 "$SUITE/tools/build_release.py" "$PORTAL" "$T/build-portal" --bundle "$T/build-$BT" > "$T/build.log" 2>&1 || { cat "$T/build.log"; fail=1; }
+/usr/bin/python3 "$S/tools/build_release.py" "$PORTAL" "$T/build-portal" --bundle "$T/build-$BT" > "$T/build.log" 2>&1 || { cat "$T/build.log"; fail=1; }
 cat "$T/build-$BT/SHA256SUMS" "$T/build-$GOV/SHA256SUMS" > "$T/dist/SHA256SUMS"
 check "three tarballs" "[ -f $T/dist/$BT.tar.gz ] && [ -f $T/dist/$GOV.tar.gz ] && [ -f $T/build-portal/$PORTAL.tar.gz ]"
 check "sums verify" "(cd $T/dist && sha256sum --check --quiet SHA256SUMS) && (cd $T/build-portal && sha256sum --check --quiet SHA256SUMS)"

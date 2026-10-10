@@ -100,6 +100,23 @@ each step it shows the git commands to run.
 
 `python3 tools/release_plan.py` lists every app with its version, its last tag and its pin, without Qt.
 
+### Checking a release
+
+A release tarball has the same content when you build its tag yourself, but usually not the same checksum: the
+gzip compression differs between zlib builds (Fedora uses zlib-ng, GitHub's Ubuntu runners zlib), and Bazzite
+Test records its build time in `bc250_gui/_build_info.py`. So compare the unpacked files, not the `.tar.gz`:
+
+```bash
+git archive <tag> | tar -x -C /tmp/src
+SOURCE_DATE_EPOCH=$(git log -1 --format=%ct <tag>) python3 /tmp/src/tools/build_release.py <tag> /tmp/local
+curl -LO https://github.com/RobertoTorino/bc250-bazzite-suite/releases/download/<tag>/<tag>.tar.gz
+mkdir -p /tmp/a /tmp/b && tar -xzf <tag>.tar.gz -C /tmp/a && tar -xzf /tmp/local/<tag>.tar.gz -C /tmp/b
+diff -r /tmp/a /tmp/b              # Bazzite Test: only BUILD_DATE in _build_info.py differs
+```
+
+The checksum pinned in `apps.toml` is always the one of the published tarball. That is also why the release
+tests pin their own local builds instead of the published ones.
+
 ---
 
 ### a new app gets into the portal

@@ -9,9 +9,11 @@ VERSION. bazzite-test gets its engine checksum recorded (development/tools/build
 build that refuses a changed engine. A portal tag needs --bundle: a folder with the pinned bazzite-test release
 (<tag>.tar.gz and SHA256SUMS, as published); it is verified against apps.toml and unpacked into bundled/.
 
-The tarball is reproducible and the same on Linux and Windows: sorted entries, root:root, the commit time (or
+The tar inside is reproducible and the same on Linux and Windows: sorted entries, root:root, the commit time (or
 SOURCE_DATE_EPOCH) as mtime, and modes set here (755 for folders and scripts, 644 for the rest), not taken from the
-file system, which on Windows has no exec bit."""
+file system, which on Windows has no exec bit. The .tar.gz is only byte for byte the same with the same zlib: its
+compressed bytes differ between zlib builds (Fedora's zlib-ng, Ubuntu's zlib). bazzite-test also records its build
+time in bc250_gui/_build_info.py."""
 
 from __future__ import annotations
 
@@ -29,6 +31,7 @@ import tempfile
 from pathlib import Path
 
 SUITE = Path(__file__).resolve().parent.parent
+MANIFEST = SUITE / "portal" / "apps.toml"
 _TAG = re.compile(r"^(?P<app>[a-z0-9-]+)-v(?P<version>\d+\.\d+\.\d+)$")
 
 
@@ -102,7 +105,7 @@ def latest_changes(changelog: Path) -> str:
 
 def bundle_bazzite_test(stage_dir: Path, bundle: Path) -> str:
     """Verify the pinned bazzite-test release in *bundle* and unpack it into stage_dir/bundled/. Returns its tag."""
-    entry = next(e for e in manifest.load(SUITE / "portal" / "apps.toml") if e.key == "bazzite-test")
+    entry = next(e for e in manifest.load(MANIFEST) if e.key == "bazzite-test")
     archive = bundle / entry.asset
     if not archive.is_file():
         raise SystemExit(f"--bundle {bundle} has no {entry.asset} (the tag apps.toml pins)")
@@ -146,7 +149,7 @@ def build(tag: str, out: Path, bundle: Path | None = None) -> Path:
             if bundle is None:
                 raise SystemExit("a portal release needs --bundle with the pinned bazzite-test release")
             bundled = bundle_bazzite_test(stage_dir, bundle)
-            pins = "\n".join(f"- `{e.tag}`" for e in manifest.load(SUITE / "portal" / "apps.toml"))
+            pins = "\n".join(f"- `{e.tag}`" for e in manifest.load(MANIFEST))
             notes += ["This portal release installs and pins these app releases:", "", pins, "",
                       f"`{bundled}` is included and installed with the portal.", ""]
         archive = out / f"{tag}.tar.gz"

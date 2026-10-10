@@ -1,3 +1,11 @@
+Changelog: 10-10-2026 21:37:45
+
+Manual: Checking a release (docs/portal.md). A local build of a tag has the same content as the GitHub release, checked for bazzite-test-v0.1.0 and governor-v0.1.0: governor's tar is identical, bazzite-test's differs only in the build time in bc250_gui/_build_info.py. The .tar.gz checksum is not the same, because gzip output differs between zlib builds (Fedora's zlib-ng, Ubuntu's zlib). The build_release.py docstring and a release.yml comment, which said a local build gives the same files, now say this.
+
+Changelog: 10-10-2026 21:23:00
+
+Release tool tests no longer depend on the checksums pinned in portal/apps.toml. They failed once the first releases were pinned, because a local build (another mtime) never matches a real release. test_build_release pins bazzite-test to its own local build (build_release.py reads the manifest from one MANIFEST constant, so a test can point it at a copy) and gains a test that a wrong pin is refused; test_pin_app reads the old tag and checksum from the manifest; tools/installer-tests/release.sh runs on a copy of the checkout where pin_app.py pins bazzite-test and governor to their local builds, so the bundle and the fetched governor release are checked against a real pin. The release tools themselves behave as before.
+
 Changelog: 10-10-2026 21:09:25
 
 Release front end: no more "Failed to register with host portal" line in the terminal on Wayland. The tool has no .desktop file, so it no longer gives Qt a desktop file name to register.
