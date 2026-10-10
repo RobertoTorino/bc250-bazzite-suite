@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Single window: shows whether bc250-cu-bisect.sh's results accept a mask, and installs/removes it."""
 
 from __future__ import annotations

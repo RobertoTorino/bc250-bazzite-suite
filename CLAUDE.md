@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # CLAUDE.md
 
 Instructions for Claude Code in this repository. The owner works on it from both Windows and Bazzite (Linux) and

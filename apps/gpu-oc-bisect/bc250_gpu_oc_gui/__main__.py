@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Entry point: python -m bc250_gpu_oc_gui [--script PATH] [--lang CODE]"""
 
 from __future__ import annotations

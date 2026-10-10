@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 site_name: BC250 Bazzite Suite
 site_description: Tools for the AMD BC-250 running Bazzite
 site_url: https://robertotorino.github.io/bc250-bazzite-suite/

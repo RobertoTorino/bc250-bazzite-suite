@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # BC-250 CU Bisect
 
 ![BC-250 CU Bisect](../assets/cu-bisect/bc250-cu-bisect.png){ .app-logo }

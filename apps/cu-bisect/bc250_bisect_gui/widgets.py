@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """About and Help dialogs for the launcher GUI."""
 
 from __future__ import annotations

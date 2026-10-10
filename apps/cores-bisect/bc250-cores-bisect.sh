@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # bc250-cores-bisect.sh - finds out whether the BC-250's 2 fused-off CPU cores are healthy
 # before you trust (or persist) the 8C/16T core unlock.
 #

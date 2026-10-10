@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Runs bc250-cores-unlock.sh through QProcess; install/uninstall go through sudo."""
 
 from __future__ import annotations

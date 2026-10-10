@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Starts a command in a visible terminal window, detached from this process.
 
 bc250-gpu-oc-bisect.sh needs a real TTY: it asks interactive questions (resume after a crash?

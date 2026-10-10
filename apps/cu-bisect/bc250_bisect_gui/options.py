@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Turns the launcher GUI's choices into a bc250-cu-bisect.sh command line, and the validation
 that goes with it - kept free of any Qt import so it's easy to unit-test on its own."""
 

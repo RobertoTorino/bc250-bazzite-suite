@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # bc250-cu-bisect.sh - finds out whether CU-unlock crashes come from bad WGPs or from the unlock itself.
 #
 # The script writes the WGP masks itself with umr: the three GPU registers a runtime CU unlock uses

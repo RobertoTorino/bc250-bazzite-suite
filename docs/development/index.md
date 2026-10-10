@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # Development
 
 How the repository is laid out, how to work on it from Linux and Windows, and how versions and releases fit

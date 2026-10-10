@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # bc250-cores-unlock.sh - persists the validated BC-250 8C/16T core unlock across reboots.
 #
 # Run bc250-cores-bisect.sh first and only install this when:

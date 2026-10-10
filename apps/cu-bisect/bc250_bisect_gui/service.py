@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Optional helper: installs the systemd --user unit that resumes an ``--auto`` bisect run after
 every reboot/login (see bc250-cu-bisect-auto.service.example and the manual's "--auto checklist").
 The launcher GUI only offers this as a convenience for the unattended path; everything it does here

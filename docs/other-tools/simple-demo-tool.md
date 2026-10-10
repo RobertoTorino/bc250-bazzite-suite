@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # Simple Demo Tool
 
 A standalone Qt app for recording a BC250 Bazzite Suite installation demo on Bazzite. It is not installed by the

@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # BC-250 Bazzite Test
 
 Read-only diagnostics, stress test and benchmarks for an **AMD BC-250** board (Cyan Skillfish APU,

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """PyQt6 front-end for bc250-cores-unlock.sh (persisting a validated BC-250 8C/16T core unlock)."""
 
 from pathlib import Path

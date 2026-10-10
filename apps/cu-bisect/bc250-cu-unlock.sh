@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # bc250-cu-unlock.sh - persists a validated BC-250 CU unlock across reboots.
 #
 # Run bc250-cu-bisect.sh first and only use masks that:

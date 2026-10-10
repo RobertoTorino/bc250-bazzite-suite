@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Removes everything packaging/bazzite/install-bisect-gui.sh set up for the current user. Does not
 # touch your bisect results in ~/.local/share/bc250-cores-bisect, and does not touch the unlock GUI
 # (use uninstall-gui.sh for that).

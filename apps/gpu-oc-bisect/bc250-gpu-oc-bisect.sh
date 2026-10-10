@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # bc250-gpu-oc-bisect.sh - finds your BC-250's safe GPU overclock and undervolt, one step at a time.
 #
 # The cyan-skillfish-governor-smu scales the BC-250 GPU along a frequency/voltage curve defined by

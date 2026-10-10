@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # BC-250 BIOS Reader
 
 ![BC-250 BIOS Reader](../assets/bios-reader/bc250-bios-reader.png){ .app-logo }

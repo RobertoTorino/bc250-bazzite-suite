@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # bc250_core
 
 Code shared by the suite's apps: theme, widgets, settings, help, update checks and platform helpers. Each app's

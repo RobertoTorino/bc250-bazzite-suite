@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Decides whether bc250-cores-bisect.sh's own recorded results accept the core unlock for install.
 
 Nothing here runs the bisect script or touches the SMU; it only reads the state the script already

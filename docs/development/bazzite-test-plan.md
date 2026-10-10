@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # Basic tests and additional requirements to streamline the Qt GUI version
 
 ### Start the GUI: 

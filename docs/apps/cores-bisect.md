@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # BC-250 Cores Bisect
 
 ![BC-250 Cores Bisect](../assets/cores-bisect/bc250-cores-bisect.png){ .app-logo }

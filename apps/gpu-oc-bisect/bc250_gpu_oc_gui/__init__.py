@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """PyQt6 front-end for bc250-gpu-oc-bisect.sh: a menu-driven launcher for the initial setup/start
 of a GPU OC/UV sweep. It only assembles the command line and starts it in a terminal; the actual
 sweeping still happens in bc250-gpu-oc-bisect.sh itself, exactly as if typed by hand."""

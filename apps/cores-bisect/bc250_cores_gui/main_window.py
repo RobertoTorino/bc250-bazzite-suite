@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Single window: shows whether bc250-cores-bisect.sh's results accept the unlock, and installs/removes
 the persistence service."""
 

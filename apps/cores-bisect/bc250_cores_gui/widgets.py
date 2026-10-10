@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Masked sudo password prompt and the About dialog. The sudo password is returned once and never
 persisted."""
 

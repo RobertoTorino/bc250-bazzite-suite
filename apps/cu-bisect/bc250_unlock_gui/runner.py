@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Runs bc250-cu-unlock.sh through QProcess for the actions that need root (install/uninstall)."""
 
 from __future__ import annotations

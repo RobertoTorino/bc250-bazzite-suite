@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # Migration status
 
 Working notes for moving the seven BC-250 tools into this suite. Not part of the manual or the READMEs, which

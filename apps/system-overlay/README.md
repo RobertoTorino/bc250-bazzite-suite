@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # BC-250 System Overlay
 
 A small window that stays on top of your desktop and shows the **AMD BC-250**'s live system values on

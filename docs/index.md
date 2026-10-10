@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # BC250 Bazzite Suite
 
 Tools for the AMD BC-250 running Bazzite. The **portal** installs, opens, updates and removes them: BC-250 Bazzite

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """PyQt6 front-end for bc250-cu-unlock.sh (persisting a validated BC-250 CU unlock)."""
 
 APP_NAME = "BC-250 CU Unlock"

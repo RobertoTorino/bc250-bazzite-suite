@@ -1,3 +1,7 @@
+Changelog: 10-10-2026 12:13:47
+
+GPL source files, scripts, translations, dependency manifests and Markdown documentation missing SPDX identifiers now carry the project license header.
+
 Changelog: 10-10-2026 12:05:15
 
 Manual: Simple Demo Tool's installation, recording, uninstall and test instructions are now in its own chapter

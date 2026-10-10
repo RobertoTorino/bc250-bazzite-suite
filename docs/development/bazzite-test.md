@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # Bazzite Test: the script
 
 Diagnostic script for **Bazzite** (Fedora Atomic / rpm-ostree) running on an **AMD BC-250** board (Cyan Skillfish APU,

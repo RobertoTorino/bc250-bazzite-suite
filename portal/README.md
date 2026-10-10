@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # Portal
 
 The BC250 Bazzite Suite's front door: one window that installs, opens, updates and removes the suite's apps.

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Removes everything packaging/bazzite/install-bisect-gui.sh set up for the current user. Does not
 # touch any bisect results in ~/.local/share/bc250-cu-bisect or the --auto systemd unit - disable
 # that yourself with: systemctl --user disable --now bc250-cu-bisect-auto.service

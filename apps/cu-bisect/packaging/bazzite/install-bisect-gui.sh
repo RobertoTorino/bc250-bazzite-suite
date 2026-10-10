@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Self-install for Bazzite (and any other immutable/rpm-ostree-based desktop): sets up
 # bc250_bisect_gui in a private venv under ~/.local, with a launcher, .desktop entry and icon.
 # Nothing here touches rpm-ostree or needs root - the GUI itself only assembles a command line and

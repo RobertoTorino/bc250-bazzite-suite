@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Single window: a menu-driven "initial setup" screen for bc250-gpu-oc-bisect.sh. Pick the
 options, hit Start, and the GUI hands off to a terminal running the real script and gets out of
 the way."""

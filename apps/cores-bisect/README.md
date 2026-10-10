@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # BC-250 Cores Bisect
 
 Tells **bad CPU cores** apart from an **unstable core unlock** on the AMD BC-250 (Cyan Skillfish),

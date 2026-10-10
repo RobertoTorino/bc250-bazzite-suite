@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """PyQt6 front-end for bc250-cu-bisect.sh: a menu-driven launcher for the initial setup/start of a
 bisect run. It only assembles the command line and starts it in a terminal; the actual bisecting
 still happens in bc250-cu-bisect.sh itself, exactly as if typed by hand."""

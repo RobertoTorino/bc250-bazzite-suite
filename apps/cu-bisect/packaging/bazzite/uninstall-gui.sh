@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Removes everything packaging/bazzite/install-gui.sh set up for the current user. Does not touch
 # /etc/bc250-cu-bisect or the systemd unit - run "bc250-unlock-cu-gui" (Uninstall button) or
 # "sudo ./bc250-cu-unlock.sh --uninstall" first if you also want the unlock itself removed.

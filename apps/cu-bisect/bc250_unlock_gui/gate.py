@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Decides whether bc250-cu-bisect.sh's own recorded results accept a combined mask for install.
 
 Nothing here runs the bisect script or any register write; it only reads the state the script already

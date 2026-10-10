@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 # BC-250 HelixSR Manager
 
 ![BC-250 HelixSR Manager](../assets/helixsr/bc250-bazzite-helixsr-gui.png){ .app-logo }

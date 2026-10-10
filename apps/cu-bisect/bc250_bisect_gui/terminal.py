@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Starts a command in a visible terminal window, detached from this process.
 
 bc250-cu-bisect.sh needs a real TTY: in the default (non ``--auto``) mode it asks interactive

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Removes everything packaging/bazzite/install-gui.sh set up for the current user. Does not touch
 # the unlock service - use the GUI's Uninstall button or "sudo ./bc250-cores-unlock.sh --uninstall"
 # first if you also want the persistent unlock removed.
