@@ -1,3 +1,8 @@
+Changelog: 10-10-2026 12:05:15
+
+README: the short app description and license now link to the Simple Demo Tool chapter in the suite manual; the
+installation, recording and uninstall guide moved there.
+
 Changelog: 10-10-2026 11:22:25
 
 Simple Demo Tool: create ~/SimpleVideoToolRecordings, set it as the OBS recording folder, and list videos from it.
