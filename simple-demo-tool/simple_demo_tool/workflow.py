@@ -14,6 +14,7 @@ from pathlib import Path
 
 PORTAL_LAUNCHER = Path.home() / ".local" / "bin" / "bc250-bazzite-suite"
 OBS_FLATPAK_ID = "com.obsproject.Studio"
+RECORDINGS_DIRECTORY = Path.home() / "SimpleVideoToolRecordings"
 RECORDING_EXTENSIONS = frozenset({".avi", ".flv", ".mkv", ".mov", ".mp4", ".m3u8", ".ts", ".webm"})
 
 
@@ -158,16 +159,25 @@ def recording_active(client) -> bool:
         raise WorkflowError(f"Could not read OBS recording status: {exc}") from exc
 
 
-def recording_directory(client) -> Path:
+def set_recording_directory(client) -> Path:
     import obsws_python as obs
 
     try:
-        directory = client.get_record_directory().record_directory
+        RECORDINGS_DIRECTORY.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise WorkflowError(f"Could not create the recordings folder {RECORDINGS_DIRECTORY}: {exc}") from exc
+    try:
+        client.set_record_directory(str(RECORDINGS_DIRECTORY))
     except (obs.OBSSDKError, OSError, AttributeError) as exc:
-        raise WorkflowError(f"Could not read the OBS recording folder: {exc}") from exc
-    if not isinstance(directory, str) or not directory:
-        raise WorkflowError("OBS did not provide a recording folder.")
-    return Path(directory).expanduser()
+        raise WorkflowError(
+            f"Could not set the OBS recording folder to {RECORDINGS_DIRECTORY}: {exc}\n"
+            "OBS WebSocket 5.3 or newer is required."
+        ) from exc
+    return RECORDINGS_DIRECTORY
+
+
+def recordings_directory() -> Path:
+    return RECORDINGS_DIRECTORY
 
 
 def recent_recordings(directory: Path, limit: int = 10) -> tuple[Path, ...]:

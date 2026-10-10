@@ -124,6 +124,21 @@ def test_test_connection_shows_popup_if_obs_is_not_running(qapp, monkeypatch):
     window.close()
 
 
+def test_test_connection_sets_and_reports_recordings_folder(qapp, monkeypatch, tmp_path):
+    client = object()
+    recordings_path = tmp_path / "SimpleVideoToolRecordings"
+    monkeypatch.setattr(main_window, "obs_install_command", lambda: None)
+    monkeypatch.setattr(main_window, "connect_obs", lambda *_args: (client, "test"))
+    monkeypatch.setattr(main_window, "set_recording_directory", lambda _client: recordings_path)
+    window = main_window.MainWindow()
+
+    assert window._check_obs()
+
+    assert window.client is client
+    assert str(recordings_path) in window.obs_status.text()
+    window.close()
+
+
 def test_recent_recordings_are_available_without_expanding_main_window(qapp, monkeypatch):
     monkeypatch.setattr(main_window, "obs_install_command", lambda: None)
     window = main_window.MainWindow()
@@ -135,6 +150,26 @@ def test_recent_recordings_are_available_without_expanding_main_window(qapp, mon
     assert window.recent_recordings_button.isEnabled()
     assert window.minimumHeight() == original_height
     assert not hasattr(window, "recordings_list")
+    window.close()
+
+
+def test_recent_recordings_uses_tool_recordings_folder(qapp, monkeypatch, tmp_path):
+    recordings_path = tmp_path / "SimpleVideoToolRecordings"
+    folders = []
+    monkeypatch.setattr(main_window, "obs_install_command", lambda: None)
+    monkeypatch.setattr(main_window, "recordings_directory", lambda: recordings_path)
+    monkeypatch.setattr(
+        main_window,
+        "recent_recordings",
+        lambda folder: folders.append(folder) or (),
+    )
+    monkeypatch.setattr(main_window.QDialog, "exec", lambda _dialog: 0)
+    window = main_window.MainWindow()
+    window.client = object()
+
+    window._show_recent_recordings()
+
+    assert folders == [recordings_path]
     window.close()
 
 
@@ -220,6 +255,8 @@ def test_open_recording_starts_inline_player(qapp, monkeypatch, tmp_path):
 
 
 def test_start_hides_window_and_global_shortcut_stops_recording(qapp, monkeypatch, tmp_path):
+    shortcut_registrations = []
+
     class FakeShortcutManager(QObject):
         registered = pyqtSignal(str)
         activated = pyqtSignal()
@@ -230,7 +267,7 @@ def test_start_hides_window_and_global_shortcut_stops_recording(qapp, monkeypatc
             self.register_calls = 0
 
         def register(self):
-            self.register_calls += 1
+            shortcut_registrations.append(True)
 
         def stop(self):
             pass
@@ -255,6 +292,7 @@ def test_start_hides_window_and_global_shortcut_stops_recording(qapp, monkeypatc
     monkeypatch.setattr(main_window, "downloads_dir", lambda: tmp_path)
     monkeypatch.setattr(main_window, "find_portal_release", lambda: None)
     monkeypatch.setattr(main_window, "connect_obs", lambda *_args: (client, "test"))
+    monkeypatch.setattr(main_window, "set_recording_directory", lambda _client: tmp_path)
     monkeypatch.setattr(main_window, "PORTAL_LAUNCHER", launcher)
     monkeypatch.setattr(main_window, "recording_active", lambda _client: False)
     monkeypatch.setattr(main_window, "start_recording", lambda client: started.append(client))
@@ -281,7 +319,7 @@ def test_start_hides_window_and_global_shortcut_stops_recording(qapp, monkeypatc
 
     window._start_demo()
 
-    assert window.shortcut_manager.register_calls == 1
+    assert shortcut_registrations == [True]
     assert started == []
     assert window.isVisible()
 

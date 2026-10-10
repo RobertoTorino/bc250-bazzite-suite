@@ -15,15 +15,17 @@ From this folder, run:
 
 The installer creates an app-specific Python environment under
 `~/.local/share/simple-demo-tool/venv`, installs PyQt6 and the OBS WebSocket client, and adds **Simple Demo Tool**
-to the desktop app menu and Desktop, using the supplied app icon. It does not use `sudo` or layer packages into
-Bazzite. Start the app from the menu or run `~/.local/bin/simple-demo-tool`. Python 3.11 or newer is required.
+to the desktop app menu and Desktop, using the supplied app icon. It also creates `~/SimpleVideoToolRecordings`
+for recordings. It does not use `sudo` or layer packages into Bazzite. Start the app from the menu or run
+`~/.local/bin/simple-demo-tool`. Python 3.11 or newer is required.
 
 ## Record a demo
 
 1. Open OBS, configure a scene with a screen-capture source, and enable **Tools → WebSocket Server Settings**.
    For a Wayland session, use **Screen Capture (PipeWire)** and approve the desktop-sharing prompt.
 2. Open Simple Demo Tool and test the OBS connection. It defaults to `127.0.0.1:4455`; enter the WebSocket
-   password if OBS authentication is enabled.
+   password if OBS authentication is enabled. On a successful connection, the tool sets OBS's recording folder
+   to `~/SimpleVideoToolRecordings`. This needs OBS WebSocket 5.3 or newer.
 3. Download the portal tarball and `SHA256SUMS` from the suite's
    [Releases page](https://github.com/RobertoTorino/bc250-bazzite-suite/releases), verify it with
    `sha256sum --check --ignore-missing SHA256SUMS`, and extract it into your Downloads folder. Simple Demo Tool
@@ -42,13 +44,14 @@ Bazzite. Start the app from the menu or run `~/.local/bin/simple-demo-tool`. Pyt
    controls to pause or seek, and **Refresh** to update the list.
 
 The system-wide stop shortcut uses the desktop's GlobalShortcuts portal. If your desktop does not support that
-portal, Simple Demo Tool reports the error and does not start recording. The app does not automate OBS settings
-or click through the portal. That keeps the capture source and normal portal warnings under your control.
+portal, Simple Demo Tool reports the error and does not start recording. The app only changes OBS's recording
+folder; it does not automate other OBS settings or click through the portal. That keeps the capture source and
+normal portal warnings under your control.
 
 ## Uninstall
 
 Run `./install --uninstall` from this folder. This removes the launcher, menu entry, Desktop shortcut, bundled
-icons, and the tool's own files; it does not remove OBS, the suite, or any suite apps.
+icons, and the tool's own files. It leaves `~/SimpleVideoToolRecordings` and its videos untouched.
 
 ## Tests
 

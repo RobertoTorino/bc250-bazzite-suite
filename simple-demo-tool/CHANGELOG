@@ -1,3 +1,7 @@
+Changelog: 10-10-2026 11:22:25
+
+Simple Demo Tool: create ~/SimpleVideoToolRecordings, set it as the OBS recording folder, and list videos from it.
+
 Changelog: 10-10-2026 10:37:08
 
 Simple Demo Tool: read the portal's trigger_description for the registered stop shortcut, including keyboard aliases such as End.

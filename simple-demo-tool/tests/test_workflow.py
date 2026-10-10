@@ -121,28 +121,37 @@ def test_recording_helpers_surface_server_errors(monkeypatch):
         workflow.recording_active(Client())
 
 
-def test_recording_directory_reads_obs_recording_folder(monkeypatch, tmp_path):
+def test_set_recording_directory_configures_obs_folder(monkeypatch, tmp_path):
     monkeypatch.setitem(sys.modules, "obsws_python", SimpleNamespace(OBSSDKError=Exception))
+    recording_path = tmp_path / "SimpleVideoToolRecordings"
+    monkeypatch.setattr(workflow, "RECORDINGS_DIRECTORY", recording_path)
 
     class Client:
-        def get_record_directory(self):
-            return SimpleNamespace(record_directory=str(tmp_path))
+        directory = None
 
-    assert workflow.recording_directory(Client()) == tmp_path
+        def set_record_directory(self, directory):
+            self.directory = directory
+
+    client = Client()
+
+    assert workflow.set_recording_directory(client) == recording_path
+    assert client.directory == str(recording_path)
+    assert recording_path.is_dir()
 
 
-def test_recording_directory_reports_obs_request_failure(monkeypatch):
+def test_set_recording_directory_reports_obs_request_failure(monkeypatch, tmp_path):
     class SdkError(Exception):
         pass
 
     monkeypatch.setitem(sys.modules, "obsws_python", SimpleNamespace(OBSSDKError=SdkError))
+    monkeypatch.setattr(workflow, "RECORDINGS_DIRECTORY", tmp_path / "SimpleVideoToolRecordings")
 
     class Client:
-        def get_record_directory(self):
+        def set_record_directory(self, _directory):
             raise SdkError("request rejected")
 
-    with pytest.raises(workflow.WorkflowError, match="Could not read the OBS recording folder"):
-        workflow.recording_directory(Client())
+    with pytest.raises(workflow.WorkflowError, match="Could not set the OBS recording folder"):
+        workflow.set_recording_directory(Client())
 
 
 def test_recent_recordings_returns_newest_video_files(tmp_path):

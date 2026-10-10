@@ -6,6 +6,7 @@ set -euo pipefail
 APP_ID="simple-demo-tool"
 DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"
 APP_DIR="$DATA_DIR/$APP_ID"
+RECORDINGS_DIR="$HOME/SimpleVideoToolRecordings"
 LAUNCHER="$HOME/.local/bin/$APP_ID"
 MENU_ENTRY="$DATA_DIR/applications/$APP_ID.desktop"
 DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
@@ -47,7 +48,7 @@ python3 -c 'import sys; raise SystemExit(sys.version_info < (3, 11))' ||
     die "Python 3.11 or newer is required."
 
 info "Installing app files in $APP_DIR"
-mkdir -p "$APP_DIR" "$HOME/.local/bin" "$DATA_DIR/applications" "$DESKTOP_DIR"
+mkdir -p "$APP_DIR" "$RECORDINGS_DIR" "$HOME/.local/bin" "$DATA_DIR/applications" "$DESKTOP_DIR"
 rm -rf -- "$APP_DIR/simple_demo_tool"
 cp -R "$SRC/simple_demo_tool" "$APP_DIR/simple_demo_tool"
 rm -rf -- "$APP_DIR/images"

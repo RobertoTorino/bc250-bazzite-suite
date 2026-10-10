@@ -42,8 +42,9 @@ from .workflow import (
     launch_installer,
     obs_install_command,
     recording_active,
-    recording_directory,
+    recordings_directory,
     recent_recordings,
+    set_recording_directory,
     start_recording,
     stop_recording,
     validate_release,
@@ -215,13 +216,17 @@ class MainWindow(QMainWindow):
     def _check_obs(self) -> bool:
         try:
             self.client, version = connect_obs(self.host.text().strip(), self.port.value(), self.password.text())
+            recordings_path = set_recording_directory(self.client)
         except WorkflowError as exc:
             QMessageBox.warning(self, "OBS connection failed", str(exc))
             self.client = None
             self.recent_recordings_button.setEnabled(False)
             self._update_start_button()
             return False
-        self.obs_status.setText(f"Connected to OBS {version}. Check the preview shows your desktop before recording.")
+        self.obs_status.setText(
+            f"Connected to OBS {version}. Recordings will be saved in {recordings_path}. "
+            "Check the preview shows your desktop before recording."
+        )
         self.recent_recordings_button.setEnabled(True)
         self._update_start_button()
         return True
@@ -229,7 +234,6 @@ class MainWindow(QMainWindow):
     def _show_recent_recordings(self) -> None:
         if self.client is None:
             return
-        client = self.client
         dialog = QDialog(self)
         dialog.setWindowTitle("Recent recordings")
         dialog.resize(560, 380)
@@ -249,7 +253,7 @@ class MainWindow(QMainWindow):
 
         def refresh() -> None:
             try:
-                directory = recording_directory(client)
+                directory = recordings_directory()
                 recordings = recent_recordings(directory)
             except WorkflowError as exc:
                 recordings_list.clear()
