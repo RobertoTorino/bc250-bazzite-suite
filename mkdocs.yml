@@ -71,7 +71,11 @@ nav:
       - Bazzite Test script: development/bazzite-test.md
       - Bazzite Test internals: development/bazzite-test-internals.md
       - Bazzite Test test plan: development/bazzite-test-plan.md
-  - Security: SECURITY.md
+  - Security:
+      - Security policy: SECURITY.md
+  - History:
+      - What is Bazzite: history/bazzite.md
+      - What is BC-250: history/bc250.md
   - Other tools:
       - Simple demo tool: other-tools/simple-demo-tool.md
 validation:
