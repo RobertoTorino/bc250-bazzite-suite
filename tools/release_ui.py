@@ -28,9 +28,11 @@ from PyQt6.QtWidgets import (QCheckBox, QComboBox, QHBoxLayout, QHeaderView, QLa
 
 import release_plan as rp  # noqa: E402
 from bc250_core import AppInfo  # noqa: E402
-from bc250_core.widgets import Terminal, accent_button, hint_label, page_header  # noqa: E402
+from bc250_core.platform import data_home  # noqa: E402
+from bc250_core.widgets import ClickableLogo, Terminal, accent_button, hint_label, page_header  # noqa: E402
 
-INFO = AppInfo(app_id="bc250-release", name="BC250 Suite Releases", version="", settings_ini=True,
+LOGO_PATH = TOOLS / "images" / "release-ui.png"
+INFO = AppInfo(app_id="bc250-release", name="BC250 Suite Releases", version="", logo=LOGO_PATH, settings_ini=True,
                languages={"en": "English"})
 COLUMNS = ("Release", "App", "VERSION", "Last tag", "Changes", "New version", "Notes")
 
@@ -149,6 +151,7 @@ class PortalPage(QWidget):
         self.pin_button = QPushButton("Pin")
         self.pin_button.setToolTip("Read each ticked release's SHA256SUMS from GitHub and pin tag and sha256")
         self.pin_button.clicked.connect(self.pin)
+        self.empty_note = hint_label("")
         self.minimum = QLabel()
         self.portal_version = QComboBox()
         self.portal_version.setEditable(True)
@@ -176,6 +179,7 @@ class PortalPage(QWidget):
                                  "then bump the portal. Its CHANGELOG entry lists the pinned app releases."))
         lay.addLayout(top)
         lay.addWidget(self.pins, 1)
+        lay.addWidget(self.empty_note)
         lay.addLayout(pin_row)
         lay.addWidget(self.minimum)
         lay.addLayout(portal_row)
@@ -194,6 +198,11 @@ class PortalPage(QWidget):
                 self.pins.setItem(i, col, QTableWidgetItem(text))
             self.candidates.append((unit, tick))
         self.pin_button.setEnabled(bool(cands))
+        self.empty_note.setText("" if cands else
+                                "Nothing to pin: every app whose VERSION is tagged is already pinned with its checksum. "
+                                "Tagged on another machine? Fetch tags. Not tagged yet? Do step 1, push, and push the "
+                                "app tags first.")
+        self.empty_note.setVisible(not cands)
         portal = next(u for u in units if u.kind == "portal")
         minimum, why = rp.portal_minimum(self.window.root, self.window.base(), portal.version)
         if minimum:
@@ -260,6 +269,7 @@ class ReleaseWindow(QMainWindow):
         self.setWindowTitle(INFO.name)
         self.resize(1100, 760)
         header, _ = page_header(INFO.name)
+        header.insertWidget(0, ClickableLogo(LOGO_PATH, 40))
         self.status = QLabel()
         header.addWidget(self.status)
         self.tabs = QTabWidget()
@@ -267,6 +277,9 @@ class ReleaseWindow(QMainWindow):
         self.portal_page = PortalPage(self)
         self.tabs.addTab(self.apps_page, "1. Apps")
         self.tabs.addTab(self.portal_page, "2. Pin and portal")
+        # Opening step 2 reads the tags again, so tags pushed from a terminal meanwhile show up; step 1 keeps what
+        # was typed in it.
+        self.tabs.currentChanged.connect(lambda i: i == 1 and self.portal_page.fill(rp.load_units(self.root)))
         central = QWidget()
         lay = QVBoxLayout(central)
         lay.addLayout(header)
@@ -293,9 +306,11 @@ class ReleaseWindow(QMainWindow):
 def main() -> int:
     from bc250_core.app import create_app, exec_app
     app = create_app(INFO, sys.argv[1:], lang="en")
-    # No .desktop file is installed for this tool: without a desktop file name Qt does not try to register it with
-    # the desktop portal (which only logs "App info not found").
-    app.setDesktopFileName("")
+    # With the menu entry of tools/release.sh --install, the desktop file name gives the window its icon in the task
+    # bar. Without it, no name: Qt would try to register it with the desktop portal, which only logs "App info not
+    # found".
+    if not (data_home() / "applications" / f"{INFO.app_id}.desktop").is_file():
+        app.setDesktopFileName("")
     window = ReleaseWindow()
     window.show()
     return exec_app(app)

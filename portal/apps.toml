@@ -129,8 +129,8 @@ launch = [["Open", "~/.local/bin/bc250-bios-reader"]]
 [apps.ace-queues]
 name = "BC-250 ACE Queues"
 summary = "Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use."
-tag = "ace-queues-v0.1.0"
-sha256 = "1df33c64d9a33ea5faa411cd672f1fd4da0f104e5f2762fd9cb1b2dd4a6a6bd5"
+tag = "ace-queues-v0.1.1"
+sha256 = "c845ea7c75f7bdb3b85afad85a674fa4fb31b1aff2be459ec4d858d43d0df79c"
 required = false
 changes_board = true
 install = ["bash install.sh"]
@@ -141,8 +141,8 @@ launch = [["Open", "~/.local/bin/bc250-ace-queues"]]
 [apps.memory-manager]
 name = "BC-250 Memory Manager"
 summary = "The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it."
-tag = "memory-manager-v0.1.0"
-sha256 = "11fa5ad67a33ff68a64740c55d68a9e15b00c055397483dfb35454c88ba05685"
+tag = "memory-manager-v0.1.1"
+sha256 = "95ea8845e8791e75eb01754a4ce260dde1f6feb8f636e5372497a988492c13b8"
 required = false
 changes_board = true
 install = ["bash install.sh"]

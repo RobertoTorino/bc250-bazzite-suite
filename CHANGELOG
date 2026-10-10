@@ -1,3 +1,11 @@
+Changelog: 11-10-2026 00:18:14
+
+Release front end as an app: tools/release.sh --install adds a launcher (~/.local/bin/bc250-release), an app menu entry and a Desktop icon for the checkout it is run from (--no-desktop-shortcut: menu entry only; --uninstall removes them). It is not part of the portal; the entry starts the checkout's own tool with its .venv-linux. The window shows its icon (tools/images/release-ui.png), and with the menu entry installed it keeps its desktop file name, so the task bar shows that icon. The manual serves tools/images as assets/tools/ and shows the small icon (release-ui-128.png) in the release section of docs/portal.md, with the install commands. New installer test tools/installer-tests/release-ui.sh, in CI and CLAUDE.md.
+
+Changelog: 11-10-2026 00:11:07
+
+Release front end: opening step 2 reads the tags again, so tags pushed from a terminal while the window is open show up without a restart (step 1 keeps what was typed in it). An empty pin list now says why: nothing tagged that is not pinned yet, with Fetch tags for tags made on another machine.
+
 Changelog: 11-10-2026 00:04:34
 
 CI: the pytest jobs check out the full history with its tags (fetch-depth: 0), as the versions job already did. tools/tests checks the shipped apps.toml, and once an app is bumped past its pinned release (step 1 of a release), that pin only passes when its tag exists; the default checkout has no tags, so the test failed in CI while it passed locally.

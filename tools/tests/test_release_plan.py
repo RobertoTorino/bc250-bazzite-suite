@@ -221,3 +221,23 @@ def test_window_refuses_a_tagged_version(window, repo, monkeypatch):
     window.apps_page.apply()
     assert "already tagged" in warnings[0]
     assert (repo / "apps/alpha/CHANGELOG").read_text().startswith("Changelog: 01-01-2026")
+
+
+def test_window_reads_new_tags_when_step_2_opens(window, repo):
+    _, tick, combo, _ = row(window, "alpha")
+    tick.setChecked(True)                                     # typed in step 1: kept
+    assert [u.tag for u, _ in window.portal_page.candidates] == ["alpha-v0.1.0"]
+    rp.set_version(repo, unit(repo, "alpha"), "0.1.1")
+    sh(repo, "tag", "alpha-v0.1.1")                           # tagged in a terminal while the window is open
+    window.tabs.setCurrentIndex(1)
+    assert [u.tag for u, _ in window.portal_page.candidates] == ["alpha-v0.1.1"]
+    assert window.portal_page.empty_note.isHidden()
+    assert row(window, "alpha")[1].isChecked()
+
+
+def test_window_explains_an_empty_pin_list(window, repo):
+    rp.pin(repo, unit(repo, "alpha"), SHA)
+    window.reload()
+    assert window.portal_page.candidates == []
+    assert not window.portal_page.empty_note.isHidden()
+    assert "Fetch tags" in window.portal_page.empty_note.text()

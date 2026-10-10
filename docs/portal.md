@@ -85,8 +85,22 @@ Releasing an app and pinning it in the portal:
 
 ### The release front end
 
-`tools/release.sh` opens a window that makes these file edits for you. It never commits, tags or pushes: after
-each step it shows the git commands to run.
+![BC250 Suite Releases](assets/tools/release-ui-128.png){ .app-logo }
+
+`tools/release.sh` opens a window, **BC250 Suite Releases**, that makes these file edits for you. It never commits,
+tags or pushes: after each step it shows the git commands to run.
+
+To start it from the app menu instead, install it once on Linux. It stays out of the portal, and the entry always
+starts the tool of the checkout you installed it from:
+
+```bash
+tools/release.sh --install                         # app menu entry and Desktop icon
+tools/release.sh --install --no-desktop-shortcut   # app menu entry only
+tools/release.sh --uninstall                       # remove them; the checkout stays
+```
+
+It runs with the checkout's `.venv-linux` (see [Development](development/index.md)). After moving the checkout,
+run `--install` again. On Windows, run `tools/release.sh` from Git Bash.
 
 - **1. Apps:** tick the apps to release and enter their version. A version that was never tagged (the first
   release) can be released as it is. **Apply** writes `VERSION`, every copy `tools/check_versions.py` checks and a

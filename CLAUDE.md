@@ -85,7 +85,7 @@ shellcheck -S warning apps/ace-queues/bc250-ace-queues.sh apps/ace-queues/bc250-
 bash tools/installer-tests/bazzite-test.sh; bash tools/installer-tests/portal.sh
 bash tools/installer-tests/persistent-acpi.sh; bash tools/installer-tests/system-overlay.sh
 bash tools/installer-tests/bios-reader.sh; bash tools/installer-tests/ace-queues.sh
-bash tools/installer-tests/memory-manager.sh
+bash tools/installer-tests/memory-manager.sh; bash tools/installer-tests/release-ui.sh
 bash tools/installer-tests/release.sh
 mkdocs build --strict                               # from the venv
 ```

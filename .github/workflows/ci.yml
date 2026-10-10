@@ -140,6 +140,8 @@ jobs:
         run: bash tools/installer-tests/ace-queues.sh
       - name: memory-manager installer
         run: bash tools/installer-tests/memory-manager.sh
+      - name: release front end installer
+        run: bash tools/installer-tests/release-ui.sh
       - name: release tarballs, end to end
         run: bash tools/installer-tests/release.sh
 
