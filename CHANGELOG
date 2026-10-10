@@ -1,3 +1,6 @@
+Changelog: 10-10-2026 19:34:00
+Bumped version to 0.8.0
+
 Changelog: 10-10-2026 19:15:00
 
 Manual: the list of third-party GPU info tools in the CU Bisect chapter names only rocm-smi and the Vulkan/OpenCL CU counts.

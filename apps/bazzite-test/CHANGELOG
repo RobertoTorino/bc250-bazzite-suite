@@ -1,3 +1,16 @@
+Changelog: 10-10-2026 19:25:36
+
+TTM hints follow the kernel: amdgpu sizes GTT from ttm.pages_limit and caps it at the system RAM on this APU.
+Test 37 now reports the real dynamic ceiling (the GTT total) instead of the parameter, says when ttm.pages_limit is
+above the RAM and therefore has no effect, and gives the small-split ceiling from the live split and GTT instead of
+the fixed 8.25 GiB. The stress test no longer always suggests ttm.pages_limit=2621440 when GTT runs full: that could
+lower a higher limit, and --append-if-missing may add a second ttm.pages_limit instead of changing it. When GTT is already as
+large as the RAM, or the limit is already 3014656, it points at the memory use and the swap layout instead;
+otherwise it suggests 3014656 (the value of test 37) with --replace or --append. The saturated-VRAM hint names
+bc250_memcfg instead of a BIOS setting the board does not expose.
+
+Changelog history: entries no longer name the third-party CU manager the early versions read.
+
 Changelog: 10-10-2026 13:33:27
 
 Print results now opens the saved PNG in the system image viewer and keeps a clickable thumbnail with its folder
@@ -613,12 +626,12 @@ bc250-cu-bisect.sh moved to its own repository: https://github.com/RobertoTorino
 - Rewritten there with its own umr unlock, a control item, rounds and per-WGP verdicts (see its CHANGELOG).
 - README: the bisect section is now a short description with a link.
 
-No more dependencies on bc250-control-center:
+No more dependencies on an external CU manager:
 - Test 21 reads the live WGP masks from the GPU registers itself (umr, read-only, needs root): a WGP counts
   when its SPI bit is set and its CC inactive bit is clear. Without root or umr it falls back to the kernel
-  probe value and RADV, with a hint. The Control Center state file, boot table and dashboard cache are no
+  probe value and RADV, with a hint. Its state file, boot table and dashboard cache are no
   longer read; the benchmark's CU count uses test 21's value or the kernel value.
-- The Control Center install/update section and other mentions removed from README.md, README_APP.md, TEST.md and the test catalogue.
+- Its install/update section and other mentions removed from README.md, README_APP.md, TEST.md and the test catalogue.
 
 Changelog: 03-10-2026 14:20:00
 
@@ -1049,9 +1062,9 @@ Changelog: 28-09-2026 22:35:00
 New tool — bc250-cu-bisect.sh:
 - Per-Shader-Array CU bisect helper: tests one extra WGP (+2 CUs) per array while
   the other three stay at the known-good baseline (read from
-  /etc/bc250-cu-live-manager.conf, prompted otherwise).
-- Per step: user applies the printed masks in Control Center LIVE mode, script
-  verifies the routed count via the dashboard cache, runs a stress load
+  the CU manager's config, prompted otherwise).
+- Per step: user applies the printed masks with an external CU manager, script
+  verifies the routed count via its dashboard cache, runs a stress load
   (memtest_vulkan/vkpeak/vkmark/glmark2), scans the kernel log for GPU faults
   and asks about artifacts.
 - Verdicts persisted to ~/.local/share/bc250-cu-bisect/results.tsv: crash-safe,
@@ -1146,8 +1159,8 @@ Journal noise filters (TESTs 15/16), all verified against a real run:
 - "ACPI BIOS Warning" (FADT Pm2ControlBlock).
 
 TEST 21:
-- 25-39 CUs is now a SUCCESS labelled as an intentional partial unlock via
-  Control Center, with a note on why partial unlocks are normal, instead of
+- 25-39 CUs is now a SUCCESS labelled as an intentional partial unlock,
+  with a note on why partial unlocks are normal, instead of
   an ambiguous "partial unlock, or unhealthy CUs have been masked".
 
 TEST 00:
@@ -1164,7 +1177,7 @@ TEST 26
   (bc250-acpi-fix) or the BIOS itself.
 
 README:
-- TEST 21 description updated: active CUs come from Control Center state /
+- TEST 21 description updated: active CUs come from the CU manager's state /
   the saved boot table (24 stock, up to 40 unlocked), with the probe-time
   kernel/RADV caveat. All other test descriptions verified against the
   script (42 tests, numbers and titles match).
@@ -1173,19 +1186,19 @@ README:
 Changelog: 28-09-2026 19:29:00
 
 Changes to TEST 21
-1. New system-wide check: reads /etc/bc250-cu-live-manager.conf (BC250_WGP_MASKS popcount × 2 = 28) and verifies bc250-cu-live-manager.service is enabled — matches your setup exactly.
+1. New system-wide check: reads the CU manager's config (mask popcount × 2 = 28) and verifies its service is enabled — matches your setup exactly.
 2. Fixed cache path/parser: correct Data/ location, parses the authoritative CUs active & routed : X / 40 line plus Boot sync : current table saved.
 3. Corrected messaging: kernel/RADV labelled probe-time; RADV mismatch downgraded from WARNING to an explanatory INFO (harmless, dispatch uses all routed CUs).
 
 Changelog: 28-09-2026 19:01:00
 
-Bugfix for control center settings:
+Bugfix for live CU changes:
 The script reads active_cu_number from the kernel log — which amdgpu prints once at driver probe during boot, so a live change was invisible to it.
 
 TEST 21 now, in priority order:
 
-- /run/bc250-control-center/cu-live-state.json → live cu_active_cus, plus whether cu_boot_saved is set (warns if the change is live-only and will be lost on cold boot).
-- Control Center's per-user dashboard cache as a fallback.
+- The CU manager's live state file → live cu_active_cus, plus whether cu_boot_saved is set (warns if the change is live-only and will be lost on cold boot).
+- Its per-user dashboard cache as a fallback.
 - Kernel log — now explicitly labelled as the boot-time value, reported alongside rather than overriding the live one.
 - If only 24 is found from the kernel, it now prints a NOTE explaining the live/boot distinction instead of silently claiming stock.
 

@@ -1965,18 +1965,25 @@ else
 fi
 log_result "Report the VRAM split and its dynamic ceiling"
 VRAM_SPLIT_MIB=$(( $(read_num_g "/sys/class/drm/card1/device/mem_info_vram_total") / 1048576 ))
+GTT_MIB=$(( $(read_num_g "/sys/class/drm/card1/device/mem_info_gtt_total") / 1048576 ))
 for card in /sys/class/drm/card*/device; do
     [ -r "$card/mem_info_vram_total" ] || continue
     VRAM_SPLIT_MIB=$(( $(read_num_g "$card/mem_info_vram_total") / 1048576 ))
+    GTT_MIB=$(( $(read_num_g "$card/mem_info_gtt_total") / 1048576 ))
 done
+# amdgpu sizes GTT from ttm.pages_limit (4 KiB pages, default half the RAM) and caps it at the RAM on this APU,
+# so the GTT total is the real dynamic ceiling, not the parameter.
 TTM_LIMIT=$(cat /sys/module/ttm/parameters/pages_limit 2>/dev/null)
-if [ -n "$TTM_LIMIT" ] && [ "$TTM_LIMIT" -gt 0 ]; then
-    log_result "INFO: VRAM split is ${VRAM_SPLIT_MIB} MiB; ttm.pages_limit allows $((TTM_LIMIT / 262144)) GiB of dynamic VRAM."
+if [ "$GTT_MIB" -gt 0 ]; then
+    log_result "INFO: VRAM split is ${VRAM_SPLIT_MIB} MiB; the GPU can borrow up to ${GTT_MIB} MiB of system RAM on top (GTT)."
+fi
+if [ -n "$TTM_LIMIT" ] && [ "$TTM_LIMIT" -gt 0 ] && [ "$GTT_MIB" -gt 0 ] && [ $((TTM_LIMIT / 256)) -gt "$GTT_MIB" ]; then
+    log_result "INFO: ttm.pages_limit is $((TTM_LIMIT / 256)) MiB, more than the RAM: amdgpu caps GTT at the RAM, so a higher limit has no effect."
 fi
 if [ "$VRAM_SPLIT_MIB" -le 1024 ]; then
     log_result "INFO: This is a small (dynamic-friendly) split, which maximises regular RAM."
     if ! grep -q "ttm.pages_limit" /proc/cmdline 2>/dev/null; then
-        log_result "WARNING: A small split without ttm.pages_limit caps total VRAM at roughly 8.25 GiB."
+        log_result "WARNING: A small split without ttm.pages_limit caps total VRAM at $((VRAM_SPLIT_MIB + GTT_MIB)) MiB (the split plus half the RAM)."
         log_result "HINT: rpm-ostree kargs --append-if-missing=ttm.pages_limit=3014656   # ~11.5 GiB"
         WARN_FOUND=true
     fi
@@ -2489,12 +2496,23 @@ if [ "$SAMPLES" -gt 0 ]; then
     log_result "INFO: GTT  peak ${MAX_GTT} MiB of ${GTT_TOTAL_MIB} MiB ($((MAX_GTT * 100 / GTT_TOTAL_MIB))%)"
     if [ "$((MAX_VRAM * 100 / VRAM_TOTAL_MIB))" -ge 90 ]; then
         log_result "WARNING: The VRAM carveout was saturated; allocations are spilling into GTT."
-        log_result "HINT: Raise the UMA/framebuffer size in BIOS if your board exposes it."
+        log_result "HINT: Raise the VRAM split with bc250_memcfg (UMA_SIZE, see test 37), then reboot."
         WARN_FOUND=true
     fi
     if [ "$((MAX_GTT * 100 / GTT_TOTAL_MIB))" -ge 85 ]; then
         log_result "WARNING: GTT peaked at $((MAX_GTT * 100 / GTT_TOTAL_MIB))% of its limit; the GPU is close to running out of memory."
-        log_result "HINT: rpm-ostree kargs --append-if-missing=ttm.pages_limit=2621440   # 10 GiB"
+        # GTT is capped at the RAM (test 37): once it is there, or the limit is already the recommended one,
+        # a higher ttm.pages_limit only takes RAM away from the system.
+        RAM_MIB=$(( $(awk '/^MemTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0) / 1024 ))
+        TTM_NOW=$(read_num /sys/module/ttm/parameters/pages_limit)
+        if [ "$GTT_TOTAL_MIB" -ge $((RAM_MIB * 95 / 100)) ] || [ "$TTM_NOW" -ge 3014656 ]; then
+            log_result "HINT: GTT is already at its practical maximum (${GTT_TOTAL_MIB} MiB, RAM ${RAM_MIB} MiB); a higher ttm.pages_limit will not help."
+            log_result "HINT: Lower texture/resolution settings, close other programs, or check the swap layout (test 14)."
+        elif grep -q "ttm.pages_limit=" /proc/cmdline 2>/dev/null; then
+            log_result "HINT: rpm-ostree kargs --replace=ttm.pages_limit=3014656   # ~11.5 GiB, capped at the RAM"
+        else
+            log_result "HINT: rpm-ostree kargs --append=ttm.pages_limit=3014656   # ~11.5 GiB, capped at the RAM"
+        fi
         WARN_FOUND=true
     fi
 

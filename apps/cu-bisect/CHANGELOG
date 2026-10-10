@@ -1,3 +1,7 @@
+Changelog: 10-10-2026 19:25:46
+
+Changelog history: entries no longer name the third-party CU manager the first version worked with.
+
 Changelog: 09-10-2026 22:59:08
 
 README: only the app's name, what it does and its license, with a link to its chapter of the manual; the rest moved into the manual (docs/apps/cu-bisect.md). The bisect GUI's texts that said "see README" now say the manual; the unlock GUI's mask preview tooltip still mentions the README, because it is translated.
@@ -329,7 +333,7 @@ Changelog: 03-10-2026 20:51:00
 Changelog: 03-10-2026 15:00:00
 
 1.0.0 — moved to its own repository (from bc250-bazzite-test) and rewritten: tells bad WGPs apart from
-an unstable unlock, with its own unlock. No dependency on bc250-control-center.
+an unstable unlock, with its own unlock. No dependency on an external CU manager.
 - Writes the masks itself with umr (CC/SPI/RLC registers of a runtime unlock), only on an idle GPU, and
   reads them back; during the load it reads them again every 10 s to catch drift.
 - A control item does the same writes with the baseline masks (no extra CUs): if it fails, the unlock
@@ -350,7 +354,7 @@ Changelog: 28-09-2026 22:35:00
 First version (part of bc250-bazzite-test):
 - Per-Shader-Array CU bisect helper: tests one extra WGP (+2 CUs) per array while the other three stay at
   the known-good baseline.
-- Per step: the user applied the printed masks in Control Center LIVE mode; the script ran a stress load
+- Per step: the user applied the printed masks with an external CU manager; the script ran a stress load
   (memtest_vulkan/vkpeak/vkmark/glmark2), scanned the kernel log for GPU faults and asked about artifacts.
 - Verdicts in ~/.local/share/bc250-cu-bisect/results.tsv: crash-safe, resumes after a hard hang. The final
   summary suggested a combined mask; a readable report was copied to the Desktop.
