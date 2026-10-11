@@ -164,3 +164,30 @@ def test_deployment_state_after_switching_versions(game, payload, tmp_path):
     replaced.helixsr_version = standalone.helixsr_version = "1.2.0"
     assert backend.deployment_state(replaced, payload) == ("warn", "Older build")
     assert backend.deployment_state(standalone, payload) == ("warn", "Older build")
+
+
+def test_one_file_dll(game, payload, tmp_path):
+    """HelixSR 1.8+: the network is inside the DLL, so no network files go along, and stale ones are removed."""
+    from tests.conftest import embedded_dll
+    release = tmp_path / "HelixSR-1.8.0"
+    release.mkdir()
+    (release / backend.HELIXSR_DLL).write_bytes(embedded_dll())
+    result = backend.import_payload(release, payload)
+    status = backend.payload_status(payload)
+    assert result.missing == [] and status.ready and status.embedded and status.missing() == []
+    assert not (payload / backend.WEIGHTS).exists() and not (payload / backend.KERNELS).exists()   # 1.2.0's are gone
+    target = dll_of(game)
+    (target.parent / backend.WEIGHTS).write_bytes(b"old weights")
+    written = backend.deploy(target, payload)
+    assert backend.network_embedded(target) and not (target.parent / backend.WEIGHTS).exists()
+    assert not any(p.name in backend.NETWORK_FILES for p in written)
+    assert backend.inspect_dll(target, payload).network_files
+    dep = backend.Deployment(str(target), backend.MODE_REPLACE, "g", helixsr_version="1.8.0")
+    assert backend.deployment_state(dep, payload) == ("ok", "In place")
+    folder = tmp_path / "opti" / "HelixSR"
+    backend.deploy_folder(folder, payload)
+    standalone = backend.Deployment(str(folder), backend.MODE_FOLDER, "g", helixsr_version="1.8.0")
+    assert backend.deployment_state(standalone, payload) == ("ok", "In place")
+    (payload / backend.HELIXSR_DLL).write_bytes(embedded_dll(b"MZ-helixsr-1.8.1"))  # the payload moved on
+    backend.remove_folder(folder, payload)                                       # still recognised as HelixSR
+    assert not folder.exists()

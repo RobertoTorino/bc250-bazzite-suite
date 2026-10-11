@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import QMessageBox
 
 from bc250_portal import MANIFEST
 from bc250_portal import main_window as mw
-from bc250_portal.manifest import load
+from bc250_portal.manifest import load, load_checkout
 from bc250_portal.sources import Records, Sources
 from bc250_core.updates import ReleaseInfo
 
@@ -65,37 +65,89 @@ def test_bazzite_test_first_without_uninstall(window):
     assert window.cards["cu-bisect"].open_button.menu() is not None        # Bisect / Unlock
 
 
-def test_every_card_has_its_icon(window):
-    for key, card in window.cards.items():
+def test_every_card_has_its_icon(qapp, home, settings_dir, tmp_path, launched):
+    entries = load(MANIFEST) + load_checkout(MANIFEST)
+    w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
+    for key, card in w.cards.items():
         icon = mw.APP_ICON_FILES.get(key, key)
         assert (mw.APP_ICONS / f"{icon}.png").is_file(), key
-        assert not card.icon.isHidden() and card.icon.pixmap().width() == mw.ICON_PX, key
-    assert (mw.APP_ICONS / f"{mw.APP_ICON_FILES['dependency-checker']}.png").is_file()
+        assert card.has_icon and card.icon.iconSize().width() == mw.ICON_PX, key
+    w.close()
 
 
-def test_card_without_icon_file_shows_none(qapp, home, settings_dir, tmp_path, launched, monkeypatch):
+def test_open_menu_shows_each_window_icon(window):
+    for key in ("cu-bisect", "cores-bisect"):
+        actions = window.cards[key].icon.menu().actions()
+        assert [a.text() for a in actions] == ["Bisect", "Unlock"]
+        assert all(not a.icon().isNull() for a in actions), key
+        assert (mw.APP_ICONS / f"{mw.LAUNCH_ICON_FILES[(key, 'Unlock')]}.png").is_file()
+
+
+def test_card_without_icon_file_shows_its_initial(qapp, home, settings_dir, tmp_path, launched, monkeypatch):
     monkeypatch.setattr(mw, "APP_ICONS", tmp_path / "no-icons")
     w = mw.MainWindow(load(MANIFEST), FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
-    assert all(card.icon.isHidden() for card in w.cards.values())
+    assert all(not card.has_icon and not card.icon.isHidden() for card in w.cards.values())
     w.close()
 
 
-def test_no_open_button_without_launch(qapp, home, settings_dir, tmp_path, launched):
+def test_short_names_drop_the_suite_prefix(window):
+    assert mw.short_name("BC-250 Bazzite Test") == "Bazzite Test"
+    assert mw.short_name("BC250 Suite Releases") == "Suite Releases"
+    assert mw.short_name("Simple Demo Tool") == "Simple Demo Tool"
+    assert window.cards["governor"].title.text() == "GPU Governor Manager"
+    assert "BC-250 GPU Governor Manager" in window.cards["governor"].icon.toolTip()     # the full name on hover
+
+
+def test_icon_opens_only_an_installed_program(qapp, home, settings_dir, tmp_path, launched, monkeypatch):
     entries = [replace(e, launch=()) if e.key == "governor" else e for e in load(MANIFEST)]
     w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
-    assert w.cards["governor"].open_button.isHidden()                      # not a program
+    acpi = w.cards["persistent-acpi"]
+    assert not acpi.icon.isEnabled() and "Not installed" in acpi.icon.toolTip()
+    for name in ("bc250-governor-manager", "bc250-persistent-acpi-gui"):
+        (home / ".local" / "bin" / name).write_text("#!/bin/sh\n")
+    w.refresh()
+    assert acpi.icon.isEnabled() and "Click to open it." in acpi.icon.toolTip()
+    assert not w.cards["governor"].icon.isEnabled()                         # not a program
+    opened = []
+    monkeypatch.setattr(w, "open_app", lambda entry, command: opened.append(command))
+    acpi.open_clicked.disconnect()
+    acpi.open_clicked.connect(w.open_app)
+    acpi.icon.click()
+    assert opened == ["~/.local/bin/bc250-persistent-acpi-gui"]
     w.close()
+
+
+def test_icon_is_greyed_until_installed(window, home):
+    card = window.cards["system-overlay"]
+    assert card.icon.icon().cacheKey() == card._icons[1].cacheKey()
+    (home / ".local" / "bin" / "bc250-system-overlay").write_text("#!/bin/sh\n")
+    window.refresh()
+    assert card.icon.icon().cacheKey() == card._icons[0].cacheKey()
+
+
+def test_board_warning_under_the_icon(window):
+    assert not window.cards["governor"].board.isHidden()
+    assert window.cards["system-overlay"].board.isHidden()
 
 
 def test_states_follow_detection_and_records(window, home):
     card = window.cards["governor"]
-    assert card.pill.text() == "Not installed" and card.install_button.text() == "Install"
+    assert card.status == "Not installed" and card.install_button.toolTip().startswith("Install ")
+    assert not card.uninstall_button.isEnabled()
     (home / ".local" / "bin" / "bc250-governor-manager").write_text("#!/bin/sh\n")
     window.refresh()
-    assert card.pill.text() == "Installed" and card.install_button.text() == "Reinstall"
+    assert card.status == "Installed" and card.install_button.toolTip().startswith("Reinstall ")
+    assert card.uninstall_button.isEnabled()
     window.records.set("governor", "governor-v0.0.9")
     window.refresh()
-    assert card.pill.text() == "Update" and card.install_button.text() == "Update"
+    assert card.status == "Update" and card.install_button.toolTip().startswith("Update ")
+
+
+def test_bazzite_test_has_only_reinstall(window, home):
+    card = window.cards["bazzite-test"]
+    (home / ".local" / "bin" / "bc250-bazzite-test").write_text("#!/bin/sh\n")
+    window.refresh()
+    assert card.install_button.toolTip().startswith("Reinstall ") and card.uninstall_button.isHidden()
 
 
 def test_board_change_needs_confirmation(window, launched, monkeypatch):
@@ -112,7 +164,8 @@ def test_no_warning_for_bazzite_test(window, launched, monkeypatch):
     assert wait_for(lambda: launched)
     line, exit_file = launched[0]
     assert line.endswith("&& bash install.sh") and "local-bazzite-test" not in line
-    assert window.pending is not None and window.cards["bazzite-test"].pill.text() == "Installing…"
+    assert window.pending is not None and window.cards["bazzite-test"].status == "Installing…"
+    assert not window.cards["bazzite-test"].busy_label.isHidden()
     assert not window.cards["governor"].install_button.isEnabled()          # one action at a time
 
 
@@ -127,7 +180,7 @@ def test_install_success_records_tag(window, launched, monkeypatch, home):
     window._check_pending()
     assert window.pending is None
     assert window.records.get("governor") == entry.tag
-    assert window.cards["governor"].pill.text() == "Installed"
+    assert window.cards["governor"].status == "Installed"
 
 
 def test_failed_install_warns_and_records_nothing(window, launched, monkeypatch):
@@ -221,16 +274,50 @@ def test_no_portal_offer_when_not_newer_or_offline(qapp, home, settings_dir, tmp
     w.close()
 
 
-def test_cards_reflow_into_two_columns(window, qapp):
+def test_tiles_flow_in_file_order(window, qapp):
     window.show()
-    for width, columns in ((1100, 2), (700, 1), (1100, 2)):
+    regular = [card for card in window.cards.values() if not card.entry.development]
+    for width in (1400, 700, 300, 1400):
         window.resize(width, 720)
         qapp.processEvents()
-        assert window.columns == columns, width
-        places = [window.grid.getItemPosition(window.grid.indexOf(card))[:2] for card in window.cards.values()]
-        assert places == [(i // columns, i % columns) for i in range(len(window.cards))]   # file order, by rows
-    assert window.column_count(2 * mw.TILE_MIN_WIDTH + 20) == 2
-    assert window.column_count(2 * mw.TILE_MIN_WIDTH - 1) == 1
+        columns = window.columns
+        assert columns == window.column_count(window.scroll.width() - window.scroll.verticalScrollBar().sizeHint()
+                                              .width() - mw.DEV_FRAME_MARGIN), width
+        places = [window.grid.getItemPosition(window.grid.indexOf(card))[:2] for card in regular]
+        assert places == [(i // columns, i % columns) for i in range(len(regular))]   # file order, by rows
+    step = mw.TILE_WIDTH + mw.TILE_SPACING
+    assert window.column_count(0) == 1
+    assert window.column_count(3 * step - mw.TILE_SPACING) == 3 and window.column_count(3 * step - 13) == 2
+
+
+def test_development_apps_apart_and_closed(window, qapp):
+    dev = {key for key, card in window.cards.items() if card.entry.development}
+    assert dev == {"demo-tool", "dependency-checker"}
+    assert all(window.dev_grid.indexOf(window.cards[key]) >= 0 for key in dev)
+    assert all(window.grid.indexOf(window.cards[key]) < 0 for key in dev)
+    assert not window.dev_toggle.isHidden() and window.dev_box.isHidden()   # closed until asked for
+    window.dev_toggle.click()
+    assert not window.dev_box.isHidden()
+    assert window.settings.value(mw.DEV_OPEN_KEY, type=bool)                 # remembered
+
+
+def test_no_development_section_without_development_apps(qapp, home, settings_dir, tmp_path, launched):
+    entries = [e for e in load(MANIFEST) if not e.development]
+    w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
+    assert w.dev_toggle.isHidden() and w.dev_box.isHidden()
+    w.close()
+
+
+def test_checkout_only_app_has_no_update(qapp, home, settings_dir, tmp_path, launched):
+    entries = load(MANIFEST) + load_checkout(MANIFEST)
+    w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
+    card = w.cards["suite-releases"]
+    assert w.dev_grid.indexOf(card) >= 0
+    (home / ".local" / "bin" / "bc250-release").write_text("#!/bin/sh\n")
+    w.records.set("suite-releases", "local")
+    w.refresh()
+    assert card.status == "Installed" and card.dot.isHidden() and "suite checkout" in card.icon.toolTip()
+    w.close()
 
 
 def test_portal_offer_names_the_app_updates(qapp, home, settings_dir, tmp_path, launched):

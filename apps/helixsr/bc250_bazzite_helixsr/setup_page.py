@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Setup page: get the latest HelixSR release, its prerequisites and build the network files in one go, and
-see whether the payload or this app has a newer release. The page shows and asks; the main window runs."""
+see whether the payload has a newer release. The page shows and asks; the main window runs."""
 
 from __future__ import annotations
 
@@ -58,21 +58,13 @@ class SetupPage(QWidget):
         row.addWidget(self.helix_pill)
         row.addWidget(self.helix_text, 1)
         form.addRow(self.tr("HelixSR"), row)
-        self.app_pill = StatusPill(self.tr("Not checked"))
-        self.app_text = QLabel()
-        self.app_text.setWordWrap(True)
-        self.app_text.setOpenExternalLinks(True)
-        row = QHBoxLayout()
-        row.addWidget(self.app_pill)
-        row.addWidget(self.app_text, 1)
-        form.addRow(self.tr("This app"), row)
         buttons = QHBoxLayout()
         self.check = QPushButton(self.tr("Check now"))
-        self.check.setToolTip(self.tr("Ask GitHub for the latest HelixSR release and the latest release of this app"))
+        self.check.setToolTip(self.tr("Ask GitHub for the latest HelixSR release"))
         self.check.clicked.connect(self.check_requested)
         buttons.addWidget(self.check)
         self.auto_check = QCheckBox(self.tr("Check at start"))
-        self.auto_check.setToolTip(self.tr("Look up both releases every time the app starts (one small request each)"))
+        self.auto_check.setToolTip(self.tr("Look up the latest HelixSR release every time the app starts (one small request)"))
         self.auto_check.toggled.connect(self.auto_check_changed)
         buttons.addWidget(self.auto_check)
         buttons.addStretch(1)
@@ -166,13 +158,6 @@ class SetupPage(QWidget):
                 text += self.tr(' — <a href="{url}">{name}</a> ({size})').format(
                     url=helix.latest.url, name=helix.latest.asset_name, size=_size(helix.latest.asset_size))
             self.helix_text.setText(text)
-        app = statuses.get("app")
-        if app:
-            self.app_pill.set_status(self._pill_text(app), app.kind)
-            text = app.summary
-            if app.latest.version:
-                text += self.tr(' — <a href="{url}">release page</a>').format(url=app.latest.url)
-            self.app_text.setText(text)
         self._update_buttons()
 
     @staticmethod
@@ -189,7 +174,6 @@ class SetupPage(QWidget):
         self._update_buttons()
         if on:
             self.helix_pill.set_status(self.tr("Checking…"), "neutral")
-            self.app_pill.set_status(self.tr("Checking…"), "neutral")
 
     def set_auto_check(self, on: bool) -> None:
         self.auto_check.blockSignals(True)

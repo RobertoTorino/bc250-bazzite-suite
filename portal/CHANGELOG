@@ -1,3 +1,19 @@
+Changelog: 11-10-2026 17:01:09
+
+The Portal dependency checker's tile has its new icon (images/apps/portal-dependency-checker.png, 128 px).
+
+Changelog: 11-10-2026 16:32:48
+
+A compact window. Each app is a tile with its name without the BC-250 prefix, its icon (click to open the app, hover
+for what it does, grey while it is not installed, a red dot in it for an update), "changes the board" in orange under
+the icon, and symbol buttons beside it: Install and Uninstall, or only Reinstall for Bazzite Test. The tiles flow
+left to right, as many to a row as fit. The symbols are drawn in code (glyphs.py). A new "Development only" section,
+closed until opened and remembered, lists Simple Demo Tool and Portal dependency checker (apps.toml development =
+true) and, in a portal that runs from a checkout, BC250 Suite Releases from the new [checkout.<name>] table of
+apps.toml, which installs and runs in its own folder of the checkout. Icons for demo-tool and suite-releases, and the
+Governor's new colour icon (128 px). The Bisect/Unlock menu of CU Bisect and Cores Bisect shows each window's icon
+(cu-unlock.png, and the new cores-unlock.png).
+
 Changelog: 11-10-2026 12:37:32
 
 Release 0.9.4.

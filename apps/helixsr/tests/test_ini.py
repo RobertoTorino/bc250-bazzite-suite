@@ -59,6 +59,18 @@ def test_ini_template_prefers_payload(payload, tmp_path):
     assert backend.ini_template(tmp_path / "nowhere") == DEFAULT_INI_TEXT
 
 
-def test_ini_tuning_ignored_from_1_7_0():
-    assert backend.ini_tuning_ignored("1.7.0") and backend.ini_tuning_ignored("1.10.2")
-    assert not backend.ini_tuning_ignored("1.4.3") and not backend.ini_tuning_ignored("")
+def test_ignored_fields_per_version():
+    assert backend.ini_ignored_fields("") == set()
+    assert backend.ini_ignored_fields("1.4.3") == {"sharpener", "use_game_slider"}
+    assert {"sharpening_mode", "sharpness", "sharpener", "network"} <= backend.ini_ignored_fields("1.7.0")
+    assert backend.ini_ignored_fields("1.8.0") == {"sharpening_mode", "network"}
+
+
+def test_new_1_8_keys_are_written_only_when_set():
+    assert "Sharpener" not in render_ini(HelixIni()) and "UseGameSlider" not in render_ini(HelixIni())
+    out = render_ini(replace(HelixIni(), sharpener="nvidia", sharpness=0.5, use_game_slider=True))
+    assert "Sharpener = nvidia" in out and "UseGameSlider = true" in out and out.count("[Sharpening]") == 1
+    assert parse_ini(out).sharpener == "nvidia"
+    # a file that has the key keeps it, also when it goes back to the default
+    assert "Sharpener = off" in render_ini(HelixIni(), out)
+    assert any("Sharpener" in p for p in validate_ini(replace(HelixIni(), sharpener="nis")))

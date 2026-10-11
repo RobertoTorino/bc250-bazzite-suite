@@ -17,7 +17,7 @@ from bc250_core.updates import repo_slug
 from . import APP_NAME, INFO, MANIFEST, __version__, state_dir, suite_checkout
 from . import portal_update
 from .main_window import MainWindow
-from .manifest import ManifestError, load
+from .manifest import ManifestError, load, load_checkout
 from .sources import Records, Sources, http_download
 
 
@@ -41,6 +41,7 @@ def main() -> int:
     sys.excepthook = _show_error
     try:
         entries = load(Path(args.manifest))
+        checkout_only = load_checkout(Path(args.manifest))
     except (OSError, ManifestError) as exc:
         QMessageBox.critical(None, APP_NAME, f"The app list could not be read:\n\n{exc}")
         return 1
@@ -49,6 +50,8 @@ def main() -> int:
     if args.source == "checkout" and checkout is None:
         QMessageBox.critical(None, APP_NAME, "--source checkout: the portal is not running from a suite checkout.")
         return 1
+    # The checkout-only apps run from the checkout: listed only when the apps install from one.
+    shown = entries + (checkout_only if checkout is not None else [])
     sources = Sources(state_dir() / "releases", checkout=checkout, download=http_download(INFO.user_agent))
     # One instance: a second launch brings the running window to the front and exits.
     if instance.already_running(INFO.app_id):
@@ -59,7 +62,7 @@ def main() -> int:
     def portal_check():
         return portal_update.check(repo_slug(INFO.repo_url), INFO.tag_prefix, entries, INFO.user_agent)
 
-    window = MainWindow(entries, sources, Records(state_dir() / "installed.json"), portal_check=portal_check,
+    window = MainWindow(shown, sources, Records(state_dir() / "installed.json"), portal_check=portal_check,
                         local_build=local_build)
     window.show()
     server = instance.serve(INFO.app_id, window)  # noqa: F841 (kept alive while the app runs)

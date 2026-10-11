@@ -1,3 +1,13 @@
+Changelog: 11-10-2026 17:17:19
+
+Release 0.1.1.
+
+Changelog: 11-10-2026 16:55:40
+
+Cores Unlock has its own icon (images/bc250-cores-unlock.png, 512 px) for its window, its app menu entry and Desktop
+icon (install.sh and packaging/bazzite/install-gui.sh); Cores Bisect keeps its icon. The manual's Cores Unlock
+section shows it.
+
 Changelog: 10-10-2026 20:56:48
 
 Release 0.1.0. Initial release

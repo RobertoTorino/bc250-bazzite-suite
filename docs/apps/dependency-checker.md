@@ -14,7 +14,8 @@ The checker is read-only. It does not install or update packages or tools.
 
 ## Install
 
-From the suite's [Releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases) page, download the
+In the [portal](../portal.md), open **Development only** and click the Install button beside its icon. Or by hand:
+from the suite's [Releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases) page, download the
 `dependency-checker-v<version>.tar.gz` release and extract it. Run `install.sh` as your own user:
 
 ```shell

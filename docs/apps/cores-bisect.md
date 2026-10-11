@@ -276,7 +276,7 @@ scope here: this project stays software-only and reversible.
 
 ## GUI
 
-<img src="../assets/cores-bisect/bc250-cores-bisect.png" alt="BC-250 Cores Unlock" width="96">
+<img src="../assets/cores-bisect/bc250-cores-unlock.png" alt="BC-250 Cores Unlock" width="96">
 
 Two separate PyQt6 front-ends ship with the project: a **setup GUI** that
 starts a bisect run, and an **unlock GUI** for the persistence step afterwards. Both are optional —

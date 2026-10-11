@@ -90,20 +90,12 @@
         <translation>Domyślnie &lt;game&gt;/HelixSR</translation>
     </message>
     <message>
-        <source>Install OptiScaler for the game as its documentation describes, then point its OptiScaler.ini at this folder with the lines below (Copy puts them on the clipboard).</source>
-        <translation>Zainstaluj OptiScaler dla gry zgodnie z jego dokumentacją, a potem wskaż ten folder w OptiScaler.ini za pomocą poniższych wierszy (Kopiuj umieszcza je w schowku).</translation>
-    </message>
-    <message>
         <source>Copy OptiScaler.ini lines</source>
         <translation>Kopiuj wiersze OptiScaler.ini</translation>
     </message>
     <message>
         <source>Write helixsr.ini with the values of the helixsr.ini page</source>
         <translation>Zapisz helixsr.ini z wartościami ze strony helixsr.ini</translation>
-    </message>
-    <message>
-        <source>Unticked: the payload's helixsr.ini is copied if it has one, else none is written and HelixSR uses its defaults.</source>
-        <translation>Odznaczone: helixsr.ini z pakietu zostanie skopiowany, jeśli istnieje; w przeciwnym razie nic nie zostanie zapisane i HelixSR użyje wartości domyślnych.</translation>
     </message>
     <message>
         <source>Remove HelixSR</source>
@@ -164,6 +156,34 @@
     <message>
         <source>Copied into the folder as {0}, with UpscalerDll in helixsr.ini pointing at it: OptiScaler&apos;s FFX Upscaler menu then lists its upscalers after HelixSR, and the one you pick runs in that DLL. Empty: HelixSR only.</source>
         <translation>Kopiowana do folderu jako {0}, a UpscalerDll w helixsr.ini wskazuje na nią: menu „FFX Upscaler” OptiScalera pokazuje wtedy jej upscalery po HelixSR, a wybrany działa w tej DLL. Puste: tylko HelixSR.</translation>
+    </message>
+    <message>
+        <source>Install OptiScaler next to the game's .exe:</source>
+        <translation>Zainstaluj OptiScaler obok pliku .exe gry:</translation>
+    </message>
+    <message>
+        <source>The OptiScaler that comes with HelixSR goes next to the game's .exe as dxgi.dll (or under the name of an OptiScaler the game already has), with its OptiScaler.ini pointed at this folder. Start the game and select &lt;b&gt;DLSS&lt;/b&gt;; OptiScaler's menu (Insert) shows &lt;b&gt;FSR HelixSR&lt;/b&gt;. Remove puts back everything it replaced.</source>
+        <translation>OptiScaler dołączony do HelixSR trafia obok pliku .exe gry jako dxgi.dll (lub pod nazwą OptiScalera, którego gra już ma), a jego OptiScaler.ini wskazuje ten folder. Uruchom grę i wybierz &lt;b&gt;DLSS&lt;/b&gt;; menu OptiScalera (Insert) pokazuje &lt;b&gt;FSR HelixSR&lt;/b&gt;. Usunięcie przywraca wszystko, co zastąpił.</translation>
+    </message>
+    <message>
+        <source>The folder of the game's .exe (found by Scan)</source>
+        <translation>Folder pliku .exe gry (znaleziony przez Skanuj)</translation>
+    </message>
+    <message>
+        <source>The payload has no OptiScaler: HelixSR 1.7 and newer ship it. Get such a release on the Setup page.</source>
+        <translation>Pakiet nie ma OptiScalera: HelixSR 1.7 i nowsze go zawierają. Pobierz takie wydanie na stronie Konfiguracja.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;helixsr.ini&lt;/b&gt; is HelixSR's own settings file, next to its DLL in the game: sharpening, the log and the other options of the helixsr.ini page. Ticked, Deploy writes that page's values there. Unticked, the payload's helixsr.ini is copied if it has one; without one HelixSR uses its defaults (no sharpening, as DLSS).</source>
+        <translation>&lt;b&gt;helixsr.ini&lt;/b&gt; to własny plik ustawień HelixSR, obok jego biblioteki DLL w grze: wyostrzanie, dziennik i inne opcje ze strony helixsr.ini. Zaznaczone: wdrażanie zapisuje tam wartości z tej strony. Niezaznaczone: kopiowany jest helixsr.ini z pakietu, jeśli go ma; bez niego HelixSR używa wartości domyślnych (bez wyostrzania, jak DLSS).</translation>
+    </message>
+    <message>
+        <source>Put the lines above on the clipboard, to paste into the game's OptiScaler.ini.</source>
+        <translation>Skopiuj powyższe wiersze do schowka, aby wkleić je do OptiScaler.ini gry.</translation>
+    </message>
+    <message>
+        <source>You install OptiScaler yourself, as its documentation describes. &lt;b&gt;OptiScaler.ini&lt;/b&gt; is OptiScaler's settings file, next to the game's .exe. The lines below make OptiScaler use HelixSR: &lt;code&gt;Dx12Upscaler=fsr31&lt;/code&gt; hands the game's upscaling to an FSR 3.1 DLL, and the two &lt;code&gt;Path&lt;/code&gt; lines say that this DLL is HelixSR in this folder. &lt;b&gt;Copy OptiScaler.ini lines&lt;/b&gt; puts them on the clipboard: paste them into the game's OptiScaler.ini, in place of the lines with the same names.</source>
+        <translation>OptiScaler instalujesz sam, zgodnie z jego dokumentacją. &lt;b&gt;OptiScaler.ini&lt;/b&gt; to plik ustawień OptiScalera, obok pliku .exe gry. Poniższe wiersze sprawiają, że OptiScaler używa HelixSR: &lt;code&gt;Dx12Upscaler=fsr31&lt;/code&gt; przekazuje skalowanie gry do biblioteki DLL FSR 3.1, a dwa wiersze &lt;code&gt;Path&lt;/code&gt; mówią, że tą biblioteką jest HelixSR w tym folderze. &lt;b&gt;Kopiuj wiersze OptiScaler.ini&lt;/b&gt; kopiuje je do schowka: wklej je do OptiScaler.ini gry w miejsce wierszy o tych samych nazwach.</translation>
     </message>
 </context><context>
     <name>HelpPage</name>
@@ -298,8 +318,16 @@
         <translation>Zastąp helixsr.ini tego wdrożenia tym plikiem.</translation>
     </message>
     <message>
-        <source>HelixSR {0} behaves like DLSS: it ignores [Sharpening] and the [ModelE] Network setting, so they are greyed out. HelixSR {1} still reads them.</source>
-        <translation>HelixSR {0} działa jak DLSS: ignoruje [Sharpening] i ustawienie Network w [ModelE], dlatego są wyszarzone. HelixSR {1} nadal je odczytuje.</translation>
+        <source>Follow the game's sharpness slider when it has one</source>
+        <translation>Używaj suwaka ostrości gry, jeśli go ma</translation>
+    </message>
+    <message>
+        <source>HelixSR 1.8 and newer: off (as DLSS 4), nvidia (NVIDIA's sharpening filter, as the driver's Image Sharpening) or rcas (AMD FSR's).</source>
+        <translation>HelixSR 1.8 i nowsze: off (jak DLSS 4), nvidia (filtr wyostrzania NVIDIA, jak wyostrzanie obrazu w sterowniku) lub rcas (z AMD FSR).</translation>
+    </message>
+    <message>
+        <source>HelixSR {0} does not read the greyed-out settings; they are kept in the file for other versions.</source>
+        <translation>HelixSR {0} nie odczytuje wyszarzonych ustawień; zostają w pliku dla innych wersji.</translation>
     </message>
 </context><context>
     <name>MainWindow</name>
@@ -516,10 +544,6 @@ i przywrócić nazwę .original.dll gry?</translation>
         <translation>Najnowsze wydanie HelixSR: {version} ({published}).</translation>
     </message>
     <message>
-        <source>{app} {version} is available: {url}</source>
-        <translation>Dostępne jest {app} {version}: {url}</translation>
-    </message>
-    <message>
         <source>{0} does not exist.</source>
         <translation>{0} nie istnieje.</translation>
     </message>
@@ -598,6 +622,42 @@ i przywrócić nazwę .original.dll gry?</translation>
     <message>
         <source>HelixSR {version} is out ({published}); the payload has {installed}, the fallback picked on the Setup page.</source>
         <translation>Wydano HelixSR {version} ({published}); pakiet ma {installed}, wersję zapasową wybraną na stronie Konfiguracja.</translation>
+    </message>
+    <message>
+        <source>HelixSR is in
+{folder}
+and OptiScaler, as {name}, in
+{exe_dir}
+
+Start the game and select DLSS. OptiScaler's menu (Insert) shows FSR HelixSR.</source>
+        <translation>HelixSR jest w
+{folder}
+a OptiScaler, jako {name}, w
+{exe_dir}
+
+Uruchom grę i wybierz DLSS. Menu OptiScalera (Insert) pokazuje FSR HelixSR.</translation>
+    </message>
+    <message>
+        <source>Install OptiScaler</source>
+        <translation>Zainstaluj OptiScaler</translation>
+    </message>
+    <message>
+        <source>Put OptiScaler into
+{exe_dir}
+next to the game's .exe, pointed at HelixSR in
+{folder}?
+
+A file of the game it replaces is kept in {backup}; Remove puts it back.</source>
+        <translation>Umieścić OptiScaler w
+{exe_dir}
+obok pliku .exe gry, ze wskazaniem na HelixSR w
+{folder}?
+
+Plik gry, który zastąpi, zostaje zachowany w {backup}; usunięcie go przywraca.</translation>
+    </message>
+    <message>
+        <source>The folder of the game's .exe</source>
+        <translation>Folder pliku .exe gry</translation>
     </message>
 </context><context>
     <name>OverviewPage</name>
@@ -757,6 +817,14 @@ i przywrócić nazwę .original.dll gry?</translation>
         <source>OptiScaler folder</source>
         <translation>Folder OptiScaler</translation>
     </message>
+    <message>
+        <source>HelixSR's setup built the network into {0}.</source>
+        <translation>Instalator HelixSR wbudował sieć w {0}.</translation>
+    </message>
+    <message>
+        <source>In the DLL</source>
+        <translation>W DLL</translation>
+    </message>
 </context><context>
     <name>SetupPage</name>
     <message>
@@ -792,24 +860,12 @@ i przywrócić nazwę .original.dll gry?</translation>
         <translation>HelixSR</translation>
     </message>
     <message>
-        <source>This app</source>
-        <translation>Ta aplikacja</translation>
-    </message>
-    <message>
         <source>Check now</source>
         <translation>Sprawdź teraz</translation>
     </message>
     <message>
-        <source>Ask GitHub for the latest HelixSR release and the latest release of this app</source>
-        <translation>Zapytaj GitHub o najnowsze wydanie HelixSR i najnowsze wydanie tej aplikacji</translation>
-    </message>
-    <message>
         <source>Check at start</source>
         <translation>Sprawdzaj przy starcie</translation>
-    </message>
-    <message>
-        <source>Look up both releases every time the app starts (one small request each)</source>
-        <translation>Sprawdzaj oba wydania przy każdym uruchomieniu aplikacji (po jednym małym żądaniu)</translation>
     </message>
     <message>
         <source>Get HelixSR and build the network files</source>
@@ -876,10 +932,6 @@ i przywrócić nazwę .original.dll gry?</translation>
         <translation> — &lt;a href="{url}"&gt;{name}&lt;/a&gt; ({size})</translation>
     </message>
     <message>
-        <source> — &lt;a href="{url}"&gt;release page&lt;/a&gt;</source>
-        <translation> — &lt;a href="{url}"&gt;strona wydania&lt;/a&gt;</translation>
-    </message>
-    <message>
         <source>Checking…</source>
         <translation>Sprawdzanie…</translation>
     </message>
@@ -922,6 +974,14 @@ i przywrócić nazwę .original.dll gry?</translation>
     <message>
         <source>HelixSR's developer recommends {0} when the latest release does not work for you. Switching builds the network files again; deploy again per game afterwards.</source>
         <translation>Twórca HelixSR zaleca {0}, gdy najnowsze wydanie nie działa. Zmiana buduje pliki sieciowe od nowa; potem wdróż ponownie dla każdej gry.</translation>
+    </message>
+    <message>
+        <source>Ask GitHub for the latest HelixSR release</source>
+        <translation>Zapytaj GitHub o najnowsze wydanie HelixSR</translation>
+    </message>
+    <message>
+        <source>Look up the latest HelixSR release every time the app starts (one small request)</source>
+        <translation>Sprawdzaj najnowsze wydanie HelixSR przy każdym starcie aplikacji (jedno małe żądanie)</translation>
     </message>
 </context><context>
     <name>StatusPill</name>
@@ -1072,12 +1132,12 @@ i przywrócić nazwę .original.dll gry?</translation>
         <translation>Konfiguracja zakończyła się, ale nie utworzyła {0}</translation>
     </message>
     <message>
-        <source>no release tagged {0} yet</source>
-        <translation>brak jeszcze wydania z tagiem {0}</translation>
-    </message>
-    <message>
         <source>Could not look up HelixSR {0}: {1}</source>
         <translation>Nie można sprawdzić HelixSR {0}: {1}</translation>
+    </message>
+    <message>
+        <source>The network is built. HelixSR's own game installer is skipped: use the Deploy page to put HelixSR into a game.</source>
+        <translation>Sieć jest zbudowana. Własny instalator gier HelixSR jest pomijany: użyj strony Wdrażanie, aby dodać HelixSR do gry.</translation>
     </message>
 </context><context>
     <name>backend</name>
@@ -1169,6 +1229,26 @@ i przywrócić nazwę .original.dll gry?</translation>
         <source>Newer build</source>
         <translation>Nowsza kompilacja</translation>
     </message>
+    <message>
+        <source>The HelixSR folder must not be the game's .exe folder: pick a folder of its own, such as {0}.</source>
+        <translation>Folder HelixSR nie może być folderem pliku .exe gry: wybierz osobny folder, np. {0}.</translation>
+    </message>
+    <message>
+        <source>The payload has no OptiScaler. HelixSR 1.7 and newer ship it: get or import such a release.</source>
+        <translation>Pakiet nie ma OptiScalera. HelixSR 1.7 i nowsze go zawierają: pobierz lub zaimportuj takie wydanie.</translation>
+    </message>
+    <message>
+        <source>This HelixSR folder already serves OptiScaler in {0}. Remove it there first.</source>
+        <translation>Ten folder HelixSR obsługuje już OptiScaler w {0}. Najpierw usuń go tam.</translation>
+    </message>
+    <message>
+        <source>{0} has more than one {1} line.</source>
+        <translation>{0} ma więcej niż jeden wiersz {1}.</translation>
+    </message>
+    <message>
+        <source>{0} has no [{1}] section.</source>
+        <translation>{0} nie ma sekcji [{1}].</translation>
+    </message>
 </context><context>
     <name>help</name>
     <message>
@@ -1214,10 +1294,6 @@ i przywrócić nazwę .original.dll gry?</translation>
     <message>
         <source>&lt;p&gt;If a game you own already ships DLSS 310.7.0, tick &lt;b&gt;Use a nvngx_dlss.dll already on this PC&lt;/b&gt; and let &lt;b&gt;Find in Steam&lt;/b&gt; locate it (checksums are compared, only the exact build HelixSR pins is offered): that skips NVIDIA's download. The downloads are not what takes time; the build is.&lt;/p&gt;</source>
         <translation>&lt;p&gt;Jeśli posiadana gra dostarcza już DLSS 310.7.0, zaznacz &lt;b&gt;Użyj nvngx_dlss.dll już obecnego na tym komputerze&lt;/b&gt; i pozwól opcji &lt;b&gt;Znajdź w Steam&lt;/b&gt; go odszukać (sumy kontrolne są porównywane, oferowana jest tylko dokładna kompilacja wymagana przez HelixSR): pominie to pobieranie z NVIDIA. To nie pobieranie zajmuje czas, tylko budowanie.&lt;/p&gt;</translation>
-    </message>
-    <message>
-        <source>&lt;p&gt;&lt;b&gt;Releases&lt;/b&gt; compares the payload with the latest HelixSR release and this app with its latest release on GitHub, at start (one small request each, can be turned off) or with &lt;b&gt;Check now&lt;/b&gt;. A newer HelixSR shows on the Overview too; &lt;b&gt;Download and build&lt;/b&gt; again updates the payload, then deploy again per game (the Overview marks them &lt;i&gt;Older build&lt;/i&gt;).&lt;/p&gt;</source>
-        <translation>&lt;p&gt;&lt;b&gt;Wydania&lt;/b&gt; porównują pakiet z najnowszym wydaniem HelixSR, a tę aplikację z jej najnowszym wydaniem na GitHub, przy starcie (po jednym małym żądaniu, można wyłączyć) albo przez &lt;b&gt;Sprawdź teraz&lt;/b&gt;. Nowszy HelixSR pojawia się też w Przeglądzie; ponowne &lt;b&gt;Pobierz i zbuduj&lt;/b&gt; aktualizuje pakiet, po czym trzeba wdrożyć go ponownie dla każdej gry (Przegląd oznacza je jako &lt;i&gt;Starsza kompilacja&lt;/i&gt;).&lt;/p&gt;</translation>
     </message>
     <message>
         <source>&lt;h2&gt;Overview&lt;/h2&gt;</source>
@@ -1328,8 +1404,28 @@ i przywrócić nazwę .original.dll gry?</translation>
         <translation>&lt;p&gt;&lt;b&gt;Drugi upscaler&lt;/b&gt; (opcjonalnie, tylko folder OptiScalera): wybierz inną DLL upscalera FidelityFX, na przykład &lt;code&gt;amd_fidelityfx_upscaler_dx12.dll&lt;/code&gt; od AMD z FSR 4. Zostanie skopiowana do folderu jako &lt;code&gt;{second}&lt;/code&gt;, a &lt;code&gt;UpscalerDll&lt;/code&gt; w jego helixsr.ini wskaże na nią, więc menu „FFX Upscaler” OptiScalera pokaże jej upscalery po HelixSR, a wybrany będzie działał w tej DLL.&lt;/p&gt;</translation>
     </message>
     <message>
-        <source>&lt;p&gt;&lt;b&gt;Version&lt;/b&gt; picks what &lt;b&gt;Download and build&lt;/b&gt; gets: the latest HelixSR release, or HelixSR {fallback}, the version HelixSR's developer recommends when the latest one does not work for you (please then open an issue at &lt;a href="{helixsr_url}/issues"&gt;HelixSR&lt;/a&gt; with the &lt;code&gt;helixsr.log&lt;/code&gt; from the game folder). Switching builds the network files for that version and replaces the payload; deploy again per game afterwards (the Overview marks them &lt;i&gt;Older build&lt;/i&gt; or &lt;i&gt;Newer build&lt;/i&gt;). From HelixSR 1.7.0 on, the sharpening and network settings of &lt;code&gt;{ini}&lt;/code&gt; are ignored.&lt;/p&gt;</source>
-        <translation>&lt;p&gt;&lt;b&gt;Wersja&lt;/b&gt; wybiera, co pobiera &lt;b&gt;Pobierz i zbuduj&lt;/b&gt;: najnowsze wydanie HelixSR albo HelixSR {fallback}, wersję zalecaną przez twórcę HelixSR, gdy najnowsza nie działa (zgłoś wtedy problem na &lt;a href="{helixsr_url}/issues"&gt;HelixSR&lt;/a&gt; z plikiem &lt;code&gt;helixsr.log&lt;/code&gt; z folderu gry). Zmiana buduje pliki sieciowe dla tej wersji i zastępuje pakiet; potem wdróż ponownie dla każdej gry (Przegląd oznacza je jako &lt;i&gt;Starsza kompilacja&lt;/i&gt; lub &lt;i&gt;Nowsza kompilacja&lt;/i&gt;). Od HelixSR 1.7.0 ustawienia wyostrzania i sieci w &lt;code&gt;{ini}&lt;/code&gt; są ignorowane.&lt;/p&gt;</translation>
+        <source>&lt;p&gt;&lt;b&gt;Releases&lt;/b&gt; compares the payload with the latest HelixSR release on GitHub, at start (one small request, can be turned off) or with &lt;b&gt;Check now&lt;/b&gt;. A newer HelixSR shows on the Overview too; &lt;b&gt;Download and build&lt;/b&gt; again updates the payload, then deploy again per game (the Overview marks them &lt;i&gt;Older build&lt;/i&gt;). This app itself is updated through the BC250 Bazzite Suite portal.&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;Wydania&lt;/b&gt; porównują pakiet z najnowszym wydaniem HelixSR na GitHub, przy starcie (jedno małe żądanie, można wyłączyć) albo przez &lt;b&gt;Sprawdź teraz&lt;/b&gt;. Nowszy HelixSR pojawia się też w Przeglądzie; ponowne &lt;b&gt;Pobierz i zbuduj&lt;/b&gt; aktualizuje pakiet, po czym trzeba wdrożyć go ponownie dla każdej gry (Przegląd oznacza je jako &lt;i&gt;Starsza kompilacja&lt;/i&gt;). Sama aplikacja jest aktualizowana przez portal BC250 Bazzite Suite.&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;From HelixSR 1.8.0 on, the setup builds the network into HelixSR's DLL: there are no separate &lt;code&gt;{weights}&lt;/code&gt; and &lt;code&gt;{kernels}&lt;/code&gt;, and Deploy copies only the DLL (and the ini). Network files left next to it by an older release are removed.&lt;/p&gt;</source>
+        <translation>&lt;p&gt;Od HelixSR 1.8.0 instalator wbudowuje sieć w bibliotekę DLL HelixSR: nie ma już osobnych &lt;code&gt;{weights}&lt;/code&gt; i &lt;code&gt;{kernels}&lt;/code&gt;, a wdrażanie kopiuje tylko DLL (i ini). Pliki sieciowe pozostawione obok przez starsze wydanie są usuwane.&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;tr&gt;&lt;td&gt;[Sharpening]&lt;/td&gt;&lt;td&gt;Sharpener&lt;/td&gt;&lt;td&gt;off&lt;/td&gt;&lt;td&gt;HelixSR 1.8+: &lt;i&gt;off&lt;/i&gt; (as DLSS 4), &lt;i&gt;nvidia&lt;/i&gt; = NVIDIA's sharpening filter, &lt;i&gt;rcas&lt;/i&gt; = AMD FSR's&lt;/td&gt;&lt;/tr&gt;</source>
+        <translation>&lt;tr&gt;&lt;td&gt;[Sharpening]&lt;/td&gt;&lt;td&gt;Sharpener&lt;/td&gt;&lt;td&gt;off&lt;/td&gt;&lt;td&gt;HelixSR 1.8+: &lt;i&gt;off&lt;/i&gt; (jak DLSS 4), &lt;i&gt;nvidia&lt;/i&gt; = filtr wyostrzania NVIDIA, &lt;i&gt;rcas&lt;/i&gt; = z AMD FSR&lt;/td&gt;&lt;/tr&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;tr&gt;&lt;td&gt;[Sharpening]&lt;/td&gt;&lt;td&gt;UseGameSlider&lt;/td&gt;&lt;td&gt;false&lt;/td&gt;&lt;td&gt;HelixSR 1.8+: follow the game's sharpness slider when it has one&lt;/td&gt;&lt;/tr&gt;</source>
+        <translation>&lt;tr&gt;&lt;td&gt;[Sharpening]&lt;/td&gt;&lt;td&gt;UseGameSlider&lt;/td&gt;&lt;td&gt;false&lt;/td&gt;&lt;td&gt;HelixSR 1.8+: używaj suwaka ostrości gry, jeśli go ma&lt;/td&gt;&lt;/tr&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;b&gt;Version&lt;/b&gt; picks what &lt;b&gt;Download and build&lt;/b&gt; gets: the latest HelixSR release, or HelixSR {fallback}, the version HelixSR's developer recommends when the latest one does not work for you (please then open an issue at &lt;a href="{helixsr_url}/issues"&gt;HelixSR&lt;/a&gt; with the &lt;code&gt;helixsr.log&lt;/code&gt; from the game folder). Switching builds the network files for that version and replaces the payload; deploy again per game afterwards (the Overview marks them &lt;i&gt;Older build&lt;/i&gt; or &lt;i&gt;Newer build&lt;/i&gt;). The &lt;code&gt;{ini}&lt;/code&gt; page greys out the settings the payload's HelixSR version does not read.&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;Wersja&lt;/b&gt; wybiera, co pobiera &lt;b&gt;Pobierz i zbuduj&lt;/b&gt;: najnowsze wydanie HelixSR albo HelixSR {fallback}, wersję zalecaną przez twórcę HelixSR, gdy najnowsza nie działa (zgłoś wtedy problem na &lt;a href="{helixsr_url}/issues"&gt;HelixSR&lt;/a&gt; z plikiem &lt;code&gt;helixsr.log&lt;/code&gt; z folderu gry). Zmiana buduje pliki sieciowe dla tej wersji i zastępuje pakiet; potem wdróż ponownie dla każdej gry (Przegląd oznacza je jako &lt;i&gt;Starsza kompilacja&lt;/i&gt; lub &lt;i&gt;Nowsza kompilacja&lt;/i&gt;). Strona &lt;code&gt;{ini}&lt;/code&gt; wyszarza ustawienia, których wersja HelixSR w pakiecie nie odczytuje.&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;b&gt;Install OptiScaler next to the game's .exe&lt;/b&gt; (on when the payload has OptiScaler: HelixSR 1.7 and newer ship the official one): the app does that part too. Scan finds the folder of the game's .exe; OptiScaler goes there as &lt;code&gt;dxgi.dll&lt;/code&gt; (or under the name of an OptiScaler the game already has) with &lt;code&gt;fakenvapi&lt;/code&gt;, and its &lt;code&gt;OptiScaler.ini&lt;/code&gt; points at the HelixSR folder. Start the game and select &lt;b&gt;DLSS&lt;/b&gt;. A file of the game it replaces, and an &lt;code&gt;OptiScaler.ini&lt;/code&gt; the game already had, are kept in the HelixSR folder's &lt;code&gt;backup&lt;/code&gt;; &lt;b&gt;Remove&lt;/b&gt; puts them back. If OptiScaler's menu (Insert) does not appear in a game, add &lt;code&gt;WINEDLLOVERRIDES="dxgi=n,b" %command%&lt;/code&gt; to its launch options in Steam.&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;b&gt;Zainstaluj OptiScaler obok pliku .exe gry&lt;/b&gt; (włączone, gdy pakiet ma OptiScaler: HelixSR 1.7 i nowsze zawierają oficjalny): aplikacja robi też tę część. Skanuj znajduje folder pliku .exe gry; OptiScaler trafia tam jako &lt;code&gt;dxgi.dll&lt;/code&gt; (lub pod nazwą OptiScalera, którego gra już ma) razem z &lt;code&gt;fakenvapi&lt;/code&gt;, a jego &lt;code&gt;OptiScaler.ini&lt;/code&gt; wskazuje folder HelixSR. Uruchom grę i wybierz &lt;b&gt;DLSS&lt;/b&gt;. Plik gry, który zastąpi, oraz &lt;code&gt;OptiScaler.ini&lt;/code&gt;, który gra już miała, zostają w &lt;code&gt;backup&lt;/code&gt; folderu HelixSR; &lt;b&gt;Usuń&lt;/b&gt; je przywraca. Jeśli menu OptiScalera (Insert) nie pojawia się w grze, dodaj &lt;code&gt;WINEDLLOVERRIDES="dxgi=n,b" %command%&lt;/code&gt; do jej opcji uruchamiania w Steam.&lt;/p&gt;</translation>
     </message>
 </context><context>
     <name>setup_page</name>

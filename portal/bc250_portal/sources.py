@@ -6,6 +6,8 @@
   target folder.
 * Checkout (development): the app staged from the local suite repo with tools/stage_app.py, exactly as the release
   workflow builds it, so the portal can be tried before anything is released.
+* A checkout-only app ([checkout.<key>] in apps.toml): its own folder in the suite checkout, as it is, since it runs
+  from there. Never staged, never removed.
 
 The extracted folder is kept under the portal's state dir, so the matching uninstaller is at hand later.
 Nothing here is Qt: the GUI runs prepare() in a worker thread."""
@@ -93,12 +95,20 @@ class Sources:
         return self.checkout is not None
 
     def folder(self, entry: AppEntry) -> Path:
+        if entry.checkout_only:
+            if self.checkout is None:
+                raise SourceError(f"{entry.name} runs from a suite checkout, and this portal has none")
+            return self.checkout / "apps" / entry.key
         return self.work / ("local-" + entry.key if self.local else entry.tag)
 
     def prepare(self, entry: AppEntry) -> Path:
         """The folder with the app's installer, fetched or staged when needed. A checkout is staged afresh every
         time (it may have changed); a release folder is reused, since a tag never changes."""
         folder = self.folder(entry)
+        if entry.checkout_only:
+            if not folder.is_dir():
+                raise SourceError(f"{folder} is missing from the checkout")
+            return folder
         if self.local:
             if folder.exists():
                 shutil.rmtree(folder)
@@ -151,7 +161,8 @@ class Sources:
             shutil.rmtree(tmp, ignore_errors=True)
 
     def forget(self, entry: AppEntry) -> None:
-        shutil.rmtree(self.folder(entry), ignore_errors=True)
+        if not entry.checkout_only:                 # that folder is the checkout's own
+            shutil.rmtree(self.folder(entry), ignore_errors=True)
 
 
 def _stage_module(checkout: Path):

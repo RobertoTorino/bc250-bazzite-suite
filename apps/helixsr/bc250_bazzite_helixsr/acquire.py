@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Getting HelixSR onto this PC and keeping it current.
 
-* latest_release(): the newest GitHub release of HelixSR (and of this app), for the update check.
+* latest_release(): the newest GitHub release of HelixSR, for the update check (this app is updated by the portal).
 * parse_pins(): the exact URLs and SHA-256 sums that a HelixSR release's setup scripts pin for NVIDIA's DLSS DLL,
   Microsoft's DXC and the portable Python, so the app downloads what the script would download, in parallel.
 * SetupWorker: downloads the release zip, the prerequisites it still needs, then runs helixsr-setup.sh --yes with
@@ -30,8 +30,8 @@ from typing import Callable
 
 from PyQt6.QtCore import QCoreApplication, QObject, QThread, pyqtSignal
 
-from . import APP_ID, DATA_HOME, HELIXSR_RELEASES_URL, SUITE_URL, __version__
-from .backend import HELIXSR_DLL, KERNELS, WEIGHTS, HelixError, file_digest, version_key
+from . import APP_ID, DATA_HOME, HELIXSR_RELEASES_URL, __version__
+from .backend import HELIXSR_DLL, HelixError, file_digest, payload_status, version_key
 
 HELIXSR_API = "https://api.github.com/repos/lonewolf0622/HelixSR/releases/latest"
 # The release HelixSR's developer points to when the latest one does not work ("If 1.7.0 does not work for you, use
@@ -39,15 +39,13 @@ HELIXSR_API = "https://api.github.com/repos/lonewolf0622/HelixSR/releases/latest
 FALLBACK_VERSION = "1.4.3"
 FALLBACK_TAG = f"v{FALLBACK_VERSION}"
 HELIXSR_TAG_API = "https://api.github.com/repos/lonewolf0622/HelixSR/releases/tags/{tag}"
-# Every suite app has its own tags in one repository, so /releases/latest would answer with whichever app released
-# last: the release list is searched for this app's tag prefix instead.
-APP_API = "https://api.github.com/repos/RobertoTorino/bc250-bazzite-suite/releases?per_page=100"
-APP_TAG_PREFIX = "helixsr-v"
-APP_RELEASES_URL = f"{SUITE_URL}/releases"
 HELIXSR_DATA_DIR = DATA_HOME / "HelixSR"            # where helixsr-setup.sh keeps its Python and DXC
 WORK_DIR = DATA_HOME / APP_ID / "work"              # downloaded releases live here until imported
 SETUP_SCRIPT = "helixsr-setup.sh"
-MANUAL_INSTALL = "manual-install"                   # HelixSR 1.7's setup writes it for hand installs; not used here
+# Written by the setup of HelixSR 1.7+ for installs by hand, with more copies of the network; not used here.
+UNUSED_OUTPUT = ("manual-install", "fsr3-drop-in")
+# The first line of that game installer: what follows are its questions, which the app does not answer.
+INSTALLER_START = "looking for games with DLSS, XeSS or FSR"
 DLSS_DLL = "nvngx_dlss.dll"
 TIMEOUT = 15
 CHUNK = 1 << 18
@@ -77,23 +75,10 @@ def _get_json(url: str, timeout: int = TIMEOUT) -> dict:
         return json.load(response)
 
 
-def latest_release(api_url: str, page_url: str, tag_prefix: str = "") -> ReleaseInfo:
-    """The latest release of a GitHub repository; never raises, errors land in .error. With *tag_prefix*, *api_url*
-    is the release list and the newest release whose tag starts with the prefix counts (drafts and pre-releases
-    are skipped)."""
+def latest_release(api_url: str, page_url: str) -> ReleaseInfo:
+    """The release *api_url* answers with (GitHub's latest, or one by tag); never raises, errors land in .error."""
     try:
         data = _get_json(api_url)
-        if tag_prefix:
-            if not isinstance(data, list):
-                raise ValueError("not a release list")
-            candidates = [(version_tuple(str(item.get("tag_name", ""))[len(tag_prefix):]), item) for item in data
-                          if str(item.get("tag_name", "")).startswith(tag_prefix)
-                          and not item.get("draft") and not item.get("prerelease")]
-            candidates = [(v, item) for v, item in candidates if v]
-            if not candidates:
-                return ReleaseInfo(url=page_url, error=QCoreApplication.translate(
-                    "acquire", "no release tagged {0} yet").format(tag_prefix + "*"))
-            data = max(candidates, key=lambda c: c[0])[1]
     except urllib.error.HTTPError as exc:
         return ReleaseInfo(url=page_url, error=QCoreApplication.translate("acquire", "GitHub answered {0}").format(exc.code))
     except (urllib.error.URLError, OSError, ValueError) as exc:
@@ -114,7 +99,7 @@ def latest_release(api_url: str, page_url: str, tag_prefix: str = "") -> Release
 
 @dataclass
 class UpdateStatus:
-    """What the update check tells about one thing (HelixSR payload, this app)."""
+    """What the update check tells about the HelixSR payload."""
 
     name: str
     installed: str                  # "" when nothing is installed
@@ -154,10 +139,8 @@ def fallback_release() -> ReleaseInfo:
 
 
 def check_updates(payload_version: str) -> dict[str, UpdateStatus]:
-    return {
-        "helixsr": UpdateStatus("HelixSR", payload_version, latest_release(HELIXSR_API, HELIXSR_RELEASES_URL)),
-        "app": UpdateStatus("This app", __version__, latest_release(APP_API, APP_RELEASES_URL, APP_TAG_PREFIX)),
-    }
+    # This app itself is updated through the BC250 Bazzite Suite portal.
+    return {"helixsr": UpdateStatus("HelixSR", payload_version, latest_release(HELIXSR_API, HELIXSR_RELEASES_URL))}
 
 
 # ---------------------------------------------------------------------------------------- downloads
@@ -510,20 +493,30 @@ class SetupWorker(QThread):
         except OSError as exc:
             raise HelixError(QCoreApplication.translate("acquire", "Could not start {0}: {1}").format(SETUP_SCRIPT, exc)) from exc
         assert self._process.stdout is not None
+        installer = False
         for line in self._process.stdout:
+            if installer:
+                continue
+            if INSTALLER_START in line:
+                installer = True
+                self._say(QCoreApplication.translate("acquire", "The network is built. HelixSR's own game installer is "
+                                                     "skipped: use the Deploy page to put HelixSR into a game."))
+                continue
             self._say(line.rstrip("\n"))
         code = self._process.wait()
         self._process = None
         if "dlss" in downloads:
             downloads["dlss"].unlink(missing_ok=True)         # NVIDIA's DLL is used once and deleted
             self._say(QCoreApplication.translate("acquire", "Deleted the downloaded {0}").format(DLSS_DLL))
-        if (release_dir / MANUAL_INSTALL).is_dir():           # another copy of the network files, for hand installs
-            shutil.rmtree(release_dir / MANUAL_INSTALL, ignore_errors=True)
+        for name in UNUSED_OUTPUT:
+            if (release_dir / name).is_dir():
+                shutil.rmtree(release_dir / name, ignore_errors=True)
         if self._cancelled():
             raise Aborted("cancelled")
         if code != 0:
             raise HelixError(QCoreApplication.translate("acquire", "{0} exited with code {1}; see the output above.").format(SETUP_SCRIPT, code))
-        missing = [n for n in (WEIGHTS, KERNELS) if not (release_dir / n).is_file()]
+        # HelixSR 1.8+ builds the network into its DLL; older releases leave the two files next to it.
+        missing = payload_status(release_dir).missing()
         if missing:
             raise HelixError(QCoreApplication.translate("acquire", "The setup finished but did not produce {0}").format(", ".join(missing)))
         return release_dir, release.version

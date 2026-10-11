@@ -15,7 +15,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-for f in bc250_cores_gui/__main__.py bc250-cores-unlock.sh images/bc250-cores-bisect.png requirements.txt VERSION; do
+for f in bc250_cores_gui/__main__.py bc250-cores-unlock.sh images/bc250-cores-unlock.png requirements.txt VERSION; do
   if [ ! -e "$REPO_ROOT/$f" ]; then
     echo "error: $f not found under $REPO_ROOT - run this from a clone of bc250-cores-bisect" >&2
     exit 1
@@ -40,7 +40,7 @@ rm -rf "$APP_SRC/bc250_cores_gui/__pycache__"
 cp "$REPO_ROOT/bc250-cores-unlock.sh" "$APP_SRC/bc250-cores-unlock.sh"
 chmod +x "$APP_SRC/bc250-cores-unlock.sh"
 cp "$REPO_ROOT/requirements.txt" "$REPO_ROOT/VERSION" "$APP_SRC/"
-cp "$REPO_ROOT/images/bc250-cores-bisect.png" "$APP_SRC/images/"
+cp "$REPO_ROOT/images/bc250-cores-unlock.png" "$APP_SRC/images/"
 
 echo "==> Creating venv in $VENV_DIR"
 python3 -m venv "$VENV_DIR"
@@ -57,7 +57,7 @@ chmod +x "$LAUNCHER"
 
 echo "==> Installing desktop entry and icon"
 mkdir -p "$(dirname "$DESKTOP_FILE")" "$ICON_DIR"
-cp "$REPO_ROOT/images/bc250-cores-bisect.png" "$ICON_FILE"
+cp "$REPO_ROOT/images/bc250-cores-unlock.png" "$ICON_FILE"
 # Use the icon's absolute path rather than the bare theme name: Bazzite's gamescope/Big Picture
 # session (and some freshly-logged-in desktop sessions) look up app icons before the hicolor
 # icon cache is rebuilt, which otherwise leaves a blank placeholder in the launcher.

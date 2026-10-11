@@ -1,3 +1,12 @@
+Changelog: 11-10-2026 17:17:19
+
+Release 0.1.3.
+
+Changelog: 11-10-2026 16:32:48
+
+Listed in the portal under "Development only" (portal/apps.toml, development = true); the .standalone marker is gone.
+The README says so.
+
 Changelog: 11-10-2026 12:02:24
 
 Release 0.1.2. syntax errors fix

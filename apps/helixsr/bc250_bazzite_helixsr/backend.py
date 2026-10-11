@@ -32,6 +32,9 @@ SECOND_UPSCALER_DLL = "amd_fidelityfx_upscaler_dx12.amd.dll"
 WEIGHTS = "helixsr_weights.bin"
 KERNELS = "helixsr_kernels.pak"
 NETWORK_FILES = (WEIGHTS, KERNELS)                  # built by helixsr-setup.sh, NVIDIA's property: never shipped
+# From HelixSR 1.8 on the setup appends the network to the DLL instead ("one file"): [DLL][weights][pak] and a 32-byte
+# footer that starts with this magic, followed by the two sizes and a format number (u64 each).
+EMBED_MAGIC = b"HXSRNET1"
 INI = "helixsr.ini"
 LOG = "helixsr.log"
 ORIGINAL_SUFFIX = ".original.dll"
@@ -42,10 +45,8 @@ MAX_SCAN_DEPTH = 12
 MODE_REPLACE, MODE_FOLDER = "replace", "folder"
 
 SHARPENING_MODES = ("off", "game", "override")
+SHARPENERS = ("off", "nvidia", "rcas")              # HelixSR 1.8+: NVIDIA Image Scaling's sharpening or AMD's RCAS
 NETWORKS = ("auto", "nvidia", "main", "ultraperformance")
-# From this HelixSR version on the DLL behaves like DLSS and ignores [Sharpening] and [ModelE] Network ("helixsr.ini's
-# sharpening / network settings are ignored" in its log); 1.4.3 and older still read them.
-INI_TUNING_IGNORED_FROM = (1, 7, 0)
 
 # The helixsr.ini HelixSR 1.2.0 ships; used as the template when the payload has none.
 DEFAULT_INI_TEXT = """\
@@ -117,6 +118,16 @@ def same_file(a: Path, b: Path) -> bool:
         return False
 
 
+def network_embedded(dll: Path) -> bool:
+    """True when the DLL carries HelixSR's network itself (HelixSR 1.8 and newer, after its setup)."""
+    try:
+        with open(dll, "rb") as handle:
+            handle.seek(-32, os.SEEK_END)
+            return handle.read(8) == EMBED_MAGIC
+    except OSError:
+        return False
+
+
 def original_path(dll: Path) -> Path:
     """amd_fidelityfx_upscaler_dx12.dll -> amd_fidelityfx_upscaler_dx12.original.dll (the game's own file)."""
     return dll.with_name(dll.name[:-len(".dll")] + ORIGINAL_SUFFIX)
@@ -136,18 +147,20 @@ class PayloadStatus:
     kernels: bool
     ini: bool
     version: str = ""           # from the README.md that comes with the release, "" when unknown
+    embedded: bool = False      # the network is inside the DLL (HelixSR 1.8+): no separate network files
+    optiscaler: bool = False    # the payload has the OptiScaler that HelixSR 1.7+ ships
 
     @property
     def ready(self) -> bool:
-        return self.dll and self.weights and self.kernels
+        return self.dll and self.network_ready
 
     @property
     def network_ready(self) -> bool:
-        return self.weights and self.kernels
+        return self.embedded or (self.weights and self.kernels)
 
     def missing(self) -> list[str]:
-        return [name for name, have in ((HELIXSR_DLL, self.dll), (WEIGHTS, self.weights), (KERNELS, self.kernels))
-                if not have]
+        network = () if self.embedded else ((WEIGHTS, self.weights), (KERNELS, self.kernels))
+        return [name for name, have in ((HELIXSR_DLL, self.dll), *network) if not have]
 
 
 def payload_version(payload_dir: Path) -> str:
@@ -165,16 +178,25 @@ def version_key(version: str) -> tuple[int, ...]:
     return tuple(int(p) for p in match.groups()) if match else ()
 
 
-def ini_tuning_ignored(version: str) -> bool:
-    """True when HelixSR *version* ignores the sharpening and network settings of helixsr.ini."""
+def ini_ignored_fields(version: str) -> set[str]:
+    """The HelixIni fields HelixSR *version* does not read (nothing for an unknown version). 1.7 behaves like DLSS and
+    ignores sharpening and the network choice ("helixsr.ini's sharpening / network settings are ignored" in its
+    log); 1.8 brings sharpening back with Sharpener and UseGameSlider instead of Mode."""
     key = version_key(version)
-    return bool(key) and key >= INI_TUNING_IGNORED_FROM
+    if not key:
+        return set()
+    if key < (1, 7, 0):
+        return set(NEW_IN_1_8)
+    if key < (1, 8, 0):
+        return {name for section, _, name in INI_SCHEMA if section == "Sharpening"} | {"network"}
+    return {"sharpening_mode", "network"}
 
 
 def payload_status(payload_dir: Path) -> PayloadStatus:
     have = lambda name: (payload_dir / name).is_file()
     return PayloadStatus(payload_dir, have(HELIXSR_DLL), have(WEIGHTS), have(KERNELS), have(INI),
-                         payload_version(payload_dir))
+                         payload_version(payload_dir), network_embedded(payload_dir / HELIXSR_DLL),
+                         optiscaler_available(payload_dir))
 
 
 @dataclass
@@ -229,8 +251,45 @@ def import_payload(source: Path, payload_dir: Path) -> ImportResult:
         raise HelixError(QCoreApplication.translate(
             "backend", "No {0} found in {1}. Pick the folder the HelixSR release was extracted to (or the release "
                        "zip itself).").format(HELIXSR_DLL, source))
+    copied += _import_optiscaler(source, payload_dir)
+    if network_embedded(payload_dir / HELIXSR_DLL):
+        # One-file DLL: network files left from an earlier release belong to another build, and Deploy would copy them.
+        for name in NETWORK_FILES:
+            if name not in copied:
+                (payload_dir / name).unlink(missing_ok=True)
+        return ImportResult(copied, [])
     missing = [name for name in ESSENTIAL_FILES if name not in copied and not (payload_dir / name).is_file()]
     return ImportResult(copied, missing)
+
+
+def _import_optiscaler(source: Path, payload_dir: Path) -> list[str]:
+    """The release's optiscaler folder (HelixSR 1.7+: the official OptiScaler with fakenvapi) into the payload.
+    A release without one leaves the payload's as it is: OptiScaler works with any HelixSR."""
+    wanted = {name.lower(): name for name in OPTISCALER_FILES}
+    found: dict[str, bytes | Path] = {}
+    if source.is_file():
+        with zipfile.ZipFile(source) as archive:
+            for member in archive.infolist():
+                parts = Path(member.filename).parts
+                name = wanted.get(parts[-1].lower()) if len(parts) >= 2 and parts[-2] == OPTISCALER_DIR else None
+                if name and not member.is_dir() and name not in found:
+                    found[name] = archive.read(member)
+    else:
+        folder = next((d for d in (source / OPTISCALER_DIR, *(c / OPTISCALER_DIR for c in sorted(source.iterdir())
+                                                                if c.is_dir())) if d.is_dir()), None)
+        for name in OPTISCALER_FILES if folder else ():
+            if (folder / name).is_file():
+                found[name] = folder / name
+    if not all(name in found for name in ("OptiScaler.dll", "OptiScaler.ini")):
+        return []
+    target = payload_dir / OPTISCALER_DIR
+    target.mkdir(parents=True, exist_ok=True)
+    for name, data in found.items():
+        if isinstance(data, Path):
+            shutil.copy2(data, target / name)
+        else:
+            (target / name).write_bytes(data)
+    return [f"{OPTISCALER_DIR}/{name}" for name in found]
 
 
 # ------------------------------------------------------------------------------------- game discovery
@@ -241,7 +300,7 @@ class GameDll:
     path: Path
     has_backup: bool            # *.original.dll exists: HelixSR (some build) replaced the game's file
     matches_payload: bool       # the file is byte-identical to the payload's DLL
-    network_files: bool         # weights and kernels next to it
+    network_files: bool         # weights and kernels next to it, or the network inside the DLL
     ini: bool
 
     @property
@@ -268,7 +327,8 @@ def inspect_dll(path: Path, payload_dir: Path) -> GameDll:
     payload_dll = payload_dir / HELIXSR_DLL
     return GameDll(path, original_path(path).is_file(),
                    payload_dll.is_file() and same_file(path, payload_dll),
-                   all((folder / name).is_file() for name in NETWORK_FILES), (folder / INI).is_file())
+                   all((folder / name).is_file() for name in NETWORK_FILES) or network_embedded(path),
+                   (folder / INI).is_file())
 
 
 def find_game_dlls(game_dir: Path, payload_dir: Path, max_depth: int = MAX_SCAN_DEPTH) -> list[GameDll]:
@@ -301,7 +361,11 @@ def _require_ready(payload_dir: Path) -> PayloadStatus:
 
 def _copy_support_files(folder: Path, payload_dir: Path, ini_text: str | None) -> list[Path]:
     written = []
+    embedded = network_embedded(payload_dir / HELIXSR_DLL)
     for name in NETWORK_FILES:
+        if embedded:                            # the DLL carries the network; files of an earlier build would be stale
+            (folder / name).unlink(missing_ok=True)
+            continue
         shutil.copy2(payload_dir / name, folder / name)
         written.append(folder / name)
     if ini_text is not None:
@@ -391,7 +455,8 @@ def deploy_folder(folder: Path, payload_dir: Path, ini_text: str | None = None,
 
 
 def remove_folder(folder: Path, payload_dir: Path) -> list[Path]:
-    """Delete the files deploy_folder() wrote (only those) and the folder when it is empty afterwards."""
+    """Delete the files deploy_folder() wrote (only those), put back what install_optiscaler() changed, and delete
+    the folder when it is empty afterwards."""
     payload_dll = payload_dir / HELIXSR_DLL
     for name in GAME_DLLS:
         dll = folder / name
@@ -399,10 +464,11 @@ def remove_folder(folder: Path, payload_dir: Path) -> list[Path]:
             raise HelixError(QCoreApplication.translate(
                 "backend", "{0} holds a game's own {1} (there is a {2}): this is a replaced DLL, not a stand-alone "
                            "folder. Use Remove on the DLL instead.").format(folder, name, original_path(dll).name))
-        if dll.is_file() and payload_dll.is_file() and not same_file(dll, payload_dll) and not (folder / WEIGHTS).exists():
+        if dll.is_file() and payload_dll.is_file() and not same_file(dll, payload_dll) and \
+                not (folder / WEIGHTS).exists() and not network_embedded(dll):
             raise HelixError(QCoreApplication.translate("backend", "{0} is not HelixSR; nothing was changed.")
                              .format(dll))
-    removed = []
+    removed = uninstall_optiscaler(folder)
     for name in (*GAME_DLLS, SECOND_UPSCALER_DLL, *NETWORK_FILES, INI, LOG):
         path = folder / name
         if path.exists():
@@ -420,6 +486,172 @@ def optiscaler_snippet(folder: Path) -> str:
     win = to_windows_path(folder)
     return (f"[Upscalers]\nDx12Upscaler=fsr31\n\n[Libraries]\n"
             f"FfxDx12Path={win}\\{HELIXSR_DLL}\nFfxDx12SRPath={win}\\{UPSCALER_DLL}\n")
+
+
+# ------------------------------------------------------------------------------------------- OptiScaler
+# HelixSR 1.7+ ships the official OptiScaler with fakenvapi. Installed next to the game's .exe, it hands the game's
+# DLSS (or XeSS / FSR 2) inputs to the stand-alone HelixSR folder through its FSR 3.1 backend, as HelixSR's own
+# installer does it. What is replaced is kept in the HelixSR folder and put back on removal.
+OPTISCALER_DIR = "optiscaler"                       # in the release and in the payload
+OPTISCALER_FILES = ("OptiScaler.dll", "OptiScaler.ini", "fakenvapi.dll", "fakenvapi.ini", "LICENSE-GPL-3.0.txt",
+                    "fakenvapi-LICENSE.txt")
+OPTISCALER_INI = "OptiScaler.ini"
+# The names a game loads OptiScaler under; a game that already has OptiScaler keeps its name, else dxgi.dll.
+OPTISCALER_NAMES = ("dxgi.dll", "winmm.dll", "version.dll", "dbghelp.dll", "d3d12.dll", "wininet.dll", "winhttp.dll",
+                    "OptiScaler.asi")
+OPTISCALER_EXTRA = ("fakenvapi.dll", "fakenvapi.ini")   # OptiScaler loads fakenvapi on GPUs that are not NVIDIA's
+OPTISCALER_MARKER = "bc250-optiscaler.json"         # in the HelixSR folder: what was installed where
+OPTISCALER_BACKUP = "backup"                        # in the HelixSR folder: the game's files OptiScaler replaced
+_SKIP_EXE = re.compile(r"unins|setup|redist|crash|launcher|vc_?redist|dxsetup|easyanticheat|beservice|dotnet|"
+                       r"helper|report|prereq|install|7z|ue4prereq|cefprocess|webhelper", re.I)
+
+
+def optiscaler_available(payload_dir: Path) -> bool:
+    return all((payload_dir / OPTISCALER_DIR / name).is_file() for name in ("OptiScaler.dll", OPTISCALER_INI))
+
+
+def is_optiscaler(path: Path) -> bool:
+    try:
+        with open(path, "rb") as handle:
+            return b"OptiScaler" in handle.read(32 << 20)
+    except OSError:
+        return False
+
+
+def find_exe_folder(game_dir: Path, max_depth: int = 7) -> Path | None:
+    """The folder of the game's main .exe, where OptiScaler goes: one that already has OptiScaler, else the one with
+    the largest .exe that is no installer, launcher or helper (an Unreal *-Win64-Shipping.exe always wins)."""
+    best, best_size = None, -1
+    base_depth = len(game_dir.parts)
+    for root, dirs, files in os.walk(game_dir):
+        folder = Path(root)
+        if len(folder.parts) - base_depth >= max_depth:
+            dirs[:] = []
+        dirs[:] = sorted(d for d in dirs if d.lower() != "helixsr")
+        if OPTISCALER_INI in files:
+            return folder
+        for name in files:
+            if not name.lower().endswith(".exe") or _SKIP_EXE.search(name):
+                continue
+            try:
+                size = (folder / name).stat().st_size
+            except OSError:
+                continue
+            if name.lower().endswith("-win64-shipping.exe"):
+                size += 1 << 40
+            if size > best_size:
+                best, best_size = folder, size
+    return best
+
+
+def set_ini_value(text: str, key: str, value: str, section: str) -> str:
+    """Sets "key=value" in OptiScaler.ini text, keeping its line endings; a missing key goes at the start of
+    [section]."""
+    pattern = re.compile(r"(?m)^(%s)[ \t]*=[^\r\n]*" % re.escape(key))
+    if len(pattern.findall(text)) > 1:
+        raise HelixError(QCoreApplication.translate("backend", "{0} has more than one {1} line.").format(OPTISCALER_INI, key))
+    if pattern.search(text):
+        return pattern.sub(lambda m: f"{m.group(1)}={value}", text, count=1)
+    header = re.search(r"(?m)^\[%s\][ \t]*(\r?\n)" % re.escape(section), text)
+    if not header:
+        raise HelixError(QCoreApplication.translate("backend", "{0} has no [{1}] section.").format(OPTISCALER_INI, section))
+    return text[:header.end()] + f"{key}={value}" + header.group(1) + text[header.end():]
+
+
+def _read_raw(path: Path) -> str:
+    return path.read_bytes().decode("utf-8", errors="surrogateescape")
+
+
+def _write_raw(path: Path, text: str) -> None:
+    path.write_bytes(text.encode("utf-8", errors="surrogateescape"))
+
+
+def optiscaler_record(folder: Path) -> dict | None:
+    try:
+        return json.loads((folder / OPTISCALER_MARKER).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def install_optiscaler(exe_dir: Path, folder: Path, payload_dir: Path) -> list[Path]:
+    """OptiScaler next to the game's .exe, its OptiScaler.ini pointed at the HelixSR *folder*. A game's own file of
+    the same name goes to <folder>/backup, an existing OptiScaler.ini is kept there as a copy and edited; again on
+    the same folder it updates OptiScaler and keeps the record. Returns the files written."""
+    if not optiscaler_available(payload_dir):
+        raise HelixError(QCoreApplication.translate(
+            "backend", "The payload has no OptiScaler. HelixSR 1.7 and newer ship it: get or import such a release."))
+    if not exe_dir.is_dir():
+        raise HelixError(QCoreApplication.translate("backend", "{0} does not exist.").format(exe_dir))
+    if exe_dir.resolve() == folder.resolve():
+        raise HelixError(QCoreApplication.translate(
+            "backend", "The HelixSR folder must not be the game's .exe folder: pick a folder of its own, such as "
+                       "{0}.").format(exe_dir / "HelixSR"))
+    source = payload_dir / OPTISCALER_DIR
+    record = optiscaler_record(folder) or {}
+    if record and Path(record.get("exe_dir", "")) != exe_dir:
+        raise HelixError(QCoreApplication.translate(
+            "backend", "This HelixSR folder already serves OptiScaler in {0}. Remove it there first.")
+            .format(record.get("exe_dir")))
+    if not record:
+        name = next((n for n in OPTISCALER_NAMES if (exe_dir / n).is_file() and is_optiscaler(exe_dir / n)), "dxgi.dll")
+        record = {"exe_dir": str(exe_dir), "optiscaler": name, "moved": [], "created": [], "ini": "created"}
+        backup = folder / OPTISCALER_BACKUP
+        if (exe_dir / name).exists():
+            backup.mkdir(parents=True, exist_ok=True)
+            os.replace(exe_dir / name, backup / name)
+            record["moved"].append(name)
+        if (exe_dir / OPTISCALER_INI).is_file():
+            backup.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(exe_dir / OPTISCALER_INI, backup / OPTISCALER_INI)
+            record["ini"] = "edited"
+        for extra in OPTISCALER_EXTRA:
+            if not (exe_dir / extra).exists():
+                record["created"].append(extra)
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / OPTISCALER_MARKER).write_text(json.dumps(record, indent=1) + "\n", encoding="utf-8")
+    written = []
+    shutil.copy2(source / "OptiScaler.dll", exe_dir / record["optiscaler"])
+    written.append(exe_dir / record["optiscaler"])
+    for extra in record["created"]:
+        if (source / extra).is_file():
+            shutil.copy2(source / extra, exe_dir / extra)
+            written.append(exe_dir / extra)
+    ini = exe_dir / OPTISCALER_INI
+    text = _read_raw(ini) if ini.is_file() else _read_raw(source / OPTISCALER_INI)
+    win = to_windows_path(folder)
+    text = set_ini_value(text, "Dx12Upscaler", "fsr31", "Upscalers")
+    text = set_ini_value(text, "FfxDx12Path", f"{win}\\{HELIXSR_DLL}", "Libraries")
+    text = set_ini_value(text, "FfxDx12SRPath", f"{win}\\{UPSCALER_DLL}", "Libraries")
+    _write_raw(ini, text)
+    written.append(ini)
+    return written
+
+
+def uninstall_optiscaler(folder: Path) -> list[Path]:
+    """Undo install_optiscaler() for the HelixSR *folder*: OptiScaler, the files it created and its OptiScaler.ini
+    go, the game's own files come back. Nothing happens without the record."""
+    record = optiscaler_record(folder)
+    if record is None:
+        return []
+    exe_dir = Path(record["exe_dir"])
+    backup = folder / OPTISCALER_BACKUP
+    removed = []
+    names = [record["optiscaler"], *record.get("created", [])]
+    if record.get("ini") == "created":
+        names += [OPTISCALER_INI, "OptiScaler.log"]
+    for name in names:
+        if (exe_dir / name).exists():
+            (exe_dir / name).unlink()
+            removed.append(exe_dir / name)
+    for name in [*record.get("moved", []), *([OPTISCALER_INI] if record.get("ini") == "edited" else [])]:
+        if (backup / name).exists():
+            os.replace(backup / name, exe_dir / name)
+    (folder / OPTISCALER_MARKER).unlink()
+    try:
+        backup.rmdir()
+    except OSError:
+        pass
+    return removed
 
 
 # ------------------------------------------------------------------------------------------ helixsr.ini
@@ -441,16 +673,22 @@ class HelixIni:
     log_enabled: bool = True
     forwarding_dll: str = ""
     upscaler_dll: str = ""
+    sharpener: str = "off"
+    use_game_slider: bool = False
 
 
+# Keys HelixSR 1.8 added: written only when set, so a file for an older HelixSR stays as it was.
+NEW_IN_1_8 = ("sharpener", "use_game_slider")
 # (section, key, field) in file order; the type comes from the dataclass default.
 INI_SCHEMA = (
     ("Sharpening", "Mode", "sharpening_mode"),
+    ("Sharpening", "Sharpener", "sharpener"),
     ("Sharpening", "Sharpness", "sharpness"),
     ("Sharpening", "MotionAdaptive", "motion_adaptive"),
     ("Sharpening", "MotionThreshold", "motion_threshold"),
     ("Sharpening", "MotionLimit", "motion_limit"),
     ("Sharpening", "MotionReduction", "motion_reduction"),
+    ("Sharpening", "UseGameSlider", "use_game_slider"),
     ("ModelE", "Enabled", "model_e_enabled"),
     ("ModelE", "Network", "network"),
     ("ModelE", "InvertJitter", "invert_jitter"),
@@ -518,6 +756,9 @@ def render_ini(settings: HelixIni, template: str = DEFAULT_INI_TEXT) -> str:
     pending: dict[str, dict[str, str]] = {}
     for section, key, name in INI_SCHEMA:
         pending.setdefault(section, {})[key] = _format_value(getattr(settings, name))
+    defaults = HelixIni()
+    unset = {(section, key) for section, key, name in INI_SCHEMA         # edited in place, never appended
+             if name in NEW_IN_1_8 and getattr(settings, name) == getattr(defaults, name)}
     pending_lower = {s.lower(): s for s in pending}
 
     out: list[str] = []
@@ -533,8 +774,9 @@ def render_ini(settings: HelixIni, template: str = DEFAULT_INI_TEXT) -> str:
         while insert_at > section_start and not out[insert_at - 1].strip():
             insert_at -= 1
         for key, value in pending.pop(canonical).items():
-            out.insert(insert_at, f"{key} = {value}".rstrip())
-            insert_at += 1
+            if (canonical, key) not in unset:
+                out.insert(insert_at, f"{key} = {value}".rstrip())
+                insert_at += 1
 
     for line in lines:
         header = _SECTION_RE.match(line)
@@ -556,12 +798,13 @@ def render_ini(settings: HelixIni, template: str = DEFAULT_INI_TEXT) -> str:
         out.append(line)
     close_section()
     for canonical in dict.fromkeys(s for s, _, _ in INI_SCHEMA):
-        if not pending.get(canonical):
+        keys = {k: v for k, v in pending.pop(canonical, {}).items() if (canonical, k) not in unset}
+        if not keys:
             continue
         if out and out[-1].strip():
             out.append("")
         out.append(f"[{canonical}]")
-        for key, value in pending.pop(canonical).items():
+        for key, value in keys.items():
             out.append(f"{key} = {value}".rstrip())
     return "\n".join(out) + "\n"
 
@@ -571,6 +814,8 @@ def validate_ini(settings: HelixIni) -> list[str]:
     problems = []
     if settings.sharpening_mode not in SHARPENING_MODES:
         problems.append(f"Sharpening mode must be one of {', '.join(SHARPENING_MODES)}.")
+    if settings.sharpener not in SHARPENERS:
+        problems.append(f"Sharpener must be one of {', '.join(SHARPENERS)}.")
     if not 0.0 <= settings.sharpness <= 1.0:
         problems.append("Sharpness must be between 0 and 1.")
     if settings.motion_threshold < 0 or settings.motion_limit < 0:
@@ -631,7 +876,7 @@ def deployment_state(dep: Deployment, payload_dir: Path) -> tuple[str, str]:
         dll = folder / HELIXSR_DLL
         if not dll.is_file():
             return "bad", QCoreApplication.translate("backend", "Removed")
-        if not all((folder / n).is_file() for n in NETWORK_FILES):
+        if not all((folder / n).is_file() for n in NETWORK_FILES) and not network_embedded(dll):
             return "warn", QCoreApplication.translate("backend", "Network files missing")
         payload_dll = payload_dir / HELIXSR_DLL
         if payload_dll.is_file() and not same_file(dll, payload_dll):

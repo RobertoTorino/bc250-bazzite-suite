@@ -1,3 +1,20 @@
+Changelog: 11-10-2026 17:04:46
+
+Run from checkout has a Manual (local) icon after the apps: it serves the manual from the checkout with mkdocs serve
+(on 127.0.0.1:8765, the path of site_url) and opens it in the browser once the server answers. When it already runs,
+a click only opens the page again. The manual's release front end section says so.
+
+Changelog: 11-10-2026 14:34:03
+
+New page, Run from checkout: every app window in the checkout as an icon (each package with a __main__.py under
+apps/, tests and the checkout-only apps left out), with its name, version and icon. A click starts that app from the
+checkout, to try a change before its release: python -m <package> with this venv and the checkout's core on the path,
+as run.sh starts this app (plan.launch_targets and plan.launch_command). Apps that portal/apps.toml marks
+changes_board ask first. Each app runs in its own session, so it keeps running when the window closes, and writes its
+output to ~/.cache/bc250-release/run/<package>.log; when it stops with an error, the end of that log shows on the
+page. docs/portal.md describes the page. Tests: the targets and their command, the page (start, the question for board
+apps, the log tail of a failed app) and a real start that keeps its output in the log.
+
 Changelog: 11-10-2026 12:34:52
 
 The board test buttons of step 2 are renamed: Check updates is now Test updates, Check release is now Test release, in the window, its hint, the command list and docs/portal.md. They do what they did.

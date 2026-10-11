@@ -11,14 +11,15 @@ BC250
 The **BC250 Bazzite Suite** (exactly that name): tools for the AMD BC-250 on Bazzite, in one repository,
 `github.com/RobertoTorino/bc250-bazzite-suite` (branch `main`). A **portal** installs and starts the apps listed in
 its manifest. **bazzite-test** is always installed and always listed first; every other listed app is an optional
-card ("pill"). Standalone apps may live under `apps/` without appearing in the portal.
+tile. Standalone apps may live under `apps/` without appearing in the portal.
 
 - `apps/<name>/`: bazzite-test, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
-  system-overlay, bios-reader, ace-queues, memory-manager, demo-tool, suite-releases. Each has its own
-  VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT, the rest GPL-3.0-or-later), .gitignore. The standalone
-  Simple Demo Tool and Suite Releases also have a `.standalone` marker and are not listed in `portal/apps.toml`.
-  Suite Releases (the release front end) also has `.checkout-only`: it runs from the checkout and is never
-  released.
+  system-overlay, bios-reader, ace-queues, memory-manager, demo-tool, dependency-checker, suite-releases. Each has its own
+  VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT, the rest GPL-3.0-or-later), .gitignore. Simple Demo
+  Tool and the Portal dependency checker are `development = true` in `portal/apps.toml`: the portal lists them
+  under "Development only". Suite Releases (the release front end) has `.standalone` and `.checkout-only`: it runs
+  from the checkout, is never released, and is listed as `[checkout.suite-releases]`, which only a portal running
+  from a checkout shows (also under "Development only").
 - `core/bc250_core/`: shared Python code. It is **bundled per app** at release time (`tools/stage_app.py`), so each
   app runs on the core it was tested with; the shared venv `~/.local/share/bc250-bazzite-suite/venv` holds only
   PyQt6.

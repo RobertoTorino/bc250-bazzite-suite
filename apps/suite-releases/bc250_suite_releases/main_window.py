@@ -7,20 +7,24 @@ Step 2, Pin and portal: once GitHub has built the app releases, Pin fills in the
 Bump portal writes the portal version (at least what check_manifest.py asks) and its CHANGELOG entry, runs
 check_manifest.py and shows the git commands. Test updates and Test release run check-release.sh in a
 terminal: the portal from the checkout before the push, the published portal release after it. Committing, tagging
-and pushing stay with you."""
+and pushing stay with you.
+Run from checkout: click an app's icon to start it from this checkout, to try it before its release; the Manual icon
+serves the manual from the checkout (mkdocs serve) and opens it in the browser."""
 
 from __future__ import annotations
 
+import os
 import shlex
+import socket
 import subprocess
 import sys
 from pathlib import Path
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import (QCheckBox, QComboBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
-                             QMainWindow, QMessageBox, QPushButton, QTableWidget, QTableWidgetItem, QTabWidget,
-                             QVBoxLayout, QWidget)
+from PyQt6.QtCore import QSize, Qt, QTimer, QUrl
+from PyQt6.QtGui import QColor, QDesktopServices, QIcon
+from PyQt6.QtWidgets import (QCheckBox, QComboBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView,
+                             QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPushButton, QTableWidget,
+                             QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
 
 from bc250_core.platform import launch_in_terminal
 from bc250_core.theme import ORANGE
@@ -30,6 +34,7 @@ from . import APP_NAME, LOGO_PATH, SUITE, __version__
 from . import plan as rp
 
 COLUMNS = ("Release", "App", "VERSION", "Last tag", "Needs release", "New version", "Notes")
+LOG_DIR = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "bc250-release" / "run"
 
 
 def run_check(root: Path, *args: str) -> str:
@@ -351,12 +356,131 @@ class PortalPage(QWidget):
         self.window.reload()
 
 
+def start_app(command: list[str], env: dict[str, str], cwd: Path, log: Path) -> subprocess.Popen:
+    """Starts an app in its own session, so it keeps running when this window closes; its output goes to *log*."""
+    log.parent.mkdir(parents=True, exist_ok=True)
+    with open(log, "wb") as out:
+        return subprocess.Popen(command, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=out,
+                                stderr=subprocess.STDOUT, start_new_session=True)
+
+
+def answers(url: str) -> bool:
+    """True when something listens at the host and port of *url* (a local server that is up)."""
+    address = QUrl(url)
+    try:
+        with socket.create_connection((address.host(), address.port(80)), timeout=0.2):
+            return True
+    except OSError:
+        return False
+
+
+def open_url(url: str) -> None:
+    QDesktopServices.openUrl(QUrl(url))
+
+
+def log_tail(log: Path, lines: int = 20) -> str:
+    try:
+        return "\n".join(log.read_text(encoding="utf-8", errors="replace").splitlines()[-lines:])
+    except OSError:
+        return ""
+
+
+class RunPage(QWidget):
+    """Every app window in the checkout as an icon: a click starts it from the checkout, as it is before a release."""
+
+    def __init__(self, window: "ReleaseWindow"):
+        super().__init__()
+        self.window = window
+        self.apps = QListWidget()
+        self.apps.setViewMode(QListView.ViewMode.IconMode)
+        self.apps.setIconSize(QSize(64, 64))
+        self.apps.setGridSize(QSize(150, 120))
+        self.apps.setResizeMode(QListView.ResizeMode.Adjust)
+        self.apps.setMovement(QListView.Movement.Static)
+        self.apps.setWordWrap(True)
+        self.apps.itemClicked.connect(lambda item: self.run(item.data(Qt.ItemDataRole.UserRole)))
+        self.output = Terminal()
+        lay = QVBoxLayout(self)
+        lay.addWidget(hint_label(
+            "Click an app to start it from this checkout, to try it before its release: <code>python -m</code> with "
+            "this venv and the checkout's core, as <code>run.sh</code> starts this app. An app that changes how the "
+            "board runs asks first; it uses the scripts in the checkout. Each app writes its output to "
+            f"<code>{LOG_DIR}</code>; when it stops with an error, the end of that log shows below. "
+            "<b>Manual (local)</b> serves the manual from the checkout with <code>mkdocs serve</code> and opens it in "
+            "the browser; it rebuilds on every save."))
+        lay.addWidget(self.apps, 2)
+        lay.addWidget(self.output, 1)
+        self.running: list[tuple[rp.Launch, subprocess.Popen, Path]] = []
+        self.waiting: list[str] = []            # servers started, whose page opens once they answer
+        self.timer = QTimer(self, interval=1000)
+        self.timer.timeout.connect(self.poll)
+
+    def fill(self, targets: list[rp.Launch]) -> None:
+        self.apps.clear()
+        for target in targets:
+            item = QListWidgetItem(QIcon(str(target.icon)) if target.icon else QIcon(),
+                                   target.label + ("\n\u26a0 changes the board" if target.changes_board else ""))
+            item.setData(Qt.ItemDataRole.UserRole, target)
+            item.setToolTip(" ".join(("python -m", target.module, *target.args)) + f" in {target.folder}" +
+                            (f"\nopens {target.url}" if target.url else ""))
+            self.apps.addItem(item)
+
+    def run(self, target: rp.Launch) -> None:
+        if target.changes_board and QMessageBox.question(
+                self, "Run from checkout",
+                f"{target.name} changes how the board runs. Like every app of the suite it is software-only and "
+                f"reversible; started from the checkout it uses the scripts in {target.folder}.\n\nStart it?") \
+                != QMessageBox.StandardButton.Yes:
+            return
+        if target.url and answers(target.url):
+            # Already up (started here or before): mkdocs would only fail on the taken port.
+            open_url(target.url)
+            self.output.appendPlainText(f"{target.label} is already running: opened {target.url}")
+            return
+        command, env = rp.launch_command(self.window.root, target)
+        log = LOG_DIR / f"{target.module}.log"
+        try:
+            process = self.window.start(command, env, target.folder, log)
+        except OSError as exc:
+            self.output.appendPlainText(f"{target.label}: could not start ({exc})")
+            return
+        self.running.append((target, process, log))
+        if target.url:
+            self.waiting.append(target.url)
+        self.timer.start()
+        self.output.appendPlainText(f"{target.label} started from {target.folder} (log: {log})" +
+                                    (f"; {target.url} opens once it is up" if target.url else ""))
+
+    def poll(self) -> None:
+        for entry in list(self.running):
+            target, process, log = entry
+            code = process.poll()
+            if code is None:
+                if target.url in self.waiting and answers(target.url):
+                    self.waiting.remove(target.url)
+                    open_url(target.url)
+                continue
+            self.running.remove(entry)
+            if target.url in self.waiting:
+                self.waiting.remove(target.url)
+            if code == 0:
+                self.output.appendPlainText(f"{target.label} closed.")
+            else:
+                tail = log_tail(log)
+                self.output.appendPlainText(f"{target.label} stopped with exit code {code}" +
+                                        (f"; the end of {log}:\n{tail}" if tail else "."))
+        if not self.running:
+            self.timer.stop()
+
+
 class ReleaseWindow(QMainWindow):
-    def __init__(self, root: Path = SUITE, sha256_source=rp.fetch_sha256, launch=launch_in_terminal):
+    def __init__(self, root: Path = SUITE, sha256_source=rp.fetch_sha256, launch=launch_in_terminal,
+                 start=start_app):
         super().__init__()
         self.root = root
         self.sha256_source = sha256_source
         self.launch = launch
+        self.start = start
         self.setWindowTitle(APP_NAME)
         self.resize(1100, 760)
         header, _ = page_header(APP_NAME)
@@ -373,6 +497,8 @@ class ReleaseWindow(QMainWindow):
         self.portal_page = PortalPage(self)
         self.tabs.addTab(self.apps_page, "1. Apps")
         self.tabs.addTab(self.portal_page, "2. Pin and portal")
+        self.run_page = RunPage(self)
+        self.tabs.addTab(self.run_page, "Run from checkout")
         # Opening step 2 reads the tags again, so tags pushed from a terminal meanwhile show up; step 1 keeps what
         # was typed in it.
         self.tabs.currentChanged.connect(lambda i: i == 1 and self.portal_page.fill(rp.load_units(self.root)))
@@ -415,6 +541,8 @@ class ReleaseWindow(QMainWindow):
         units = rp.load_units(self.root)
         self.apps_page.fill(units)
         self.portal_page.fill(units)
+        docs = rp.docs_target(self.root)
+        self.run_page.fill(rp.launch_targets(self.root) + ([docs] if docs else []))
         problems = rp.bad_tags(self.root, units)
         self.bad_tags.setText("\n".join(
             f"\u26a0 {p}: release.yml cannot build it. Delete it (git tag -d {p.split()[0]} && git push origin "

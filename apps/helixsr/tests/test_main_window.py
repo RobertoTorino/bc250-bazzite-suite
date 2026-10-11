@@ -36,7 +36,7 @@ def test_deploy_and_remove_through_deploy_page(window, game, payload, tmp_path):
          mock.patch.object(QMessageBox, "critical"):
         window.deploy_page.scan_requested.emit(game)
         found = backend.find_game_dlls(game, payload)
-        window.deploy_page.deploy_requested.emit(found[0], backend.MODE_REPLACE, None, True, None)
+        window.deploy_page.deploy_requested.emit(found[0], backend.MODE_REPLACE, None, True, None, None)
         assert target.read_bytes() == FAKE_DLL
         assert window.store.find(target) is not None
         window.refresh()
@@ -50,7 +50,7 @@ def test_folder_mode_through_deploy_page(window, payload, tmp_path):
     with mock.patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes), \
          mock.patch.object(QMessageBox, "information"), mock.patch.object(QMessageBox, "warning"), \
          mock.patch.object(QMessageBox, "critical"):
-        window.deploy_page.deploy_requested.emit(None, backend.MODE_FOLDER, folder, False, None)
+        window.deploy_page.deploy_requested.emit(None, backend.MODE_FOLDER, folder, False, None, None)
         assert (folder / backend.HELIXSR_DLL).is_file() and (folder / backend.UPSCALER_DLL).is_file()
         dep = window.store.find(folder)
         assert dep is not None and dep.mode == backend.MODE_FOLDER
@@ -97,10 +97,9 @@ def test_setup_page_builds_and_imports(qapp, tmp_path):
 def test_update_hint_on_overview(window):
     from bc250_bazzite_helixsr.acquire import ReleaseInfo, UpdateStatus
     newer = ReleaseInfo("9.0.0", "v9.0.0", "u", "2030-01-01", "HelixSR-9.0.0.zip", "https://x/z.zip", 10)
-    window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.2.0", newer),
-                             "app": UpdateStatus("This app", "0.1.0", ReleaseInfo(error="GitHub answered 403"))})
+    window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.2.0", newer)})
     assert "9.0.0" in window.overview.update_hint.text() and window.setup_page.helix_pill.text() == "Update"
-    assert window.setup_page.app_pill.text() == "Unknown"
+    assert not hasattr(window.setup_page, "app_pill")                  # the portal updates this app
     window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.2.0", ReleaseInfo("1.2.0", "v1.2.0", "u", "d"))})
     assert window.overview.update_hint.text() == "" and window.setup_page.helix_pill.text() == "Up to date"
 
@@ -134,12 +133,17 @@ def test_folder_mode_with_a_second_upscaler(window, payload, tmp_path):
 
 def test_ini_page_greys_out_what_the_version_ignores(window):
     page = window.ini_page
+    page.set_helixsr_version("1.8.0")
+    assert not page.sharpening_mode.isEnabled() and not page.network.isEnabled()
+    assert page.sharpener.isEnabled() and page.sharpness.isEnabled() and page.use_game_slider.isEnabled()
+    assert not page.ignored_hint.isHidden() and "1.8.0" in page.ignored_hint.text()
     page.set_helixsr_version("1.7.0")
-    assert not page.sharp_box.isEnabled() and not page.network.isEnabled()
-    assert not page.ignored_hint.isHidden() and "1.7.0" in page.ignored_hint.text()
-    assert "Mode = off" in page.text()                     # the values stay in the file for older versions
+    assert not page.sharpener.isEnabled() and not page.sharpness.isEnabled()
+    assert "Mode = off" in page.text()                     # the values stay in the file for other versions
     page.set_helixsr_version("1.4.3")
-    assert page.sharp_box.isEnabled() and page.network.isEnabled() and page.ignored_hint.isHidden()
+    assert page.sharpening_mode.isEnabled() and page.network.isEnabled() and not page.sharpener.isEnabled()
+    page.set_helixsr_version("")
+    assert page.sharpener.isEnabled() and page.ignored_hint.isHidden()
 
 
 def test_setup_page_fallback_choice(window):
@@ -157,3 +161,25 @@ def test_setup_page_fallback_choice(window):
     assert request.fallback and request.release is None
     window._setup_worker = None
     window.setup_page.set_running(False)
+
+
+def test_optiscaler_through_deploy_page(window, payload, tmp_path):
+    from tests.test_optiscaler import add_optiscaler, make_game
+    add_optiscaler(payload)
+    window.refresh()
+    game, exe_dir = make_game(tmp_path)
+    page = window.deploy_page
+    page.mode_folder.setChecked(True)
+    with mock.patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes) as asked, \
+            mock.patch.object(QMessageBox, "information") as info, mock.patch.object(QMessageBox, "critical") as crit:
+        page.set_game_path(game)                               # Scan finds the .exe folder
+        assert page.exe_folder() == exe_dir and page.snippet.isHidden() and not page.opti_hint.isHidden()
+        page.deploy.click()
+        assert asked.called and not crit.called and "DLSS" in info.call_args.args[2]
+    assert (exe_dir / "dxgi.dll").read_bytes() == b"MZ-OptiScaler-0.9.4"
+    page.install_opti.setChecked(False)                        # by hand: the lines to paste are back
+    assert page.exe_folder() is None and not page.snippet.isHidden()
+    dep = window.store.find(page.folder())
+    with mock.patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes):
+        window.overview.remove_requested.emit(dep)
+    assert (exe_dir / "dxgi.dll").read_bytes() == b"MZ-the-games-dxgi" and not (exe_dir / "OptiScaler.ini").exists()

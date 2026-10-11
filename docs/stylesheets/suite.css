@@ -134,3 +134,22 @@
   margin: 0.1rem 0.2rem;
   padding: 0.1rem;
 }
+
+/* The repository in the header: as wide as its name, not Material's fixed 11.7rem that cut it off. */
+@media screen and (min-width: 60em) {
+  .md-header__source {
+    width: auto;
+    max-width: none;
+  }
+
+  .md-source__repository {
+    max-width: none;
+  }
+}
+
+/* With the table of contents on the right, the repository ends where that column starts: moved left by its width. */
+@media screen and (min-width: 76.25em) {
+  .md-header__source {
+    margin-right: 12.1rem;
+  }
+}

@@ -113,7 +113,8 @@ fi
 # --- Checks ------------------------------------------------------------------------------------
 [ "$(uname -s)" = Linux ] || die "These apps run on Linux (Bazzite) only."
 for f in bc250-cores-bisect.sh bc250-cores-unlock.sh requirements.txt VERSION \
-         bc250_cores_bisect_gui/__main__.py bc250_cores_gui/__main__.py "images/$APP_ID.png"; do
+         bc250_cores_bisect_gui/__main__.py bc250_cores_gui/__main__.py "images/$APP_ID.png" \
+         images/bc250-cores-unlock.png; do
     [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from a clone or the extracted release folder."
 done
 VERSION=$(tr -d '[:space:]' <"$SRC/VERSION")
@@ -180,7 +181,7 @@ EOF
 }
 
 write_entry() {
-    # $1 .desktop file name, $2 StartupWMClass/desktop id, $3 Name, $4 Comment, $5 launcher path
+    # $1 .desktop file name, $2 StartupWMClass/desktop id, $3 Name, $4 Comment, $5 launcher path, $6 icon in images/
     local content="[Desktop Entry]
 Type=Application
 Version=1.0
@@ -188,7 +189,7 @@ Name=$3
 GenericName=BC-250 core tools
 Comment=$4
 Exec=$5
-Icon=$LINK/images/$APP_ID.png
+Icon=$LINK/images/$6.png
 Terminal=false
 Categories=System;Settings;
 Keywords=BC-250;Bazzite;cores;bisect;unlock;CPU;
@@ -213,7 +214,7 @@ if $WANT_BISECT; then
     info "Creating the launcher $BISECT_LAUNCHER and its menu entry"
     write_launcher "$BISECT_LAUNCHER" bc250_cores_bisect_gui
     write_entry "$BISECT_DESKTOP" bc250-cores-bisect-gui "BC-250 Cores Bisect" \
-        "Set up and start a BC-250 CPU core bisect run" "$BISECT_LAUNCHER"
+        "Set up and start a BC-250 CPU core bisect run" "$BISECT_LAUNCHER" "$APP_ID"
 else
     rm -f "$BISECT_LAUNCHER" "$DATA_DIR/applications/$BISECT_DESKTOP" "$DESKTOP_DIR/$BISECT_DESKTOP"
 fi
@@ -222,7 +223,7 @@ if $WANT_UNLOCK; then
     info "Creating the launcher $UNLOCK_LAUNCHER and its menu entry"
     write_launcher "$UNLOCK_LAUNCHER" bc250_cores_gui
     write_entry "$UNLOCK_DESKTOP" bc250-cores-unlock "BC-250 Cores Unlock" \
-        "Persist a validated BC-250 8C/16T core unlock across reboots" "$UNLOCK_LAUNCHER"
+        "Persist a validated BC-250 8C/16T core unlock across reboots" "$UNLOCK_LAUNCHER" bc250-cores-unlock
 else
     rm -f "$UNLOCK_LAUNCHER" "$DATA_DIR/applications/$UNLOCK_DESKTOP" "$DESKTOP_DIR/$UNLOCK_DESKTOP"
 fi

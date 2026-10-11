@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QAbstractItemView, QButtonGroup, QCheckBox, QComboBox, QDoubleSpinBox, QFormLayout, QGroupBox, QHBoxLayout,
@@ -15,11 +15,10 @@ from PyQt6.QtWidgets import (
 )
 
 from . import plain_tooltip
-from .acquire import FALLBACK_VERSION
 from .backend import (
-    HELIXSR_DLL, INI, KERNELS, MODE_FOLDER, MODE_REPLACE, NETWORKS, SECOND_UPSCALER_DLL, SHARPENING_MODES, WEIGHTS,
-    Deployment,
-    GameDll, HelixIni, PayloadStatus, deployment_state, ini_tuning_ignored, optiscaler_snippet, render_ini,
+    HELIXSR_DLL, INI, KERNELS, MODE_FOLDER, MODE_REPLACE, NETWORKS, SECOND_UPSCALER_DLL, SHARPENERS, SHARPENING_MODES,
+    WEIGHTS, Deployment,
+    GameDll, HelixIni, PayloadStatus, deployment_state, ini_ignored_fields, optiscaler_snippet, render_ini,
     validate_ini,
 )
 from .widgets import STATE_COLORS, StatusPill, Terminal, accent_button, hint_label, page_header
@@ -33,8 +32,16 @@ def _item(text: str, tooltip: str = "") -> QTableWidgetItem:
     return item
 
 
+class _Table(QTableWidget):
+    preferred_height = 0                    # 0: Qt's default size hint
+
+    def sizeHint(self) -> QSize:
+        hint = super().sizeHint()
+        return QSize(hint.width(), self.preferred_height) if self.preferred_height else hint
+
+
 def _table(headers: list[str]) -> QTableWidget:
-    table = QTableWidget(0, len(headers))
+    table = _Table(0, len(headers))
     table.setHorizontalHeaderLabels(headers)
     table.verticalHeader().setVisible(False)
     table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -154,7 +161,13 @@ class OverviewPage(QWidget):
         self.update_hint.setVisible(bool(text))
 
     def show_payload(self, status: PayloadStatus) -> None:
-        for key, have in ((HELIXSR_DLL, status.dll), (WEIGHTS, status.weights), (KERNELS, status.kernels)):
+        self.pills[HELIXSR_DLL].set_status(self.tr("Present") if status.dll else self.tr("Missing"),
+                                           "ok" if status.dll else "bad", plain_tooltip(str(status.path / HELIXSR_DLL)))
+        for key, have in ((WEIGHTS, status.weights), (KERNELS, status.kernels)):
+            if status.embedded:                 # HelixSR 1.8+: the network is inside the DLL
+                self.pills[key].set_status(self.tr("In the DLL"), "ok",
+                                           self.tr("HelixSR's setup built the network into {0}.").format(HELIXSR_DLL))
+                continue
             self.pills[key].set_status(self.tr("Present") if have else self.tr("Missing"), "ok" if have else "bad",
                                        plain_tooltip(str(status.path / key)))
         self.pills[INI].set_status(self.tr("Present") if status.ini else self.tr("Default"), "ok" if status.ini else "neutral",
@@ -216,9 +229,11 @@ class DeployPage(QWidget):
     browse_requested = pyqtSignal()
     browse_folder_requested = pyqtSignal()
     browse_second_requested = pyqtSignal()
+    browse_exe_requested = pyqtSignal()
     scan_requested = pyqtSignal(object)                             # Path of the game folder
-    # GameDll | None, mode, folder Path | None, write the ini, second upscaler DLL Path | None
-    deploy_requested = pyqtSignal(object, str, object, bool, object)
+    # GameDll | None, mode, folder Path | None, write the ini, second upscaler DLL Path | None,
+    # the game's .exe folder to install OptiScaler into (Path | None: not installed)
+    deploy_requested = pyqtSignal(object, str, object, bool, object, object)
     remove_requested = pyqtSignal(object, str, object)              # GameDll | None, mode, folder Path | None
     copy_requested = pyqtSignal(str)
 
@@ -227,6 +242,7 @@ class DeployPage(QWidget):
         self.found: list[GameDll] = []
         self.games: list[Path] = []
         self.payload_ready = False
+        self.optiscaler_available = False
         layout = QVBoxLayout(self)
         header, _ = page_header(self.tr("Deploy"))
         layout.addLayout(header)
@@ -262,6 +278,7 @@ class DeployPage(QWidget):
         self.table = _table([self.tr("DLL"), self.tr("State"), self.tr("Network files"), self.tr("helixsr.ini"),
                              self.tr("Location")])
         self.table.itemSelectionChanged.connect(self._update_buttons)
+        self.table.preferred_height = 110       # grows with the window, but leaves a small one to the How box
         found_layout.addWidget(self.table, 1)
         self.found_info = hint_label(self.tr("Scan a game folder first."))
         found_layout.addWidget(self.found_info)
@@ -309,16 +326,44 @@ class DeployPage(QWidget):
         self.browse_second.clicked.connect(self.browse_second_requested)
         second_row.addWidget(self.browse_second)
         mode_layout.addLayout(second_row)
+        exe_row = QHBoxLayout()
+        exe_row.addSpacing(22)
+        self.install_opti = QCheckBox(self.tr("Install OptiScaler next to the game's .exe:"))
+        self.install_opti.setChecked(True)
+        self.install_opti.toggled.connect(lambda *_: self._mode_changed())
+        exe_row.addWidget(self.install_opti)
+        self.exe_path = QLineEdit()
+        self.exe_path.setPlaceholderText(self.tr("The folder of the game's .exe (found by Scan)"))
+        self.exe_path.textChanged.connect(lambda *_: self._update_buttons())
+        exe_row.addWidget(self.exe_path, 1)
+        self.browse_exe = QPushButton(self.tr("Browse…"))
+        self.browse_exe.clicked.connect(self.browse_exe_requested)
+        exe_row.addWidget(self.browse_exe)
+        mode_layout.addLayout(exe_row)
+        self.opti_hint = hint_label(self.tr(
+            "The OptiScaler that comes with HelixSR goes next to the game's .exe as dxgi.dll (or under the name of an "
+            "OptiScaler the game already has), with its OptiScaler.ini pointed at this folder. Start the game and "
+            "select <b>DLSS</b>; OptiScaler's menu (Insert) shows <b>FSR HelixSR</b>. Remove puts back everything it "
+            "replaced."))
+        mode_layout.addWidget(self.opti_hint)
         self.folder_hint = hint_label(self.tr(
-            "Install OptiScaler for the game as its documentation describes, then point its OptiScaler.ini at this "
-            "folder with the lines below (Copy puts them on the clipboard)."))
+            "You install OptiScaler yourself, as its documentation describes. <b>OptiScaler.ini</b> is OptiScaler's "
+            "settings file, next to the game's .exe. The lines below make OptiScaler use HelixSR: "
+            "<code>Dx12Upscaler=fsr31</code> hands the game's upscaling to an FSR 3.1 DLL, and the two "
+            "<code>Path</code> lines say that this DLL is HelixSR in this folder. <b>Copy OptiScaler.ini lines</b> puts "
+            "them on the clipboard: paste them into the game's OptiScaler.ini, in place of the lines with the same "
+            "names."))
         mode_layout.addWidget(self.folder_hint)
         self.snippet = Terminal()
-        self.snippet.setMaximumHeight(110)
+        # every line of optiscaler_snippet() (six and the final newline) and the scroll bar of its long Z:\ paths
+        self.snippet.setFixedHeight(self.snippet.fontMetrics().lineSpacing() * 7 + 2 * self.snippet.frameWidth()
+                                    + self.snippet.horizontalScrollBar().sizeHint().height() + 8)
         mode_layout.addWidget(self.snippet)
         snippet_row = QHBoxLayout()
         snippet_row.addStretch(1)
         self.copy_snippet = QPushButton(self.tr("Copy OptiScaler.ini lines"))
+        self.copy_snippet.setToolTip(self.tr("Put the lines above on the clipboard, to paste into the game's "
+                                             "OptiScaler.ini."))
         self.copy_snippet.clicked.connect(lambda: self.copy_requested.emit(self.snippet.toPlainText()))
         snippet_row.addWidget(self.copy_snippet)
         mode_layout.addLayout(snippet_row)
@@ -327,10 +372,16 @@ class DeployPage(QWidget):
         actions = QHBoxLayout()
         self.write_ini = QCheckBox(self.tr("Write helixsr.ini with the values of the helixsr.ini page"))
         self.write_ini.setChecked(True)
-        self.write_ini.setToolTip(self.tr("Unticked: the payload's helixsr.ini is copied if it has one, else none is written "
-                                  "and HelixSR uses its defaults."))
-        actions.addWidget(self.write_ini)
-        actions.addStretch(1)
+        ini_column = QVBoxLayout()
+        ini_column.setSpacing(2)
+        ini_column.addWidget(self.write_ini)
+        ini_column.addWidget(hint_label(self.tr(
+            "<b>helixsr.ini</b> is HelixSR's own settings file, next to its DLL in the game: sharpening, the log and "
+            "the other options of the helixsr.ini page. Ticked, Deploy writes that page's values there. Unticked, "
+            "the payload's helixsr.ini is copied if it has one; without one HelixSR uses its defaults (no "
+            "sharpening, as DLSS).")))
+        actions.addLayout(ini_column, 1)
+        actions.addSpacing(12)
         self.remove = QPushButton(self.tr("Remove HelixSR"))
         self.remove.setToolTip(self.tr("Delete HelixSR's files and put the game's original DLL back."))
         self.remove.clicked.connect(self._remove_clicked)
@@ -377,8 +428,14 @@ class DeployPage(QWidget):
         self.folder_path.setProperty("auto", False)
         self.folder_path.setText(str(path))
 
-    def set_payload_ready(self, ready: bool) -> None:
+    def set_exe_folder(self, path: Path | None) -> None:
+        self.exe_path.setText(str(path) if path else "")
+
+    def set_payload_ready(self, ready: bool, optiscaler: bool = False) -> None:
         self.payload_ready = ready
+        if optiscaler != self.optiscaler_available:
+            self.optiscaler_available = optiscaler
+            self._mode_changed()
         self._update_buttons()
 
     def show_found(self, found: list[GameDll], game_dir: Path, error: str = "") -> None:
@@ -420,6 +477,13 @@ class DeployPage(QWidget):
         text = self.folder_path.text().strip()
         return Path(text).expanduser() if text else None
 
+    def exe_folder(self) -> Path | None:
+        """The game's .exe folder when OptiScaler is to be installed, else None."""
+        text = self.exe_path.text().strip()
+        if self.mode() != MODE_FOLDER or not self.optiscaler_available or not self.install_opti.isChecked() or not text:
+            return None
+        return Path(text).expanduser()
+
     def second_upscaler(self) -> Path | None:
         text = self.second_path.text().strip()
         return Path(text).expanduser() if text else None
@@ -443,9 +507,19 @@ class DeployPage(QWidget):
 
     def _mode_changed(self) -> None:
         folder = self.mode() == MODE_FOLDER
-        for widget in (self.folder_path, self.browse_folder, self.folder_hint, self.snippet, self.copy_snippet,
-                       self.second_label, self.second_path, self.browse_second):
+        for widget in (self.folder_path, self.browse_folder, self.second_label, self.second_path, self.browse_second,
+                       self.install_opti, self.exe_path, self.browse_exe):
             widget.setVisible(folder)
+        self.install_opti.setEnabled(self.optiscaler_available)
+        self.install_opti.setToolTip("" if self.optiscaler_available else self.tr(
+            "The payload has no OptiScaler: HelixSR 1.7 and newer ship it. Get such a release on the Setup page."))
+        auto = self.optiscaler_available and self.install_opti.isChecked()
+        self.exe_path.setEnabled(auto)
+        self.browse_exe.setEnabled(auto)
+        self.opti_hint.setVisible(folder and auto)
+        # by hand: the OptiScaler.ini lines to paste
+        for widget in (self.folder_hint, self.snippet, self.copy_snippet):
+            widget.setVisible(folder and not auto)
         self._update_snippet()
         self._update_buttons()
 
@@ -457,7 +531,9 @@ class DeployPage(QWidget):
         info = self.selected()
         if self.mode() == MODE_FOLDER:
             folder = self.folder()
-            self.deploy.setEnabled(self.payload_ready and folder is not None)
+            needs_exe = self.optiscaler_available and self.install_opti.isChecked()
+            self.deploy.setEnabled(self.payload_ready and folder is not None
+                                   and (not needs_exe or self.exe_folder() is not None))
             self.remove.setEnabled(folder is not None and (folder / HELIXSR_DLL).is_file())
             self.deploy.setToolTip(self.tr("Import a complete payload first.") if not self.payload_ready else
                                    self.tr("Write HelixSR under both FidelityFX names into the folder."))
@@ -470,7 +546,8 @@ class DeployPage(QWidget):
 
     def _deploy_clicked(self) -> None:
         second = self.second_upscaler() if self.mode() == MODE_FOLDER else None
-        self.deploy_requested.emit(self.selected(), self.mode(), self.folder(), self.write_ini.isChecked(), second)
+        self.deploy_requested.emit(self.selected(), self.mode(), self.folder(), self.write_ini.isChecked(), second,
+                                   self.exe_folder())
 
     def _remove_clicked(self) -> None:
         self.remove_requested.emit(self.selected(), self.mode(), self.folder())
@@ -504,13 +581,18 @@ class IniPage(QWidget):
 
         columns = QHBoxLayout()
         left = QVBoxLayout()
-        sharp = self.sharp_box = QGroupBox("[Sharpening]")
+        sharp = QGroupBox("[Sharpening]")
         form = QFormLayout(sharp)
         self.sharpening_mode = QComboBox()
         self.sharpening_mode.addItems(SHARPENING_MODES)
         self.sharpening_mode.setToolTip(self.tr("off: never sharpen (DLSS's network does not). game: the game's FSR sharpness, "
                                         "or Sharpness below if it sends none. override: always Sharpness below."))
         form.addRow("Mode", self.sharpening_mode)
+        self.sharpener = QComboBox()
+        self.sharpener.addItems(SHARPENERS)
+        self.sharpener.setToolTip(self.tr("HelixSR 1.8 and newer: off (as DLSS 4), nvidia (NVIDIA's sharpening filter, as the "
+                                  "driver's Image Sharpening) or rcas (AMD FSR's)."))
+        form.addRow("Sharpener", self.sharpener)
         self.sharpness = self._spin(0, 1, 0.05, 2, self.tr("0 = none, 1 = strongest RCAS (FidelityFX scale)."))
         form.addRow("Sharpness", self.sharpness)
         self.motion_adaptive = QCheckBox(self.tr("Less sharpening on fast-moving pixels"))
@@ -521,6 +603,8 @@ class IniPage(QWidget):
         form.addRow("MotionLimit", self.motion_limit)
         self.motion_reduction = self._spin(0, 1, 0.05, 2, self.tr("Fraction of sharpening removed at and above MotionLimit."))
         form.addRow("MotionReduction", self.motion_reduction)
+        self.use_game_slider = QCheckBox(self.tr("Follow the game's sharpness slider when it has one"))
+        form.addRow("UseGameSlider", self.use_game_slider)
         left.addWidget(sharp)
         log = QGroupBox("[Log]")
         form = QFormLayout(log)
@@ -593,12 +677,12 @@ class IniPage(QWidget):
         actions.addWidget(self.apply)
         layout.addLayout(actions)
 
-        for widget in (self.sharpening_mode, self.network):
+        for widget in (self.sharpening_mode, self.sharpener, self.network):
             widget.currentIndexChanged.connect(self._changed)
         for widget in (self.sharpness, self.motion_threshold, self.motion_limit, self.motion_reduction):
             widget.valueChanged.connect(self._changed)
         for widget in (self.motion_adaptive, self.log_enabled, self.model_e_enabled, self.invert_jitter,
-                       self.invert_motion_vectors, self.motion_vector_front_end):
+                       self.invert_motion_vectors, self.motion_vector_front_end, self.use_game_slider):
             widget.toggled.connect(self._changed)
         for widget in (self.forwarding_dll, self.upscaler_dll):
             widget.textChanged.connect(self._changed)
@@ -615,14 +699,14 @@ class IniPage(QWidget):
         return spin
 
     def set_helixsr_version(self, version: str) -> None:
-        """Grey out what this HelixSR version ignores; the values stay in the file for older versions."""
-        ignored = ini_tuning_ignored(version)
-        self.sharp_box.setEnabled(not ignored)
-        self.network.setEnabled(not ignored)
-        self.ignored_hint.setText(self.tr("HelixSR {0} behaves like DLSS: it ignores [Sharpening] and the [ModelE] Network "
-                                          "setting, so they are greyed out. HelixSR {1} still reads them.")
-                                  .format(version, FALLBACK_VERSION) if ignored else "")
-        self.ignored_hint.setVisible(ignored)
+        """Grey out what the payload's HelixSR version does not read; the values stay in the file for other versions."""
+        ignored = ini_ignored_fields(version)
+        for name in ("sharpening_mode", "sharpener", "sharpness", "motion_adaptive", "motion_threshold", "motion_limit",
+                     "motion_reduction", "use_game_slider", "network"):
+            getattr(self, name).setEnabled(name not in ignored)
+        self.ignored_hint.setText(self.tr("HelixSR {0} does not read the greyed-out settings; they are kept in the file "
+                                          "for other versions.").format(version) if ignored else "")
+        self.ignored_hint.setVisible(bool(ignored))
 
     # ---------------------------------------------------------------- values
     def load(self, settings: HelixIni, template: str) -> None:
@@ -630,13 +714,15 @@ class IniPage(QWidget):
         self.show_values(settings)
 
     def show_values(self, s: HelixIni) -> None:
-        widgets = (self.sharpening_mode, self.network, self.sharpness, self.motion_threshold, self.motion_limit,
+        widgets = (self.sharpening_mode, self.sharpener, self.use_game_slider, self.network, self.sharpness, self.motion_threshold, self.motion_limit,
                    self.motion_reduction, self.motion_adaptive, self.log_enabled, self.model_e_enabled,
                    self.invert_jitter, self.invert_motion_vectors, self.motion_vector_front_end,
                    self.forwarding_dll, self.upscaler_dll)
         for widget in widgets:
             widget.blockSignals(True)
         self.sharpening_mode.setCurrentText(s.sharpening_mode if s.sharpening_mode in SHARPENING_MODES else "off")
+        self.sharpener.setCurrentText(s.sharpener if s.sharpener in SHARPENERS else "off")
+        self.use_game_slider.setChecked(s.use_game_slider)
         self.network.setCurrentText(s.network if s.network in NETWORKS else "auto")
         self.sharpness.setValue(s.sharpness)
         self.motion_threshold.setValue(s.motion_threshold)
@@ -662,7 +748,8 @@ class IniPage(QWidget):
             model_e_enabled=self.model_e_enabled.isChecked(), network=self.network.currentText(),
             invert_jitter=self.invert_jitter.isChecked(), invert_motion_vectors=self.invert_motion_vectors.isChecked(),
             motion_vector_front_end=self.motion_vector_front_end.isChecked(), log_enabled=self.log_enabled.isChecked(),
-            forwarding_dll=self.forwarding_dll.text().strip(), upscaler_dll=self.upscaler_dll.text().strip())
+            forwarding_dll=self.forwarding_dll.text().strip(), upscaler_dll=self.upscaler_dll.text().strip(),
+            sharpener=self.sharpener.currentText(), use_game_slider=self.use_game_slider.isChecked())
 
     def text(self) -> str:
         return render_ini(self.settings(), self.template)

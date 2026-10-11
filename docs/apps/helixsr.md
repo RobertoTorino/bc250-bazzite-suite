@@ -26,14 +26,15 @@ app does exactly that, reversibly, and nothing else on the system is touched. No
   checksums), which skips NVIDIA's download. The build itself is HelixSR's own script, unchanged: about 5–6 minutes on a
   BC-250, because it compiles the network's shaders for both wave sizes through Proton. The Setup page shows the
   elapsed time. From HelixSR 1.7.0 on, the script ends with its own game installer, which asks about each Steam
-  game; the app gives it no input, so it stops there and only the network files are built.
+  game; the app gives it no input, so it stops there and only the network files are built. From HelixSR 1.8.0
+  on, the network is built into HelixSR's DLL instead of two separate files.
 - **Version choice** – *Version* on the Setup page picks the latest HelixSR release (the default) or HelixSR
   1.4.3, the version HelixSR's developer recommends when the latest one does not work for you (please then open
   an issue at [HelixSR](https://github.com/lonewolf0622/HelixSR/issues) with the game's `helixsr.log`).
   Switching builds the network files for that version and replaces the payload; deploy again per game
   afterwards.
 - **Update checks** – at start (can be turned off) or on demand: the payload against the latest HelixSR release
-  and this app against its latest release on GitHub. A newer HelixSR is flagged on the Overview; building again
+  on GitHub. The app itself is updated through the BC250 Bazzite Suite portal. A newer HelixSR is flagged on the Overview; building again
   updates the payload and deployed games show *Older build* until redeployed (*Newer build* after switching
   back to 1.4.3).
 - **Payload** – one imported HelixSR release, kept under `~/.local/share/bc250-bazzite-helixsr-gui/payload`.
@@ -49,15 +50,22 @@ app does exactly that, reversibly, and nothing else on the system is touched. No
     games bury it under `Engine/Plugins/.../ThirdParty/Win64`), backs it up and deploys. *Remove* restores
     the original. Re-deploying a newer build never overwrites the real original.
   - *Stand-alone folder for OptiScaler* – for games without FSR 3.1: writes a folder with the DLL under both
-    FidelityFX names, the network files and the ini, and gives you the `OptiScaler.ini` lines
-    (`Dx12Upscaler=fsr31`, `FfxDx12Path`, `FfxDx12SRPath` as `Z:\` paths) to paste.
+    FidelityFX names, the network files and the ini. With a payload from HelixSR 1.7 or newer, which ships the
+    official OptiScaler, it also installs OptiScaler next to the game's `.exe` (Scan finds that folder): as
+    `dxgi.dll`, or under the name of an OptiScaler the game already has, with `fakenvapi`, and its
+    `OptiScaler.ini` pointed at the HelixSR folder. Select DLSS in the game. What it replaces is kept in the
+    HelixSR folder's `backup`; *Remove* puts it back. If OptiScaler's menu (Insert) does not appear in a game, add
+    `WINEDLLOVERRIDES="dxgi=n,b" %command%` to its launch options in Steam. Untick it to install OptiScaler
+    yourself: the page then gives you the `OptiScaler.ini` lines (`Dx12Upscaler=fsr31`, `FfxDx12Path`,
+    `FfxDx12SRPath` as `Z:\` paths) to paste.
     Optionally it adds a second upscaler, for example AMD's `amd_fidelityfx_upscaler_dx12.dll` with FSR 4: it
     goes into the folder as `amd_fidelityfx_upscaler_dx12.amd.dll` with `UpscalerDll` pointing at it, and
     OptiScaler's FFX Upscaler menu lists its upscalers after HelixSR.
 - **helixsr.ini** – a form over every key HelixSR reads (`[Sharpening]`, `[ModelE]`, `[Log]`, `[Forwarding]`)
   with validation and a live preview that keeps the upstream comments. Save it as the default for new
-  deployments or push it to an existing one. HelixSR 1.7.0 and newer behave like DLSS and ignore
-  `[Sharpening]` and `[ModelE] Network`; the page greys those out for such a payload.
+  deployments or push it to an existing one. The page greys out what the payload's HelixSR version does not
+  read: HelixSR 1.7 ignores `[Sharpening]` and `[ModelE] Network`; 1.8 reads sharpening again through
+  `Sharpener` (`off`, `nvidia` or `rcas`), `Sharpness` and `UseGameSlider` instead of `Mode`.
 
 ## Privilege model
 
@@ -124,7 +132,7 @@ PyQt6 wheels do not ship. The tests check that every shipped translation is comp
 - **Overview** – payload status (version from the release's README, DLL, weights, kernels, ini) with
   *Import folder* / *Import zip* / *Open payload folder*, and the deployment table with *Open folder*,
   *Remove* (restores the original or deletes the stand-alone folder) and *Forget*.
-- **Setup** – release status for HelixSR and this app with *Check now*; the version to get (latest or 1.4.3);
+- **Setup** – release status for HelixSR with *Check now*; the version to get (latest or 1.4.3);
   *Download and build* with progress, the script's output, *Cancel*, *Import built release* and *Open work
   folder*; optional local `nvngx_dlss.dll`.
 - **Deploy** – choose a Steam game or browse to any folder, scan for upscaler DLLs, pick the mode, decide

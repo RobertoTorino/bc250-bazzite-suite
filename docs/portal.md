@@ -3,14 +3,27 @@
 # Portal
 
 The BC250 Bazzite Suite's front door: one window that installs, opens, updates and removes the suite's apps.
-**BC-250 Bazzite Test** is always installed with the portal and listed first; every other app is an optional
-card ("pill") with **Install**, **Open** and **Uninstall**. The cards stand in two columns, left to right in the
-order of `apps.toml`, and in one column when the window is too narrow for two.
+**Bazzite Test** is always installed with the portal and listed first; every other app is optional. Each app is a
+tile, left to right in the order of `apps.toml` and as many to a row as the window fits:
 
-- `apps/` also contains standalone suite tools that do not appear in `apps.toml` and are not installed or
-  launched by the portal. These include [Simple Demo Tool](other-tools/simple-demo-tool.md),
-  [Portal dependency checker](apps/dependency-checker.md) and the release front end,
-  [BC250 Suite Releases](#the-release-front-end).
+- **The name**, without the suite's "BC-250" prefix.
+- **The icon.** Click it to open the app; an app with two windows (CU Bisect, Cores Bisect) asks which one. The
+  icon is grey while the app is not installed. Hover over it to see what the app does, its state and the release
+  this portal pins.
+- **A red dot** in the icon: an update is available.
+- **changes the board**, in orange under the icon, for apps that change how the board runs.
+- **The buttons beside the icon:** Install (an arrow into a tray) and Uninstall (a bin). For an installed app,
+  Install reinstalls it, or updates it when the arrow is red. Bazzite Test has only Reinstall (a circular
+  arrow): it is removed together with the portal.
+
+**Development only**, below the apps, opens a separate section with tools for working on the suite:
+[Simple Demo Tool](other-tools/simple-demo-tool.md), [Portal dependency checker](apps/dependency-checker.md)
+and, when the portal runs from a suite checkout, the release front end
+[BC250 Suite Releases](#the-release-front-end). You do not need them to use the board. The section is closed until
+you open it, and the portal remembers whether it was open.
+
+- `apps/` may also contain standalone tools (with a `.standalone` marker) that do not appear in `apps.toml`
+  and that the portal does not install or open.
 - Install, update and uninstall run **the app's own installer** in a terminal window, because installers may ask
   for the sudo password and print what they do. The portal watches for the result and refreshes.
 - Apps that change how the board runs (CU/core unlocks, the GPU governor, GPU overclocking, the ACPI override, the VRAM
@@ -20,11 +33,11 @@ order of `apps.toml`, and in one column when the window is too narrow for two.
   against the release's `SHA256SUMS` until one is pinned. Then it unpacks the tarball without ever writing
   outside its folder.
 - **Updates:** a red dot marks every app whose installed version differs from the one this portal pins, and the
-  header counts them; **Update** installs the pinned version. Newer app versions come with a newer portal
+  header counts them; its red Install button installs the pinned version. Newer app versions come with a newer portal
   release: at start the portal looks for one on GitHub and, when there is one, shows a red button that opens its
   release page. The button names what that release brings, for example **Portal 0.9.1: updates ACE Queues and
   Memory Manager**, and its tooltip lists each app with its old and new version. After the portal update, the
-  installed apps among them show **Update**. When the new pins cannot be read (offline, for example), the button
+  installed apps among them show the red dot. When the new pins cannot be read (offline, for example), the button
   says **Portal x.y.z available**.
 - The **Portal dependency checker** is a separate app in `apps/`. It lists declared runtime Python packages and
   app-specific external tools, plus the apps and features that use them. It compares Python package versions with
@@ -138,6 +151,15 @@ apps/suite-releases/install.sh --uninstall             # remove them; the checko
 - **Test updates** and **Test release** run the two board tests below in a terminal, with
   `apps/suite-releases/check-release.sh`: the portal from the checkout before the push, and the published portal release after
   GitHub has built it. Linux only.
+- **Run from checkout:** every app window in the checkout, as an icon. A click starts that app from the checkout,
+  to try a change before its release: `python -m <package>` with the checkout's venv and its `core`, as `run.sh`
+  starts Suite Releases. An app that changes how the board runs asks first, as in the portal; started from the
+  checkout it uses the scripts in the checkout. Each app writes its output to
+  `~/.cache/bc250-release/run/<package>.log`. When an app stops with an error, the end of its log shows on the page.
+  The apps keep running when you close the window. The last icon, **Manual (local)**, serves this manual from the
+  checkout with `mkdocs serve` (the development venv has MkDocs) and opens it in the browser at
+  `http://127.0.0.1:8765/bc250-bazzite-suite/`. It rebuilds on every save; its log is `mkdocs.log` there. When it
+  is already running, a click only opens the page again.
 
 A red line at the top of the window means a release tag points at a commit whose `VERSION` is not the tag's
 version: the tag was made before the version bump was committed, and `release.yml` cannot build it. Delete the tag
@@ -163,8 +185,8 @@ install and run:
     Apps then install as on a user's board: the portal downloads each pinned tarball from GitHub and refuses it
     unless its checksum matches the pin. Without `--source release`, a portal installed from a checkout installs
     the apps from the checkout.
-4. The apps whose pin changed show **Update** with a red dot. Update them, open each one and check that it starts
-   and works; afterwards their pill reads **Installed** and the update count in the header is gone.
+4. The apps whose pin changed show a red dot and a red Install button. Update them, open each one and check that
+   it starts and works; afterwards the red dots and the update count in the header are gone.
 5. All good: tag the portal (step 5). Something wrong: fix the app and release a new patch version of it (steps 1
    to 4). Nothing has reached users yet.
 
@@ -210,10 +232,13 @@ tests pin their own local builds instead of the published ones.
 #### Code
 
 Create apps/<name>/ with VERSION 0.1.0, a CHANGELOG, a LICENSE and a .gitignore. For an app that stays outside the
-portal, add `.standalone` instead of adding it to `portal/apps.toml`.
+portal, add `.standalone` instead of adding it to `portal/apps.toml`. An app that runs from the checkout and is
+never released also gets `.checkout-only`, and a `[checkout.<name>]` table in `apps.toml` (no tag) when a portal from
+a checkout should list it under "Development only".
 Add an install.sh that supports --uninstall and puts a launcher in ~/.local/bin/, plus tests under tests/.        
 Add the app to ./test.sh, the CI shellcheck list and an installer test in tools/installer-tests/.       
-Add its [apps.<name>] card to portal/apps.toml: name, summary, changes_board, install/uninstall/detect/launch,          
+Add its [apps.<name>] card to portal/apps.toml: name, summary, changes_board (and development = true for a tool
+that belongs under "Development only"), install/uninstall/detect/launch,          
 and tag = "<name>-v<VERSION>" with sha256 left empty. CI accepts a tag that doesn't exist yet as long as it matches the app's VERSION.        
 Run all the checks and hand over.
 

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""apps.toml: the apps of this portal release, each pinned to one release tag (see the comment in apps.toml)."""
+"""apps.toml: the apps of this portal release, each pinned to one release tag (see the comment in apps.toml), and
+the checkout-only apps a portal that runs from a suite checkout also lists."""
 
 from __future__ import annotations
 
@@ -21,10 +22,12 @@ class AppEntry:
     key: str                                    # "cu-bisect": folder under apps/, tag prefix
     name: str
     summary: str
-    tag: str
+    tag: str                                    # "" for a checkout-only app: it is never released
     sha256: str = ""
     required: bool = False
     changes_board: bool = False
+    development: bool = False                   # listed under "Development only" in the portal
+    checkout_only: bool = False                 # [checkout.<key>]: installs from apps/<key> in the suite checkout
     install: tuple[str, ...] = ()
     uninstall: tuple[str, ...] = ()
     detect: tuple[str, ...] = ()
@@ -32,7 +35,7 @@ class AppEntry:
 
     @property
     def version(self) -> str:
-        return self.tag.rsplit("-v", 1)[1]
+        return self.tag.rsplit("-v", 1)[1] if self.tag else ""
 
     @property
     def asset(self) -> str:
@@ -51,38 +54,49 @@ def _strings(key: str, field: str, value: object) -> tuple[str, ...]:
     return tuple(value)
 
 
-def _entry(key: str, raw: dict) -> AppEntry:
-    for field in ("name", "summary", "tag"):
+def _entry(key: str, raw: dict, table: str = "apps") -> AppEntry:
+    checkout_only = table == "checkout"
+    for field in ("name", "summary") + (() if checkout_only else ("tag",)):
         if not isinstance(raw.get(field), str) or not raw[field].strip():
-            raise ManifestError(f"[apps.{key}] needs a non-empty {field}")
-    match = _TAG.match(raw["tag"])
-    if not match or match["app"] != key:
-        raise ManifestError(f"[apps.{key}] tag {raw['tag']!r} is not {key}-v<x.y.z>")
+            raise ManifestError(f"[{table}.{key}] needs a non-empty {field}")
+    if checkout_only:
+        if any(field in raw for field in ("tag", "sha256", "required")):
+            raise ManifestError(f"[{table}.{key}] is never released: no tag, sha256 or required")
+    else:
+        match = _TAG.match(raw["tag"])
+        if not match or match["app"] != key:
+            raise ManifestError(f"[{table}.{key}] tag {raw['tag']!r} is not {key}-v<x.y.z>")
     sha = str(raw.get("sha256", "")).lower()
     if not _SHA256.match(sha):
-        raise ManifestError(f"[apps.{key}] sha256 must be empty or 64 hex digits")
+        raise ManifestError(f"[{table}.{key}] sha256 must be empty or 64 hex digits")
     launch = raw.get("launch", [])
     if not isinstance(launch, list) or not all(isinstance(item, list) and len(item) == 2 and
                                                all(isinstance(s, str) and s for s in item) for item in launch):
-        raise ManifestError(f"[apps.{key}] launch must be a list of [label, command] pairs")
-    entry = AppEntry(key=key, name=raw["name"], summary=raw["summary"], tag=raw["tag"], sha256=sha,
+        raise ManifestError(f"[{table}.{key}] launch must be a list of [label, command] pairs")
+    entry = AppEntry(key=key, name=raw["name"], summary=raw["summary"], tag=raw.get("tag", ""), sha256=sha,
                      required=bool(raw.get("required", False)), changes_board=bool(raw.get("changes_board", False)),
+                     development=checkout_only or bool(raw.get("development", False)), checkout_only=checkout_only,
                      install=_strings(key, "install", raw.get("install")),
                      uninstall=_strings(key, "uninstall", raw.get("uninstall")),
                      detect=_strings(key, "detect", raw.get("detect")),
                      launch=tuple((label, command) for label, command in launch))
     if not entry.install or not entry.uninstall or not entry.detect:
-        raise ManifestError(f"[apps.{key}] install, uninstall and detect must not be empty")
+        raise ManifestError(f"[{table}.{key}] install, uninstall and detect must not be empty")
+    if entry.required and entry.development:
+        raise ManifestError(f"[{table}.{key}] the required app cannot be a development app")
     return entry
 
 
-def parse(text: str) -> list[AppEntry]:
-    """The apps in display order: the required one(s) first, the rest in file order."""
+def _load_toml(text: str) -> dict:
     try:
-        data = tomllib.loads(text)
+        return tomllib.loads(text)
     except tomllib.TOMLDecodeError as exc:
         raise ManifestError(f"apps.toml is not valid TOML: {exc}") from exc
-    apps = data.get("apps")
+
+
+def parse(text: str) -> list[AppEntry]:
+    """The pinned apps in display order: the required one(s) first, the rest in file order."""
+    apps = _load_toml(text).get("apps")
     if not isinstance(apps, dict) or not apps:
         raise ManifestError("apps.toml has no [apps.<name>] tables")
     entries = [_entry(key, raw) for key, raw in apps.items()]
@@ -91,5 +105,18 @@ def parse(text: str) -> list[AppEntry]:
     return sorted(entries, key=lambda e: not e.required)        # stable: file order within each group
 
 
+def parse_checkout(text: str) -> list[AppEntry]:
+    """The checkout-only apps ([checkout.<key>]), in file order: never released, so never pinned; only a portal
+    that runs from a suite checkout lists them."""
+    apps = _load_toml(text).get("checkout", {})
+    if not isinstance(apps, dict):
+        raise ManifestError("apps.toml: checkout must hold [checkout.<name>] tables")
+    return [_entry(key, raw, "checkout") for key, raw in apps.items()]
+
+
 def load(path: Path) -> list[AppEntry]:
     return parse(path.read_text(encoding="utf-8"))
+
+
+def load_checkout(path: Path) -> list[AppEntry]:
+    return parse_checkout(path.read_text(encoding="utf-8"))

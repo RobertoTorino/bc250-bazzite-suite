@@ -13,10 +13,16 @@
 #   sha256          of <tag>.tar.gz; filled in when the tag is released (empty: checked against SHA256SUMS only)
 #   required        installed with the portal and always listed first (only bazzite-test)
 #   changes_board   true: the portal warns before installing or opening it
+#   development     true: listed under "Development only", apart from the apps for using the board
 #   install         shell commands run in a terminal from the extracted release folder, in order
 #   uninstall       idem, for removal
 #   detect          paths whose existence means "installed" (any of them)
 #   launch          [[label, command]] to open the app; none for apps that are not programs
+#
+# [checkout.<name>]: an app that runs from the suite checkout and is never released (apps/<name>/.checkout-only).
+# Only a portal that runs from a checkout, or was installed from one, lists it, under "Development only"; its
+# install and uninstall run in apps/<name> of that checkout. The same fields as above, without tag, sha256 and
+# required.
 
 [apps.bazzite-test]
 name = "BC-250 Bazzite Test"
@@ -149,3 +155,38 @@ install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-memory-manager"]
 launch = [["Open", "~/.local/bin/bc250-memory-manager"]]
+
+[apps.demo-tool]
+name = "Simple Demo Tool"
+summary = "Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite."
+tag = "demo-tool-v0.1.2"
+sha256 = ""
+required = false
+changes_board = false
+development = true
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/simple-demo-tool"]
+launch = [["Open", "~/.local/bin/simple-demo-tool"]]
+
+[apps.dependency-checker]
+name = "Portal dependency checker"
+summary = "The suite's Python packages and external tools, which apps use them, and whether newer ones exist."
+tag = "dependency-checker-v0.1.0"
+sha256 = ""
+required = false
+changes_board = false
+development = true
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-portal-dependency-checker"]
+launch = [["Open", "~/.local/bin/bc250-portal-dependency-checker"]]
+
+[checkout.suite-releases]
+name = "BC250 Suite Releases"
+summary = "The release front end: versions, pins and the board checks of a release. Edits the checkout it runs from."
+changes_board = false
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-release"]
+launch = [["Open", "~/.local/bin/bc250-release"]]

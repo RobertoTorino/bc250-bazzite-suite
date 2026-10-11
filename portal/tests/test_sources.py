@@ -130,6 +130,17 @@ def test_checkout_stages_app_with_core(tmp_path):
     assert not (acpi_folder / "bc250_core").exists()                         # shell only: no core
 
 
+def test_checkout_only_app_runs_in_its_checkout_folder(tmp_path):
+    entry = AppEntry(key="suite-releases", name="SR", summary="s", tag="", checkout_only=True, install=("x",),
+                     uninstall=("y",), detect=("z",))
+    sources = Sources(tmp_path / "work", checkout=SUITE)
+    assert sources.prepare(entry) == SUITE / "apps" / "suite-releases"
+    sources.forget(entry)
+    assert (SUITE / "apps" / "suite-releases" / "install.sh").is_file()      # never removed
+    with pytest.raises(SourceError, match="no"):
+        Sources(tmp_path / "work").prepare(entry)                          # a portal from a release has no checkout
+
+
 def test_suite_checkout(tmp_path, monkeypatch):
     import bc250_portal
     assert bc250_portal.suite_checkout() == SUITE                           # running from the checkout

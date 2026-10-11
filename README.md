@@ -19,6 +19,13 @@ and removes them: BC-250 Bazzite Test is always installed, every other app is op
 - <img src="portal/images/apps/memory-manager.png" width="20" height="20" alt=""/> **[BC-250 Memory Manager](apps/memory-manager)**: The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it.
 - <img src="portal/images/apps/ace-queues.png" width="20" height="20" alt=""/> **[BC-250 ACE Queues](apps/ace-queues)**: Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use.
 
+**Development only**: tools for working on the suite, in their own section of the portal. You do not need them to
+use the board.
+
+- <img src="portal/images/apps/demo-tool.png" width="20" height="20" alt=""/> **[Simple Demo Tool](apps/demo-tool)**: Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite.
+- <img src="portal/images/apps/portal-dependency-checker.png" width="20" height="20" alt=""/> **[Portal dependency checker](apps/dependency-checker)**: The suite's Python packages and external tools, which apps use them, and whether newer ones exist.
+- <img src="portal/images/apps/suite-releases.png" width="20" height="20" alt=""/> **[BC250 Suite Releases](apps/suite-releases)**: The release front end: versions, pins and the board checks of a release. Runs from a checkout of this repository.
+
 How to install and use them: **[the manual](https://robertotorino.github.io/bc250-bazzite-suite/)**.
 
 ## License

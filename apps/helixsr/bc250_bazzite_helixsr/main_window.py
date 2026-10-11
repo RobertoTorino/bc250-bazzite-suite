@@ -10,8 +10,8 @@ from pathlib import Path
 from PyQt6.QtCore import QSettings, Qt, QTimer
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import (
-    QApplication, QFileDialog, QHBoxLayout, QLabel, QListWidget, QMainWindow, QMessageBox, QStackedWidget,
-    QVBoxLayout, QWidget,
+    QApplication, QFileDialog, QFrame, QHBoxLayout, QLabel, QListWidget, QMainWindow, QMessageBox, QScrollArea,
+    QStackedWidget, QVBoxLayout, QWidget,
 )
 
 from . import APP_ID, APP_NAME, DEPLOYMENTS_FILE, DISPLAY_NAME, LOGO_PATH, PAYLOAD_DIR, __version__, plain_tooltip
@@ -108,6 +108,7 @@ class MainWindow(QMainWindow):
         self.deploy_page.browse_requested.connect(self._browse_game)
         self.deploy_page.browse_folder_requested.connect(self._browse_folder)
         self.deploy_page.browse_second_requested.connect(self._browse_second)
+        self.deploy_page.browse_exe_requested.connect(self._browse_exe)
         self.deploy_page.scan_requested.connect(self._scan)
         self.deploy_page.deploy_requested.connect(self._deploy)
         self.deploy_page.remove_requested.connect(self._remove_from_deploy_page)
@@ -122,6 +123,13 @@ class MainWindow(QMainWindow):
                            (self.tr("Deploy"), self.deploy_page), (self.tr("helixsr.ini"), self.ini_page),
                            (self.tr("Help"), self.help_page)):
             self.nav.addItem(name)
+            if page in (self.deploy_page, self.ini_page):
+                # Taller than a small window: scroll instead of squeezing the hints and boxes to one line.
+                scroll = QScrollArea()
+                scroll.setWidgetResizable(True)
+                scroll.setFrameShape(QFrame.Shape.NoFrame)
+                scroll.setWidget(page)
+                page = scroll
             self.stack.addWidget(page)
         self.nav.currentRowChanged.connect(self.stack.setCurrentIndex)
         self.nav.currentRowChanged.connect(self._bold_nav_item)
@@ -132,7 +140,7 @@ class MainWindow(QMainWindow):
         self.refresh()
         self._restore_window_state()
         built = latest_work_release(self.work_dir)
-        if built is not None and all((built / n).is_file() for n in (backend.WEIGHTS, backend.KERNELS)):
+        if built is not None and backend.payload_status(built).network_ready:
             self.setup_page.set_built(built)
         auto = self.settings.value("updates/check_on_start", True, type=bool) if check_updates is None else check_updates
         self.setup_page.set_auto_check(bool(auto))
@@ -188,7 +196,7 @@ class MainWindow(QMainWindow):
         status = backend.payload_status(self.payload_dir)
         self.overview.show_payload(status)
         self.overview.show_deployments(self.store.items, self.payload_dir)
-        self.deploy_page.set_payload_ready(status.ready)
+        self.deploy_page.set_payload_ready(status.ready, status.optiscaler)
         self.ini_page.set_deployments(self.store.items)
         self.ini_page.set_helixsr_version(status.version)
 
@@ -277,6 +285,12 @@ class MainWindow(QMainWindow):
         if path:
             self.deploy_page.set_second_upscaler(Path(path))
 
+    def _browse_exe(self) -> None:
+        start = self.deploy_page.exe_path.text() or self.deploy_page.game_path.text() or str(Path.home())
+        path = QFileDialog.getExistingDirectory(self, self.tr("The folder of the game's .exe"), start)
+        if path:
+            self.deploy_page.set_exe_folder(Path(path))
+
     def _scan(self, game_dir: Path) -> None:
         if not game_dir.is_dir():
             self.deploy_page.show_found([], game_dir, self.tr("{0} is not a folder.").format(game_dir))
@@ -284,6 +298,7 @@ class MainWindow(QMainWindow):
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             found = backend.find_game_dlls(game_dir, self.payload_dir)
+            self.deploy_page.set_exe_folder(backend.find_exe_folder(game_dir))
         except OSError as exc:
             found = []
             self.deploy_page.show_found([], game_dir, self.tr("Could not scan {0}: {1}").format(game_dir, exc))
@@ -296,7 +311,7 @@ class MainWindow(QMainWindow):
         return backend.game_name(path, self.libraries)
 
     def _deploy(self, info: GameDll | None, mode: str, folder: Path | None, write_ini: bool,
-                second: Path | None = None) -> None:
+                second: Path | None = None, exe_dir: Path | None = None) -> None:
         if write_ini and not self.ini_page.valid():
             QMessageBox.warning(self, self.tr("helixsr.ini"), self.tr("The helixsr.ini page has invalid values; fix them or untick "
                                 "writing the ini."))
@@ -318,7 +333,16 @@ class MainWindow(QMainWindow):
             else:
                 if folder is None:
                     return
+                if exe_dir is not None and backend.optiscaler_record(folder) is None and QMessageBox.question(
+                        self, self.tr("Install OptiScaler"),
+                        self.tr("Put OptiScaler into\n{exe_dir}\nnext to the game's .exe, pointed at HelixSR in\n{folder}?"
+                                "\n\nA file of the game it replaces is kept in {backup}; Remove puts it back.").format(
+                                    exe_dir=exe_dir, folder=folder, backup=folder / backend.OPTISCALER_BACKUP)) \
+                        != QMessageBox.StandardButton.Yes:
+                    return
                 written = backend.deploy_folder(folder, self.payload_dir, ini_text, second)
+                if exe_dir is not None:
+                    written += backend.install_optiscaler(exe_dir, folder, self.payload_dir)
                 location = folder
         except (HelixError, OSError) as exc:
             QMessageBox.critical(self, self.tr("Deploy failed"), str(exc))
@@ -331,10 +355,15 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(self.tr("HelixSR deployed: {0} file(s) written to {1}").format(
             len(written), location.parent if mode == MODE_REPLACE else location), 8000)
         if mode == MODE_FOLDER:
+            record = backend.optiscaler_record(folder)
+            text = (self.tr("HelixSR is in\n{folder}\nand OptiScaler, as {name}, in\n{exe_dir}\n\nStart the game and select "
+                            "DLSS. OptiScaler's menu (Insert) shows FSR HelixSR.").format(
+                                folder=folder, name=record["optiscaler"], exe_dir=record["exe_dir"])
+                    if exe_dir is not None and record else
+                    self.tr("HelixSR is in\n{folder}\n\nNow point OptiScaler at it: the OptiScaler.ini lines "
+                            "on the Deploy page (Copy button) go into the game's OptiScaler.ini.").format(folder=folder))
             QMessageBox.information(self, self.tr("HelixSR folder ready"),
-                                    self.tr("HelixSR is in\n{folder}\n\nNow point OptiScaler at it: the OptiScaler.ini lines "
-                                            "on the Deploy page (Copy button) go into the game's OptiScaler.ini.").format(
-                                                folder=folder)
+                                    text
                                     + ("\n\n" + self.tr("The second upscaler is in the folder as {0}; OptiScaler's FFX Upscaler menu "
                                                          "lists its upscalers after HelixSR.").format(backend.SECOND_UPSCALER_DLL)
                                        if second is not None else ""))
@@ -415,10 +444,6 @@ class MainWindow(QMainWindow):
                 version=helix.latest.version, published=helix.latest.published), "info")
         else:
             self.overview.show_update("", "ok")
-        app = statuses.get("app")
-        if app is not None and app.update_available:
-            self.statusBar().showMessage(self.tr("{app} {version} is available: {url}").format(
-                app=APP_NAME, version=app.latest.version, url=app.latest.url), 15000)
 
     # ------------------------------------------------------------ setup (download + build)
     def _start_setup(self, dlss_file: Path | None) -> None:

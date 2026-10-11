@@ -2,8 +2,8 @@
 
 # Simple Demo Tool
 
-A standalone Qt app for recording a BC250 Bazzite Suite installation demo on Bazzite. It is not installed by the
-suite portal and does not use the suite's shared Python environment.
+A standalone Qt app for recording a BC250 Bazzite Suite installation demo on Bazzite. The suite portal lists it
+under "Development only". It does not use the suite's shared Python environment.
 
 ## Install
 

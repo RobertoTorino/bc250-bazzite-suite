@@ -22,6 +22,7 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import urlparse
 
 SUITE = Path(__file__).resolve().parents[3]           # apps/suite-releases/bc250_suite_releases/plan.py
 TOOLS = SUITE / "tools"
@@ -311,6 +312,88 @@ def portal_minimum(root: Path, base: str, portal_version: str) -> tuple[str, str
             check_manifest.bump_level(start, portal_version) >= need:
         bumped = portal_version
     return bumped, why
+
+
+# --- Run from the checkout ------------------------------------------------------------------------------------
+
+@dataclass
+class Launch:
+    """One window of an app, as `python -m <module>` in the checkout: how an app is tried before its release."""
+    key: str                            # the app folder under apps/
+    module: str                         # "bc250_bazzite_helixsr"
+    name: str                           # its APP_NAME, else the module
+    folder: Path                        # where the module runs from: its package's parent
+    version: str
+    changes_board: bool                 # as portal/apps.toml marks the app (standalone apps: False)
+    icon: Path | None
+    args: tuple[str, ...] = ()          # after `python -m <module>`
+    url: str = ""                       # a server: the page to open once it answers
+
+    @property
+    def label(self) -> str:
+        return f"{self.name} {self.version}".strip()
+
+
+_CONSTANT = re.compile(r'^(APP_NAME|APP_ID)\s*=\s*"([^"]+)"', re.M)
+
+
+def launch_targets(root: Path = SUITE) -> list[Launch]:
+    """Every app window in the checkout: each package with a __main__.py (one or two levels below the app folder,
+    tests left out). The checkout-only apps, like this one, are not listed."""
+    try:
+        board = {e.key: e.changes_board for e in check_manifest.manifest.load(root / "portal" / "apps.toml")}
+    except (OSError, check_manifest.manifest.ManifestError):
+        board = {}
+    found = []
+    for app in sorted((root / "apps").iterdir()):
+        if not (app / "VERSION").is_file() or (app / CHECKOUT_ONLY).is_file():
+            continue
+        version = (app / "VERSION").read_text(encoding="utf-8").strip()
+        mains = sorted(p for p in (*app.glob("*/__main__.py"), *app.glob("*/*/__main__.py"))
+                       if "tests" not in p.relative_to(app).parts)
+        for main in mains:
+            package = main.parent
+            try:
+                init = (package / "__init__.py").read_text(encoding="utf-8")
+            except OSError:
+                init = ""
+            consts = dict(_CONSTANT.findall(init))
+            # The icon: the .png its __init__ names (its LOGO_PATH), else the one named after APP_ID, else the first
+            # that is not a numbered screenshot.
+            images = sorted((app / "images").glob("*.png")) + sorted((package.parent / "images").glob("*.png"))
+            named = [p for p in images if f'"{p.name}"' in init] + [p for p in images if p.stem == consts.get("APP_ID")]
+            icon = (named or [p for p in images if not p.stem[:1].isdigit()] or [None])[0]
+            found.append(Launch(app.name, package.name, consts.get("APP_NAME", package.name), package.parent, version,
+                                board.get(app.name, False), icon))
+    return found
+
+
+DOCS_ADDRESS = "127.0.0.1:8765"         # not mkdocs' default 8000, which other dev servers like to take
+
+
+def docs_target(root: Path = SUITE) -> Launch | None:
+    """The manual, served from the checkout with `mkdocs serve` (the dev venv has it): it rebuilds on every save.
+    The page is under the path of site_url, as on GitHub Pages. None without a mkdocs.yml."""
+    config = root / "mkdocs.yml"
+    try:
+        text = config.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    site = re.search(r"^site_url:\s*(\S+)", text, re.M)
+    path = urlparse(site[1]).path.strip("/") if site else ""
+    path = f"/{path}/" if path else "/"
+    icon = root / "portal" / "images" / "bc250-bazzite-suite.png"
+    return Launch("docs", "mkdocs", "Manual (local)", root, "", False, icon if icon.is_file() else None,
+                  ("serve", "--dev-addr", DOCS_ADDRESS), f"http://{DOCS_ADDRESS}{path}")
+
+
+def launch_command(root: Path, target: Launch, python: str = sys.executable) -> tuple[list[str], dict[str, str]]:
+    """The command and environment that start *target* from the checkout: the dev venv's python, with the
+    checkout's core on the path as run.sh does it (a release bundles core instead)."""
+    import os
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(filter(None, (str(root / "core"), env.get("PYTHONPATH"))))
+    return [python, "-m", target.module, *target.args], env
 
 
 # --- The commands for the owner --------------------------------------------------------------------------------

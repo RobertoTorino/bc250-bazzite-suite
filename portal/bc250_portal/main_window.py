@@ -1,46 +1,55 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The portal window: bazzite-test fixed in first place, then one card ("pill") per optional app.
+"""The portal window: bazzite-test fixed in first place, then one tile per optional app, and the development apps in
+their own section that opens on request.
 
 Install, update and uninstall run the app's own installer in a terminal window (they may ask for the sudo
 password and print what they do); the portal watches for the exit file the terminal writes and then refreshes.
 An app that changes the board (unlocks, governor, ACPI) gets a warning before it is installed or opened.
 
-Updates: a red dot marks every card whose installed app differs from the version this portal pins, the header counts
+Updates: a red dot marks every tile whose installed app differs from the version this portal pins, the header counts
 them, and at start the portal looks for a newer portal release on GitHub (which is how newer app versions arrive)."""
 
 from __future__ import annotations
 
 import shlex
 import subprocess
+from html import escape
 import tempfile
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path, PurePath
 
-from PyQt6.QtCore import QEvent, QTimer, Qt, QUrl, pyqtSignal
-from PyQt6.QtGui import QDesktopServices, QPixmap
+from PyQt6.QtCore import QEvent, QSize, QTimer, Qt, QUrl, pyqtSignal
+from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPalette, QPixmap
 from PyQt6.QtWidgets import (
-    QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea, QVBoxLayout,
-    QWidget,
+    QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea, QToolButton,
+    QVBoxLayout, QWidget,
 )
 
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import expand, launch_in_terminal
 from bc250_core.settings import open_settings, restore_geometry, save_geometry
-from bc250_core.theme import ORANGE, RED, header_font
+from bc250_core.theme import ACCENT, BLUE, GREY, ORANGE, RED, header_font
 from bc250_core.updates import ReleaseInfo, UpdateChecker, version_tuple
-from bc250_core.widgets import ClickableLogo, StatusPill, accent_button, hint_label
+from bc250_core.widgets import ClickableLogo, hint_label
 
+from . import glyphs
 from . import APP_ICONS, APP_NAME, INFO, LOGO_PATH, __version__
 from .manifest import AppEntry
 from .portal_update import PortalUpdate
 from .sources import Records, SourceError, Sources, is_installed
 
 POLL_MS = 1000
-ICON_PX = 24                    # the app icon in front of the name on its card
-TILE_MIN_WIDTH = 420            # below two of these side by side, the cards go back to one column
+ICON_PX = 128                   # the app icon on its tile (the icon files are 128 x 128)
+SYMBOL_PX = 28                  # the Install / Uninstall / Reinstall symbols beside it
+DOT_PX = 16                     # the red update dot inside the icon
+TILE_WIDTH = 216                # the tiles flow left to right, as many to a row as fit
+TILE_SPACING = 12
+DEV_FRAME_MARGIN = 24           # the development section's frame and margins take this much of the width
+DEV_OPEN_KEY = "portal/development_open"
 APP_ICON_FILES = {"dependency-checker": "portal-dependency-checker"}
+LAUNCH_ICON_FILES = {("cu-bisect", "Unlock"): "cu-unlock", ("cores-bisect", "Unlock"): "cores-unlock"}  # else the app's
 
 BOARD_WARNING = (
     "<p><b>{name} changes how your BC-250 runs</b> (clocks, voltages, unlocked units or firmware tables).</p>"
@@ -57,11 +66,11 @@ class Pending:
     tag: str
 
 
-def red_dot(tooltip: str = "") -> QLabel:
+def red_dot(size: int = 10, tooltip: str = "") -> QLabel:
     """The small red dot that marks an available update."""
     dot = QLabel()
-    dot.setFixedSize(10, 10)
-    dot.setStyleSheet(f"background:{RED}; border-radius:5px;")
+    dot.setFixedSize(size, size)
+    dot.setStyleSheet(f"background:{RED}; border-radius:{size // 2}px; border:2px solid palette(window);")
     dot.setToolTip(tooltip)
     dot.hide()
     return dot
@@ -72,8 +81,59 @@ def shell_line(folder: PurePath, commands: tuple[str, ...]) -> str:
     return " && ".join([f"cd {shlex.quote(str(folder))}", *commands])
 
 
-class AppCard(QFrame):
-    """One app as a tile: icon and name, summary, pinned tag and badges, then the state pill and its buttons."""
+def short_name(name: str) -> str:
+    """The name on a tile: the suite's prefix is understood in the portal ("BC-250 Bazzite Test": "Bazzite Test")."""
+    for prefix in ("BC-250 ", "BC250 "):
+        if name.startswith(prefix):
+            return name[len(prefix):]
+    return name
+
+
+def greyed(pixmap: QPixmap) -> QPixmap:
+    """The icon of an app that is not installed: grey and faded, with its own transparency kept."""
+    image = pixmap.toImage().convertToFormat(QImage.Format.Format_ARGB32)
+    grey = image.convertToFormat(QImage.Format.Format_Grayscale8).convertToFormat(QImage.Format.Format_ARGB32)
+    grey.setAlphaChannel(image.convertToFormat(QImage.Format.Format_Alpha8))
+    out = QPixmap(pixmap.size())
+    out.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(out)
+    painter.setOpacity(0.45)
+    painter.drawImage(0, 0, grey)
+    painter.end()
+    return out
+
+
+def placeholder_icon(name: str) -> QPixmap:
+    """For an app without an icon file: its initial on a grey tile."""
+    pixmap = QPixmap(ICON_PX, ICON_PX)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    painter.setPen(Qt.PenStyle.NoPen)
+    painter.setBrush(QColor(GREY))
+    painter.drawRoundedRect(4, 4, ICON_PX - 8, ICON_PX - 8, 20, 20)
+    font = painter.font()
+    font.setPixelSize(ICON_PX // 2)
+    font.setBold(True)
+    painter.setFont(font)
+    painter.setPen(QColor("white"))
+    painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, short_name(name)[:1].upper())
+    painter.end()
+    return pixmap
+
+
+def still_icon(pixmap: QPixmap) -> QIcon:
+    """An icon that looks the same on a disabled button: the tile chooses itself when it is greyed."""
+    icon = QIcon()
+    for mode in (QIcon.Mode.Normal, QIcon.Mode.Disabled, QIcon.Mode.Active):
+        icon.addPixmap(pixmap, mode)
+    return icon
+
+
+class AppTile(QFrame):
+    """One app, compact: its short name, its icon (click: open; hover: what it does; grey: not installed; red dot:
+    an update), "changes the board" under it when so, and beside it the symbol buttons: Install and Uninstall, or
+    only Reinstall for bazzite-test."""
 
     install_clicked = pyqtSignal(object)
     uninstall_clicked = pyqtSignal(object)
@@ -82,80 +142,132 @@ class AppCard(QFrame):
     def __init__(self, entry: AppEntry, parent: QWidget | None = None):
         super().__init__(parent)
         self.entry = entry
-        self.setObjectName("card")
-        self.setStyleSheet("QFrame#card { border:1px solid palette(mid); border-radius:8px; }")
-        text = QVBoxLayout(self)
-        text.setContentsMargins(14, 10, 14, 10)
-        title_row = QHBoxLayout()
-        title_row.setSpacing(8)
-        self.icon = QLabel()
-        icon = APP_ICONS / f"{APP_ICON_FILES.get(entry.key, entry.key)}.png"
-        if icon.is_file():
-            self.icon.setPixmap(QPixmap(str(icon)).scaled(
-                ICON_PX, ICON_PX, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
-        self.icon.setVisible(not self.icon.pixmap().isNull())
-        title_row.addWidget(self.icon)
-        title = QLabel(entry.name)
-        title.setStyleSheet(header_font() + "font-size:16px; font-weight:700;")
-        title_row.addWidget(title)
-        title_row.addStretch(1)
-        text.addLayout(title_row)
-        text.addWidget(hint_label(entry.summary))
-        badges = [entry.tag]
-        if entry.required:
-            badges.append("always installed")
-        if entry.changes_board:
-            badges.append(f"<span style='color:{ORANGE}; font-weight:700;'>changes the board</span>")
-        self.badges = QLabel(" · ".join(badges))
-        self.badges.setStyleSheet("color:palette(placeholder-text); font-size:11px;")
-        text.addWidget(self.badges)
-        text.addStretch(1)                              # tiles in one grid row share a height: buttons at the bottom
+        self.status = ""
+        self.setFixedWidth(TILE_WIDTH)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(4, 4, 4, 4)
+        outer.setSpacing(4)
+        self.title = QLabel(short_name(entry.name))
+        self.title.setWordWrap(True)
+        self.title.setStyleSheet(header_font() + "font-size:15px; font-weight:700;")
+        outer.addWidget(self.title)
         row = QHBoxLayout()
-        text.addLayout(row)
+        row.setSpacing(6)
+        outer.addLayout(row)
+        under = QVBoxLayout()
+        under.setSpacing(2)
+        row.addLayout(under)
 
-        self.dot = red_dot()
-        row.addWidget(self.dot, 0, Qt.AlignmentFlag.AlignVCenter)
-        self.pill = StatusPill()
-        row.addWidget(self.pill, 0, Qt.AlignmentFlag.AlignVCenter)
-        row.addStretch(1)
-        self.open_button = QPushButton("Open")
+        file = APP_ICONS / f"{APP_ICON_FILES.get(entry.key, entry.key)}.png"
+        loaded = QPixmap(str(file)) if file.is_file() else QPixmap()
+        self.has_icon = not loaded.isNull()
+        pixmap = loaded.scaled(ICON_PX, ICON_PX, Qt.AspectRatioMode.KeepAspectRatio,
+                               Qt.TransformationMode.SmoothTransformation) if self.has_icon \
+            else placeholder_icon(entry.name)
+        self._icons = (still_icon(pixmap), still_icon(greyed(pixmap)))      # installed, not installed
+        self.icon = QToolButton()
+        self.icon.setIconSize(QSize(ICON_PX, ICON_PX))
+        self.icon.setFixedSize(ICON_PX + 8, ICON_PX + 8)
+        self.icon.setAutoRaise(True)
+        self.icon.setStyleSheet("QToolButton { border:none; border-radius:18px; }"
+                                "QToolButton:hover:enabled { background:palette(midlight); }"
+                                "QToolButton::menu-indicator { image:none; width:0; }")
+        self.open_button = self.icon                    # clicking the icon opens the app
         if len(entry.launch) > 1:
-            menu = QMenu(self.open_button)
+            menu = QMenu(self.icon)
             for label, command in entry.launch:
-                menu.addAction(label, lambda c=command: self.open_clicked.emit(self.entry, c))
-            self.open_button.setMenu(menu)
+                action = menu.addAction(label, lambda c=command: self.open_clicked.emit(self.entry, c))
+                own = APP_ICONS / f"{LAUNCH_ICON_FILES.get((entry.key, label), '')}.png"
+                action.setIcon(QIcon(str(own)) if (entry.key, label) in LAUNCH_ICON_FILES and own.is_file()
+                               else QIcon(pixmap))
+            self.icon.setMenu(menu)
+            self.icon.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         elif entry.launch:
-            self.open_button.clicked.connect(lambda: self.open_clicked.emit(self.entry, entry.launch[0][1]))
-        self.open_button.setVisible(bool(entry.launch))
-        self.install_button = accent_button("Install")
+            self.icon.clicked.connect(lambda: self.open_clicked.emit(self.entry, entry.launch[0][1]))
+        under.addWidget(self.icon, 0, Qt.AlignmentFlag.AlignHCenter)
+        self.dot = red_dot(DOT_PX)
+        self.dot.setParent(self.icon)
+        self.dot.move(ICON_PX - DOT_PX - 4, ICON_PX - DOT_PX - 4)          # inside the icon, bottom right
+        self.board = QLabel("changes the board")
+        self.board.setStyleSheet(f"color:{ORANGE}; font-size:11px; font-weight:700;")
+        self.board.setToolTip("It changes how the board runs; the portal asks first before installing or opening it.")
+        self.board.setVisible(entry.changes_board)
+        under.addWidget(self.board, 0, Qt.AlignmentFlag.AlignHCenter)
+        self.busy_label = QLabel()
+        self.busy_label.setStyleSheet(f"color:{BLUE}; font-size:11px; font-weight:700;")
+        self.busy_label.hide()
+        under.addWidget(self.busy_label, 0, Qt.AlignmentFlag.AlignHCenter)
+        under.addStretch(1)
+
+        buttons = QVBoxLayout()
+        buttons.setSpacing(6)
+        buttons.addStretch(1)
+        self.install_button = self._symbol_button()
         self.install_button.clicked.connect(lambda: self.install_clicked.emit(self.entry))
-        self.uninstall_button = QPushButton("Uninstall")
+        self.uninstall_button = self._symbol_button()
+        self.uninstall_button.setIcon(glyphs.uninstall(self._ink()))
+        self.uninstall_button.setToolTip(f"Uninstall {entry.name}")
         self.uninstall_button.clicked.connect(lambda: self.uninstall_clicked.emit(self.entry))
         # bazzite-test is part of the suite: it goes when the portal is uninstalled (packaging/install.sh --uninstall).
         self.uninstall_button.setVisible(not entry.required)
-        for button in (self.open_button, self.install_button, self.uninstall_button):
-            row.addWidget(button, 0, Qt.AlignmentFlag.AlignVCenter)
+        buttons.addWidget(self.install_button)
+        buttons.addWidget(self.uninstall_button)
+        buttons.addStretch(1)
+        row.addLayout(buttons)
+        row.addStretch(1)
+        outer.addStretch(1)
+
+    def _symbol_button(self) -> QToolButton:
+        button = QToolButton()
+        button.setFixedSize(SYMBOL_PX + 12, SYMBOL_PX + 12)
+        button.setIconSize(QSize(SYMBOL_PX, SYMBOL_PX))
+        button.setAutoRaise(True)
+        button.setStyleSheet(f"QToolButton {{ border:1px solid transparent; border-radius:8px; }}"
+                             f"QToolButton:hover:enabled {{ border:1px solid {ACCENT}; }}")
+        return button
+
+    def _ink(self) -> str:
+        return self.palette().color(QPalette.ColorRole.ButtonText).name()
 
     def show_state(self, installed: bool, installed_tag: str, busy: str = "") -> bool:
         """Show the app's state; True when an update is available."""
         entry = self.entry
         # An update needs a known, different tag: an app installed some other way has none recorded.
-        update = installed and bool(installed_tag) and installed_tag not in (entry.tag, "local")
+        update = installed and bool(installed_tag) and bool(entry.tag) and installed_tag not in (entry.tag, "local")
         self.dot.setVisible(update)
         self.dot.setToolTip(f"Update available: {entry.tag} (installed {installed_tag})." if update else "")
         if busy:
-            self.pill.set_status(busy, "info")
+            self.status, detail = busy, busy
         elif not installed:
-            self.pill.set_status("Not installed", "neutral")
+            self.status, detail = "Not installed", "Not installed: install it with the button beside the icon."
         elif update:
-            self.pill.set_status("Update", "warn", f"Installed {installed_tag}; this portal pins {entry.tag}.")
+            self.status, detail = "Update", f"Update available: installed {installed_tag}, this portal pins {entry.tag}."
         else:
-            self.pill.set_status("Installed", "ok", f"Installed from {installed_tag}." if installed_tag else
-                                 "Installed (not by this portal, so its version is unknown).")
-        self.install_button.setText("Update" if update else ("Reinstall" if installed else "Install"))
+            self.status = "Installed"
+            detail = (f"Installed from {installed_tag}." if installed_tag not in ("", "local") else
+                      "Installed from the suite checkout." if installed_tag == "local" else
+                      "Installed (not by this portal, so its version is unknown).")
+        self.busy_label.setText(busy)
+        self.busy_label.setVisible(bool(busy))
+        self.icon.setIcon(self._icons[0 if installed else 1])
+        opens = installed and not busy and bool(entry.launch)
+        self.icon.setEnabled(opens)
+        self.icon.setCursor(Qt.CursorShape.PointingHandCursor if opens else Qt.CursorShape.ArrowCursor)
+        how = ("Click to open it." if len(entry.launch) == 1 else
+               "Click to open: " + ", ".join(label for label, _ in entry.launch) + "." if entry.launch else
+               "Not a program: nothing to open.")
+        source = entry.tag or "runs from the suite checkout"
+        self.icon.setToolTip(f"<p><b>{escape(entry.name)}</b></p><p>{escape(entry.summary)}</p>"
+                             f"<p style='color:gray;'>{escape(detail)}<br>{escape(source)}"
+                             + (f"<br>{escape(how)}" if installed else "") + "</p>")
+
+        action, ink = ("Update", RED) if update else ("Reinstall", self._ink()) if installed else \
+            ("Install", self._ink())
+        draw = glyphs.reinstall if entry.required and installed and not update else glyphs.install
+        self.install_button.setIcon(draw(ink))
+        self.install_button.setToolTip(f"{action} {entry.name}" + (f" ({entry.tag})" if entry.tag else ""))
         self.install_button.setEnabled(not busy)
         self.uninstall_button.setEnabled(installed and not busy)
-        self.open_button.setEnabled(installed and not busy)
         return update
 
 
@@ -214,21 +326,51 @@ class MainWindow(QMainWindow):
         self.source_label = hint_label(source)
         root.addWidget(self.source_label)
 
-        cards = QWidget()
-        self.grid = QGridLayout(cards)
-        self.grid.setContentsMargins(0, 0, 0, 0)
+        content = QWidget()
+        column = QVBoxLayout(content)
+        column.setContentsMargins(0, 0, 0, 0)
+        self.grid = self._tile_grid()
+        column.addLayout(self.grid)
         self.columns = 0
-        self.cards: dict[str, AppCard] = {}
+        self.cards: dict[str, AppTile] = {}
         for entry in entries:
-            card = AppCard(entry)
+            card = AppTile(entry)
             card.install_clicked.connect(self.install)
             card.uninstall_clicked.connect(self.uninstall)
             card.open_clicked.connect(self.open_app)
             self.cards[entry.key] = card
+
+        # Development only: tools for working on the suite, not for using the board. Closed until asked for, and
+        # set apart by a dashed frame.
+        self.dev_toggle = QToolButton()
+        self.dev_toggle.setText("Development only")
+        self.dev_toggle.setCheckable(True)
+        self.dev_toggle.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.dev_toggle.setAutoRaise(True)
+        self.dev_toggle.setStyleSheet("color:palette(placeholder-text); font-weight:700;")
+        self.dev_toggle.setToolTip("Tools for working on the suite itself. Not needed to use the board.")
+        self.dev_toggle.toggled.connect(self._show_development)
+        column.addSpacing(10)
+        column.addWidget(self.dev_toggle, 0, Qt.AlignmentFlag.AlignLeft)
+        self.dev_box = QFrame()
+        self.dev_box.setObjectName("dev")
+        self.dev_box.setStyleSheet("QFrame#dev { border:1px dashed palette(mid); border-radius:8px; }")
+        dev_column = QVBoxLayout(self.dev_box)
+        dev_column.addWidget(hint_label("For working on the BC250 Bazzite Suite: recording demos, checking its "
+                                        "dependencies, making releases. You do not need these to use the board."))
+        self.dev_grid = self._tile_grid()
+        dev_column.addLayout(self.dev_grid)
+        column.addWidget(self.dev_box)
+        column.addStretch(1)
+        self.has_development = any(e.development for e in entries)
+        self.dev_toggle.setVisible(self.has_development)
+        self.dev_toggle.setChecked(self.settings.value(DEV_OPEN_KEY, False, type=bool))
+        self._show_development(self.dev_toggle.isChecked())
+
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setWidget(cards)
+        scroll.setWidget(content)
         self.scroll = scroll
         scroll.installEventFilter(self)                 # reflow when the scroll area itself gets its new width
         root.addWidget(scroll, 1)
@@ -246,27 +388,39 @@ class MainWindow(QMainWindow):
             self.portal_checker.start(portal_check)
 
     # ------------------------------------------------------------------------------------------- layout
+    @staticmethod
+    def _tile_grid() -> QGridLayout:
+        grid = QGridLayout()
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setHorizontalSpacing(TILE_SPACING)
+        grid.setVerticalSpacing(TILE_SPACING)
+        grid.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        return grid
+
     def column_count(self, width: int) -> int:
-        spacing = self.grid.horizontalSpacing()
-        return 2 if width >= 2 * TILE_MIN_WIDTH + max(spacing, 0) else 1
+        return max(1, (width + TILE_SPACING) // (TILE_WIDTH + TILE_SPACING))
 
     def reflow(self) -> None:
-        """The cards in file order (bazzite-test first), left to right and then down, in as many columns as fit."""
+        """The tiles in file order (bazzite-test first), left to right and then down, in as many columns as fit;
+        the development apps likewise in their own section."""
         # The scroll area's width less a scroll bar, whether one shows or not: a bar that comes and goes cannot
-        # switch the layout back and forth.
-        columns = self.column_count(self.scroll.width() - self.scroll.verticalScrollBar().sizeHint().width())
+        # switch the layout back and forth. The development section is the narrower (its frame), so it decides.
+        width = self.scroll.width() - self.scroll.verticalScrollBar().sizeHint().width() - DEV_FRAME_MARGIN
+        columns = self.column_count(width)
         if columns == self.columns:
             return
         self.columns = columns
-        while self.grid.count():
-            self.grid.takeAt(0)
-        for i, card in enumerate(self.cards.values()):
-            self.grid.addWidget(card, i // columns, i % columns)
-        for c in range(2):
-            self.grid.setColumnStretch(c, 1 if c < columns else 0)
-        rows = (len(self.cards) + columns - 1) // columns
-        for r in range(len(self.cards) + 1):
-            self.grid.setRowStretch(r, 1 if r == rows else 0)     # an empty last row takes the spare height
+        for grid, tiles in ((self.grid, [c for c in self.cards.values() if not c.entry.development]),
+                            (self.dev_grid, [c for c in self.cards.values() if c.entry.development])):
+            while grid.count():
+                grid.takeAt(0)
+            for i, tile in enumerate(tiles):
+                grid.addWidget(tile, i // columns, i % columns)
+
+    def _show_development(self, show: bool) -> None:
+        self.dev_toggle.setArrowType(Qt.ArrowType.DownArrow if show else Qt.ArrowType.RightArrow)
+        self.dev_box.setVisible(show and self.has_development)
+        self.settings.setValue(DEV_OPEN_KEY, show)
 
     def eventFilter(self, watched, event) -> bool:
         if watched is self.scroll and event.type() == QEvent.Type.Resize:
@@ -292,7 +446,7 @@ class MainWindow(QMainWindow):
                 card.uninstall_button.setEnabled(False)
         self.updates_label.setText(f"\u25cf {updates} update{'s' if updates != 1 else ''}")
         self.updates_label.setToolTip("Apps whose installed version differs from the one this portal pins; "
-                                      "each has a red dot and an Update button.")
+                                      "each has a red dot in its icon, and its Install button updates it.")
         self.updates_label.setVisible(updates > 0)
 
     def _portal_checked(self, result: object) -> None:

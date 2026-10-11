@@ -1,3 +1,15 @@
+Changelog: 11-10-2026 17:17:19
+
+Release 0.1.1.
+
+Changelog: 11-10-2026 17:01:09
+
+A new app icon (images/portal-dependency-checker.png, 512 px, by the owner); the portal tile uses its 128 px version.
+
+Changelog: 11-10-2026 16:32:48
+
+Listed in the portal under "Development only" (portal/apps.toml, development = true); the .standalone marker is gone.
+
 Changelog: 11-10-2026 11:04:45
 
 Release 0.1.0. first release

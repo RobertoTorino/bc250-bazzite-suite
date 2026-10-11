@@ -38,6 +38,15 @@ installed app.
 | ![](assets/apps/memory-manager.png){ .app-icon } [BC-250 Memory Manager](apps/memory-manager.md) | The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it. **Changes the board.** |
 | ![](assets/apps/ace-queues.png){ .app-icon } [BC-250 ACE Queues](apps/ace-queues.md) | Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use. **Changes the board.** |
 
+**Development only**: tools for working on the suite, in their own section of the [portal](portal.md). You do not
+need them to use the board.
+
+| App | What it does |
+|---|---|
+| ![](assets/apps/demo-tool.png){ .app-icon } [Simple Demo Tool](other-tools/simple-demo-tool.md) | Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite. |
+| ![](assets/apps/portal-dependency-checker.png){ .app-icon } [Portal dependency checker](apps/dependency-checker.md) | The suite's Python packages and external tools, which apps use them, and whether newer ones exist. |
+| ![](assets/apps/suite-releases.png){ .app-icon } [BC250 Suite Releases](portal.md#the-release-front-end) | The release front end: versions, pins and the board checks of a release. Runs from a checkout of this repository. |
+
 Apps that **change the board** (unlocks, the GPU governor, GPU overclocking, the ACPI override, the VRAM split,
 a patched GPU driver) change how the BC-250 runs. They are software-only and can be undone; the portal asks before it installs or opens them. Read an
 app's chapter before you use it.

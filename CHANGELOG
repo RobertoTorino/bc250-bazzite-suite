@@ -1,3 +1,24 @@
+Changelog: 11-10-2026 17:15:03
+
+In the manual's header, the search field and the repository move left: on screens with the table of contents
+on the right, the repository ends just before that column starts (docs/stylesheets/suite.css).
+
+Changelog: 11-10-2026 17:09:03
+
+The manual's header shows the full repository name (RobertoTorino/bc250-bazzite-suite) instead of cutting it
+off: docs/stylesheets/suite.css lets its box grow to fit.
+
+Changelog: 11-10-2026 17:01:09
+
+The README and the manual's start page list the development tools (Simple Demo Tool, Portal dependency checker, BC250
+Suite Releases) under "Development only", as the portal does.
+
+Changelog: 11-10-2026 16:32:48
+
+tools/check_manifest.py also checks the new [checkout.<name>] tables of portal/apps.toml: they list exactly the app
+folders with a .checkout-only marker. The manual (portal, Simple Demo Tool, Portal dependency checker) and CLAUDE.md
+describe the portal's compact tiles and its "Development only" section.
+
 Changelog: 11-10-2026 09:29:29
 
 Move Simple Demo Tool's runnable package into apps/demo-tool/simple-demo-tool, using apps/demo-tool as its

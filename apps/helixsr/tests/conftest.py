@@ -17,6 +17,13 @@ FAKE_GAME_DLL = b"MZ-amd-original-dll"
 FAKE_README = "# HelixSR\n\n**Version 1.2.0** - test build\n"
 
 
+def embedded_dll(dll: bytes = FAKE_DLL) -> bytes:
+    """A HelixSR 1.8+ DLL after its setup: the network appended, with the footer HelixSR's setup writes."""
+    import struct
+    weights, pak = b"weights", b"kernels"
+    return dll + weights + pak + b"HXSRNET1" + struct.pack("<QQQ", len(weights), len(pak), 1)
+
+
 @pytest.fixture(scope="session")
 def qapp():
     from PyQt6.QtWidgets import QApplication

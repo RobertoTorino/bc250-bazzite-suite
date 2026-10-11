@@ -275,32 +275,22 @@ def test_setup_worker_release_error(qapp, tmp_path):
     assert not outcome.ok and "no connection" in outcome.message
 
 
-def test_latest_release_with_a_tag_prefix_picks_this_apps_newest():
-    releases = [{"tag_name": "governor-v0.9.0", "html_url": "g"},
-                {"tag_name": "helixsr-v0.2.0", "html_url": "h2", "published_at": "2026-11-02T10:00:00Z"},
-                {"tag_name": "helixsr-v0.10.0", "html_url": "h10", "prerelease": True},
-                {"tag_name": "helixsr-v0.1.5", "html_url": "h15"}]
-    with mock.patch.object(acquire, "_get_json", return_value=releases):
-        info = latest_release("api", "page", "helixsr-v")
-    assert (info.version, info.tag, info.url, info.published) == ("0.2.0", "helixsr-v0.2.0", "h2", "2026-11-02")
-
-
-def test_latest_release_with_a_tag_prefix_and_none_released():
-    with mock.patch.object(acquire, "_get_json", return_value=[{"tag_name": "portal-v0.1.0"}]):
-        info = latest_release("api", "page", "helixsr-v")
-    assert info.version == "" and "helixsr-v*" in info.error and info.url == "page"
-
-
-def test_app_check_uses_the_suite_repository():
-    assert acquire.APP_API.startswith("https://api.github.com/repos/RobertoTorino/bc250-bazzite-suite/releases")
-    assert acquire.APP_TAG_PREFIX == "helixsr-v"
+def test_update_check_covers_only_helixsr():
+    with mock.patch.object(acquire, "latest_release", return_value=ReleaseInfo("1.8.0", "v1.8.0")) as lookup:
+        statuses = acquire.check_updates("1.7.0")
+    assert list(statuses) == ["helixsr"] and statuses["helixsr"].update_available       # the portal updates this app
+    assert lookup.call_args.args[0] == acquire.HELIXSR_API
 
 
 # HelixSR 1.7's script ends with its game installer, which asks per Steam game and writes manual-install/.
 INSTALLER_SCRIPT = GOOD_SCRIPT + """
-if read -r answer; then echo "[fake-setup] answered: $answer"; else echo "[fake-setup] no input"; fi
-mkdir -p "$HERE/manual-install/HelixSR"
+echo "[helixsr-setup] looking for games with DLSS, XeSS or FSR ..."
+echo "  f = FSR   o = OptiScaler   n = skip"
+printf 'GodOfWar: install? [o/n] '
+if read -r answer; then echo "answered: $answer" > "$HERE/stdin.txt"; else echo "no input" > "$HERE/stdin.txt"; fi
+mkdir -p "$HERE/manual-install/HelixSR" "$HERE/fsr3-drop-in"
 echo weights > "$HERE/manual-install/HelixSR/helixsr_weights.bin"
+cp "$HERE/amd_fidelityfx_dx12.dll" "$HERE/fsr3-drop-in/"
 """
 
 
@@ -309,8 +299,11 @@ def test_setup_worker_gives_the_script_no_input(qapp, tmp_path):
     with mock.patch.object(acquire, "is_immutable_system", return_value=True):
         outcome, log = run_worker(qapp, SetupRequest(release, tmp_path / "work", tmp_path / "data" / "HelixSR"))
     assert outcome.ok, outcome.message
-    assert "[fake-setup] no input" in log
-    assert not (outcome.release_dir / acquire.MANUAL_INSTALL).exists()
+    assert (outcome.release_dir / "stdin.txt").read_text() == "no input\n"
+    assert not any("GodOfWar" in line for line in log)                                     # the questions are hidden
+    assert any("game installer is skipped" in line for line in log)
+    assert "[fake-setup] args: --yes --dlss " + str(tmp_path / "work" / "nvngx_dlss.dll") in log    # the build is shown
+    assert not any((outcome.release_dir / name).exists() for name in acquire.UNUSED_OUTPUT)
     assert (outcome.release_dir / backend.WEIGHTS).is_file()
 
 
@@ -320,3 +313,23 @@ def test_setup_worker_fallback_looks_up_the_pinned_tag(qapp, tmp_path):
         outcome, _ = run_worker(qapp, SetupRequest(None, tmp_path / "work", tmp_path / "data", fallback=True))
     assert lookup.call_args.args[0] == "https://api.github.com/repos/lonewolf0622/HelixSR/releases/tags/v1.4.3"
     assert not outcome.ok and "1.4.3" in outcome.message and "404" in outcome.message
+
+
+# HelixSR 1.8's setup appends the network to its DLL and leaves no separate network files.
+ONE_FILE_SCRIPT = """
+HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+printf 'weightskernels' >> "$HERE/amd_fidelityfx_dx12.dll"
+printf 'HXSRNET1' >> "$HERE/amd_fidelityfx_dx12.dll"
+printf '\\x07\\0\\0\\0\\0\\0\\0\\0\\x07\\0\\0\\0\\0\\0\\0\\0\\x01\\0\\0\\0\\0\\0\\0\\0' >> "$HERE/amd_fidelityfx_dx12.dll"
+"""
+
+
+def test_setup_worker_accepts_a_one_file_dll(qapp, tmp_path):
+    release, _ = prepared(tmp_path, ONE_FILE_SCRIPT)
+    with mock.patch.object(acquire, "is_immutable_system", return_value=True):
+        outcome, log = run_worker(qapp, SetupRequest(release, tmp_path / "work", tmp_path / "data" / "HelixSR"))
+    assert outcome.ok, outcome.message
+    rd = outcome.release_dir
+    assert backend.network_embedded(rd / backend.HELIXSR_DLL) and not (rd / backend.WEIGHTS).exists()
+    assert backend.import_payload(rd, tmp_path / "payload").missing == []
+    assert backend.payload_status(tmp_path / "payload").ready

@@ -1,3 +1,69 @@
+Changelog: 11-10-2026 17:17:19
+
+Release 0.2.1.
+
+Changelog: 11-10-2026 16:03:59
+
+Deploy page: the two settings files are explained on the page, not only in a tooltip. Under the OptiScaler.ini
+lines: what OptiScaler.ini is (OptiScaler's settings file next to the game's .exe), what the lines do
+(Dx12Upscaler=fsr31 hands the game's upscaling to an FSR 3.1 DLL, the two Path lines say that DLL is HelixSR in the
+folder) and what Copy OptiScaler.ini lines does (the clipboard, to paste in place of the lines with the same names);
+the button has a tooltip too. Under "Write helixsr.ini": what helixsr.ini is (HelixSR's own settings file next to its
+DLL) and what ticked and unticked do. All languages updated.
+
+Changelog: 11-10-2026 15:17:42
+
+Deploy page, OptiScaler folder: the app now also installs OptiScaler, for games without a separate FSR 3.1 DLL (God of
+War, DLSS / XeSS / FSR 2 games). HelixSR 1.7 and newer ship the official OptiScaler (0.9.4) with fakenvapi; importing
+such a release copies its optiscaler folder into the payload. "Install OptiScaler next to the game's .exe" is on when
+the payload has it, and Scan fills in the .exe folder (one that already has an OptiScaler.ini, else the folder of the
+largest .exe that is no launcher, installer or crash handler; an Unreal *-Win64-Shipping.exe wins). Deploy asks
+first, then puts OptiScaler there as dxgi.dll (or under the name of an OptiScaler the game already has), adds
+fakenvapi where the game has none, and sets Dx12Upscaler=fsr31, FfxDx12Path and FfxDx12SRPath in its OptiScaler.ini,
+keeping the file's comments and line endings. A file of the game it replaces and an OptiScaler.ini the game already
+had are kept in the HelixSR folder's backup, with a record (bc250-optiscaler.json); Remove, on the Deploy page or the
+Overview, puts them back and deletes what it added. Unticked, the page shows the OptiScaler.ini lines to paste, as
+before. The same steps as HelixSR's own installer, for the app's folder. Help and the manual describe it, including
+WINEDLLOVERRIDES="dxgi=n,b" for a game whose OptiScaler menu does not appear; all languages updated. Tests: import,
+finding the .exe folder, install and remove (also over an OptiScaler the game already had), the refusals and the
+Deploy page.
+
+Changelog: 11-10-2026 15:10:06
+
+Deploy page: in a window too small for the whole page, Qt squeezed the hints to their first line and the
+OptiScaler.ini lines to one row. The Deploy and helixsr.ini pages now scroll instead; the box with the OptiScaler.ini
+lines always shows all of them, and the DLL table starts smaller (it still grows with the window).
+
+Changelog: 11-10-2026 14:06:06
+
+Setup page: the output of HelixSR's own game installer, which runs after the build and asks about each Steam game
+("GodOfWar: install? [o/d/n]"), is no longer shown, so the output no longer ends on a question nobody answers. From
+its first line ("looking for games with DLSS, XeSS or FSR") on, the page says that the network is built and that
+Deploy puts HelixSR into a game. Everything the build prints before that is shown as before.
+
+Changelog: 11-10-2026 13:08:28
+
+HelixSR 1.8.0: its setup builds the network into HelixSR's DLL (an HXSRNET1 footer at the end of the file) and removes
+helixsr_weights.bin and helixsr_kernels.pak, so Download and build failed with "The setup finished but did not
+produce helixsr_weights.bin, helixsr_kernels.pak". A DLL that carries the network now counts as a complete payload:
+the build check, import, deploy (both modes), the deployment state and Remove accept it. Deploy copies only the DLL
+and the ini, and removes network files an older release left next to it; importing such a DLL removes the payload's
+old network files. The Overview shows the weights and kernels as "In the DLL". The fsr3-drop-in folder the 1.8 setup
+writes is deleted after the build, like manual-install.
+
+helixsr.ini page: HelixSR 1.8 reads sharpening again, through Sharpener (off, nvidia, rcas), Sharpness and
+UseGameSlider instead of Mode. The page edits the two new keys and writes them only when they are set, so files for
+older versions stay as they were. It greys out per field what the payload's version does not read: Sharpener and
+UseGameSlider before 1.8, all of [Sharpening] and [ModelE] Network in 1.7, Mode and Network from 1.8 on.
+
+The Setup page no longer checks this app's own release ("This app" with its release page link), and the status bar
+no longer announces one: the app is updated through the BC250 Bazzite Suite portal. latest_release() lost its
+tag-prefix search, which only that check used.
+
+Help and the manual describe the one-file DLL, the new sharpening keys and the portal; all languages updated. Tests:
+a setup that builds a one-file DLL, import and deploy of one, the 1.8 keys in the ini and the update check covering
+only HelixSR.
+
 Changelog: 10-10-2026 20:56:48
 
 Release 0.2.0. Update to latest HelixSR release

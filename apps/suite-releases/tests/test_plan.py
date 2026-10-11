@@ -342,3 +342,129 @@ def test_window_check_buttons(window, repo):
     assert launched == [f"{script} local", f"{script} release"]
     assert "published portal-v0.1.0 release" in page.output.toPlainText()
     assert "portal-v0.1.0" in page.release_button.toolTip()
+
+
+# --- Run from the checkout ------------------------------------------------------------------------------------------
+
+def add_windows(root: Path) -> None:
+    """alpha and beta get a window each, beta changes the board, the standalone app keeps its package a level deeper
+    (like demo-tool), and the checkout-only app has one too (like this app)."""
+    for key in ("alpha", "beta"):
+        write(root / f"apps/{key}/{key}/__main__.py", "print('hi')\n")
+    write(root / "apps/alpha/alpha/__init__.py",
+          'APP_NAME = "Alpha App"\nAPP_ID = "alpha-app"\nLOGO = ROOT / "images" / "alpha-logo.png"\n')
+    for name in ("01-screenshot.png", "alpha-app.png", "alpha-logo.png"):
+        write(root / f"apps/alpha/images/{name}", "png")
+    write(root / "apps/alpha/tests/fake/__main__.py", "")                         # tests are never listed
+    write(root / "apps/standalone/tool-dir/tool/__main__.py", "")
+    write(root / "apps/releases/rel/__main__.py", "")
+    toml = root / "portal/apps.toml"
+    text = toml.read_text().replace('[apps.beta]\nname = "beta"\nsummary = "s"\ntag = "beta-v0.1.0"\nsha256 = ""\n'
+                                    'required = false\nchanges_board = false',
+                                    '[apps.beta]\nname = "beta"\nsummary = "s"\ntag = "beta-v0.1.0"\nsha256 = ""\n'
+                                    'required = false\nchanges_board = true')
+    assert "changes_board = true" in text
+    toml.write_text(text)
+
+
+def test_launch_targets(repo):
+    add_windows(repo)
+    targets = {t.module: t for t in rp.launch_targets(repo)}
+    assert sorted(targets) == ["alpha", "beta", "tool"]                        # not the checkout-only app, not tests
+    alpha, beta, tool = targets["alpha"], targets["beta"], targets["tool"]
+    assert (alpha.name, alpha.label, alpha.folder) == ("Alpha App", "Alpha App 0.1.0", repo / "apps/alpha")
+    assert alpha.icon == repo / "apps/alpha/images/alpha-logo.png"            # the one its __init__ names
+    assert beta.changes_board and not alpha.changes_board and beta.name == "beta" and beta.icon is None
+    assert tool.key == "standalone" and tool.folder == repo / "apps/standalone/tool-dir"
+    command, env = rp.launch_command(repo, alpha, python="/venv/python")
+    assert command == ["/venv/python", "-m", "alpha"]
+    assert env["PYTHONPATH"].split(os.pathsep)[0] == str(repo / "core")
+
+
+def test_docs_target(repo):
+    assert rp.docs_target(repo) is None                                       # no mkdocs.yml
+    write(repo / "mkdocs.yml", "site_name: S\nsite_url: https://example.invalid/suite/\n")
+    docs = rp.docs_target(repo)
+    assert (docs.module, docs.folder, docs.label) == ("mkdocs", repo, "Manual (local)")
+    assert docs.url == f"http://{rp.DOCS_ADDRESS}/suite/"                      # the path of site_url
+    command, _ = rp.launch_command(repo, docs, python="/venv/python")
+    assert command == ["/venv/python", "-m", "mkdocs", "serve", "--dev-addr", rp.DOCS_ADDRESS]
+    write(repo / "mkdocs.yml", "site_name: S\n")
+    assert rp.docs_target(repo).url == f"http://{rp.DOCS_ADDRESS}/"
+
+
+def test_window_serves_the_manual(window, repo, tmp_path, monkeypatch):
+    from bc250_suite_releases import main_window
+    write(repo / "mkdocs.yml", "site_name: S\nsite_url: https://example.invalid/suite/\n")
+    monkeypatch.setattr(main_window, "LOG_DIR", tmp_path / "logs")
+    started, opened, up = [], [], [False]
+    monkeypatch.setattr(main_window, "answers", lambda url: up[0])
+    monkeypatch.setattr(main_window, "open_url", opened.append)
+    window.start = lambda command, env, cwd, log: started.append((command, cwd)) or FakeProcess()
+    window.reload()
+    page = window.run_page
+    items = [page.apps.item(i) for i in range(page.apps.count())]
+    docs = items[-1]                                                          # after the apps
+    assert docs.text() == "Manual (local)"
+    page.apps.itemClicked.emit(docs)
+    assert started == [([sys.executable, "-m", "mkdocs", "serve", "--dev-addr", rp.DOCS_ADDRESS], repo)]
+    page.poll()
+    assert opened == []                                                       # not up yet
+    up[0] = True
+    page.poll()
+    page.poll()
+    assert opened == [f"http://{rp.DOCS_ADDRESS}/suite/"]                       # once
+    page.apps.itemClicked.emit(docs)                                          # already up: only the page again
+    assert len(started) == 1 and len(opened) == 2
+
+
+class FakeProcess:
+    def __init__(self, code=None):
+        self.code = code
+
+    def poll(self):
+        return self.code
+
+
+def test_window_runs_an_app_from_the_checkout(window, repo, tmp_path, monkeypatch):
+    from PyQt6.QtWidgets import QMessageBox
+    from bc250_suite_releases import main_window
+    add_windows(repo)
+    monkeypatch.setattr(main_window, "LOG_DIR", tmp_path / "logs")
+    started = []
+    window.start = lambda command, env, cwd, log: started.append((command, cwd, log)) or FakeProcess()
+    window.reload()
+    page = window.run_page
+    items = {page.apps.item(i).data(0x0100).module: page.apps.item(i) for i in range(page.apps.count())}
+    assert sorted(items) == ["alpha", "beta", "tool"] and "changes the board" in items["beta"].text()
+    page.apps.itemClicked.emit(items["alpha"])
+    assert started == [([sys.executable, "-m", "alpha"], repo / "apps/alpha", tmp_path / "logs/alpha.log")]
+    with mock_question(QMessageBox.StandardButton.No) as asked:
+        page.apps.itemClicked.emit(items["beta"])                              # a board app asks first
+    assert asked.called and len(started) == 1
+    with mock_question(QMessageBox.StandardButton.Yes):
+        page.apps.itemClicked.emit(items["beta"])
+    assert len(started) == 2 and page.timer.isActive()
+    # alpha stops with an error: the end of its log shows; beta closes normally
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs/alpha.log").write_text("Traceback (most recent call last):\nImportError: no module x\n")
+    page.running[0][1].code, page.running[1][1].code = 1, 0
+    page.poll()
+    out = page.output.toPlainText()
+    assert "Alpha App 0.1.0 stopped with exit code 1" in out and "ImportError: no module x" in out
+    assert "beta 0.1.0 closed." in out and not page.running and not page.timer.isActive()
+
+
+def mock_question(answer):
+    from unittest import mock
+    from PyQt6.QtWidgets import QMessageBox
+    return mock.patch.object(QMessageBox, "question", return_value=answer)
+
+
+def test_start_app_keeps_the_output_in_a_log(tmp_path):
+    from bc250_suite_releases import main_window
+    log = tmp_path / "logs" / "x.log"
+    process = main_window.start_app([sys.executable, "-c", "print('hello'); raise SystemExit(3)"], dict(os.environ),
+                                    tmp_path, log)
+    assert process.wait(30) == 3
+    assert main_window.log_tail(log) == "hello"

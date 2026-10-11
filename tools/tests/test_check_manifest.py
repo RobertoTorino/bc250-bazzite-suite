@@ -90,4 +90,21 @@ def test_app_moving_back_is_refused():
 def test_shipped_manifest_passes_without_required_tags():
     entries = cm.manifest.load(cm.SUITE / cm.MANIFEST)
     assert cm.check_entries(entries, require_tags=False) == []
-    assert "demo-tool" not in {entry.key for entry in entries}
+    assert {"demo-tool", "dependency-checker"} <= {entry.key for entry in entries if entry.development}
+    checkout = cm.manifest.load_checkout(cm.SUITE / cm.MANIFEST)
+    assert cm.check_checkout_entries(checkout) == []
+    assert [entry.key for entry in checkout] == ["suite-releases"]
+
+
+def test_checkout_tables_match_the_checkout_only_folders():
+    entry = cm.manifest.AppEntry(key="governor", name="Gov", summary="s", tag="", checkout_only=True)
+    errors = cm.check_checkout_entries([entry])
+    assert any("suite-releases has .checkout-only" in e for e in errors)
+    assert any("[checkout.governor]: apps/governor has no .checkout-only" in e for e in errors)
+
+
+def test_checkout_table_change_needs_a_patch_bump():
+    table = ('\n[checkout.suite-releases]\nname = "SR"\nsummary = "s"\ninstall = ["bash install.sh"]\n'
+             'uninstall = ["bash install.sh --uninstall"]\ndetect = ["~/.local/bin/r"]\n')
+    assert errors(BASE + table, "0.1.0", "0.1.0")
+    assert errors(BASE + table, "0.1.0", "0.1.1") == []

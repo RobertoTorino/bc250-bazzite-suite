@@ -67,17 +67,21 @@ def help_html(payload_dir: str, deployments_file: str,
             ' and let <b>Find in Steam</b> locate it (checksums are compared, only the exact build HelixSR pins '
             "is offered): that skips NVIDIA's download. The downloads are not what takes time; the build is.</p>"),
         QCoreApplication.translate("help",
-            '<p><b>Releases</b> compares the payload with the latest HelixSR release and this app with its latest'
-            ' release on GitHub, at start (one small request each, can be turned off) or with <b>Check now</b>. A'
-            ' newer HelixSR shows on the Overview too; <b>Download and build</b> again updates the payload, then '
-            'deploy again per game (the Overview marks them <i>Older build</i>).</p>'),
+            '<p><b>Releases</b> compares the payload with the latest HelixSR release on GitHub, at start (one small '
+            'request, can be turned off) or with <b>Check now</b>. A newer HelixSR shows on the Overview too; '
+            '<b>Download and build</b> again updates the payload, then deploy again per game (the Overview marks '
+            'them <i>Older build</i>). This app itself is updated through the BC250 Bazzite Suite portal.</p>'),
         QCoreApplication.translate("help",
             '<p><b>Version</b> picks what <b>Download and build</b> gets: the latest HelixSR release, or HelixSR '
             "{fallback}, the version HelixSR's developer recommends when the latest one does not work for you (please"
             ' then open an issue at <a href="{helixsr_url}/issues">HelixSR</a> with the <code>helixsr.log</code> from '
             'the game folder). Switching builds the network files for that version and replaces the payload; deploy '
-            'again per game afterwards (the Overview marks them <i>Older build</i> or <i>Newer build</i>). From '
-            'HelixSR 1.7.0 on, the sharpening and network settings of <code>{ini}</code> are ignored.</p>'),
+            'again per game afterwards (the Overview marks them <i>Older build</i> or <i>Newer build</i>). The '
+            "<code>{ini}</code> page greys out the settings the payload's HelixSR version does not read.</p>"),
+        QCoreApplication.translate("help",
+            "<p>From HelixSR 1.8.0 on, the setup builds the network into HelixSR's DLL: there are no separate "
+            '<code>{weights}</code> and <code>{kernels}</code>, and Deploy copies only the DLL (and the ini). '
+            'Network files left next to it by an older release are removed.</p>'),
         QCoreApplication.translate("help",
             '<h2>Overview</h2>'),
         QCoreApplication.translate("help",
@@ -109,6 +113,15 @@ def help_html(payload_dir: str, deployments_file: str,
             'OptiScaler for the game as its documentation describes, paste the lines, and pick <b>FSR HelixSR '
             "(3.1.5)</b> in OptiScaler's FFX Upscaler menu.</p>"),
         QCoreApplication.translate("help",
+            "<p><b>Install OptiScaler next to the game's .exe</b> (on when the payload has OptiScaler: HelixSR 1.7 and "
+            'newer ship the official one): the app does that part too. Scan finds the folder of the game\'s .exe; '
+            "OptiScaler goes there as <code>dxgi.dll</code> (or under the name of an OptiScaler the game already "
+            'has) with <code>fakenvapi</code>, and its <code>OptiScaler.ini</code> points at the HelixSR folder. '
+            "Start the game and select <b>DLSS</b>. A file of the game it replaces, and an <code>OptiScaler.ini</code> "
+            "the game already had, are kept in the HelixSR folder's <code>backup</code>; <b>Remove</b> puts them "
+            'back. If OptiScaler\'s menu (Insert) does not appear in a game, add <code>WINEDLLOVERRIDES="dxgi=n,b" '
+            '%command%</code> to its launch options in Steam.</p>'),
+        QCoreApplication.translate("help",
             "<p><b>Second upscaler</b> (optional, OptiScaler folder only): pick another FidelityFX upscaler DLL, for "
             "example AMD's <code>amd_fidelityfx_upscaler_dx12.dll</code> with FSR 4. It is copied into the folder as "
             "<code>{second}</code> and <code>UpscalerDll</code> in its helixsr.ini points at it, so OptiScaler's FFX "
@@ -125,7 +138,13 @@ def help_html(payload_dir: str, deployments_file: str,
             "<tr><td>[Sharpening]</td><td>Mode</td><td>off</td><td><i>off</i> (as DLSS), <i>game</i> = the game's"
             ' FSR sharpness (or Sharpness if it sends none), <i>override</i> = always Sharpness</td></tr>'),
         QCoreApplication.translate("help",
+            '<tr><td>[Sharpening]</td><td>Sharpener</td><td>off</td><td>HelixSR 1.8+: <i>off</i> (as DLSS 4), '
+            "<i>nvidia</i> = NVIDIA's sharpening filter, <i>rcas</i> = AMD FSR's</td></tr>"),
+        QCoreApplication.translate("help",
             '<tr><td>[Sharpening]</td><td>Sharpness</td><td>0.3</td><td>0-1, FidelityFX RCAS scale</td></tr>'),
+        QCoreApplication.translate("help",
+            "<tr><td>[Sharpening]</td><td>UseGameSlider</td><td>false</td><td>HelixSR 1.8+: follow the game's "
+            'sharpness slider when it has one</td></tr>'),
         QCoreApplication.translate("help",
             '<tr><td>[Sharpening]</td><td>MotionAdaptive, MotionThreshold, MotionLimit, '
             'MotionReduction</td><td>true, 2, 16, 0.6</td><td>Less sharpening on fast-moving pixels: where the '
