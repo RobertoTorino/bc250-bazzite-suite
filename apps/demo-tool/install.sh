@@ -71,13 +71,13 @@ exec "$VENV/bin/python" -m simple_demo_tool "\$@"
 EOF
 chmod 755 "$LAUNCHER"
 
-DESKTOP_CONTENT="[Desktop Entry]"
+DESKTOP_CONTENT="[Desktop Entry]
 Type=Application
 Version=1.0
 Name=Simple Demo Tool
 GenericName=Screen recording helper
 Comment=Prepare and record a portal installation demo
-Exec="$LAUNCHER"
+Exec=$LAUNCHER
 Icon=$APP_DIR/images/simple-demo-tool.png
 Terminal=false
 Categories=Utility;AudioVideo;

@@ -1,3 +1,7 @@
+Changelog: 11-10-2026 12:00:43
+
+Release 0.9.3. Pins bazzite-test-v0.1.2, system-overlay-v0.1.2, bios-reader-v0.1.2, ace-queues-v0.1.3, memory-manager-v0.1.3. updates for: ace-queues, bazzite-test, bios-reader, memory-manager, system-overlay
+
 Changelog: 11-10-2026 09:27:05
 
 Stop requiring dependencies.toml during portal installation; the dependency catalog now belongs to the separate

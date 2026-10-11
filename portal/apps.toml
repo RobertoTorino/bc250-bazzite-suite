@@ -21,8 +21,8 @@
 [apps.bazzite-test]
 name = "BC-250 Bazzite Test"
 summary = "Read-only diagnostics, stress test and benchmarks. Always installed."
-tag = "bazzite-test-v0.1.1"
-sha256 = "33843437dc93cd7922d63e45e137ad7e7eca5e44aece2bb02bf8d8b083158c81"
+tag = "bazzite-test-v0.1.2"
+sha256 = "4df9060a0c25903623535a632757b9cd6667dbc4e3cee2d6f1b39b02db9ab7fc"
 required = true
 changes_board = false
 install = ["bash install.sh"]
@@ -105,8 +105,8 @@ launch = [["Open", "~/.local/bin/bc250-persistent-acpi-gui"]]
 [apps.system-overlay]
 name = "BC-250 System Overlay"
 summary = "CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top."
-tag = "system-overlay-v0.1.1"
-sha256 = "d48448a416fa707edb5c25b89892f37858debfd33d99491745743e43e80ef329"
+tag = "system-overlay-v0.1.2"
+sha256 = "b5c6d168e72f5346a4505930710f116476392d4457fb5bc77b10db44603a97bf"
 required = false
 changes_board = false
 install = ["bash install.sh"]
@@ -117,8 +117,8 @@ launch = [["Open", "~/.local/bin/bc250-system-overlay"]]
 [apps.bios-reader]
 name = "BC-250 BIOS Reader"
 summary = "The BIOS settings as the setup screen shows them, hidden menus included. Stock or modded BIOS. Read-only."
-tag = "bios-reader-v0.1.1"
-sha256 = "276c7048c7189bd7726d2a05366f0b9ca35cdd4e5a90cc1331ec10786285c79e"
+tag = "bios-reader-v0.1.2"
+sha256 = "2fc987c40ca0e738584afb10fc2751b9d1f5499690b8cdb83c1625288c808ceb"
 required = false
 changes_board = false
 install = ["bash install.sh"]
@@ -129,8 +129,8 @@ launch = [["Open", "~/.local/bin/bc250-bios-reader"]]
 [apps.ace-queues]
 name = "BC-250 ACE Queues"
 summary = "Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use."
-tag = "ace-queues-v0.1.2"
-sha256 = "86f83cd6ff8eb4b04c14a64c2e7fcde9d35cb8736e4413d3576a0e567588fd51"
+tag = "ace-queues-v0.1.3"
+sha256 = "e7929d0177f23abf186eff73d8f442067bc8b75198b87d267c5467982b3ff762"
 required = false
 changes_board = true
 install = ["bash install.sh"]
@@ -141,8 +141,8 @@ launch = [["Open", "~/.local/bin/bc250-ace-queues"]]
 [apps.memory-manager]
 name = "BC-250 Memory Manager"
 summary = "The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it."
-tag = "memory-manager-v0.1.2"
-sha256 = "e2682356f92a64182c4f61d202dae173acce1cf9d9e1af1d3f84e821d3cd9ad8"
+tag = "memory-manager-v0.1.3"
+sha256 = "052c25f0e01b82f3aea692987ea5c4d1c61b4cc49853b302b791c57f44bcfabf"
 required = false
 changes_board = true
 install = ["bash install.sh"]

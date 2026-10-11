@@ -1,3 +1,11 @@
+Changelog: 11-10-2026 12:02:24
+
+Release 0.1.2. syntax errors fix
+
+Changelog: 11-10-2026 11:57:14
+
+Fix a syntax error in the desktop-entry assignment that prevented installation from completing.
+
 Changelog: 11-10-2026 11:50:49
 
 Release 0.1.1. fixed install.sh which had some syntax errors
