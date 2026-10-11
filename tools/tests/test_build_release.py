@@ -98,6 +98,8 @@ def test_sums_and_notes(bt_release):
     assert f"cd {BT_TAG} && ./install.sh" in notes and digest in notes
     core = (br.SUITE / "core" / "VERSION").read_text().strip()
     assert f"Bundles the suite core `bc250_core` {core}." in notes
+    assert notes.index("use the portal, not this file") < notes.index("### Install")   # an app: the portal first
+    assert br.LATEST_PORTAL_URL in notes
 
 
 def test_reproducible(bt_release, tmp_path):
@@ -137,7 +139,8 @@ def test_portal_needs_and_verifies_bundle(bt_release, pinned, tmp_path):
     assert f"{PORTAL_TAG}/bundled/{BT_TAG}/install.sh" in names
     assert f"{PORTAL_TAG}/bundled/{BT_TAG}/bc250_gui/_build_info.py" in names
     assert f"{PORTAL_TAG}/bc250_core/platform.py" in names and f"{PORTAL_TAG}/apps.toml" in names
-    assert BT_TAG in (tmp_path / "b" / "notes.md").read_text()
+    notes = (tmp_path / "b" / "notes.md").read_text()
+    assert BT_TAG in notes and "use the portal, not this file" not in notes
 
 
 def test_wrong_pin_refused(bt_release, pinned, tmp_path):

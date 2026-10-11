@@ -658,7 +658,8 @@ class ReleaseWindow(QMainWindow):
         problems = rp.bad_tags(self.root, units)
         self.bad_tags.setText("\n".join(
             f"\u26a0 {p}: release.yml cannot build it. Delete it (git tag -d {p.split()[0]} && git push origin "
-            f":refs/tags/{p.split()[0]}), commit the bump, then tag again." for p in problems))
+            f":refs/tags/{p.split()[0]}), commit and push the bump, then tag again with {rp.TAG_SCRIPT} "
+            f"{p.split()[0]}." for p in problems))
         self.bad_tags.setVisible(bool(problems))
         dirty = rp.git(self.root, "status", "--porcelain")
         self.status.setText("working tree has changes" if dirty else "working tree clean" if dirty is not None

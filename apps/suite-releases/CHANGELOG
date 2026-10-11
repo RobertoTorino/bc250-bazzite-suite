@@ -1,3 +1,9 @@
+Changelog: 11-10-2026 17:35:05
+
+The commands after Apply and Bump portal tag with tools/tag-release.sh instead of git tag, so a tag cannot land on a
+commit from before the bump; the red line for such a tag names it too. Step 3 of the portal commands says that the
+tag goes on the commit of step 1.
+
 Changelog: 11-10-2026 17:23:05
 
 The header shows whether GitHub built the last push (GitHub: building, passed or failed): the workflow runs of its

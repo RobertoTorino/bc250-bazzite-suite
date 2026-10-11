@@ -63,5 +63,8 @@ jobs:
         run: |
           app=${TAG%-v*}
           title="$app ${TAG##*-v}"
+          # Only a portal release is GitHub's "Latest": /releases/latest is what users install, never an app.
+          latest=false
+          [ "$app" = portal ] && latest=true
           gh release create "$TAG" "dist/$TAG.tar.gz" dist/SHA256SUMS \
-            --title "$title" --notes-file dist/notes.md --verify-tag
+            --title "$title" --notes-file dist/notes.md --verify-tag --latest="$latest"

@@ -30,6 +30,7 @@ from urllib.parse import urlparse
 SUITE = Path(__file__).resolve().parents[3]           # apps/suite-releases/bc250_suite_releases/plan.py
 TOOLS = SUITE / "tools"
 CHECK_SCRIPT = "apps/suite-releases/check-release.sh"  # relative to the checkout
+TAG_SCRIPT = "tools/tag-release.sh"     # tags only a pushed HEAD that holds the version: never one before the bump
 CHECKOUT_ONLY = ".checkout-only"        # an app folder with this marker runs from the checkout and is never released
 _VERSION = re.compile(r"^\d+\.\d+\.\d+$")
 
@@ -487,7 +488,7 @@ def just_finished(before: dict[str, BuildRun], runs: list[BuildRun]) -> list[Bui
 
 def app_commands(tags: list[str]) -> str:
     lines = ["git add -A && tools/fix-modes.sh", f'git commit -m "Release {", ".join(tags)}"', "git push"]
-    lines += [f"git tag {t} && git push origin {t}" for t in tags]
+    lines += [f"{TAG_SCRIPT} {' '.join(tags)}     # refuses until the bump is committed and pushed"]
     lines += ["# when GitHub has built the releases: step 2 (pin and portal)"]
     return "\n".join(lines)
 
@@ -504,9 +505,10 @@ def portal_commands(tag: str) -> str:
         "#    The apps whose pin changed show Update: update them, open each one, check that it works.",
         "#    Something wrong? Fix the app and release a new patch version (step 1), then pin again.",
         "",
-        "# 3. All good: push, then tag the portal.",
+        "# 3. All good: push, then tag the portal. The tag goes on the commit of step 1, so commit before you tag:",
+        "#    the script refuses while HEAD does not hold the bump.",
         "git push",
-        f"git tag {tag} && git push origin {tag}",
+        f"{TAG_SCRIPT} {tag}",
         "",
         "# 4. Once GitHub's release workflow has built it: Test release, or",
         f"{CHECK_SCRIPT} release {tag}   # installs and starts the published portal release",
@@ -516,7 +518,7 @@ def portal_commands(tag: str) -> str:
 def main() -> int:
     units = load_units()
     for problem in bad_tags(SUITE, units):
-        print(f"WARNING: {problem}: delete the tag and tag the commit with the bump", file=sys.stderr)
+        print(f"WARNING: {problem}: delete the tag and tag the commit with the bump ({TAG_SCRIPT})", file=sys.stderr)
     for u in units:
         since = "never released" if u.last_tag is None and u.kind != "core" else \
             f"{u.commits} commits since {u.last_tag}" if u.last_tag else ""

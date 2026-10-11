@@ -46,7 +46,7 @@ you open it, and the portal remembers whether it was open.
 
 ## Install
 
-From the suite's [Releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases) page, download
+From the [latest portal release](https://github.com/RobertoTorino/bc250-bazzite-suite/releases/latest), download
 `portal-v<version>.tar.gz` and `SHA256SUMS`, then:
 
 ```shell
@@ -100,13 +100,13 @@ The comment at the top of [`apps.toml`](https://github.com/RobertoTorino/bc250-b
 Releasing an app and pinning it in the portal:
 
 1. Bump `apps/<app>/VERSION` (and the copies that `tools/check_versions.py` lists), and update its CHANGELOG.
-2. Tag `<app>-v<x.y.z>` and push the tag; [`release.yml`](https://github.com/RobertoTorino/bc250-bazzite-suite/blob/main/.github/workflows/release.yml) builds
+2. Commit and push, then tag with `tools/tag-release.sh <app>-v<x.y.z>`; [`release.yml`](https://github.com/RobertoTorino/bc250-bazzite-suite/blob/main/.github/workflows/release.yml) builds
    `<tag>.tar.gz` and `SHA256SUMS` with [`tools/build_release.py`](https://github.com/RobertoTorino/bc250-bazzite-suite/blob/main/tools/build_release.py).
 3. `python3 tools/pin_app.py <tag>`: this sets the tag and checksum in `apps.toml`.
 4. Bump `portal/VERSION` as `tools/check_manifest.py` asks, and list the app release in the portal CHANGELOG.
 5. Once the pinned app releases are tested together on a BC-250 (see
-   [Testing a portal release before its tag](#testing-a-portal-release-before-its-tag)), tag `portal-v<x.y.z>`.
-   That release bundles the pinned bazzite-test release.
+   [Testing a portal release before its tag](#testing-a-portal-release-before-its-tag)), commit steps 3 and 4,
+   push, and tag with `tools/tag-release.sh portal-v<x.y.z>`. That release bundles the pinned bazzite-test release.
 
 ### The release front end
 
@@ -168,9 +168,17 @@ every 5 minutes otherwise, and **Refresh** looks at once. When a run it saw runn
 notification says whether it passed. It needs no GitHub token: answers that did not change do not count against
 GitHub's limit of 60 requests an hour.
 
+Only portal releases are marked **Latest** on GitHub (`release.yml` passes `--latest=false` for app releases), so
+`/releases/latest`, which the README and the manual link to, always opens the newest portal. App release notes
+start by pointing to it.
+
 A red line at the top of the window means a release tag points at a commit whose `VERSION` is not the tag's
 version: the tag was made before the version bump was committed, and `release.yml` cannot build it. Delete the tag
-(the line shows how), commit the bump, and tag again.
+(the line shows how), commit and push the bump, and tag again with `tools/tag-release.sh`.
+
+`tools/tag-release.sh <tag> [...]` tags HEAD and pushes the tags, but refuses while HEAD does not hold each tag's
+version (the bump is not committed yet), while that folder has uncommitted changes, or while HEAD is not pushed to
+`origin/main`. A plain `git tag` tags whatever HEAD is at that moment, also the commit from before the bump.
 
 `python3 tools/release_plan.py` lists every app with its version, its last tag and its pin, without Qt.
 

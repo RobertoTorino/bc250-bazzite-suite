@@ -160,11 +160,12 @@ def test_pin_and_portal(repo):
 
 def test_commands():
     text = rp.app_commands(["alpha-v0.2.0", "beta-v0.1.0"])
-    assert "git tag alpha-v0.2.0 && git push origin alpha-v0.2.0" in text and "git push\n" in text
+    assert "tools/tag-release.sh alpha-v0.2.0 beta-v0.1.0" in text and "git push\n" in text
+    assert text.index("git commit") < text.index("git push\n") < text.index("tag-release.sh")
     text = rp.portal_commands("portal-v0.2.0")
-    assert "git tag portal-v0.2.0 && git push origin portal-v0.2.0" in text
+    assert "\ntools/tag-release.sh portal-v0.2.0\n" in text
     assert text.endswith(f"{rp.CHECK_SCRIPT} release portal-v0.2.0   # installs and starts the published portal release")
-    order = [text.index(s) for s in ("git commit", "check-release.sh local", "git push\n", "git tag",
+    order = [text.index(s) for s in ("git commit", "check-release.sh local", "git push\n", "tag-release.sh",
                                      "check-release.sh release")]
     assert order == sorted(order)                             # commit, test, push and tag, then check the release
 
@@ -207,7 +208,7 @@ def test_window_release_then_portal(window, repo):
     out = window.apps_page.output.toPlainText()
     assert (repo / "apps/alpha/VERSION").read_text() == "0.1.1\n"
     assert "Release 0.1.1. Fixes." in (repo / "apps/alpha/CHANGELOG").read_text()
-    assert "git tag alpha-v0.1.1 && git push origin alpha-v0.1.1" in out
+    assert "tools/tag-release.sh alpha-v0.1.1" in out
     assert "check_versions.py" in out
 
     sh(repo, "tag", "alpha-v0.1.1")                           # the owner tagged it; GitHub built it
@@ -221,7 +222,7 @@ def test_window_release_then_portal(window, repo):
     assert (repo / "portal/VERSION").read_text() == "0.1.1\n"
     assert '__version__ = "0.1.1"' in (repo / "portal/bc250_portal/__init__.py").read_text()
     assert "Release 0.1.1. Pins alpha-v0.1.1." in (repo / "portal/CHANGELOG").read_text()
-    assert "git tag portal-v0.1.1" in page.output.toPlainText()
+    assert "tools/tag-release.sh portal-v0.1.1" in page.output.toPlainText()
 
 
 def test_window_refuses_a_tagged_version(window, repo, monkeypatch):
@@ -331,7 +332,8 @@ def test_window_warns_about_a_bad_tag(window, repo):
     rp.set_version(repo, unit(repo, "beta"), "0.2.0")
     sh(repo, "tag", "beta-v0.2.0")
     window.reload()
-    assert not window.bad_tags.isHidden() and "git tag -d beta-v0.2.0" in window.bad_tags.text()
+    text = window.bad_tags.text()
+    assert not window.bad_tags.isHidden() and "git tag -d beta-v0.2.0" in text and "tag-release.sh beta-v0.2.0" in text
 
 
 @pytest.mark.skipif(not sys.platform.startswith("linux"), reason="the checks run on the board: Linux only")

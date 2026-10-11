@@ -7,6 +7,27 @@
 Tools for the AMD BC-250 running Bazzite, in one repository. The **[portal](portal)** installs, opens, updates
 and removes them: BC-250 Bazzite Test is always installed, every other app is optional.
 
+## Install
+
+**Install the portal, not the apps one by one.** It installs, updates and removes every app below for you, and
+checks each download against its checksum.
+
+1. Open the **[latest portal release](https://github.com/RobertoTorino/bc250-bazzite-suite/releases/latest)** and
+   download `portal-v<version>.tar.gz` and `SHA256SUMS`.
+2. In a terminal, in the folder you downloaded them to:
+
+   ```bash
+   sha256sum --check --ignore-missing SHA256SUMS
+   tar -xzf portal-v*.tar.gz && cd portal-v*/ && ./install.sh
+   ```
+
+3. Start **BC250 Bazzite Suite** from the app menu or the Desktop, and install the apps you want from there.
+
+The other releases on the Releases page (`governor-v…`, `helixsr-v…` and so on) are the app downloads the portal
+uses. You do not need them.
+
+## The apps
+
 - <img src="portal/images/apps/bazzite-test.png" width="20" height="20" alt=""/> **[BC-250 Bazzite Test](apps/bazzite-test)**: Read-only diagnostics, stress test and benchmarks. Always installed.
 - <img src="portal/images/apps/governor.png" width="20" height="20" alt=""/> **[BC-250 GPU Governor Manager](apps/governor)**: Manage the cyan-skillfish GPU governor: tuning, safe points, profiles, backups.
 - <img src="portal/images/apps/helixsr.png" width="20" height="20" alt=""/> **[BC-250 HelixSR Manager](apps/helixsr)**: Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games.

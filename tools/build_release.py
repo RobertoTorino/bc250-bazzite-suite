@@ -32,6 +32,8 @@ from pathlib import Path
 
 SUITE = Path(__file__).resolve().parent.parent
 MANIFEST = SUITE / "portal" / "apps.toml"
+# release.yml marks only portal releases as GitHub's "Latest", so this always opens the newest portal.
+LATEST_PORTAL_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite/releases/latest"
 _TAG = re.compile(r"^(?P<app>[a-z0-9-]+)-v(?P<version>\d+\.\d+\.\d+)$")
 
 
@@ -142,6 +144,10 @@ def build(tag: str, out: Path, bundle: Path | None = None) -> Path:
         raise SystemExit(f"{tag}: {src.relative_to(SUITE)}/VERSION is {current}; bump it before tagging")
     out.mkdir(parents=True, exist_ok=True)
     notes = [f"## {tag}", ""]
+    if app != "portal":
+        notes += [f"> **To install the suite, use the portal, not this file:** the [latest portal release]"
+                  f"({LATEST_PORTAL_URL}) installs, updates and removes {app} for you and checks every download. "
+                  "This tarball is what the portal downloads; install it by hand only without the portal.", ""]
     with tempfile.TemporaryDirectory() as tmp:
         stage_dir = stage_app.stage(app, Path(tmp) / tag)
         if app == "bazzite-test":

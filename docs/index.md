@@ -7,15 +7,18 @@ Test is always installed, every other app is optional.
 
 ## Install
 
-Download `portal-v<version>.tar.gz` and `SHA256SUMS` from the suite's
-[Releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases) page, then:
+Install the portal, not the apps one by one: it installs, updates and removes the apps for you. Download
+`portal-v<version>.tar.gz` and `SHA256SUMS` from the
+[latest portal release](https://github.com/RobertoTorino/bc250-bazzite-suite/releases/latest), then:
 
 ```bash
 sha256sum --check --ignore-missing SHA256SUMS
 tar -xzf portal-v*.tar.gz && cd portal-v*/ && ./install.sh
 ```
 
-This installs the portal and BC-250 Bazzite Test. Install the other apps from the portal. What goes where and how
+This installs the portal and BC-250 Bazzite Test. Install the other apps from the portal. The other releases on
+the Releases page (`governor-v…`, `helixsr-v…` and so on) are the app downloads the portal uses; you do not need
+them. What goes where and how
 to uninstall: [Portal](portal.md).
 
 To test from a clone of the repository instead, run `./install.sh` in its root. The portal then installs every app
