@@ -1,3 +1,21 @@
+Changelog: 11-10-2026 09:27:05
+
+Stop requiring dependencies.toml during portal installation; the dependency catalog now belongs to the separate
+dependency checker app.
+
+Changelog: 11-10-2026 09:02:11
+
+Use the Portal dependency checker icon file name for its portal card artwork.
+
+Changelog: 11-10-2026 08:49:10
+
+Move dependency listing and update checks into the standalone Portal dependency checker app; remove the checker
+window and catalog from the portal itself.
+
+Changelog: 11-10-2026 08:02:58
+
+The title's tooltip and --version also show the bundled core version.
+
 Changelog: 11-10-2026 07:41:28
 
 Release 0.9.2. Pins bazzite-test-v0.1.1, system-overlay-v0.1.1, bios-reader-v0.1.1, ace-queues-v0.1.2, memory-manager-v0.1.2. updates for: ace-queues, bazzite-test, bios-reader, memory-manager, systemoverlay

@@ -19,7 +19,12 @@ PATTERNS = {
 def main() -> int:
     errors = []
     checked = 0
-    units = [ROOT / "core", ROOT / "portal", *sorted(p for p in (ROOT / "apps").iterdir() if p.is_dir())]
+    units = [
+        ROOT / "core",
+        ROOT / "portal",
+        *sorted(p for p in (ROOT / "apps").iterdir() if p.is_dir()),
+        ROOT / "tools" / "installer-tests" / "gui",
+    ]
     for unit in units:
         version_file = unit / "VERSION"
         if not version_file.is_file():

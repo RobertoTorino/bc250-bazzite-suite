@@ -7,6 +7,10 @@ The BC250 Bazzite Suite's front door: one window that installs, opens, updates a
 card ("pill") with **Install**, **Open** and **Uninstall**. The cards stand in two columns, left to right in the
 order of `apps.toml`, and in one column when the window is too narrow for two.
 
+- `apps/` also contains standalone suite tools that do not appear in `apps.toml` and are not installed or
+  launched by the portal. These include [Simple Demo Tool](other-tools/simple-demo-tool.md),
+  [Portal dependency checker](apps/dependency-checker.md) and the release front end,
+  [BC250 Suite Releases](#the-release-front-end).
 - Install, update and uninstall run **the app's own installer** in a terminal window, because installers may ask
   for the sudo password and print what they do. The portal watches for the result and refreshes.
 - Apps that change how the board runs (CU/core unlocks, the GPU governor, GPU overclocking, the ACPI override, the VRAM
@@ -22,9 +26,9 @@ order of `apps.toml`, and in one column when the window is too narrow for two.
   Memory Manager**, and its tooltip lists each app with its old and new version. After the portal update, the
   installed apps among them show **Update**. When the new pins cannot be read (offline, for example), the button
   says **Portal x.y.z available**.
-- **Dependencies:** open **Dependencies** to see the declared runtime Python packages and app-specific external
-  tools, plus the apps and features that use them. **Check for updates** compares Python package versions with
-  PyPI and checks whether external tools are available; the tool links open the relevant app guide. Some apps use
+- The **Portal dependency checker** is a separate app in `apps/`. It lists declared runtime Python packages and
+  app-specific external tools, plus the apps and features that use them. It compares Python package versions with
+  PyPI and checks whether external tools are available; tool links open the relevant app guide. Some apps use
   separate virtual environments. The checker does not install or update anything.
 
 ## Install
@@ -93,29 +97,37 @@ Releasing an app and pinning it in the portal:
 
 ### The release front end
 
-![BC250 Suite Releases](assets/tools/release-ui-128.png){ .app-logo }
+![BC250 Suite Releases](assets/suite-releases/bc250-release-128.png){ .app-logo }
 
-`tools/release.sh` opens a window, **BC250 Suite Releases**, that makes these file edits for you. It never commits,
-tags or pushes: after each step it shows the git commands to run.
-
-To start it from the app menu instead, install it once on Linux. It stays out of the portal, and the entry always
-starts the tool of the checkout you installed it from:
+**BC250 Suite Releases** (`apps/suite-releases/`) is a window that makes these file edits for you. It never commits,
+tags or pushes: after each step it shows the git commands to run. It edits the checkout it lives in, so it is not
+in the portal and has no releases of its own. Start it from the repository root:
 
 ```bash
-tools/release.sh --install                         # app menu entry and Desktop icon
-tools/release.sh --install --no-desktop-shortcut   # app menu entry only
-tools/release.sh --uninstall                       # remove them; the checkout stays
+tools/release.sh            # or apps/suite-releases/run.sh
+tools/release.sh --list     # the same overview in the terminal, with the system python3
 ```
 
-It runs with the checkout's `.venv-linux` (see [Development](development/index.md)). After moving the checkout,
-run `--install` again. On Windows, run `tools/release.sh` from Git Bash.
+To start it from the app menu instead, install it once on Linux. Nothing is copied: the entry always starts the app
+of the checkout you installed it from.
+
+```bash
+apps/suite-releases/install.sh                         # app menu entry and Desktop icon
+apps/suite-releases/install.sh --no-desktop-shortcut   # app menu entry only
+apps/suite-releases/install.sh --uninstall             # remove them; the checkout stays
+```
+
+`tools/release.sh --install` and `--uninstall` do the same. It runs with the checkout's `.venv-linux` (see
+[Development](development/index.md)). After moving the checkout, run `install.sh` again. On Windows, run
+`tools/release.sh` from Git Bash.
 
 - **1. Apps:** the **Needs release** column marks in orange every app that ships something new since its last
   tag: a changed file in its folder (tests and `requirements-dev.txt` do not count), in the core it bundles, or in
   its manual chapter, committed or not. Hover it for the files; **Tick what needs a release** ticks those apps.
   Step 2 says the same for the portal. Tick the apps to release and enter their version. A version that was never tagged (the first
   release) can be released as it is. **Apply** writes `VERSION`, every copy `tools/check_versions.py` checks and a
-  `Release x.y.z.` CHANGELOG entry with your notes, which become the release notes on GitHub. When `apps.toml`
+  `Release x.y.z.` CHANGELOG entry with your notes, which become the release notes on GitHub. The release notes
+  of an app that bundles the core also name the core version. When `apps.toml`
   pins a tag of that app that was never released, the pin moves to the new version, and the window says that
   this push then also needs a portal bump. Then commit, push, and push the app tags (steps 1 and 2 above).
 - **2. Pin and portal:** once GitHub has built the app releases, **Pin** reads each release's `SHA256SUMS` and
@@ -123,6 +135,9 @@ run `--install` again. On Windows, run `tools/release.sh` from Git Bash.
   the last push (`origin/main`); **Bump portal** writes it with a CHANGELOG entry that lists the pinned app
   releases, and runs `tools/check_manifest.py` (step 4). Then commit, test on a BC-250 (below), and only then push
   and tag the portal (step 5). The window lists these commands in that order.
+- **Check updates** and **Check release** run the two board tests below in a terminal, with
+  `apps/suite-releases/check-release.sh`: the portal from the checkout before the push, and the published portal release after
+  GitHub has built it. Linux only.
 
 A red line at the top of the window means a release tag points at a commit whose `VERSION` is not the tag's
 version: the tag was made before the version bump was committed, and `release.yml` cannot build it. Delete the tag
@@ -137,9 +152,9 @@ portal offers those releases as updates. So before the tag, check on a BC-250 th
 install and run:
 
 1. Bump the portal (step 4) and commit. Pushing is not needed for this test.
-2. Install the portal from the checkout: `./install.sh` in the repository root. This installs this portal version,
-   with its new pins in `apps.toml`.
-3. Start it with the pinned releases instead of the checkout:
+2. Click **Check updates** in the release front end, or run `apps/suite-releases/check-release.sh local`. It installs the portal
+   from the checkout (`./install.sh` in the repository root: this portal version, with its new pins in
+   `apps.toml`) and starts it with the pinned releases instead of the checkout:
 
     ```bash
     bc250-bazzite-suite --source release
@@ -154,7 +169,22 @@ install and run:
    to 4). Nothing has reached users yet.
 
 This does not test the portal tarball itself, which GitHub builds from the tag; the release workflow checks it
-(`tools/check_manifest.py --require-tags`, and the bundled Bazzite Test against its pin).
+(`tools/check_manifest.py --require-tags`, and the bundled Bazzite Test against its pin). The next section tests
+it on the board.
+
+### Testing a portal release after its tag
+
+Once GitHub's release workflow has built the portal release, click **Check release**, or run:
+
+```bash
+apps/suite-releases/check-release.sh release              # the release of portal/VERSION
+apps/suite-releases/check-release.sh release portal-v0.9.2
+```
+
+It downloads the release tarball and its `SHA256SUMS` from GitHub into `~/.cache/bc250-release-check/`, checks
+the checksum, installs it and starts it. The board then runs the official release, as a user's board does: check
+that the portal starts, that its version is the new one, and that the apps install. To go back to the checkout,
+run `./install.sh` in the repository root (or Check updates).
 
 ### Checking a release
 
@@ -178,7 +208,8 @@ tests pin their own local builds instead of the published ones.
 ### a new app gets into the portal
 #### Code
 
-Create apps/<name>/ with VERSION 0.1.0, a CHANGELOG, a LICENSE and a .gitignore.        
+Create apps/<name>/ with VERSION 0.1.0, a CHANGELOG, a LICENSE and a .gitignore. For an app that stays outside the
+portal, add `.standalone` instead of adding it to `portal/apps.toml`.
 Add an install.sh that supports --uninstall and puts a launcher in ~/.local/bin/, plus tests under tests/.        
 Add the app to ./test.sh, the CI shellcheck list and an installer test in tools/installer-tests/.       
 Add its [apps.<name>] card to portal/apps.toml: name, summary, changes_board, install/uninstall/detect/launch,          

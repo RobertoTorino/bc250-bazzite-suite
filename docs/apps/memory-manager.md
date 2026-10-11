@@ -31,6 +31,19 @@ The top row shows what the kernel got at this boot: the **VRAM split**, the **GT
 **swap** layout. Under it are the TTM limit and `vm.swappiness`. When `ttm.pages_limit` is above the RAM, the app
 says so: GTT stops at the RAM, so that limit has no effect.
 
+The **memory map** under it draws the 16 GB as one bar and follows it live, every two seconds:
+
+- **The split:** the VRAM in use and the VRAM that is free.
+- **The system RAM:** what the GPU borrows from it now (GTT), what zram or zswap take, what Linux and the apps use,
+  and what is still available.
+- **What the firmware keeps** at boot, the last part of the bar.
+
+The bracket under the RAM is the GTT limit: how much RAM the GPU may borrow, and what the TTM limit does to it.
+Parts too narrow for a label are named in the line under it. Under the bar is the swap: for zram, the pages it holds
+and the RAM that costs (light and dark), and whether zswap or disk swap is in use. Hover any part for what it is.
+Picking a split under **New split** draws the next boot under the bar: the new split, the RAM that leaves, and
+about how much the GPU may then borrow.
+
 - **New split** and **Apply…:** pick a split and apply it. The app asks first and shows how much RAM the system
   keeps, then asks for your password. The status next to the title turns to **Reboot to apply**.
 - **Reboot.** After the reboot the app says whether the kernel got the new split.

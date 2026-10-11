@@ -135,6 +135,8 @@ def build(tag: str, out: Path, bundle: Path | None = None) -> Path:
         raise SystemExit(f"{tag} is not <app>-v<x.y.z>")
     app, version = match["app"], match["version"]
     src = stage_app.source_dir(app)
+    if (src / ".checkout-only").is_file():
+        raise SystemExit(f"{tag}: {src.relative_to(SUITE)} runs from the checkout and has no releases")
     current = (src / "VERSION").read_text(encoding="utf-8").strip()
     if current != version:
         raise SystemExit(f"{tag}: {src.relative_to(SUITE)}/VERSION is {current}; bump it before tagging")
@@ -152,6 +154,9 @@ def build(tag: str, out: Path, bundle: Path | None = None) -> Path:
             pins = "\n".join(f"- `{e.tag}`" for e in manifest.load(MANIFEST))
             notes += ["This portal release installs and pins these app releases:", "", pins, "",
                       f"`{bundled}` is included and installed with the portal.", ""]
+        if (stage_dir / "bc250_core").is_dir():
+            core = (SUITE / "core" / "VERSION").read_text(encoding="utf-8").strip()
+            notes += [f"Bundles the suite core `bc250_core` {core}.", ""]
         archive = out / f"{tag}.tar.gz"
         write_tarball(stage_dir, tag, archive, source_epoch())
     digest = sha256_of(archive)

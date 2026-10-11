@@ -3,7 +3,6 @@
 
 * assets/apps/<key>.png    the small app icons the portal shows on its cards (portal/images/apps/)
 * assets/<app>/<file>      an app's own images (apps/<app>/images/): its icon and its screenshots
-* assets/tools/<file>      the repository tools' images (tools/images/): the release front end's icon
 * assets/logo.png          the suite's icon (portal/images/bc250-bazzite-suite.png), also the favicon"""
 
 from __future__ import annotations
@@ -22,8 +21,6 @@ def pictures() -> dict[str, Path]:
     for app in sorted((SUITE / "apps").iterdir()):
         for p in sorted((app / "images").glob("*")) if (app / "images").is_dir() else []:
             found[f"assets/{app.name}/{p.name}"] = p
-    for p in sorted((SUITE / "tools" / "images").glob("*")):
-        found[f"assets/tools/{p.name}"] = p
     found["assets/logo.png"] = SUITE / "portal" / "images" / "bc250-bazzite-suite.png"
     return {uri: p for uri, p in found.items() if p.suffix.lower() in PICTURES}
 

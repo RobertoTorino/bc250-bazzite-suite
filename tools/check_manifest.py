@@ -4,7 +4,8 @@
 
     python3 tools/check_manifest.py [--base REF] [--require-tags]
 
-* The manifest parses, and lists exactly the apps under apps/.
+* The manifest parses and lists exactly the portal apps under apps/. An app folder with a ``.standalone`` marker
+  is not a portal app and must not be listed.
 * Every pinned tag exists. Without --require-tags a tag that does not exist yet is accepted when its version equals
   the app's VERSION: the release that is about to be tagged. The portal release workflow passes --require-tags.
 * With --base REF (the previous commit, or the PR base): when apps.toml changed since REF, portal/VERSION must have
@@ -22,6 +23,7 @@ from pathlib import Path
 
 SUITE = Path(__file__).resolve().parent.parent
 MANIFEST = "portal/apps.toml"
+STANDALONE_MARKER = ".standalone"
 LEVELS = {0: "none", 1: "patch", 2: "minor", 3: "major"}
 
 
@@ -60,7 +62,10 @@ def tag_exists(tag: str) -> bool:
 
 def check_entries(entries, require_tags: bool) -> list[str]:
     errors = []
-    apps = {p.name for p in (SUITE / "apps").iterdir() if p.is_dir()}
+    apps = {
+        p.name for p in (SUITE / "apps").iterdir()
+        if p.is_dir() and not (p / STANDALONE_MARKER).is_file()
+    }
     listed = {e.key for e in entries}
     errors += [f"apps/{name} is not in {MANIFEST}" for name in sorted(apps - listed)]
     errors += [f"{MANIFEST} lists {name}, which has no apps/{name}" for name in sorted(listed - apps)]

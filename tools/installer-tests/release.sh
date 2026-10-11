@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # End to end from release tarballs: build the bazzite-test, governor and portal releases with build_release.py,
 # install the portal from its tarball (which installs the bundled bazzite-test release build), and let the
-# portal's release code fetch and verify the governor release the way it would from GitHub.
+# portal's release code fetch and verify the governor release the way it would from GitHub. Last, apps/suite-releases/check-release.sh
+# installs that portal tarball as if downloaded from GitHub, and the portal from the checkout copy.
 # It works on a copy of the checkout in which apps.toml pins bazzite-test and governor to these local builds: the
 # checksums pinned in the repository are those of the real releases, which a local build never matches.
 # Runs with the shims from shims.sh (CI, or WSL on Windows).
@@ -20,8 +21,10 @@ export SOURCE_DATE_EPOCH=1790000000
 
 echo "== 1. build the releases"
 mkdir -p "$T/dist" "$T/suite"
-# The checkout as git sees it (tracked and new files, nothing ignored), without .git.
-(cd "$SUITE" && git ls-files -z --cached --others --exclude-standard | tar --null -T - -cf -) | tar -xf - -C "$T/suite"
+# The checkout as git sees it (tracked and new files, nothing ignored, not what is deleted but not committed yet),
+# without .git.
+(cd "$SUITE" && git ls-files -z --cached --others --exclude-standard |
+    while IFS= read -r -d '' f; do [ -e "$f" ] && printf '%s\0' "$f"; done | tar --null -T - -cf -) | tar -xf - -C "$T/suite"
 S=$T/suite
 for tag in "$BT" "$GOV"; do
     /usr/bin/python3 "$S/tools/build_release.py" "$tag" "$T/build-$tag" > "$T/build.log" 2>&1 || { cat "$T/build.log"; fail=1; }
@@ -71,6 +74,19 @@ PY
 PYTHONPATH="$T/opt/bc250-bazzite-suite" /usr/bin/python3 "$T/fetch.py" "$T/dist" "$T/work" > "$T/fetch.log" 2>&1; rc=$?
 check "fetched, verified, unpacked; tampered copy refused" "[ $rc -eq 0 ] && grep -q 'refused:' $T/fetch.log"
 check "governor installer runs from the fetched folder" "(cd $T/work/$GOV && bash install.sh --help >/dev/null 2>&1)"
+
+echo "== 4. check-release.sh: the local check, then back to the release"
+R=$D/bc250-bazzite-suite/portal/installed.json
+bash "$S/apps/suite-releases/check-release.sh" local --no-start > "$T/check-local.log" 2>&1; rc=$?
+check "local: installs the portal from the checkout" "[ $rc -eq 0 ] && grep -q '\"bazzite-test\": \"local\"' $R"
+mkdir -p "$T/gh/$PORTAL" && cp "$T/build-portal/$PORTAL.tar.gz" "$T/build-portal/SHA256SUMS" "$T/gh/$PORTAL/"
+BC250_RELEASE_URL="file://$T/gh" bash "$S/apps/suite-releases/check-release.sh" release --no-start > "$T/check-release.log" 2>&1; rc=$?
+check "release: downloads and verifies portal/VERSION's tag" "[ $rc -eq 0 ] && grep -q '$PORTAL.tar.gz: OK' $T/check-release.log"
+check "release: installed it, bundled Bazzite Test included" "grep -q \"\\\"bazzite-test\\\": \\\"$BT\\\"\" $R && [ -f $T/opt/bc250-bazzite-suite/bc250_core/__init__.py ]"
+BC250_RELEASE_URL="file://$T/gh" bash "$S/apps/suite-releases/check-release.sh" release portal-v9.9.9 --no-start > "$T/check-missing.log" 2>&1; rc=$?
+check "release: a tag GitHub has not built yet is reported" "[ $rc -ne 0 ] && grep -q 'finished the release workflow' $T/check-missing.log"
+bash "$S/apps/suite-releases/check-release.sh" nonsense > "$T/check-usage.log" 2>&1; rc=$?
+check "unknown mode refused" "[ $rc -ne 0 ] && grep -q 'Usage' $T/check-usage.log"
 
 [ $fail -eq 0 ] && echo "ALL OK" || for l in "$T"/*.log; do echo "--- $l"; cat "$l"; done
 exit $fail

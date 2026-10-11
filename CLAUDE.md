@@ -9,12 +9,16 @@ BC250
 ## What this is
 
 The **BC250 Bazzite Suite** (exactly that name): tools for the AMD BC-250 on Bazzite, in one repository,
-`github.com/RobertoTorino/bc250-bazzite-suite` (branch `main`). A **portal** installs and starts the apps.
-**bazzite-test** is always installed and always listed first; every other app is an optional card ("pill").
+`github.com/RobertoTorino/bc250-bazzite-suite` (branch `main`). A **portal** installs and starts the apps listed in
+its manifest. **bazzite-test** is always installed and always listed first; every other listed app is an optional
+card ("pill"). Standalone apps may live under `apps/` without appearing in the portal.
 
 - `apps/<name>/`: bazzite-test, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
-  system-overlay, bios-reader, ace-queues, memory-manager. Each has its own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT, the rest
-  GPL-3.0-or-later), .gitignore.
+  system-overlay, bios-reader, ace-queues, memory-manager, demo-tool, suite-releases. Each has its own
+  VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT, the rest GPL-3.0-or-later), .gitignore. The standalone
+  Simple Demo Tool and Suite Releases also have a `.standalone` marker and are not listed in `portal/apps.toml`.
+  Suite Releases (the release front end) also has `.checkout-only`: it runs from the checkout and is never
+  released.
 - `core/bc250_core/`: shared Python code. It is **bundled per app** at release time (`tools/stage_app.py`), so each
   app runs on the core it was tested with; the shared venv `~/.local/share/bc250-bazzite-suite/venv` holds only
   PyQt6.
@@ -79,13 +83,15 @@ shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/
   apps/cores-bisect/install.sh apps/cores-bisect/packaging/bazzite/*.sh
 shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
 shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh \
-  apps/system-overlay/install.sh apps/bios-reader/install.sh apps/memory-manager/install.sh
+  apps/system-overlay/install.sh apps/bios-reader/install.sh apps/memory-manager/install.sh \
+  apps/demo-tool/install.sh apps/suite-releases/*.sh
 shellcheck -S warning apps/ace-queues/bc250-ace-queues.sh apps/ace-queues/bc250-ace-queues-run \
   apps/ace-queues/install.sh apps/ace-queues/mesa/build-in-container.sh
 bash tools/installer-tests/bazzite-test.sh; bash tools/installer-tests/portal.sh
 bash tools/installer-tests/persistent-acpi.sh; bash tools/installer-tests/system-overlay.sh
 bash tools/installer-tests/bios-reader.sh; bash tools/installer-tests/ace-queues.sh
-bash tools/installer-tests/memory-manager.sh; bash tools/installer-tests/release-ui.sh
+bash tools/installer-tests/memory-manager.sh; bash tools/installer-tests/demo-tool.sh
+bash tools/installer-tests/suite-releases.sh
 bash tools/installer-tests/release.sh
 mkdocs build --strict                               # from the venv
 ```
@@ -106,8 +112,9 @@ The owner does every step of a release; Claude does none of them, and doesn't of
 - pinning a release in `portal/apps.toml` (`tools/pin_app.py`, the `tag` and `sha256` lines);
 - the release entries in the CHANGELOGs.
 
-`tools/release.sh` (`release_ui.py` on `release_plan.py`) is the owner's front end for the file edits of a release;
-Claude may change it and its tests, but never uses it on the repository.
+`tools/release.sh` starts the owner's front end for the file edits of a release, BC250 Suite Releases
+(`apps/suite-releases/`: `main_window.py` on `plan.py`, and `check-release.sh` for the board checks). Claude may
+change it and its tests, but never uses it on the repository.
 
 Claude may change the release tools and their tests, and runs `tools/installer-tests/release.sh` as a test (it
 works in a temp folder and publishes nothing). When finished work will need a release or a version bump, the

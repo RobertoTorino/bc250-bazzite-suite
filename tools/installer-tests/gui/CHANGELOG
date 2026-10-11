@@ -1,0 +1,5 @@
+Changelog: 11-10-2026 10:52:47
+
+Add a desktop GUI for selecting and running installer tests.
+Add application and documentation icons.
+Add a per-user desktop installer and uninstaller.

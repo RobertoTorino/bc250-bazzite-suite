@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (QApplication, QGridLayout, QLabel, QMainWindow, QMe
                              QVBoxLayout, QWidget)
 
 from bc250_core import SUITE_MANUAL_URL, window_title
+from bc250_core import __version__ as CORE_VERSION
 from bc250_core.settings import SettingsStore
 from bc250_core.widgets import (ClickableLogo, StatusText, Terminal, accent_button, hint_label, page_header,
                                 set_button_active)
@@ -130,7 +131,7 @@ class MainWindow(QMainWindow):
         lay.addSpacing(6)
         lay.addWidget(self.running)
         lay.addWidget(self.output, 1)
-        version = QLabel(f"{APP_NAME} {__version__} · the system Mesa is never changed")
+        version = QLabel(f"{APP_NAME} {__version__} · core {CORE_VERSION} · the system Mesa is never changed")
         version.setStyleSheet("color:palette(placeholder-text);")
         lay.addWidget(version, 0, Qt.AlignmentFlag.AlignRight)
         self.setCentralWidget(central)

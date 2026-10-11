@@ -1,0 +1,155 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+from __future__ import annotations
+
+import os
+from pathlib import Path
+import subprocess
+
+import pytest
+from PyQt6.QtCore import QEventLoop, QTimer
+from PyQt6.QtWidgets import QApplication
+
+from installer_test_gui import TESTS_DIR
+from installer_test_gui import APP_DIR
+from installer_test_gui.main_window import MainWindow
+from installer_test_gui.runner import InstallerTestRunner, discover_tests
+
+INSTALLER = APP_DIR / "install.sh"
+
+
+@pytest.fixture(scope="session", autouse=True)
+def qapp() -> QApplication:
+    return QApplication.instance() or QApplication([])
+
+
+def test_discovery_excludes_shared_shims(tmp_path: Path) -> None:
+    for name in ("zeta.sh", "shims.sh", "alpha.sh"):
+        (tmp_path / name).write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+
+    assert [path.name for path in discover_tests(tmp_path)] == ["alpha.sh", "zeta.sh"]
+
+
+def test_runner_executes_selected_tests_in_order_and_continues_after_failure(tmp_path: Path) -> None:
+    scripts = [tmp_path / "first.sh", tmp_path / "second.sh"]
+    scripts[0].write_text("printf 'first output\\n'\nexit 0\n", encoding="utf-8")
+    scripts[1].write_text("printf 'second output\\n'\nexit 7\n", encoding="utf-8")
+    runner = InstallerTestRunner(tmp_path, tmp_path)
+    statuses: list[tuple[str, int, bool]] = []
+    output: list[str] = []
+    loop = QEventLoop()
+    runner.test_finished.connect(lambda *result: statuses.append(result))
+    runner.output.connect(output.append)
+    runner.run_finished.connect(loop.quit)
+    QTimer.singleShot(5000, loop.quit)
+
+    runner.start(scripts)
+    loop.exec()
+
+    assert statuses == [("first.sh", 0, False), ("second.sh", 7, False)]
+    assert "first output\n" in "".join(output)
+    assert "second output\n" in "".join(output)
+    assert not runner.busy
+
+
+def test_runner_rejects_shim_and_scripts_outside_test_directory(tmp_path: Path) -> None:
+    scripts_dir = tmp_path / "tests"
+    scripts_dir.mkdir()
+    shim = scripts_dir / "shims.sh"
+    shim.write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+    outside = tmp_path / "outside.sh"
+    outside.write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+    runner = InstallerTestRunner(scripts_dir, tmp_path)
+
+    for script in (shim, outside):
+        with pytest.raises(ValueError):
+            runner.start([script])
+
+
+def test_window_lists_all_installer_scripts_except_shims() -> None:
+    window = MainWindow()
+
+    assert window.test_list.count() == len(discover_tests(TESTS_DIR))
+    assert all(
+        window.test_list.item(index).text()
+        for index in range(window.test_list.count())
+    )
+    window.close()
+
+
+def test_cancel_stops_the_current_test_and_skips_queued_tests(tmp_path: Path) -> None:
+    first = tmp_path / "first.sh"
+    second = tmp_path / "second.sh"
+    marker = tmp_path / "second-ran"
+    first.write_text("exec sleep 30\n", encoding="utf-8")
+    second.write_text('touch "$PWD/second-ran"\n', encoding="utf-8")
+    runner = InstallerTestRunner(tmp_path, tmp_path)
+    statuses: list[tuple[str, int, bool]] = []
+    cancelled_runs: list[bool] = []
+    loop = QEventLoop()
+
+    def finish_run(cancelled: bool) -> None:
+        cancelled_runs.append(cancelled)
+        loop.quit()
+
+    runner.test_finished.connect(lambda *result: statuses.append(result))
+    runner.run_finished.connect(finish_run)
+    QTimer.singleShot(50, runner.cancel)
+    QTimer.singleShot(5000, loop.quit)
+
+    runner.start([first, second])
+    loop.exec()
+
+    assert len(statuses) == 1
+    assert statuses[0][0] == "first.sh" and statuses[0][2]
+    assert cancelled_runs == [True]
+    assert not marker.exists()
+
+
+@pytest.mark.skipif(os.name != "posix" or os.geteuid() == 0, reason="installer requires a non-root Linux user")
+def test_installer_creates_desktop_entries_and_uninstalls_only_them(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    desktop = home / "Desktop"
+    data = home / ".local" / "share"
+    desktop.mkdir(parents=True)
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    xdg_user_dir = fake_bin / "xdg-user-dir"
+    xdg_user_dir.write_text('#!/bin/sh\nprintf "%s\\n" "$HOME/Desktop"\n', encoding="utf-8")
+    xdg_user_dir.chmod(0o755)
+    env = dict(os.environ, HOME=str(home), XDG_DATA_HOME=str(data), PATH=f"{fake_bin}:{os.environ['PATH']}")
+    launcher = home / ".local" / "bin" / "bc250-installer-test-gui"
+    menu_entry = data / "applications" / "bc250-installer-test-gui.desktop"
+    desktop_entry = desktop / "bc250-installer-test-gui.desktop"
+
+    install = subprocess.run(["bash", str(INSTALLER)], env=env, capture_output=True, text=True, check=False)
+
+    assert install.returncode == 0, install.stderr
+    assert launcher.stat().st_mode & 0o777 == 0o755
+    assert f'exec "{APP_DIR}/run.sh" "$@"' in launcher.read_text(encoding="utf-8")
+    assert f'Exec="{launcher}"' in menu_entry.read_text(encoding="utf-8")
+    assert f"Icon={APP_DIR}/images/bc250-installer-test-gui.png" in desktop_entry.read_text(encoding="utf-8")
+    assert desktop_entry.stat().st_mode & 0o111
+
+    without_desktop = subprocess.run(
+        ["bash", str(INSTALLER), "--no-desktop-shortcut"],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert without_desktop.returncode == 0, without_desktop.stderr
+    assert launcher.exists()
+    assert menu_entry.exists()
+    assert not desktop_entry.exists()
+
+    uninstall = subprocess.run(
+        ["bash", str(INSTALLER), "--uninstall"], env=env, capture_output=True, text=True, check=False
+    )
+
+    assert uninstall.returncode == 0, uninstall.stderr
+    assert not launcher.exists()
+    assert not menu_entry.exists()
+    assert not desktop_entry.exists()
+    assert (APP_DIR / "run.sh").is_file()
+    assert (APP_DIR / "installer_test_gui" / "__main__.py").is_file()

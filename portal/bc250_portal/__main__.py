@@ -10,13 +10,12 @@ from pathlib import Path
 
 from PyQt6.QtWidgets import QMessageBox
 
-from bc250_core import instance
+from bc250_core import __version__ as CORE_VERSION, instance
 from bc250_core.app import create_app, exec_app
 from bc250_core.updates import repo_slug
 
-from . import APP_NAME, DEPENDENCY_CATALOG, INFO, MANIFEST, __version__, state_dir, suite_checkout
+from . import APP_NAME, INFO, MANIFEST, __version__, state_dir, suite_checkout
 from . import portal_update
-from .dependencies import DependencyCatalogError, load_catalog, load_tools
 from .main_window import MainWindow
 from .manifest import ManifestError, load
 from .sources import Records, Sources, http_download
@@ -34,7 +33,7 @@ def main() -> int:
     parser.add_argument("--source", choices=("auto", "release", "checkout"), default="auto",
                         help="where apps install from: the pinned GitHub releases, or the local suite checkout "
                              "(auto: the checkout when the portal runs from one)")
-    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__} (core {CORE_VERSION})")
     args, qt_args = parser.parse_known_args()
 
     app = create_app(INFO, qt_args, lang="en")
@@ -44,12 +43,6 @@ def main() -> int:
         entries = load(Path(args.manifest))
     except (OSError, ManifestError) as exc:
         QMessageBox.critical(None, APP_NAME, f"The app list could not be read:\n\n{exc}")
-        return 1
-    try:
-        dependencies = load_catalog(DEPENDENCY_CATALOG)
-        tools = load_tools(DEPENDENCY_CATALOG)
-    except DependencyCatalogError as exc:
-        QMessageBox.critical(None, APP_NAME, f"The dependency catalog could not be read:\n\n{exc}")
         return 1
     checkout = suite_checkout() if args.source in ("auto", "checkout") else None
     if args.source == "checkout" and checkout is None:
@@ -65,8 +58,7 @@ def main() -> int:
     def portal_check():
         return portal_update.check(repo_slug(INFO.repo_url), INFO.tag_prefix, entries, INFO.user_agent)
 
-    window = MainWindow(entries, sources, Records(state_dir() / "installed.json"), portal_check=portal_check,
-                        dependencies=dependencies, tools=tools)
+    window = MainWindow(entries, sources, Records(state_dir() / "installed.json"), portal_check=portal_check)
     window.show()
     server = instance.serve(INFO.app_id, window)  # noqa: F841 (kept alive while the app runs)
     return exec_app(app)

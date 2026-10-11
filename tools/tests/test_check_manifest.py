@@ -90,3 +90,4 @@ def test_app_moving_back_is_refused():
 def test_shipped_manifest_passes_without_required_tags():
     entries = cm.manifest.load(cm.SUITE / cm.MANIFEST)
     assert cm.check_entries(entries, require_tags=False) == []
+    assert "demo-tool" not in {entry.key for entry in entries}

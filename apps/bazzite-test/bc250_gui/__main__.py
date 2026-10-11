@@ -9,7 +9,7 @@ from pathlib import Path
 
 from PyQt6.QtWidgets import QMessageBox
 
-from bc250_core import instance
+from bc250_core import __version__ as CORE_VERSION, instance
 from bc250_core.app import create_app, exec_app
 
 from . import APP_NAME, INFO, ROOT, __version__
@@ -24,7 +24,7 @@ def main() -> int:
     parser.add_argument("--script", default=str(DEFAULT_SCRIPT), help="path to test-bazzite.sh")
     parser.add_argument("--no-sudo", action="store_true",
                         help="run the script without sudo (development with development/tools/fake-test-bazzite.sh)")
-    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__} (core {CORE_VERSION})")
     args, qt_args = parser.parse_known_args()
 
     # Names, Fusion style, rounded tooltips and the window icon. English only so far, Qt's own dialog buttons

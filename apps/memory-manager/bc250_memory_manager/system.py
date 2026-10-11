@@ -3,15 +3,17 @@
 kernel got, the GTT it may lend the GPU, the TTM limit behind it, the RAM and the swap layout.
 
 The swap checks are the ones of bazzite-test's test 14 and system score (zram and disk swap from /proc/swaps,
-zswap from its module parameter)."""
+zswap from its module parameter). read_usage() adds what changes while the system runs, for the memory map: the
+VRAM and GTT in use, the RAM available, what zram and zswap hold and what that costs in RAM."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 MIB = 1024 * 1024
 PAGE = 4096
+TOTAL_MIB = 16384                       # the BC-250's 16 GB of GDDR6, shared by the CPU and the GPU
 
 
 def _read(path: Path) -> str | None:
@@ -80,6 +82,85 @@ def read_memory(sys_root: Path = Path("/sys"), proc_root: Path = Path("/proc")) 
         disk_swap=any(not Path(n).name.startswith("zram") for n in names),
         swappiness=_int(_read(proc_root / "sys/vm/swappiness")),
         boot_id=_read(proc_root / "sys/kernel/random/boot_id") or "",
+    )
+
+
+@dataclass(frozen=True)
+class Zram:
+    name: str                           # "zram0"
+    size_mib: int                       # the swap size it offers
+    stored_mib: int                     # swapped-out pages it holds, uncompressed (mm_stat orig_data_size)
+    ram_mib: int                        # the RAM that costs, compressed plus overhead (mm_stat mem_used_total)
+    algorithm: str                      # "zstd"
+
+    @property
+    def ratio(self) -> float | None:
+        return self.stored_mib / self.ram_mib if self.ram_mib else None
+
+
+@dataclass(frozen=True)
+class Usage:
+    vram_used_mib: int | None = None
+    gtt_used_mib: int | None = None     # RAM the GPU borrows now
+    ram_available_mib: int | None = None
+    zram: tuple[Zram, ...] = field(default_factory=tuple)
+    zswap_pool_mib: int | None = None   # the RAM zswap's compressed cache takes (Zswap: in /proc/meminfo)
+    zswap_stored_mib: int | None = None  # the pages it holds, uncompressed (Zswapped:)
+    zswap_max_pool_percent: int | None = None
+    zswap_compressor: str = ""
+    disk_swap_size_mib: int = 0
+    disk_swap_used_mib: int = 0
+
+
+def _meminfo(proc_root: Path) -> dict[str, int]:
+    """The /proc/meminfo fields, in KiB."""
+    out = {}
+    for line in (_read(proc_root / "meminfo") or "").splitlines():
+        parts = line.replace(":", " ").split()
+        if len(parts) >= 2 and parts[1].isdigit():
+            out[parts[0]] = int(parts[1])
+    return out
+
+
+def _selected(text: str | None) -> str:
+    """The [chosen] entry of a sysfs list such as "lzo lz4 [zstd]", or the text itself."""
+    text = text or ""
+    if "[" in text and "]" in text:
+        return text[text.index("[") + 1:text.index("]")]
+    return text.strip()
+
+
+def read_usage(sys_root: Path = Path("/sys"), proc_root: Path = Path("/proc")) -> Usage:
+    dev = gpu_device(sys_root)
+    vram_used = _int(_read(dev / "mem_info_vram_used")) if dev else None
+    gtt_used = _int(_read(dev / "mem_info_gtt_used")) if dev else None
+    info = _meminfo(proc_root)
+    zrams, disk_size, disk_used = [], 0, 0
+    for line in (_read(proc_root / "swaps") or "").splitlines()[1:]:
+        parts = line.split()
+        if len(parts) < 4 or not (parts[2].isdigit() and parts[3].isdigit()):
+            continue
+        name, size_kib, used_kib = Path(parts[0]).name, int(parts[2]), int(parts[3])
+        if not name.startswith("zram"):
+            disk_size, disk_used = disk_size + size_kib // 1024, disk_used + used_kib // 1024
+            continue
+        stat = (_read(sys_root / "block" / name / "mm_stat") or "").split()
+        stored = _int(stat[0]) if len(stat) > 2 else None
+        ram = _int(stat[2]) if len(stat) > 2 else None
+        zrams.append(Zram(name, size_kib // 1024, (stored if stored is not None else used_kib * 1024) // MIB,
+                          (ram or 0) // MIB, _selected(_read(sys_root / "block" / name / "comp_algorithm"))))
+    zswap = sys_root / "module/zswap/parameters"
+    return Usage(
+        vram_used_mib=vram_used // MIB if vram_used is not None else None,
+        gtt_used_mib=gtt_used // MIB if gtt_used is not None else None,
+        ram_available_mib=info["MemAvailable"] // 1024 if "MemAvailable" in info else None,
+        zram=tuple(zrams),
+        zswap_pool_mib=info["Zswap"] // 1024 if "Zswap" in info else None,
+        zswap_stored_mib=info["Zswapped"] // 1024 if "Zswapped" in info else None,
+        zswap_max_pool_percent=_int(_read(zswap / "max_pool_percent")),
+        zswap_compressor=_selected(_read(zswap / "compressor")),
+        disk_swap_size_mib=disk_size,
+        disk_swap_used_mib=disk_used,
     )
 
 

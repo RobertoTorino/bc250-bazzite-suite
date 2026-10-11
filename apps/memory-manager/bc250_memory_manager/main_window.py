@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The main window: the memory the system has now (split, GTT, RAM, swap), and the VRAM split in CMOS with apply,
-undo and a read of the CMOS block.
+"""The main window: the memory the system has now (split, GTT, RAM, swap), a live map of it, and the VRAM split
+in CMOS with apply, undo and a read of the CMOS block.
 
 A split is written to CMOS and takes effect at the next boot. The window remembers the change with the boot it was
 made in, and after a reboot says whether the kernel got the new split."""
@@ -13,12 +13,13 @@ from html import escape
 from pathlib import Path
 from typing import Callable
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import (QComboBox, QGroupBox, QHBoxLayout, QLabel, QMainWindow, QMessageBox, QPushButton,
                              QVBoxLayout, QWidget)
 
 from bc250_core import SUITE_MANUAL_URL, window_title
+from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import data_home
 from bc250_core.settings import SettingsStore
 from bc250_core.theme import BLUE, GREY, PURPLE
@@ -27,8 +28,10 @@ from bc250_core.widgets import (ClickableLogo, MetricBox, StatusText, TextDialog
 
 from . import APP_ID, APP_NAME, INFO, LOGO_PATH, __version__
 from . import cmos, privileged, system
+from .memory_map import MemoryMap
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/memory-manager/"
+REFRESH_MS = 2000                       # the memory map's live figures
 RECOMMENDED_MB = 6144                   # bazzite-test's recommendation (test 37): fixes framebuffer pin failures
 SPLITS = (512, 1024, 2048, 4096, RECOMMENDED_MB, 8192, 10240)
 
@@ -50,7 +53,7 @@ class MainWindow(QMainWindow):
     def __init__(self, sys_root: Path = Path("/sys"), proc_root: Path = Path("/proc"),
                  runner: Callable[[list[str]], privileged.Result] = privileged.run):
         super().__init__()
-        self.resize(900, 560)
+        self.resize(900, 820)
         self.sys_root = sys_root
         self.proc_root = proc_root
         self.runner = runner
@@ -71,10 +74,22 @@ class MainWindow(QMainWindow):
             boxes.addWidget(box)
         self.details = hint_label("")
 
+        mapped = QGroupBox("Memory map")
+        self.map = MemoryMap(self.memory)
+        lay_map = QVBoxLayout(mapped)
+        lay_map.addWidget(self.map)
+        lay_map.addWidget(hint_label("Hover a part for what it is. Picking a new split below shows the next boot "
+                                     "under the bar."))
+        self.timer = QTimer(self)
+        self.timer.setInterval(REFRESH_MS)
+        self.timer.timeout.connect(self.refresh_usage)
+        self.timer.start()
+
         split = QGroupBox("VRAM split in CMOS")
         self.combo = QComboBox()
         for mb in SPLITS:
             self.combo.addItem(split_label(mb), mb)
+        self.combo.currentIndexChanged.connect(lambda _i: self.map.set_preview(self.combo.currentData()))
         self.apply_button = accent_button("Apply…", "Write this split to CMOS; it takes effect after a reboot")
         self.apply_button.clicked.connect(self.apply_split)
         self.undo_button = QPushButton("Undo")
@@ -105,9 +120,10 @@ class MainWindow(QMainWindow):
         lay.addLayout(header)
         lay.addLayout(boxes)
         lay.addWidget(self.details)
+        lay.addWidget(mapped)
         lay.addWidget(split)
         lay.addStretch(1)
-        version = QLabel(f"{APP_NAME} {__version__} · CMOS is written only when you apply a split")
+        version = QLabel(f"{APP_NAME} {__version__} · core {CORE_VERSION} · CMOS is written only when you apply a split")
         version.setStyleSheet("color:palette(placeholder-text);")
         lay.addWidget(version, 0, Qt.AlignmentFlag.AlignRight)
         self.setCentralWidget(central)
@@ -116,6 +132,7 @@ class MainWindow(QMainWindow):
         if geometry is not None:
             self.restoreGeometry(geometry)
         self.check_reboot()
+        self.refresh_usage()
         self.refresh()
 
     # --- State ------------------------------------------------------------------------------------------------
@@ -133,6 +150,9 @@ class MainWindow(QMainWindow):
                                          f"{system.mib_text(got)}. Read CMOS to see what the firmware kept.")
         self.settings.set("pending_mb", 0)
         self.settings.set("pending_boot_id", "")
+
+    def refresh_usage(self) -> None:
+        self.map.set_usage(system.read_usage(self.sys_root, self.proc_root))
 
     def refresh(self) -> None:
         m = self.memory
@@ -233,6 +253,7 @@ class MainWindow(QMainWindow):
         dialog.exec()
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        self.timer.stop()
         self.settings.set_window_state("geometry", self.saveGeometry())
         self.settings.sync()
         super().closeEvent(event)

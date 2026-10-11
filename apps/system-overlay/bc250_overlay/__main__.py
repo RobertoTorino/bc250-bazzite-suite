@@ -7,7 +7,7 @@ import argparse
 import os
 import sys
 
-from bc250_core import instance
+from bc250_core import __version__ as CORE_VERSION, instance
 from bc250_core.app import create_app, exec_app
 
 from . import APP_NAME, INFO, __version__
@@ -18,7 +18,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(prog="bc250_overlay", description=f"{APP_NAME} {__version__}")
     parser.add_argument("--native-wayland", action="store_true",
                         help="run as a Wayland window: sharper on scaled screens, but it cannot keep itself on top")
-    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__} (core {CORE_VERSION})")
     args, qt_args = parser.parse_known_args()
 
     # A Wayland window cannot keep itself on top or choose its own position; through XWayland it can. An explicit

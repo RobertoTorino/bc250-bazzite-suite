@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
     QStackedWidget, QVBoxLayout, QWidget,
 )
 
+from bc250_core import __version__ as CORE_VERSION
 from bc250_core.settings import SettingsStore
 
 from . import APP_NAME, INFO, LOGO_PATH, REPO_URL, ROOT, __version__
@@ -278,6 +279,7 @@ class AboutPage(QWidget):
         layout.addWidget(_text(
             "<table cellspacing='6'>"
             f"<tr><td><b>Version</b></td><td>{__version__}</td></tr>"
+            f"<tr><td><b>Core</b></td><td>{CORE_VERSION} (the suite's shared code, bundled with this app)</td></tr>"
             f"<tr><td><b>Build date</b></td><td>{build_date()}</td></tr>"
             f"<tr><td><b>Repository</b></td><td><a href='{REPO_URL}'>{REPO_URL}</a></td></tr>"
             "<tr><td><b>Licence</b></td><td><a href='https://www.gnu.org/licenses/gpl-3.0.html'>GNU GPL v3</a> or later."

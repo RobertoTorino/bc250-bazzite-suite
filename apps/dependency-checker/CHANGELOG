@@ -1,0 +1,13 @@
+Changelog: 11-10-2026 11:04:45
+
+Release 0.1.0. first release
+
+Changelog: 11-10-2026 09:02:11
+
+Use the new portal-dependency-checker.png icon in the app.
+
+Changelog: 11-10-2026 08:49:10
+
+Create the standalone desktop app under apps/dependency-checker/portal-dependency-checker. Its catalog covers
+Python runtime packages and external tools used across the suite; it checks PyPI versions and local tool
+availability without installing or changing anything.

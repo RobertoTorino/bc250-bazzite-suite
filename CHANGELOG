@@ -1,3 +1,44 @@
+Changelog: 11-10-2026 09:29:29
+
+Move Simple Demo Tool's runnable package into apps/demo-tool/simple-demo-tool, using apps/demo-tool as its
+release unit and updating its installer, dependency catalog, documentation and checks.
+
+Changelog: 11-10-2026 09:27:05
+
+Rename the dependency checker installer test to dependency-checker.sh and stop requiring the moved dependency
+catalog when installing the portal.
+
+Changelog: 11-10-2026 09:24:18
+
+The release front end moved from tools/ into its own app, apps/suite-releases (BC250 Suite Releases), following the standalone-app layout; tools/release.sh stays as a short wrapper (open, --list, --install, --uninstall). The new .checkout-only marker keeps an app out of the release tool and makes tools/build_release.py refuse its tags. tools/installer-tests/release-ui.sh is now suite-releases.sh, and also covers the tools/release.sh wrapper. tools/installer-tests/release.sh copies the checkout without the files that are deleted but not committed yet. PyQt6 left tools/requirements-dev.txt (no tools test needs it now); the root requirements-dev.txt includes the app's. The MkDocs hook no longer serves tools/images/, which is gone. CI, CLAUDE.md, docs/portal.md and docs/development/index.md follow the new paths.
+
+Changelog: 11-10-2026 09:02:11
+
+Use the provided Portal dependency checker icon in the app and reserve its requested icon name for its future
+portal card.
+
+Changelog: 11-10-2026 08:49:10
+
+Add Portal dependency checker as a standalone app in apps/, with Python package update checks and external tool
+availability checks. Remove the checker window from the portal and document the separate app.
+
+Changelog: 11-10-2026 08:37:35
+
+Release planning: standalone apps under apps/ remain available for independent releases but are excluded from portal pin candidates.
+
+Changelog: 11-10-2026 08:34:32
+
+Add Simple Demo Tool as a standalone app under apps/, separate from the portal manifest. CI tests its app suite and
+installer and excludes its .standalone marker from release tarballs.
+
+Changelog: 11-10-2026 08:25:24
+
+Release front end: two buttons in step 2 run the board tests of a portal release in a terminal, through the new tools/check-release.sh. Check updates (check-release.sh local), before the push, installs the portal from the checkout and starts it with --source release. Check release (check-release.sh release [tag]), after GitHub built the portal, downloads portal-v<portal/VERSION> with its SHA256SUMS into ~/.cache/bc250-release-check/, checks the checksum, installs it and starts it, so the board runs the official release again. The commands after Bump portal name both. tools/installer-tests/release.sh tests the script on the portal tarball it builds; docs/portal.md describes both checks.
+
+Changelog: 11-10-2026 08:02:58
+
+Release notes: tools/build_release.py adds a line with the bundled core version ("Bundles the suite core `bc250_core` 0.1.2.") for every app that bundles bc250_core, the portal included. docs/portal.md says so.
+
 Changelog: 11-10-2026 07:48:34
 
 Release front end: a red warning when a release tag points at a commit whose VERSION is not the tag's version (tagged before the bump was committed; release.yml cannot build it), with the commands to delete it. release_plan.py prints the same warning. docs/portal.md explains it.

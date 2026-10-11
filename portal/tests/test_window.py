@@ -59,9 +59,6 @@ def wait_for(predicate, ms=5000):
 def test_bazzite_test_first_without_uninstall(window):
     keys = list(window.cards)
     assert keys[0] == "bazzite-test"
-    assert window.dependencies_button.text() == "Dependencies"
-    assert {dependency.name for dependency in window.dependencies} == {"PyQt6", "PyQt6-Charts"}
-    assert {tool.name for tool in window.external_tools} >= {"flashrom", "pkexec", "umr", "podman"}
     assert window.cards["bazzite-test"].uninstall_button.isHidden()
     assert not window.cards["governor"].uninstall_button.isHidden()
     assert not window.cards["persistent-acpi"].open_button.isHidden()
@@ -70,8 +67,10 @@ def test_bazzite_test_first_without_uninstall(window):
 
 def test_every_card_has_its_icon(window):
     for key, card in window.cards.items():
-        assert (mw.APP_ICONS / f"{key}.png").is_file(), key
+        icon = mw.APP_ICON_FILES.get(key, key)
+        assert (mw.APP_ICONS / f"{icon}.png").is_file(), key
         assert not card.icon.isHidden() and card.icon.pixmap().width() == mw.ICON_PX, key
+    assert (mw.APP_ICONS / f"{mw.APP_ICON_FILES['dependency-checker']}.png").is_file()
 
 
 def test_card_without_icon_file_shows_none(qapp, home, settings_dir, tmp_path, launched, monkeypatch):

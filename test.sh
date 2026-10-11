@@ -29,7 +29,7 @@ fi
 export QT_QPA_PLATFORM=offscreen
 export PYTHONDONTWRITEBYTECODE=1
 rc=0
-for dir in core portal tools apps/*; do
+for dir in core portal tools tools/installer-tests/gui apps/*; do
     [[ -d "$dir/tests" ]] || continue
     echo "== $dir"
     (cd "$dir" && "$PY" -m pytest -q -p no:cacheprovider tests "$@") || rc=1

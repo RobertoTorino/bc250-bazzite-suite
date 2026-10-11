@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from bc250_core import instance
+from bc250_core import __version__ as CORE_VERSION, instance
 from bc250_core.app import create_app, exec_app
 
 from . import APP_NAME, INFO, __version__
@@ -14,7 +14,7 @@ from . import APP_NAME, INFO, __version__
 
 def main() -> int:
     parser = argparse.ArgumentParser(prog="bc250_ace_queues", description=f"{APP_NAME} {__version__}")
-    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__} (core {CORE_VERSION})")
     _, qt_args = parser.parse_known_args()
 
     # English only so far, Qt's own menu texts included.

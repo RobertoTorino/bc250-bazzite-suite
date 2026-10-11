@@ -7,7 +7,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from bc250_core import instance
+from bc250_core import __version__ as CORE_VERSION, instance
 from bc250_core.app import create_app, exec_app
 
 from . import APP_NAME, INFO, __version__
@@ -29,7 +29,7 @@ def main() -> int:
     parser.add_argument("--build-table", type=Path, metavar="DUMP",
                         help="make the built-in table of a stock BIOS release from a dump of it, and exit")
     parser.add_argument("--out", type=Path, metavar="DIR", help="folder for --build-table (default: the app's)")
-    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__} (core {CORE_VERSION})")
     args, qt_args = parser.parse_known_args()
     if args.build_table:
         return build_table(args.build_table, args.out)

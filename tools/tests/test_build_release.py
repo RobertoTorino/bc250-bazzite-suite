@@ -25,6 +25,7 @@ pin_spec.loader.exec_module(pin_app)
 
 BT_TAG = f"bazzite-test-v{(TOOLS.parent / 'apps' / 'bazzite-test' / 'VERSION').read_text().strip()}"
 PORTAL_TAG = f"portal-v{(TOOLS.parent / 'portal' / 'VERSION').read_text().strip()}"
+DEMO_TOOL_TAG = f"demo-tool-v{(TOOLS.parent / 'apps' / 'demo-tool' / 'VERSION').read_text().strip()}"
 
 
 @pytest.fixture(autouse=True)
@@ -95,6 +96,8 @@ def test_sums_and_notes(bt_release):
     assert (bt_release / "SHA256SUMS").read_text() == f"{digest}  {archive.name}\n"
     notes = (bt_release / "notes.md").read_text()
     assert f"cd {BT_TAG} && ./install.sh" in notes and digest in notes
+    core = (br.SUITE / "core" / "VERSION").read_text().strip()
+    assert f"Bundles the suite core `bc250_core` {core}." in notes
 
 
 def test_reproducible(bt_release, tmp_path):
@@ -107,6 +110,22 @@ def test_version_must_match(tmp_path):
         br.build("bazzite-test-v9.9.9", tmp_path)
     with pytest.raises(SystemExit, match="is not <app>-v"):
         br.build("bazzite-test-9.9.9", tmp_path)
+
+
+def test_demo_tool_release_keeps_nested_package_and_omits_suite_marker(tmp_path):
+    br.build(DEMO_TOOL_TAG, tmp_path)
+    names = members(tmp_path / f"{DEMO_TOOL_TAG}.tar.gz")
+
+    assert f"{DEMO_TOOL_TAG}/install.sh" in names
+    assert f"{DEMO_TOOL_TAG}/simple-demo-tool/simple_demo_tool/__main__.py" in names
+    assert f"{DEMO_TOOL_TAG}/.standalone" not in names
+    assert not any("/tests/" in name for name in names)
+
+
+def test_checkout_only_app_has_no_release(tmp_path):
+    version = (br.SUITE / "apps/suite-releases/VERSION").read_text().strip()
+    with pytest.raises(SystemExit, match="runs from the checkout"):
+        br.build(f"suite-releases-v{version}", tmp_path)
 
 
 def test_portal_needs_and_verifies_bundle(bt_release, pinned, tmp_path):

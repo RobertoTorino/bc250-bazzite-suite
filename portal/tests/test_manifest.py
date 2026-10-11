@@ -62,7 +62,7 @@ def test_shipped_manifest_lists_every_app_with_bazzite_test_first():
     entries = load(MANIFEST)
     assert entries[0].key == "bazzite-test" and entries[0].required
     assert sum(e.required for e in entries) == 1
-    apps = {p.name for p in (SUITE / "apps").iterdir() if p.is_dir()}
+    apps = {p.name for p in (SUITE / "apps").iterdir() if p.is_dir() and not (p / ".standalone").is_file()}
     assert {e.key for e in entries} == apps
 
 

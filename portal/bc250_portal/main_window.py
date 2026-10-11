@@ -25,15 +25,14 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import expand, launch_in_terminal
 from bc250_core.settings import open_settings, restore_geometry, save_geometry
 from bc250_core.theme import ORANGE, RED, header_font
 from bc250_core.updates import ReleaseInfo, UpdateChecker, version_tuple
 from bc250_core.widgets import ClickableLogo, StatusPill, accent_button, hint_label
 
-from . import APP_ICONS, APP_NAME, DEPENDENCY_CATALOG, INFO, LOGO_PATH, __version__
-from .dependencies import Dependency, ExternalTool, load_catalog, load_tools
-from .dependency_window import DependencyWindow
+from . import APP_ICONS, APP_NAME, INFO, LOGO_PATH, __version__
 from .manifest import AppEntry
 from .portal_update import PortalUpdate
 from .sources import Records, SourceError, Sources, is_installed
@@ -41,6 +40,7 @@ from .sources import Records, SourceError, Sources, is_installed
 POLL_MS = 1000
 ICON_PX = 24                    # the app icon in front of the name on its card
 TILE_MIN_WIDTH = 420            # below two of these side by side, the cards go back to one column
+APP_ICON_FILES = {"dependency-checker": "portal-dependency-checker"}
 
 BOARD_WARNING = (
     "<p><b>{name} changes how your BC-250 runs</b> (clocks, voltages, unlocked units or firmware tables).</p>"
@@ -89,7 +89,7 @@ class AppCard(QFrame):
         title_row = QHBoxLayout()
         title_row.setSpacing(8)
         self.icon = QLabel()
-        icon = APP_ICONS / f"{entry.key}.png"
+        icon = APP_ICONS / f"{APP_ICON_FILES.get(entry.key, entry.key)}.png"
         if icon.is_file():
             self.icon.setPixmap(QPixmap(str(icon)).scaled(
                 ICON_PX, ICON_PX, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
@@ -161,16 +161,12 @@ class AppCard(QFrame):
 
 class MainWindow(QMainWindow):
     def __init__(self, entries: list[AppEntry], sources: Sources, records: Records,
-                 portal_check: Callable[[], ReleaseInfo] | None = None, parent: QWidget | None = None,
-                 dependencies: list[Dependency] | None = None, tools: list[ExternalTool] | None = None):
+                 portal_check: Callable[[], ReleaseInfo] | None = None, parent: QWidget | None = None):
         """*portal_check* returns the newest portal release (run once, off the GUI thread); None: no check."""
         super().__init__(parent)
         self.entries = entries
         self.sources = sources
         self.records = records
-        self.dependencies = dependencies if dependencies is not None else load_catalog(DEPENDENCY_CATALOG)
-        self.external_tools = tools if tools is not None else load_tools(DEPENDENCY_CATALOG)
-        self.dependency_window: DependencyWindow | None = None
         self.pending: Pending | None = None
         self.worker = UpdateChecker(self)               # generic: runs one job off the GUI thread
         self.worker.finished.connect(self._prepared)
@@ -186,6 +182,7 @@ class MainWindow(QMainWindow):
             header.addWidget(ClickableLogo(LOGO_PATH, 56))
         title = QLabel(f"{APP_NAME}  <span style='color:#9aa0a6; font-size:14px;'>v{__version__}</span>")
         title.setStyleSheet(header_font() + "font-size:24px; font-weight:800;")
+        title.setToolTip(f"{APP_NAME} {__version__} · core {CORE_VERSION}")
         header.addWidget(title, 1)
         self.updates_label = QLabel()
         self.updates_label.setStyleSheet(f"color:{RED}; font-weight:700;")
@@ -197,10 +194,6 @@ class MainWindow(QMainWindow):
         self.portal_button.hide()
         header.addWidget(self.portal_button)
         self.portal_release: ReleaseInfo | None = None
-        self.dependencies_button = QPushButton("Dependencies")
-        self.dependencies_button.setToolTip("List runtime Python dependencies and check PyPI for updates.")
-        self.dependencies_button.clicked.connect(self._open_dependency_window)
-        header.addWidget(self.dependencies_button)
         refresh = QPushButton("Refresh")
         refresh.setToolTip("Look again at which apps are installed.")
         refresh.clicked.connect(self._on_refresh)
@@ -318,13 +311,6 @@ class MainWindow(QMainWindow):
     def _open_portal_release(self) -> None:
         if self.portal_release is not None:
             QDesktopServices.openUrl(QUrl(self.portal_release.url))
-
-    def _open_dependency_window(self) -> None:
-        if self.dependency_window is None:
-            self.dependency_window = DependencyWindow(self.dependencies, self.entries, self, tools=self.external_tools)
-        self.dependency_window.show()
-        self.dependency_window.raise_()
-        self.dependency_window.activateWindow()
 
     # ----------------------------------------------------------------------------------------- actions
     def _confirm_board_change(self, entry: AppEntry, action: str) -> bool:

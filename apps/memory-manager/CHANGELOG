@@ -1,3 +1,15 @@
+Changelog: 11-10-2026 11:04:45
+
+Release 0.1.3. added virtual view
+
+Changelog: 11-10-2026 10:32:47
+
+A memory map in the main window (memory_map.py): the 16 GB as one bar, live every two seconds, with the VRAM in use and free, the RAM the GPU borrows (GTT), what zram and zswap take, what Linux and the apps use, what is available and what the firmware keeps; the GTT limit as a bracket with what the TTM limit does; the swap rows (zram's stored pages and their RAM cost, zswap, disk swap); a legend for the parts too narrow for a label, and a tooltip on every part. Picking a split under New split previews the next boot under the bar. system.read_usage() reads the live figures without root (mem_info_vram_used and mem_info_gtt_used, MemAvailable, Zswap and Zswapped in /proc/meminfo, zram's mm_stat and comp_algorithm, the zswap parameters, disk swap from /proc/swaps). It only reads: the CMOS write is unchanged. docs/apps/memory-manager.md describes it.
+
+Changelog: 11-10-2026 08:02:58
+
+The footer and --version also show the bundled core version, for example "BC-250 Memory Manager 0.1.2 · core 0.1.2".
+
 Changelog: 11-10-2026 07:28:24
 
 Release 0.1.2. UI improvements

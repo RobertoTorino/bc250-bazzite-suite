@@ -206,7 +206,7 @@ fi
 
 # --- Checks ------------------------------------------------------------------------------------
 [ "$(uname -s)" = Linux ] || die "This app runs on Linux (Bazzite) only."
-for f in apps.toml dependencies.toml requirements.txt bc250_portal/__init__.py bc250_portal/__main__.py; do
+for f in apps.toml requirements.txt bc250_portal/__init__.py bc250_portal/__main__.py; do
     [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from the extracted release folder."
 done
 [ -f "$CORE_SRC/__init__.py" ] || die "bc250_core is missing: run install.sh from the extracted release folder."

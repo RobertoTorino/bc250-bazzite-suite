@@ -32,7 +32,9 @@ jobs:
       fail-fast: false
       matrix:
         dir: [core, portal, tools, apps/bazzite-test, apps/governor, apps/helixsr, apps/persistent-acpi,
-              apps/system-overlay, apps/bios-reader, apps/ace-queues, apps/memory-manager]   # every folder with tests/
+              apps/demo-tool, apps/dependency-checker, apps/suite-releases,
+              apps/system-overlay, apps/bios-reader, apps/ace-queues, apps/memory-manager,
+              tools/installer-tests/gui]   # every folder with tests/
     defaults:
       run:
         working-directory: ${{ matrix.dir }}
@@ -87,6 +89,9 @@ jobs:
           shellcheck -S warning apps/system-overlay/install.sh apps/bios-reader/install.sh apps/memory-manager/install.sh
           shellcheck -S warning apps/ace-queues/bc250-ace-queues.sh apps/ace-queues/bc250-ace-queues-run \
             apps/ace-queues/install.sh apps/ace-queues/mesa/build-in-container.sh
+          shellcheck -S warning apps/demo-tool/install.sh
+          shellcheck -S warning apps/dependency-checker/install.sh
+          shellcheck -S warning apps/suite-releases/*.sh
 
       - name: Line endings
         run: |
@@ -103,7 +108,7 @@ jobs:
       - name: Every former repo has its LICENSE, .gitignore, VERSION and CHANGELOG
         run: |
           rc=0
-          for d in core portal apps/*; do
+          for d in core portal apps/* tools/installer-tests/gui; do
             for f in LICENSE .gitignore VERSION CHANGELOG; do
               [ -f "$d/$f" ] || { echo "::error::$d/$f missing"; rc=1; }
             done
@@ -140,8 +145,12 @@ jobs:
         run: bash tools/installer-tests/ace-queues.sh
       - name: memory-manager installer
         run: bash tools/installer-tests/memory-manager.sh
-      - name: release front end installer
-        run: bash tools/installer-tests/release-ui.sh
+      - name: Demo Tool installer
+        run: bash tools/installer-tests/demo-tool.sh
+      - name: Dependency checker installer
+        run: bash tools/installer-tests/dependency-checker.sh
+      - name: Suite Releases installer
+        run: bash tools/installer-tests/suite-releases.sh
       - name: release tarballs, end to end
         run: bash tools/installer-tests/release.sh
 

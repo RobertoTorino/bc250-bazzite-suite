@@ -11,8 +11,8 @@ together. The portal's release steps are in [Portal](../portal.md#appstoml-and-r
 core/bc250_core/   shared Python package, see bc250_core below
 portal/            the portal: app, apps.toml (the pinned app releases) and install.sh
 apps/<name>/       one folder per app, each with its own VERSION and CHANGELOG
-tools/             release and CI tools (build_release, stage_app, pin_app, check_*, the release front end
-                   release.sh), installer tests
+tools/             release and CI tools (build_release, stage_app, pin_app, check_*; release.sh starts the
+                   release front end in apps/suite-releases/), installer tests
 docs/ mkdocs.yml   the manual (MkDocs Material)
 test.sh            runs every test suite (core, portal, tools and each app with tests/)
 ```
