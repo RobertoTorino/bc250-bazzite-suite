@@ -1,5 +1,6 @@
-Changelog: 11-10-2026 10:52:47
+Changelog: 11-10-2026 11:44:16
 
 Add a desktop GUI for selecting and running installer tests.
 Add application and documentation icons.
 Add a per-user desktop installer and uninstaller.
+Show a green checkmark for passing tests and a red cross for failures.

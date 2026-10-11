@@ -71,7 +71,7 @@ exec "$VENV/bin/python" -m simple_demo_tool "\$@"
 EOF
 chmod 755 "$LAUNCHER"
 
-DESKTOP_CONTENT="[Desktop Entry]
+DESKTOP_CONTENT="[Desktop Entry]"
 Type=Application
 Version=1.0
 Name=Simple Demo Tool

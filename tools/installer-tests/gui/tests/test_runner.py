@@ -70,9 +70,27 @@ def test_window_lists_all_installer_scripts_except_shims() -> None:
 
     assert window.test_list.count() == len(discover_tests(TESTS_DIR))
     assert all(
-        window.test_list.item(index).text()
+        window._items[window.test_list.item(index).toolTip()][2].text()
         for index in range(window.test_list.count())
     )
+    window.close()
+
+
+def test_window_shows_green_check_and_red_cross_at_row_end() -> None:
+    window = MainWindow()
+    passed_name, failed_name = list(window._items)[:2]
+    _passed_item, _passed_title, _passed_checkbox, passed_status = window._items[passed_name]
+    _failed_item, _failed_title, _failed_checkbox, failed_status = window._items[failed_name]
+
+    window._test_finished(passed_name, 0, False)
+    window._test_finished(failed_name, 1, False)
+
+    assert passed_status.text() == "✓"
+    assert "color: #16803c" in passed_status.styleSheet()
+    assert passed_status.toolTip().endswith("passed")
+    assert failed_status.text() == "✗"
+    assert "color: #c62828" in failed_status.styleSheet()
+    assert failed_status.toolTip().endswith("exit code 1)")
     window.close()
 
 

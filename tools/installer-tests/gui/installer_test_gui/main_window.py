@@ -8,6 +8,7 @@ from PyQt6.QtGui import QCloseEvent, QTextCursor
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
+    QCheckBox,
     QListWidget,
     QListWidgetItem,
     QMainWindow,
@@ -34,7 +35,7 @@ class MainWindow(QMainWindow):
         self.runner.test_started.connect(self._test_started)
         self.runner.test_finished.connect(self._test_finished)
         self.runner.run_finished.connect(self._run_finished)
-        self._items: dict[str, tuple[QListWidgetItem, str]] = {}
+        self._items: dict[str, tuple[QListWidgetItem, str, QCheckBox, QLabel]] = {}
 
         central = QWidget()
         layout = QVBoxLayout(central)
@@ -101,25 +102,36 @@ class MainWindow(QMainWindow):
             title = script.stem.replace("-", " ").title()
             item = QListWidgetItem(title)
             item.setData(Qt.ItemDataRole.UserRole, script)
-            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-            item.setCheckState(Qt.CheckState.Unchecked)
             item.setToolTip(script.name)
             self.test_list.addItem(item)
-            self._items[script.name] = item, title
+            row = QWidget()
+            row_layout = QHBoxLayout(row)
+            row_layout.setContentsMargins(4, 0, 8, 0)
+            checkbox = QCheckBox(title)
+            checkbox.setToolTip(script.name)
+            status = QLabel()
+            status.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            status.setFixedWidth(28)
+            status.setAccessibleName(f"{title} result")
+            row_layout.addWidget(checkbox, 1)
+            row_layout.addWidget(status)
+            item.setSizeHint(row.sizeHint())
+            self.test_list.setItemWidget(item, row)
+            self._items[script.name] = item, title, checkbox, status
 
     def _select_all(self) -> None:
-        for index in range(self.test_list.count()):
-            self.test_list.item(index).setCheckState(Qt.CheckState.Checked)
+        for _item, _title, checkbox, _status in self._items.values():
+            checkbox.setChecked(True)
 
     def _clear_selection(self) -> None:
-        for index in range(self.test_list.count()):
-            self.test_list.item(index).setCheckState(Qt.CheckState.Unchecked)
+        for _item, _title, checkbox, _status in self._items.values():
+            checkbox.setChecked(False)
 
     def _run_selected(self) -> None:
         scripts = [
-            self.test_list.item(index).data(Qt.ItemDataRole.UserRole)
-            for index in range(self.test_list.count())
-            if self.test_list.item(index).checkState() == Qt.CheckState.Checked
+            item.data(Qt.ItemDataRole.UserRole)
+            for item, _title, checkbox, _status in self._items.values()
+            if checkbox.isChecked()
         ]
         if not scripts:
             QMessageBox.information(self, APP_NAME, "Select one or more installer tests first.")
@@ -131,8 +143,10 @@ class MainWindow(QMainWindow):
 
     def _run(self, scripts: list[Path]) -> None:
         self.output_view.clear()
-        for item, title in self._items.values():
-            item.setText(title)
+        for _item, _title, _checkbox, status in self._items.values():
+            status.clear()
+            status.setStyleSheet("")
+            status.setToolTip("")
         try:
             self.runner.start(scripts)
         except (OSError, RuntimeError, ValueError) as error:
@@ -148,15 +162,28 @@ class MainWindow(QMainWindow):
         self.output_view.ensureCursorVisible()
 
     def _test_started(self, name: str) -> None:
-        item, title = self._items[name]
-        item.setText(f"[RUNNING] {title}")
+        _item, title, _checkbox, status = self._items[name]
+        status.setText("…")
+        status.setStyleSheet("color: #777777; font-weight: bold;")
+        status.setToolTip(f"{title}: running")
         self.stop_button.setEnabled(True)
         self.statusBar().showMessage(f"Running {title}…")
 
     def _test_finished(self, name: str, exit_code: int, cancelled: bool) -> None:
-        item, title = self._items[name]
+        _item, title, _checkbox, status = self._items[name]
         result = "CANCELLED" if cancelled else "PASS" if exit_code == 0 else f"FAIL ({exit_code})"
-        item.setText(f"[{result}] {title}")
+        if cancelled:
+            status.setText("–")
+            status.setStyleSheet("color: #777777; font-weight: bold;")
+            status.setToolTip(f"{title}: cancelled")
+        elif exit_code == 0:
+            status.setText("✓")
+            status.setStyleSheet("color: #16803c; font-weight: bold;")
+            status.setToolTip(f"{title}: passed")
+        else:
+            status.setText("✗")
+            status.setStyleSheet("color: #c62828; font-weight: bold;")
+            status.setToolTip(f"{title}: failed (exit code {exit_code})")
         self._append_output(f"\n== {title}: {result} ==\n")
 
     def _run_finished(self, cancelled: bool) -> None:
