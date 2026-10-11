@@ -1,3 +1,7 @@
+Changelog: 11-10-2026 07:41:28
+
+Release 0.9.2. Pins bazzite-test-v0.1.1, system-overlay-v0.1.1, bios-reader-v0.1.1, ace-queues-v0.1.2, memory-manager-v0.1.2. updates for: ace-queues, bazzite-test, bios-reader, memory-manager, systemoverlay
+
 Changelog: 11-10-2026 00:54:13
 
 The button for a newer portal release names the app releases it brings: it reads that release's apps.toml from GitHub at its tag (portal_update.py) and compares the pins with this portal's, so it says for example "Portal 0.9.1: updates ACE Queues and Memory Manager" (more than two: "updates 4 apps"; new apps: "adds …"). The tooltip lists each app with its old and new version and explains that the installed ones show Update after the portal update. When the new apps.toml cannot be read, the button says "Portal x.y.z available" as before.

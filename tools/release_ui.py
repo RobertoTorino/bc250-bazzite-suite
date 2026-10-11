@@ -48,7 +48,11 @@ def run_check(root: Path, *args: str) -> str:
 
 def needs_tooltip(unit: rp.Unit) -> str:
     if unit.kind == "core":
-        return "Core is bundled with each app that imports it; a change to it shows in those apps."
+        text = "Core is never tagged: each app that imports it ships its own copy, so a core change needs a release " \
+               "of those apps (ticked with them, not here)."
+        if unit.in_apps:
+            text += "\n\nChanged: " + ", ".join(unit.changed) + "\nGoes into: " + ", ".join(unit.in_apps)
+        return text
     if unit.last_tag is None:
         return "Never released."
     if not unit.changed:
@@ -328,6 +332,11 @@ class ReleaseWindow(QMainWindow):
         central = QWidget()
         lay = QVBoxLayout(central)
         lay.addLayout(header)
+        self.bad_tags = QLabel()
+        self.bad_tags.setWordWrap(True)
+        self.bad_tags.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.bad_tags.setStyleSheet("color:#c62828; font-weight:600;")
+        lay.addWidget(self.bad_tags)
         lay.addWidget(self.tabs, 1)
         lay.addWidget(hint_label("Only files change here. Commit, push and tag yourself, with the commands shown."))
         self.setCentralWidget(central)
@@ -343,6 +352,11 @@ class ReleaseWindow(QMainWindow):
         units = rp.load_units(self.root)
         self.apps_page.fill(units)
         self.portal_page.fill(units)
+        problems = rp.bad_tags(self.root, units)
+        self.bad_tags.setText("\n".join(
+            f"\u26a0 {p}: release.yml cannot build it. Delete it (git tag -d {p.split()[0]} && git push origin "
+            f":refs/tags/{p.split()[0]}), commit the bump, then tag again." for p in problems))
+        self.bad_tags.setVisible(bool(problems))
         dirty = rp.git(self.root, "status", "--porcelain")
         self.status.setText("working tree has changes" if dirty else "working tree clean" if dirty is not None
                             else "not a git checkout")

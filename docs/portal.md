@@ -124,6 +124,10 @@ run `--install` again. On Windows, run `tools/release.sh` from Git Bash.
   releases, and runs `tools/check_manifest.py` (step 4). Then commit, test on a BC-250 (below), and only then push
   and tag the portal (step 5). The window lists these commands in that order.
 
+A red line at the top of the window means a release tag points at a commit whose `VERSION` is not the tag's
+version: the tag was made before the version bump was committed, and `release.yml` cannot build it. Delete the tag
+(the line shows how), commit the bump, and tag again.
+
 `python3 tools/release_plan.py` lists every app with its version, its last tag and its pin, without Qt.
 
 ### Testing a portal release before its tag

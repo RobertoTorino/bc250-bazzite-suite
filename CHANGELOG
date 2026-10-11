@@ -1,3 +1,11 @@
+Changelog: 11-10-2026 07:48:34
+
+Release front end: a red warning when a release tag points at a commit whose VERSION is not the tag's version (tagged before the bump was committed; release.yml cannot build it), with the commands to delete it. release_plan.py prints the same warning. docs/portal.md explains it.
+
+Changelog: 11-10-2026 07:47:34
+
+Installer tests: bazzite-test.sh and portal.sh take Bazzite Test's version from its VERSION file instead of a hard-coded 0.1.0, so they keep passing after a release (they failed in CI once bazzite-test-v0.1.1 was out). Release front end: the core row says which app releases would carry its changes (core is never tagged; it ships inside each app that imports it), with the files and apps in its tooltip.
+
 Changelog: 11-10-2026 01:10:46
 
 Release front end: which apps need a release. Step 1's Needs release column (orange) marks every app whose shipped files differ from its last tag, as tools/stage_app.py stages it: its folder without tests and requirements-dev.txt, the core it bundles, and its manual chapter, committed, not committed or new. The tooltip lists the files; "Tick what needs a release" ticks those apps; step 2 says whether the portal needs one. python3 tools/release_plan.py prints the same.

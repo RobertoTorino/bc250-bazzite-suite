@@ -10,13 +10,15 @@ source "$(dirname "${BASH_SOURCE[0]}")/shims.sh" "$T"; set +e
 fail=0
 check() { if eval "$2"; then echo "  ok   $1"; else echo "  FAIL $1"; fail=1; fi; }
 D=$XDG_DATA_HOME
+V=$(tr -d '[:space:]' < "$SUITE/apps/bazzite-test/VERSION")   # the version in the checkout
+NEXT="${V%.*}.$(( ${V##*.} + 1 ))"                             # a later release, for the update in step 2
 
 echo "== 1. install from the suite checkout"
 mkdir -p "$D/bc250-bazzite-test/venv/bin"                     # a pre-suite venv that should go
 bash "$SUITE/apps/bazzite-test/install.sh" --no-desktop-shortcut > "$T/log1" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
-check "versioned /opt copy" "[ -f $T/opt/bc250-bazzite-test-v0.1.0/test-bazzite.sh ]"
-check "symlink" "[ \"\$(readlink $T/opt/bc250-bazzite-test)\" = bc250-bazzite-test-v0.1.0 ]"
+check "versioned /opt copy" "[ -f $T/opt/bc250-bazzite-test-v$V/test-bazzite.sh ]"
+check "symlink" "[ \"\$(readlink $T/opt/bc250-bazzite-test)\" = bc250-bazzite-test-v$V ]"
 check "core bundled from checkout" "[ -f $T/opt/bc250-bazzite-test/bc250_core/widgets.py ]"
 check "no tests or caches copied" "[ ! -d $T/opt/bc250-bazzite-test/bc250_core/__pycache__ ]"
 check "shared venv" "[ -x $D/bc250-bazzite-suite/venv/bin/python ]"
@@ -30,12 +32,12 @@ check "core imports from the /opt copy" "(cd $T/opt/bc250-bazzite-test && python
 
 echo "== 2. install a staged release (core bundled in the tarball), new version replaces the old"
 rm -rf "$T/stage"; /usr/bin/python3 "$SUITE/tools/stage_app.py" bazzite-test "$T/stage" > /dev/null
-sed -i 's/^__version__ = "0.1.0"$/__version__ = "0.1.1"/' "$T/stage/bc250_gui/__init__.py"
+sed -i "s/^__version__ = \"$V\"\$/__version__ = \"$NEXT\"/" "$T/stage/bc250_gui/__init__.py"
 echo "# release marker" >> "$T/stage/bc250_core/__init__.py"
 bash "$T/stage/install.sh" --no-desktop-shortcut > "$T/log2" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
-check "new version linked" "[ \"\$(readlink $T/opt/bc250-bazzite-test)\" = bc250-bazzite-test-v0.1.1 ]"
-check "old version removed" "[ ! -d $T/opt/bc250-bazzite-test-v0.1.0 ]"
+check "new version linked" "[ \"\$(readlink $T/opt/bc250-bazzite-test)\" = bc250-bazzite-test-v$NEXT ]"
+check "old version removed" "[ ! -d $T/opt/bc250-bazzite-test-v$V ]"
 check "the release's own core used" "grep -q 'release marker' $T/opt/bc250-bazzite-test/bc250_core/__init__.py"
 check "no tests in staged tree" "[ ! -d $T/stage/tests ] && [ ! -e $T/stage/requirements-dev.txt ]"
 

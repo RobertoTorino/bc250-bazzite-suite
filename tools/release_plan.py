@@ -18,7 +18,7 @@ import importlib.util
 import re
 import subprocess
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 SUITE = Path(__file__).resolve().parent.parent
@@ -93,6 +93,7 @@ class Unit:
     pinned_tag: str = ""                # apps only: what portal/apps.toml pins
     pinned_sha: str = ""
     changed: list[str] | None = None    # shipped files that differ from the last tag; None: never released
+    in_apps: list[str] = field(default_factory=list)  # core only: the apps whose release would carry its changes
 
     @property
     def needs_release(self) -> bool:
@@ -102,7 +103,8 @@ class Unit:
     @property
     def release_reason(self) -> str:
         if self.kind == "core":
-            return ""
+            n = len(self.in_apps)
+            return f"changed: goes into {n} app release{'s' if n != 1 else ''}" if n else "no"
         if self.last_tag is None:
             return "first release"
         if not self.changed:
@@ -150,6 +152,20 @@ def changed_since(root: Path, tag: str, paths: list[str]) -> list[str]:
     return sorted({f for f in (diff + new).splitlines() if f and is_shipped(f)})
 
 
+def bad_tags(root: Path, units: list[Unit]) -> list[str]:
+    """Tags that point at a commit whose VERSION is not the tag's version: tagged before the version bump was
+    committed. release.yml refuses to build those; delete the tag and tag the right commit again."""
+    out = []
+    for unit in units:
+        if unit.kind == "core" or not unit.last_tag:
+            continue
+        at_tag = (git(root, "show", f"{unit.last_tag}:{unit.path}/VERSION") or "").strip()
+        want = unit.last_tag[len(unit.key) + 2:]
+        if at_tag and at_tag != want:
+            out.append(f"{unit.last_tag} points at a commit where {unit.path}/VERSION is {at_tag}")
+    return out
+
+
 def load_units(root: Path = SUITE) -> list[Unit]:
     pins = {}
     try:
@@ -170,6 +186,12 @@ def load_units(root: Path = SUITE) -> list[Unit]:
         if key in pins:
             unit.pinned_tag, unit.pinned_sha = pins[key].tag, pins[key].sha256
         units.append(unit)
+    # Core is never tagged: it ships inside each app that imports it, so its changes are the core files those
+    # apps' releases would carry.
+    core = units[0]
+    carriers = [u for u in units if u.kind != "core" and any(f.startswith("core/") for f in u.changed or [])]
+    core.in_apps = [u.key for u in carriers]
+    core.changed = sorted({f for u in carriers for f in u.changed or [] if f.startswith("core/")})
     return units
 
 
@@ -312,11 +334,15 @@ def portal_commands(tag: str) -> str:
 
 
 def main() -> int:
-    for u in load_units():
+    units = load_units()
+    for problem in bad_tags(SUITE, units):
+        print(f"WARNING: {problem}: delete the tag and tag the commit with the bump", file=sys.stderr)
+    for u in units:
         since = "never released" if u.last_tag is None and u.kind != "core" else \
             f"{u.commits} commits since {u.last_tag}" if u.last_tag else ""
         pinned = f"  pinned {u.pinned_tag}{'' if u.pinned_sha else ' (no sha256)'}" if u.pinned_tag else ""
-        needs = f"  needs a release: {u.release_reason}" if u.needs_release else ""
+        needs = f"  needs a release: {u.release_reason}" if u.needs_release else \
+            f"  {u.release_reason}: {', '.join(u.in_apps)}" if u.in_apps else ""
         print(f"{u.key:<16} {u.version:<8} {since}{pinned}{needs}")
     return 0
 

@@ -274,6 +274,10 @@ def test_core_and_manual_changes_count_for_the_apps_that_ship_them(repo):
     write(repo / "core/bc250_core/widgets.py", "class StatusText: pass\n")
     state = needs(repo)
     assert state["alpha"][:2] == (True, "yes: core") and state["beta"][0] is False   # beta does not import core
+    core = next(u for u in rp.load_units(repo) if u.kind == "core")
+    assert (core.in_apps, core.changed, core.release_reason) == (
+        ["alpha"], ["core/bc250_core/widgets.py"], "changed: goes into 1 app release")
+    assert not core.needs_release                                                 # core itself is never tagged
     write(repo / "docs/apps/alpha.md", "# Alpha\n\nMore.\n")                      # shipped as MANUAL.md
     assert needs(repo)["alpha"][1] == "yes: 1 file + core"
 
@@ -285,3 +289,21 @@ def test_window_ticks_what_needs_a_release(window, repo):
     item = window.apps_page.table.item(1, 4)
     assert item.text() == "yes: 1 file" and "apps/alpha/alpha/extra.py" in item.toolTip()
     assert "needs a release" in window.portal_page.portal_needs.text()
+
+
+def test_a_tag_before_the_bump_is_reported(repo):
+    rp.set_version(repo, unit(repo, "beta"), "0.2.0")
+    sh(repo, "tag", "beta-v0.2.0")                            # tagged, but the bump is not committed
+    assert rp.bad_tags(repo, rp.load_units(repo)) == ["beta-v0.2.0 points at a commit where apps/beta/VERSION is 0.1.0"]
+    sh(repo, "tag", "-d", "beta-v0.2.0")
+    sh(repo, "commit", "-qam", "bump")
+    sh(repo, "tag", "beta-v0.2.0")
+    assert rp.bad_tags(repo, rp.load_units(repo)) == []
+
+
+def test_window_warns_about_a_bad_tag(window, repo):
+    assert window.bad_tags.isHidden()
+    rp.set_version(repo, unit(repo, "beta"), "0.2.0")
+    sh(repo, "tag", "beta-v0.2.0")
+    window.reload()
+    assert not window.bad_tags.isHidden() and "git tag -d beta-v0.2.0" in window.bad_tags.text()

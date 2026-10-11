@@ -13,6 +13,7 @@ D=$XDG_DATA_HOME
 logs=()
 V=$(cat "$SUITE/portal/VERSION")
 NEXT="${V%.*}.$(( ${V##*.} + 1 ))"   # a later portal release, for the update in step 2
+BT="bazzite-test-v$(tr -d '[:space:]' < "$SUITE/apps/bazzite-test/VERSION")"   # the bundled release
 
 echo "== 1. install from the suite checkout, with the install.sh at its root"
 bash "$SUITE/install.sh" > "$T/log1" 2>&1; rc=$?; logs+=("$T/log1")
@@ -34,14 +35,14 @@ check "manifest parses on Linux python" "(cd $T/opt/bc250-bazzite-suite && /usr/
 echo "== 2. release-shaped tree: portal staged + bundled bazzite-test, no desktop icons"
 R="$T/release/portal-v$NEXT"; rm -rf "$T/release"; mkdir -p "$T/release"
 /usr/bin/python3 "$SUITE/tools/stage_app.py" portal "$R" > /dev/null
-/usr/bin/python3 "$SUITE/tools/stage_app.py" bazzite-test "$R/bundled/bazzite-test-v0.1.0" > /dev/null
+/usr/bin/python3 "$SUITE/tools/stage_app.py" bazzite-test "$R/bundled/$BT" > /dev/null
 sed -i "s/^__version__ = \"$V\"\$/__version__ = \"$NEXT\"/" "$R/bc250_portal/__init__.py"
 bash "$R/install.sh" --no-desktop-shortcut > "$T/log2" 2>&1; rc=$?; logs+=("$T/log2")
 check "exit 0" "[ $rc -eq 0 ]"
 check "new portal version, old removed" "[ \"\$(readlink $T/opt/bc250-bazzite-suite)\" = bc250-bazzite-suite-v$NEXT ] && [ ! -d $T/opt/bc250-bazzite-suite-v$V ]"
 check "bundled/ not copied to /opt" "[ ! -d $T/opt/bc250-bazzite-suite/bundled ]"
 check "portal installs apps from releases" "[ ! -e $T/opt/bc250-bazzite-suite/suite-checkout ]"
-check "record has the bundled tag" "grep -q '\"bazzite-test\": \"bazzite-test-v0.1.0\"' $D/bc250-bazzite-suite/portal/installed.json"
+check "record has the bundled tag" "grep -q '\"bazzite-test\": \"$BT\"' $D/bc250-bazzite-suite/portal/installed.json"
 check "desktop icons removed" "[ ! -e $HOME/Desktop/bc250-bazzite-suite.desktop ] && [ ! -e $HOME/Desktop/bc250-bazzite-test.desktop ]"
 
 echo "== 3. uninstall keeps the venv for another suite app"
