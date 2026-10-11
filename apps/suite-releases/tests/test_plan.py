@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 import datetime
+import json
 import os
 import subprocess
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -181,7 +183,7 @@ def window(repo, tmp_path):
     QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(tmp_path / "settings"))
     app = QApplication.instance() or QApplication([])          # noqa: F841 (kept alive for the window)
     from bc250_suite_releases import main_window
-    w = main_window.ReleaseWindow(repo, sha256_source=lambda tag: SHA, launch=launched.append)
+    w = main_window.ReleaseWindow(repo, sha256_source=lambda tag: SHA, launch=launched.append, runs_source=None)
     w.portal_page.base_edit.setText("pushed")
     w.reload()
     yield w
@@ -468,3 +470,83 @@ def test_start_app_keeps_the_output_in_a_log(tmp_path):
                                     tmp_path, log)
     assert process.wait(30) == 3
     assert main_window.log_tail(log) == "hello"
+
+
+# --- GitHub builds ----------------------------------------------------------------------------------------------
+
+def run(workflow="CI", ref="main", status="completed", conclusion="success", n=1, sha="abc1234def"):
+    return {"name": workflow, "head_branch": ref, "status": status, "conclusion": conclusion if status == "completed"
+            else None, "html_url": f"https://github.invalid/runs/{n}", "head_sha": sha, "display_title": "Fix it"}
+
+
+def test_build_state_of_the_latest_push():
+    runs = rp.parse_runs({"workflow_runs": [run(n=3), run("Release", "governor-v0.1.1", "in_progress", n=2),
+                                            run(n=1, sha="older", conclusion="failure")]})
+    latest = rp.latest_push(runs)
+    assert [r.url[-1] for r in latest] == ["3", "2"]                          # not the older commit
+    assert rp.build_state(latest) == "running" and latest[1].outcome == "in progress"
+    done = [replace(latest[1], status="completed", conclusion="failure")]
+    assert rp.build_state([latest[0], *done]) == "failed" and done[0].outcome == "failure"
+    assert rp.build_state([latest[0], replace(latest[1], status="completed", conclusion="skipped")]) == "passed"
+    assert rp.build_state([]) == "" and rp.parse_runs({"message": "rate limit"}) == []
+    before = {r.url: r for r in runs}
+    assert rp.just_finished(before, [latest[0], *done]) == done              # only what was seen running
+    assert rp.just_finished({}, done) == []                                   # finished before the first look
+
+
+def test_fetch_runs_sends_the_etag(monkeypatch):
+    import io
+    import urllib.error
+    sent = []
+
+    class Response(io.BytesIO):
+        headers = {"ETag": 'W/"new"'}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    def urlopen(request, timeout):
+        sent.append(request.get_header("If-none-match"))
+        if sent[-1] == 'W/"new"':
+            raise urllib.error.HTTPError(request.full_url, 304, "Not Modified", {}, None)
+        return Response(json.dumps({"workflow_runs": [run()]}).encode())
+
+    monkeypatch.setattr(rp.urllib.request, "urlopen", urlopen)
+    runs, etag = rp.fetch_runs()
+    assert [r.label for r in runs] == ["CI on main"] and etag == 'W/"new"' and sent == [None]
+    assert rp.fetch_runs(etag) == (None, 'W/"new"')                           # unchanged: 304
+
+
+def test_window_build_indicator_notifies_when_a_run_ends(repo, tmp_path):
+    pytest.importorskip("PyQt6.QtWidgets")
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PyQt6.QtCore import QSettings
+    from PyQt6.QtWidgets import QApplication
+    QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(tmp_path / "settings"))
+    app = QApplication.instance() or QApplication([])          # noqa: F841 (kept alive for the window)
+    from bc250_suite_releases import main_window
+    notes = []
+    w = main_window.ReleaseWindow(repo, sha256_source=lambda tag: SHA, launch=launched.append,
+                                  runs_source=lambda etag: (None, etag), notify=lambda *a: notes.append(a))
+    build = w.build
+    assert not build.isHidden()
+    build.checked((rp.parse_runs({"workflow_runs": [run(n=2), run("Release", "governor-v0.1.1", "in_progress")]}),
+                   "e1"))
+    assert build.state == "running" and "building" in build.text() and notes == []
+    assert build.timer.interval() == main_window.BUILD_BUSY_MS
+    assert build.target() == "https://github.invalid/runs/1"                  # the run still going
+    assert "Release on governor-v0.1.1: in progress" in build.toolTip()
+    build.checked((None, "e1"))                                               # unchanged
+    assert build.state == "running" and notes == []
+    build.checked((rp.parse_runs({"workflow_runs": [run(n=2), run("Release", "governor-v0.1.1",
+                                                                  conclusion="failure")]}), "e2"))
+    assert build.state == "failed" and "failed" in build.text()
+    assert notes == [("GitHub build failed", "Release on governor-v0.1.1: failure")]
+    assert build.target() == "https://github.invalid/runs/1" and build.timer.interval() == main_window.BUILD_IDLE_MS
+    build.checked(OSError("offline"))
+    assert build.state == "unreachable" and "offline" in build.toolTip()
+    w.close()
+    assert main_window.ReleaseWindow(repo, runs_source=None).build.isHidden()

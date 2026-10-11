@@ -1,3 +1,10 @@
+Changelog: 11-10-2026 17:23:05
+
+The header shows whether GitHub built the last push (GitHub: building, passed or failed): the workflow runs of its
+commit, from the public Actions API with an ETag, every 30 s while a build runs and every 5 minutes otherwise, and at
+Refresh. Hover lists each run; a click opens the failed or running run. A run seen running that finishes gives a
+desktop notification (notify-send) and flags the window.
+
 Changelog: 11-10-2026 17:04:46
 
 Run from checkout has a Manual (local) icon after the apps: it serves the manual from the checkout with mkdocs serve

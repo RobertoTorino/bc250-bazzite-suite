@@ -161,6 +161,13 @@ apps/suite-releases/install.sh --uninstall             # remove them; the checko
   `http://127.0.0.1:8765/bc250-bazzite-suite/`. It rebuilds on every save; its log is `mkdocs.log` there. When it
   is already running, a click only opens the page again.
 
+**GitHub** in the header shows whether GitHub built your last push: every workflow run (CI, Release, Manual) on
+its commit, tags included. It reads **building** while one runs, then **passed** or **failed**; hover for each
+run, click to open the run that failed (or still runs) on GitHub. It looks every 30 seconds while a build runs and
+every 5 minutes otherwise, and **Refresh** looks at once. When a run it saw running finishes, a desktop
+notification says whether it passed. It needs no GitHub token: answers that did not change do not count against
+GitHub's limit of 60 requests an hour.
+
 A red line at the top of the window means a release tag points at a commit whose `VERSION` is not the tag's
 version: the tag was made before the version bump was committed, and `release.yml` cannot build it. Delete the tag
 (the line shows how), commit the bump, and tag again.

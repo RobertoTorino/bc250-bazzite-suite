@@ -17,7 +17,10 @@ from __future__ import annotations
 
 import datetime
 import importlib.util
+import json
 import re
+import urllib.error
+import urllib.request
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -394,6 +397,90 @@ def launch_command(root: Path, target: Launch, python: str = sys.executable) -> 
     env = dict(os.environ)
     env["PYTHONPATH"] = os.pathsep.join(filter(None, (str(root / "core"), env.get("PYTHONPATH"))))
     return [python, "-m", target.module, *target.args], env
+
+
+# --- GitHub Actions: did the push build? -----------------------------------------------------------------------
+
+RUNS_URL = "https://api.github.com/repos/{repo}/actions/runs?per_page=30"
+ACTIONS_URL = "{repo_url}/actions"
+OK_CONCLUSIONS = ("success", "skipped", "neutral")
+
+
+@dataclass(frozen=True)
+class BuildRun:
+    """One workflow run on GitHub: CI, Release or Manual, on a branch or a tag."""
+    workflow: str                       # "CI"
+    ref: str                            # "main", "governor-v0.1.1"
+    status: str                         # "queued", "in_progress", "completed", ...
+    conclusion: str                     # "success", "failure", "cancelled", ...; "" until it is completed
+    url: str                            # its page; also what tells two runs apart
+    sha: str
+    title: str                          # the commit message's first line
+
+    @property
+    def done(self) -> bool:
+        return self.status == "completed"
+
+    @property
+    def passed(self) -> bool:
+        return self.done and self.conclusion in OK_CONCLUSIONS
+
+    @property
+    def outcome(self) -> str:
+        return ("passed" if self.passed else self.conclusion.replace("_", " ") or "failed") if self.done \
+            else self.status.replace("_", " ")
+
+    @property
+    def label(self) -> str:
+        return f"{self.workflow} on {self.ref}"
+
+
+def repo_slug() -> str:
+    return pin_app.REPO_URL.removeprefix("https://github.com/")
+
+
+def parse_runs(data: object) -> list[BuildRun]:
+    runs = data.get("workflow_runs", []) if isinstance(data, dict) else []
+    return [BuildRun(str(r.get("name") or ""), str(r.get("head_branch") or ""), str(r.get("status") or ""),
+                     str(r.get("conclusion") or ""), str(r.get("html_url") or ""), str(r.get("head_sha") or ""),
+                     str(r.get("display_title") or "")) for r in runs if isinstance(r, dict)]
+
+
+def fetch_runs(etag: str = "") -> tuple[list[BuildRun] | None, str]:
+    """The newest workflow runs (newest first) and the ETag to send next time; None when nothing changed since
+    *etag*. GitHub answers that with 304, which does not count against its 60 requests an hour without a token.
+    Raises OSError offline or when GitHub refuses (rate limit)."""
+    headers = {"Accept": "application/vnd.github+json", "User-Agent": "bc250-release"}
+    if etag:
+        headers["If-None-Match"] = etag
+    request = urllib.request.Request(RUNS_URL.format(repo=repo_slug()), headers=headers)
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            return parse_runs(json.load(response)), response.headers.get("ETag", "")
+    except urllib.error.HTTPError as exc:
+        if exc.code == 304:
+            return None, etag
+        raise
+
+
+def latest_push(runs: list[BuildRun]) -> list[BuildRun]:
+    """The runs of the newest commit: a push and its tags start CI, Release and Manual on the same commit."""
+    return [r for r in runs if r.sha == runs[0].sha] if runs else []
+
+
+def build_state(runs: list[BuildRun]) -> str:
+    """"running" while one of *runs* has not finished, else "failed" when one did not pass, else "passed"; ""
+    without runs."""
+    if not runs:
+        return ""
+    if not all(r.done for r in runs):
+        return "running"
+    return "passed" if all(r.passed for r in runs) else "failed"
+
+
+def just_finished(before: dict[str, BuildRun], runs: list[BuildRun]) -> list[BuildRun]:
+    """The runs that were running at the last look (*before*, by url) and have finished now."""
+    return [r for r in runs if r.done and r.url in before and not before[r.url].done]
 
 
 # --- The commands for the owner --------------------------------------------------------------------------------

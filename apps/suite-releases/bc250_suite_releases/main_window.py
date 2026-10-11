@@ -8,6 +8,8 @@ Bump portal writes the portal version (at least what check_manifest.py asks) and
 check_manifest.py and shows the git commands. Test updates and Test release run check-release.sh in a
 terminal: the portal from the checkout before the push, the published portal release after it. Committing, tagging
 and pushing stay with you.
+The header shows whether GitHub built the last push (CI, Release, Manual) and notifies when a build it saw
+running passes or fails.
 Run from checkout: click an app's icon to start it from this checkout, to try it before its release; the Manual icon
 serves the manual from the checkout (mkdocs serve) and opens it in the browser."""
 
@@ -15,19 +17,21 @@ from __future__ import annotations
 
 import os
 import shlex
+import shutil
 import socket
 import subprocess
 import sys
 from pathlib import Path
 
-from PyQt6.QtCore import QSize, Qt, QTimer, QUrl
+from PyQt6.QtCore import QProcess, QSize, Qt, QTimer, QUrl
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon
-from PyQt6.QtWidgets import (QCheckBox, QComboBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView,
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView,
                              QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPushButton, QTableWidget,
                              QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
 
 from bc250_core.platform import launch_in_terminal
-from bc250_core.theme import ORANGE
+from bc250_core.theme import BLUE, GREEN, GREY, ORANGE, RED
+from bc250_core.updates import UpdateChecker
 from bc250_core.widgets import ClickableLogo, Terminal, accent_button, hint_label, page_header
 
 from . import APP_NAME, LOGO_PATH, SUITE, __version__
@@ -473,9 +477,113 @@ class RunPage(QWidget):
             self.timer.stop()
 
 
+def desktop_notify(summary: str, body: str) -> bool:
+    """A desktop notification through notify-send; False when the desktop has none."""
+    exe = shutil.which("notify-send")
+    if not exe:
+        return False
+    ok, _pid = QProcess.startDetached(exe, ["--app-name", APP_NAME, "--icon", str(LOGO_PATH), summary, body])
+    return ok
+
+
+BUILD_BUSY_MS = 30_000                  # how often to look while a build runs
+BUILD_IDLE_MS = 300_000                 # and otherwise (unchanged answers do not count against GitHub's limit)
+BUILD_LOOK = {"running": (BLUE, "\u25cf GitHub: building"), "passed": (GREEN, "\u2714 GitHub: passed"),
+              "failed": (RED, "\u2716 GitHub: failed"), "": (GREY, "GitHub: no builds")}
+
+
+class BuildIndicator(QPushButton):
+    """Whether GitHub built the newest push: CI, Release and Manual on its commit. Looks every 30 s while a build
+    runs and every 5 minutes otherwise; a run seen running that finishes gives a desktop notification. A click opens
+    the run that failed (or still runs), else the Actions page."""
+
+    def __init__(self, window: "ReleaseWindow", source, notify):
+        super().__init__()
+        self.window = window
+        self.source = source            # rp.fetch_runs: (runs | None when unchanged, etag)
+        self.notify = notify
+        self.etag = ""
+        self.runs: list[rp.BuildRun] = []
+        self.seen: dict[str, rp.BuildRun] = {}
+        self.setFlat(True)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.clicked.connect(self.open)
+        self.checker = UpdateChecker(self)
+        self.checker.finished.connect(self.checked)
+        self.timer = QTimer(self, singleShot=True)
+        self.timer.timeout.connect(self.check)
+        self.show_state("", "Not looked yet.")
+        self.setVisible(source is not None)
+
+    def check(self) -> None:
+        if self.source is None:
+            return
+        etag = self.etag
+        self.checker.start(lambda: self._fetch(etag))
+
+    def _fetch(self, etag: str) -> object:
+        """Worker thread: the runs, or the error to show."""
+        try:
+            return self.source(etag)
+        except (OSError, ValueError) as exc:
+            return exc
+
+    def checked(self, result: object) -> None:
+        if isinstance(result, Exception):
+            self.show_state("", f"GitHub could not be reached: {result}", unreachable=True)
+            self.timer.start(BUILD_IDLE_MS)
+            return
+        runs, self.etag = result
+        if runs is not None:
+            finished = rp.just_finished(self.seen, runs)
+            self.runs, self.seen = runs, {r.url: r for r in runs}
+            if finished:
+                self.announce(finished)
+        latest = rp.latest_push(self.runs)
+        state = rp.build_state(latest)
+        self.show_state(state, self.details(latest))
+        running = any(not r.done for r in self.runs)
+        self.timer.start(BUILD_BUSY_MS if running else BUILD_IDLE_MS)
+
+    def details(self, latest: list[rp.BuildRun]) -> str:
+        if not latest:
+            return "No workflow runs on GitHub."
+        head = f"{latest[0].sha[:7]} {latest[0].title}"
+        return "\n".join([head, *(f"{r.label}: {r.outcome}" for r in latest), "", "Click to open it on GitHub."])
+
+    def show_state(self, state: str, tooltip: str, unreachable: bool = False) -> None:
+        color, text = (GREY, "GitHub: not reachable") if unreachable else BUILD_LOOK[state]
+        self.state = "unreachable" if unreachable else state
+        self.setText(text)
+        self.setStyleSheet(f"color:{color}; font-weight:700;")
+        self.setToolTip(tooltip)
+
+    def announce(self, finished: list[rp.BuildRun]) -> None:
+        failed = [r for r in finished if not r.passed]
+        summary = f"GitHub build {'failed' if failed else 'passed'}"
+        body = "\n".join(f"{r.label}: {r.outcome}" for r in (failed or finished))
+        self.notify(summary, body)
+        QApplication.alert(self.window)
+
+    def target(self) -> str:
+        latest = rp.latest_push(self.runs)
+        pick = next((r for r in latest if r.done and not r.passed), None) or \
+            next((r for r in latest if not r.done), None)
+        return pick.url if pick else rp.ACTIONS_URL.format(repo_url=rp.pin_app.REPO_URL)
+
+    def open(self) -> None:
+        QDesktopServices.openUrl(QUrl(self.target()))
+
+    def stop(self) -> None:
+        self.timer.stop()
+        self.checker.stop(2000)
+
+
 class ReleaseWindow(QMainWindow):
     def __init__(self, root: Path = SUITE, sha256_source=rp.fetch_sha256, launch=launch_in_terminal,
-                 start=start_app):
+                 start=start_app, runs_source=rp.fetch_runs, notify=desktop_notify):
+        """*runs_source* reads the GitHub Actions runs (None: no build indicator); *notify* shows a desktop
+        notification."""
         super().__init__()
         self.root = root
         self.sha256_source = sha256_source
@@ -487,6 +595,8 @@ class ReleaseWindow(QMainWindow):
         header.insertWidget(0, ClickableLogo(LOGO_PATH, 40))
         self.status = QLabel()
         header.addWidget(self.status)
+        self.build = BuildIndicator(self, runs_source, notify)
+        header.addWidget(self.build)
         self.refresh_button = QPushButton("Refresh")
         self.refresh_button.setToolTip("Read the checkout and its tags again, for changes made in a terminal; "
                                        "what you entered stays")
@@ -517,6 +627,7 @@ class ReleaseWindow(QMainWindow):
         lay.addWidget(version, 0, Qt.AlignmentFlag.AlignRight)
         self.setCentralWidget(central)
         self.reload()
+        self.build.check()
 
     def base(self) -> str:
         return self.portal_page.base_edit.text().strip() or "origin/main"
@@ -536,6 +647,7 @@ class ReleaseWindow(QMainWindow):
         if version is not None:
             combo.setEditText(version)
         self.portal_page.portal_notes.setText(notes)
+        self.build.check()                      # a push from a terminal: its build
 
     def reload(self) -> None:
         units = rp.load_units(self.root)
@@ -551,3 +663,7 @@ class ReleaseWindow(QMainWindow):
         dirty = rp.git(self.root, "status", "--porcelain")
         self.status.setText("working tree has changes" if dirty else "working tree clean" if dirty is not None
                             else "not a git checkout")
+
+    def closeEvent(self, event) -> None:
+        self.build.stop()
+        super().closeEvent(event)
