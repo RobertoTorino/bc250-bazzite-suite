@@ -299,6 +299,11 @@ reports the overall verdict. In the app these become the button colours, the cou
 | 15 | Boot Logs      | Current-boot kernel errors, with known-benign BC-250 noise filtered out. |
 | 16 | System Journal | Journal errors from the last 7 days, same filtering.                     |
 
+Tests 15, 16 and 17 follow the log lines with a hint per kind of line: what it means and what to do about it,
+with the number of lines it covers. Real faults (GPU hangs, disk errors, crashes) come first, known harmless
+messages after them. A service that failed gets the commands to read why and to turn it off. Lines without a known
+explanation are grouped per program, with the command to read them.
+
 ### GPU and graphics
 
 | #  | Test                  | Checks                                                                     |

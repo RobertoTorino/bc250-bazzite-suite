@@ -32,7 +32,7 @@ The top row shows what the kernel got at this boot: the **VRAM split**, the **GT
 says so: GTT stops at the RAM, so that limit has no effect.
 
 - **New split** and **Apply…:** pick a split and apply it. The app asks first and shows how much RAM the system
-  keeps, then asks for your password. The badge turns to **Reboot to apply**.
+  keeps, then asks for your password. The status next to the title turns to **Reboot to apply**.
 - **Reboot.** After the reboot the app says whether the kernel got the new split.
 - **Undo:** writes back the split from before the last change. Also takes effect after a reboot.
 - **Read CMOS…:** shows the memory block in CMOS (signature, checksum, the split and the memory timings) and the

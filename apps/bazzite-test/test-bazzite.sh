@@ -241,6 +241,91 @@ filter_logs() {
     echo "$filtered_log"
 }
 
+# What journal lines mean and what to do about them (tests 15, 16 and 17): pairs of a
+# pattern (grep -iE) and its advice. A line counts for the first pattern it matches, so
+# real faults come first and the known noise after them.
+LOG_ADVICE=(
+  # --- Real faults ---
+  "ring [a-z0-9_.]+ timed? ?out|amdgpu_job_timedout|GPU reset|gpu_recover|Waiting for fences timed out|MES failed"
+  "GPU hang or reset: usually an unstable CU unlock, GPU overclock or governor setting. Go back to the last stable one (cu-bisect, gpu-oc-bisect, governor) and check test 35."
+  "VM_L2_PROTECTION_FAULT|GPU fault detected|page fault \(src_id"
+  "GPU page fault: a game or the driver used invalid GPU memory. Once is usually a game bug; if it repeats, update Bazzite (Mesa) and undo any GPU overclock."
+  "flip_done timed out|commit wait timed out"
+  "Display update timed out: try another cable, port or refresh rate. A GPU hang (test 35) causes it too."
+  "Direct firmware load for .* failed|failed to load firmware"
+  "Missing firmware file: harmless if the device it names works; otherwise update Bazzite (rpm-ostree upgrade)."
+  "nvme.*(timeout|I/O error|resetting controller|controller is down)"
+  "NVMe timeout or reset, often the drive's power saving (APST): sudo rpm-ostree kargs --append-if-missing=nvme_core.default_ps_max_latency_us=0, reboot, and check test 10."
+  "I/O error, dev|Buffer I/O error|EXT4-fs error|BTRFS (error|critical)|critical medium error"
+  "Disk read or write errors: back up your data now and check the drive health (test 10, sudo smartctl -a /dev/nvme0n1)."
+  "Machine check|mce: \[Hardware Error\]"
+  "CPU hardware error (MCE): usually an unstable core unlock, undervolt or overheating. Go back to stock settings and check the cooling (tests 22, 36 and 46)."
+  "Out of memory: Killed process|oom-kill|invoked oom-killer"
+  "Out of memory, the kernel killed a program: close programs, check the swap layout (test 14) or move RAM from VRAM to the CPU with memory-manager."
+  "segfault at|dumped core|Failed with result 'core-dump'|coredump|__stack_chk_fail|__fortify_fail"
+  "A program crashed: coredumpctl list shows which, coredumpctl info <name> shows why. If it repeats, update Bazzite or the app."
+  "Failed at step EXEC spawning (/var)?/home/"
+  "systemd cannot run a script from a home folder (SELinux blocks it), so that service never starts. Reinstall the app from the portal, or remove the old service: sudo systemctl disable <name>.service."
+  "usb .*(device descriptor read|unable to enumerate|not accepting address|over-current)"
+  "A USB device failed to connect: try another port or cable, or a powered hub for power-hungry devices."
+  "app-.*@autostart\.service"
+  "An autostart entry failed: check it in System Settings > Autostart, and remove it if the program is gone."
+  # --- Known noise ---
+  "Transaction for .* is destructive"
+  "Logged while shutting down or rebooting; harmless."
+  "kwallet"
+  "KDE Wallet is off or not set up, so apps that store passwords may ask again. Harmless; set it up in System Settings > KDE Wallet if you want it."
+  "org\.bluez|bluetoothd|Bluetooth:"
+  "Bluetooth: the BC-250 has no radio, and with a USB dongle bluez reports profiles it cannot start. Harmless if your Bluetooth devices work."
+  "Activation request for '[^']+' failed|Could not activate remote peer"
+  "A D-Bus service (UDisks2, UPower, RealtimeKit, a portal) was asked for while it was stopping, usually at logout or shutdown. Harmless if disks, power and sound work."
+  "pam_unix.*(auth|conversation failed)|Authentication failure|ERROR_AUTHENTICATION"
+  "A wrong or cancelled password at the login screen or sudo; harmless unless it was not you."
+  "plasmalogin.*(Process crashed|ERROR_INTERNAL)"
+  "The login screen process ended with an error, usually when it closes at login or shutdown. Look into it only if the login screen fails to appear."
+  "\.qml(:[0-9]+)?:|TypeError: Cannot read property"
+  "Plasma widget script messages; harmless, Plasma updates clear them."
+  "wireplumber|pipewire"
+  "PipeWire / WirePlumber (sound) messages; harmless if sound works. Otherwise: systemctl --user restart pipewire wireplumber."
+  "kwin_wayland"
+  "KWin (the desktop compositor): logged when switching to Game Mode or a TTY, or probing sensors the BC-250 lacks. Harmless if the screen works."
+  "IPP_INTERNAL_ERROR|Failed to reconnect Invalid argument"
+  "The printer status (CUPS) reconnecting, also without a printer; harmless."
+  "xdg-desktop-portal"
+  "Desktop portal messages (file dialogs and screen sharing for Flatpak apps); harmless if those work."
+  "kded[0-9]*(\[[0-9]+\])?:|kioworker|dolphin"
+  "KDE desktop and file manager messages; harmless."
+)
+
+# explain_log_lines LINES SCOPE: after a test's journal lines, a HINT per known kind of line,
+# per failed unit and per source of the lines left unexplained. SCOPE is the journalctl
+# time option to read more with ("-b" or "--since '7 days ago'").
+explain_log_lines() {
+    local rest="$1" scope="$2" i hits n unit units ident
+    [ -n "$rest" ] || return 0
+    for ((i = 0; i < ${#LOG_ADVICE[@]}; i += 2)); do
+        hits=$(grep -iE -- "${LOG_ADVICE[i]}" <<<"$rest")
+        [ -n "$hits" ] || continue
+        n=$(grep -c '' <<<"$hits")
+        log_result "HINT: [$n line$( [ "$n" = 1 ] || echo s)] ${LOG_ADVICE[i + 1]}"
+        rest=$(grep -viE -- "${LOG_ADVICE[i]}" <<<"$rest")
+    done
+    # Units that failed to start: where to read why, and how to stop them.
+    units=$(grep -iE "Failed to start |: Failed with result|: Failed at step" <<<"$rest" \
+        | grep -oE "[A-Za-z0-9@_.:\\-]+\.(service|socket|mount|timer)" | sort | uniq -c | sort -rn | head -5)
+    while read -r n unit; do
+        [ -n "$unit" ] || continue
+        log_result "HINT: [$n line$( [ "$n" = 1 ] || echo s)] ${unit} failed. Read why with: journalctl ${scope} -u ${unit}; if you no longer use it: sudo systemctl disable ${unit}."
+        rest=$(grep -vF -- "$unit" <<<"$rest")
+    done <<<"$units"
+    # Everything else: the programs that logged it, and how to read their lines.
+    while read -r n ident; do
+        [ -n "$ident" ] || continue
+        log_result "HINT: [$n line$( [ "$n" = 1 ] || echo s)] from ${ident}, no known explanation. Read them with: journalctl ${scope} -p warning -t ${ident}; search the message online if it repeats."
+    done < <(awk '/^[A-Z][a-z][a-z] +[0-9]+ [0-9:]+ / { t = $5; sub(/\[[0-9]+\]/, "", t); sub(/:$/, "", t); if (t != "") print t }' <<<"$rest" \
+        | sort | uniq -c | sort -rn | head -3)
+}
+
 # Function to check service status
 check_service() {
     local SERVICE_NAME=$1
@@ -929,6 +1014,7 @@ FILTERED_OUTPUT=$(filter_logs "$JOURNAL_OUTPUT")
 if echo "$FILTERED_OUTPUT" | grep -iE "error|fail" >/dev/null 2>&1; then
     log_result "WARNING: Issues detected in boot logs. Displaying matching entries below:"
     echo "$FILTERED_OUTPUT" | grep -iE "error|fail" | tail -n 50 | tee -a "$LOG_FILE"
+    explain_log_lines "$(grep -iE "error|fail" <<<"$FILTERED_OUTPUT")" "-b"
     WARN_FOUND=true
 else
     log_result "SUCCESS: No issues detected in boot logs."
@@ -950,6 +1036,7 @@ if [ -n "$JOURNAL_WARNINGS" ]; then
     echo "$JOURNAL_WARNINGS" | tail -n 50 | while read -r line; do
         log_result "$line"
     done
+    explain_log_lines "$JOURNAL_WARNINGS" "--since '7 days ago'"
     WARN_FOUND=true
 else
     log_result "SUCCESS: No issues detected in the system journal."
@@ -971,6 +1058,7 @@ AMDGPU_ERRS=$(filter_logs "$(journalctl -b -k --no-pager 2>/dev/null | grep -iE 
 if [ -n "$AMDGPU_ERRS" ]; then
     log_result "WARNING: amdgpu/drm errors in the kernel log (last 20):"
     echo "$AMDGPU_ERRS" | tail -20 | tee -a "$LOG_FILE"
+    explain_log_lines "$AMDGPU_ERRS" "-b -k"
     WARN_FOUND=true
 else
     log_result "SUCCESS: No amdgpu/drm errors in the kernel log."

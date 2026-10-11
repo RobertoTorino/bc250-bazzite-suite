@@ -1,3 +1,11 @@
+Changelog: 11-10-2026 07:28:24
+
+Release 0.1.2. UI improvements
+
+Changelog: 11-10-2026 01:05:44
+
+The state next to the title is bold coloured text with a dot (StatusText) instead of the big pill. Not built and Not installed are orange now (something to do), Test failed and No BC-250 red, Ready green, On for all apps blue.
+
 Changelog: 11-10-2026 01:03:09
 
 The four steps line up: each row centres its name, state and buttons, every button has the same size (Build too) and the buttons stand in two columns on the right, a single button in the right one. A short window no longer squeezes the second line of a state out of sight: each state text keeps the height its lines need.

@@ -1,3 +1,18 @@
+Changelog: 11-10-2026 07:28:24
+
+Release 0.1.1. More hints and tips when warnings or failures are found in the logs
+
+Changelog: 11-10-2026 01:18:47
+
+Tests 15, 16 and 17 now explain the journal lines they show instead of only listing them. After the lines comes a
+hint per kind of line, with the number of lines it covers: what it means and what to do about it. Real faults come
+first (GPU hangs and page faults, display timeouts, missing firmware, NVMe timeouts, disk errors, MCEs, out of
+memory, crashes, services that cannot run from a home folder, USB failures), then known harmless messages
+(shutdown transactions, KDE Wallet, Bluetooth, D-Bus activation, passwords, Plasma, PipeWire, KWin, printer status,
+desktop portal). A failed unit gets the journalctl and systemctl disable commands for that unit, and the remaining
+lines are grouped per program with the command to read them. The table is LOG_ADVICE in test-bazzite.sh, and
+tests/test_log_advice.py runs it. The raw lines, the exclusions and the test results are unchanged.
+
 Changelog: 10-10-2026 20:56:48
 
 Release 0.1.0. Initial release

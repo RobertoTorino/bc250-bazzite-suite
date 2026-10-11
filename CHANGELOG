@@ -1,3 +1,7 @@
+Changelog: 11-10-2026 01:10:46
+
+Release front end: which apps need a release. Step 1's Needs release column (orange) marks every app whose shipped files differ from its last tag, as tools/stage_app.py stages it: its folder without tests and requirements-dev.txt, the core it bundles, and its manual chapter, committed, not committed or new. The tooltip lists the files; "Tick what needs a release" ticks those apps; step 2 says whether the portal needs one. python3 tools/release_plan.py prints the same.
+
 Changelog: 11-10-2026 00:44:36
 
 Release front end: after Bump portal the commands come in the right order, numbered: 1. commit (no push yet), 2. test on a BC-250 (./install.sh, then bc250-bazzite-suite --source release, with what to check and what to do when something is wrong), 3. only then push and tag the portal. Step 2's hint lists the four steps (Pin, Bump portal, commit and test, push and tag), and docs/portal.md and the release_plan.py docstring say the same.

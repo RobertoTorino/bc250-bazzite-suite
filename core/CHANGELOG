@@ -1,3 +1,11 @@
+Changelog: 11-10-2026 07:28:24
+
+Version 0.1.2. Shared UI improvements
+
+Changelog: 11-10-2026 01:05:44
+
+Header status widget StatusText: a coloured dot and the state in bold, in the colour of its kind (red bad, orange warn, green ok, blue info, the normal text colour for neutral), with the same set_status() and text() as StatusPill. For a state next to an app's title, where a pill is too heavy; StatusPill stays for cards.
+
 Changelog: 10-10-2026 20:56:48
 
 Version 0.1.1. Initial release

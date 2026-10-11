@@ -58,7 +58,7 @@ Installing the app changes nothing on the board. Open **BC-250 ACE Queues** and 
     - **All apps:** every app uses the patched driver, the desktop included, without launch options. It applies
       after you log out and back in. Flatpak apps keep their own driver.
 
-The badge next to the title sums it up: **Not built**, **Not installed**, **Test needed**, **Ready**,
+The status next to the title sums it up: **Not built**, **Not installed**, **Test needed**, **Ready**,
 **Test failed** or **On for all apps**.
 
 ## The test

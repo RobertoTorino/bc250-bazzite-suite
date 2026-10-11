@@ -81,7 +81,7 @@ def parse(text: str) -> Status:
 
 
 def verdict(status: Status) -> tuple[str, str, str]:
-    """(pill text, StatusPill kind, tooltip) for the header."""
+    """(text, kind, tooltip) of the status next to the title (StatusText)."""
     if not status.fields:
         return "Unknown", "neutral", "The status could not be read."
     if not status.is_bc250:

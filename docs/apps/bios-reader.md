@@ -20,7 +20,7 @@ The window opens on **this board**: the setup screens of its BIOS release and th
 - **Show hidden items** (or H): also lists what the BIOS does not show, in grey italics, with the reason: hidden
   always, hidden by the value of another setting, or a menu no link leads to. The extra **Not linked** tab opens
   the menus that no menu links to.
-- **The badge** next to the title: Stock BIOS or Modded BIOS. Hover it to see why.
+- **The status** next to the title: Stock BIOS or Modded BIOS. Hover it to see why.
 - **Read BIOS chip…:** reads the flash chip and opens the dump. See below.
 - **Open dump…:** opens a BIOS image made earlier. **This board** goes back to the running board.
 
@@ -136,7 +136,7 @@ What is inside:
 ## Stock or modded
 
 - **With a dump** (certain): the app compares the setup screens in the dump with those of the stock release of the
-  same version, byte for byte. A modded BIOS changes them to show hidden menus; the badge then lists the changed
+  same version, byte for byte. A modded BIOS changes them to show hidden menus; the status then lists the changed
   screens and the menus stock hides that this BIOS shows.
 - **Without a dump** (a strong hint): the version string (a modded BIOS often says so), and the size of the
   `AmdSetup` variable, which changes when the AMD CBS screens are changed. Many modded BIOSes keep the stock version
