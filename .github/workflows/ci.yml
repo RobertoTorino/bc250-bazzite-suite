@@ -52,7 +52,7 @@ jobs:
       - name: Qt runtime libraries
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q libegl1 libgl1 libxkbcommon0 libdbus-1-3 libfontconfig1 libglib2.0-0
+          sudo apt-get install -y -q libegl1 libgl1 libxkbcommon0 libdbus-1-3 libfontconfig1 libglib2.0-0 libpulse0
 
       - name: Install
         run: python -m pip install -q -r requirements-dev.txt
@@ -77,8 +77,7 @@ jobs:
       # shellcheck is preinstalled on ubuntu-latest. Error level for everything; warning level for the scripts
       # that their own release workflows already held to it.
       - name: shellcheck (errors, all scripts)
-        run: find apps portal tools -name '*.sh' -print0 | xargs -0 shellcheck -x -S error test.sh install.sh
-
+        run: find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 shellcheck -x -S error
       - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace-queues, memory-manager and the suite's own scripts)
         run: |
           shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh
