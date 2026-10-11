@@ -1,3 +1,7 @@
+Changelog: 11-10-2026 22:33:43
+
+Release 0.9.9. Pins bazzite-test-v0.1.5, governor-v0.1.4, helixsr-v0.2.3, system-overlay-v0.1.4, bios-reader-v0.1.4, ace-queues-v0.1.5, memory-manager-v0.1.5, hdmi-cec-v0.1.1, dependency-checker-v0.1.4. hdmi-cec tested on my tv and updated
+
 Changelog: 11-10-2026 20:50:19
 
 Release 0.9.8. Pins bazzite-test-v0.1.4, governor-v0.1.3, dependency-checker-v0.1.3. 3 app updates and a new app bc250-hdmi-cec
