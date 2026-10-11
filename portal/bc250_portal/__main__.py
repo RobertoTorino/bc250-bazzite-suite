@@ -44,7 +44,8 @@ def main() -> int:
     except (OSError, ManifestError) as exc:
         QMessageBox.critical(None, APP_NAME, f"The app list could not be read:\n\n{exc}")
         return 1
-    checkout = suite_checkout() if args.source in ("auto", "checkout") else None
+    local_build = suite_checkout()
+    checkout = local_build if args.source in ("auto", "checkout") else None
     if args.source == "checkout" and checkout is None:
         QMessageBox.critical(None, APP_NAME, "--source checkout: the portal is not running from a suite checkout.")
         return 1
@@ -58,7 +59,8 @@ def main() -> int:
     def portal_check():
         return portal_update.check(repo_slug(INFO.repo_url), INFO.tag_prefix, entries, INFO.user_agent)
 
-    window = MainWindow(entries, sources, Records(state_dir() / "installed.json"), portal_check=portal_check)
+    window = MainWindow(entries, sources, Records(state_dir() / "installed.json"), portal_check=portal_check,
+                        local_build=local_build)
     window.show()
     server = instance.serve(INFO.app_id, window)  # noqa: F841 (kept alive while the app runs)
     return exec_app(app)

@@ -161,8 +161,10 @@ class AppCard(QFrame):
 
 class MainWindow(QMainWindow):
     def __init__(self, entries: list[AppEntry], sources: Sources, records: Records,
-                 portal_check: Callable[[], ReleaseInfo] | None = None, parent: QWidget | None = None):
-        """*portal_check* returns the newest portal release (run once, off the GUI thread); None: no check."""
+                 portal_check: Callable[[], ReleaseInfo] | None = None, local_build: Path | None = None,
+                 parent: QWidget | None = None):
+        """*portal_check* returns the newest portal release (run once, off the GUI thread); None: no check.
+        *local_build* is the suite checkout this portal runs from or was installed from: a banner says so."""
         super().__init__(parent)
         self.entries = entries
         self.sources = sources
@@ -177,6 +179,14 @@ class MainWindow(QMainWindow):
 
         central = QWidget()
         root = QVBoxLayout(central)
+        self.local_banner = QLabel()
+        self.local_banner.setWordWrap(True)
+        self.local_banner.setStyleSheet(f"background:{ORANGE}; color:white; font-weight:700; padding:6px 10px;")
+        if local_build is not None:
+            self.local_banner.setText(f"Local build: this portal comes from the checkout {local_build}, "
+                                      "not from a published release.")
+        self.local_banner.setVisible(local_build is not None)
+        root.addWidget(self.local_banner)
         header = QHBoxLayout()
         if LOGO_PATH.is_file():
             header.addWidget(ClickableLogo(LOGO_PATH, 56))

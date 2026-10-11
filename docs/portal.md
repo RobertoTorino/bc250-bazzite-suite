@@ -135,7 +135,7 @@ apps/suite-releases/install.sh --uninstall             # remove them; the checko
   the last push (`origin/main`); **Bump portal** writes it with a CHANGELOG entry that lists the pinned app
   releases, and runs `tools/check_manifest.py` (step 4). Then commit, test on a BC-250 (below), and only then push
   and tag the portal (step 5). The window lists these commands in that order.
-- **Check updates** and **Check release** run the two board tests below in a terminal, with
+- **Test updates** and **Test release** run the two board tests below in a terminal, with
   `apps/suite-releases/check-release.sh`: the portal from the checkout before the push, and the published portal release after
   GitHub has built it. Linux only.
 
@@ -152,7 +152,7 @@ portal offers those releases as updates. So before the tag, check on a BC-250 th
 install and run:
 
 1. Bump the portal (step 4) and commit. Pushing is not needed for this test.
-2. Click **Check updates** in the release front end, or run `apps/suite-releases/check-release.sh local`. It installs the portal
+2. Click **Test updates** in the release front end, or run `apps/suite-releases/check-release.sh local`. It installs the portal
    from the checkout (`./install.sh` in the repository root: this portal version, with its new pins in
    `apps.toml`) and starts it with the pinned releases instead of the checkout:
 
@@ -174,7 +174,7 @@ it on the board.
 
 ### Testing a portal release after its tag
 
-Once GitHub's release workflow has built the portal release, click **Check release**, or run:
+Once GitHub's release workflow has built the portal release, click **Test release**, or run:
 
 ```bash
 apps/suite-releases/check-release.sh release              # the release of portal/VERSION
@@ -184,7 +184,8 @@ apps/suite-releases/check-release.sh release portal-v0.9.2
 It downloads the release tarball and its `SHA256SUMS` from GitHub into `~/.cache/bc250-release-check/`, checks
 the checksum, installs it and starts it. The board then runs the official release, as a user's board does: check
 that the portal starts, that its version is the new one, and that the apps install. To go back to the checkout,
-run `./install.sh` in the repository root (or Check updates).
+run `./install.sh` in the repository root (or Test updates). A portal from the checkout shows an orange
+banner at the top, "Local build"; the published release has none.
 
 ### Checking a release
 

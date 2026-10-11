@@ -186,6 +186,15 @@ def test_red_dot_and_count_for_updates(window, home):
     assert window.cards["governor"].dot.isHidden() and window.updates_label.isHidden()
 
 
+def test_local_build_banner(qapp, home, settings_dir, tmp_path, launched, window):
+    assert window.local_banner.isHidden()                       # a published release: no banner
+    w = mw.MainWindow(load(MANIFEST), FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"),
+                      local_build=Path("/home/me/bc250-bazzite-suite"))
+    assert not w.local_banner.isHidden()
+    assert "checkout /home/me/bc250-bazzite-suite" in w.local_banner.text()
+    w.close()
+
+
 def portal_window(tmp_path, release):
     return mw.MainWindow(load(MANIFEST), FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"),
                          portal_check=lambda: release)
