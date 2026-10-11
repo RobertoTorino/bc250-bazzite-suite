@@ -8,8 +8,8 @@ A release has two steps, because an app's checksum only exists once GitHub has b
 1. Apps: the new VERSION, every copy that tools/check_versions.py checks, and a "Release x.y.z." CHANGELOG entry.
    Commit, push, tag <app>-v<x.y.z>, push the tag: release.yml builds the tarball and SHA256SUMS.
 2. Portal: pin each released app in portal/apps.toml (tag and sha256, as tools/pin_app.py), bump portal/VERSION at
-   least as much as tools/check_manifest.py asks, and a CHANGELOG entry listing the pins. Commit, push, tag
-   portal-v<x.y.z>."""
+   least as much as tools/check_manifest.py asks, and a CHANGELOG entry listing the pins. Commit, test on a board
+   (bc250-bazzite-suite --source release), then push and tag portal-v<x.y.z>."""
 
 from __future__ import annotations
 
@@ -34,6 +34,7 @@ def _load(name: str):
 
 
 check_versions = _load("check_versions")
+stage_app = _load("stage_app")
 check_manifest = _load("check_manifest")
 pin_app = _load("pin_app")
 
@@ -91,6 +92,25 @@ class Unit:
     commits: int | None                 # commits touching the folder since that tag
     pinned_tag: str = ""                # apps only: what portal/apps.toml pins
     pinned_sha: str = ""
+    changed: list[str] | None = None    # shipped files that differ from the last tag; None: never released
+
+    @property
+    def needs_release(self) -> bool:
+        """Something it ships changed since its last tag (or it was never released). Core is never released."""
+        return self.kind != "core" and (self.last_tag is None or bool(self.changed))
+
+    @property
+    def release_reason(self) -> str:
+        if self.kind == "core":
+            return ""
+        if self.last_tag is None:
+            return "first release"
+        if not self.changed:
+            return "no"
+        core = [f for f in self.changed if f.startswith("core/")]
+        own = len(self.changed) - len(core)
+        parts = ([f"{own} file{'s' if own != 1 else ''}"] if own else []) + (["core"] if core else [])
+        return "yes: " + " + ".join(parts)
 
     @property
     def kind(self) -> str:
@@ -104,6 +124,30 @@ class Unit:
     @property
     def released(self) -> bool:
         return self.last_tag == self.tag
+
+
+def shipped_sources(root: Path, key: str, path: str) -> list[str]:
+    """The source paths a release of *key* is made from, as tools/stage_app.py stages it."""
+    paths = [path]
+    if key != "core" and stage_app.uses_core(root / path):
+        paths.append("core/bc250_core")
+    if key not in ("core", "portal") and (root / "docs" / "apps" / f"{key}.md").is_file():
+        paths.append(f"docs/apps/{key}.md")
+    return paths
+
+
+def is_shipped(rel: str) -> bool:
+    parts = rel.split("/")
+    return not (set(parts) & stage_app.SKIP_DIRS) and parts[-1] not in stage_app.SKIP_FILES \
+        and not parts[-1].endswith(".pyc") and not any(p.startswith(".venv") for p in parts)
+
+
+def changed_since(root: Path, tag: str, paths: list[str]) -> list[str]:
+    """Shipped files under *paths* that differ between *tag* and the working tree: committed, not yet committed
+    and new (untracked) files alike."""
+    diff = git(root, "diff", "--name-only", tag, "--", *paths) or ""
+    new = git(root, "ls-files", "--others", "--exclude-standard", "--", *paths) or ""
+    return sorted({f for f in (diff + new).splitlines() if f and is_shipped(f)})
 
 
 def load_units(root: Path = SUITE) -> list[Unit]:
@@ -121,6 +165,8 @@ def load_units(root: Path = SUITE) -> list[Unit]:
         tags = tags_of(root, key) if key != "core" else []
         last = tags[-1] if tags else None
         unit = Unit(key, path, version, last, commits_since(root, last, path))
+        if last:
+            unit.changed = changed_since(root, last, shipped_sources(root, key, path))
         if key in pins:
             unit.pinned_tag, unit.pinned_sha = pins[key].tag, pins[key].sha256
         units.append(unit)
@@ -247,8 +293,22 @@ def app_commands(tags: list[str]) -> str:
 
 
 def portal_commands(tag: str) -> str:
-    return "\n".join(["git add -A && tools/fix-modes.sh", f'git commit -m "Release {tag}"', "git push",
-                      "# test the combination on a BC-250, then:", f"git tag {tag} && git push origin {tag}"])
+    """Commit, test on a board, and only then push and tag: the tag is what reaches the users' portals."""
+    return "\n".join([
+        "# 1. Commit (no push yet):",
+        "git add -A && tools/fix-modes.sh",
+        f'git commit -m "Release {tag}"',
+        "",
+        "# 2. Test on a BC-250 (docs/portal.md, Testing a portal release before its tag):",
+        "./install.sh                            # installs this portal version, with its new pins",
+        "bc250-bazzite-suite --source release    # apps from the pinned GitHub releases, checked against the pins",
+        "#    The apps whose pin changed show Update: update them, open each one, check that it works.",
+        "#    Something wrong? Fix the app and release a new patch version (step 1), then pin again.",
+        "",
+        "# 3. All good: push, then tag the portal.",
+        "git push",
+        f"git tag {tag} && git push origin {tag}",
+    ])
 
 
 def main() -> int:
@@ -256,7 +316,8 @@ def main() -> int:
         since = "never released" if u.last_tag is None and u.kind != "core" else \
             f"{u.commits} commits since {u.last_tag}" if u.last_tag else ""
         pinned = f"  pinned {u.pinned_tag}{'' if u.pinned_sha else ' (no sha256)'}" if u.pinned_tag else ""
-        print(f"{u.key:<16} {u.version:<8} {since}{pinned}")
+        needs = f"  needs a release: {u.release_reason}" if u.needs_release else ""
+        print(f"{u.key:<16} {u.version:<8} {since}{pinned}{needs}")
     return 0
 
 

@@ -22,6 +22,7 @@ sys.path.insert(0, str(SUITE / "core"))
 sys.path.insert(0, str(TOOLS))
 
 from PyQt6.QtCore import Qt  # noqa: E402
+from PyQt6.QtGui import QColor  # noqa: E402
 from PyQt6.QtWidgets import (QCheckBox, QComboBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit,  # noqa: E402
                              QMainWindow, QMessageBox, QPushButton, QTableWidget, QTableWidgetItem, QTabWidget,
                              QVBoxLayout, QWidget)
@@ -29,12 +30,13 @@ from PyQt6.QtWidgets import (QCheckBox, QComboBox, QHBoxLayout, QHeaderView, QLa
 import release_plan as rp  # noqa: E402
 from bc250_core import AppInfo  # noqa: E402
 from bc250_core.platform import data_home  # noqa: E402
+from bc250_core.theme import ORANGE  # noqa: E402
 from bc250_core.widgets import ClickableLogo, Terminal, accent_button, hint_label, page_header  # noqa: E402
 
 LOGO_PATH = TOOLS / "images" / "release-ui.png"
 INFO = AppInfo(app_id="bc250-release", name="BC250 Suite Releases", version="", logo=LOGO_PATH, settings_ini=True,
                languages={"en": "English"})
-COLUMNS = ("Release", "App", "VERSION", "Last tag", "Changes", "New version", "Notes")
+COLUMNS = ("Release", "App", "VERSION", "Last tag", "Needs release", "New version", "Notes")
 
 
 def run_check(root: Path, *args: str) -> str:
@@ -42,6 +44,17 @@ def run_check(root: Path, *args: str) -> str:
     out = (result.stdout + result.stderr).strip()
     return f"$ python3 {' '.join(args)}\n{out or '(no output)'}\n" + ("" if result.returncode == 0 else
                                                                         f"exit code {result.returncode}\n")
+
+
+def needs_tooltip(unit: rp.Unit) -> str:
+    if unit.kind == "core":
+        return "Core is bundled with each app that imports it; a change to it shows in those apps."
+    if unit.last_tag is None:
+        return "Never released."
+    if not unit.changed:
+        return f"Nothing it ships changed since {unit.last_tag}."
+    files = unit.changed[:25] + ([f"… and {len(unit.changed) - 25} more"] if len(unit.changed) > 25 else [])
+    return f"Changed since {unit.last_tag} ({unit.commits} commits, plus what is not committed):\n" + "\n".join(files)
 
 
 class AppsPage(QWidget):
@@ -58,15 +71,21 @@ class AppsPage(QWidget):
         header.setSectionResizeMode(len(COLUMNS) - 1, QHeaderView.ResizeMode.Stretch)
         self.apply_button = accent_button("Apply", "Write the new versions and CHANGELOG entries of the ticked apps")
         self.apply_button.clicked.connect(self.apply)
+        self.tick_button = QPushButton("Tick what needs a release")
+        self.tick_button.setToolTip("Tick every app whose shipped files changed since its last tag")
+        self.tick_button.clicked.connect(self.tick_needed)
         self.output = Terminal()
         lay = QVBoxLayout(self)
         lay.addWidget(hint_label(
             "Tick the apps to release and enter their version: a never-tagged version can be released as it is. "
             "Apply writes VERSION, its copies (__version__, VERSION=, pyproject) and a \"Release x.y.z.\" "
             "CHANGELOG entry with the notes, which become the release notes on GitHub. Core is bundled with the "
-            "apps and gets a version only, no tag."))
+            "apps and gets a version only, no tag. <b>Needs release</b> (orange): something the app ships (its "
+            "folder without tests, the core it bundles, its manual chapter) differs from its last tag, committed or "
+            "not; hover it for the files."))
         lay.addWidget(self.table, 2)
         row = QHBoxLayout()
+        row.addWidget(self.tick_button)
         row.addStretch(1)
         row.addWidget(self.apply_button)
         lay.addLayout(row)
@@ -80,10 +99,16 @@ class AppsPage(QWidget):
         for i, unit in enumerate(shown):
             tick = QCheckBox()
             self.table.setCellWidget(i, 0, tick)
-            since = "" if unit.kind == "core" else (f"{unit.commits} commits" if unit.last_tag else "never released")
-            for col, text in ((1, unit.key), (2, unit.version), (3, unit.last_tag or "—"), (4, since)):
+            reason = unit.release_reason
+            if unit.needs_release and unit.last_tag and not unit.released:
+                reason += f" · {unit.version} not tagged yet"
+            tip = needs_tooltip(unit)
+            for col, text in ((1, unit.key), (2, unit.version), (3, unit.last_tag or "—"), (4, reason)):
                 item = QTableWidgetItem(text)
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                item.setToolTip(tip)
+                if unit.needs_release:
+                    item.setForeground(QColor(ORANGE))
                 self.table.setItem(i, col, item)
             combo = QComboBox()
             combo.setEditable(True)
@@ -95,6 +120,10 @@ class AppsPage(QWidget):
             self.table.setCellWidget(i, 5, combo)
             self.table.setCellWidget(i, 6, notes)
             self.rows.append((unit, tick, combo, notes))
+
+    def tick_needed(self) -> None:
+        for unit, tick, _, _ in self.rows:
+            tick.setChecked(unit.needs_release)
 
     def apply(self) -> None:
         picked = [(u, combo.currentText().strip(), notes.text()) for u, tick, combo, notes in self.rows
@@ -153,6 +182,7 @@ class PortalPage(QWidget):
         self.pin_button.clicked.connect(self.pin)
         self.empty_note = hint_label("")
         self.minimum = QLabel()
+        self.portal_needs = QLabel()
         self.portal_version = QComboBox()
         self.portal_version.setEditable(True)
         self.portal_notes = QLineEdit()
@@ -175,13 +205,20 @@ class PortalPage(QWidget):
         portal_row.addWidget(self.portal_notes, 1)
         portal_row.addWidget(self.bump_button)
         lay = QVBoxLayout(self)
-        lay.addWidget(hint_label("After step 1 is pushed and tagged, and GitHub has built those releases: pin them, "
-                                 "then bump the portal. Its CHANGELOG entry lists the pinned app releases."))
+        lay.addWidget(hint_label(
+            "After step 1 is pushed and tagged, and GitHub has built those releases:<br>"
+            "<b>1.</b> Pin: the new tags and their checksums go into apps.toml.<br>"
+            "<b>2.</b> Bump portal: the portal version and a CHANGELOG entry that lists the pinned releases.<br>"
+            "<b>3.</b> Commit, then test on a BC-250 with <code>./install.sh</code> and "
+            "<code>bc250-bazzite-suite --source release</code>: the changed apps install from GitHub and must work.<br>"
+            "<b>4.</b> Only then push and tag the portal: the tag is what reaches the users. The commands appear "
+            "below after Bump portal."))
         lay.addLayout(top)
         lay.addWidget(self.pins, 1)
         lay.addWidget(self.empty_note)
         lay.addLayout(pin_row)
         lay.addWidget(self.minimum)
+        lay.addWidget(self.portal_needs)
         lay.addLayout(portal_row)
         lay.addWidget(self.output, 1)
         self.candidates: list[tuple[rp.Unit, QCheckBox]] = []
@@ -204,6 +241,14 @@ class PortalPage(QWidget):
                                 "app tags first.")
         self.empty_note.setVisible(not cands)
         portal = next(u for u in units if u.kind == "portal")
+        if portal.needs_release:
+            self.portal_needs.setText(f"The portal needs a release: {portal.release_reason}"
+                                      + (f" since {portal.last_tag}." if portal.last_tag else "."))
+            self.portal_needs.setStyleSheet(f"color:{ORANGE}; font-weight:600;")
+        else:
+            self.portal_needs.setText(f"Nothing the portal ships changed since {portal.last_tag}.")
+            self.portal_needs.setStyleSheet("")
+        self.portal_needs.setToolTip(needs_tooltip(portal))
         minimum, why = rp.portal_minimum(self.window.root, self.window.base(), portal.version)
         if minimum:
             self.minimum.setText(f"apps.toml changed since {self.window.base()} ({why}): the portal needs at least "

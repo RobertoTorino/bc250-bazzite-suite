@@ -13,6 +13,7 @@ from bc250_core.platform import data_home
 ROOT = Path(__file__).resolve().parent.parent           # portal/ in the checkout, /opt/bc250-bazzite-suite installed
 CHECKOUT_FILE = "suite-checkout"                        # in ROOT, written by install.sh when installed from a checkout
 MANIFEST = ROOT / "apps.toml"
+DEPENDENCY_CATALOG = ROOT / "dependencies.toml"
 LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
 APP_ICONS = ROOT / "images" / "apps"                    # <key>.png: the small icon on each app's card
 INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="portal-v",

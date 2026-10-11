@@ -38,6 +38,35 @@ class StatusPill(QLabel):
                            "border-radius:6px; padding:3px 10px; }")
 
 
+class StatusText(QWidget):
+    """A state next to an app's title: a coloured dot and the state in bold, in the colour of its kind, the same
+    set_status() as StatusPill. Lighter than a pill in a header; neutral uses the normal text colour."""
+
+    def __init__(self, text: str = "", parent: QWidget | None = None):
+        super().__init__(parent)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(4, 0, 4, 0)
+        layout.setSpacing(6)
+        self.dot = QLabel("●")
+        self.label = QLabel()
+        layout.addWidget(self.dot)
+        layout.addWidget(self.label)
+        self.kind = ""
+        self.set_status(text or self.tr("Unknown"), "neutral")
+
+    def set_status(self, text: str, kind: str, tooltip: str = "") -> None:
+        self.kind = kind
+        self.label.setText(text)
+        self.setToolTip(tooltip)
+        colour = STATE_COLORS.get(kind) if kind != "neutral" else None
+        style = f"color:{colour};" if colour else "color:palette(window-text);"
+        self.dot.setStyleSheet(style + "font-size:14px;")
+        self.label.setStyleSheet(style + "font-weight:700; font-size:14px;")
+
+    def text(self) -> str:
+        return self.label.text()
+
+
 class MetricBox(QFrame):
     """One box of a header row: a big value with a caption, like the stats boxes of bc250-bazzite-test."""
 

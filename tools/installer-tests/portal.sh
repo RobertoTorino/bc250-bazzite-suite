@@ -18,7 +18,7 @@ echo "== 1. install from the suite checkout, with the install.sh at its root"
 bash "$SUITE/install.sh" > "$T/log1" 2>&1; rc=$?; logs+=("$T/log1")
 check "exit 0" "[ $rc -eq 0 ]"
 check "portal installs apps from the checkout" "[ \"\$(cat $T/opt/bc250-bazzite-suite/suite-checkout)\" = \"\$(cd $SUITE && pwd -P)\" ]"
-check "portal in /opt" "[ -f $T/opt/bc250-bazzite-suite/bc250_portal/__main__.py ] && [ -f $T/opt/bc250-bazzite-suite/apps.toml ]"
+check "portal in /opt" "[ -f $T/opt/bc250-bazzite-suite/bc250_portal/__main__.py ] && [ -f $T/opt/bc250-bazzite-suite/apps.toml ] && [ -f $T/opt/bc250-bazzite-suite/dependencies.toml ]"
 check "portal symlink" "[ \"\$(readlink $T/opt/bc250-bazzite-suite)\" = bc250-bazzite-suite-v$V ]"
 check "core bundled with portal" "[ -f $T/opt/bc250-bazzite-suite/bc250_core/platform.py ]"
 check "no tests in /opt" "[ ! -d $T/opt/bc250-bazzite-suite/tests ]"

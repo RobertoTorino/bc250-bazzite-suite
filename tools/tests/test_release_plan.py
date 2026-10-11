@@ -56,6 +56,8 @@ def repo(tmp_path) -> Path:
         write(root / f"apps/{key}/run.sh", 'VERSION="0.1.0"\necho "$VERSION"\n')
         write(root / f"apps/{key}/tests/test_x.py", '__version__ = "0.1.0"\n')
         write(root / f"apps/{key}/CHANGELOG", "Changelog: 01-01-2026 00:00:00\n\nFirst.\n")
+    write(root / "apps/alpha/alpha/ui.py", "from bc250_core import widgets\n")      # alpha bundles core, beta not
+    write(root / "docs/apps/alpha.md", "# Alpha\n")
     sh(root, "init", "-q", "-b", "main")
     sh(root, "add", "-A")
     sh(root, "commit", "-q", "-m", "start")
@@ -156,7 +158,10 @@ def test_pin_and_portal(repo):
 def test_commands():
     text = rp.app_commands(["alpha-v0.2.0", "beta-v0.1.0"])
     assert "git tag alpha-v0.2.0 && git push origin alpha-v0.2.0" in text and "git push\n" in text
-    assert rp.portal_commands("portal-v0.2.0").endswith("git tag portal-v0.2.0 && git push origin portal-v0.2.0")
+    text = rp.portal_commands("portal-v0.2.0")
+    assert text.endswith("git tag portal-v0.2.0 && git push origin portal-v0.2.0")
+    order = [text.index(s) for s in ("git commit", "--source release", "git push\n", "git tag")]
+    assert order == sorted(order)                             # commit, test, and only then push and tag
 
 
 # --- The window -------------------------------------------------------------------------------------------------
@@ -241,3 +246,42 @@ def test_window_explains_an_empty_pin_list(window, repo):
     assert window.portal_page.candidates == []
     assert not window.portal_page.empty_note.isHidden()
     assert "Fetch tags" in window.portal_page.empty_note.text()
+
+
+def needs(root):
+    return {u.key: (u.needs_release, u.release_reason, u.changed) for u in rp.load_units(root)}
+
+
+def test_needs_release_follows_what_ships(repo):
+    alpha = needs(repo)["alpha"]
+    assert alpha == (True, "yes: 1 file", ["apps/alpha/alpha/extra.py"])          # committed after the tag
+    assert needs(repo)["beta"][:2] == (True, "first release")
+    assert needs(repo)["core"][0] is False
+    sh(repo, "tag", "alpha-v0.1.1")                                               # released: nothing left
+    assert needs(repo)["alpha"][:2] == (False, "no")
+    write(repo / "apps/alpha/tests/test_y.py", "x = 2\n")                         # tests do not ship
+    write(repo / "apps/alpha/requirements-dev.txt", "pytest\n")
+    assert needs(repo)["alpha"][0] is False
+    write(repo / "apps/alpha/alpha/__init__.py", 'APP = "alpha"\n__version__ = "0.1.0"\n# changed\n')
+    assert needs(repo)["alpha"][2] == ["apps/alpha/alpha/__init__.py"]           # not committed yet
+    write(repo / "apps/alpha/alpha/new.py", "y = 1\n")
+    assert "apps/alpha/alpha/new.py" in needs(repo)["alpha"][2]                  # new, untracked
+
+
+def test_core_and_manual_changes_count_for_the_apps_that_ship_them(repo):
+    sh(repo, "tag", "alpha-v0.1.1")
+    sh(repo, "tag", "beta-v0.1.0")
+    write(repo / "core/bc250_core/widgets.py", "class StatusText: pass\n")
+    state = needs(repo)
+    assert state["alpha"][:2] == (True, "yes: core") and state["beta"][0] is False   # beta does not import core
+    write(repo / "docs/apps/alpha.md", "# Alpha\n\nMore.\n")                      # shipped as MANUAL.md
+    assert needs(repo)["alpha"][1] == "yes: 1 file + core"
+
+
+def test_window_ticks_what_needs_a_release(window, repo):
+    window.apps_page.tick_needed()
+    ticked = [u.key for u, tick, _, _ in window.apps_page.rows if tick.isChecked()]
+    assert ticked == ["alpha", "beta"]
+    item = window.apps_page.table.item(1, 4)
+    assert item.text() == "yes: 1 file" and "apps/alpha/alpha/extra.py" in item.toolTip()
+    assert "needs a release" in window.portal_page.portal_needs.text()

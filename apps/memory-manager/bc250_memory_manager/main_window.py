@@ -22,7 +22,8 @@ from bc250_core import SUITE_MANUAL_URL, window_title
 from bc250_core.platform import data_home
 from bc250_core.settings import SettingsStore
 from bc250_core.theme import BLUE, GREY, PURPLE
-from bc250_core.widgets import ClickableLogo, MetricBox, StatusPill, TextDialog, accent_button, hint_label, page_header
+from bc250_core.widgets import (ClickableLogo, MetricBox, StatusText, TextDialog, accent_button, hint_label,
+                                 page_header)
 
 from . import APP_ID, APP_NAME, INFO, LOGO_PATH, __version__
 from . import cmos, privileged, system
@@ -58,7 +59,7 @@ class MainWindow(QMainWindow):
 
         header, _title = page_header(APP_NAME)
         header.insertWidget(0, ClickableLogo(LOGO_PATH, 40))
-        self.badge = StatusPill()
+        self.badge = StatusText()
         header.insertWidget(2, self.badge)
 
         self.vram_box = MetricBox("VRAM split", PURPLE)

@@ -31,8 +31,11 @@ from bc250_core.theme import ORANGE, RED, header_font
 from bc250_core.updates import ReleaseInfo, UpdateChecker, version_tuple
 from bc250_core.widgets import ClickableLogo, StatusPill, accent_button, hint_label
 
-from . import APP_ICONS, APP_NAME, INFO, LOGO_PATH, __version__
+from . import APP_ICONS, APP_NAME, DEPENDENCY_CATALOG, INFO, LOGO_PATH, __version__
+from .dependencies import Dependency, ExternalTool, load_catalog, load_tools
+from .dependency_window import DependencyWindow
 from .manifest import AppEntry
+from .portal_update import PortalUpdate
 from .sources import Records, SourceError, Sources, is_installed
 
 POLL_MS = 1000
@@ -158,12 +161,16 @@ class AppCard(QFrame):
 
 class MainWindow(QMainWindow):
     def __init__(self, entries: list[AppEntry], sources: Sources, records: Records,
-                 portal_check: Callable[[], ReleaseInfo] | None = None, parent: QWidget | None = None):
+                 portal_check: Callable[[], ReleaseInfo] | None = None, parent: QWidget | None = None,
+                 dependencies: list[Dependency] | None = None, tools: list[ExternalTool] | None = None):
         """*portal_check* returns the newest portal release (run once, off the GUI thread); None: no check."""
         super().__init__(parent)
         self.entries = entries
         self.sources = sources
         self.records = records
+        self.dependencies = dependencies if dependencies is not None else load_catalog(DEPENDENCY_CATALOG)
+        self.external_tools = tools if tools is not None else load_tools(DEPENDENCY_CATALOG)
+        self.dependency_window: DependencyWindow | None = None
         self.pending: Pending | None = None
         self.worker = UpdateChecker(self)               # generic: runs one job off the GUI thread
         self.worker.finished.connect(self._prepared)
@@ -190,6 +197,10 @@ class MainWindow(QMainWindow):
         self.portal_button.hide()
         header.addWidget(self.portal_button)
         self.portal_release: ReleaseInfo | None = None
+        self.dependencies_button = QPushButton("Dependencies")
+        self.dependencies_button.setToolTip("List runtime Python dependencies and check PyPI for updates.")
+        self.dependencies_button.clicked.connect(self._open_dependency_window)
+        header.addWidget(self.dependencies_button)
         refresh = QPushButton("Refresh")
         refresh.setToolTip("Look again at which apps are installed.")
         refresh.clicked.connect(self._on_refresh)
@@ -281,21 +292,39 @@ class MainWindow(QMainWindow):
                                       "each has a red dot and an Update button.")
         self.updates_label.setVisible(updates > 0)
 
-    def _portal_checked(self, release: object) -> None:
-        """A newer portal release brings newer pinned app versions; offer its release page."""
-        if not isinstance(release, ReleaseInfo) or release.error or not release.version:
+    def _portal_checked(self, result: object) -> None:
+        """A newer portal release brings newer pinned app versions; name them and offer its release page."""
+        update = result if isinstance(result, PortalUpdate) else PortalUpdate(result) \
+            if isinstance(result, ReleaseInfo) else None
+        release = update.release if update else None
+        if release is None or release.error or not release.version:
             return                                      # offline or no release yet: nothing to announce
         if version_tuple(release.version) <= version_tuple(__version__):
             return
         self.portal_release = release
-        self.portal_button.setText(f"\u25cf Portal {release.version} available")
-        self.portal_button.setToolTip(f"Released {release.published}. A new portal version pins newer app versions; "
-                                      "click to open its release page.")
+        summary = update.summary()
+        self.portal_button.setText(f"\u25cf Portal {release.version}" + (f": {summary}" if summary else " available"))
+        if update.changes:
+            tip = (f"Released {release.published}. App updates come with the portal: once it is updated, the "
+                   f"installed apps among these show Update.\n\n{update.details()}\n\nClick to open its release page.")
+        elif update.changes == []:
+            tip = f"Released {release.published}. It pins the same app versions as this portal. Click to open its page."
+        else:
+            tip = (f"Released {release.published}. A new portal version pins newer app versions; "
+                   "click to open its release page.")
+        self.portal_button.setToolTip(tip)
         self.portal_button.show()
 
     def _open_portal_release(self) -> None:
         if self.portal_release is not None:
             QDesktopServices.openUrl(QUrl(self.portal_release.url))
+
+    def _open_dependency_window(self) -> None:
+        if self.dependency_window is None:
+            self.dependency_window = DependencyWindow(self.dependencies, self.entries, self, tools=self.external_tools)
+        self.dependency_window.show()
+        self.dependency_window.raise_()
+        self.dependency_window.activateWindow()
 
     # ----------------------------------------------------------------------------------------- actions
     def _confirm_board_change(self, entry: AppEntry, action: str) -> bool:

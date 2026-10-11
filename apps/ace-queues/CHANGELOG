@@ -1,3 +1,7 @@
+Changelog: 11-10-2026 01:03:09
+
+The four steps line up: each row centres its name, state and buttons, every button has the same size (Build too) and the buttons stand in two columns on the right, a single button in the right one. A short window no longer squeezes the second line of a state out of sight: each state text keeps the height its lines need.
+
 Changelog: 10-10-2026 23:59:26
 
 Release 0.1.1. new app icons

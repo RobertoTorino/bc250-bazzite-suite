@@ -59,6 +59,9 @@ def wait_for(predicate, ms=5000):
 def test_bazzite_test_first_without_uninstall(window):
     keys = list(window.cards)
     assert keys[0] == "bazzite-test"
+    assert window.dependencies_button.text() == "Dependencies"
+    assert {dependency.name for dependency in window.dependencies} == {"PyQt6", "PyQt6-Charts"}
+    assert {tool.name for tool in window.external_tools} >= {"flashrom", "pkexec", "umr", "podman"}
     assert window.cards["bazzite-test"].uninstall_button.isHidden()
     assert not window.cards["governor"].uninstall_button.isHidden()
     assert not window.cards["persistent-acpi"].open_button.isHidden()
@@ -220,3 +223,20 @@ def test_cards_reflow_into_two_columns(window, qapp):
         assert places == [(i // columns, i % columns) for i in range(len(window.cards))]   # file order, by rows
     assert window.column_count(2 * mw.TILE_MIN_WIDTH + 20) == 2
     assert window.column_count(2 * mw.TILE_MIN_WIDTH - 1) == 1
+
+
+def test_portal_offer_names_the_app_updates(qapp, home, settings_dir, tmp_path, launched):
+    from bc250_portal.portal_update import AppChange, PortalUpdate
+    release = ReleaseInfo(version="99.0.0", tag="portal-v99.0.0", url="https://example.invalid/r", published="2030-01-01")
+    update = PortalUpdate(release, [AppChange("BC-250 ACE Queues", "0.1.0", "0.1.1"),
+                                    AppChange("BC-250 Memory Manager", "0.1.0", "0.1.1")])
+    w = portal_window(tmp_path, update)
+    assert wait_for(lambda: not w.portal_button.isHidden())
+    assert w.portal_button.text().endswith("Portal 99.0.0: updates ACE Queues and Memory Manager")
+    tip = w.portal_button.toolTip()
+    assert "App updates come with the portal" in tip and "BC-250 Memory Manager: 0.1.0 → 0.1.1" in tip
+    w.close()
+    same = portal_window(tmp_path, PortalUpdate(release, []))
+    assert wait_for(lambda: not same.portal_button.isHidden())
+    assert same.portal_button.text().endswith("Portal 99.0.0 available") and "same app versions" in same.portal_button.toolTip()
+    same.close()

@@ -95,5 +95,5 @@ def verdict(status: Status) -> tuple[str, str, str]:
     if status.installed:
         return "Test needed", "warn", "Run the test: games only use the driver after it passed on this kernel."
     if status.built:
-        return "Not installed", "neutral", "The driver is built; install it next."
-    return "Not built", "neutral", "Build the driver first."
+        return "Not installed", "warn", "The driver is built; install it next."
+    return "Not built", "warn", "Build the driver first."

@@ -7,8 +7,8 @@ from PyQt6.QtWidgets import QPushButton, QTableWidget, QTableWidgetItem, QWidget
 
 from bc250_core import theme
 from bc250_core.widgets import (
-    MetricBox, RoundedToolTip, StatusPill, Terminal, TextDialog, accent_button, hide_tooltip, set_button_active,
-    show_tooltip,
+    MetricBox, RoundedToolTip, StatusPill, StatusText, Terminal, TextDialog, accent_button, hide_tooltip,
+    set_button_active, show_tooltip,
 )
 
 
@@ -21,6 +21,19 @@ def test_status_pill_colours(qapp):
     assert theme.GREEN in pill.styleSheet()
     pill.set_status("?", "no-such-kind")
     assert theme.GREY in pill.styleSheet()
+
+
+def test_status_text_colours(qapp):
+    status = StatusText()
+    assert status.text() == "Unknown" and "palette(window-text)" in status.label.styleSheet()
+    status.set_status("Test failed", "bad", "tip")
+    assert (status.text(), status.toolTip(), status.kind) == ("Test failed", "tip", "bad")
+    assert theme.RED in status.label.styleSheet() and theme.RED in status.dot.styleSheet()
+    assert "font-weight:700" in status.label.styleSheet()
+    status.set_status("Not installed", "warn")
+    assert theme.ORANGE in status.label.styleSheet()
+    status.set_status("?", "no-such-kind")
+    assert "palette(window-text)" in status.label.styleSheet()
 
 
 def test_metric_box(qapp):

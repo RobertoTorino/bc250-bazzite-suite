@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (QCheckBox, QDialog, QDialogButtonBox, QFileDialog, 
 from bc250_core import SUITE_MANUAL_URL, window_title
 from bc250_core.platform import data_home
 from bc250_core.settings import SettingsStore
-from bc250_core.widgets import ClickableLogo, StatusPill, Terminal, accent_button, hint_label, page_header
+from bc250_core.widgets import ClickableLogo, StatusText, Terminal, accent_button, hint_label, page_header
 
 from . import APP_ID, APP_NAME, INFO, LOGO_PATH, __version__
 from . import bios as biosmod
@@ -46,7 +46,7 @@ class MainWindow(QMainWindow):
 
         header, title = page_header(APP_NAME)
         header.insertWidget(0, ClickableLogo(LOGO_PATH, 40))
-        self.badge = StatusPill()
+        self.badge = StatusText()
         header.insertWidget(2, self.badge)
         self.read_button = accent_button("Read BIOS chip…", "Read the BIOS flash chip with flashrom (read-only)")
         self.read_button.clicked.connect(self.read_chip)

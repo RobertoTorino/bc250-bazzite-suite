@@ -1,3 +1,16 @@
+Changelog: 11-10-2026 00:54:13
+
+The button for a newer portal release names the app releases it brings: it reads that release's apps.toml from GitHub at its tag (portal_update.py) and compares the pins with this portal's, so it says for example "Portal 0.9.1: updates ACE Queues and Memory Manager" (more than two: "updates 4 apps"; new apps: "adds …"). The tooltip lists each app with its old and new version and explains that the installed ones show Update after the portal update. When the new apps.toml cannot be read, the button says "Portal x.y.z available" as before.
+
+Changelog: 11-10-2026 00:46:35
+
+Expanded the Portal dependency checker to list app-specific external tools, check availability (including flashrom's
+internal programmer support), and link to app instructions. Python package versions continue to be checked on PyPI.
+
+Changelog: 11-10-2026 00:33:23
+
+Added Portal dependency checker, showing the suite's declared runtime Python dependencies and checking PyPI for newer versions.
+
 Changelog: 11-10-2026 00:25:37
 
 Release 0.9.1. Pins ace-queues-v0.1.1, memory-manager-v0.1.1. updates for ace-queues and memory-manager

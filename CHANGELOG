@@ -1,3 +1,11 @@
+Changelog: 11-10-2026 00:44:36
+
+Release front end: after Bump portal the commands come in the right order, numbered: 1. commit (no push yet), 2. test on a BC-250 (./install.sh, then bc250-bazzite-suite --source release, with what to check and what to do when something is wrong), 3. only then push and tag the portal. Step 2's hint lists the four steps (Pin, Bump portal, commit and test, push and tag), and docs/portal.md and the release_plan.py docstring say the same.
+
+Changelog: 11-10-2026 00:31:51
+
+Manual: Testing a portal release before its tag (docs/portal.md): install the portal from the checkout and start it with --source release, so the apps install from the pinned GitHub releases and are checked against their pins, as on a user's board; what to check, and what to do when something fails. Release step 5 links to it, and the release front end's portal commands show the test instead of "test the combination on a BC-250".
+
 Changelog: 11-10-2026 00:18:14
 
 Release front end as an app: tools/release.sh --install adds a launcher (~/.local/bin/bc250-release), an app menu entry and a Desktop icon for the checkout it is run from (--no-desktop-shortcut: menu entry only; --uninstall removes them). It is not part of the portal; the entry starts the checkout's own tool with its .venv-linux. The window shows its icon (tools/images/release-ui.png), and with the menu entry installed it keeps its desktop file name, so the task bar shows that icon. The manual serves tools/images as assets/tools/ and shows the small icon (release-ui-128.png) in the release section of docs/portal.md, with the install commands. New installer test tools/installer-tests/release-ui.sh, in CI and CLAUDE.md.

@@ -10,12 +10,12 @@ from pathlib import Path
 
 from PyQt6.QtCore import QProcess, Qt
 from PyQt6.QtGui import QCloseEvent
-from PyQt6.QtWidgets import (QApplication, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMessageBox, QPushButton,
+from PyQt6.QtWidgets import (QApplication, QGridLayout, QLabel, QMainWindow, QMessageBox, QPushButton,
                              QVBoxLayout, QWidget)
 
 from bc250_core import SUITE_MANUAL_URL, window_title
 from bc250_core.settings import SettingsStore
-from bc250_core.widgets import (ClickableLogo, StatusPill, Terminal, accent_button, hint_label, page_header,
+from bc250_core.widgets import (ClickableLogo, StatusText, Terminal, accent_button, hint_label, page_header,
                                 set_button_active)
 
 from . import APP_NAME, INFO, LOGO_PATH, SCRIPT, __version__
@@ -52,7 +52,7 @@ class MainWindow(QMainWindow):
 
         header, _title = page_header(APP_NAME)
         header.insertWidget(0, ClickableLogo(LOGO_PATH, 40))
-        self.pill = StatusPill()
+        self.pill = StatusText()
         header.insertWidget(2, self.pill)
         self.refresh_button = QPushButton("Refresh")
         self.refresh_button.setToolTip("Read the state again")
@@ -94,16 +94,26 @@ class MainWindow(QMainWindow):
                 ("2. Install", self.install_state, [self.install_button, self.remove_button]),
                 ("3. Test", self.test_state, [self.test_button]),
                 ("4. Use", self.use_state, [self.copy_button, self.all_button])]
+        # One line per step: name, state and its buttons centred on the row. Every button has the size of the
+        # widest plain one (Build too), in two columns on the right (a single button in the right one), so they
+        # line up.
+        everything = [b for _, _, buttons in rows for b in buttons]
+        width = max(b.sizeHint().width() for b in everything)
+        height = max(b.sizeHint().height() for b in everything if b is not self.build_button)
+        centre = Qt.AlignmentFlag.AlignVCenter
         for row, (name, state, buttons) in enumerate(rows):
             label = QLabel(name)
             label.setStyleSheet("font-weight:700;")
-            grid.addWidget(label, row, 0, Qt.AlignmentFlag.AlignTop)
+            # The labels fill their cell and centre their own text: a word-wrapped label added with an alignment
+            # gets no height for its second line.
+            for text in (label, state):
+                text.setAlignment(Qt.AlignmentFlag.AlignLeft | centre)
+            grid.addWidget(label, row, 0)
             grid.addWidget(state, row, 1)
-            box = QHBoxLayout()
-            box.addStretch(1)
-            for button in buttons:
-                box.addWidget(button)
-            grid.addLayout(box, row, 2, Qt.AlignmentFlag.AlignTop)
+            for column, button in zip((3, 2), reversed(buttons)):
+                button.setFixedSize(width, height)
+                grid.addWidget(button, row, column, centre)
+            grid.setRowMinimumHeight(row, height)
 
         self.running = QLabel()
         self.running.setStyleSheet("font-weight:600;")
@@ -191,7 +201,18 @@ class MainWindow(QMainWindow):
         elif off_note:
             use += f"<br>All apps: off ({escape(off_note)})."
         self.use_state.setText(use)
+        self._fit_states()
         self._update_buttons()
+
+    def _fit_states(self) -> None:
+        """Each state text keeps the height its lines need at its width. Qt leaves wrapped text out of a window's
+        minimum height, so a short window would otherwise squeeze a second line out of sight."""
+        for label in (self.build_state, self.install_state, self.test_state, self.use_state):
+            label.setMinimumHeight(label.heightForWidth(max(label.width(), 300)))
+
+    def resizeEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        super().resizeEvent(event)
+        self._fit_states()                  # a narrower window wraps into more lines
 
     def _update_buttons(self) -> None:
         s, idle = self.status, self.process is None

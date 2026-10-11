@@ -12,9 +12,11 @@ from PyQt6.QtWidgets import QMessageBox
 
 from bc250_core import instance
 from bc250_core.app import create_app, exec_app
-from bc250_core.updates import latest_release, repo_slug
+from bc250_core.updates import repo_slug
 
-from . import APP_NAME, INFO, MANIFEST, __version__, state_dir, suite_checkout
+from . import APP_NAME, DEPENDENCY_CATALOG, INFO, MANIFEST, __version__, state_dir, suite_checkout
+from . import portal_update
+from .dependencies import DependencyCatalogError, load_catalog, load_tools
 from .main_window import MainWindow
 from .manifest import ManifestError, load
 from .sources import Records, Sources, http_download
@@ -43,6 +45,12 @@ def main() -> int:
     except (OSError, ManifestError) as exc:
         QMessageBox.critical(None, APP_NAME, f"The app list could not be read:\n\n{exc}")
         return 1
+    try:
+        dependencies = load_catalog(DEPENDENCY_CATALOG)
+        tools = load_tools(DEPENDENCY_CATALOG)
+    except DependencyCatalogError as exc:
+        QMessageBox.critical(None, APP_NAME, f"The dependency catalog could not be read:\n\n{exc}")
+        return 1
     checkout = suite_checkout() if args.source in ("auto", "checkout") else None
     if args.source == "checkout" and checkout is None:
         QMessageBox.critical(None, APP_NAME, "--source checkout: the portal is not running from a suite checkout.")
@@ -52,11 +60,13 @@ def main() -> int:
     if instance.already_running(INFO.app_id):
         return 0
 
-    # The newest portal release on GitHub, checked once in the background; offline it simply finds nothing.
+    # The newest portal release on GitHub, and which app releases it pins differently, checked once in the
+    # background; offline it simply finds nothing.
     def portal_check():
-        return latest_release(repo_slug(INFO.repo_url), INFO.tag_prefix, user_agent=INFO.user_agent)
+        return portal_update.check(repo_slug(INFO.repo_url), INFO.tag_prefix, entries, INFO.user_agent)
 
-    window = MainWindow(entries, sources, Records(state_dir() / "installed.json"), portal_check=portal_check)
+    window = MainWindow(entries, sources, Records(state_dir() / "installed.json"), portal_check=portal_check,
+                        dependencies=dependencies, tools=tools)
     window.show()
     server = instance.serve(INFO.app_id, window)  # noqa: F841 (kept alive while the app runs)
     return exec_app(app)

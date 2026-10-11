@@ -17,8 +17,15 @@ order of `apps.toml`, and in one column when the window is too narrow for two.
   outside its folder.
 - **Updates:** a red dot marks every app whose installed version differs from the one this portal pins, and the
   header counts them; **Update** installs the pinned version. Newer app versions come with a newer portal
-  release: at start the portal looks for one on GitHub and, when there is one, shows a red **Portal x.y.z
-  available** button that opens its release page.
+  release: at start the portal looks for one on GitHub and, when there is one, shows a red button that opens its
+  release page. The button names what that release brings, for example **Portal 0.9.1: updates ACE Queues and
+  Memory Manager**, and its tooltip lists each app with its old and new version. After the portal update, the
+  installed apps among them show **Update**. When the new pins cannot be read (offline, for example), the button
+  says **Portal x.y.z available**.
+- **Dependencies:** open **Dependencies** to see the declared runtime Python packages and app-specific external
+  tools, plus the apps and features that use them. **Check for updates** compares Python package versions with
+  PyPI and checks whether external tools are available; the tool links open the relevant app guide. Some apps use
+  separate virtual environments. The checker does not install or update anything.
 
 ## Install
 
@@ -80,8 +87,9 @@ Releasing an app and pinning it in the portal:
    `<tag>.tar.gz` and `SHA256SUMS` with [`tools/build_release.py`](https://github.com/RobertoTorino/bc250-bazzite-suite/blob/main/tools/build_release.py).
 3. `python3 tools/pin_app.py <tag>`: this sets the tag and checksum in `apps.toml`.
 4. Bump `portal/VERSION` as `tools/check_manifest.py` asks, and list the app release in the portal CHANGELOG.
-5. Once the combination is tested on a BC-250, tag `portal-v<x.y.z>`. That release bundles the pinned
-   bazzite-test release.
+5. Once the pinned app releases are tested together on a BC-250 (see
+   [Testing a portal release before its tag](#testing-a-portal-release-before-its-tag)), tag `portal-v<x.y.z>`.
+   That release bundles the pinned bazzite-test release.
 
 ### The release front end
 
@@ -110,9 +118,36 @@ run `--install` again. On Windows, run `tools/release.sh` from Git Bash.
 - **2. Pin and portal:** once GitHub has built the app releases, **Pin** reads each release's `SHA256SUMS` and
   pins its tag and checksum in `apps.toml` (step 3). The window shows the lowest portal version CI accepts against
   the last push (`origin/main`); **Bump portal** writes it with a CHANGELOG entry that lists the pinned app
-  releases, and runs `tools/check_manifest.py` (step 4). Then commit, push, test, and tag the portal (step 5).
+  releases, and runs `tools/check_manifest.py` (step 4). Then commit, test on a BC-250 (below), and only then push
+  and tag the portal (step 5). The window lists these commands in that order.
 
 `python3 tools/release_plan.py` lists every app with its version, its last tag and its pin, without Qt.
+
+### Testing a portal release before its tag
+
+A portal release promises one set of app releases, each with its checksum. Once its tag is out, every installed
+portal offers those releases as updates. So before the tag, check on a BC-250 that exactly those pinned releases
+install and run:
+
+1. Bump the portal (step 4) and commit. Pushing is not needed for this test.
+2. Install the portal from the checkout: `./install.sh` in the repository root. This installs this portal version,
+   with its new pins in `apps.toml`.
+3. Start it with the pinned releases instead of the checkout:
+
+    ```bash
+    bc250-bazzite-suite --source release
+    ```
+
+    Apps then install as on a user's board: the portal downloads each pinned tarball from GitHub and refuses it
+    unless its checksum matches the pin. Without `--source release`, a portal installed from a checkout installs
+    the apps from the checkout.
+4. The apps whose pin changed show **Update** with a red dot. Update them, open each one and check that it starts
+   and works; afterwards their pill reads **Installed** and the update count in the header is gone.
+5. All good: tag the portal (step 5). Something wrong: fix the app and release a new patch version of it (steps 1
+   to 4). Nothing has reached users yet.
+
+This does not test the portal tarball itself, which GitHub builds from the tag; the release workflow checks it
+(`tools/check_manifest.py --require-tags`, and the bundled Bazzite Test against its pin).
 
 ### Checking a release
 
@@ -154,4 +189,3 @@ Users then see the new card, and installed apps whose version differs from the p
 #### New Version
 - Change portal/VERSION from 0.1.0 to 0.2.0.
 - Change __version__ in portal/bc250_portal/init.py:6 to the same number.
-
