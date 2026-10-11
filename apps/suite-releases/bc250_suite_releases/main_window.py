@@ -5,7 +5,7 @@ Step 1, Apps: tick the apps to release, enter their versions and notes, Apply. I
 check_versions.py checks and a "Release x.y.z." CHANGELOG entry, runs check_versions.py and shows the git commands.
 Step 2, Pin and portal: once GitHub has built the app releases, Pin fills in their tag and sha256 in apps.toml;
 Bump portal writes the portal version (at least what check_manifest.py asks) and its CHANGELOG entry, runs
-check_manifest.py and shows the git commands. Check updates and Check release run check-release.sh in a
+check_manifest.py and shows the git commands. Test updates and Test release run check-release.sh in a
 terminal: the portal from the checkout before the push, the published portal release after it. Committing, tagging
 and pushing stay with you."""
 
@@ -200,11 +200,11 @@ class PortalPage(QWidget):
         self.portal_notes.setPlaceholderText("What this portal release brings (optional)")
         self.bump_button = accent_button("Bump portal", "Write portal/VERSION, its copies and the CHANGELOG entry")
         self.bump_button.clicked.connect(self.bump)
-        self.local_button = QPushButton("Check updates")
+        self.local_button = QPushButton("Test updates")
         self.local_button.setToolTip("Before the push: install the portal from this checkout and start it with the "
                                      "apps from the pinned GitHub releases (check-release.sh local)")
         self.local_button.clicked.connect(lambda: self.check("local"))
-        self.release_button = QPushButton("Check release")
+        self.release_button = QPushButton("Test release")
         self.release_button.clicked.connect(lambda: self.check("release"))
         if not sys.platform.startswith("linux"):
             for button in (self.local_button, self.release_button):
@@ -235,11 +235,11 @@ class PortalPage(QWidget):
             "After step 1 is pushed and tagged, and GitHub has built those releases:<br>"
             "<b>1.</b> Pin: the new tags and their checksums go into apps.toml.<br>"
             "<b>2.</b> Bump portal: the portal version and a CHANGELOG entry that lists the pinned releases.<br>"
-            "<b>3.</b> Commit, then <b>Check updates</b> on a BC-250: it installs the portal from the checkout and "
+            "<b>3.</b> Commit, then <b>Test updates</b> on a BC-250: it installs the portal from the checkout and "
             "starts it with <code>--source release</code>, so the changed apps install from GitHub and must work.<br>"
             "<b>4.</b> Only then push and tag the portal: the tag is what reaches the users. The commands appear "
             "below after Bump portal.<br>"
-            "<b>5.</b> Once GitHub's release workflow has built the portal: <b>Check release</b> downloads and installs "
+            "<b>5.</b> Once GitHub's release workflow has built the portal: <b>Test release</b> downloads and installs "
             "that published release and starts it, so the board runs the official release again."))
         lay.addLayout(top)
         lay.addWidget(self.pins, 1)

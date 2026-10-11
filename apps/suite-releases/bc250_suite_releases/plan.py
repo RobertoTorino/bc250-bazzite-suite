@@ -329,7 +329,7 @@ def portal_commands(tag: str) -> str:
         "git add -A && tools/fix-modes.sh",
         f'git commit -m "Release {tag}"',
         "",
-        "# 2. Test on a BC-250 (docs/portal.md, Testing a portal release before its tag): Check updates, or",
+        "# 2. Test on a BC-250 (docs/portal.md, Testing a portal release before its tag): Test updates, or",
         f"{CHECK_SCRIPT} local     # ./install.sh, then bc250-bazzite-suite --source release",
         "#    The apps whose pin changed show Update: update them, open each one, check that it works.",
         "#    Something wrong? Fix the app and release a new patch version (step 1), then pin again.",
@@ -338,7 +338,7 @@ def portal_commands(tag: str) -> str:
         "git push",
         f"git tag {tag} && git push origin {tag}",
         "",
-        "# 4. Once GitHub's release workflow has built it: Check release, or",
+        "# 4. Once GitHub's release workflow has built it: Test release, or",
         f"{CHECK_SCRIPT} release {tag}   # installs and starts the published portal release",
     ])
 

@@ -1,3 +1,7 @@
+Changelog: 11-10-2026 12:34:52
+
+The board test buttons of step 2 are renamed: Check updates is now Test updates, Check release is now Test release, in the window, its hint, the command list and docs/portal.md. They do what they did.
+
 Changelog: 11-10-2026 12:19:03
 
 A Refresh button in the header reads the checkout and its tags again, for changes made in a terminal while the window is open (commits, reverts, tags, edited files). It keeps what was entered: the ticks, versions and notes of step 1, and the portal version and notes of step 2. A version is kept only when it was typed or picked, not when it is still the one offered, so a version changed in a terminal shows its new choices.
