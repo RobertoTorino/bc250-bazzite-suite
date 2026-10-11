@@ -1,3 +1,11 @@
+Changelog: 11-10-2026 22:56:45
+
+Release 0.1.2. get TV info
+
+Changelog: 11-10-2026 22:37:30
+
+Nothing in the app is limited to the owner's TV or board any more. TV info… shows what a CEC 2.0 TV reports instead of only "supported": its feature list (CEC version, device types, remote profile, ARC, exact volume, …), its volume and mute status and its lip-sync delay (decoded from cec-ctl's field names; tested on made-up CEC 2.0 replies, since the owner's TV is CEC 1.4), and an AV receiver's name and volume when one answers. Remote buttons… offers all 74 buttons cecd maps, the 20 common ones first. The picture choices say what the current mode means: the signal's speed is estimated from the mode (CTA timings), so 1440p120 and 4K60 are told that 8 bits does not help there and 1080p60 that it never needs the handshake. With several CEC adapters the app and the watcher use the first that sees a display (cec.pick) instead of the first one. The watcher configured the adapter as "BC-250" even when the user had set another name; it now uses the name on the TV.
+
 Changelog: 11-10-2026 22:27:40
 
 Release 0.1.1.

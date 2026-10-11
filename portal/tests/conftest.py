@@ -51,3 +51,13 @@ def settings_dir(tmp_path, qapp, monkeypatch):
 
         monkeypatch.setattr(core_settings, "QSettings", FileSettings)
     return tmp_path / "settings"
+
+
+@pytest.fixture(autouse=True)
+def desktop(tmp_path, monkeypatch):
+    """The Desktop folder inside tmp_path for every test: the portal removes app icons from the Desktop."""
+    import bc250_portal.desktop_icons as desktop_icons
+    folder = tmp_path / "Desktop"
+    folder.mkdir()
+    monkeypatch.setattr(desktop_icons, "desktop_dir", lambda: folder)
+    return folder

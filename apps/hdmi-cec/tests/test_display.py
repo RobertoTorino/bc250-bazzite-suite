@@ -38,3 +38,12 @@ def test_commands():
 
 def test_read_without_kscreen():
     assert display.read(lambda argv: Result(127, "not found")) == {}
+
+
+def test_handshake_depends_on_the_mode():
+    assert round(display.clock_mhz(display.Mode("21", 1920, 1080, 120.0))) == 296           # CTA: 297 MHz
+    assert display.handshake(display.Mode("21", 1920, 1080, 120.0)) == "above 8 bits"      # 8 bits helps
+    assert display.handshake(display.Mode("23", 1920, 1080, 60.0)) == "never"
+    assert display.handshake(display.Mode("1", 3840, 2160, 60.0)) == "always"              # 8 bits does not
+    assert display.handshake(display.Mode("x", 2560, 1440, 120.0)) == "always"
+    assert display.describe(display.Mode("22", 1920, 1080, 119.88)) == "1920 × 1080 at 119.88 Hz"

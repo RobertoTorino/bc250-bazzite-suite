@@ -4,7 +4,7 @@ from pathlib import Path
 
 from bc250_hdmi_cec import cec, media, watcher
 from bc250_hdmi_cec.runner import Result
-from conftest import INFO, NACK, POWER_ON
+from conftest import INFO, NACK, POWER_ON, UNCONFIGURED
 
 KSCREEN = (Path(__file__).parent / "kscreen.json").read_text()      # the owner's board, 11-10-2026
 STANDBY = POWER_ON.replace("pwr-state: on (0x00)", "pwr-state: standby (0x01)")
@@ -103,3 +103,25 @@ def test_no_kscreen_output():
     w.step()
     w.step()
     assert board.switches == []
+
+
+def test_find_adapter_takes_the_one_with_a_display_and_the_users_name(tmp_path):
+    dev = tmp_path / "dev"
+    dev.mkdir()
+    for name in ("cec0", "cec1"):
+        (dev / name).touch()
+    calls = []
+
+    def run(argv):
+        calls.append(argv)
+        if "--playback" in argv:
+            return Result(0, INFO.replace("DP-1", "HDMI-A-1"))
+        return Result(0, UNCONFIGURED.replace("1.0.0.0", "f.f.f.f") if argv[2].endswith("cec0") else
+                      UNCONFIGURED.replace("DP-1", "HDMI-A-1"))
+    config = tmp_path / "config"
+    (config / "cecd/config.d").mkdir(parents=True)
+    (config / "cecd/config.d/99-bc250-hdmi-cec.toml").write_text('osd_name = "Lounge PC"\n')
+    w = watcher.Watcher(run=run, sleep=lambda s: None, config_dir=config)
+    adapter = w.find_adapter(dev)
+    assert adapter.device == str(dev / "cec1") and adapter.configured
+    assert ["cec-ctl", "-d", str(dev / "cec1"), "--playback", "--osd-name", "Lounge PC"] in calls

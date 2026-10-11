@@ -39,14 +39,28 @@ DEFAULTS = {
     "f3": "KEY_GREEN", "f4": "KEY_YELLOW", "f5": "KEY_F5", "data": "KEY_DATA",
 }
 
-# The buttons the app offers to change: the ones a TV relays from its remote. (cecd name, label)
-BUTTONS = (
+# The buttons most TVs relay from their remote, first in the list. (cecd name, label)
+COMMON = (
     ("select", "OK"), ("up", "Up"), ("down", "Down"), ("left", "Left"), ("right", "Right"), ("back", "Back"),
     ("play", "Play"), ("pause", "Pause"), ("stop", "Stop"), ("rewind", "Rewind"), ("fast-forward", "Fast forward"),
     ("skip-backward", "Previous"), ("skip-forward", "Next"), ("f2", "Red"), ("f3", "Green"), ("f4", "Yellow"),
     ("f1", "Blue"), ("display-information", "Info"), ("channel-up", "Channel up"),
     ("channel-down", "Channel down"),
 )
+
+
+def _button_label(name: str) -> str:
+    """ "device-root-menu" -> "Device root menu", "7" -> "Number 7", "f5" -> "F5" """
+    if name.isdigit():
+        return f"Number {name}"
+    if name[0] == "f" and name[1:].isdigit():
+        return name.upper()
+    return name.replace("-", " ").capitalize()
+
+
+# Every button cecd maps: the common ones, then the rest in cecd's order. TVs differ in what they relay (a CEC 2.0
+# TV may pass on more of its remote), so all of them can be changed.
+BUTTONS = COMMON + tuple((name, _button_label(name)) for name in DEFAULTS if name not in dict(COMMON))
 
 # What a button can do: (key name, label). "" is cecd's default for that button, None is nothing.
 KEYS = (

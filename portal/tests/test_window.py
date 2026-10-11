@@ -358,3 +358,60 @@ def test_checkout_only_apps_greyed_without_a_checkout(qapp, home, settings_dir, 
     assert card.icon.isEnabled() and not card.uninstall_button.isEnabled()  # opens; cannot be removed from here
     assert w.cards["demo-tool"].install_button.isEnabled()                  # released development apps as usual
     w.close()
+
+
+def icons_window(tmp_path, desktop, names=("bc250-hdmi-cec.desktop", "bc250-governor-manager.desktop")):
+    menu = tmp_path / "applications"
+    menu.mkdir(exist_ok=True)
+    for name in ("bc250-bazzite-suite.desktop", *names):
+        (menu / name).write_text("[Desktop Entry]\n")
+        (desktop / name).write_text("[Desktop Entry]\n")
+    return mw.MainWindow(load(MANIFEST), FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"),
+                         desktop=desktop, menu=menu)
+
+
+def test_first_start_asks_about_app_icons(qapp, home, settings_dir, tmp_path, launched, desktop, monkeypatch):
+    asked = []
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: (asked.append(a[2]),
+                                                                  QMessageBox.StandardButton.No)[1])
+    w = icons_window(tmp_path, desktop)
+    w.settle_icons()
+    assert len(asked) == 1 and "Keep the app icons on the Desktop?" in asked[0]
+    assert sorted(p.name for p in desktop.iterdir()) == ["bc250-bazzite-suite.desktop"]     # the portal's stays
+    assert not w.icons_box.isChecked()
+    w.settle_icons()
+    assert len(asked) == 1                                                                   # asked once
+    w.icons_box.setChecked(True)
+    assert (desktop / "bc250-hdmi-cec.desktop").is_file() and (desktop / "bc250-governor-manager.desktop").is_file()
+    w.close()
+
+
+def test_keeping_the_icons(qapp, home, settings_dir, tmp_path, launched, desktop, monkeypatch):
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: YES)
+    w = icons_window(tmp_path, desktop)
+    w.settle_icons()
+    assert w.icons_box.isChecked() and (desktop / "bc250-hdmi-cec.desktop").is_file()
+    w.close()
+
+
+def test_no_question_without_app_icons(qapp, home, settings_dir, tmp_path, launched, desktop, monkeypatch):
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: pytest.fail("nothing to ask"))
+    w = icons_window(tmp_path, desktop, names=())
+    w.settle_icons()
+    assert not w.icons_box.isChecked()
+    w.close()
+
+
+def test_an_install_with_icons_off_removes_the_new_icon(qapp, home, settings_dir, tmp_path, launched, desktop,
+                                                        monkeypatch):
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.No)
+    w = icons_window(tmp_path, desktop)
+    w.settle_icons()
+    entry = next(e for e in w.entries if e.key == "hdmi-cec")
+    w.install(entry)
+    assert wait_for(lambda: launched)
+    (desktop / "bc250-hdmi-cec.desktop").write_text("[Desktop Entry]\n")                   # the installer's icon
+    launched[0][1].write_text("0\n")
+    w._check_pending()
+    assert not (desktop / "bc250-hdmi-cec.desktop").exists() and (desktop / "bc250-bazzite-suite.desktop").exists()
+    w.close()

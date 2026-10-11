@@ -98,7 +98,8 @@ class RemoteDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.addWidget(hint_label("What each button of the TV remote does on the board. Valve's CEC daemon turns "
                                     "the buttons into key presses; Default is its own choice. A button gives one "
-                                    "key, not a combination."))
+                                    "key, not a combination. The buttons most TVs pass on come first; which of the "
+                                    "others arrive depends on the TV and its remote."))
         self.table = QTableWidget(len(keys.BUTTONS), 2)
         self.table.setHorizontalHeaderLabels(["Button", "Key"])
         self.table.verticalHeader().setVisible(False)
@@ -296,11 +297,9 @@ class MainWindow(QMainWindow):
     def refresh(self) -> None:
         """Reads the adapter and Bazzite's CEC mode again; sends nothing on the bus."""
         found = cec.devices(self.dev_root)
-        self.adapter = None
-        if found:
-            result = self.cec_ctl(cec.info(found[0]))
-            if result.ok:
-                self.adapter = cec.parse_info(found[0], result.out)
+        read = [self.cec_ctl(cec.info(device)) for device in found]
+        adapters = [cec.parse_info(device, r.out) for device, r in zip(found, read) if r.ok]
+        self.adapter = cec.pick(adapters)
         a = self.adapter
         if a is None:
             self.badge.set_status("No CEC adapter", "warn")
@@ -323,8 +322,11 @@ class MainWindow(QMainWindow):
                                           "EDID was not read. CEC needs both.")
             else:
                 self.badge.set_status("Not checked", "neutral", "Check TV asks the TV whether it is there")
+                others = [b.device for b in adapters if b is not a]
                 self.adapter_note.setText(f"{escape(a.device)} on {escape(a.name)} ({escape(a.driver)}), "
-                                          f"{escape(', '.join(a.logical_addresses) or 'no logical address yet')}.")
+                                          f"{escape(', '.join(a.logical_addresses) or 'no logical address yet')}."
+                                          + (f" Also here: {escape(', '.join(others))}; the app uses the one that "
+                                             "sees a display." if others else ""))
         for w in (self.on_button, self.source_button, self.standby_button, self.check_button, self.topology_button,
                   self.info_button, self.name_button, *self.volume_buttons):
             w.setEnabled(a is not None)
@@ -362,7 +364,23 @@ class MainWindow(QMainWindow):
             self.picture_note.setText("Needs KDE's kscreen-doctor and a CEC adapter on a display output: not "
                                       "available here (Game Mode, or no adapter).")
         else:
-            self.picture_note.setText(dict((k, why) for k, _l, why in PICTURE)[choice])
+            self.picture_note.setText(" ".join([dict((k, why) for k, _l, why in PICTURE)[choice],
+                                                self.mode_note(output)]).strip())
+
+    @staticmethod
+    def mode_note(output: display.Output) -> str:
+        """What the current mode means for the choices: the handshake depends on the signal's speed."""
+        mode = output.mode
+        if mode is None:
+            return ""
+        need = display.handshake(mode)
+        if need == "never":
+            return (f"At {display.describe(mode)} the signal stays below the speed that needs the handshake, so a "
+                    "black TV after standby has another cause.")
+        if need == "always":
+            return (f"At {display.describe(mode)} the signal needs the handshake even at 8 bits per colour: 8 bits "
+                    "does not help there, Restart the picture does.")
+        return ""
 
     def refresh_mode(self) -> None:
         mode = bazzite.read_mode(self.run, self.usr_root)

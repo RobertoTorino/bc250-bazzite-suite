@@ -1,3 +1,7 @@
+Changelog: 11-10-2026 22:37:30
+
+CLAUDE.md: a rule that the apps are not limited to the owner's board, TV and settings: they offer what the hardware reports, and tests cover other setups too.
+
 Changelog: 11-10-2026 20:58:28
 
 The header boxes (value and caption) are centred in every app, as Bazzite Test's and HelixSR's were: core's MetricBox centres by default (centred=False for left-aligned), and so do the copies in governor and helixsr. HDMI CEC and Memory Manager get it through the core they bundle, at their next release.

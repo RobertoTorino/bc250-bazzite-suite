@@ -16,9 +16,12 @@ import argparse
 import subprocess
 import sys
 import time
+from pathlib import Path
 from typing import Callable
 
-from . import cec, display, media
+from bc250_core.platform import config_home
+
+from . import bazzite, cec, display, media
 from .runner import Result
 
 POLL_S = 5
@@ -41,24 +44,27 @@ def log(text: str) -> None:
 
 class Watcher:
     def __init__(self, run: Callable[[list[str]], Result] = run, sleep: Callable[[float], None] = time.sleep,
-                 restart_picture: bool = True, pause_media: bool = False):
+                 restart_picture: bool = True, pause_media: bool = False, config_dir: Path | None = None):
         self.run, self.sleep = run, sleep
+        self.config_dir = config_dir or config_home()
         self.restart, self.pause = restart_picture, pause_media
         self.adapter: cec.Adapter | None = None
         self.last: str | None = None            # "on" or "off" at the last look; None before the first answer
         self.silent = 0                         # unanswered questions in a row
         self.paused: list[str] = []             # the players paused while the TV is off
 
-    def find_adapter(self) -> cec.Adapter | None:
-        for device in cec.devices():
+    def find_adapter(self, dev_root: Path = Path("/dev")) -> cec.Adapter | None:
+        found = []
+        for device in cec.devices(dev_root):
             result = self.run([cec.CEC_CTL, *cec.info(device)])
             if result.ok:
-                adapter = cec.parse_info(device, result.out)
-                if not adapter.configured:      # cecd claims an address; without it, as the app does
-                    configured = self.run([cec.CEC_CTL, *cec.configure(device)])
-                    adapter = cec.parse_info(device, configured.out) if "Driver Info" in configured.out else adapter
-                return adapter
-        return None
+                found.append(cec.parse_info(device, result.out))
+        adapter = cec.pick(found)
+        if adapter is not None and not adapter.configured:     # cecd claims an address; without it, as the app does
+            name = bazzite.read_fragment(self.config_dir).get("osd_name") or cec.OSD_NAME
+            configured = self.run([cec.CEC_CTL, *cec.configure(adapter.device, name)])
+            adapter = cec.parse_info(adapter.device, configured.out) if "Driver Info" in configured.out else adapter
+        return adapter
 
     def tv_power(self) -> str:
         return cec.power_status(self.run([cec.CEC_CTL, *cec.give_power_status(self.adapter.device)]).out)

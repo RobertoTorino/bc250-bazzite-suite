@@ -7,7 +7,11 @@ password and print what they do); the portal watches for the exit file the termi
 An app that changes the board (unlocks, governor, ACPI) gets a warning before it is installed or opened.
 
 Updates: a red dot marks every tile whose installed app differs from the version this portal pins, the header counts
-them, and at start the portal looks for a newer portal release on GitHub (which is how newer app versions arrive)."""
+them, and at start the portal looks for a newer portal release on GitHub (which is how newer app versions arrive).
+
+Desktop icons: the portal's own icon is enough to reach every app, so the apps' icons on the Desktop are the user's
+choice ("App icons on the Desktop", desktop_icons.py). The first start asks when app icons are there; off, the portal
+removes them at start and after each install (the installers write one), on, it adds one for every installed app."""
 
 from __future__ import annotations
 
@@ -23,8 +27,8 @@ from pathlib import Path, PurePath
 from PyQt6.QtCore import QEvent, QSize, QTimer, Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPalette, QPixmap
 from PyQt6.QtWidgets import (
-    QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea, QToolButton,
-    QVBoxLayout, QWidget,
+    QCheckBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea,
+    QToolButton, QVBoxLayout, QWidget,
 )
 
 from bc250_core import __version__ as CORE_VERSION
@@ -34,7 +38,7 @@ from bc250_core.theme import ACCENT, BLUE, GREY, ORANGE, RED, header_font
 from bc250_core.updates import ReleaseInfo, UpdateChecker, version_tuple
 from bc250_core.widgets import ClickableLogo, hint_label
 
-from . import glyphs
+from . import desktop_icons, glyphs
 from . import APP_ICONS, APP_NAME, INFO, LOGO_PATH, __version__
 from .manifest import AppEntry
 from .portal_update import PortalUpdate
@@ -48,6 +52,7 @@ TILE_WIDTH = 216                # the tiles flow left to right, as many to a row
 TILE_SPACING = 12
 DEV_FRAME_MARGIN = 24           # the development section's frame and margins take this much of the width
 DEV_OPEN_KEY = "portal/development_open"
+DESKTOP_ICONS_KEY = "portal/desktop_icons"
 APP_ICON_FILES = {"dependency-checker": "portal-dependency-checker"}
 LAUNCH_ICON_FILES = {("cu-bisect", "Unlock"): "cu-unlock", ("cores-bisect", "Unlock"): "cores-unlock"}  # else the app's
 
@@ -283,11 +288,14 @@ class AppTile(QFrame):
 class MainWindow(QMainWindow):
     def __init__(self, entries: list[AppEntry], sources: Sources, records: Records,
                  portal_check: Callable[[], ReleaseInfo] | None = None, local_build: Path | None = None,
-                 parent: QWidget | None = None):
+                 desktop: Path | None = None, menu: Path | None = None, parent: QWidget | None = None):
         """*portal_check* returns the newest portal release (run once, off the GUI thread); None: no check.
-        *local_build* is the suite checkout this portal runs from or was installed from: a banner says so."""
+        *local_build* is the suite checkout this portal runs from or was installed from: a banner says so.
+        *desktop* and *menu* are the Desktop folder and the app menu entries' folder (default: the user's)."""
         super().__init__(parent)
         self.entries = entries
+        self.desktop = desktop or desktop_icons.desktop_dir()
+        self.menu = menu or desktop_icons.menu_dir()
         self.sources = sources
         self.records = records
         self.pending: Pending | None = None
@@ -325,6 +333,13 @@ class MainWindow(QMainWindow):
         self.portal_button.hide()
         header.addWidget(self.portal_button)
         self.portal_release: ReleaseInfo | None = None
+        self.icons_box = QCheckBox("App icons on the Desktop")
+        self.icons_box.setToolTip("On: every installed app gets an icon on the Desktop. Off: only the portal's icon "
+                                  "is there, and you start the apps from here. The apps stay in the app menu either "
+                                  "way.")
+        self.icons_box.setChecked(self.settings.value(DESKTOP_ICONS_KEY, False, type=bool))
+        self.icons_box.toggled.connect(self._show_icons)
+        header.addWidget(self.icons_box)
         refresh = QPushButton("Refresh")
         refresh.setToolTip("Look again at which apps are installed.")
         refresh.clicked.connect(self._on_refresh)
@@ -396,6 +411,7 @@ class MainWindow(QMainWindow):
         self.portal_checker.finished.connect(self._portal_checked)
         if portal_check is not None:
             self.portal_checker.start(portal_check)
+        QTimer.singleShot(0, self.settle_icons)          # once the window shows: it may ask
 
     # ------------------------------------------------------------------------------------------- layout
     @staticmethod
@@ -496,6 +512,30 @@ class MainWindow(QMainWindow):
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel, QMessageBox.StandardButton.Cancel)
         return answer == QMessageBox.StandardButton.Yes
 
+    def settle_icons(self) -> None:
+        """At start: ask the first time, when app icons are on the Desktop, whether to keep them; then, when they are
+        switched off, remove the ones installers added since (an update of the portal puts Bazzite Test's back)."""
+        if not self.settings.contains(DESKTOP_ICONS_KEY):
+            show = bool(desktop_icons.on_desktop(self.desktop, self.menu)) and QMessageBox.question(
+                self, APP_NAME, "Keep the app icons on the Desktop?\n\nThe portal starts every app, so its own icon "
+                "is enough. The apps stay in the app menu either way, and you can change this any time with \"App "
+                "icons on the Desktop\" at the top of the portal.",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes) == QMessageBox.StandardButton.Yes
+            self.settings.setValue(DESKTOP_ICONS_KEY, show)
+            self.icons_box.blockSignals(True)
+            self.icons_box.setChecked(show)
+            self.icons_box.blockSignals(False)
+        if not self.icons_box.isChecked():
+            desktop_icons.remove(self.desktop, self.menu)
+
+    def _show_icons(self, show: bool) -> None:
+        self.settings.setValue(DESKTOP_ICONS_KEY, show)
+        try:
+            desktop_icons.apply(show, self.desktop, self.menu)
+        except OSError as exc:
+            QMessageBox.warning(self, APP_NAME, f"The Desktop icons could not be changed:\n\n{exc}")
+
     def install(self, entry: AppEntry) -> None:
         if self.busy() or not self._confirm_board_change(entry, f"Install {entry.name}"):
             return
@@ -562,6 +602,8 @@ class MainWindow(QMainWindow):
         if ok and pending.action == "install":
             self.records.set(entry.key, pending.tag)
             self.sources.prune(entry)                   # an update: the previous release's folder goes
+            if not self.icons_box.isChecked():          # the installer put its icon on the Desktop
+                desktop_icons.remove(self.desktop, self.menu)
         elif ok:
             self.records.remove(entry.key)
             self.sources.forget(entry)

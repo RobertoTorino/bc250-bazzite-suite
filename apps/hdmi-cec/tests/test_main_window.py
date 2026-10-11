@@ -360,3 +360,36 @@ def test_remote_buttons(make, tmp_path, monkeypatch):
                                                                      QDialog.DialogCode.Rejected)[1])
     w.edit_remote()
     assert seen[0]["f2"] == "KEY_F12" and seen[0]["f3"] is None and seen[0]["select"] == ""
+
+
+def test_remote_buttons_offers_every_button_of_cecd(make, monkeypatch):
+    sizes = []
+    monkeypatch.setattr(main_window.RemoteDialog, "exec", lambda d: (sizes.append(d.table.rowCount()),
+                                                                     QDialog.DialogCode.Rejected)[1])
+    make(FakeBoard(native=True)).edit_remote()
+    assert sizes == [74]
+
+
+def test_the_note_follows_the_mode(make):
+    board = FakeBoard()
+    w = make(board)
+    assert "at 8 bits" not in w.picture_note.text() and "another cause" not in w.picture_note.text()   # 1080p120
+    board.output["currentModeId"] = "1"                                                                 # 4K60
+    w.refresh_picture()
+    assert "3840 × 2160 at 60 Hz" in w.picture_note.text() and "8 bits does not help" in w.picture_note.text()
+    board.output["currentModeId"] = "23"                                                                # 1080p60
+    w.refresh_picture()
+    assert "another cause" in w.picture_note.text()
+
+
+def test_two_adapters_uses_the_one_with_a_display(make, dev_root):
+    (dev_root / "cec1").touch()
+
+    class TwoAdapters(FakeBoard):
+        def __call__(self, argv):
+            if argv[0] == "cec-ctl" and argv[1:] == ["-d", str(dev_root / "cec0")]:
+                return Result(0, INFO.replace("1.0.0.0", "f.f.f.f"))
+            return super().__call__(argv)
+    w = make(TwoAdapters())
+    assert w.adapter.device == str(dev_root / "cec1")
+    assert f"Also here: {dev_root / 'cec0'}" in w.adapter_note.text()

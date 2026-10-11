@@ -1,3 +1,7 @@
+Changelog: 11-10-2026 22:51:53
+
+App icons on the Desktop: a switch at the top of the portal (desktop_icons.py). The portal's own icon is enough to reach every app, so the apps' icons on the Desktop are the user's choice: on, the portal copies every installed app's menu entry to the Desktop (executable, trusted for GNOME, as the installers do); off, it removes the Desktop copies of the suite's menu entries, at start, after each install (the installers still write one) and when switched off. Only files named like a suite menu entry (bc250-*.desktop in ~/.local/share/applications) are touched, never the portal's own icon. The first start asks whether to keep the app icons when there are some; without any, the switch starts off without asking. The app menu entries always stay. The app installers are unchanged.
+
 Changelog: 11-10-2026 22:33:43
 
 Release 0.9.9. Pins bazzite-test-v0.1.5, governor-v0.1.4, helixsr-v0.2.3, system-overlay-v0.1.4, bios-reader-v0.1.4, ace-queues-v0.1.5, memory-manager-v0.1.5, hdmi-cec-v0.1.1, dependency-checker-v0.1.4. hdmi-cec tested on my tv and updated

@@ -77,6 +77,12 @@ def devices(dev_root: Path = Path("/dev")) -> list[str]:
     return [str(p) for p in sorted(found, key=lambda p: int(p.name[3:]))]
 
 
+def pick(adapters: list[Adapter]) -> Adapter | None:
+    """The adapter to use when there are several (amdgpu's and a USB one, or one for each display output): the
+    first that sees a display, else the first."""
+    return next((a for a in adapters if a.has_display), adapters[0] if adapters else None)
+
+
 def parse_info(device: str, text: str) -> Adapter:
     """The Driver Info block that cec-ctl prints for an adapter."""
     values: dict[str, str] = {}

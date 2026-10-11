@@ -28,7 +28,8 @@ Bazzite Test checks both (test 51).
 
 The top row shows the **CEC adapter** (the connector it belongs to), the board's **physical address** (the HDMI
 input it is on, from the TV's EDID; "None" when the board sees no display), the **display**'s name and the
-**TV power** after a check. Opening the app only reads these; nothing goes to the TV.
+**TV power** after a check. Opening the app only reads these; nothing goes to the TV. With more than one CEC
+adapter (a USB one as well, for example), the app uses the one that sees a display.
 
 **TV:**
 
@@ -40,8 +41,10 @@ input it is on, from the TV's EDID; "None" when the board sees no display), the 
 - **Volume −**, **Volume +** and **Mute:** go to an AV receiver when one answered the last check, else to the TV.
 - **Devices on the bus…:** asks every device on the HDMI bus who it is, and lists them. Read-only.
 - **TV info…:** what the TV tells about itself: its CEC version, power status, name and type, vendor ID, menu
-  language, and whether it supports the CEC 2.0 feature list, reporting its volume and lip-sync delay, and whether an
-  AV receiver or soundbar is connected. These are only questions: nothing on the TV changes.
+  language, its CEC 2.0 features, its volume and mute status, its lip-sync delay, and whether an AV receiver or
+  soundbar is connected (with its name and volume). A CEC 1.4 TV says "not supported" to the CEC 2.0 questions; a
+  CEC 2.0 TV shows what it can do, for example ARC or taking an exact volume. These are only questions: nothing on
+  the TV changes.
 - **Name on the TV** and **Set name:** the name the TV shows for the board in its list of inputs and devices, at
   most 14 plain characters. The app tells the TV the new name right away; with Valve's CEC daemon running, it
   restarts the daemon with it.
@@ -67,12 +70,16 @@ Choose what the app does about it:
 - **Leave it as it is:** nothing changes. Fine with most TVs and adapters. With this choice, **TV standby** asks first,
   because the picture may not come back.
 - **8 bits per colour:** the picture comes back by itself. 1080p at 120 Hz then stays below the speed where the
-  handshake is needed. Colours are slightly less fine; nothing runs in the background and nothing flickers.
+  handshake is needed. Colours are slightly less fine; nothing runs in the background and nothing flickers. Larger
+  modes, such as 1440p at 120 Hz or 4K at 60 Hz, need the handshake even at 8 bits: there only the next choice
+  helps.
 - **Restart the picture when the TV turns on:** full colour. A small background service asks the TV every 5 seconds
   whether it is on. When the TV comes back, the screen switches to another refresh rate for 4 seconds and back: one
   short flicker, and the converter handshakes again. It starts with your desktop session.
 
-Both fixes use KDE's display settings, so they work on the KDE desktop and not in Game Mode. The colour depth is the
+Under the choices the app says what the current mode means: whether 8 bits is enough, or whether the signal is so
+slow that the handshake never happens (1080p at 60 Hz, for example), so a black TV has another cause. Both fixes use
+KDE's display settings, so they work on the KDE desktop and not in Game Mode. The colour depth is the
 same setting as **Color resolution** in KDE's Display settings. If the TV stays black and neither fix is on, changing
 the refresh rate in Display settings (when you can see it) or a restart brings the picture back.
 
@@ -104,10 +111,12 @@ The four switches are the daemon's settings for your account. The app writes the
 defaults (`98-bazzite-cec-mode.toml`). Where SteamOS Manager runs, its own settings (`99-steamos-manager.toml`) win
 over the app's.
 
-**Remote buttons…** chooses the key each button of the TV remote gives: OK, the arrows, back, the media buttons, the
-four coloured buttons, info and the channel buttons. Each button can keep the daemon's **Default**, give one key
-(for example **F12** for a Steam screenshot, **Super** for the app launcher, **Play/pause**), or do **Nothing**. A
-button gives one key, not a combination. The daemon reads the buttons when it starts, so saving restarts it. As soon
+**Remote buttons…** chooses the key each button of the TV remote gives. The buttons most TVs pass on come first:
+OK, the arrows, back, the media buttons, the four coloured buttons, info and the channel buttons. After them come all
+the others the daemon knows (numbers, menus, guide, …); which of those arrive depends on the TV. Each button can
+keep the daemon's **Default**, give one key (for example **F12** for a Steam screenshot, **Super** for the app
+launcher, **Play/pause**), or do **Nothing**. A button gives one key, not a combination.
+The daemon reads the buttons when it starts, so saving restarts it. As soon
 as one button differs from the default, the app writes the daemon's whole table with your changes, in the same file.
 
 ## Remote control keys

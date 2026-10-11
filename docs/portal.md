@@ -42,6 +42,12 @@ you open it, and the portal remembers whether it was open.
   Memory Manager**, and its tooltip lists each app with its old and new version. After the portal update, the
   installed apps among them show the red dot. When the new pins cannot be read (offline, for example), the button
   says **Portal x.y.z available**.
+- **App icons on the Desktop**, at the top: on, every installed app has an icon on the Desktop; off, only the
+  portal's icon is there and you start the apps from the portal. The apps stay in the app menu either way, so KDE's
+  search and Steam's **Add a Non-Steam Game** still find them. The first time the portal starts with app icons on
+  the Desktop, it asks whether to keep them. While the switch is off, the portal removes the icons the apps'
+  installers put there, at start and after each install. It only touches the icons of the suite's apps, never its
+  own or anything else on the Desktop.
 - The **Portal dependency checker** is a separate app in `apps/`. It lists declared runtime Python packages and
   app-specific external tools, plus the apps and features that use them. It compares Python package versions with
   PyPI and checks whether external tools are available; tool links open the relevant app guide. Some apps use
@@ -67,7 +73,7 @@ What it installs:
 | BC-250 Bazzite Test (bundled in the portal release) | `/opt/bc250-bazzite-test`, through its own installer | Its test engine runs as root and must be root-owned |
 | The suite's shared venv with PyQt6 | `~/.local/share/bc250-bazzite-suite/venv` | One copy of the ~100 MB of Qt for all suite apps; removed with the last app that uses it (`venv-users/`) |
 | What the portal installed, and the release each app was installed from | `~/.local/share/bc250-bazzite-suite/portal/` | So each app's matching uninstaller is at hand; an update removes the previous release |
-| Launcher, menu entry, Desktop icon | `~/.local/bin/bc250-bazzite-suite`, `~/.local/share/applications/`, the Desktop | |
+| Launcher, menu entry, Desktop icon | `~/.local/bin/bc250-bazzite-suite`, `~/.local/share/applications/`, the Desktop | The portal's icon is the one way in; the apps' own icons are optional (**App icons on the Desktop**) |
 
 Uninstall: `/opt/bc250-bazzite-suite/install.sh --uninstall`. This removes the portal and Bazzite Test and
 keeps settings; add `--purge` to remove those too. First it asks about each other suite app that is installed:

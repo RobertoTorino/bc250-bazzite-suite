@@ -49,6 +49,10 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
   shell `VERSION=`, pyproject) must match: `tools/check_versions.py`.
 - **Every former repo folder** (each app, `core/`, `portal/`) keeps LICENSE, .gitignore, VERSION and CHANGELOG.
   GitHub workflows live only in the root `.github/`.
+- **Not limited to the owner's setup.** The owner's board, TV, cable and settings are one case, not the target:
+  apps read what the hardware reports and offer every option it supports (a CEC 2.0 TV, another display mode,
+  a second adapter), and say so where an option does not apply, rather than leaving out what the owner's setup
+  lacks. Recorded data from the owner's board makes good test fixtures; tests also cover other setups.
 - **Ask** before decisions that are the owner's (what an app does, version numbers, repo layout, anything on the
   board). Do the obvious housekeeping without asking.
 

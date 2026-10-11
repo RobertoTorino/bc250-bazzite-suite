@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """TV info: what the TV tells about itself over CEC. Only questions (Get CEC Version, Give OSD Name, …): nothing on
-the TV changes. Each answer becomes one row of the TV Info window."""
+the TV changes. Each answer becomes one row of the TV Info window.
+
+TVs differ: a CEC 1.4 TV refuses the CEC 2.0 questions, a CEC 2.0 TV answers them, and the rows show what each one
+says. The 2.0 answers are decoded from cec-ctl's names for them (`cec-ctl --help-all`)."""
 
 from __future__ import annotations
 
@@ -13,6 +16,7 @@ from .runner import Result
 
 _REPLY_FIELD = re.compile(r"^\t(?P<key>[a-z][a-z-]*):\s*(?P<value>.+?)\s*$")
 _CODE = re.compile(r"\s*\(0x[0-9a-f]+\)$")
+_WORD = re.compile(r"[a-z][a-z0-9-]*")
 
 # CEC vendor ids (IEEE OUIs) of common TVs and audio systems.
 VENDORS = {
@@ -26,9 +30,14 @@ VENDORS = {
 class Reply:
     state: str                                      # "answer", "unsupported", "no reply", "no answer"
     fields: dict[str, str] = field(default_factory=dict)
+    words: frozenset[str] = frozenset()             # every name in the reply's values: "tv", "sink-has-arc-tx", …
 
     def get(self, key: str) -> str:
         return _CODE.sub("", self.fields.get(key, ""))
+
+    def number(self, key: str) -> int | None:
+        value = self.get(key)
+        return int(value) if value.isdigit() else None
 
 
 def parse_reply(text: str) -> Reply:
@@ -40,12 +49,14 @@ def parse_reply(text: str) -> Reply:
     _head, received, tail = text.partition("Received from")
     if not received:
         return Reply("no reply")
-    fields = {}
+    fields: dict[str, str] = {}
+    words: set[str] = set()
     for line in tail.splitlines():
         match = _REPLY_FIELD.match(line)
-        if match and match["key"] not in fields:
-            fields[match["key"]] = match["value"]
-    return Reply("answer", fields)
+        if match:
+            fields.setdefault(match["key"], match["value"])
+            words.update(_WORD.findall(match["value"]))
+    return Reply("answer", fields, frozenset(words))
 
 
 def vendor_name(vendor: str) -> str:
@@ -81,17 +92,82 @@ QUESTIONS = (
 
 
 def ask(run: Callable[[list[str]], Result], device: str) -> dict[str, Reply]:
-    replies = {key: parse_reply(run([cec.CEC_CTL, "-d", device, "-s", "--to", str(cec.TV), *args]).out)
-               for key, _label, args in QUESTIONS}
+    def question(to: int, *args: str) -> Reply:
+        return parse_reply(run([cec.CEC_CTL, "-d", device, "-s", "--to", str(to), *args]).out)
+
+    replies = {key: question(cec.TV, *args) for key, _label, args in QUESTIONS}
     tv_address = replies["address"].get("phys-addr") or "0.0.0.0"
-    replies["latency"] = parse_reply(run([cec.CEC_CTL, "-d", device, "-s", "--to", str(cec.BROADCAST),
-                                          "--request-current-latency", f"phys-addr={tv_address}"]).out)
+    replies["latency"] = question(cec.BROADCAST, "--request-current-latency", f"phys-addr={tv_address}")
     replies["receiver"] = parse_reply(run([cec.CEC_CTL, *cec.poll(device, cec.AUDIO_SYSTEM)]).out)
+    if replies["receiver"].state != "no answer":        # an AV receiver or soundbar took the poll: who is it?
+        replies["receiver name"] = question(cec.AUDIO_SYSTEM, "--give-osd-name")
+        replies["receiver audio"] = question(cec.AUDIO_SYSTEM, "--give-audio-status")
     return replies
 
 
 LANGUAGES = {"eng": "English", "dut": "Dutch", "nld": "Dutch", "ger": "German", "deu": "German",
              "fre": "French", "fra": "French", "spa": "Spanish", "ita": "Italian"}
+
+
+# The CEC 2.0 feature list (Report Features), as cec-ctl names its flags.
+FEATURES = (
+    ("sink-has-arc-tx", "sends its sound to a receiver (ARC)"),
+    ("source-has-arc-rx", "takes the TV's sound (ARC)"),
+    ("has-set-audio-volume-level", "takes an exact volume"),
+    ("has-set-audio-rate", "changes the audio speed"),
+    ("has-deck-control", "deck control"),
+    ("has-set-osd-string", "shows messages from devices"),
+    ("has-record-tv-screen", "records what the TV shows"),
+)
+DEVICE_TYPES = (("tv", "TV"), ("record", "recorder"), ("tuner", "tuner"), ("playback", "player"),
+                ("audiosystem", "audio system"), ("switch", "switch"))
+
+
+def features(reply: Reply) -> str:
+    """ "CEC 2.0; TV; remote profile 1; sends its sound to a receiver (ARC)" from Report Features."""
+    words = reply.words
+    parts = [f"CEC {_version(reply.get('cec-version'))}" if reply.get("cec-version") else ""]
+    parts.append(", ".join(text for word, text in DEVICE_TYPES if word in words))
+    parts += [f"remote profile {n}" for n in "1234" if f"tv-profile-{n}" in words]
+    parts += [text for word, text in FEATURES if word in words]
+    return "; ".join(p for p in parts if p)
+
+
+def audio(reply: Reply) -> str:
+    """ "volume 30, not muted" from Report Audio Status (the volume is 0-100; 127 is unknown)."""
+    volume = reply.number("aud-vol-status")
+    mute = reply.get("aud-mute-status")
+    parts = [f"volume {volume}" if volume is not None and volume <= 100 else "volume unknown",
+             {"on": "muted", "off": "not muted"}.get(mute, "")]
+    return ", ".join(p for p in parts if p)
+
+
+def _ms(value: int | None) -> str:
+    """CEC latency values are milliseconds / 2 + 1 (1-251)."""
+    return f"{(value - 1) * 2} ms" if value is not None and 1 <= value <= 251 else "unknown"
+
+
+def latency(reply: Reply) -> str:
+    """ "picture 20 ms, low-latency mode off, sound 40 ms" from Report Current Latency."""
+    parts = [f"picture {_ms(reply.number('video-latency'))}"]
+    if reply.get("low-latency-mode"):
+        parts.append(f"low-latency mode {reply.get('low-latency-mode')}")
+    compensated = reply.get("audio-out-compensated")
+    if compensated == "partial-delay":
+        parts.append(f"sound {_ms(reply.number('audio-out-delay'))}")
+    elif compensated in ("delay", "no-delay"):
+        parts.append("sound delayed to match" if compensated == "delay" else "sound not delayed")
+    return ", ".join(parts)
+
+
+def _receiver(replies: dict[str, Reply]) -> str:
+    """ 'connected: "Soundbar", volume 30, not muted' """
+    if replies["receiver"].state == "no answer":
+        return "none connected"
+    name, sound = replies.get("receiver name"), replies.get("receiver audio")
+    parts = [f'"{name.get("name")}"' if name and name.get("name") else "",
+             audio(sound) if sound and sound.state == "answer" else ""]
+    return ": ".join(["connected", ", ".join(p for p in parts if p)]).rstrip(": ")
 
 
 def _who(replies: dict[str, Reply]) -> str:
@@ -118,10 +194,10 @@ def rows(replies: dict[str, Reply]) -> list[tuple[str, str]]:
         ("Its name and type", _who(replies) or answer("name", lambda r: "?")),
         ("Vendor ID", answer("vendor", lambda r: vendor_name(r.fields.get("vendor-id", "")))),
         ("Menu language", answer("language", lambda r: LANGUAGES.get(r.get("language"), r.get("language")))),
-        ("CEC 2.0 feature list", answer("features", lambda r: "supported")),
-        ("Volume and mute status", answer("audio", lambda r: "supported",
-                                          "not supported (it does not report its volume)")),
-        ("Lip-sync delay", answer("latency", lambda r: "supported", no_reply="no answer (a CEC 2.0 feature)")),
+        ("CEC 2.0 feature list", answer("features", lambda r: f"supported: {features(r)}" if features(r)
+                                        else "supported")),
+        ("Volume and mute status", answer("audio", audio, "not supported (it does not report its volume)")),
+        ("Lip-sync delay", answer("latency", latency, no_reply="no answer (a CEC 2.0 feature)")),
         # A poll brings no reply: it went through ("no reply") when a device took it.
-        ("AV receiver or soundbar", "none connected" if replies["receiver"].state == "no answer" else "connected"),
+        ("AV receiver or soundbar", _receiver(replies)),
     ]

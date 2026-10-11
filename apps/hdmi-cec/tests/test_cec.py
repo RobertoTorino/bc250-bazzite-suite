@@ -60,3 +60,10 @@ def test_display_name(sys_root):
     assert cec.edid_name(b"short") == ""
     assert cec.display_name("DP-1", sys_root) == "Mi TV"
     assert cec.display_name("DP-2", sys_root) == "" and cec.display_name("", sys_root) == ""
+
+
+def test_pick_prefers_the_adapter_with_a_display():
+    dark = cec.parse_info("/dev/cec0", INFO.replace("1.0.0.0", "f.f.f.f"))
+    lit = cec.parse_info("/dev/cec1", INFO)
+    assert cec.pick([dark, lit]) is lit
+    assert cec.pick([dark]) is dark and cec.pick([]) is None
