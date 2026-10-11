@@ -3,7 +3,7 @@
 
 APP_NAME = "Portal dependency checker"
 APP_ID = "bc250-portal-dependency-checker"
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 from pathlib import Path
 
@@ -27,6 +27,7 @@ APP_LABELS = {
     "bios-reader": "BC-250 BIOS Reader",
     "ace-queues": "BC-250 ACE Queues",
     "memory-manager": "BC-250 Memory Manager",
+    "hdmi-cec": "BC250 HDMI CEC",
     "demo-tool": "Simple Demo Tool",
 }
 

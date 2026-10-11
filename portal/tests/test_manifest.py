@@ -51,6 +51,13 @@ def test_rejects(change, message):
         parse(MINIMAL.replace(*change, 1))
 
 
+def test_short_name_for_the_tile():
+    assert parse(MINIMAL)[1].short == ""
+    assert parse(MINIMAL.replace('name = "CU"', 'name = "CU"\nshort = "C-U"', 1))[1].short == "C-U"
+    with pytest.raises(ManifestError, match="short must be a string"):
+        parse(MINIMAL.replace('name = "CU"', 'name = "CU"\nshort = 1', 1))
+
+
 def test_bad_sha_and_toml():
     with pytest.raises(ManifestError, match="sha256"):
         parse(MINIMAL.replace('summary = "s"\ntag = "cu', 'summary = "s"\nsha256 = "abc"\ntag = "cu', 1))

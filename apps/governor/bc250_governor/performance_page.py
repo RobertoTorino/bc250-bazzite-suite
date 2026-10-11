@@ -76,8 +76,13 @@ class PerformancePage(QWidget):
         form.setVerticalSpacing(10)
 
         mode_row = QHBoxLayout()
-        self.mode_button = QPushButton(self.tr("Performance mode: off"))
-        self.mode_button.setFixedWidth(180)
+        self.mode_button = QPushButton()
+        # Wide enough for both labels in this font and language, so the button keeps its size when it toggles.
+        widths = []
+        for text in (self.tr("Performance mode: on"), self.tr("Performance mode: off")):
+            self.mode_button.setText(text)
+            widths.append(self.mode_button.sizeHint().width())
+        self.mode_button.setFixedWidth(max(widths))
         self.mode_button.setToolTip(self.tr("SetEnabled: on lets the governor use the whole allowed range and "
                                             "react faster to load; off returns to the range the governor started "
                                             "with."))
@@ -198,7 +203,6 @@ class PerformancePage(QWidget):
             set_button_active(self.mode_button, state.enabled)
             self.mode_button.setText(self.tr("Performance mode: on") if state.enabled
                                      else self.tr("Performance mode: off"))
-            self.mode_button.setFixedWidth(50)
             self.fields["current"].setText(_range(state.current_min, state.current_max))
             self.fields["initial"].setText(_range(state.initial_min, state.initial_max))
             self.fields["allowed"].setText(_range(state.allowed_min, state.allowed_max))

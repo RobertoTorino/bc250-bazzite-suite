@@ -1,0 +1,22 @@
+Changelog: 11-10-2026 20:43:41
+
+Release 0.1.0. enable HDMI-CEC
+
+Changelog: 11-10-2026 20:38:36
+
+The real logo and portal icon replace the placeholders (images/bc250-hdmi-cec.png, images/bc250-hdmi-cec-128.png, portal/images/apps/hdmi-cec.png).
+
+Changelog: 11-10-2026 20:29:46
+
+Whether the TV acknowledged a message: cec-ctl exits 0 either way and prints a "Tx, ..." status line only when the transmit failed, not "Tx, OK" on success, so a TV that answered counted as silent. The test fixtures are now cec-ctl's real output from the owner's board, with CEC off and on in the TV.
+
+Changelog: 11-10-2026 20:12:42
+
+First version: the board's CEC adapter (amdgpu's own, on DP-1, through the DP-to-HDMI converter) and the display
+behind it, read with cec-ctl and the display's EDID; buttons for the TV through cec-ctl (Turn TV on with Image View
+On and Active Source, Switch to BC-250, TV standby, Check TV with a poll and the TV's power status, the volume keys to
+an AV receiver when one answers, else to the TV, and the devices on the bus); the settings of Valve's CEC daemon
+(cecd, Bazzite's native CEC mode: wake and standby with the board, the remote as a keyboard, the board to sleep with
+the TV) in ~/.config/cecd/config.d/99-bc250-hdmi-cec.toml, with a button that runs `ujust cec-mode native`; and a key
+tester for the remote that listens to cecd on the session bus. Opening the app sends nothing on the bus. Tests,
+installer, installer test, manual chapter, a placeholder logo.

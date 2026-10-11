@@ -39,6 +39,7 @@ uses. You do not need them.
 - <img src="portal/images/apps/bios-reader.png" width="20" height="20" alt=""/> **[BC-250 BIOS Reader](apps/bios-reader)**: The BIOS settings as the setup screen shows them, hidden menus included. Stock or modded BIOS. Read-only.
 - <img src="portal/images/apps/memory-manager.png" width="20" height="20" alt=""/> **[BC-250 Memory Manager](apps/memory-manager)**: The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it.
 - <img src="portal/images/apps/ace-queues.png" width="20" height="20" alt=""/> **[BC-250 ACE Queues](apps/ace-queues)**: Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use.
+- <img src="portal/images/apps/hdmi-cec.png" width="20" height="20" alt=""/> **[BC250 HDMI CEC](apps/hdmi-cec)**: Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC.
 
 **Development only**: tools for working on the suite, in their own section of the portal. You do not need them to
 use the board.

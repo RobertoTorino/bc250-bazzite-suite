@@ -33,6 +33,7 @@ class AppEntry:
     uninstall: tuple[str, ...] = ()
     detect: tuple[str, ...] = ()
     launch: tuple[tuple[str, str], ...] = ()
+    short: str = ""                             # the name on its tile; "": the name without the suite prefix
 
     @property
     def version(self) -> str:
@@ -76,6 +77,9 @@ def _entry(key: str, raw: dict, table: str = "apps") -> AppEntry:
     sha = str(raw.get("sha256", "")).lower()
     if not _SHA256.match(sha):
         raise ManifestError(f"[{table}.{key}] sha256 must be empty or 64 hex digits")
+    short = raw.get("short", "")
+    if not isinstance(short, str):
+        raise ManifestError(f"[{table}.{key}] short must be a string")
     launch = raw.get("launch", [])
     if not isinstance(launch, list) or not all(isinstance(item, list) and len(item) == 2 and
                                                all(isinstance(s, str) and s for s in item) for item in launch):
@@ -87,7 +91,7 @@ def _entry(key: str, raw: dict, table: str = "apps") -> AppEntry:
                      install=_strings(key, "install", raw.get("install")),
                      uninstall=_strings(key, "uninstall", raw.get("uninstall")),
                      detect=_strings(key, "detect", raw.get("detect")),
-                     launch=tuple((label, command) for label, command in launch))
+                     launch=tuple((label, command) for label, command in launch), short=short.strip())
     if not entry.install or not entry.uninstall or not entry.detect:
         raise ManifestError(f"[{table}.{key}] install, uninstall and detect must not be empty")
     if entry.required and entry.development:

@@ -1,3 +1,7 @@
+Changelog: 11-10-2026 20:21:41
+
+New app BC250 HDMI CEC (apps/hdmi-cec, portal tile HDMI-CEC): the board's CEC adapter and the TV, buttons for the TV through cec-ctl, and the settings of Valve's CEC daemon that Bazzite ships. Registered in the portal manifest (hdmi-cec-v0.1.0, not released yet), the manual (docs/apps/hdmi-cec.md, nav, home page), the README, CI (pytest, shellcheck, tools/installer-tests/hdmi-cec.sh) and CLAUDE.md. Bazzite Test gets test 51 (HDMI-CEC); the dependency checker lists cec-ctl and cecd.
+
 Changelog: 11-10-2026 18:31:14
 
 docs/portal.md: "What stays after an uninstall": the board changes each app leaves active until you undo them (CU and

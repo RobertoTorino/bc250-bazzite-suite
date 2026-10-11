@@ -9,6 +9,7 @@
 #
 # Fields:
 #   name, summary   shown on the pill
+#   short           optional: the name on the tile (default: name without its "BC-250 " or "BC250 " prefix)
 #   tag             the pinned release: <name>-v<x.y.z>; asset <tag>.tar.gz with SHA256SUMS on the suite release
 #   sha256          of <tag>.tar.gz; filled in when the tag is released (empty: checked against SHA256SUMS only)
 #   required        installed with the portal and always listed first (only bazzite-test)
@@ -155,6 +156,19 @@ install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-memory-manager"]
 launch = [["Open", "~/.local/bin/bc250-memory-manager"]]
+
+[apps.hdmi-cec]
+name = "BC250 HDMI CEC"
+short = "HDMI-CEC"
+summary = "Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC."
+tag = "hdmi-cec-v0.1.0"
+sha256 = ""
+required = false
+changes_board = false
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-hdmi-cec"]
+launch = [["Open", "~/.local/bin/bc250-hdmi-cec"]]
 
 [apps.demo-tool]
 name = "Simple Demo Tool"

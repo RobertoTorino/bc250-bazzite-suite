@@ -186,6 +186,7 @@ reports the overall verdict.
 | 29 | Display Session       | Identifies the display manager, session type and compositor.               |
 | 47 | Vulkan Futureproof Matrix | Vulkan API level and the feature set modern games need: ray tracing, mesh shaders, VRS, pipeline libraries and the VRAM carveout vs today's 8 GiB recommendation. |
 | 50 | Video Decode and Encode (VCN) | `vainfo` codec matrix: H.264/HEVC/VP9/AV1 decode and encode. |
+| 51 | HDMI-CEC | The CEC adapter of the DisplayPort output, whether the TV answers a poll, and Bazzite's CEC mode. |
 
 ### CPU and firmware
 

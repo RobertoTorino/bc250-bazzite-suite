@@ -1,3 +1,7 @@
+Changelog: 11-10-2026 20:21:41
+
+apps.toml: an optional short field, the name on the tile when it is not the name without its suite prefix; the tile and the update summary use it. New card: BC250 HDMI CEC, short HDMI-CEC (hdmi-cec-v0.1.0, changes_board false), with its icon in images/apps/hdmi-cec.png.
+
 Changelog: 11-10-2026 19:34:02
 
 Release 0.9.7. Pins bazzite-test-v0.1.3, governor-v0.1.2, helixsr-v0.2.2, cu-bisect-v0.1.1, cores-bisect-v0.1.2, gpu-oc-bisect-v0.1.1, persistent-acpi-v0.1.1, system-overlay-v0.1.3, bios-reader-v0.1.3, ace-queues-v0.1.4, memory-manager-v0.1.4, dependency-checker-v0.1.2.

@@ -125,6 +125,15 @@ def test_performance_page_prefill_and_validation(window):
     assert page.temp_button.isEnabled() and page.target_warning.text() == ""
 
 
+def test_performance_mode_button_shows_its_whole_label(window):
+    button = window.performance.mode_button
+    for enabled in (False, True):
+        window.performance.update(PerformanceState(available=True, enabled=enabled), mock.Mock(), True)
+        assert button.text().startswith("Performance mode")
+        assert button.width() >= button.fontMetrics().horizontalAdvance(button.text())
+        assert button.minimumWidth() >= button.sizeHint().width()
+
+
 def test_hotkey_requests(window):
     from bc250_governor import instance
     box = window.tuning.profiles

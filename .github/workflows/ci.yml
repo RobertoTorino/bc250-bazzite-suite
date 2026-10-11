@@ -33,7 +33,7 @@ jobs:
       matrix:
         dir: [core, portal, tools, apps/bazzite-test, apps/governor, apps/helixsr, apps/persistent-acpi,
               apps/demo-tool, apps/dependency-checker, apps/suite-releases,
-              apps/system-overlay, apps/bios-reader, apps/ace-queues, apps/memory-manager,
+              apps/system-overlay, apps/bios-reader, apps/ace-queues, apps/memory-manager, apps/hdmi-cec,
               tools/installer-tests/gui]   # every folder with tests/
     defaults:
       run:
@@ -78,7 +78,7 @@ jobs:
       # that their own release workflows already held to it.
       - name: shellcheck (errors, all scripts)
         run: find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 shellcheck -x -S error
-      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace-queues, memory-manager and the suite's own scripts)
+      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace-queues, memory-manager, hdmi-cec and the suite's own scripts)
         run: |
           shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh
           shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/bc250-cores-unlock.sh \
@@ -86,6 +86,7 @@ jobs:
           shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
           shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh
           shellcheck -S warning apps/system-overlay/install.sh apps/bios-reader/install.sh apps/memory-manager/install.sh
+          shellcheck -S warning apps/hdmi-cec/install.sh
           shellcheck -S warning apps/ace-queues/bc250-ace-queues.sh apps/ace-queues/bc250-ace-queues-run \
             apps/ace-queues/install.sh apps/ace-queues/mesa/build-in-container.sh
           shellcheck -S warning apps/demo-tool/install.sh
@@ -144,6 +145,8 @@ jobs:
         run: bash tools/installer-tests/ace-queues.sh
       - name: memory-manager installer
         run: bash tools/installer-tests/memory-manager.sh
+      - name: hdmi-cec installer
+        run: bash tools/installer-tests/hdmi-cec.sh
       - name: Demo Tool installer
         run: bash tools/installer-tests/demo-tool.sh
       - name: Dependency checker installer

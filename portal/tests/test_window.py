@@ -96,6 +96,7 @@ def test_short_names_drop_the_suite_prefix(window):
     assert mw.short_name("Simple Demo Tool") == "Simple Demo Tool"
     assert window.cards["governor"].title.text() == "GPU Governor Manager"
     assert "BC-250 GPU Governor Manager" in window.cards["governor"].icon.toolTip()     # the full name on hover
+    assert window.cards["hdmi-cec"].title.text() == "HDMI-CEC"                          # apps.toml's short
 
 
 def test_icon_opens_only_an_installed_program(qapp, home, settings_dir, tmp_path, launched, monkeypatch):

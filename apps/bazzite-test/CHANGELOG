@@ -1,3 +1,15 @@
+Changelog: 11-10-2026 20:43:41
+
+Release 0.1.4.
+
+Changelog: 11-10-2026 20:29:46
+
+Test 51: a poll counts as answered when cec-ctl prints no "Tx, ..." failure line (it prints none on success), not when it prints "Tx, OK". Checked on the owner's board with CEC off and on in the TV.
+
+Changelog: 11-10-2026 20:21:41
+
+Test 51, HDMI-CEC (GPU and graphics): the CEC adapters (/dev/cec*: driver, connector, physical address, read with cec-ctl), a poll of the TV when the adapter is configured and sees a display, and Bazzite's CEC mode (native, dGPU or disabled). No adapter, no display or no answer are notes, not warnings: the picture does not need CEC. In the catalogue and both chapters of the manual.
+
 Changelog: 11-10-2026 19:25:11
 
 Release 0.1.3.

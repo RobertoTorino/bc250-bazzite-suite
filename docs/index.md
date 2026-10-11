@@ -40,6 +40,7 @@ installed app.
 | ![](assets/apps/bios-reader.png){ .app-icon } [BC-250 BIOS Reader](apps/bios-reader.md) | The BIOS settings as the setup screen shows them, hidden menus included. Stock or modded BIOS. Read-only. |
 | ![](assets/apps/memory-manager.png){ .app-icon } [BC-250 Memory Manager](apps/memory-manager.md) | The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it. **Changes the board.** |
 | ![](assets/apps/ace-queues.png){ .app-icon } [BC-250 ACE Queues](apps/ace-queues.md) | Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use. **Changes the board.** |
+| ![](assets/apps/hdmi-cec.png){ .app-icon } [BC250 HDMI CEC](apps/hdmi-cec.md) | Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC. |
 
 **Development only**: tools for working on the suite, in their own section of the [portal](portal.md). You do not
 need them to use the board.

@@ -21,6 +21,7 @@ class AppChange:
     name: str                           # "BC-250 Memory Manager"
     old: str                            # "0.1.0"; "" for an app the new portal adds
     new: str                            # "0.1.1"
+    short: str = ""                     # the name on its tile, when apps.toml sets one ("HDMI-CEC")
 
 
 @dataclass(frozen=True)
@@ -32,8 +33,8 @@ class PortalUpdate:
         """ "updates ACE Queues and Memory Manager", "updates 4 apps, adds BIOS Reader", or "" """
         if not self.changes:
             return ""
-        updated = [short(c.name) for c in self.changes if c.old]
-        added = [short(c.name) for c in self.changes if not c.old]
+        updated = [c.short or short(c.name) for c in self.changes if c.old]
+        added = [c.short or short(c.name) for c in self.changes if not c.old]
         parts = []
         if updated:
             parts.append("updates " + (and_list(updated) if len(updated) <= 2 else f"{len(updated)} apps"))
@@ -62,9 +63,9 @@ def compare(current: list[AppEntry], new: list[AppEntry]) -> list[AppChange]:
     for entry in new:
         old = pinned.get(entry.key)
         if old is None:
-            out.append(AppChange(entry.name, "", entry.version))
+            out.append(AppChange(entry.name, "", entry.version, entry.short))
         elif old.tag != entry.tag:
-            out.append(AppChange(entry.name, old.version, entry.version))
+            out.append(AppChange(entry.name, old.version, entry.version, entry.short))
     return out
 
 

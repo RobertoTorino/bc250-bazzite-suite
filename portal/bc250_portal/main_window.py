@@ -147,7 +147,7 @@ class AppTile(QFrame):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(4, 4, 4, 4)
         outer.setSpacing(4)
-        self.title = QLabel(short_name(entry.name))
+        self.title = QLabel(entry.short or short_name(entry.name))
         self.title.setWordWrap(True)
         self.title.setStyleSheet(header_font() + "font-size:15px; font-weight:700;")
         outer.addWidget(self.title)

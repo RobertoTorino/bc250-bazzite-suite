@@ -319,6 +319,10 @@ usage = "Install, remove and inspect the persistent core-unlock service."
 owner = "ace-queues"
 usage = "Manage the driver guard service."
 
+[[tool.source]]
+owner = "hdmi-cec"
+usage = "Read Bazzite's CEC mode and tell Valve's CEC daemon to reload its settings."
+
 [[tool]]
 name = "journalctl"
 executables = ["journalctl"]
@@ -393,6 +397,26 @@ owner = "ace-queues"
 usage = "Required to build the patched driver in a Fedora container."
 anchor = "before-you-start"
 
+[[tool]]
+name = "cec-ctl"
+executables = ["cec-ctl"]
+
+[[tool.source]]
+owner = "hdmi-cec"
+usage = "Required: read the CEC adapter and send the TV its messages (package v4l-utils)."
+
+[[tool.source]]
+owner = "bazzite-test"
+usage = "Optional: read the CEC adapter for the HDMI-CEC check (test 51)."
+
+[[tool]]
+name = "cecd"
+executables = ["cecd"]
+
+[[tool.source]]
+owner = "hdmi-cec"
+usage = "Optional: Valve's CEC daemon (Bazzite's native CEC mode), for the TV with the board's sleep and the remote."
+
 [[dependency]]
 name = "PyQt6"
 
@@ -446,6 +470,10 @@ specifier = ">=6.11,<7"
 
 [[dependency.source]]
 owner = "memory-manager"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
+owner = "hdmi-cec"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]

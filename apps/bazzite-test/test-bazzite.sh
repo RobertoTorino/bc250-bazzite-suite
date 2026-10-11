@@ -3564,6 +3564,56 @@ else
 fi
 echo
 fi  # TEST 50
+if want 51; then
+log_result "[TEST 51] HDMI-CEC Test"
+log_result "Whether the board can control the TV over HDMI: on and off, its input and its remote (BC250 HDMI CEC)"
+CEC_DEVS=$(ls /dev/cec* 2>/dev/null)
+if [ -z "$CEC_DEVS" ]; then
+    log_result "INFO: No CEC adapter (/dev/cec*). On the BC-250 amdgpu adds one for a DisplayPort output only when the"
+    log_result "INFO: DP-to-HDMI cable or adapter reports CEC tunnelling; this one does not, so the board cannot control"
+    log_result "INFO: the TV. Not a fault: the picture and sound do not need CEC."
+    log_result "HINT: A DP-to-HDMI adapter that passes CEC, or a USB CEC adapter (Pulse-Eight), adds it."
+elif ! command -v cec-ctl >/dev/null 2>&1; then
+    log_result "INFO: CEC adapter: $(echo $CEC_DEVS), but cec-ctl is not installed to read it."
+    log_result "HINT: rpm-ostree install v4l-utils   (then reboot)"
+else
+    # cec-ctl -d DEV with no message only prints the adapter's state; the poll below is the one message sent.
+    cec_field() { sed -n "s/^[[:space:]]*$1[[:space:]]*: //p" <<<"$CEC_INFO" | head -1; }
+    for CEC_DEV in $CEC_DEVS; do
+        CEC_INFO=$(cec-ctl -d "$CEC_DEV" 2>&1)
+        CEC_PA=$(cec_field "Physical Address")
+        CEC_LA=$(cec_field "Logical Address")
+        log_result "INFO: $CEC_DEV: driver $(cec_field "Driver Name"), adapter $(cec_field "Adapter Name"), physical address ${CEC_PA:-unknown}"
+        if [ -z "$CEC_PA" ] || [ "$CEC_PA" = "f.f.f.f" ]; then
+            log_result "NOTE: The adapter sees no display: the TV is off or its EDID was not read. CEC needs both."
+        elif [ -z "$CEC_LA" ]; then
+            log_result "NOTE: Nothing has configured the adapter yet (no logical address), so the TV was not asked."
+            log_result "HINT: BC250 HDMI CEC configures it with its first message, Valve's CEC daemon when it starts."
+        # cec-ctl exits 0 either way; it prints a "Tx, ..." status line only when the transmit failed.
+        elif CEC_POLL=$(cec-ctl -d "$CEC_DEV" -s --poll --to 0 2>&1) && grep -q 'Sequence:' <<<"$CEC_POLL" &&
+             ! grep -qE '^[[:space:]]*Tx, ' <<<"$CEC_POLL"; then
+            log_result "SUCCESS: The TV answers on $CEC_DEV ($CEC_LA): the board can turn it on and off and switch its input."
+        else
+            log_result "NOTE: The TV does not answer a poll on $CEC_DEV. Check that CEC is switched on in the TV's settings"
+            log_result "NOTE: (Anynet+, SimpLink, Bravia Sync, HDMI control, ...) and that the TV is on. Some DP-to-HDMI"
+            log_result "NOTE: converters report CEC tunnelling but do not connect the CEC wire; then no setting helps."
+        fi
+    done
+    if [ -f /etc/default/cec-control ] || command -v cecd >/dev/null 2>&1; then
+        CEC_USER_HOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)
+        if [ -n "$CEC_USER_HOME" ] && [ -e "$CEC_USER_HOME/.config/systemd/user/graphical-session.target.wants/cecd.service" ]; then
+            CEC_MODE_NOW="native (Valve's CEC daemon)"
+        elif systemctl is-enabled --quiet cec-onboot.service cec-onsleep.service cec-onpoweroff.service 2>/dev/null; then
+            CEC_MODE_NOW="dGPU (cec-control services)"
+        else
+            CEC_MODE_NOW="disabled"
+        fi
+        log_result "INFO: Bazzite CEC mode: $CEC_MODE_NOW. The automatic part (TV on and off with the board, the"
+        log_result "INFO: remote as a keyboard) is Valve's CEC daemon: ujust cec-mode native, or BC250 HDMI CEC."
+    fi
+fi
+echo
+fi  # TEST 51
 log_result "All tests completed. Review results in $LOG_FILE."
 echo
 

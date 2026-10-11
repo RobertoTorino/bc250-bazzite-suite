@@ -88,6 +88,9 @@ CATEGORIES: list[Category] = [
         TestDef("50", "Video Decode and Encode (VCN)",
                 "vainfo codec matrix: H.264/HEVC/VP9/AV1 decode and encode. Matters for streaming, OBS "
                 "recording and video playback while gaming."),
+        TestDef("51", "HDMI-CEC",
+                "The CEC adapter of the DisplayPort output (only when the DP-to-HDMI converter tunnels CEC), whether "
+                "the TV answers, and Bazzite's CEC mode. Whether the board can turn the TV on and off."),
         TestDef("29", "Display Session", "Identifies the display manager, session type and compositor."),
     ]),
     Category("cpu", "CPU and firmware", [

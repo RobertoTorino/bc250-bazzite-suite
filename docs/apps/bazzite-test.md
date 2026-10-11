@@ -463,6 +463,7 @@ explanation are grouped per program, with the command to read them.
 | 29 | Display Session       | Identifies the display manager, session type and compositor.               |
 | 47 | Vulkan Futureproof Matrix | Vulkan API level and the feature set modern games need: ray tracing, mesh shaders, VRS, pipeline libraries and the VRAM carveout vs today's 8 GiB recommendation. Hard evidence of which current and upcoming titles can run at all. |
 | 50 | Video Decode and Encode (VCN) | `vainfo` codec matrix: H.264/HEVC/VP9/AV1 decode and encode. Matters for streaming, OBS recording and video playback while gaming. |
+| 51 | HDMI-CEC | The CEC adapter of the DisplayPort output (only when the DP-to-HDMI converter tunnels CEC), whether the TV answers a poll, and Bazzite's CEC mode. Whether the board can turn the TV on and off; see [BC250 HDMI CEC](hdmi-cec.md). |
 
 ### CPU and firmware
 
