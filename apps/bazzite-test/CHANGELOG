@@ -1,3 +1,11 @@
+Changelog: 11-10-2026 22:27:40
+
+Release 0.1.5.
+
+Changelog: 11-10-2026 22:13:52
+
+Test 51: a poll counts as unanswered only for a "Tx, ..." status line without OK, so "Tx, OK, Rx, ..." lines no longer count against the TV; one grep instead of a pipeline.
+
 Changelog: 11-10-2026 20:43:41
 
 Release 0.1.4.

@@ -3589,9 +3589,9 @@ else
         elif [ -z "$CEC_LA" ]; then
             log_result "NOTE: Nothing has configured the adapter yet (no logical address), so the TV was not asked."
             log_result "HINT: BC250 HDMI CEC configures it with its first message, Valve's CEC daemon when it starts."
-        # cec-ctl exits 0 either way; it prints a "Tx, ..." status line only when the transmit failed.
+        # cec-ctl exits 0 either way; a "Tx, ..." status line without "Tx, OK" means the transmit failed.
         elif CEC_POLL=$(cec-ctl -d "$CEC_DEV" -s --poll --to 0 2>&1) && grep -q 'Sequence:' <<<"$CEC_POLL" &&
-             ! grep -qE '^[[:space:]]*Tx, ' <<<"$CEC_POLL"; then
+             ! grep -qE '^[[:space:]]*Tx, ([^O]|O[^K])' <<<"$CEC_POLL"; then
             log_result "SUCCESS: The TV answers on $CEC_DEV ($CEC_LA): the board can turn it on and off and switch its input."
         else
             log_result "NOTE: The TV does not answer a poll on $CEC_DEV. Check that CEC is switched on in the TV's settings"

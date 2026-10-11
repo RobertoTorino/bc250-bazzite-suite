@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The main window: the board's CEC adapter and the TV behind it, buttons for the TV, the automatic behaviour of
-Valve's CEC daemon (cecd) and a tester for the remote's keys.
+"""The main window: the board's CEC adapter and the TV behind it, buttons for the TV and what it tells about itself
+(tvinfo.py), the board's name on the TV, what happens when the TV turns off and on (the picture: display.py; media:
+media.py; both through the watcher service), the automatic behaviour of Valve's CEC daemon (cecd) with the remote's
+buttons (keys.py), and a tester for the remote's keys.
 
 The buttons send their messages with cec-ctl, so they work whichever CEC mode Bazzite is in. The automatic part
 (wake and standby with the board, the remote as key presses) is cecd's: the app only writes its settings."""
 
 from __future__ import annotations
 
+import sys
 import time
 from html import escape
 from pathlib import Path
@@ -14,8 +17,10 @@ from typing import Callable
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QCloseEvent
-from PyQt6.QtWidgets import (QCheckBox, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QListWidget, QMainWindow,
-                             QMessageBox, QPushButton, QVBoxLayout, QWidget)
+from PyQt6.QtWidgets import (QAbstractItemView, QButtonGroup, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
+                             QFrame, QGridLayout, QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+                             QListWidget, QMainWindow, QMessageBox, QPushButton, QRadioButton, QScrollArea,
+                             QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
 from bc250_core import SUITE_MANUAL_URL, window_title
 from bc250_core import __version__ as CORE_VERSION
@@ -25,8 +30,8 @@ from bc250_core.theme import BLUE, GREY, PURPLE
 from bc250_core.widgets import (ClickableLogo, MetricBox, StatusText, TextDialog, accent_button, hint_label,
                                  page_header)
 
-from . import APP_NAME, INFO, LOGO_PATH, __version__
-from . import bazzite, cec, runner
+from . import APP_NAME, INFO, LOGO_PATH, ROOT, __version__
+from . import bazzite, cec, display, keys, runner, service, tvinfo
 from .remote import RemoteListener
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/hdmi-cec/"
@@ -40,10 +45,89 @@ AUTOMATIC = (
     ("uinput", "Use the TV remote as a keyboard (arrows, OK, back, play/pause)"),
     ("allow_standby", "Put the board to sleep when the TV goes to standby"),
 )
+# What to do for the picture after the TV was off (display.py): key, label, explanation.
+PICTURE = (
+    ("nothing", "Leave it as it is",
+     "Fine with most TVs and adapters. With some DP-to-HDMI converters the TV stays black after standby until the "
+     "picture changes."),
+    ("8bit", "8 bits per colour: the picture comes back by itself",
+     "Keeps the signal below the speed where HDMI needs the handshake the converter forgets. Colours are slightly "
+     "less fine; there is no flicker and nothing runs in the background."),
+    ("restart", "Restart the picture when the TV turns on: full colour, one short flicker",
+     "A small background service asks the TV every 5 seconds whether it is on. When it comes back, the screen "
+     "switches to another refresh rate for 4 seconds and back, so the converter handshakes again. KDE desktop only."),
+)
 
 
 class CecSettings(SettingsStore):
     DEFAULTS = {}
+
+
+class TableDialog(QDialog):
+    """A title, a two-column table and a Close button: the TV Info window."""
+
+    def __init__(self, title: str, headers: tuple[str, str], rows: list[tuple[str, str]], note: str,
+                 parent: QWidget | None = None):
+        super().__init__(parent)
+        self.setWindowTitle(window_title(title))
+        self.resize(620, 420)
+        layout = QVBoxLayout(self)
+        self.table = QTableWidget(len(rows), 2)
+        self.table.setHorizontalHeaderLabels(list(headers))
+        self.table.verticalHeader().setVisible(False)
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setStretchLastSection(True)
+        for row, (question, answer) in enumerate(rows):
+            self.table.setItem(row, 0, QTableWidgetItem(question))
+            self.table.setItem(row, 1, QTableWidgetItem(answer))
+        layout.addWidget(self.table, 1)
+        layout.addWidget(hint_label(note))
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+
+class RemoteDialog(QDialog):
+    """What each button of the TV remote does: one key for each, or cecd's default, or nothing."""
+
+    def __init__(self, choices: dict[str, str | None], parent: QWidget | None = None):
+        super().__init__(parent)
+        self.setWindowTitle(window_title("Remote buttons"))
+        self.resize(480, 640)
+        layout = QVBoxLayout(self)
+        layout.addWidget(hint_label("What each button of the TV remote does on the board. Valve's CEC daemon turns "
+                                    "the buttons into key presses; Default is its own choice. A button gives one "
+                                    "key, not a combination."))
+        self.table = QTableWidget(len(keys.BUTTONS), 2)
+        self.table.setHorizontalHeaderLabels(["Button", "Key"])
+        self.table.verticalHeader().setVisible(False)
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setStretchLastSection(True)
+        self.combos: dict[str, QComboBox] = {}
+        for row, (button, label) in enumerate(keys.BUTTONS):
+            item = QTableWidgetItem(label)
+            item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+            self.table.setItem(row, 0, item)
+            combo = QComboBox()
+            for key, text in keys.KEYS:
+                combo.addItem(text if key != "" else f"Default ({keys.label(keys.DEFAULTS[button])})", key)
+            current = choices.get(button, "")
+            index = combo.findData(current)
+            if index < 0:                                   # a key the list does not offer, set in the file
+                combo.addItem(current, current)
+                index = combo.count() - 1
+            combo.setCurrentIndex(index)
+            self.combos[button] = combo
+            self.table.setCellWidget(row, 1, combo)
+        layout.addWidget(self.table, 1)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def choices(self) -> dict[str, str | None]:
+        return {button: combo.currentData() for button, combo in self.combos.items()}
 
 
 class MainWindow(QMainWindow):
@@ -52,7 +136,7 @@ class MainWindow(QMainWindow):
                  run: Callable[[list[str]], runner.Result] = runner.run,
                  terminal: Callable[[str], None] = launch_in_terminal, listen: bool = True):
         super().__init__()
-        self.resize(860, 760)
+        self.resize(880, 990)
         self.dev_root, self.sys_root, self.etc_root, self.usr_root = dev_root, sys_root, etc_root, usr_root
         self.config_dir = config_dir or config_home()
         self.run, self.terminal = run, terminal
@@ -94,15 +178,49 @@ class MainWindow(QMainWindow):
         self.topology_button = QPushButton("Devices on the bus…")
         self.topology_button.setToolTip("Ask every device on the HDMI bus who it is (read-only)")
         self.topology_button.clicked.connect(self.show_topology)
+        self.info_button = QPushButton("TV info…")
+        self.info_button.setToolTip("What the TV tells about itself over CEC (only questions)")
+        self.info_button.clicked.connect(self.show_tv_info)
         grid = QGridLayout()
         for col, w in enumerate((self.on_button, self.source_button, self.standby_button, self.check_button)):
             grid.addWidget(w, 0, col)
         for col, w in enumerate((*self.volume_buttons, self.topology_button)):
             grid.addWidget(w, 1, col)
+        grid.addWidget(self.info_button, 2, 3)
+        self.name_edit = QLineEdit()
+        self.name_edit.setMaxLength(bazzite.OSD_NAME_BYTES)
+        self.name_edit.setToolTip("The name the TV shows for the board, in its list of inputs and devices")
+        self.name_button = QPushButton("Set name")
+        self.name_button.clicked.connect(self.save_name)
+        name_row = QHBoxLayout()
+        name_row.addWidget(QLabel("Name on the TV:"))
+        name_row.addWidget(self.name_edit)
+        name_row.addWidget(self.name_button)
+        name_row.addStretch(1)
+        grid.addLayout(name_row, 2, 0, 1, 3)
         self.result = hint_label("")
         lay_tv = QVBoxLayout(tv)
         lay_tv.addLayout(grid)
         lay_tv.addWidget(self.result)
+
+        picture = QGroupBox("When the TV turns off and on")
+        self.picture_group = QButtonGroup(self)
+        lay_picture = QVBoxLayout(picture)
+        self.picture_buttons: dict[str, QRadioButton] = {}
+        for key, label, why in PICTURE:
+            button = QRadioButton(label)
+            button.setToolTip(why)
+            self.picture_group.addButton(button)
+            self.picture_buttons[key] = button
+            lay_picture.addWidget(button)
+        self.picture_group.buttonClicked.connect(lambda _b: self.choose_picture())
+        self.picture_note = hint_label("")
+        lay_picture.addWidget(self.picture_note)
+        self.pause_box = QCheckBox("Pause videos and music while the TV is off, and continue them when it is on again")
+        self.pause_box.setToolTip("Media players (browsers, mpv, VLC, Spotify, …), through the same background "
+                                  "service; games keep running")
+        self.pause_box.toggled.connect(self.choose_pause)
+        lay_picture.addWidget(self.pause_box)
 
         automatic = QGroupBox("Automatic (Valve's CEC daemon)")
         self.mode_label = QLabel()
@@ -116,6 +234,10 @@ class MainWindow(QMainWindow):
         mode_row.addWidget(self.mode_label, 1)
         mode_row.addWidget(self.native_button)
         mode_row.addWidget(self.recheck_button)
+        self.remote_button = QPushButton("Remote buttons…")
+        self.remote_button.setToolTip("Choose the key each button of the TV remote gives")
+        self.remote_button.clicked.connect(self.edit_remote)
+        mode_row.addWidget(self.remote_button)
         self.boxes: dict[str, QCheckBox] = {}
         lay_auto = QVBoxLayout(automatic)
         lay_auto.addLayout(mode_row)
@@ -147,14 +269,19 @@ class MainWindow(QMainWindow):
         lay.addLayout(boxes)
         lay.addWidget(self.adapter_note)
         lay.addWidget(tv)
+        lay.addWidget(picture)
         lay.addWidget(automatic)
         lay.addWidget(keys)
         lay.addStretch(1)
-        version = QLabel(f"{APP_NAME} {__version__} · core {CORE_VERSION} · sends CEC messages only when you press "
-                         "a button")
+        version = QLabel(f"{APP_NAME} {__version__} · core {CORE_VERSION} · sends CEC messages when you press a "
+                         "button, and asks the TV's power while Restart the picture is on")
         version.setStyleSheet("color:palette(placeholder-text);")
         lay.addWidget(version, 0, Qt.AlignmentFlag.AlignRight)
-        self.setCentralWidget(central)
+        scroll = QScrollArea()              # a smaller window scrolls instead of cutting off the wrapped texts
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setWidget(central)
+        self.setCentralWidget(scroll)
 
         geometry = self.settings.window_state("geometry")
         if geometry is not None:
@@ -199,10 +326,43 @@ class MainWindow(QMainWindow):
                 self.adapter_note.setText(f"{escape(a.device)} on {escape(a.name)} ({escape(a.driver)}), "
                                           f"{escape(', '.join(a.logical_addresses) or 'no logical address yet')}.")
         for w in (self.on_button, self.source_button, self.standby_button, self.check_button, self.topology_button,
-                  *self.volume_buttons):
+                  self.info_button, self.name_button, *self.volume_buttons):
             w.setEnabled(a is not None)
+        self.name_edit.setText(self.osd_name())
         self.power_box.set_value("—")
+        self.refresh_picture()
         self.refresh_mode()
+
+    def output(self) -> display.Output | None:
+        """KDE's view of the output the CEC adapter belongs to."""
+        if self.adapter is None or not self.adapter.name:
+            return None
+        return display.read(self.run).get(self.adapter.name)
+
+    def osd_name(self) -> str:
+        return bazzite.read_fragment(self.config_dir).get("osd_name") or cec.OSD_NAME
+
+    def picture_choice(self) -> str:
+        if service.RESTART in service.jobs(self.run, self.config_dir):
+            return "restart"
+        output = self.output()
+        return "8bit" if output is not None and output.max_bpc == 8 else "nothing"
+
+    def refresh_picture(self) -> None:
+        output = self.output()
+        choice = self.picture_choice()
+        self.picture_buttons[choice].setChecked(True)
+        for button in self.picture_buttons.values():
+            button.setEnabled(output is not None)
+        self.pause_box.blockSignals(True)
+        self.pause_box.setChecked(service.PAUSE in service.jobs(self.run, self.config_dir))
+        self.pause_box.blockSignals(False)
+        self.pause_box.setEnabled(self.adapter is not None)
+        if output is None:
+            self.picture_note.setText("Needs KDE's kscreen-doctor and a CEC adapter on a display output: not "
+                                      "available here (Game Mode, or no adapter).")
+        else:
+            self.picture_note.setText(dict((k, why) for k, _l, why in PICTURE)[choice])
 
     def refresh_mode(self) -> None:
         mode = bazzite.read_mode(self.run, self.usr_root)
@@ -218,6 +378,7 @@ class MainWindow(QMainWindow):
         self.mode_label.setText(text)
         native = mode.name == "native"
         self.native_button.setVisible(mode.cecd_installed and not native)
+        self.remote_button.setEnabled(mode.cecd_installed and keys.available())
         current = bazzite.read_settings(self.config_dir, self.etc_root, self.usr_root)
         for key, box in self.boxes.items():
             box.blockSignals(True)
@@ -243,7 +404,7 @@ class MainWindow(QMainWindow):
         if a is None:
             return False
         if not a.configured:
-            result = self.cec_ctl(cec.configure(a.device))
+            result = self.cec_ctl(cec.configure(a.device, self.osd_name()))
             if not result.ok:
                 self.show_result(f"Could not configure {a.device}:\n{result.out.strip()}")
                 return False
@@ -282,6 +443,14 @@ class MainWindow(QMainWindow):
                   f"Sent Active Source {a.physical_address}: the TV should show the BC-250.")
 
     def tv_standby(self) -> None:
+        if self.picture_choice() == "nothing":
+            answer = QMessageBox.question(
+                self, window_title("TV standby"),
+                "Put the TV in standby?\n\nWith some DP-to-HDMI converters the TV stays black when it comes back, "
+                "although the board runs on. If that happens, choose one of the other picture options under \"When "
+                "the TV turns off and on\": they bring the picture back without a restart.")
+            if answer != QMessageBox.StandardButton.Yes:
+                return
         if self.ensure_configured():
             self.send(cec.standby(self.adapter.device), "The TV took Standby.")
 
@@ -307,6 +476,34 @@ class MainWindow(QMainWindow):
         if self.send(cec.key_press(device, self.audio_target, ui_cmd), f"Sent {ui_cmd}."):
             self.cec_ctl(cec.key_release(device, self.audio_target))
 
+    def show_tv_info(self) -> None:
+        if not self.ensure_configured():
+            return
+        rows = tvinfo.rows(tvinfo.ask(self.run, self.adapter.device))
+        TableDialog("TV Info", ("Question", "Answer"), rows, "Asked just now. These are only questions: nothing on "
+                    "the TV changed.", self).exec()
+
+    def save_name(self) -> None:
+        name = self.name_edit.text().strip()
+        problem = bazzite.osd_name_problem(name)
+        if problem:
+            self.show_result(problem)
+            return
+        bazzite.update_fragment(self.config_dir, osd_name=name)
+        if self.mode.cecd_running:                          # cecd owns the adapter: it takes the name at a restart
+            bazzite.restart_cecd(self.run)
+            self.show_result(f"Valve's CEC daemon restarted with the name {name}.")
+            return
+        a = self.adapter
+        if a is None:
+            return
+        result = self.cec_ctl(cec.configure(a.device, name))
+        if not result.ok:
+            self.show_result(f"Could not configure {a.device}:\n{result.out.strip()}")
+            return
+        self.adapter = cec.parse_info(a.device, result.out) if "Driver Info" in result.out else a
+        self.send(cec.set_osd_name(a.device, name), f"The TV now knows the board as {name}.")
+
     def show_topology(self) -> None:
         if not self.ensure_configured():
             return
@@ -317,6 +514,32 @@ class MainWindow(QMainWindow):
             lines += ["", NO_ANSWER]
         TextDialog("Devices on the HDMI bus", "\n".join(lines) + f"\n\ncec-ctl said:\n{result.out}", self).exec()
 
+    # --- Picture after the TV was off ----------------------------------------------------------------------
+
+    def choose_picture(self) -> None:
+        """Applies the choice: 8-bit colour, the watcher service, or neither. Each undoes the others."""
+        output = self.output()
+        choice = next(k for k, b in self.picture_buttons.items() if b.isChecked())
+        if output is None:
+            return
+        wanted_bpc = 8 if choice == "8bit" else display.AUTOMATIC
+        if output.max_bpc != wanted_bpc and (choice == "8bit" or output.max_bpc == 8):
+            self.run(display.set_max_bpc(output.name, wanted_bpc))
+        jobs = service.jobs(self.run, self.config_dir) - {service.RESTART}
+        self.set_jobs(jobs | ({service.RESTART} if choice == "restart" else set()))
+        self.refresh_picture()
+
+    def choose_pause(self, on: bool) -> None:
+        jobs = service.jobs(self.run, self.config_dir) - {service.PAUSE}
+        self.set_jobs(jobs | ({service.PAUSE} if on else set()))
+        self.refresh_picture()
+
+    def set_jobs(self, jobs: set[str]) -> None:
+        result = service.set_jobs(self.run, self.config_dir, sys.executable, ROOT, jobs)
+        if not result.ok:
+            QMessageBox.warning(self, window_title("Background service"),
+                                f"The background service did not start:\n{result.out.strip()}")
+
     # --- Automatic --------------------------------------------------------------------------------------------
 
     def save_automatic(self) -> None:
@@ -325,6 +548,17 @@ class MainWindow(QMainWindow):
         reloaded = bazzite.reload_cecd(self.run)
         self.automatic_note.setText(f"Saved in {path}." + ("" if reloaded.ok else
                                                            " cecd is not running; it reads them when it starts."))
+        self.automatic_note.setVisible(True)
+
+    def edit_remote(self) -> None:
+        dialog = RemoteDialog(keys.choices_from(bazzite.read_fragment(self.config_dir).get("mappings")), self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        bazzite.update_fragment(self.config_dir, mappings=keys.mappings_for(dialog.choices()))
+        restarted = bazzite.restart_cecd(self.run)
+        self.automatic_note.setText("Saved. " + ("Valve's CEC daemon restarted with the new buttons."
+                                                 if self.mode.cecd_running and restarted.ok else
+                                                 "Valve's CEC daemon uses them when it starts."))
         self.automatic_note.setVisible(True)
 
     def use_native(self) -> None:

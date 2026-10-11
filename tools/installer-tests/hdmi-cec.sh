@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Exercise apps/hdmi-cec/install.sh: install from the checkout (core bundled, shared venv, no sudo), a staged release
-# replacing it, uninstall with and without other venv users (the CEC daemon settings kept), --purge (removed), and the
-# refusal to run as root.
+# replacing it (and restarting the watcher service when it is there), uninstall with and without other venv users (the
+# CEC daemon settings kept, the watcher service removed), --purge (removed), and the refusal to run as root.
 # Runs with the shims from shims.sh (CI, or WSL on Windows).
 set -u
 SUITE=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
@@ -15,8 +15,11 @@ D=$XDG_DATA_HOME
 APP=bc250-hdmi-cec
 A=$D/$APP/app
 FRAGMENT=$XDG_CONFIG_HOME/cecd/config.d/99-bc250-hdmi-cec.toml
-# sudo must never be needed: make it fail loudly.
+WATCH=$XDG_CONFIG_HOME/systemd/user/bc250-hdmi-cec-watch.service
+# sudo must never be needed: make it fail loudly. systemctl only records what it was asked.
 printf '#!/bin/sh\necho "sudo called: $*" >&2\nexit 1\n' > "$T/shims/sudo"
+printf '#!/bin/sh\necho "$*" >> "%s"\n' "$T/systemctl.log" > "$T/shims/systemctl"
+chmod +x "$T/shims/systemctl"
 
 echo "== 1. install from the suite checkout"
 bash "$SUITE/apps/hdmi-cec/install.sh" > "$T/log1" 2>&1; rc=$?
@@ -33,14 +36,18 @@ check "menu entry" "grep -qx 'Exec=$HOME/.local/bin/$APP' $D/applications/$APP.d
 check "desktop icon, executable" "[ -x $HOME/Desktop/$APP.desktop ]"
 check "core imports from the app copy" "(cd $A && /usr/bin/python3 -c 'import importlib.util as u, sys; s=u.find_spec(\"bc250_core\"); sys.exit(0 if s and s.origin.startswith(\"$A\") else 1)')"
 
-echo "== 2. install a staged release (core bundled in the tarball) without the Desktop icon"
+check "no watcher service: systemctl not asked" "[ ! -s $T/systemctl.log ]"
+
+echo "== 2. install a staged release (core bundled in the tarball) without the Desktop icon; the watcher restarts"
 rm -rf "$T/stage"; /usr/bin/python3 "$SUITE/tools/stage_app.py" hdmi-cec "$T/stage" > /dev/null
 echo "# release marker" >> "$T/stage/bc250_core/__init__.py"
+mkdir -p "$(dirname "$WATCH")" && echo "[Unit]" > "$WATCH"
 bash "$T/stage/install.sh" --no-desktop-shortcut > "$T/log2" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "the release's own core used" "grep -q 'release marker' $A/bc250_core/__init__.py"
 check "manual bundled" "[ -f $A/MANUAL.md ]"
 check "desktop icon removed" "[ ! -e $HOME/Desktop/$APP.desktop ]"
+check "watcher restarted" "grep -qx -- '--user try-restart bc250-hdmi-cec-watch.service' $T/systemctl.log"
 
 echo "== 3. refuses to run as root"
 fakeroot -- bash "$T/stage/install.sh" > "$T/log3" 2>&1; rc=$?
@@ -52,6 +59,7 @@ mkdir -p "$(dirname "$FRAGMENT")" && echo "wake_tv = true" > "$FRAGMENT"
 bash "$T/stage/install.sh" --uninstall > "$T/log4" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "app gone, CEC daemon settings kept" "[ ! -e $A ] && [ -f $FRAGMENT ]"
+check "watcher stopped and removed" "[ ! -e $WATCH ] && grep -qx -- '--user disable --now bc250-hdmi-cec-watch.service' $T/systemctl.log"
 check "venv kept" "[ -x $D/bc250-bazzite-suite/venv/bin/python ]"
 check "own marker gone" "[ ! -e $D/bc250-bazzite-suite/venv-users/$APP ]"
 check "launcher and menu entry gone" "[ ! -e $HOME/.local/bin/$APP ] && [ ! -e $D/applications/$APP.desktop ]"

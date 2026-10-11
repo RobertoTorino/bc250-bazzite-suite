@@ -55,9 +55,10 @@ class StatusPill(QLabel):
 
 
 class MetricBox(QFrame):
-    """One box of the header row: a big value with a caption, like the stats boxes of bc250-bazzite-test."""
+    """One box of the header row: a big value with a caption, centred like the stats boxes of bc250-bazzite-test
+    (centred=False: left-aligned)."""
 
-    def __init__(self, caption: str, colour: str = GREY, parent: QWidget | None = None):
+    def __init__(self, caption: str, colour: str = GREY, parent: QWidget | None = None, centred: bool = True):
         super().__init__(parent)
         self.setStyleSheet(f"QFrame {{ background:{colour}; border-radius:8px; }} QLabel {{ color:white; }}")
         self.setMinimumWidth(120)
@@ -68,8 +69,10 @@ class MetricBox(QFrame):
         self.value.setStyleSheet(header_font() + "font-size:22px; font-weight:800;")
         self.caption = QLabel(caption)
         self.caption.setStyleSheet("font-size:12px; font-weight:600;")
-        layout.addWidget(self.value)
-        layout.addWidget(self.caption)
+        for label in (self.value, self.caption):
+            if centred:
+                label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+            layout.addWidget(label)
 
     def set_value(self, text: str, tooltip: str = "") -> None:
         self.value.setText(text)

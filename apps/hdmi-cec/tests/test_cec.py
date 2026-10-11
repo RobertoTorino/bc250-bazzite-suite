@@ -36,6 +36,10 @@ def test_answers():
     assert cec.power_status(POWER_ON) == "on"
     assert cec.power_status("\tpwr-state: in transition standby to on (0x02)") == "in transition standby to on"
     assert not cec.acked("") and not cec.acked("Error: no such device")
+    # The owner's TV (CEC 1.4) on 11-10-2026: it took the message and answered that it does not support it.
+    abort = ("GIVE_FEATURES (0xa5)\n    Received from TV (0):\n    FEATURE_ABORT (0x00):\n"
+             "\tSequence: 140 Tx Timestamp: 1.0s Rx Timestamp: 1.1s\n\tTx, OK, Rx, OK, Feature Abort\n")
+    assert cec.acked(abort) and cec.acked("\tSequence: 141 Tx Timestamp: 2.0s\n\tTx, OK, Rx, Timeout\n")
 
 
 def test_messages():

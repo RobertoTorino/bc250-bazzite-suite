@@ -1,3 +1,19 @@
+Changelog: 11-10-2026 22:27:40
+
+Release 0.1.1.
+
+Changelog: 11-10-2026 22:24:27
+
+TV info…: what the TV tells about itself over CEC, in a table (tvinfo.py): CEC version, power status, name and type with its HDMI address, vendor ID (named for common brands, else as letters when it spells some), menu language, and whether it supports the CEC 2.0 feature list, reporting its volume and lip-sync delay, and whether an AV receiver or soundbar answers. Only questions; tested on the owner's TV's recorded answers (tests/tv_answers.json). Name on the TV: the board's OSD name, at most 14 plain characters, in cecd's osd_name; without cecd the app configures the adapter with it and sends Set OSD Name, with cecd it restarts cecd (try-restart). Remote buttons…: the key each of 20 remote buttons gives (keys.py), as cecd's mappings table; since that table replaces cecd's defaults, the app writes linux-cec's default table with the changes on top, resolved to key codes by libevdev, and restarts cecd, which reads mappings only when it opens the adapter. bazzite.update_fragment keeps the switches, the name and the table in the app's cecd file. Pause videos and music while the TV is off (media.py): the media players that play (MPRIS, through busctl) pause when the TV goes to standby and continue when it is on again. The watcher has two jobs now (--restart-picture, --pause-media) in one service whose unit records them; only three unanswered questions in a row count as the TV being off, so a glitch neither flickers nor pauses. The group is now "When the TV turns off and on". The window is taller by default.
+
+Changelog: 11-10-2026 22:13:52
+
+A message the TV took but answered with Feature Abort ("Tx, OK, Rx, OK, Feature Abort": it does not support it) or did not reply to ("Tx, OK, Rx, Timeout") counted as not acknowledged: only a "Tx, ..." status line without OK means the transmit failed. Seen on the owner's TV (CEC 1.4) on 11-10-2026.
+
+Changelog: 11-10-2026 22:10:55
+
+Picture after the TV was off: with some DP-to-HDMI converters (the owner's UGreen cable) the TV stays black after a longer standby, although it is on and the board runs on. The converter keeps the DisplayPort side up, so the board is never told, and it does not redo HDMI scrambling with the TV (1080p120 at 12 bits per colour is about 445 MHz, above the 340 MHz limit); only a different signal brings the picture back. Found with four standby tests on the owner's board on 11-10-2026: at 12 bits the TV stayed black until the refresh rate or HDR changed; at 8 bits the picture came back by itself. A new group lets the user choose: leave it as it is (TV standby then asks first), 8 bits per colour (display.py, kscreen-doctor maxbpc; nothing runs in the background), or restart the picture when the TV turns on (watcher.py: a user service, bc250-hdmi-cec-watch.service from service.py, asks the TV's power every 5 s and, when it comes back on, switches the output to another refresh rate for 4 s and back). Each choice undoes the others; a colour depth set by the user in Display settings is left alone. install.sh restarts the service on an update and removes it on uninstall. The window scrolls instead of cutting off text when it is smaller than its contents. Tests for display.py, service.py, the watcher and the window, on the board's real kscreen-doctor output; the installer test shims systemctl.
+
 Changelog: 11-10-2026 20:43:41
 
 Release 0.1.0. enable HDMI-CEC

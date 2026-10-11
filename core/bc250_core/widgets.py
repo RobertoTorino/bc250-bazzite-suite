@@ -68,9 +68,10 @@ class StatusText(QWidget):
 
 
 class MetricBox(QFrame):
-    """One box of a header row: a big value with a caption, like the stats boxes of bc250-bazzite-test."""
+    """One box of a header row: a big value with a caption, centred like the stats boxes of bc250-bazzite-test
+    (centred=False: left-aligned)."""
 
-    def __init__(self, caption: str, colour: str = GREY, parent: QWidget | None = None, centred: bool = False):
+    def __init__(self, caption: str, colour: str = GREY, parent: QWidget | None = None, centred: bool = True):
         super().__init__(parent)
         self.setStyleSheet(f"QFrame {{ background:{colour}; border-radius:8px; }} QLabel {{ color:white; }}")
         self.setMinimumWidth(120)

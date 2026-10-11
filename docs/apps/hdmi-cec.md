@@ -7,7 +7,8 @@
 HDMI-CEC lets the board and the TV talk over the HDMI cable. With it you can turn the TV on and off from the
 **AMD BC-250**, switch the TV to the board's input, set the volume, and use the TV remote on the board.
 
-The app does not change how the board runs. It sends CEC messages to the TV only when you press a button.
+The app does not change how the board runs. It sends CEC messages to the TV when you press a button, and while
+**Restart the picture** is on, it asks the TV every 5 seconds whether it is on.
 
 ## What the board needs
 
@@ -38,12 +39,52 @@ input it is on, from the TV's EDID; "None" when the board sees no display), the 
   **TV does not answer**.
 - **Volume −**, **Volume +** and **Mute:** go to an AV receiver when one answered the last check, else to the TV.
 - **Devices on the bus…:** asks every device on the HDMI bus who it is, and lists them. Read-only.
+- **TV info…:** what the TV tells about itself: its CEC version, power status, name and type, vendor ID, menu
+  language, and whether it supports the CEC 2.0 feature list, reporting its volume and lip-sync delay, and whether an
+  AV receiver or soundbar is connected. These are only questions: nothing on the TV changes.
+- **Name on the TV** and **Set name:** the name the TV shows for the board in its list of inputs and devices, at
+  most 14 plain characters. The app tells the TV the new name right away; with Valve's CEC daemon running, it
+  restarts the daemon with it.
 
 When the TV does not answer, the app says what to check: CEC switched on in the TV, the TV on, and a cable or
 adapter that passes CEC.
 
 The first message configures the adapter when nothing has yet: the board then shows up on the TV as a playback
-device named **BC-250**.
+device with that name (**BC-250** until you set another).
+
+## When the TV turns off and on
+
+### The picture
+
+With some DP-to-HDMI converters the TV stays black after standby, although it is on and the board runs on. The
+converter keeps the DisplayPort side up while the TV is off, so the board never learns that the TV went away. At
+high speeds HDMI needs a handshake with the TV (scrambling, above 340 MHz: 1080p at 120 Hz with 10 or 12 bits per
+colour). When the TV comes back, some converters do not redo that handshake, and the TV gets no picture until the
+signal changes.
+
+Choose what the app does about it:
+
+- **Leave it as it is:** nothing changes. Fine with most TVs and adapters. With this choice, **TV standby** asks first,
+  because the picture may not come back.
+- **8 bits per colour:** the picture comes back by itself. 1080p at 120 Hz then stays below the speed where the
+  handshake is needed. Colours are slightly less fine; nothing runs in the background and nothing flickers.
+- **Restart the picture when the TV turns on:** full colour. A small background service asks the TV every 5 seconds
+  whether it is on. When the TV comes back, the screen switches to another refresh rate for 4 seconds and back: one
+  short flicker, and the converter handshakes again. It starts with your desktop session.
+
+Both fixes use KDE's display settings, so they work on the KDE desktop and not in Game Mode. The colour depth is the
+same setting as **Color resolution** in KDE's Display settings. If the TV stays black and neither fix is on, changing
+the refresh rate in Display settings (when you can see it) or a restart brings the picture back.
+
+### Videos and music
+
+**Pause videos and music while the TV is off** pauses the media players that play when the TV goes to standby
+(browsers, mpv, VLC, Spotify and other players that offer media controls), and continues them when the TV is on
+again. Only the ones that were playing continue. Games are not media players: they keep running. It uses the same
+background service as **Restart the picture**, and works with or without it.
+
+The service asks the TV every 5 seconds. One missed answer does not count as "off": only three in a row do, for
+example when the TV is unplugged. So a hiccup on the HDMI bus neither flickers the picture nor pauses anything.
 
 ## Automatic: Valve's CEC daemon
 
@@ -63,6 +104,12 @@ The four switches are the daemon's settings for your account. The app writes the
 defaults (`98-bazzite-cec-mode.toml`). Where SteamOS Manager runs, its own settings (`99-steamos-manager.toml`) win
 over the app's.
 
+**Remote buttons…** chooses the key each button of the TV remote gives: OK, the arrows, back, the media buttons, the
+four coloured buttons, info and the channel buttons. Each button can keep the daemon's **Default**, give one key
+(for example **F12** for a Steam screenshot, **Super** for the app launcher, **Play/pause**), or do **Nothing**. A
+button gives one key, not a combination. The daemon reads the buttons when it starts, so saving restarts it. As soon
+as one button differs from the default, the app writes the daemon's whole table with your changes, in the same file.
+
 ## Remote control keys
 
 With the daemon running, every key the board receives from the TV remote shows in the list, with its CEC name.
@@ -71,5 +118,9 @@ The TV sends the keys only while it shows the BC-250's input.
 ## Files
 
 - `~/.config/bc250-hdmi-cec/bc250-hdmi-cec.ini`: the window size.
-- `~/.config/cecd/config.d/99-bc250-hdmi-cec.toml`: the daemon settings, once you change one. Uninstalling keeps
+- `~/.config/cecd/config.d/99-bc250-hdmi-cec.toml`: the daemon settings, the name on the TV and the remote's
+  buttons, once you change one. Uninstalling keeps
   it, so the TV keeps behaving the same; `install.sh --uninstall --purge` removes it.
+- `~/.config/systemd/user/bc250-hdmi-cec-watch.service`: the background service of **Restart the picture** and
+  **Pause videos and music**, only while one of them is on. Uninstalling removes it. It writes a line to the journal
+  each time it restarts the picture, pauses or continues: `journalctl --user -u bc250-hdmi-cec-watch`.

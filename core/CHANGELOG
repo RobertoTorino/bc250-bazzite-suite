@@ -1,3 +1,7 @@
+Changelog: 11-10-2026 20:58:28
+
+MetricBox centres its value and caption by default, like Bazzite Test's stats boxes; centred=False keeps them left-aligned. test_widgets checks the default; test_parity compares centred and left-aligned boxes with both governor's and helixsr's copies.
+
 Changelog: 11-10-2026 19:02:46
 
 instance.py: Two launches at the same moment (a double-click on a Desktop icon that opens on one click) no longer

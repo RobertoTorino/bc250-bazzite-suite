@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+import json
 import tomllib
+from pathlib import Path
 
 import pytest
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QDialog, QMessageBox
 
 from bc250_hdmi_cec import main_window
 from bc250_hdmi_cec.main_window import MainWindow
@@ -10,15 +12,49 @@ from bc250_hdmi_cec.runner import Result
 from conftest import ACK, INFO, NACK, POWER_ON, TOPOLOGY_TV, UNCONFIGURED
 
 
-class FakeBoard:
-    """cec-ctl and systemctl as the board answers them; tv=False is the owner's board today: nothing acknowledges."""
+KSCREEN = json.loads((Path(__file__).parent / "kscreen.json").read_text())       # the owner's board, 11-10-2026
+TV_ANSWERS = json.loads((Path(__file__).parent / "tv_answers.json").read_text())  # the owner's TV, 11-10-2026
 
-    def __init__(self, tv=True, info=INFO, native=False, receiver=False):
+
+class FakeBoard:
+    """cec-ctl, systemctl and kscreen-doctor as the board answers them; tv=False is the owner's board with CEC off
+    in the TV: nothing acknowledges."""
+
+    def __init__(self, tv=True, info=INFO, native=False, receiver=False, kscreen=True):
         self.tv, self.info, self.native, self.receiver = tv, info, native, receiver
+        self.kscreen = json.loads(json.dumps(KSCREEN)) if kscreen else None
+        self.watching = False
         self.calls = []
+
+    @property
+    def output(self):
+        return self.kscreen["outputs"][0]
 
     def __call__(self, argv):
         self.calls.append(argv)
+        if argv[0] == "kscreen-doctor":
+            if self.kscreen is None:
+                return Result(127, "kscreen-doctor: not found")
+            if argv[1] == "-j":
+                return Result(0, json.dumps(self.kscreen))
+            _out, name, field, value = argv[1].split(".", 3)
+            if field == "maxbpc":
+                self.output["maxBpc"] = 0 if value == "automatic" else int(value)
+            elif field == "mode":
+                self.output["currentModeId"] = value
+            return Result(0, "")
+        if argv[0] == "systemctl" and argv[-1] == "bc250-hdmi-cec-watch.service":
+            if "is-enabled" in argv:
+                return Result(0, "enabled\n") if self.watching else Result(1, "disabled\n")
+            if "enable" in argv or "disable" in argv:
+                self.watching = "enable" in argv
+            return Result(0, "")
+        if argv[0] == "systemctl" and "try-restart" in argv:
+            return Result(0 if self.native else 1, "")
+        if argv[0] == "cec-ctl" and self.tv and "-s" in argv and not (self.receiver and argv[-1] == "5"):
+            answer = TV_ANSWERS.get(" ".join(argv[4:]))
+            if answer is not None:
+                return Result(0, answer)
         if argv[0] == "systemctl":
             unit = argv[-1]
             if "is-enabled" in argv:
@@ -48,6 +84,16 @@ class FakeBoard:
         """The logical address the first message with *option* went to."""
         call = self.sent(option)[0]
         return call[call.index("--to") + 1]
+
+
+@pytest.fixture(autouse=True)
+def answer(monkeypatch):
+    """Every question is answered Yes unless a test says otherwise, so no dialog waits for a click."""
+    replies = {"value": QMessageBox.StandardButton.Yes, "asked": []}
+    monkeypatch.setattr(QMessageBox, "question", lambda _p, _t, text, *a, **k: (replies["asked"].append(text),
+                                                                                  replies["value"])[1])
+    monkeypatch.setattr(QMessageBox, "warning", lambda _p, _t, text, *a, **k: replies["asked"].append(text))
+    return replies
 
 
 @pytest.fixture
@@ -181,3 +227,136 @@ def test_key_tester(make):
         w.key_pressed(0x41, 0)
     assert w.keys.count() == main_window.KEYS_SHOWN
     assert "volume-up" in w.keys.item(0).text() and "from the TV" in w.keys.item(0).text()
+
+
+def test_picture_choice_reads_the_system(make):
+    w = make(FakeBoard())
+    assert w.picture_buttons["nothing"].isChecked() and w.picture_buttons["8bit"].isEnabled()
+    board = FakeBoard()
+    board.output["maxBpc"] = 8
+    assert make(board).picture_buttons["8bit"].isChecked()
+
+
+def test_eight_bit_and_back(make):
+    board = FakeBoard()
+    w = make(board)
+    w.picture_buttons["8bit"].click()
+    assert board.output["maxBpc"] == 8 and w.picture_buttons["8bit"].isChecked()
+    assert ["kscreen-doctor", "output.DP-1.maxbpc.8"] in board.calls
+    w.picture_buttons["nothing"].click()
+    assert board.output["maxBpc"] == 0 and ["kscreen-doctor", "output.DP-1.maxbpc.automatic"] in board.calls
+
+
+def test_restart_installs_the_watcher(make, tmp_path):
+    board = FakeBoard()
+    board.output["maxBpc"] = 8
+    w = make(board)
+    w.picture_buttons["restart"].click()
+    unit = tmp_path / "config/systemd/user/bc250-hdmi-cec-watch.service"
+    assert board.watching and unit.is_file() and "-m bc250_hdmi_cec.watcher --restart-picture" in unit.read_text()
+    assert board.output["maxBpc"] == 0                                          # full colour again
+    assert ["systemctl", "--user", "restart", "bc250-hdmi-cec-watch.service"] in board.calls
+    w.close()
+    assert make(board).picture_buttons["restart"].isChecked()
+    make(board).picture_buttons["8bit"].click()
+    assert not board.watching and not unit.exists() and board.output["maxBpc"] == 8
+
+
+def test_a_choice_set_by_the_user_is_left_alone(make):
+    board = FakeBoard()
+    board.output["maxBpc"] = 10                                                 # set in Display settings
+    w = make(board)
+    w.picture_buttons["nothing"].click()
+    assert board.output["maxBpc"] == 10 and not [c for c in board.calls if c[0] == "kscreen-doctor" and c[1] != "-j"]
+
+
+def test_without_kscreen_the_choice_is_off(make):
+    w = make(FakeBoard(kscreen=False))
+    assert not any(b.isEnabled() for b in w.picture_buttons.values())
+    assert "Game Mode" in w.picture_note.text()
+
+
+def test_standby_asks_first_only_without_a_fix(make, answer):
+    board = FakeBoard()
+    w = make(board)
+    answer["value"] = QMessageBox.StandardButton.No
+    w.tv_standby()
+    assert not board.sent("--standby") and "stays black" in answer["asked"][0]
+    w.picture_buttons["8bit"].click()
+    answer["asked"].clear()
+    w.tv_standby()
+    assert board.sent("--standby") and answer["asked"] == []
+
+
+def test_tv_info(make, monkeypatch):
+    shown = []
+    monkeypatch.setattr(main_window.TableDialog, "exec",
+                        lambda self: shown.append({self.table.item(r, 0).text(): self.table.item(r, 1).text()
+                                                   for r in range(self.table.rowCount())}))
+    make(FakeBoard()).show_tv_info()
+    rows = shown[0]
+    assert rows["CEC version"] == "1.4" and rows["Power status"] == "yes (on)"
+    assert rows["Its name and type"] == 'name "Game", type TV, HDMI address 0.0.0.0'
+    assert rows["Vendor ID"] == '0x6d746b = "mtk"' and rows["Menu language"] == "English"
+    assert rows["CEC 2.0 feature list"] == "not supported"
+    assert rows["Lip-sync delay"] == "no answer (a CEC 2.0 feature)"
+    assert rows["AV receiver or soundbar"] == "none connected"
+
+
+def test_pause_option(make, tmp_path):
+    board = FakeBoard()
+    w = make(board)
+    w.pause_box.setChecked(True)
+    unit = tmp_path / "config/systemd/user/bc250-hdmi-cec-watch.service"
+    assert board.watching and "--pause-media" in unit.read_text() and "--restart-picture" not in unit.read_text()
+    w.picture_buttons["restart"].click()
+    assert "--pause-media --restart-picture" not in unit.read_text()            # the app's own order
+    assert "--restart-picture --pause-media" in unit.read_text() and w.pause_box.isChecked()
+    w.pause_box.setChecked(False)
+    assert "--pause-media" not in unit.read_text() and w.picture_buttons["restart"].isChecked()
+    w.picture_buttons["nothing"].click()
+    assert not board.watching and not unit.exists()
+
+
+def test_name_without_cecd(make, tmp_path):
+    board = FakeBoard()
+    w = make(board)
+    assert w.name_edit.text() == "BC-250"
+    w.name_edit.setText("Gaming PC")
+    w.save_name()
+    assert ["cec-ctl", "-d", w.adapter.device, "--playback", "--osd-name", "Gaming PC"] in board.calls
+    assert board.sent("name=Gaming PC") and "Gaming PC" in w.result.text()
+    assert 'osd_name = "Gaming PC"' in (tmp_path / "config/cecd/config.d/99-bc250-hdmi-cec.toml").read_text()
+    w.name_edit.setText("Ünïcode")
+    w.save_name()
+    assert "plain letters" in w.result.text()
+
+
+def test_name_with_cecd_restarts_it(make):
+    board = FakeBoard(native=True)
+    w = make(board)
+    w.name_edit.setText("BC-250 Lounge")
+    w.save_name()
+    assert ["systemctl", "--user", "try-restart", "cecd.service"] in board.calls and not board.sent("--playback")
+
+
+def test_remote_buttons(make, tmp_path, monkeypatch):
+    board = FakeBoard(native=True)
+    w = make(board)
+
+    def pick(dialog):
+        combo = dialog.combos["f2"]
+        combo.setCurrentIndex(combo.findData("KEY_F12"))                      # red: Steam screenshot
+        dialog.combos["f3"].setCurrentIndex(dialog.combos["f3"].findData(None))
+        return QDialog.DialogCode.Accepted
+    monkeypatch.setattr(main_window.RemoteDialog, "exec", pick)
+    w.edit_remote()
+    table = tomllib.loads((tmp_path / "config/cecd/config.d/99-bc250-hdmi-cec.toml").read_text())["mappings"]
+    assert table["f2"] == 88 and "f3" not in table and table["select"] == 28 and len(table) == 73
+    assert ["systemctl", "--user", "try-restart", "cecd.service"] in board.calls
+
+    seen = []
+    monkeypatch.setattr(main_window.RemoteDialog, "exec", lambda d: (seen.append(d.choices()),
+                                                                     QDialog.DialogCode.Rejected)[1])
+    w.edit_remote()
+    assert seen[0]["f2"] == "KEY_F12" and seen[0]["f3"] is None and seen[0]["select"] == ""

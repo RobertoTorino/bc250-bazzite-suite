@@ -85,15 +85,67 @@ def fragment_path(config_home: Path) -> Path:
     return config_home / "cecd" / "config.d" / FRAGMENT
 
 
-def write_settings(config_home: Path, settings: dict[str, bool]) -> Path:
+OSD_NAME_BYTES = 14                     # cecd's limit for osd_name
+
+
+def read_fragment(config_home: Path) -> dict:
+    """The app's own file as it is: the switches, osd_name and the mappings table it wrote."""
+    try:
+        return tomllib.loads(fragment_path(config_home).read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return {}
+
+
+def _toml(value) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, int):
+        return str(value)
+    return '"' + str(value).replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def update_fragment(config_home: Path, **changes) -> Path:
+    """Writes the app's file with *changes* on top of what it holds; a None value removes that setting. The
+    mappings table (a dict) goes last, as a [mappings] section."""
+    data = read_fragment(config_home)
+    for key, value in changes.items():
+        if value is None:
+            data.pop(key, None)
+        else:
+            data[key] = value
+    mappings = data.pop("mappings", None)
+    lines = ["# Written by BC250 HDMI CEC. Removed with: install.sh --uninstall --purge",
+             *(f"{key} = {_toml(value)}" for key, value in data.items() if not isinstance(value, dict))]
+    if mappings:
+        lines += ["", "# The TV remote's buttons: UI command -> Linux key code (cecd's defaults with the app's "
+                  "changes)", "[mappings]", *(f'"{button}" = {number}' for button, number in mappings.items())]
     path = fragment_path(config_home)
     path.parent.mkdir(parents=True, exist_ok=True)
-    lines = ["# Written by BC250 HDMI CEC. Removed with: install.sh --uninstall --purge",
-             *(f"{key} = {'true' if settings[key] else 'false'}" for key in DEFAULTS)]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
+
+
+def write_settings(config_home: Path, settings: dict[str, bool]) -> Path:
+    return update_fragment(config_home, **{key: settings[key] for key in DEFAULTS})
+
+
+def osd_name_problem(name: str) -> str:
+    """Why cecd would not take *name* as its OSD name; "" when it would."""
+    if not name.strip():
+        return "The name is empty."
+    if not name.isascii() or not name.isprintable():
+        return "Use plain letters, digits and punctuation: many TVs show nothing else."
+    if len(name.encode()) > OSD_NAME_BYTES:
+        return f"At most {OSD_NAME_BYTES} characters."
+    return ""
 
 
 def reload_cecd(runner: Runner) -> Result:
     """cecd reloads its configuration on SIGHUP, as `ujust cec-sleep` does it."""
     return runner(["systemctl", "--user", "kill", "-s", "HUP", CECD_UNIT])
+
+
+def restart_cecd(runner: Runner) -> Result:
+    """The name and the remote's mappings take effect only when cecd opens the adapter again ("Cannot change
+    mappings after opening"), so those need a restart; try-restart leaves a stopped cecd stopped."""
+    return runner(["systemctl", "--user", "try-restart", CECD_UNIT])

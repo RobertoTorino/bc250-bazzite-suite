@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 CEC_CTL = "cec-ctl"
-OSD_NAME = "BC-250"                     # the name the TV shows for the board, when the app configures the adapter
+OSD_NAME = "BC-250"                     # the name the TV shows for the board, unless the user set another
 NO_ADDRESS = "f.f.f.f"
 TV = 0                                  # logical addresses
 AUDIO_SYSTEM = 5
@@ -47,7 +47,7 @@ UI_COMMANDS = {
 
 _FIELD = re.compile(r"^\s*(?P<key>[A-Za-z][A-Za-z ]*?)\s*:\s*(?P<value>.*?)\s*$")
 _TOPOLOGY = re.compile(r"^\s*(?P<address>[0-9a-f]\.[0-9a-f]\.[0-9a-f]\.[0-9a-f]):\s*(?P<name>.+?)\s*$")
-_TX_FAILED = re.compile(r"^\s*Tx, ", re.M)
+_TX_FAILED = re.compile(r"^\s*Tx, (?!OK)", re.M)
 _POWER = re.compile(r"pwr-state:\s*(?P<state>[a-z][a-z -]*?)\s*\(0x", re.I)
 
 
@@ -110,8 +110,9 @@ def parse_topology(text: str) -> list[tuple[str, str]]:
 
 
 def acked(text: str) -> bool:
-    """Whether the other end took the message. cec-ctl exits 0 either way; it prints a "Tx, …" status line only when
-    the transmit failed ("Tx, Not Acknowledged (1), Max Retries" when no device answered)."""
+    """Whether the other end took the message. cec-ctl exits 0 either way; it prints a "Tx, …" status line when the
+    transmit failed ("Tx, Not Acknowledged (1), Max Retries" when no device answered), or when it went out but the
+    reply did not come as asked ("Tx, OK, Rx, OK, Feature Abort": the device does not support the message)."""
     return "Sequence:" in text and _TX_FAILED.search(text) is None
 
 
@@ -131,9 +132,14 @@ def info(device: str) -> list[str]:
     return ["-d", device]
 
 
-def configure(device: str) -> list[str]:
+def configure(device: str, name: str = OSD_NAME) -> list[str]:
     """Claim a logical address as a playback device, as Bazzite's cec-control does, when nothing has yet."""
-    return ["-d", device, "--playback", "--osd-name", OSD_NAME]
+    return ["-d", device, "--playback", "--osd-name", name]
+
+
+def set_osd_name(device: str, name: str) -> list[str]:
+    """Tells the TV the board's name now (TVs otherwise ask when the cable is plugged in)."""
+    return ["-d", device, "-s", "--to", str(TV), "--set-osd-name", f"name={name}"]
 
 
 def topology(device: str) -> list[str]:

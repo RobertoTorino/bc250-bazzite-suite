@@ -1,3 +1,7 @@
+Changelog: 11-10-2026 20:54:31
+
+Hovering or clicking the GitHub build status stopped the app (SIGABRT): BuildIndicator kept the main window in an attribute named window, which hides QWidget.window(), and the suite's tooltip calls window() on the widget it is shown for (TypeError: 'ReleaseWindow' object is not callable). The attribute is release_window now, also in the three pages that had the same name. tests/test_main_window.py checks that every widget of the window keeps window() and shows the tooltip over the build indicator.
+
 Changelog: 11-10-2026 17:35:05
 
 The commands after Apply and Bump portal tag with tools/tag-release.sh instead of git tag, so a tag cannot land on a

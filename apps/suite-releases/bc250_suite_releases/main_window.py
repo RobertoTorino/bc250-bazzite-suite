@@ -68,7 +68,7 @@ class AppsPage(QWidget):
 
     def __init__(self, window: "ReleaseWindow"):
         super().__init__()
-        self.window = window
+        self.release_window = window
         self.table = QTableWidget(0, len(COLUMNS))
         self.table.setHorizontalHeaderLabels(COLUMNS)
         self.table.verticalHeader().setVisible(False)
@@ -156,7 +156,7 @@ class AppsPage(QWidget):
         if problems:
             QMessageBox.warning(self, "Release", "\n".join(problems))
             return
-        root = self.window.root
+        root = self.release_window.root
         log, tags, pins_moved = [], [], []
         for unit, new, notes in picked:
             if new != unit.version:
@@ -172,14 +172,14 @@ class AppsPage(QWidget):
                 if rp.follow_unreleased_pin(root, unit):
                     pins_moved.append(unit.tag)
         if pins_moved:
-            minimum, why = rp.portal_minimum(root, self.window.base(), self.window.portal_version())
+            minimum, why = rp.portal_minimum(root, self.release_window.base(), self.release_window.portal_version())
             log.append(f"apps.toml: the never-released pins move along ({', '.join(pins_moved)}), so this push also "
                        f"needs portal {minimum or '?'} ({why}): do step 2's Bump portal before you commit.")
         log += ["", run_check(root, "tools/check_versions.py")]
         if tags:
             log += ["Then:", rp.app_commands(tags)]
         self.output.set_text("\n".join(log))
-        self.window.reload()
+        self.release_window.reload()
 
 
 class PortalPage(QWidget):
@@ -187,7 +187,7 @@ class PortalPage(QWidget):
 
     def __init__(self, window: "ReleaseWindow"):
         super().__init__()
-        self.window = window
+        self.release_window = window
         self.base_edit = QLineEdit("origin/main")
         self.base_edit.setToolTip("The last push: CI compares apps.toml and portal/VERSION with it")
         self.fetch_button = QPushButton("Fetch tags")
@@ -287,12 +287,12 @@ class PortalPage(QWidget):
             self.portal_needs.setText(f"Nothing the portal ships changed since {portal.last_tag}.")
             self.portal_needs.setStyleSheet("")
         self.portal_needs.setToolTip(needs_tooltip(portal))
-        minimum, why = rp.portal_minimum(self.window.root, self.window.base(), portal.version)
+        minimum, why = rp.portal_minimum(self.release_window.root, self.release_window.base(), portal.version)
         if minimum:
-            self.minimum.setText(f"apps.toml changed since {self.window.base()} ({why}): the portal needs at least "
+            self.minimum.setText(f"apps.toml changed since {self.release_window.base()} ({why}): the portal needs at least "
                                  f"{minimum}.")
         else:
-            self.minimum.setText(f"apps.toml is unchanged since {self.window.base()}.")
+            self.minimum.setText(f"apps.toml is unchanged since {self.release_window.base()}.")
         choices = [minimum] if minimum and minimum != portal.version else []
         if not portal.released:
             choices.append(portal.version)
@@ -306,20 +306,20 @@ class PortalPage(QWidget):
 
     def check(self, mode: str) -> None:
         """Run check-release.sh in a terminal: it installs a portal and keeps it running there."""
-        script = shlex.quote(str(self.window.root / rp.CHECK_SCRIPT))
+        script = shlex.quote(str(self.release_window.root / rp.CHECK_SCRIPT))
         try:
-            self.window.launch(f"{script} {mode}")
+            self.release_window.launch(f"{script} {mode}")
         except RuntimeError as exc:
             self.output.set_text(str(exc))
             return
         what = ("the portal from this checkout, then starts it with --source release" if mode == "local" else
-                f"the published portal-v{self.window.portal_version()} release, then starts it")
+                f"the published portal-v{self.release_window.portal_version()} release, then starts it")
         self.output.set_text(f"A terminal installs {what}. Close the portal there to finish.")
 
     def fetch_tags(self) -> None:
-        out = rp.git(self.window.root, "fetch", "--tags", "--quiet")
+        out = rp.git(self.release_window.root, "fetch", "--tags", "--quiet")
         self.output.set_text("Tags fetched." if out is not None else "git fetch --tags failed.")
-        self.window.reload()
+        self.release_window.reload()
 
     def pin(self) -> None:
         log = []
@@ -327,17 +327,17 @@ class PortalPage(QWidget):
             if not tick.isChecked():
                 continue
             try:
-                sha = self.window.sha256_source(unit.tag)
+                sha = self.release_window.sha256_source(unit.tag)
             except (OSError, SystemExit) as exc:
                 log.append(f"{unit.tag}: no checksum yet ({exc}). Has GitHub finished that release?")
                 continue
-            rp.pin(self.window.root, unit, sha)
+            rp.pin(self.release_window.root, unit, sha)
             log.append(f"{unit.tag}: pinned ({sha[:16]}…)")
-        self.window.reload()
+        self.release_window.reload()
         self.output.set_text("\n".join(log) or "Tick a release to pin.")
 
     def bump(self) -> None:
-        root = self.window.root
+        root = self.release_window.root
         units = rp.load_units(root)
         portal = next(u for u in units if u.kind == "portal")
         new = self.portal_version.currentText().strip()
@@ -349,15 +349,15 @@ class PortalPage(QWidget):
         if new != portal.version:
             changed = rp.set_version(root, portal, new)
             log.append(f"portal: {new} in " + ", ".join(str(p.relative_to(root)) for p in changed))
-        pins = rp.changed_pins(root, self.window.base())
+        pins = rp.changed_pins(root, self.release_window.base())
         text = rp.portal_text(new, pins, self.portal_notes.text())
         rp.add_changelog_entry(root, portal, text)
         log += [f"portal: CHANGELOG entry \"{text}\"", "",
                 run_check(root, "tools/check_versions.py"),
-                run_check(root, "tools/check_manifest.py", "--base", self.window.base()),
+                run_check(root, "tools/check_manifest.py", "--base", self.release_window.base()),
                 "Then:", rp.portal_commands(f"portal-v{new}")]
         self.output.set_text("\n".join(log))
-        self.window.reload()
+        self.release_window.reload()
 
 
 def start_app(command: list[str], env: dict[str, str], cwd: Path, log: Path) -> subprocess.Popen:
@@ -394,7 +394,7 @@ class RunPage(QWidget):
 
     def __init__(self, window: "ReleaseWindow"):
         super().__init__()
-        self.window = window
+        self.release_window = window
         self.apps = QListWidget()
         self.apps.setViewMode(QListView.ViewMode.IconMode)
         self.apps.setIconSize(QSize(64, 64))
@@ -441,10 +441,10 @@ class RunPage(QWidget):
             open_url(target.url)
             self.output.appendPlainText(f"{target.label} is already running: opened {target.url}")
             return
-        command, env = rp.launch_command(self.window.root, target)
+        command, env = rp.launch_command(self.release_window.root, target)
         log = LOG_DIR / f"{target.module}.log"
         try:
-            process = self.window.start(command, env, target.folder, log)
+            process = self.release_window.start(command, env, target.folder, log)
         except OSError as exc:
             self.output.appendPlainText(f"{target.label}: could not start ({exc})")
             return
@@ -499,7 +499,7 @@ class BuildIndicator(QPushButton):
 
     def __init__(self, window: "ReleaseWindow", source, notify):
         super().__init__()
-        self.window = window
+        self.release_window = window
         self.source = source            # rp.fetch_runs: (runs | None when unchanged, etag)
         self.notify = notify
         self.etag = ""
@@ -563,7 +563,7 @@ class BuildIndicator(QPushButton):
         summary = f"GitHub build {'failed' if failed else 'passed'}"
         body = "\n".join(f"{r.label}: {r.outcome}" for r in (failed or finished))
         self.notify(summary, body)
-        QApplication.alert(self.window)
+        QApplication.alert(self.release_window)
 
     def target(self) -> str:
         latest = rp.latest_push(self.runs)

@@ -14,6 +14,8 @@
 #  * ~/.local/share/bc250-bazzite-suite/venv, the BC250 Bazzite Suite's shared venv with PyQt6 (the wheels bundle
 #    Qt; nothing is layered). It is removed with the last suite app that uses it.
 #  * ~/.config/cecd/config.d/99-bc250-hdmi-cec.toml: the CEC daemon settings, once you change one in the app.
+#  * ~/.config/systemd/user/bc250-hdmi-cec-watch.service: the background part of "Restart the picture when the TV
+#    turns on", only while that is chosen in the app. It starts the app's own files, so uninstalling removes it.
 #  * ~/.local/bin/bc250-hdmi-cec to start it from a terminal, plus an app menu entry and a Desktop icon.
 set -euo pipefail
 
@@ -30,6 +32,8 @@ MENU_ENTRY="$DATA_DIR/applications/$APP_ID.desktop"
 DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
 DESKTOP_ICON="$DESKTOP_DIR/$APP_ID.desktop"
 CECD_FRAGMENT="$CONFIG_DIR/cecd/config.d/99-bc250-hdmi-cec.toml"
+WATCH_UNIT="bc250-hdmi-cec-watch.service"
+WATCH_FILE="$CONFIG_DIR/systemd/user/$WATCH_UNIT"
 
 SRC=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 # bc250_core: bundled next to bc250_hdmi_cec in a release; in the suite checkout it lives in core/.
@@ -57,6 +61,12 @@ $PURGE && ! $UNINSTALL && die "--purge only goes with --uninstall."
 [ "$(id -u)" -ne 0 ] || die "Run this as your own user, not with sudo: the app, the venv and the launcher belong in your home folder."
 
 if $UNINSTALL; then
+    if [ -f "$WATCH_FILE" ]; then
+        info "Stopping and removing the background service $WATCH_UNIT"
+        systemctl --user disable --now "$WATCH_UNIT" >/dev/null 2>&1 || true
+        rm -f "$WATCH_FILE"
+        systemctl --user daemon-reload >/dev/null 2>&1 || true
+    fi
     info "Removing the launcher, the menu entry and the app"
     rm -f "$LAUNCHER" "$MENU_ENTRY" "$DESKTOP_ICON"
     command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q "$DATA_DIR/applications" || true
@@ -160,6 +170,12 @@ if $DESKTOP_SHORTCUT && [ -d "$DESKTOP_DIR" ]; then
     command -v gio >/dev/null 2>&1 && gio set "$DESKTOP_ICON" metadata::trusted true 2>/dev/null || true
 elif ! $DESKTOP_SHORTCUT; then
     rm -f "$DESKTOP_ICON"
+fi
+
+if [ -f "$WATCH_FILE" ]; then
+    info "Restarting the background service $WATCH_UNIT with the new version"
+    systemctl --user daemon-reload >/dev/null 2>&1 || true
+    systemctl --user try-restart "$WATCH_UNIT" >/dev/null 2>&1 || true
 fi
 
 info "Done. Start \"$APP_NAME\" from the app menu$($DESKTOP_SHORTCUT && echo ' or the Desktop'), or run: $APP_ID"

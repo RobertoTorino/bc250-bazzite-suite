@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from PyQt6 import sip
-from PyQt6.QtCore import QPoint
+from PyQt6.QtCore import QPoint, Qt
 from PyQt6.QtWidgets import QPushButton, QTableWidget, QTableWidgetItem, QWidget
 
 from bc250_core import theme
@@ -40,6 +40,10 @@ def test_metric_box(qapp):
     box = MetricBox("GPU clock", theme.PURPLE)
     box.set_value("1800 MHz", "now")
     assert (box.value.text(), box.caption.text(), box.toolTip()) == ("1800 MHz", "GPU clock", "now")
+    centre = Qt.AlignmentFlag.AlignHCenter
+    assert box.value.alignment() & centre and box.caption.alignment() & centre        # centred by default
+    left = MetricBox("GPU clock", theme.PURPLE, centred=False)
+    assert not left.value.alignment() & centre
 
 
 def test_set_button_active_keeps_height(qapp):

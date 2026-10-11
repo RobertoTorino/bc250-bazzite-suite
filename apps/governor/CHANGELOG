@@ -1,3 +1,11 @@
+Changelog: 11-10-2026 22:27:40
+
+Release 0.1.4.
+
+Changelog: 11-10-2026 20:58:28
+
+The header boxes (GPU load, clock, temperature, power, performance mode, governor) are centred, like the other apps of the suite: MetricBox has core's centred option, on by default.
+
 Changelog: 11-10-2026 20:43:41
 
 Release 0.1.3.
