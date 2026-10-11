@@ -52,3 +52,24 @@ def test_listen_recovers_stale_socket(qapp):
     assert second.listen()
     second.close()
     first.close()
+
+
+def test_launch_during_startup_hands_over_once_the_socket_is_up(qapp, monkeypatch):
+    from PyQt6.QtCore import QDir, QLockFile
+    name = f"bc250-test-gov-starting-{os.getpid()}"
+    assert not instance.already_running(instance.SHOW, name=name)    # the first launch: it runs
+    instance._locks.pop(name).unlock()
+    starting = QLockFile(os.path.join(QDir.tempPath(), f"{name}.lock"))  # another launch, still starting
+    starting.setStaleLockTime(0)
+    assert starting.tryLock(0)
+    monkeypatch.setattr(instance, "STARTUP_WAIT_S", 0.3)
+    assert instance.already_running(instance.SHOW, name=name)        # waits; still no second instance
+    server = instance.InstanceServer(name=name)
+    assert server.listen()
+    got = []
+    server.received.connect(got.append)
+    assert instance.already_running(instance.PROFILE + "Quiet", name=name)
+    _pump(200)
+    assert got == [instance.PROFILE + "Quiet"]
+    server.close()
+    starting.unlock()

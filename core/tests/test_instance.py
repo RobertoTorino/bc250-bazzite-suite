@@ -63,3 +63,32 @@ def test_second_launch_raises_the_window(qapp, monkeypatch):
     server.close()
     window.close()
     dispose(window)                                            # the server is the window's child
+
+
+def test_first_launch_takes_the_lock(qapp):
+    app_id = f"bc250-test-lock-{os.getpid()}"
+    name = instance.server_name(app_id)
+    assert not instance.already_running(app_id)                # the first: it runs and holds the lock
+    assert name in instance._locks and instance._locks[name].isLocked()
+    instance._locks.pop(name).unlock()
+
+
+def test_launch_during_startup_waits_instead_of_opening_a_second_window(qapp, monkeypatch):
+    from PyQt6.QtCore import QLockFile
+    app_id = f"bc250-test-starting-{os.getpid()}"
+    name = instance.server_name(app_id)
+    starting = QLockFile(instance.lock_path(name))             # another launch, still building its window
+    starting.setStaleLockTime(0)
+    assert starting.tryLock(0)
+    monkeypatch.setattr(instance, "STARTUP_WAIT_S", 0.3)
+    began = time.monotonic()
+    assert instance.already_running(app_id)                    # no socket yet: waits, still no second window
+    assert time.monotonic() - began >= 0.3
+    server = instance.InstanceServer(None, name)               # its socket is up now
+    assert server.listen()
+    monkeypatch.setattr(instance, "STARTUP_WAIT_S", 5)
+    began = time.monotonic()
+    assert instance.already_running(app_id) and time.monotonic() - began < 2
+    server.close()
+    dispose(server)
+    starting.unlock()

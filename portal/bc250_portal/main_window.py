@@ -229,8 +229,9 @@ class AppTile(QFrame):
     def _ink(self) -> str:
         return self.palette().color(QPalette.ColorRole.ButtonText).name()
 
-    def show_state(self, installed: bool, installed_tag: str, busy: str = "") -> bool:
-        """Show the app's state; True when an update is available."""
+    def show_state(self, installed: bool, installed_tag: str, busy: str = "", available: bool = True) -> bool:
+        """Show the app's state; True when an update is available. *available* False: a checkout-only app in a
+        portal without a checkout, which can neither install nor remove it (an installed one still opens)."""
         entry = self.entry
         # An update needs a known, different tag: an app installed some other way has none recorded.
         update = installed and bool(installed_tag) and bool(entry.tag) and installed_tag not in (entry.tag, "local")
@@ -238,6 +239,11 @@ class AppTile(QFrame):
         self.dot.setToolTip(f"Update available: {entry.tag} (installed {installed_tag})." if update else "")
         if busy:
             self.status, detail = busy, busy
+        elif not available:
+            self.status = "Needs a checkout"
+            detail = (f"{'Installed from a suite checkout. ' if installed else ''}It runs from a suite checkout and "
+                      "has no release, so this portal (installed from a release) cannot install or remove it. To use "
+                      "it, install the portal from the checkout: ./install.sh in the repository.")
         elif not installed:
             self.status, detail = "Not installed", "Not installed: install it with the button beside the icon."
         elif update:
@@ -265,9 +271,12 @@ class AppTile(QFrame):
             ("Install", self._ink())
         draw = glyphs.reinstall if entry.required and installed and not update else glyphs.install
         self.install_button.setIcon(draw(ink))
-        self.install_button.setToolTip(f"{action} {entry.name}" + (f" ({entry.tag})" if entry.tag else ""))
-        self.install_button.setEnabled(not busy)
-        self.uninstall_button.setEnabled(installed and not busy)
+        self.install_button.setToolTip(f"{action} {entry.name}" + (f" ({entry.tag})" if entry.tag else "") if available
+                                       else "Needs a suite checkout: install the portal from it (./install.sh)")
+        self.install_button.setEnabled(available and not busy)
+        self.uninstall_button.setEnabled(available and installed and not busy)
+        if not available:
+            self.uninstall_button.setToolTip(self.install_button.toolTip())
         return update
 
 
@@ -441,7 +450,8 @@ class MainWindow(QMainWindow):
             elif self.pending and self.pending.entry is entry:
                 busy = "Installing…" if self.pending.action == "install" else "Removing…"
             card = self.cards[entry.key]
-            updates += card.show_state(is_installed(entry), self.records.get(entry.key), busy)
+            available = not entry.checkout_only or self.sources.checkout is not None
+            updates += card.show_state(is_installed(entry), self.records.get(entry.key), busy, available)
             if self.busy() and not busy:
                 card.install_button.setEnabled(False)
                 card.uninstall_button.setEnabled(False)

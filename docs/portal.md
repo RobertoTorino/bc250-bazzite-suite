@@ -18,9 +18,11 @@ tile, left to right in the order of `apps.toml` and as many to a row as the wind
 
 **Development only**, below the apps, opens a separate section with tools for working on the suite:
 [Simple Demo Tool](other-tools/simple-demo-tool.md), [Portal dependency checker](apps/dependency-checker.md)
-and, when the portal runs from a suite checkout, the release front end
-[BC250 Suite Releases](#the-release-front-end) and BC-250 Installer Tests (`tools/installer-tests/gui`), a window
-that runs the installer tests one at a time. You do not need them to use the board. The section is closed until
+the release front end [BC250 Suite Releases](#the-release-front-end) and BC-250 Installer Tests
+(`tools/installer-tests/gui`), a window that runs the installer tests one at a time. You do not need them to use
+the board. The last two run from a checkout of the repository and have no release: a portal installed from a
+release shows them greyed, and installs them once you install the portal from the checkout (`./install.sh` in the
+repository root). The section is closed until
 you open it, and the portal remembers whether it was open.
 
 - `apps/` may also contain standalone tools (with a `.standalone` marker) that do not appear in `apps.toml`

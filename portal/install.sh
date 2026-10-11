@@ -376,3 +376,8 @@ PY
 
 info "Done. Start \"$APP_NAME\" from the app menu$($DESKTOP_SHORTCUT && echo ' or the Desktop'), or run: $APP_ID"
 case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) info "Note: ~/.local/bin is not on your PATH, so the terminal command needs the full path: $LAUNCHER" ;; esac
+# A portal window that is still open keeps running the old version, and starting the portal again only brings that
+# window to the front: say so.
+if command -v pgrep >/dev/null 2>&1 && pgrep -u "$(id -u)" -f -- '-m bc250_portal' >/dev/null 2>&1; then
+    info "A $APP_NAME window is still open with the version from before: close it, then start it again."
+fi

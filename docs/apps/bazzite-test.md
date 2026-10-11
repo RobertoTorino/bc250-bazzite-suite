@@ -102,8 +102,8 @@ about your system: read it before you post it. Security problems: see [SECURITY.
   during a run asks first and stops the tests cleanly. A run of a minute or more that finishes while
   you're in another window gives a desktop notification (*Settings → General*).
 * The app remembers its window size, the last page, the panel sizes and the stress settings.
-* **Show Logs** lists earlier runs, coloured like the live output; **Settings** has privacy options, the
-  help, a system overview, log cleanup, version information and **Print results**: it saves the Base and
+* **Show Logs** lists earlier runs, coloured like the live output; **Settings** has privacy options, a
+  system overview, log cleanup, version information and **Print results**: it saves the Base and
   Extended System scores and the other header boxes as a compact "BC-250 Bazzite Test Results" card
   (results.png), easy to share and compare with other users.
 * **Game details** records a game while you play, like MangoHud's logging: copy its launch line into the
@@ -115,7 +115,7 @@ about your system: read it before you post it. Security problems: see [SECURITY.
   out, whether the board was power-capped or lost clocks to heat, and any amdgpu errors the kernel
   logged while the game ran. Per game you can turn recording on or off and set the sample interval; a
   screenshot of the game is taken once during the first recorded session and shown on the page. FPS and
-  the frametime checks need MangoHud with logging on (see the Help).
+  the frametime checks need MangoHud with logging on (see [A game's FPS](#a-games-fps)).
 * **In-game overlay:** the app has its own overlay in its own style (*Show overlay* / *Test overlay* on
   the Game details page). With *Test overlay* it can be dragged anywhere on the screen; the position is
   saved and the in-game overlay (click-through, so it never steals a click from the game) appears
@@ -159,6 +159,153 @@ A stock BC-250 on the latest BIOS, set up as recommended and with every default 
   array, so 10/8/6/8 = 32 CUs counts as 24) and the pop-up warns that the CUs are not evenly assigned.
   The per-array counts come from test 21, which needs root and `umr`; without them the total is rounded
   down to a multiple of 8 (24, 32 or 40).
+
+## The window in detail
+
+**The left pane:** the Overview, one page per test category, History, Game details, Help (this chapter) and
+Settings.
+
+**The boxes at the top** count the latest result of every test over all runs, also after a restart: *Tests*
+available, *Finished* (tests with a result in the history), *Passed*, *Warnings*, *Failures* and *Info / hints*.
+The test buttons show that result too; their tooltip has its date. Behind *Warnings*, *Failures* and
+*Info / hints* are, per test, the WARNING, ERROR or INFO lines and the hints from the log of that result: click a
+test name to open its page, or *Show in log* to open the run log at that test.
+
+* **Health score:** passed and info tests count 100%, warnings 50% and failures 0%, averaged over the tests
+  that ran. Green from 90%, orange from 70%, red below.
+* **CPU score** (purple) and **GPU score** (blue): the last performance benchmark (test 42), where 100 is your
+  board in its stock configuration. Hover for details.
+
+**The status bar** (bottom right) shows live values, every 2 s:
+
+* **CPU / GPU:** whole-system load. The GPU load comes from the kernel sensor, the governor's patched
+  `gpu_metrics` (fix-metrics on) or the GPU time of your processes; hover to see which, and what a sample costs.
+* **🎮 Game:** while a game runs, its name (from Steam, or the game's .exe), the share of the CPU and GPU it
+  uses and, with MangoHud logging on, its FPS.
+* **↓ / ↑:** download and upload traffic over the wired and Wi-Fi interfaces, from `/proc/net/dev`.
+* **Hz:** the refresh rate of the display the app is on.
+* **Live:** switch it off to stop sampling. It also pauses while the window is minimised.
+
+It only reads a few files from `/proc` and `/sys` (about 1 ms per sample, a full process scan every 10 s) and
+slows down by itself if sampling gets expensive, so it is safe to keep running while you play.
+
+**Settings** opens a panel over the window (close it with ✕, Esc or a click outside): *Privacy* (what is stored
+and sent, history and log masking, administrator rights), *General* (language, notifications, copying the reports
+to the Desktop), *System overview* (BIOS version, CUs, cores, threads, speed test, NVMe size, free space and package
+count at a glance), *Logs & history* (clean up logs), *About* (version, build date, repository) and *Print
+results*.
+
+### Running and stopping
+
+* **Run all tests** never includes the benchmark (42), the disk speed test (43) or the internet speed test
+  (44); **Run all &lt;category&gt; tests** runs every test on that page.
+* Only one run happens at a time; the buttons are off while it runs.
+* **Stop** stops the current run: the tests first end their CPU and GPU load and remove their temporary files.
+  The test that was running goes back to not run.
+* A test takes the colour of the worst line it logged (error over warning over success over info). Its output
+  also streams into the terminal of the test's own category page. The **Hints** panel collects suggested fixes
+  (⚠) and background notes (ℹ).
+
+### Administrator password
+
+Most checks read root-only logs and sysfs, so the tests run through `sudo`. When sudo needs a password, a masked
+prompt appears; the password goes straight to sudo and is never stored or logged. sudo remembers it for its
+usual timeout, so you are not asked for every test. *Settings › Privacy* can turn sudo off (fewer checks, never
+a password) or make sudo forget the password right away.
+
+### Logs
+
+Every run is saved as `~/.local/share/bc250-bazzite-test/logs/<YYYYmmdd-HHMMSS>_<scope>.log`. **Show Logs** on a
+page lists that page's runs; *Show all logs* lists every run. With *Mask personal data in saved GUI logs* on
+(the default, *Settings › Privacy*), host and user name, home folder, serial numbers, MAC and IP addresses and
+the speed test's ISP and result URL are replaced by placeholders in these files; the terminal shows everything.
+
+Below the list of runs, **Files mentioned in this run** lists every log, CSV and config file the selected run
+refers to (the full report, the stress CSV, the GPU load tool log, the governor config, and so on). Click one to
+read it. A warning icon means the file is not on this machine; very large files show their last 2 MiB;
+root-only files show the `sudo less` command to use instead. For a CSV, **Show graph** plots it.
+
+**Clean up logs** (*Settings › Logs & history*) removes the run logs older than N days (default 30), or all logs.
+The dialog shows what goes before anything happens. Removing old logs keeps the results in the history; *Remove
+ALL* also empties the history. The full reports are owned by root, so removing them asks for your password.
+`bench-baseline.json` and the benchmark and speed test history CSVs are always kept.
+
+### History
+
+Every result is stored in a small SQLite database, `~/.local/share/bc250-bazzite-test/history.db`: per run the
+date, scope, active CUs and cores/threads (kernel version and mitigation state only when turned on in
+*Settings › Privacy*); per test the status and the number of hints; and the numbers worth comparing (benchmark
+scores, stress clocks, temperatures and power, disk and internet speeds). Full reports that are not in the
+history yet (in `/var/log/bc250-bazzite-test` and the Desktop folder) are imported once, at startup. The
+database grows by a few KB per run. The history and the logs are readable by your user only. The app checks the
+history at every start: when it is damaged or was changed outside the app, it is kept aside as
+`history.db.damaged-<date>` and a new, empty history starts.
+
+On the **History** page, **From** / **to** pick the dates and **All dates** shows everything again.
+
+* **One run selected:** its results per category, its measurements and the files it wrote. **Show logs** opens
+  its log and full report; click a test name to open its page.
+* **Two runs selected** (Ctrl-click or Shift-click): side by side, the older run on the left: the counts and
+  configuration, the tests whose result changed and every measurement with the difference. Green is better, red
+  is worse; differences under 2% count as the same (measurement noise). Untick *Only differences* to see every
+  test.
+
+Typical use: run everything and the benchmark, change something (CU unlock, BIOS, kernel, governor), run them
+again, and compare the two runs.
+
+### Integrity of the tests
+
+Before every run the app checks that the test files are exactly the ones that came with this version and that
+only an administrator can change them (see *Why `/opt`?* above). If not, no tests run, since they would run with
+administrator rights, and a red bar at the top says so: reinstall the app.
+
+### Graphs
+
+**Show graph** opens a chart window for the CSV files the tests write:
+
+* **Stress telemetry** (next to the stress settings): the latest stress run as panels for clocks, temperatures,
+  GPU busy, GPU power, GPU memory, fan, GPU voltage and load average, with the peaks on top. Pick older runs from
+  the *File* list. A clock that drops while the temperature climbs is thermal throttling; a line that simply
+  stops is the moment the board froze.
+* **Benchmark history** (Performance page): bar charts per run of the scores against the baseline, GPU FP32, CPU
+  multi- and single-thread, VRAM bandwidth and GPU clock. Bars are labelled *#run CUs threads*; hover for the
+  date, mitigations and kernel.
+* **Any CSV** in Show Logs: one panel per numeric column.
+
+Drag a rectangle to zoom in, right-click to zoom out, hover a line for its value. *Save as PNG* saves all panels
+as one image. Graphs need the `PyQt6-Charts` package, which the installer puts in the venv.
+
+### Stress test and benchmark settings
+
+* **Stress test (41):** *Stress duration* is how long the load runs (10–3600 s, default 120), *Sample interval*
+  the seconds between telemetry samples (default 2). It loads all CPU threads (`stress-ng`, or shell
+  busy-loops) and the GPU (`memtest_vulkan`, which also checks the VRAM for errors and is recommended, or
+  `vkpeak`, `vkmark`, `glmark2`, `vkcube`). This is a deliberate attempt to reproduce lockups under load: the
+  system is sluggish while it runs and may freeze. If it does, the last telemetry line is the board's final
+  operating point. The app asks before it starts.
+* **Benchmark (42):** *CPU time per phase* is the seconds per `stress-ng` phase (default 20); keep it the same
+  between runs you compare. The log also shows the theoretical FP32 peak for the detected CU count and clock: a
+  result far below it means unlocked CUs are not doing work. Close games and other heavy apps first. How to save
+  the baseline: [Performance score](#performance-score-comparing-cu-and-core-unlocks).
+
+### A game's FPS
+
+The FPS comes from MangoHud's log, which it writes while the game runs. Turn it on once in
+`~/.config/MangoHud/MangoHud.conf`:
+
+```ini
+output_folder=/home/<you>/mangohud-logs
+autostart_log=1
+log_interval=500
+```
+
+Create the folder, and make sure MangoHud is active for the game (for example the Steam launch option
+`mangohud %command%`). A log file is written per game session; delete old ones now and then. Without logging,
+the game's name and its CPU and GPU share are still shown.
+
+The **Game details** launch line does not work with the **Flatpak** version of Steam: the game would not start.
+Use the Steam that comes with Bazzite. The **Checks for the last session** always describe the newest session;
+older sessions keep their graphs.
 
 ## Output files
 

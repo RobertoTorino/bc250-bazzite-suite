@@ -43,6 +43,12 @@ def test_main_window_builds(sandbox, qapp):
     window.show()
     qapp.processEvents()                        # runs the deferred history load
     assert window.windowTitle() == INFO.display_name
+    from bc250_gui.readme import ReadmeView
+    rows = [window.nav.item(i).text() for i in range(window.nav.count())]
+    assert "Help" in rows and "Manual" not in rows                     # the chapter of the manual, as Help
+    assert isinstance(window.stack.widget(rows.index("Help")), ReadmeView)
+    assert "Help" not in window.settings_overlay.SECTIONS               # no second help in Settings
+    assert window.settings_overlay.pages.count() == len(window.settings_overlay.SECTIONS)
     window.shutdown()
     window.close()
     # Dispose of the window here, while the event loop is alive, instead of leaving it to whenever Python's garbage

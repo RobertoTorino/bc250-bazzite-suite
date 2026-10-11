@@ -63,7 +63,7 @@ def main() -> int:
 
     app = QApplication([sys.argv[0], *qt_args])
     request = instance.PROFILE + args.profile if args.profile else instance.SHOW
-    if instance.forward(request):
+    if instance.already_running(request):
         if args.profile:
             print(f"Profile '{args.profile}' handed to the running {APP_NAME}")
         return 0

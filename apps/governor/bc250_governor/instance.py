@@ -4,21 +4,28 @@
 A second launch does not start a second poller and tray icon: it hands its request to the running instance
 (`forward`) and exits. Requests are one line each: `show` raises the window, `profile <name>` applies a saved
 profile. This is what makes `bc250-governor-manager --profile <name>` usable as a desktop hotkey command.
+
+Two launches at the same moment both find no running instance yet, since the window and its socket take a while
+to appear; so `already_running` also takes a lock file at once, and a launch that finds it taken waits for that
+instance's socket instead of starting a second poller. The lock goes with its process.
 """
 
 from __future__ import annotations
 
 import os
+import time
 
-from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QDir, QLockFile, QObject, pyqtSignal
 from PyQt6.QtNetwork import QLocalServer, QLocalSocket
 
 from . import APP_ID
 
 SERVER_NAME = f"{APP_ID}-{os.getuid()}"
 CONNECT_MS = 500
+STARTUP_WAIT_S = 10                     # how long a launch waits for an instance that is still starting
 SHOW = "show"
 PROFILE = "profile "
+_locks: dict[str, QLockFile] = {}       # held for the life of the process
 
 
 def forward(message: str, name: str = SERVER_NAME) -> bool:
@@ -46,6 +53,23 @@ def forward(message: str, name: str = SERVER_NAME) -> bool:
         socket.waitForDisconnected(CONNECT_MS)
 
     return True
+
+
+def already_running(message: str, name: str = SERVER_NAME) -> bool:
+    """True when an instance runs (or is starting) and `message` was handed to it; False: this launch runs."""
+    if forward(message, name):
+        return True
+    lock = QLockFile(os.path.join(QDir.tempPath(), f"{name}.lock"))
+    lock.setStaleLockTime(0)            # never stale by age: only when its process is gone
+    if lock.tryLock(0):
+        _locks[name] = lock
+        return False
+    end = time.monotonic() + STARTUP_WAIT_S
+    while time.monotonic() < end:
+        if forward(message, name):
+            return True
+        time.sleep(0.1)
+    return True                         # it holds the lock but does not answer: still no second instance
 
 
 class InstanceServer(QObject):

@@ -1,3 +1,12 @@
+Changelog: 11-10-2026 19:02:46
+
+instance.py: Two launches at the same moment (a double-click on a Desktop icon that opens on one click) no longer
+open two windows. Both found no running instance, since the window and its socket take a while to appear, and the
+second then removed the first one's socket. The first launch now takes a lock file at once; a launch that finds it
+taken waits up to 10 s for that instance's socket and hands over instead. A crashed instance's lock is stale, so the
+next launch starts as before. The apps that bundle core (portal, Bazzite Test, ACE Queues, BIOS Reader, Memory
+Manager, System Overlay, Portal dependency checker) get it with their next release. Tests in tests/test_instance.py.
+
 Changelog: 11-10-2026 07:28:24
 
 Version 0.1.2. Shared UI improvements

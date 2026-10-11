@@ -23,7 +23,6 @@ from bc250_core.settings import SettingsStore
 
 from . import APP_NAME, INFO, LOGO_PATH, REPO_URL, ROOT, __version__
 from .dashboard import ACCENT, RED, header_font
-from .help import HelpView
 from .history import db_path
 from .logstore import log_dir
 from .sysoverview import SystemOverviewPage
@@ -234,14 +233,6 @@ class GeneralPage(QWidget):
         layout.addStretch(1)
 
 
-class HelpPage(QWidget):
-    def __init__(self, parent: QWidget | None = None):
-        super().__init__(parent)
-        layout = QVBoxLayout(self)
-        layout.addWidget(_heading("Help"))
-        layout.addWidget(HelpView(), 1)
-
-
 class PrintResultsPage(QWidget):
     print_results_requested = pyqtSignal()
 
@@ -380,7 +371,7 @@ class SettingsOverlay(QWidget):
     forget_sudo_requested = pyqtSignal()
     cleanup_requested = pyqtSignal()
     print_results_requested = pyqtSignal()
-    SECTIONS = ("Privacy", "General", "System overview", "Logs & history", "About", "Help", "Print results")
+    SECTIONS = ("Privacy", "General", "System overview", "Logs & history", "About", "Print results")
 
     def __init__(self, settings: AppSettings, script: str, sudo_locked: bool, parent: QWidget,
                  history_provider=lambda: None):
@@ -426,7 +417,6 @@ class SettingsOverlay(QWidget):
         self.logs.cleanup_requested.connect(self.cleanup_requested)
         self.pages.addWidget(_scroll(self.logs))
         self.pages.addWidget(_scroll(AboutPage(script)))
-        self.pages.addWidget(HelpPage())
         self.print_page = PrintResultsPage()
         self.print_page.print_results_requested.connect(self.print_results_requested)
         self.pages.addWidget(self.print_page)

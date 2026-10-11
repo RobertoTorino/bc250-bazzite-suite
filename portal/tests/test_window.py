@@ -313,7 +313,9 @@ def test_no_development_section_without_development_apps(qapp, home, settings_di
 
 def test_checkout_only_app_has_no_update(qapp, home, settings_dir, tmp_path, launched):
     entries = load(MANIFEST) + load_checkout(MANIFEST)
-    w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
+    sources = FakeSources(tmp_path / "work")
+    sources.checkout = Path("/checkout")                                    # a portal from a checkout
+    w = mw.MainWindow(entries, sources, Records(tmp_path / "installed.json"))
     card = w.cards["suite-releases"]
     assert w.dev_grid.indexOf(card) >= 0
     (home / ".local" / "bin" / "bc250-release").write_text("#!/bin/sh\n")
@@ -338,3 +340,20 @@ def test_portal_offer_names_the_app_updates(qapp, home, settings_dir, tmp_path, 
     assert wait_for(lambda: not same.portal_button.isHidden())
     assert same.portal_button.text().endswith("Portal 99.0.0 available") and "same app versions" in same.portal_button.toolTip()
     same.close()
+
+
+def test_checkout_only_apps_greyed_without_a_checkout(qapp, home, settings_dir, tmp_path, launched):
+    entries = load(MANIFEST) + load_checkout(MANIFEST)
+    w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))  # a release
+    for key in ("suite-releases", "installer-tests"):
+        card = w.cards[key]
+        assert w.dev_grid.indexOf(card) >= 0 and card.status == "Needs a checkout"
+        assert not card.install_button.isEnabled() and not card.uninstall_button.isEnabled()
+        assert "./install.sh in the repository" in card.icon.toolTip() and "./install.sh" in card.install_button.toolTip()
+        assert card.icon.icon().cacheKey() == card._icons[1].cacheKey()      # greyed
+    (home / ".local" / "bin" / "bc250-release").write_text("#!/bin/sh\n")   # installed from a checkout before
+    w.refresh()
+    card = w.cards["suite-releases"]
+    assert card.icon.isEnabled() and not card.uninstall_button.isEnabled()  # opens; cannot be removed from here
+    assert w.cards["demo-tool"].install_button.isEnabled()                  # released development apps as usual
+    w.close()

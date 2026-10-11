@@ -50,8 +50,8 @@ def main() -> int:
     if args.source == "checkout" and checkout is None:
         QMessageBox.critical(None, APP_NAME, "--source checkout: the portal is not running from a suite checkout.")
         return 1
-    # The checkout-only apps run from the checkout: listed only when the apps install from one.
-    shown = entries + (checkout_only if checkout is not None else [])
+    # The checkout-only apps run from the checkout: without one they are listed greyed, with how to get them.
+    shown = entries + checkout_only
     sources = Sources(state_dir() / "releases", checkout=checkout, download=http_download(INFO.user_agent))
     # One instance: a second launch brings the running window to the front and exits.
     if instance.already_running(INFO.app_id):

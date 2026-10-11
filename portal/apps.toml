@@ -20,8 +20,8 @@
 #   launch          [[label, command]] to open the app; none for apps that are not programs
 #
 # [checkout.<name>]: an app that runs from the suite checkout and is never released (apps/<name>/.checkout-only).
-# Only a portal that runs from a checkout, or was installed from one, lists it, under "Development only"; its
-# install and uninstall run in apps/<name> of that checkout. The same fields as above, without tag, sha256 and
+# Listed under "Development only"; only a portal that runs from a checkout, or was installed from one, can install
+# it (its install and uninstall run in apps/<name> of that checkout). Without a checkout its tile is greyed. The same fields as above, without tag, sha256 and
 # required, plus an optional folder (default apps/<name>) for one that lives elsewhere in the checkout.
 
 [apps.bazzite-test]

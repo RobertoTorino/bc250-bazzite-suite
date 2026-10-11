@@ -151,7 +151,7 @@ class MainWindow(QMainWindow):
         self.nav.addItem("Game details")
         self.stack.addWidget(InGamePage())
 
-        self.nav.addItem("Manual")
+        self.nav.addItem("Help")                # the app's chapter of the suite manual
         self.stack.addWidget(ReadmeView())
         # Settings is not a page: it opens a panel over the window and the nav keeps the current page.
         self.nav.addItem("Settings")

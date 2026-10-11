@@ -9,6 +9,11 @@ A second launch does not open a second window: it asks the running instance to s
     window.show()
     server = instance.serve(APP_ID, window)     # keep the reference while the app runs
 
+Two launches at the same moment (a double-click on a Desktop icon that opens on one click) both find no running
+instance yet: the window and its socket take a while to appear. So the first launch also takes a lock file at once;
+a launch that finds it taken waits for that instance's socket instead of opening a second window. The lock goes
+with its process (Qt sees a dead holder's lock as stale).
+
 On Wayland a window may only take the focus with an activation token; a launch from the menu or the Desktop gets
 one (XDG_ACTIVATION_TOKEN), and the second launch hands it to the running instance, which Qt then uses.
 The apps that are not on bc250_core yet carry a copy of this file; tools/tests checks that the copies match."""
@@ -16,13 +21,16 @@ The apps that are not on bc250_core yet carry a copy of this file; tools/tests c
 from __future__ import annotations
 
 import os
+import time
 
-from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QDir, QLockFile, QObject, pyqtSignal
 from PyQt6.QtNetwork import QLocalServer, QLocalSocket
 from PyQt6.QtWidgets import QWidget
 
 CONNECT_MS = 500
+STARTUP_WAIT_S = 10                     # how long a launch waits for an instance that is still starting
 SHOW = "show"
+_locks: dict[str, QLockFile] = {}       # held for the life of the process
 
 
 def server_name(app_id: str) -> str:
@@ -95,10 +103,28 @@ def raise_window(window: QWidget) -> None:
     window.activateWindow()
 
 
+def lock_path(name: str) -> str:
+    return os.path.join(QDir.tempPath(), f"{name}.lock")
+
+
 def already_running(app_id: str) -> bool:
-    """True when this app already runs for this user; it has been asked to show its window."""
-    token = os.environ.get("XDG_ACTIVATION_TOKEN", "")
-    return forward(f"{SHOW} {token}".strip(), server_name(app_id))
+    """True when this app already runs (or is starting) for this user; it has been asked to show its window."""
+    name = server_name(app_id)
+    message = f"{SHOW} {os.environ.get('XDG_ACTIVATION_TOKEN', '')}".strip()
+    if forward(message, name):
+        return True
+    lock = QLockFile(lock_path(name))
+    lock.setStaleLockTime(0)            # never stale by age: only when its process is gone
+    if lock.tryLock(0):
+        _locks[name] = lock
+        return False                    # the first launch: this one runs
+    # Another launch holds the lock and is still building its window: hand over once its socket is up.
+    end = time.monotonic() + STARTUP_WAIT_S
+    while time.monotonic() < end:
+        if forward(message, name):
+            return True
+        time.sleep(0.1)
+    return True                         # it holds the lock but does not answer: still no second window
 
 
 def serve(app_id: str, window: QWidget) -> InstanceServer:
