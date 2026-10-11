@@ -45,15 +45,16 @@ check "portal installs apps from releases" "[ ! -e $T/opt/bc250-bazzite-suite/su
 check "record has the bundled tag" "grep -q '\"bazzite-test\": \"$BT\"' $D/bc250-bazzite-suite/portal/installed.json"
 check "desktop icons removed" "[ ! -e $HOME/Desktop/bc250-bazzite-suite.desktop ] && [ ! -e $HOME/Desktop/bc250-bazzite-test.desktop ]"
 
-echo "== 3. uninstall keeps the venv for another suite app"
+echo "== 3. uninstall keeps the venv for another suite app, drops the state of apps that are gone"
 touch "$D/bc250-bazzite-suite/venv-users/bc250-governor-manager"
+mkdir -p "$D/bc250-bazzite-suite/portal/releases/governor-v0.0.1" "$D/bc250-bazzite-suite/portal/releases/local-bios-reader"
 bash "$T/opt/bc250-bazzite-suite/install.sh" --uninstall > "$T/log3" 2>&1; rc=$?; logs+=("$T/log3")
 check "exit 0" "[ $rc -eq 0 ]"
 check "portal and bazzite-test gone from /opt" "[ -z \"\$(ls $T/opt)\" ]"
 check "launchers gone" "[ ! -e $HOME/.local/bin/bc250-bazzite-suite ] && [ ! -e $HOME/.local/bin/bc250-bazzite-test ]"
 check "venv kept, only governor left" "[ -x $D/bc250-bazzite-suite/venv/bin/python ] && [ \"\$(ls $D/bc250-bazzite-suite/venv-users)\" = bc250-governor-manager ]"
 check "mentions what is left" "grep -q 'Still installed: bc250-governor-manager' $T/log3"
-check "state kept without --purge" "[ -f $D/bc250-bazzite-suite/portal/installed.json ]"
+check "no state left: no app it installed remains" "[ ! -e $D/bc250-bazzite-suite/portal ]"
 
 echo "== 4. reinstall and purge as the last user"
 rm "$D/bc250-bazzite-suite/venv-users/bc250-governor-manager"
@@ -78,6 +79,7 @@ json.dump(data, open(sys.argv[1], "w"))
 PY
 installed() { [ -x "$HOME/.local/bin/$1" ]; }
 check "both apps installed" "installed bc250-system-overlay && installed bc250-bios-reader"
+mkdir -p "$D/bc250-bazzite-suite/portal/releases/system-overlay-v0.0.1"   # an older release it was updated from
 printf 'y\nc\n' | BC250_INTERACTIVE=1 bash "$SUITE/install.sh" --uninstall >> "$T/log5" 2>&1; rc=$?
 check "cancel: exit 1" "[ $rc -eq 1 ]"
 check "cancel: nothing removed" "installed bc250-system-overlay && installed bc250-bios-reader && installed bc250-bazzite-suite && installed bc250-bazzite-test"
@@ -88,9 +90,17 @@ check "asked about both (twice: the cancel run too), again after an unknown answ
 check "skipped app stays" "installed bc250-system-overlay && [ -d $D/bc250-bazzite-suite/portal/releases/local-system-overlay ]"
 check "chosen app gone" "! installed bc250-bios-reader && [ ! -e $D/bc250-bazzite-suite/portal/releases/local-bios-reader ]"
 check "record drops the chosen app" "! grep -q bios-reader $D/bc250-bazzite-suite/portal/installed.json && grep -q system-overlay $D/bc250-bazzite-suite/portal/installed.json"
+check "record and folder of bazzite-test gone" "! grep -q bazzite-test $D/bc250-bazzite-suite/portal/installed.json && [ ! -e $D/bc250-bazzite-suite/portal/releases/local-bazzite-test ]"
+check "older release of the skipped app gone" "[ ! -e $D/bc250-bazzite-suite/portal/releases/system-overlay-v0.0.1 ]"
 check "portal and bazzite-test gone" "! installed bc250-bazzite-suite && ! installed bc250-bazzite-test"
 check "mentions what is left" "grep -q 'Still installed: bc250-system-overlay' $T/log5"
 (cd "$D/bc250-bazzite-suite/portal/releases/local-system-overlay" && bash install.sh --uninstall) >> "$T/log5" 2>&1
+
+echo "== 6. after an uninstall that kept nothing, no suite folder is left"
+bash "$SUITE/install.sh" > "$T/log6" 2>&1 && bash "$T/opt/bc250-bazzite-suite/install.sh" --uninstall >> "$T/log6" 2>&1
+rc=$?; logs+=("$T/log6")
+check "exit 0" "[ $rc -eq 0 ]"
+check "suite data dir gone (settings stay in ~/.config)" "[ ! -e $D/bc250-bazzite-suite ]"
 
 [ $fail -eq 0 ] && echo "ALL OK" || for l in "${logs[@]}"; do echo "--- $l"; cat "$l"; done
 exit $fail

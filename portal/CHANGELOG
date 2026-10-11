@@ -1,3 +1,21 @@
+Changelog: 11-10-2026 18:35:10
+
+Release 0.9.6. more robust uninstall
+
+Changelog: 11-10-2026 18:31:14
+
+After a successful install or update, the app's other release folders in the portal's state (older releases, or a
+staged checkout copy) are removed; only the one it was installed from stays, for its uninstaller. Until now every
+release an app ever had stayed there. install.sh --uninstall without --purge keeps only the records and release
+folders of the apps that stay installed (Bazzite Test's go with it), removes the state folder when none is left, and
+the suite's data folder when it is empty. The installer test checks both (steps 3, 5 and 6).
+
+Changelog: 11-10-2026 18:15:13
+
+A portal from a checkout also lists BC-250 Installer Tests under Development only ([checkout.installer-tests] in
+apps.toml). A [checkout.<name>] table may name its folder (folder = "...", default apps/<name>) for a tool that lives
+elsewhere in the checkout, here tools/installer-tests/gui.
+
 Changelog: 11-10-2026 17:42:39
 
 Release 0.9.5.

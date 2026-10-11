@@ -19,7 +19,8 @@ tile, left to right in the order of `apps.toml` and as many to a row as the wind
 **Development only**, below the apps, opens a separate section with tools for working on the suite:
 [Simple Demo Tool](other-tools/simple-demo-tool.md), [Portal dependency checker](apps/dependency-checker.md)
 and, when the portal runs from a suite checkout, the release front end
-[BC250 Suite Releases](#the-release-front-end). You do not need them to use the board. The section is closed until
+[BC250 Suite Releases](#the-release-front-end) and BC-250 Installer Tests (`tools/installer-tests/gui`), a window
+that runs the installer tests one at a time. You do not need them to use the board. The section is closed until
 you open it, and the portal remembers whether it was open.
 
 - `apps/` may also contain standalone tools (with a `.standalone` marker) that do not appear in `apps.toml`
@@ -63,13 +64,37 @@ What it installs:
 | The portal, its `apps.toml` and the `bc250_core` it was tested with | `/opt/bc250-bazzite-suite-v<version>`, root-owned, with `/opt/bc250-bazzite-suite` pointing at it | Same as bazzite-test's engine: code that starts root-run installers is not writable by a normal user |
 | BC-250 Bazzite Test (bundled in the portal release) | `/opt/bc250-bazzite-test`, through its own installer | Its test engine runs as root and must be root-owned |
 | The suite's shared venv with PyQt6 | `~/.local/share/bc250-bazzite-suite/venv` | One copy of the ~100 MB of Qt for all suite apps; removed with the last app that uses it (`venv-users/`) |
-| What the portal installed, and the releases it installed from | `~/.local/share/bc250-bazzite-suite/portal/` | So each app's matching uninstaller is at hand |
+| What the portal installed, and the release each app was installed from | `~/.local/share/bc250-bazzite-suite/portal/` | So each app's matching uninstaller is at hand; an update removes the previous release |
 | Launcher, menu entry, Desktop icon | `~/.local/bin/bc250-bazzite-suite`, `~/.local/share/applications/`, the Desktop | |
 
 Uninstall: `/opt/bc250-bazzite-suite/install.sh --uninstall`. This removes the portal and Bazzite Test and
 keeps settings; add `--purge` to remove those too. First it asks about each other suite app that is installed:
 `y` uninstalls it, `s` skips it (it stays installed), `c` cancels the whole uninstall before anything is removed.
-Those apps keep their own settings, also with `--purge`.
+Those apps keep their own settings, also with `--purge`. Of the portal's own records, only those of the apps you
+kept stay, with the release each one's uninstaller needs; with no app left, that folder goes too.
+
+### What stays after an uninstall
+
+Uninstalling an app removes the app. Two things stay on purpose: **changes it made to the board**, which you undo
+in the app (or with its script) before you uninstall it, and **your settings and results**, which `--purge`
+removes.
+
+| App | Still active on the board after its uninstall | Undo it with |
+|---|---|---|
+| CU Bisect / Unlock | A persisted CU unlock: `bc250-cu-unlock.service` at every boot | **Uninstall** in the Unlock app, or `sudo /usr/local/sbin/bc250-cu-unlock.sh --uninstall`; stock CUs after the next reboot |
+| Cores Bisect / Unlock | A persisted core unlock: its boot service | **Uninstall** in the Unlock app, or `sudo /usr/local/sbin/bc250-cores-unlock.sh --uninstall`; stock cores after the next full power off |
+| GPU OC Bisect | The installed overclock in the governor's `config.toml` | **Uninstall** in the app, or `bc250-gpu-oc-bisect.sh --uninstall`: restores the backup |
+| Persistent ACPI | The ACPI override (`/boot/acpi_override.cpio` and its GRUB line) | **Uninstall** in the app, or `sudo ./bc250-acpi-override.sh --uninstall`; then reboot |
+| ACE Queues | An installed patched driver | **Remove** in the app |
+| Memory Manager | The VRAM split in CMOS | Set the split back in the app (or **Undo**) and reboot |
+
+The GPU Governor Manager changes nothing of its own: the governor and its `config.toml` belong to the governor
+package, which stays installed. HelixSR keeps the imported payload (`~/.local/share/bc250-bazzite-helixsr-gui`) and
+leaves the games it deployed to as they are; **Remove** each deployment in the app first.
+
+Settings live in `~/.config/bc250-*`, results and logs in `~/.local/share/bc250-*` (Bazzite Test also writes its
+reports to `~/Desktop/bc250-bazzite-test`). Each app's `install.sh --uninstall --purge` removes them; the
+portal's `--purge` does so for the portal and Bazzite Test.
 
 ## Development
 
@@ -249,7 +274,8 @@ tests pin their own local builds instead of the published ones.
 Create apps/<name>/ with VERSION 0.1.0, a CHANGELOG, a LICENSE and a .gitignore. For an app that stays outside the
 portal, add `.standalone` instead of adding it to `portal/apps.toml`. An app that runs from the checkout and is
 never released also gets `.checkout-only`, and a `[checkout.<name>]` table in `apps.toml` (no tag) when a portal from
-a checkout should list it under "Development only".
+a checkout should list it under "Development only". Such a tool outside `apps/` (like
+`tools/installer-tests/gui`) names its folder with `folder = "..."` and has the marker there.
 Add an install.sh that supports --uninstall and puts a launcher in ~/.local/bin/, plus tests under tests/.        
 Add the app to ./test.sh, the CI shellcheck list and an installer test in tools/installer-tests/.       
 Add its [apps.<name>] card to portal/apps.toml: name, summary, changes_board (and development = true for a tool

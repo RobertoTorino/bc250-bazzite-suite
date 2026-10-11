@@ -177,9 +177,12 @@ def test_install_success_records_tag(window, launched, monkeypatch, home):
     _, exit_file = launched[0]
     (home / ".local" / "bin" / "bc250-governor-manager").write_text("#!/bin/sh\n")
     exit_file.write_text("0\n")
+    old = window.sources.work / "governor-v0.0.9"                          # the release it updates from
+    old.mkdir(parents=True)
     window._check_pending()
     assert window.pending is None
     assert window.records.get("governor") == entry.tag
+    assert not old.exists() and window.sources.folder(entry).is_dir()      # only the installed release stays
     assert window.cards["governor"].status == "Installed"
 
 

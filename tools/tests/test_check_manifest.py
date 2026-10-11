@@ -93,7 +93,8 @@ def test_shipped_manifest_passes_without_required_tags():
     assert {"demo-tool", "dependency-checker"} <= {entry.key for entry in entries if entry.development}
     checkout = cm.manifest.load_checkout(cm.SUITE / cm.MANIFEST)
     assert cm.check_checkout_entries(checkout) == []
-    assert [entry.key for entry in checkout] == ["suite-releases"]
+    assert [(entry.key, entry.folder) for entry in checkout] == [
+        ("suite-releases", "apps/suite-releases"), ("installer-tests", "tools/installer-tests/gui")]
 
 
 def test_checkout_tables_match_the_checkout_only_folders():
@@ -101,6 +102,8 @@ def test_checkout_tables_match_the_checkout_only_folders():
     errors = cm.check_checkout_entries([entry])
     assert any("suite-releases has .checkout-only" in e for e in errors)
     assert any("[checkout.governor]: apps/governor has no .checkout-only" in e for e in errors)
+    elsewhere = cm.manifest.AppEntry(key="gui", name="G", summary="s", tag="", checkout_only=True, folder="tools")
+    assert any("[checkout.gui]: tools has no .checkout-only" in e for e in cm.check_checkout_entries([elsewhere]))
 
 
 def test_checkout_table_change_needs_a_patch_bump():

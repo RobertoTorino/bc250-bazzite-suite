@@ -130,6 +130,17 @@ def test_checkout_stages_app_with_core(tmp_path):
     assert not (acpi_folder / "bc250_core").exists()                         # shell only: no core
 
 
+def test_prune_keeps_only_the_installed_release(tmp_path):
+    work = tmp_path / "work"
+    for name in ("cu-bisect-v0.9.0", "cu-bisect-v1.0.0", "local-cu-bisect", "cores-bisect-v0.1.0", ".x.part"):
+        (work / name).mkdir(parents=True)
+    Sources(work).prune(ENTRY)                                              # installed cu-bisect-v1.0.0
+    assert sorted(p.name for p in work.iterdir()) == [".x.part", "cores-bisect-v0.1.0", "cu-bisect-v1.0.0"]
+    Sources(work, checkout=SUITE).prune(ENTRY)                              # then from the checkout
+    assert sorted(p.name for p in work.iterdir()) == [".x.part", "cores-bisect-v0.1.0"]   # local-cu-bisect not made
+    Sources(tmp_path / "none").prune(ENTRY)                                 # no folder yet: nothing to do
+
+
 def test_checkout_only_app_runs_in_its_checkout_folder(tmp_path):
     entry = AppEntry(key="suite-releases", name="SR", summary="s", tag="", checkout_only=True, install=("x",),
                      uninstall=("y",), detect=("z",))
@@ -139,6 +150,8 @@ def test_checkout_only_app_runs_in_its_checkout_folder(tmp_path):
     assert (SUITE / "apps" / "suite-releases" / "install.sh").is_file()      # never removed
     with pytest.raises(SourceError, match="no"):
         Sources(tmp_path / "work").prepare(entry)                          # a portal from a release has no checkout
+    gui = replace(entry, key="installer-tests", folder="tools/installer-tests/gui")
+    assert sources.prepare(gui) == SUITE / "tools/installer-tests/gui"      # a folder outside apps/
 
 
 def test_suite_checkout(tmp_path, monkeypatch):

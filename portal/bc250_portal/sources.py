@@ -6,10 +6,11 @@
   target folder.
 * Checkout (development): the app staged from the local suite repo with tools/stage_app.py, exactly as the release
   workflow builds it, so the portal can be tried before anything is released.
-* A checkout-only app ([checkout.<key>] in apps.toml): its own folder in the suite checkout, as it is, since it runs
-  from there. Never staged, never removed.
+* A checkout-only app ([checkout.<key>] in apps.toml): its own folder in the suite checkout (apps/<key>, or the
+  folder apps.toml names), as it is, since it runs from there. Never staged, never removed.
 
-The extracted folder is kept under the portal's state dir, so the matching uninstaller is at hand later.
+The extracted folder is kept under the portal's state dir, so the matching uninstaller is at hand later; after an
+install the app's other folders there (older releases) are removed.
 Nothing here is Qt: the GUI runs prepare() in a worker thread."""
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import re
 import shutil
 import tarfile
 import urllib.request
@@ -30,6 +32,7 @@ from bc250_core.platform import expand
 from .manifest import AppEntry
 
 Download = Callable[[str, Path], None]          # url, destination file
+_RELEASE_FOLDER = re.compile(r"^(?P<key>[a-z0-9-]+)-v\d+\.\d+\.\d+$")
 TIMEOUT = 30
 
 
@@ -98,7 +101,7 @@ class Sources:
         if entry.checkout_only:
             if self.checkout is None:
                 raise SourceError(f"{entry.name} runs from a suite checkout, and this portal has none")
-            return self.checkout / "apps" / entry.key
+            return self.checkout / (entry.folder or f"apps/{entry.key}")
         return self.work / ("local-" + entry.key if self.local else entry.tag)
 
     def prepare(self, entry: AppEntry) -> Path:
@@ -159,6 +162,18 @@ class Sources:
             return folder
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
+
+    def prune(self, entry: AppEntry) -> None:
+        """After an install: the app's other folders here (older releases, or a staged checkout copy) go; only the
+        one it was installed from stays, for its uninstaller."""
+        if entry.checkout_only or not self.work.is_dir():
+            return
+        keep = self.folder(entry)
+        for path in self.work.iterdir():
+            match = _RELEASE_FOLDER.match(path.name)
+            mine = (match is not None and match["key"] == entry.key) or path.name == f"local-{entry.key}"
+            if mine and path != keep and path.is_dir():
+                shutil.rmtree(path, ignore_errors=True)
 
     def forget(self, entry: AppEntry) -> None:
         if not entry.checkout_only:                 # that folder is the checkout's own

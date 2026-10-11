@@ -1,6 +1,15 @@
-Changelog: 11-10-2026 11:44:16
+Changelog: 11-10-2026 18:15:13
+
+A .checkout-only marker: it runs from the checkout and is never released. A portal from a checkout lists it under
+Development only.
+
+Changelog: 11-10-2026 18:11:09
 
 Add a desktop GUI for selecting and running installer tests.
 Add application and documentation icons.
 Add a per-user desktop installer and uninstaller.
 Show a green checkmark for passing tests and a red cross for failures.
+Prevent duplicate test labels from overlapping the checkbox labels.
+Find the Homebrew fakeroot binary when desktop launchers provide a limited PATH.
+Keep completed test results visible when starting subsequent runs.
+Show the app icon beside the title in the window header.

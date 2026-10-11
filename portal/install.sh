@@ -179,6 +179,47 @@ if isinstance(data, dict) and data.pop(key, None) is not None:
 PY
 }
 
+# After the uninstall without --purge: keep only what an app that is still installed needs (its record and the
+# release folder its uninstaller runs from); records and folders of apps that are gone, and Bazzite Test's, go.
+# With nothing left, the portal's state folder goes too.
+prune_state() {
+    local manifest="$SRC/apps.toml"
+    [ -f "$LINK/apps.toml" ] && manifest="$LINK/apps.toml"
+    [ -d "$STATE_DIR" ] || return 0
+    python3 - "$manifest" "$STATE_DIR" <<'PY'
+import json, os, re, shutil, sys, tomllib
+from pathlib import Path
+manifest, state = Path(sys.argv[1]), Path(sys.argv[2])
+apps = tomllib.loads(manifest.read_text(encoding="utf-8")).get("apps", {})
+try:
+    records = json.loads((state / "installed.json").read_text(encoding="utf-8"))
+except (OSError, ValueError):
+    records = {}
+records = records if isinstance(records, dict) else {}
+def installed(key):
+    app = apps.get(key)
+    if app is None:
+        return True                     # not in this portal's list: unknown, so kept
+    return not app.get("required") and any(Path(os.path.expandvars(os.path.expanduser(p))).exists()
+                                           for p in app.get("detect", []))
+records = {k: v for k, v in records.items() if installed(k)}
+keep = {f"local-{k}" if v == "local" else v for k, v in records.items()}
+releases = state / "releases"
+if releases.is_dir():
+    for path in releases.iterdir():
+        match = re.match(r"^(.+)-v\d+\.\d+\.\d+$", path.name)
+        key = match[1] if match else path.name.removeprefix("local-")
+        if path.name not in keep and (key in apps or key not in records):
+            shutil.rmtree(path, ignore_errors=True)
+if records:
+    tmp = state / "installed.tmp"
+    tmp.write_text(json.dumps(records, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    tmp.replace(state / "installed.json")
+else:
+    shutil.rmtree(state, ignore_errors=True)
+PY
+}
+
 if $UNINSTALL; then
     uninstall_other_apps
     if [ -f "$OPT_DIR/$BT_ID/install.sh" ]; then
@@ -187,6 +228,7 @@ if $UNINSTALL; then
         $PURGE && bt_args+=(--purge)
         bash "$OPT_DIR/$BT_ID/install.sh" "${bt_args[@]}"
     fi
+    $PURGE || prune_state
     info "Removing the portal's launcher and menu entry"
     remove_menu_entries
     info "Removing $LINK and the installed versions (sudo)"
@@ -195,8 +237,8 @@ if $UNINSTALL; then
     if $PURGE; then
         info "Removing the portal's settings and state"
         rm -rf "${STATE_DIR:?}" "${CONFIG_DIR:?}/$APP_ID"
-        rmdir "$SUITE_DIR" 2>/dev/null || true
     fi
+    rmdir "$SUITE_DIR" 2>/dev/null || true             # nothing of the suite left in it
     others=""
     if [ -d "$VENV_USERS" ]; then others=$(ls "$VENV_USERS" | tr '\n' ' '); fi
     [ -z "$others" ] || info "Still installed: $others- remove them with their own uninstallers (or reinstall the portal)."

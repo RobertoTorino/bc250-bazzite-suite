@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import QApplication
 from installer_test_gui import TESTS_DIR
 from installer_test_gui import APP_DIR
 from installer_test_gui.main_window import MainWindow
+from installer_test_gui import runner
 from installer_test_gui.runner import InstallerTestRunner, discover_tests
 
 INSTALLER = APP_DIR / "install.sh"
@@ -27,6 +28,40 @@ def test_discovery_excludes_shared_shims(tmp_path: Path) -> None:
         (tmp_path / name).write_text("#!/usr/bin/env bash\n", encoding="utf-8")
 
     assert [path.name for path in discover_tests(tmp_path)] == ["alpha.sh", "zeta.sh"]
+
+
+def test_runner_adds_homebrew_fakeroot_directory_to_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_homebrew_bin = tmp_path / "linuxbrew" / "bin"
+    fake_homebrew_bin.mkdir(parents=True)
+    fakeroot = fake_homebrew_bin / "fakeroot"
+    fakeroot.write_text("#!/bin/sh\n", encoding="utf-8")
+    fakeroot.chmod(0o755)
+    monkeypatch.setattr(runner, "HOMEBREW_BIN_DIRS", (fake_homebrew_bin,))
+
+    assert runner._path_with_fakeroot("/usr/bin:/bin") == f"{fake_homebrew_bin}:/usr/bin:/bin"
+    assert runner._path_with_fakeroot(f"{fake_homebrew_bin}:/usr/bin") == f"{fake_homebrew_bin}:/usr/bin"
+
+
+def test_runner_process_can_find_fakeroot_from_homebrew(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_homebrew_bin = tmp_path / "linuxbrew" / "bin"
+    fake_homebrew_bin.mkdir(parents=True)
+    fakeroot = fake_homebrew_bin / "fakeroot"
+    fakeroot.write_text("#!/bin/sh\n", encoding="utf-8")
+    fakeroot.chmod(0o755)
+    script = tmp_path / "check-fakeroot.sh"
+    script.write_text("command -v fakeroot\n", encoding="utf-8")
+    monkeypatch.setattr(runner, "HOMEBREW_BIN_DIRS", (fake_homebrew_bin,))
+    installer_runner = InstallerTestRunner(tmp_path, tmp_path)
+    output: list[str] = []
+    loop = QEventLoop()
+    installer_runner.output.connect(output.append)
+    installer_runner.run_finished.connect(loop.quit)
+    QTimer.singleShot(5000, loop.quit)
+
+    installer_runner.start([script])
+    loop.exec()
+
+    assert "".join(output).strip() == str(fakeroot)
 
 
 def test_runner_executes_selected_tests_in_order_and_continues_after_failure(tmp_path: Path) -> None:
@@ -68,9 +103,13 @@ def test_runner_rejects_shim_and_scripts_outside_test_directory(tmp_path: Path) 
 def test_window_lists_all_installer_scripts_except_shims() -> None:
     window = MainWindow()
 
+    assert not window.header_icon.pixmap().isNull()
+    assert window.header_icon.pixmap().width() <= 64
+    assert window.header_icon.pixmap().height() <= 64
     assert window.test_list.count() == len(discover_tests(TESTS_DIR))
     assert all(
-        window._items[window.test_list.item(index).toolTip()][2].text()
+        window.test_list.item(index).text() == ""
+        and window._items[window.test_list.item(index).toolTip()][2].text()
         for index in range(window.test_list.count())
     )
     window.close()
@@ -91,6 +130,38 @@ def test_window_shows_green_check_and_red_cross_at_row_end() -> None:
     assert failed_status.text() == "✗"
     assert "color: #c62828" in failed_status.styleSheet()
     assert failed_status.toolTip().endswith("exit code 1)")
+    window.close()
+
+
+def test_window_keeps_previous_results_when_another_test_starts(monkeypatch: pytest.MonkeyPatch) -> None:
+    window = MainWindow()
+    passed_name, failed_name, running_name = list(window._items)[:3]
+    _item1, _title1, _checkbox1, passed_status = window._items[passed_name]
+    _item2, _title2, _checkbox2, failed_status = window._items[failed_name]
+
+    window._test_finished(passed_name, 0, False)
+    window._test_finished(failed_name, 1, False)
+    previous_results = (
+        passed_status.text(),
+        passed_status.styleSheet(),
+        passed_status.toolTip(),
+        failed_status.text(),
+        failed_status.styleSheet(),
+        failed_status.toolTip(),
+    )
+    monkeypatch.setattr(window.runner, "start", lambda _scripts: None)
+
+    window._run([TESTS_DIR / running_name])
+    window._test_started(running_name)
+
+    assert (
+        passed_status.text(),
+        passed_status.styleSheet(),
+        passed_status.toolTip(),
+        failed_status.text(),
+        failed_status.styleSheet(),
+        failed_status.toolTip(),
+    ) == previous_results
     window.close()
 
 

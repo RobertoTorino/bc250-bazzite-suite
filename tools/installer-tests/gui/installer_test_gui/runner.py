@@ -2,9 +2,25 @@
 from __future__ import annotations
 
 import codecs
+import os
 from pathlib import Path
 
-from PyQt6.QtCore import QObject, QProcess, QTimer, pyqtSignal
+from PyQt6.QtCore import QObject, QProcess, QProcessEnvironment, QTimer, pyqtSignal
+
+HOMEBREW_BIN_DIRS = (
+    Path("/home/linuxbrew/.linuxbrew/bin"),
+    Path("/var/home/linuxbrew/.linuxbrew/bin"),
+    Path.home() / ".linuxbrew" / "bin",
+)
+
+
+def _path_with_fakeroot(path: str) -> str:
+    path_entries = path.split(os.pathsep) if path else []
+    for directory in HOMEBREW_BIN_DIRS:
+        executable = directory / "fakeroot"
+        if executable.is_file() and os.access(executable, os.X_OK) and str(directory) not in path_entries:
+            path_entries.insert(0, str(directory))
+    return os.pathsep.join(path_entries)
 
 
 def discover_tests(directory: Path) -> list[Path]:
@@ -89,6 +105,9 @@ class InstallerTestRunner(QObject):
         self._decoder = codecs.getincrementaldecoder("utf-8")("replace")
         process = QProcess(self)
         process.setWorkingDirectory(str(self.working_directory))
+        environment = QProcessEnvironment.systemEnvironment()
+        environment.insert("PATH", _path_with_fakeroot(environment.value("PATH")))
+        process.setProcessEnvironment(environment)
         process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
         process.readyReadStandardOutput.connect(lambda: self._read_output(process))
         process.finished.connect(lambda code, _status: self._finish_process(process, code))

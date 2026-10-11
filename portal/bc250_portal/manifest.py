@@ -27,7 +27,8 @@ class AppEntry:
     required: bool = False
     changes_board: bool = False
     development: bool = False                   # listed under "Development only" in the portal
-    checkout_only: bool = False                 # [checkout.<key>]: installs from apps/<key> in the suite checkout
+    checkout_only: bool = False                 # [checkout.<key>]: installs from its folder in the suite checkout
+    folder: str = ""                            # checkout-only: that folder, relative to the checkout (apps/<key>)
     install: tuple[str, ...] = ()
     uninstall: tuple[str, ...] = ()
     detect: tuple[str, ...] = ()
@@ -59,9 +60,15 @@ def _entry(key: str, raw: dict, table: str = "apps") -> AppEntry:
     for field in ("name", "summary") + (() if checkout_only else ("tag",)):
         if not isinstance(raw.get(field), str) or not raw[field].strip():
             raise ManifestError(f"[{table}.{key}] needs a non-empty {field}")
+    folder = ""
     if checkout_only:
         if any(field in raw for field in ("tag", "sha256", "required")):
             raise ManifestError(f"[{table}.{key}] is never released: no tag, sha256 or required")
+        folder = raw.get("folder", f"apps/{key}")
+        if not isinstance(folder, str) or not folder.strip() or folder.startswith("/") or ".." in folder.split("/"):
+            raise ManifestError(f"[{table}.{key}] folder must be a path inside the checkout, like apps/{key}")
+    elif "folder" in raw:
+        raise ManifestError(f"[{table}.{key}] folder is only for [checkout.*] apps")
     else:
         match = _TAG.match(raw["tag"])
         if not match or match["app"] != key:
@@ -76,6 +83,7 @@ def _entry(key: str, raw: dict, table: str = "apps") -> AppEntry:
     entry = AppEntry(key=key, name=raw["name"], summary=raw["summary"], tag=raw.get("tag", ""), sha256=sha,
                      required=bool(raw.get("required", False)), changes_board=bool(raw.get("changes_board", False)),
                      development=checkout_only or bool(raw.get("development", False)), checkout_only=checkout_only,
+                     folder=folder,
                      install=_strings(key, "install", raw.get("install")),
                      uninstall=_strings(key, "uninstall", raw.get("uninstall")),
                      detect=_strings(key, "detect", raw.get("detect")),

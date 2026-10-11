@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QCloseEvent, QTextCursor
+from PyQt6.QtGui import QCloseEvent, QPixmap, QTextCursor
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from . import APP_NAME, SUITE_ROOT, TESTS_DIR
+from . import APP_ICON_PATH, APP_NAME, SUITE_ROOT, TESTS_DIR
 from .runner import InstallerTestRunner, discover_tests
 
 
@@ -39,10 +39,27 @@ class MainWindow(QMainWindow):
 
         central = QWidget()
         layout = QVBoxLayout(central)
+        header = QHBoxLayout()
+        self.header_icon = QLabel()
+        pixmap = QPixmap(str(APP_ICON_PATH))
+        if not pixmap.isNull():
+            self.header_icon.setPixmap(
+                pixmap.scaled(
+                    64,
+                    64,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+            )
+        self.header_icon.setFixedSize(72, 72)
+        self.header_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.header_icon.setAccessibleName(f"{APP_NAME} icon")
+        header.addWidget(self.header_icon)
         heading = QLabel(f"<h2>{APP_NAME}</h2>"
                          "<p>Choose installer checks to run. Output and exit status appear here.</p>")
         heading.setTextFormat(Qt.TextFormat.RichText)
-        layout.addWidget(heading)
+        header.addWidget(heading, 1)
+        layout.addLayout(header)
 
         warning = QLabel(
             "Tests use fakeroot and fixed temporary directories under /tmp. "
@@ -100,7 +117,7 @@ class MainWindow(QMainWindow):
     def _populate_tests(self) -> None:
         for script in discover_tests(TESTS_DIR):
             title = script.stem.replace("-", " ").title()
-            item = QListWidgetItem(title)
+            item = QListWidgetItem()
             item.setData(Qt.ItemDataRole.UserRole, script)
             item.setToolTip(script.name)
             self.test_list.addItem(item)
@@ -143,10 +160,6 @@ class MainWindow(QMainWindow):
 
     def _run(self, scripts: list[Path]) -> None:
         self.output_view.clear()
-        for _item, _title, _checkbox, status in self._items.values():
-            status.clear()
-            status.setStyleSheet("")
-            status.setToolTip("")
         try:
             self.runner.start(scripts)
         except (OSError, RuntimeError, ValueError) as error:
@@ -162,28 +175,22 @@ class MainWindow(QMainWindow):
         self.output_view.ensureCursorVisible()
 
     def _test_started(self, name: str) -> None:
-        _item, title, _checkbox, status = self._items[name]
-        status.setText("…")
-        status.setStyleSheet("color: #777777; font-weight: bold;")
-        status.setToolTip(f"{title}: running")
+        _item, title, _checkbox, _status = self._items[name]
         self.stop_button.setEnabled(True)
         self.statusBar().showMessage(f"Running {title}…")
 
     def _test_finished(self, name: str, exit_code: int, cancelled: bool) -> None:
         _item, title, _checkbox, status = self._items[name]
         result = "CANCELLED" if cancelled else "PASS" if exit_code == 0 else f"FAIL ({exit_code})"
-        if cancelled:
-            status.setText("–")
-            status.setStyleSheet("color: #777777; font-weight: bold;")
-            status.setToolTip(f"{title}: cancelled")
-        elif exit_code == 0:
-            status.setText("✓")
-            status.setStyleSheet("color: #16803c; font-weight: bold;")
-            status.setToolTip(f"{title}: passed")
-        else:
-            status.setText("✗")
-            status.setStyleSheet("color: #c62828; font-weight: bold;")
-            status.setToolTip(f"{title}: failed (exit code {exit_code})")
+        if not cancelled:
+            if exit_code == 0:
+                status.setText("✓")
+                status.setStyleSheet("color: #16803c; font-weight: bold;")
+                status.setToolTip(f"{title}: passed")
+            else:
+                status.setText("✗")
+                status.setStyleSheet("color: #c62828; font-weight: bold;")
+                status.setToolTip(f"{title}: failed (exit code {exit_code})")
         self._append_output(f"\n== {title}: {result} ==\n")
 
     def _run_finished(self, cancelled: bool) -> None:

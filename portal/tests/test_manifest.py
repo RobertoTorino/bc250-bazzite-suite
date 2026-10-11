@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 from bc250_portal import MANIFEST
-from bc250_portal.manifest import ManifestError, load, parse
+from bc250_portal.manifest import ManifestError, load, parse, parse_checkout
 from conftest import SUITE
 
 MINIMAL = """
@@ -78,3 +78,37 @@ def test_board_changing_apps_are_marked():
     marked = {e.key for e in load(MANIFEST) if e.changes_board}
     assert {"cu-bisect", "cores-bisect", "gpu-oc-bisect", "persistent-acpi", "governor"} <= marked
     assert "bazzite-test" not in marked
+
+
+CHECKOUT = """
+[checkout.gui]
+name = "GUI"
+summary = "s"
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/gui"]
+"""
+
+
+def test_checkout_tables_are_development_apps_in_a_folder():
+    (gui,) = parse_checkout(MINIMAL + CHECKOUT)
+    assert gui.checkout_only and gui.development and gui.tag == "" and gui.version == ""
+    assert gui.folder == "apps/gui"                                         # the default
+    (moved,) = parse_checkout(CHECKOUT.replace('summary = "s"', 'summary = "s"\nfolder = "tools/x/gui"'))
+    assert moved.folder == "tools/x/gui"
+    assert [e.key for e in parse(MINIMAL + CHECKOUT)] == ["bazzite-test", "cu-bisect"]   # never pinned
+
+
+@pytest.mark.parametrize("extra, message", [
+    ('tag = "gui-v0.1.0"', "never released"),
+    ('folder = "../outside"', "inside the checkout"),
+    ('folder = "/abs"', "inside the checkout"),
+])
+def test_checkout_tables_reject(extra, message):
+    with pytest.raises(ManifestError, match=message):
+        parse_checkout(CHECKOUT.replace('summary = "s"', f'summary = "s"\n{extra}'))
+
+
+def test_folder_only_for_checkout_tables():
+    with pytest.raises(ManifestError, match="only for"):
+        parse(MINIMAL.replace('summary = "s"\ntag = "cu', 'summary = "s"\nfolder = "x"\ntag = "cu', 1))

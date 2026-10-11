@@ -6,7 +6,8 @@
 
 * The manifest parses and lists exactly the portal apps under apps/. An app folder with a ``.standalone`` marker
   is not a portal app and must not be listed. The [checkout.<name>] tables list exactly the app folders with a
-  ``.checkout-only`` marker (they run from the checkout and are never released).
+  ``.checkout-only`` marker (they run from the checkout and are never released); a table whose ``folder`` lies
+  outside apps/ needs that marker there too.
 * Every pinned tag exists. Without --require-tags a tag that does not exist yet is accepted when its version equals
   the app's VERSION: the release that is about to be tagged. The portal release workflow passes --require-tags.
 * With --base REF (the previous commit, or the PR base): when apps.toml changed since REF, portal/VERSION must have
@@ -85,12 +86,12 @@ def check_entries(entries, require_tags: bool) -> list[str]:
 
 
 def check_checkout_entries(entries) -> list[str]:
-    folders = {p.name for p in (SUITE / "apps").iterdir() if (p / CHECKOUT_ONLY_MARKER).is_file()}
-    listed = {e.key for e in entries}
-    return ([f"apps/{name} has {CHECKOUT_ONLY_MARKER} but no [checkout.{name}] in {MANIFEST}"
-             for name in sorted(folders - listed)] +
-            [f"{MANIFEST} [checkout.{name}]: apps/{name} has no {CHECKOUT_ONLY_MARKER}"
-             for name in sorted(listed - folders)])
+    marked = {f"apps/{p.name}" for p in (SUITE / "apps").iterdir() if (p / CHECKOUT_ONLY_MARKER).is_file()}
+    listed = {e.folder or f"apps/{e.key}": e.key for e in entries}
+    return ([f"{folder} has {CHECKOUT_ONLY_MARKER} but no [checkout.{folder.removeprefix('apps/')}] in {MANIFEST}"
+             for folder in sorted(marked - set(listed))] +
+            [f"{MANIFEST} [checkout.{key}]: {folder} has no {CHECKOUT_ONLY_MARKER}"
+             for folder, key in sorted(listed.items()) if not (SUITE / folder / CHECKOUT_ONLY_MARKER).is_file()])
 
 
 def check_bump(base: str) -> list[str]:

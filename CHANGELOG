@@ -1,3 +1,14 @@
+Changelog: 11-10-2026 18:31:14
+
+docs/portal.md: "What stays after an uninstall": the board changes each app leaves active until you undo them (CU and
+core unlocks, the GPU overclock, the ACPI override, the ACE driver, the VRAM split), HelixSR's payload and
+deployments, and where settings and results live (removed by --purge).
+
+Changelog: 11-10-2026 18:15:13
+
+tools/check_manifest.py also checks a [checkout.<name>] table whose folder lies outside apps/: that folder needs the
+.checkout-only marker. The README, the manual and CLAUDE.md list BC-250 Installer Tests with the development tools.
+
 Changelog: 11-10-2026 17:41:32
 
 The front page says to install the portal and not the apps one by one, with an Install section that links to the

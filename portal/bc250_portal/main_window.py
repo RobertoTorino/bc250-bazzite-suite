@@ -357,7 +357,8 @@ class MainWindow(QMainWindow):
         self.dev_box.setStyleSheet("QFrame#dev { border:1px dashed palette(mid); border-radius:8px; }")
         dev_column = QVBoxLayout(self.dev_box)
         dev_column.addWidget(hint_label("For working on the BC250 Bazzite Suite: recording demos, checking its "
-                                        "dependencies, making releases. You do not need these to use the board."))
+                                        "dependencies, making releases, running the installer tests. You do not need these to use the "
+                                        "board."))
         self.dev_grid = self._tile_grid()
         dev_column.addLayout(self.dev_grid)
         column.addWidget(self.dev_box)
@@ -550,6 +551,7 @@ class MainWindow(QMainWindow):
         ok = status == "0"
         if ok and pending.action == "install":
             self.records.set(entry.key, pending.tag)
+            self.sources.prune(entry)                   # an update: the previous release's folder goes
         elif ok:
             self.records.remove(entry.key)
             self.sources.forget(entry)

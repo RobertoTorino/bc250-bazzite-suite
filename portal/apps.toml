@@ -22,7 +22,7 @@
 # [checkout.<name>]: an app that runs from the suite checkout and is never released (apps/<name>/.checkout-only).
 # Only a portal that runs from a checkout, or was installed from one, lists it, under "Development only"; its
 # install and uninstall run in apps/<name> of that checkout. The same fields as above, without tag, sha256 and
-# required.
+# required, plus an optional folder (default apps/<name>) for one that lives elsewhere in the checkout.
 
 [apps.bazzite-test]
 name = "BC-250 Bazzite Test"
@@ -190,3 +190,13 @@ install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-release"]
 launch = [["Open", "~/.local/bin/bc250-release"]]
+
+[checkout.installer-tests]
+name = "BC-250 Installer Tests"
+summary = "Run the suite's installer tests (tools/installer-tests) one at a time, with their output live in the window."
+folder = "tools/installer-tests/gui"
+changes_board = false
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-installer-test-gui"]
+launch = [["Open", "~/.local/bin/bc250-installer-test-gui"]]
