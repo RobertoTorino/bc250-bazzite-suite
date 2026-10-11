@@ -125,3 +125,20 @@ def test_find_adapter_takes_the_one_with_a_display_and_the_users_name(tmp_path):
     adapter = w.find_adapter(dev)
     assert adapter.device == str(dev / "cec1") and adapter.configured
     assert ["cec-ctl", "-d", str(dev / "cec1"), "--playback", "--osd-name", "Lounge PC"] in calls
+
+
+def test_find_adapter_renames_a_playback_adapter_unless_cecd_runs(tmp_path):
+    dev = tmp_path / "dev"
+    dev.mkdir()
+    (dev / "cec0").touch()
+    for cecd, renamed in ((False, True), (True, False)):
+        calls = []
+
+        def run(argv):
+            calls.append(argv)
+            if argv[0] == "systemctl":
+                return Result(0 if cecd else 3, "active\n" if cecd else "inactive\n")
+            return Result(0, INFO)                      # configured, named "Playback"
+        w = watcher.Watcher(run=run, sleep=lambda s: None, config_dir=tmp_path / "config")
+        w.find_adapter(dev)
+        assert any("--playback" in c for c in calls) == renamed

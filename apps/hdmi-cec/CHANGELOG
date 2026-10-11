@@ -1,3 +1,11 @@
+Changelog: 12-10-2026 00:00:26
+
+Release 0.1.3. program your remote buttons
+
+Changelog: 11-10-2026 23:51:50
+
+An adapter that already had a logical address kept whatever name it had: configured by a plain cec-ctl --playback it was "Playback", and the owner's TV listed the input as "HDMI1: Playback" (11-10-2026). The app and the watcher now configure the adapter again when its name is not the board's name (cec.needs_name), unless Valve's CEC daemon runs (it names the adapter from its own setting); the app then tells the TV the name (Set OSD Name).
+
 Changelog: 11-10-2026 22:56:45
 
 Release 0.1.2. get TV info

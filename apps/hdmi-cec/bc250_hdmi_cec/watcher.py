@@ -60,8 +60,11 @@ class Watcher:
             if result.ok:
                 found.append(cec.parse_info(device, result.out))
         adapter = cec.pick(found)
-        if adapter is not None and not adapter.configured:     # cecd claims an address; without it, as the app does
-            name = bazzite.read_fragment(self.config_dir).get("osd_name") or cec.OSD_NAME
+        if adapter is None:
+            return None
+        name = bazzite.read_fragment(self.config_dir).get("osd_name") or cec.OSD_NAME
+        cecd = self.run(["systemctl", "--user", "is-active", bazzite.CECD_UNIT]).ok    # it names the adapter itself
+        if not adapter.configured or (cec.needs_name(adapter, name) and not cecd):   # as the app does
             configured = self.run([cec.CEC_CTL, *cec.configure(adapter.device, name)])
             adapter = cec.parse_info(adapter.device, configured.out) if "Driver Info" in configured.out else adapter
         return adapter

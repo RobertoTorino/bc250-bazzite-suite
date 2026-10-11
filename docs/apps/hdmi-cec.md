@@ -52,8 +52,10 @@ adapter (a USB one as well, for example), the app uses the one that sees a displ
 When the TV does not answer, the app says what to check: CEC switched on in the TV, the TV on, and a cable or
 adapter that passes CEC.
 
-The first message configures the adapter when nothing has yet: the board then shows up on the TV as a playback
-device with that name (**BC-250** until you set another).
+The first message configures the adapter when nothing has yet, or when it carries another name (a plain
+`cec-ctl --playback` names it "Playback", and the TV lists the input as that): the board then shows up on the TV as
+a playback device with your name (**BC-250** until you set another), and the app tells the TV. Some TVs only update
+the name in their input list after switching inputs or turning the TV off and on.
 
 ## When the TV turns off and on
 

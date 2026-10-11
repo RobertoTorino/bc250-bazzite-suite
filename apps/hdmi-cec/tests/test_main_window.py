@@ -64,8 +64,8 @@ class FakeBoard:
             return Result(0 if self.native else 1, "")
         args = argv[1:]
         if len(args) == 2 or "--playback" in args:          # the adapter's state; configuring prints it too
-            if "--playback" in args:
-                self.info = INFO
+            if "--playback" in args:                        # the adapter takes the name it is given
+                self.info = INFO.replace("'Playback'", f"'{args[args.index('--osd-name') + 1]}'")
             return Result(0, self.info)
         if "--show-topology" in args:
             return Result(0, TOPOLOGY_TV if self.tv else self.info + "\n\tTopology:\n\n\t    1.0.0.0: Playback\n")
@@ -393,3 +393,19 @@ def test_two_adapters_uses_the_one_with_a_display(make, dev_root):
     w = make(TwoAdapters())
     assert w.adapter.device == str(dev_root / "cec1")
     assert f"Also here: {dev_root / 'cec0'}" in w.adapter_note.text()
+
+
+def test_an_adapter_named_playback_gets_the_boards_name(make):
+    board = FakeBoard()                         # configured by a plain cec-ctl --playback: the TV lists "Playback"
+    w = make(board)
+    assert w.adapter.osd_name == "Playback"
+    w.tv_standby()
+    w.tv_standby()
+    assert len(board.sent("--playback")) == 1 and w.adapter.osd_name == "BC-250"
+    assert board.sent("name=BC-250")                    # the TV hears the new name at once
+
+
+def test_cecd_names_the_adapter_itself(make):
+    board = FakeBoard(native=True)
+    make(board).tv_standby()
+    assert not board.sent("--playback")

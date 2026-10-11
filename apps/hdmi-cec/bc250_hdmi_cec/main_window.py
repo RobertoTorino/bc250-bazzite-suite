@@ -417,16 +417,22 @@ class MainWindow(QMainWindow):
     # --- TV ---------------------------------------------------------------------------------------------------
 
     def ensure_configured(self) -> bool:
-        """The adapter needs a logical address to send from. cecd claims one; without it the app does, once."""
+        """The adapter needs a logical address to send from, under the board's name. cecd claims one with its own
+        name setting; without it the app configures the adapter when it has no address or another name, and tells
+        the TV the name."""
         a = self.adapter
         if a is None:
             return False
-        if not a.configured:
-            result = self.cec_ctl(cec.configure(a.device, self.osd_name()))
+        name = self.osd_name()
+        if not a.configured or (cec.needs_name(a, name) and not self.mode.cecd_running):
+            result = self.cec_ctl(cec.configure(a.device, name))
             if not result.ok:
                 self.show_result(f"Could not configure {a.device}:\n{result.out.strip()}")
                 return False
+            renamed = a.configured
             self.adapter = cec.parse_info(a.device, result.out) if "Driver Info" in result.out else a
+            if renamed:
+                self.cec_ctl(cec.set_osd_name(a.device, name))
         return True
 
     def send(self, args: list[str], done: str) -> bool:

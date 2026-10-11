@@ -138,6 +138,12 @@ def info(device: str) -> list[str]:
     return ["-d", device]
 
 
+def needs_name(adapter: Adapter, name: str) -> bool:
+    """Whether the app should (re)configure the adapter: it has no logical address, or another name than the one the
+    TV should show (cec-ctl --playback without --osd-name leaves "Playback", and the TV then lists that)."""
+    return not adapter.configured or adapter.osd_name != name
+
+
 def configure(device: str, name: str = OSD_NAME) -> list[str]:
     """Claim a logical address as a playback device, as Bazzite's cec-control does, when nothing has yet."""
     return ["-d", device, "--playback", "--osd-name", name]
