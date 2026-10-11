@@ -118,6 +118,20 @@ class AppsPage(QWidget):
             self.table.setCellWidget(i, 6, notes)
             self.rows.append((unit, tick, combo, notes))
 
+    def typed(self) -> dict[str, tuple[bool, str | None, str]]:
+        """What was entered per app: the tick, a version only if it differs from the one offered, the notes."""
+        return {unit.key: (tick.isChecked(), None if combo.currentText() == combo.itemText(0) else combo.currentText(),
+                           notes.text()) for unit, tick, combo, notes in self.rows}
+
+    def restore(self, typed: dict[str, tuple[bool, str | None, str]]) -> None:
+        for unit, tick, combo, notes in self.rows:
+            if unit.key in typed:
+                checked, version, text = typed[unit.key]
+                tick.setChecked(checked)
+                if version is not None:
+                    combo.setEditText(version)
+                notes.setText(text)
+
     def tick_needed(self) -> None:
         for unit, tick, _, _ in self.rows:
             tick.setChecked(unit.needs_release)
@@ -349,6 +363,11 @@ class ReleaseWindow(QMainWindow):
         header.insertWidget(0, ClickableLogo(LOGO_PATH, 40))
         self.status = QLabel()
         header.addWidget(self.status)
+        self.refresh_button = QPushButton("Refresh")
+        self.refresh_button.setToolTip("Read the checkout and its tags again, for changes made in a terminal; "
+                                       "what you entered stays")
+        self.refresh_button.clicked.connect(self.refresh)
+        header.addWidget(self.refresh_button)
         self.tabs = QTabWidget()
         self.apps_page = AppsPage(self)
         self.portal_page = PortalPage(self)
@@ -378,6 +397,19 @@ class ReleaseWindow(QMainWindow):
 
     def portal_version(self) -> str:
         return (self.root / "portal" / "VERSION").read_text(encoding="utf-8").strip()
+
+    def refresh(self) -> None:
+        """reload(), keeping what was entered: step 1's ticks, versions and notes, step 2's portal version (if it
+        is not the one offered) and notes."""
+        typed = self.apps_page.typed()
+        combo = self.portal_page.portal_version
+        version = None if combo.currentText() == combo.itemText(0) else combo.currentText()
+        notes = self.portal_page.portal_notes.text()
+        self.reload()
+        self.apps_page.restore(typed)
+        if version is not None:
+            combo.setEditText(version)
+        self.portal_page.portal_notes.setText(notes)
 
     def reload(self) -> None:
         units = rp.load_units(self.root)

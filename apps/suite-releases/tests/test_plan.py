@@ -246,6 +246,23 @@ def test_window_reads_new_tags_when_step_2_opens(window, repo):
     assert row(window, "alpha")[1].isChecked()
 
 
+def test_window_refresh_reads_changes_and_keeps_what_was_typed(window, repo):
+    _, tick, combo, notes = row(window, "alpha")
+    tick.setChecked(True)
+    combo.setEditText("0.2.0")
+    notes.setText("Fixes.")
+    window.portal_page.portal_notes.setText("Pins.")
+    assert window.status.text() == "working tree clean"
+    rp.set_version(repo, unit(repo, "beta"), "0.1.1")         # changed in a terminal while the window is open
+    window.refresh()
+    assert window.status.text() == "working tree has changes"
+    _, tick, combo, notes = row(window, "alpha")
+    assert (tick.isChecked(), combo.currentText(), notes.text()) == (True, "0.2.0", "Fixes.")
+    _, btick, bcombo, _ = row(window, "beta")
+    assert not btick.isChecked() and bcombo.currentText() == "0.1.1"   # not typed: what is offered now
+    assert window.portal_page.portal_notes.text() == "Pins."
+
+
 def test_window_explains_an_empty_pin_list(window, repo):
     rp.pin(repo, unit(repo, "alpha"), SHA)
     window.reload()
