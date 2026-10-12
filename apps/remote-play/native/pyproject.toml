@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Builds the Python module bc250_remote_play_core: maturin build --release (a wheel for Python 3.10 and newer), or
+# maturin develop to install it into the current venv for the tests.
+[build-system]
+requires = ["maturin>=1.5,<2"]
+build-backend = "maturin"
+
+[project]
+name = "bc250-remote-play-core"
+version = "0.1.0"
+requires-python = ">=3.10"
+license = { text = "AGPL-3.0-only" }
+
+[tool.maturin]
+features = ["python", "pyo3/extension-module"]

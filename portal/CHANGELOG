@@ -1,3 +1,7 @@
+Changelog: 12-10-2026 22:06:31
+
+Release 0.9.16. Pins dependency-checker-v0.1.7. new app bc250-sftp-tools and bc250-remote-play (beta)
+
 Changelog: 12-10-2026 21:51:19
 
 BC250 Remote Play is a tile under Development only (remote-play-v0.1.0, not yet released, so no sha256 yet; changes_board false), with its icon images/apps/remote-play.png.
