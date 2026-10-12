@@ -34,7 +34,8 @@ jobs:
         dir: [core, portal, tools, apps/bazzite-test, apps/governor, apps/helixsr, apps/persistent-acpi,
               apps/cu-bisect, apps/cores-bisect, apps/gpu-oc-bisect,
               apps/demo-tool, apps/dependency-checker, apps/suite-releases,
-              apps/system-overlay, apps/bios-reader, apps/ace-queues, apps/memory-manager, apps/hdmi-cec,
+              apps/system-overlay, apps/bios-reader, apps/ace-queues, apps/memory-manager, apps/hdmi-cec, apps/sftp-tools,
+              apps/remote-play,
               tools/installer-tests/gui]   # every folder with tests/
     defaults:
       run:
@@ -79,7 +80,7 @@ jobs:
       # that their own release workflows already held to it.
       - name: shellcheck (errors, all scripts)
         run: find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 shellcheck -x -S error
-      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace-queues, memory-manager, hdmi-cec and the suite's own scripts)
+      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace-queues, memory-manager, hdmi-cec, sftp-tools, remote-play and the suite's own scripts)
         run: |
           shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh
           shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/bc250-cores-unlock.sh \
@@ -87,7 +88,7 @@ jobs:
           shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
           shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh
           shellcheck -S warning apps/system-overlay/install.sh apps/bios-reader/install.sh apps/memory-manager/install.sh
-          shellcheck -S warning apps/hdmi-cec/install.sh
+          shellcheck -S warning apps/hdmi-cec/install.sh apps/sftp-tools/install.sh apps/remote-play/install.sh
           shellcheck -S warning apps/ace-queues/bc250-ace-queues.sh apps/ace-queues/bc250-ace-queues-run \
             apps/ace-queues/install.sh apps/ace-queues/mesa/build-in-container.sh
           shellcheck -S warning apps/demo-tool/install.sh
@@ -158,6 +159,10 @@ jobs:
         run: bash tools/installer-tests/memory-manager.sh
       - name: hdmi-cec installer
         run: bash tools/installer-tests/hdmi-cec.sh
+      - name: sftp-tools installer
+        run: bash tools/installer-tests/sftp-tools.sh
+      - name: remote-play installer
+        run: bash tools/installer-tests/remote-play.sh
       - name: Demo Tool installer
         run: bash tools/installer-tests/demo-tool.sh
       - name: Dependency checker installer
@@ -178,3 +183,14 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install -q mkdocs-material "mkdocs>=1.6,<2"
       - run: mkdocs build --strict
+
+  windows-exe:
+    # The Windows executables of the release workflow, built here too so a broken build shows before a tag.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -q -r apps/sftp-tools/requirements.txt pyinstaller pillow
+      - run: python tools/build_windows_exe.py sftp-tools windist

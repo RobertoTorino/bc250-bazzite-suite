@@ -1,3 +1,15 @@
+Changelog: 12-10-2026 21:51:19
+
+New app in the suite: BC250 Remote Play (apps/remote-play, key remote-play, version 0.1.0), iteration 1: find, wake and register PS4 and PS5 consoles and start a Remote Play session, with the protocol ported from chiaki-ng. It is AGPL-3.0, the first app of the suite under that license (README, the manual's start page and CLAUDE.md say so). It has its own installer test (tools/installer-tests/remote-play.sh, a CI step), its entry in the CI pytest matrix and the shellcheck step, a manual chapter (docs/apps/remote-play.md) and its requirements in the root requirements-dev.txt. Not yet released: the version, the tag and the portal/VERSION bump are the owner's.
+
+Changelog: 12-10-2026 21:50:59
+
+tools/build_windows_exe.py builds the Windows executable of an app that ships one (sftp-tools): it stages the app like a release and runs PyInstaller, and makes <app-id>-<version>-windows.zip and its .sha256. release.yml has a Windows job for sftp-tools tags that uploads both to the app's release; ci.yml builds it on every push. tools/tests/test_build_windows_exe.py checks the PyInstaller arguments and that the workflow covers every app in WINDOWS_APPS. docs/portal.md mentions the extra assets.
+
+Changelog: 12-10-2026 21:32:31
+
+New app in the suite: BC250 Bazzite SFTP Tools (apps/sftp-tools, key sftp-tools, version 0.1.0): an SFTP client and an SSH server manager, a tile in the portal. It has its own installer test (tools/installer-tests/sftp-tools.sh, a CI step), its entry in the CI pytest matrix and the shellcheck step, a manual chapter (docs/apps/sftp-tools.md), its card icon (portal/images/apps/sftp-tools.png) and its place in the Dependency Checker's catalogue (paramiko and paplay). Not yet released: the version, the tag and the pin in portal/apps.toml are the owner's.
+
 Changelog: 12-10-2026 08:23:31
 
 Everything follows the architecture now (owner, the portal's own header excepted): every app has install.sh at its root with --no-desktop-shortcut, --uninstall, --uninstall --purge and --help, refusing root, and a tests/ folder in CI's pytest matrix (cu-bisect, cores-bisect and gpu-oc-bisect have tests now). tools/tests/test_layout.py checks the installers, the tests and the CI matrix; the installer tests cover the new options. tools/release.sh passes --purge on. The manual's Architecture and consistency chapter has a section on the technical layout of an app and code style; the Security chapter covers the Dependency Checker, the CVE check and how the suite handles root.

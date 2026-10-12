@@ -67,6 +67,14 @@ launchers = ["~/.local/bin/bc250-memory-manager"]
 name = "BC250 HDMI CEC"
 launchers = ["~/.local/bin/bc250-hdmi-cec"]
 
+[app.sftp-tools]
+name = "BC250 Bazzite SFTP Tools"
+launchers = ["~/.local/bin/bc250-bazzite-sftp-tools"]
+
+[app.remote-play]
+name = "BC250 Remote Play"
+launchers = ["~/.local/bin/bc250-remote-play"]
+
 [app.demo-tool]
 name = "Simple Demo Tool"
 launchers = ["~/.local/bin/simple-demo-tool"]
@@ -652,6 +660,17 @@ owner = "hdmi-cec"
 need = "optional"
 usage = "Valve's CEC daemon (Bazzite's native CEC mode), for the TV with the board's sleep and the remote."
 
+[[tool]]
+name = "paplay"
+description = "Plays a sound file through PulseAudio or PipeWire. SFTP Tools plays the desktop's \"complete\" sound with it when a transfer is done."
+executables = ["paplay"]
+
+[[tool.source]]
+owner = "sftp-tools"
+need = "optional"
+usage = "The sound when a transfer completes; without it the app uses Qt's beep."
+anchor = "what-it-needs"
+
 [[dependency]]
 name = "PyQt6"
 description = "The Python bindings of the Qt 6 toolkit. Every suite app draws its windows with it; the wheels include Qt itself, so nothing is layered onto the system."
@@ -713,6 +732,14 @@ owner = "hdmi-cec"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
+owner = "sftp-tools"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
+owner = "remote-play"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
 owner = "demo-tool"
 specifier = ">=6.11,<7"
 
@@ -747,3 +774,19 @@ description = "A pure-Python D-Bus library. Simple Demo Tool uses it for the des
 [[dependency.source]]
 owner = "demo-tool"
 specifier = ">=0.2.3,<1"
+
+[[dependency]]
+name = "paramiko"
+description = "An SSH and SFTP library for Python. BC250 Bazzite SFTP Tools connects to the host, transfers files and runs the sshd commands of the Server Manager with it."
+
+[[dependency.source]]
+owner = "sftp-tools"
+specifier = ">=3.4,<5"
+
+[[dependency]]
+name = "cryptography"
+description = "Cryptographic recipes and primitives for Python, on OpenSSL. BC250 Remote Play encrypts registration and the control connection of a Remote Play session with its AES and HMAC."
+
+[[dependency.source]]
+owner = "remote-play"
+specifier = ">=42,<51"

@@ -170,6 +170,19 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-hdmi-cec"]
 launch = [["Open", "~/.local/bin/bc250-hdmi-cec"]]
 
+[apps.sftp-tools]
+name = "BC250 Bazzite SFTP Tools"
+short = "SFTP Tools"
+summary = "Move files between computers over SFTP, and manage the SSH server of a Bazzite host."
+tag = "sftp-tools-v0.1.0"
+sha256 = ""
+required = false
+changes_board = false
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-bazzite-sftp-tools"]
+launch = [["Open", "~/.local/bin/bc250-bazzite-sftp-tools"]]
+
 [apps.demo-tool]
 name = "Simple Demo Tool"
 summary = "Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite."
@@ -195,6 +208,20 @@ install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-portal-dependency-checker"]
 launch = [["Open", "~/.local/bin/bc250-portal-dependency-checker"]]
+
+[apps.remote-play]
+name = "BC250 Remote Play"
+short = "Remote Play"
+summary = "Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session."
+tag = "remote-play-v0.1.0"
+sha256 = ""
+required = false
+changes_board = false
+development = true
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-remote-play"]
+launch = [["Open", "~/.local/bin/bc250-remote-play"]]
 
 [checkout.suite-releases]
 name = "BC250 Suite Releases"

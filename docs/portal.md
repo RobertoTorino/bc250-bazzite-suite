@@ -137,6 +137,8 @@ Releasing an app and pinning it in the portal:
 1. Bump `apps/<app>/VERSION` (and the copies that `tools/check_versions.py` lists), and update its CHANGELOG.
 2. Commit and push, then tag with `tools/tag-release.sh <app>-v<x.y.z>`; [`release.yml`](https://github.com/RobertoTorino/bc250-bazzite-suite/blob/main/.github/workflows/release.yml) builds
    `<tag>.tar.gz` and `SHA256SUMS` with [`tools/build_release.py`](https://github.com/RobertoTorino/bc250-bazzite-suite/blob/main/tools/build_release.py).
+   An app with a Windows executable (SFTP Tools) also gets a Windows job on its tag, which adds
+   `<app-id>-<version>-windows.zip` and its `.sha256` to the release; the portal ignores them.
 3. `python3 tools/pin_app.py <tag>`: this sets the tag and checksum in `apps.toml`.
 4. Bump `portal/VERSION` as `tools/check_manifest.py` asks, and list the app release in the portal CHANGELOG.
 5. Once the pinned app releases are tested together on a BC-250 (see

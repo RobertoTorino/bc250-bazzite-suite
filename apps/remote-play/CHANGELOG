@@ -1,0 +1,7 @@
+Changelog: 12-10-2026 22:00:05
+
+Release 0.1.0.
+
+Changelog: 12-10-2026 21:48:58
+
+First version, iteration 1 of BC250 Remote Play (the prototype): find PS4 and PS5 consoles on the network (broadcast, or one address), wake one from rest mode, register the board with it (PSN account ID and the PIN from Link Device), and start a session with Test session or put it in rest mode. The protocol is chiaki-ng's (AGPL-3.0), ported to Python: discovery, registration and its crypto, the session request and the control connection with heartbeats, the session ID and the login passcode. The key tables are generated from chiaki-ng's rpcrypt.c, and the crypto is tested against vectors printed by chiaki-ng's own C code. The registered consoles' keys are kept in ~/.config/bc250-remote-play/consoles.json (mode 0600). The video, audio and controller stream is not in this version. License AGPL-3.0 (with chiaki-ng's OpenSSL exception): the files ported from chiaki-ng are AGPL-3.0-only, the app's own files AGPL-3.0-or-later.

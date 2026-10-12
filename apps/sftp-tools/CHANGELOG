@@ -1,0 +1,11 @@
+Changelog: 12-10-2026 22:00:05
+
+Release 0.1.0.
+
+Changelog: 12-10-2026 21:50:59
+
+A Windows program of the app: the release workflow builds BC250-SFTP-Tools.exe on Windows (PyInstaller, one file, with bc250_core and paramiko inside) and adds it to the app's release as bc250-bazzite-sftp-tools-<version>-windows.zip with a .sha256 file. The portal does not use it. The manual chapter has a section on it.
+
+Changelog: 12-10-2026 21:32:31
+
+New app: BC250 Bazzite SFTP Tools, moved in from its own repository and adapted to the suite. An SFTP client (local and remote folders, transfer queue, speed limit, overwrite choices) and a Server Manager (sshd status, start and stop, sshd_config editor) in one window with the suite's header: the icon at 96 px beside the title with the version, and a second row with the states of this system, the SFTP connection and sshd. The code is the package bc250_sftp_tools on bc250_core (start-up, single instance, tooltips, header, theme). Settings and profiles are in ~/.config/bc250-bazzite-sftp-tools and the log in ~/.local/share/bc250-bazzite-sftp-tools (they were in a folder named after the Qt organisation). The installer takes --uninstall and --uninstall --purge like the other apps' (it had --keep-data), and gives the app its own venv with PyQt6 and paramiko. The settings dialog now hands its changes to the transfer queue and the file lists straight away (they only took effect after a restart, and a failed save was logged without telling you); the password rules' dialog no longer shows the braces doubled; the file lists no longer scramble the Type, Size and Modified cells (sorting was on while the rows were filled); the sound is played without a shell; an error dot's log handler goes with its window. The Windows build files and the PyInstaller icon lookup are not part of the app.
