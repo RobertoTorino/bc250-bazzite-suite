@@ -1,3 +1,11 @@
+Changelog: 12-10-2026 06:14:55
+
+Release 0.1.5. now also installs from the portal
+
+Changelog: 12-10-2026 06:06:00
+
+install.sh failed with "Could not open requirements file": it copies only portal-dependency-checker/ into the app folder, and requirements.txt is one folder up. It copies requirements.txt next to it now. The app's name is Dependency Checker (window, launcher, menu entry, manual, portal tile); its ID, folders and launcher path stay bc250-portal-dependency-checker, so an installed copy is found as before.
+
 Changelog: 11-10-2026 22:27:40
 
 Release 0.1.4.

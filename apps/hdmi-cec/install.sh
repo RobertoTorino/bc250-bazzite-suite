@@ -7,7 +7,7 @@
 #   ./install.sh --uninstall             # remove the app; keeps its settings and the CEC daemon settings it wrote
 #   ./install.sh --uninstall --purge     # also remove its settings and its CEC daemon settings
 #
-# Run it as your own user; nothing here needs root. The app talks to the CEC adapter (/dev/cec*, yours through
+# Run it as your own user; installing needs no root. The app talks to the CEC adapter (/dev/cec*, yours through
 # udev) with cec-ctl, and writes the settings of Valve's CEC daemon for your account.
 #  * ~/.local/share/bc250-hdmi-cec/app: the app, with the bc250_core it was tested with (bundled in the
 #    release; taken from the suite checkout when run from there).
@@ -16,6 +16,10 @@
 #  * ~/.config/cecd/config.d/99-bc250-hdmi-cec.toml: the CEC daemon settings, once you change one in the app.
 #  * ~/.config/systemd/user/bc250-hdmi-cec-watch.service: the background part of "Restart the picture when the TV
 #    turns on", only while that is chosen in the app. It starts the app's own files, so uninstalling removes it.
+#  * /etc/bc250-hdmi-cec (boot.py, boot.json), /etc/systemd/system/bc250-hdmi-cec-boot.service and
+#    /etc/udev/rules.d/99-bc250-hdmi-cec-boot.rules: the board's name on the TV at boot, only while it is switched
+#    on in the app, which installs it with your password (pkexec). Uninstalling removes it (sudo); an update says
+#    when the installed copy is from another version.
 #  * ~/.local/bin/bc250-hdmi-cec to start it from a terminal, plus an app menu entry and a Desktop icon.
 set -euo pipefail
 
@@ -34,6 +38,10 @@ DESKTOP_ICON="$DESKTOP_DIR/$APP_ID.desktop"
 CECD_FRAGMENT="$CONFIG_DIR/cecd/config.d/99-bc250-hdmi-cec.toml"
 WATCH_UNIT="bc250-hdmi-cec-watch.service"
 WATCH_FILE="$CONFIG_DIR/systemd/user/$WATCH_UNIT"
+SYSTEM_ROOT="${BC250_SYSTEM_ROOT:-}"         # override only for testing
+BOOT_UNIT="bc250-hdmi-cec-boot.service"
+BOOT_DIR="$SYSTEM_ROOT/etc/$APP_ID"
+BOOT_FILES=("$SYSTEM_ROOT/etc/systemd/system/$BOOT_UNIT" "$SYSTEM_ROOT/etc/udev/rules.d/99-$APP_ID-boot.rules" "$BOOT_DIR")
 
 SRC=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 # bc250_core: bundled next to bc250_hdmi_cec in a release; in the suite checkout it lives in core/.
@@ -41,6 +49,10 @@ if [ -d "$SRC/bc250_core" ]; then CORE_SRC="$SRC/bc250_core"; else CORE_SRC="$SR
 
 info() { printf '\033[1;35m==>\033[0m %s\n' "$1"; }
 die()  { printf '\033[1;31mERROR:\033[0m %s\n' "$1" >&2; exit 1; }
+
+as_root() {
+    if [ "$(id -u)" -eq 0 ]; then "$@"; else sudo "$@"; fi
+}
 
 usage() { sed -n '3,8p' "$0" | sed 's/^# \{0,1\}//'; }
 
@@ -66,6 +78,13 @@ if $UNINSTALL; then
         systemctl --user disable --now "$WATCH_UNIT" >/dev/null 2>&1 || true
         rm -f "$WATCH_FILE"
         systemctl --user daemon-reload >/dev/null 2>&1 || true
+    fi
+    if [ -e "${BOOT_FILES[0]}" ] || [ -e "${BOOT_FILES[1]}" ] || [ -e "$BOOT_DIR" ]; then
+        info "Removing the boot service $BOOT_UNIT (sudo)"
+        as_root systemctl stop "$BOOT_UNIT" >/dev/null 2>&1 || true
+        as_root rm -rf "${BOOT_FILES[@]}"
+        as_root systemctl daemon-reload >/dev/null 2>&1 || true
+        as_root udevadm control --reload >/dev/null 2>&1 || true
     fi
     info "Removing the launcher, the menu entry and the app"
     rm -f "$LAUNCHER" "$MENU_ENTRY" "$DESKTOP_ICON"
@@ -176,6 +195,10 @@ if [ -f "$WATCH_FILE" ]; then
     info "Restarting the background service $WATCH_UNIT with the new version"
     systemctl --user daemon-reload >/dev/null 2>&1 || true
     systemctl --user try-restart "$WATCH_UNIT" >/dev/null 2>&1 || true
+fi
+
+if [ -f "$BOOT_DIR/boot.py" ] && ! cmp -s "$BOOT_DIR/boot.py" "$APP_DIR/bc250_hdmi_cec/boot.py"; then
+    info "The boot service is from another version: press Update under \"At boot\" in the app (it asks for your password)"
 fi
 
 info "Done. Start \"$APP_NAME\" from the app menu$($DESKTOP_SHORTCUT && echo ' or the Desktop'), or run: $APP_ID"

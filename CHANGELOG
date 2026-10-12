@@ -1,3 +1,7 @@
+Changelog: 12-10-2026 06:06:00
+
+The installer tests' stub venv accepted pip install -r with a requirements file that is not there, so the Dependency Checker's broken install.sh passed its test; it now fails as pip does. tools/tests/test_instance_copies.py also checks the instance.py copies one folder deeper (Simple Demo Tool) and in the installer tests' window.
+
 Changelog: 11-10-2026 22:37:30
 
 CLAUDE.md: a rule that the apps are not limited to the owner's board, TV and settings: they offer what the hardware reports, and tests cover other setups too.

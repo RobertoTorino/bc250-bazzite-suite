@@ -17,13 +17,14 @@ tile, left to right in the order of `apps.toml` and as many to a row as the wind
   arrow): it is removed together with the portal.
 
 **Development only**, below the apps, opens a separate section with tools for working on the suite:
-[Simple Demo Tool](other-tools/simple-demo-tool.md), [Portal dependency checker](apps/dependency-checker.md)
+[Simple Demo Tool](other-tools/simple-demo-tool.md), [Dependency Checker](apps/dependency-checker.md)
 the release front end [BC250 Suite Releases](#the-release-front-end) and BC-250 Installer Tests
 (`tools/installer-tests/gui`), a window that runs the installer tests one at a time. You do not need them to use
-the board. The last two run from a checkout of the repository and have no release: a portal installed from a
-release shows them greyed, and installs them once you install the portal from the checkout (`./install.sh` in the
-repository root). The section is closed until
-you open it, and the portal remembers whether it was open.
+the board. The last two run from a checkout of the repository and have no release. A portal installed from a
+release installs them too: the first time you install or remove one, it asks for the folder of your checkout (the
+repository itself) and remembers it. The other apps still install from their releases. A portal installed from the
+checkout uses its own checkout. The section is closed until you open it, and the portal remembers whether it was
+open.
 
 - `apps/` may also contain standalone tools (with a `.standalone` marker) that do not appear in `apps.toml`
   and that the portal does not install or open.
@@ -48,7 +49,7 @@ you open it, and the portal remembers whether it was open.
   the Desktop, it asks whether to keep them. While the switch is off, the portal removes the icons the apps'
   installers put there, at start and after each install. It only touches the icons of the suite's apps, never its
   own or anything else on the Desktop.
-- The **Portal dependency checker** is a separate app in `apps/`. It lists declared runtime Python packages and
+- The **Dependency Checker** is a separate app in `apps/`. It lists declared runtime Python packages and
   app-specific external tools, plus the apps and features that use them. It compares Python package versions with
   PyPI and checks whether external tools are available; tool links open the relevant app guide. Some apps use
   separate virtual environments. The checker does not install or update anything.
@@ -281,8 +282,8 @@ tests pin their own local builds instead of the published ones.
 
 Create apps/<name>/ with VERSION 0.1.0, a CHANGELOG, a LICENSE and a .gitignore. For an app that stays outside the
 portal, add `.standalone` instead of adding it to `portal/apps.toml`. An app that runs from the checkout and is
-never released also gets `.checkout-only`, and a `[checkout.<name>]` table in `apps.toml` (no tag) when a portal from
-a checkout should list it under "Development only". Such a tool outside `apps/` (like
+never released also gets `.checkout-only`, and a `[checkout.<name>]` table in `apps.toml` (no tag) when the portal
+should list it under "Development only". Such a tool outside `apps/` (like
 `tools/installer-tests/gui`) names its folder with `folder = "..."` and has the marker there.
 Add an install.sh that supports --uninstall and puts a launcher in ~/.local/bin/, plus tests under tests/.        
 Add the app to ./test.sh, the CI shellcheck list and an installer test in tools/installer-tests/.       

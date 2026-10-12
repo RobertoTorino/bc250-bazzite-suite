@@ -343,19 +343,57 @@ def test_portal_offer_names_the_app_updates(qapp, home, settings_dir, tmp_path, 
     same.close()
 
 
-def test_checkout_only_apps_greyed_without_a_checkout(qapp, home, settings_dir, tmp_path, launched):
+SUITE = Path(__file__).resolve().parents[2]                                  # this checkout
+
+
+def test_a_release_portal_asks_once_for_the_checkout(qapp, home, settings_dir, tmp_path, launched, monkeypatch):
+    """A portal installed from a release installs the checkout-only apps too: it asks for the checkout once."""
+    from bc250_portal import remembered_checkout
     entries = load(MANIFEST) + load_checkout(MANIFEST)
-    w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))  # a release
+    sources = FakeSources(tmp_path / "work")                                # a release: no checkout of its own
+    w = mw.MainWindow(entries, sources, Records(tmp_path / "installed.json"))
     for key in ("suite-releases", "installer-tests"):
         card = w.cards[key]
-        assert w.dev_grid.indexOf(card) >= 0 and card.status == "Needs a checkout"
-        assert not card.install_button.isEnabled() and not card.uninstall_button.isEnabled()
-        assert "./install.sh in the repository" in card.icon.toolTip() and "./install.sh" in card.install_button.toolTip()
-        assert card.icon.icon().cacheKey() == card._icons[1].cacheKey()      # greyed
+        assert w.dev_grid.indexOf(card) >= 0 and card.status == "Not installed"
+        assert card.install_button.isEnabled() and "asks once for that folder" in card.icon.toolTip()
+    asked = []
+    monkeypatch.setattr(mw.QFileDialog, "getExistingDirectory", lambda *a: asked.append(a) or "")
+    w.install(w.cards["installer-tests"].entry)                             # cancelled: nothing happens
+    assert asked and sources.prepared == [] and remembered_checkout() is None
+    monkeypatch.setattr(mw.QFileDialog, "getExistingDirectory", lambda *a: asked.append(a) or str(SUITE))
+    w.install(w.cards["installer-tests"].entry)
+    assert wait_for(lambda: launched)
+    assert sources.apps_checkout == SUITE and remembered_checkout() == SUITE
+    assert launched[0][0].startswith(f"cd {SUITE / 'tools/installer-tests/gui'} && ")
+    assert sources.prepared == ["installer-tests"] and w.pending.tag == "local"
+    assert "asks once" not in w.cards["suite-releases"].icon.toolTip()       # known now: no second question
+    assert sources.folder(w.cards["governor"].entry).name == w.cards["governor"].entry.tag   # releases as before
+    assert len(asked) == 2
+    w.cancel_pending()
+    w.close()
+
+
+def test_a_folder_that_is_not_the_suite_is_refused(qapp, home, settings_dir, tmp_path, launched, monkeypatch):
+    from bc250_portal import remembered_checkout
+    warned = []
+    monkeypatch.setattr(QMessageBox, "warning", lambda _p, _t, text, *a: warned.append(text))
+    monkeypatch.setattr(mw.QFileDialog, "getExistingDirectory", lambda *a: str(tmp_path))
+    entries = load(MANIFEST) + load_checkout(MANIFEST)
+    sources = FakeSources(tmp_path / "work")
+    w = mw.MainWindow(entries, sources, Records(tmp_path / "installed.json"))
+    w.install(w.cards["suite-releases"].entry)
+    assert "is not a BC250 Bazzite Suite checkout" in warned[0]
+    assert sources.apps_checkout is None and sources.prepared == [] and remembered_checkout() is None
+    w.close()
+
+
+def test_an_installed_checkout_app_still_opens(qapp, home, settings_dir, tmp_path, launched):
+    entries = load(MANIFEST) + load_checkout(MANIFEST)
+    w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
     (home / ".local" / "bin" / "bc250-release").write_text("#!/bin/sh\n")   # installed from a checkout before
     w.refresh()
     card = w.cards["suite-releases"]
-    assert card.icon.isEnabled() and not card.uninstall_button.isEnabled()  # opens; cannot be removed from here
+    assert card.status == "Installed" and card.icon.isEnabled() and card.uninstall_button.isEnabled()
     assert w.cards["demo-tool"].install_button.isEnabled()                  # released development apps as usual
     w.close()
 

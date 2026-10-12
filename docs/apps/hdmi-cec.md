@@ -7,8 +7,8 @@
 HDMI-CEC lets the board and the TV talk over the HDMI cable. With it you can turn the TV on and off from the
 **AMD BC-250**, switch the TV to the board's input, set the volume, and use the TV remote on the board.
 
-The app does not change how the board runs. It sends CEC messages to the TV when you press a button, and while
-**Restart the picture** is on, it asks the TV every 5 seconds whether it is on.
+The app does not change how the board runs. It sends CEC messages to the TV when you press a button, and at boot
+when you switch that on. While **Restart the picture** is on, it asks the TV every 5 seconds whether it is on.
 
 ## What the board needs
 
@@ -95,6 +95,62 @@ background service as **Restart the picture**, and works with or without it.
 The service asks the TV every 5 seconds. One missed answer does not count as "off": only three in a row do, for
 example when the TV is unplugged. So a hiccup on the HDMI bus neither flickers the picture nor pauses anything.
 
+## At boot, before you log in
+
+### Why a service
+
+Everything above runs in your desktop session: the buttons, the background service of **When the TV turns off and
+on**, and Valve's CEC daemon. Until you log in, none of it runs. The daemon's **Turn the TV on** setting also only
+acts when the board wakes from sleep, not when it starts.
+
+Bazzite has its own boot part, but it does not help reliably here. Bazzite ships a udev rule
+(`/usr/lib/udev/rules.d/99-cec-bluetooth.rules`) that runs `cec-control onboot` each time a Bluetooth adapter
+appears. It runs even with Bazzite's CEC services switched off, unless the CEC mode is native. The script
+configures the CEC adapter as a playback device, turns the TV on and switches it to the board. On the BC-250 this
+goes wrong in three ways:
+
+- **It depends on the Bluetooth adapter, not on the CEC adapter.** The CEC adapter only appears once the DP-to-HDMI
+  converter sees the TV, and that can be later than the Bluetooth adapter, or only when you turn the TV on. The
+  script then finds no CEC adapter and does nothing, so the TV stays off. Whether it works is a matter of timing,
+  so it can differ from one boot to the next.
+- **It gives the adapter no name.** The TV then lists the board as "Playback", also after the app named it, because
+  the script runs again whenever the Bluetooth adapter appears.
+- **The login screen has its own display settings.** When the TV is off while the login screen starts, and is
+  turned on later, some converters give no picture (see [The picture](#the-picture)). The 8 bits per colour you
+  chose for your desktop do not apply to the login screen.
+
+The service of the app starts on the CEC adapter itself, at whatever moment it appears. It uses your name for the
+board, and it runs before the login screen.
+
+### What it does
+
+- **Give the TV the board's name at boot** installs a small system service that runs once at each boot. It starts
+  when the CEC adapter appears and waits until it sees the TV. Then it gives the adapter the board's name (the one
+  under **Name on the TV**) and tells the TV.
+- **Also turn the TV on and switch it to the BC-250 at boot** has it send Image View On and Active Source as well.
+  This happens before the login screen starts. The login screen waits at most 8 seconds for that, so the TV is on
+  when the login screen sets the picture.
+
+The service is a system service because it runs before anyone logs in. Switching it on or off, and every change,
+asks for your password. When you set another name, the app updates the service too. **Update** appears when the
+installed service is from another version of the app, or has another name.
+
+For a minute after it named the adapter, the service keeps the name: when Bazzite's `cec-control` configures the
+adapter as "Playback" again at boot, the service gives it the board's name again. When Valve's CEC daemon runs, the
+service leaves the name to it.
+
+With some DP-to-HDMI converters, the adapter only appears once the TV is turned on. The service then runs at that
+moment: it names the board and switches the TV to it, but the login screen is already there.
+
+### The login screen's picture
+
+The login screen does not use the colour depth you chose under **When the TV turns off and on**. **Display settings to the login screen…** copies your desktop's display settings (resolution,
+refresh rate, colour depth) to it, as KDE's **Apply Plasma Settings** under System Settings → Login Screen does.
+With **8 bits per colour** chosen, a TV turned on while the login screen shows then gets its picture too. It works
+with KDE's login screens (Plasma Login and SDDM), and asks for your password.
+
+To see what the service did at the last boot: `journalctl -b -u bc250-hdmi-cec-boot`.
+
 ## Automatic: Valve's CEC daemon
 
 Bazzite ships Valve's CEC daemon, `cecd`, the one SteamOS uses. It runs with your desktop session and can:
@@ -135,3 +191,6 @@ The TV sends the keys only while it shows the BC-250's input.
 - `~/.config/systemd/user/bc250-hdmi-cec-watch.service`: the background service of **Restart the picture** and
   **Pause videos and music**, only while one of them is on. Uninstalling removes it. It writes a line to the journal
   each time it restarts the picture, pauses or continues: `journalctl --user -u bc250-hdmi-cec-watch`.
+- `/etc/bc250-hdmi-cec/` (`boot.py`, `boot.json`), `/etc/systemd/system/bc250-hdmi-cec-boot.service` and
+  `/etc/udev/rules.d/99-bc250-hdmi-cec-boot.rules`: the service of **At boot**, only while it is on. The name and
+  whether to turn the TV on are in `boot.json`. Uninstalling removes them; it asks for the sudo password then.

@@ -10,7 +10,8 @@ import pytest
 
 SUITE = Path(__file__).resolve().parents[2]
 CORE = SUITE / "core" / "bc250_core" / "instance.py"
-COPIES = sorted(SUITE.glob("apps/*/*/instance.py"))
+COPIES = sorted([*SUITE.glob("apps/*/*/instance.py"), *SUITE.glob("apps/*/*/*/instance.py"),
+                 *SUITE.glob("tools/installer-tests/gui/*/instance.py")])
 
 
 def body(path: Path) -> str:
@@ -22,7 +23,7 @@ def body(path: Path) -> str:
 def test_copies_exist():
     packages = {p.parent.name for p in COPIES}
     assert {"bc250_bazzite_helixsr", "bc250_bisect_gui", "bc250_unlock_gui", "bc250_cores_bisect_gui",
-            "bc250_cores_gui", "bc250_gpu_oc_gui", "bc250_acpi_gui"} <= packages
+            "bc250_cores_gui", "bc250_gpu_oc_gui", "bc250_acpi_gui", "simple_demo_tool", "installer_test_gui"} <= packages
 
 
 @pytest.mark.parametrize("copy", [p for p in COPIES if p.parent.name != "bc250_governor"],

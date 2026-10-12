@@ -1,3 +1,7 @@
+Changelog: 12-10-2026 05:57:00
+
+A double-click on the Desktop icon opened the window twice: Suite Releases was the one app on bc250_core without the single-instance guard. It now asks bc250_core.instance first, as the other apps do; a second launch brings the running window to the front and exits.
+
 Changelog: 11-10-2026 20:54:31
 
 Hovering or clicking the GitHub build status stopped the app (SIGABRT): BuildIndicator kept the main window in an attribute named window, which hides QWidget.window(), and the suite's tooltip calls window() on the widget it is shown for (TypeError: 'ReleaseWindow' object is not callable). The attribute is release_window now, also in the three pages that had the same name. tests/test_main_window.py checks that every widget of the window keeps window() and shows the tooltip over the build indicator.

@@ -4,6 +4,7 @@
 from pathlib import Path
 
 APP_NAME = "BC-250 Installer Tests"
+APP_ID = "bc250-installer-test-gui"
 APP_DIR = Path(__file__).resolve().parent.parent
 IMAGES_DIR = APP_DIR / "images"
 APP_ICON_PATH = IMAGES_DIR / "bc250-installer-test-gui.png"

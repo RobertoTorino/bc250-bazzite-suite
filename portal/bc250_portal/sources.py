@@ -90,6 +90,7 @@ class Sources:
 
     work: Path                                  # <state dir>/releases
     checkout: Path | None = None                # the suite repo, in development
+    apps_checkout: Path | None = None           # a release portal: the repo its checkout-only apps run from
     repo_url: str = SUITE_REPO_URL
     download: Download | None = None
 
@@ -97,11 +98,16 @@ class Sources:
     def local(self) -> bool:
         return self.checkout is not None
 
+    @property
+    def checkout_for_apps(self) -> Path | None:
+        """Where the checkout-only apps run from: the portal's own checkout, else the one it was shown."""
+        return self.checkout or self.apps_checkout
+
     def folder(self, entry: AppEntry) -> Path:
         if entry.checkout_only:
-            if self.checkout is None:
+            if self.checkout_for_apps is None:
                 raise SourceError(f"{entry.name} runs from a suite checkout, and this portal has none")
-            return self.checkout / (entry.folder or f"apps/{entry.key}")
+            return self.checkout_for_apps / (entry.folder or f"apps/{entry.key}")
         return self.work / ("local-" + entry.key if self.local else entry.tag)
 
     def prepare(self, entry: AppEntry) -> Path:

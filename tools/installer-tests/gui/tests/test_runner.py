@@ -242,3 +242,15 @@ def test_installer_creates_desktop_entries_and_uninstalls_only_them(tmp_path: Pa
     assert not desktop_entry.exists()
     assert (APP_DIR / "run.sh").is_file()
     assert (APP_DIR / "installer_test_gui" / "__main__.py").is_file()
+
+
+def test_a_second_launch_opens_no_window(monkeypatch):
+    """A double-click on the Desktop icon starts the app twice: the second launch hands over to the first."""
+    from PyQt6.QtWidgets import QApplication
+    import installer_test_gui.__main__ as entry
+    app = QApplication.instance() or QApplication([])
+    asked = []
+    monkeypatch.setattr(entry, "QApplication", lambda argv: app)
+    monkeypatch.setattr(entry.instance, "already_running", lambda app_id: asked.append(app_id) or True)
+    monkeypatch.setattr(entry, "MainWindow", lambda *a, **k: (_ for _ in ()).throw(AssertionError("a second window")))
+    assert entry.main() == 0 and asked == [entry.APP_ID]

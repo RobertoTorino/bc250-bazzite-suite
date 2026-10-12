@@ -185,3 +185,23 @@ def test_records_round_trip(tmp_path):
     assert Records(path).get("cu-bisect") == ""
     path.write_text("not json")
     assert Records(path).get("governor") == ""
+
+
+def test_a_release_portal_runs_checkout_apps_from_the_checkout_it_was_shown(tmp_path):
+    entry = AppEntry(key="suite-releases", name="SR", summary="s", tag="", checkout_only=True, install=("x",),
+                     uninstall=("y",), detect=("z",))
+    sources = Sources(tmp_path / "work", apps_checkout=SUITE)
+    assert not sources.local                                                # released apps still from releases
+    assert sources.prepare(entry) == SUITE / "apps" / "suite-releases"
+    with pytest.raises(SourceError):
+        Sources(tmp_path / "work").folder(entry)
+
+
+def test_remembered_checkout(tmp_path, monkeypatch):
+    import bc250_portal
+    monkeypatch.setattr(bc250_portal, "state_dir", lambda: tmp_path / "state")
+    assert bc250_portal.remembered_checkout() is None
+    bc250_portal.remember_checkout(SUITE)
+    assert bc250_portal.remembered_checkout() == SUITE
+    bc250_portal.remember_checkout(tmp_path)                                # no longer a checkout: forgotten
+    assert bc250_portal.remembered_checkout() is None

@@ -1,3 +1,19 @@
+Changelog: 12-10-2026 06:14:55
+
+Release 0.1.4. added a service so the TV turns on at boot
+
+Changelog: 12-10-2026 05:52:23
+
+The manual explains why the boot service is needed: nothing of the app or of Valve's CEC daemon runs before login, and Bazzite's own boot part (cec-control, run by a udev rule for the Bluetooth adapter) depends on the Bluetooth adapter instead of the CEC adapter, gives the adapter no name, and leaves the login screen's display settings as they are.
+
+Changelog: 12-10-2026 05:51:00
+
+The TV power box shows the state with a capital, "On" and "Standby" instead of "on" and "standby", as the other boxes do.
+
+Changelog: 12-10-2026 05:45:27
+
+At boot, before you log in: a system service (boot.py) that gives the TV the board's name and, when chosen, turns it on and switches it to the board, before the login screen. Until now nothing of the app ran before login: on the owner's board (12-10-2026) the TV showed "Playback" after every boot, and nothing turned it on. Only Bazzite's cec-control did sometimes, from a udev rule for the Bluetooth adapter: it ran before /dev/cec0 existed and failed, the login screen came up with the TV off, and when the TV was turned on later the converter gave no picture (the login screen keeps its own display settings, so not the 8 bits per colour). A udev rule starts the service once per boot when a CEC adapter appears. It waits for a display, names the adapter, sends Image View On and Active Source with wake on, and is ordered before the display manager, which waits at most 8 s for it. For a minute it keeps the name when something configures the adapter again (Bazzite's cec-control names it "Playback"), and it leaves the name to Valve's CEC daemon when that runs. The app installs, changes and removes it as root through pkexec, with the system python3 in isolated mode. The files are in /etc (bc250-hdmi-cec/boot.py and boot.json, the unit and the rule), so nothing at boot depends on /var. A new name on the TV updates the service, and Update installs this version when the installed copy differs. Display settings to the login screen… copies the user's kwinoutputconfig.json to the login screen's user (Plasma Login or SDDM), as KDE's Apply Plasma Settings does, so 8 bits per colour applies there too. install.sh --uninstall removes the service with sudo; install.sh itself still needs no root and says when the installed service is from another version.
+
 Changelog: 12-10-2026 00:00:26
 
 Release 0.1.3. program your remote buttons

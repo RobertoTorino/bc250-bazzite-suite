@@ -7,6 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 TIMEOUT_MS = 15000
+ROOT_TIMEOUT_MS = 300000                # pkexec: the password dialog waits for the user
 
 
 @dataclass(frozen=True)
@@ -38,3 +39,8 @@ def run(argv: list[str], timeout_ms: int = TIMEOUT_MS) -> Result:
         return Result(124, f"{argv[0]} did not finish within {timeout_ms // 1000} s.")
     out = bytes(process.readAllStandardOutput()).decode("utf-8", "replace")
     return Result(process.exitCode(), out)
+
+
+def run_root(argv: list[str]) -> Result:
+    """*argv* starts with pkexec: it waits for the password before it runs."""
+    return run(argv, ROOT_TIMEOUT_MS)

@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# Portal dependency checker
+# Dependency Checker
 
-Portal dependency checker lists the BC250 Bazzite Suite's declared Python packages and app-specific external
+Dependency Checker lists the BC250 Bazzite Suite's declared Python packages and app-specific external
 tools, including the apps and features that use them.
 
 **Check for updates** compares package versions with PyPI and checks whether each external tool is available.

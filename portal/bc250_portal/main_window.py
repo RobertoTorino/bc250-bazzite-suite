@@ -27,7 +27,7 @@ from pathlib import Path, PurePath
 from PyQt6.QtCore import QEvent, QSize, QTimer, Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPalette, QPixmap
 from PyQt6.QtWidgets import (
-    QCheckBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea,
+    QCheckBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea,
     QToolButton, QVBoxLayout, QWidget,
 )
 
@@ -39,7 +39,7 @@ from bc250_core.updates import ReleaseInfo, UpdateChecker, version_tuple
 from bc250_core.widgets import ClickableLogo, hint_label
 
 from . import desktop_icons, glyphs
-from . import APP_ICONS, APP_NAME, INFO, LOGO_PATH, __version__
+from . import APP_ICONS, APP_NAME, INFO, LOGO_PATH, __version__, is_suite, remember_checkout
 from .manifest import AppEntry
 from .portal_update import PortalUpdate
 from .sources import Records, SourceError, Sources, is_installed
@@ -236,7 +236,7 @@ class AppTile(QFrame):
 
     def show_state(self, installed: bool, installed_tag: str, busy: str = "", available: bool = True) -> bool:
         """Show the app's state; True when an update is available. *available* False: a checkout-only app in a
-        portal without a checkout, which can neither install nor remove it (an installed one still opens)."""
+        portal that does not know a checkout yet; it asks for one when the app is installed or removed."""
         entry = self.entry
         # An update needs a known, different tag: an app installed some other way has none recorded.
         update = installed and bool(installed_tag) and bool(entry.tag) and installed_tag not in (entry.tag, "local")
@@ -244,11 +244,6 @@ class AppTile(QFrame):
         self.dot.setToolTip(f"Update available: {entry.tag} (installed {installed_tag})." if update else "")
         if busy:
             self.status, detail = busy, busy
-        elif not available:
-            self.status = "Needs a checkout"
-            detail = (f"{'Installed from a suite checkout. ' if installed else ''}It runs from a suite checkout and "
-                      "has no release, so this portal (installed from a release) cannot install or remove it. To use "
-                      "it, install the portal from the checkout: ./install.sh in the repository.")
         elif not installed:
             self.status, detail = "Not installed", "Not installed: install it with the button beside the icon."
         elif update:
@@ -258,6 +253,9 @@ class AppTile(QFrame):
             detail = (f"Installed from {installed_tag}." if installed_tag not in ("", "local") else
                       "Installed from the suite checkout." if installed_tag == "local" else
                       "Installed (not by this portal, so its version is unknown).")
+        if not available and not busy:
+            detail += (" It runs from a suite checkout and has no release: the portal asks once for that folder "
+                       "(the repository) when you install it.")
         self.busy_label.setText(busy)
         self.busy_label.setVisible(bool(busy))
         self.icon.setIcon(self._icons[0 if installed else 1])
@@ -276,12 +274,9 @@ class AppTile(QFrame):
             ("Install", self._ink())
         draw = glyphs.reinstall if entry.required and installed and not update else glyphs.install
         self.install_button.setIcon(draw(ink))
-        self.install_button.setToolTip(f"{action} {entry.name}" + (f" ({entry.tag})" if entry.tag else "") if available
-                                       else "Needs a suite checkout: install the portal from it (./install.sh)")
-        self.install_button.setEnabled(available and not busy)
-        self.uninstall_button.setEnabled(available and installed and not busy)
-        if not available:
-            self.uninstall_button.setToolTip(self.install_button.toolTip())
+        self.install_button.setToolTip(f"{action} {entry.name}" + (f" ({entry.tag})" if entry.tag else ""))
+        self.install_button.setEnabled(not busy)
+        self.uninstall_button.setEnabled(installed and not busy)
         return update
 
 
@@ -466,7 +461,7 @@ class MainWindow(QMainWindow):
             elif self.pending and self.pending.entry is entry:
                 busy = "Installing…" if self.pending.action == "install" else "Removing…"
             card = self.cards[entry.key]
-            available = not entry.checkout_only or self.sources.checkout is not None
+            available = not entry.checkout_only or self.sources.checkout_for_apps is not None
             updates += card.show_state(is_installed(entry), self.records.get(entry.key), busy, available)
             if self.busy() and not busy:
                 card.install_button.setEnabled(False)
@@ -539,15 +534,39 @@ class MainWindow(QMainWindow):
     def install(self, entry: AppEntry) -> None:
         if self.busy() or not self._confirm_board_change(entry, f"Install {entry.name}"):
             return
+        if entry.checkout_only and not self._know_checkout(entry):
+            return
         self._start(entry, "install")
 
     def uninstall(self, entry: AppEntry) -> None:
-        if self.busy():
+        if self.busy() or (entry.checkout_only and not self._know_checkout(entry)):
             return
         answer = QMessageBox.question(self, APP_NAME, f"Uninstall {entry.name}? Its own uninstaller runs in a "
                                       "terminal; settings and results are kept unless it asks otherwise.")
         if answer == QMessageBox.StandardButton.Yes:
             self._start(entry, "uninstall")
+
+    def _know_checkout(self, entry: AppEntry) -> bool:
+        """A checkout-only app needs the suite checkout it runs from: a portal installed from a release asks for it
+        once, and remembers it."""
+        if self.sources.checkout_for_apps is not None:
+            return True
+        chosen = QFileDialog.getExistingDirectory(
+            self, f"{APP_NAME}: your suite checkout for {entry.name}", str(Path.home()))
+        if not chosen:
+            return False
+        folder = Path(chosen)
+        if not is_suite(folder):
+            QMessageBox.warning(self, APP_NAME, f"{folder} is not a BC250 Bazzite Suite checkout: it needs apps/, "
+                                "core/ and tools/stage_app.py. Choose the folder of the repository itself.")
+            return False
+        self.sources.apps_checkout = folder
+        try:
+            remember_checkout(folder)
+        except OSError:
+            pass                                        # used for now; asked again next time
+        self.refresh()
+        return True
 
     def _start(self, entry: AppEntry, action: str) -> None:
         self._job = (entry, action)
@@ -581,7 +600,8 @@ class MainWindow(QMainWindow):
                                  f"Run it by hand instead:\n{shell_line(folder, commands)}")
             self.refresh()
             return
-        self.pending = Pending(entry, action, exit_file, "local" if self.sources.local else entry.tag)
+        self.pending = Pending(entry, action, exit_file,
+                               "local" if self.sources.local or entry.checkout_only else entry.tag)
         self.poll.start()
         self.refresh()
 

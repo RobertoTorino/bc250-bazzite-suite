@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Check suite Python packages and external tools."""
 
-APP_NAME = "Portal dependency checker"
+APP_NAME = "Dependency Checker"
 APP_ID = "bc250-portal-dependency-checker"
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 from pathlib import Path
 

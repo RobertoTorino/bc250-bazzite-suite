@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import json
+import sys
 import tomllib
 from pathlib import Path
 
 import pytest
 from PyQt6.QtWidgets import QDialog, QMessageBox
 
-from bc250_hdmi_cec import main_window
+from bc250_hdmi_cec import boot, main_window
 from bc250_hdmi_cec.main_window import MainWindow
 from bc250_hdmi_cec.runner import Result
 from conftest import ACK, INFO, NACK, POWER_ON, TOPOLOGY_TV, UNCONFIGURED
@@ -86,6 +87,29 @@ class FakeBoard:
         return call[call.index("--to") + 1]
 
 
+class FakeRoot:
+    """pkexec with boot.py: does what boot.main would, in the test's /etc; cancel=True is a cancelled password."""
+
+    def __init__(self, etc_root, cancel=False):
+        self.paths, self.cancel = boot.Paths(etc_root), cancel
+        self.calls = []
+        self.greeter = []
+
+    def __call__(self, argv):
+        assert argv[:3] == boot.command([])[:3] and argv[3] == str(Path(boot.__file__).resolve())
+        args = argv[4:]
+        self.calls.append(args)
+        if self.cancel:
+            return Result(126, "")
+        if args[0] == "install":
+            boot.install(self.paths, args[args.index("--name") + 1], "--wake" in args, run=lambda a: Result(0, ""))
+        elif args[0] == "uninstall":
+            boot.uninstall(self.paths, run=lambda a: Result(0, ""))
+        else:
+            self.greeter.append(args[1])
+        return Result(0, '{"ok": true}\n')
+
+
 @pytest.fixture(autouse=True)
 def answer(monkeypatch):
     """Every question is answered Yes unless a test says otherwise, so no dialog waits for a click."""
@@ -100,9 +124,10 @@ def answer(monkeypatch):
 def make(qapp, dev_root, sys_root, etc_root, usr_root, tmp_path):
     made = []
 
-    def build(board, terminal=None):
+    def build(board, terminal=None, run_root=None):
         w = MainWindow(dev_root, sys_root, tmp_path / "config", etc_root, usr_root, run=board,
-                       terminal=terminal or (lambda cmd: None), listen=False)
+                       terminal=terminal or (lambda cmd: None), listen=False,
+                       run_root=run_root if run_root is not None else FakeRoot(etc_root))
         made.append(w)
         return w
     yield build
@@ -161,7 +186,7 @@ def test_check_tv_and_the_receiver(make):
     board = FakeBoard(receiver=True)
     w = make(board)
     w.check_tv()
-    assert w.power_box.value.text() == "on" and "AV receiver" in w.result.text()
+    assert w.power_box.value.text() == "On" and "AV receiver" in w.result.text()
     w.press("volume-up")
     assert board.target("ui-cmd=volume-up") == "5" and board.sent("--user-control-released")
 
@@ -409,3 +434,78 @@ def test_cecd_names_the_adapter_itself(make):
     board = FakeBoard(native=True)
     make(board).tv_standby()
     assert not board.sent("--playback")
+
+
+# --- At boot ------------------------------------------------------------------------------------------------------
+
+def test_boot_is_off_and_asks_nothing(make):
+    w = make(FakeBoard())
+    assert not w.boot_box.isChecked() and w.wake_box.isChecked() and w.wake_box.isEnabled()
+    assert not w.boot_update_button.isVisible() and "Off" in w.boot_note.text()
+    assert not w.run_root.calls
+
+
+def test_boot_on_with_wake_asks_once(make, etc_root):
+    w = make(FakeBoard())
+    w.boot_box.setChecked(True)
+    assert w.run_root.calls == [["install", "--name", "BC-250", "--wake"]]
+    assert boot.installed(boot.Paths(etc_root)) == boot.Config("BC-250", True)
+    assert w.boot_box.isChecked() and "On:" in w.boot_note.text() and "turns it on" in w.boot_note.text()
+    w.wake_box.setChecked(False)
+    assert w.run_root.calls[-1] == ["install", "--name", "BC-250"]
+    assert boot.installed(boot.Paths(etc_root)) == boot.Config("BC-250", False)
+    w.boot_box.setChecked(False)
+    assert w.run_root.calls[-1] == ["uninstall"] and boot.installed(boot.Paths(etc_root)) is None
+    assert not w.wake_box.isChecked()                       # the choice it gets installed with next time
+
+
+def test_boot_shows_what_is_installed(make, etc_root):
+    boot.install(boot.Paths(etc_root), "BC-250", False, run=lambda a: Result(0, ""))
+    w = make(FakeBoard())
+    assert w.boot_box.isChecked() and not w.wake_box.isChecked() and not w.run_root.calls
+
+
+def test_a_cancelled_password_changes_nothing(make, etc_root, answer):
+    w = make(FakeBoard(), run_root=FakeRoot(etc_root, cancel=True))
+    w.boot_box.setChecked(True)
+    assert not w.boot_box.isChecked() and boot.installed(boot.Paths(etc_root)) is None
+    assert "Not authorised" in answer["asked"][-1]
+
+
+def test_another_version_or_name_offers_update(make, etc_root, tmp_path):
+    other = tmp_path / "old_boot.py"
+    other.write_text("# an older version\n")
+    boot.install(boot.Paths(etc_root), "BC-250", True, run=lambda a: Result(0, ""), own=other)
+    w = make(FakeBoard())
+    assert not w.boot_update_button.isHidden() and "Update" in w.boot_note.text()
+    w.update_boot()
+    assert w.run_root.calls == [["install", "--name", "BC-250", "--wake"]]
+    assert w.boot_update_button.isHidden() and not boot.outdated(boot.Paths(etc_root))
+
+
+def test_a_new_name_goes_to_the_boot_service(make, etc_root):
+    w = make(FakeBoard())
+    w.boot_box.setChecked(True)
+    w.name_edit.setText("Lounge")
+    w.save_name()
+    assert w.run_root.calls[-1] == ["install", "--name", "Lounge", "--wake"]
+    assert boot.installed(boot.Paths(etc_root)).name == "Lounge" and w.boot_update_button.isHidden()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the display manager is a symlink, as on Linux")
+def test_display_settings_to_the_login_screen(make, etc_root, tmp_path, answer):
+    w = make(FakeBoard())
+    assert not w.greeter_button.isEnabled()                 # no KDE login screen, no display settings
+    (etc_root / "systemd/system").mkdir(parents=True)
+    (etc_root / "systemd/system/display-manager.service").symlink_to("/usr/lib/systemd/system/plasmalogin.service")
+    (tmp_path / "config").mkdir(exist_ok=True)
+    (tmp_path / "config/kwinoutputconfig.json").write_text("[]")
+    w.refresh_boot()
+    assert w.greeter_button.isEnabled()
+    answer["value"] = QMessageBox.StandardButton.No
+    w.greeter_button.click()
+    assert not w.run_root.calls
+    answer["value"] = QMessageBox.StandardButton.Yes
+    w.greeter_button.click()
+    assert w.run_root.greeter == [str(tmp_path / "config/kwinoutputconfig.json")]
+    assert "login screen" in w.result.text()

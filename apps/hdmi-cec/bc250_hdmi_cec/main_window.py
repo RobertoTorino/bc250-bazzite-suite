@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The main window: the board's CEC adapter and the TV behind it, buttons for the TV and what it tells about itself
 (tvinfo.py), the board's name on the TV, what happens when the TV turns off and on (the picture: display.py; media:
-media.py; both through the watcher service), the automatic behaviour of Valve's CEC daemon (cecd) with the remote's
-buttons (keys.py), and a tester for the remote's keys.
+media.py; both through the watcher service), what happens at boot before anyone logs in (boot.py, a system service
+installed through pkexec), the automatic behaviour of Valve's CEC daemon (cecd) with the remote's buttons (keys.py),
+and a tester for the remote's keys.
 
 The buttons send their messages with cec-ctl, so they work whichever CEC mode Bazzite is in. The automatic part
 (wake and standby with the board, the remote as key presses) is cecd's: the app only writes its settings."""
@@ -31,7 +32,7 @@ from bc250_core.widgets import (ClickableLogo, MetricBox, StatusText, TextDialog
                                  page_header)
 
 from . import APP_NAME, INFO, LOGO_PATH, ROOT, __version__
-from . import bazzite, cec, display, keys, runner, service, tvinfo
+from . import bazzite, boot, cec, display, keys, runner, service, tvinfo
 from .remote import RemoteListener
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/hdmi-cec/"
@@ -135,12 +136,14 @@ class MainWindow(QMainWindow):
     def __init__(self, dev_root: Path = Path("/dev"), sys_root: Path = Path("/sys"),
                  config_dir: Path | None = None, etc_root: Path = Path("/etc"), usr_root: Path = Path("/usr"),
                  run: Callable[[list[str]], runner.Result] = runner.run,
-                 terminal: Callable[[str], None] = launch_in_terminal, listen: bool = True):
+                 terminal: Callable[[str], None] = launch_in_terminal, listen: bool = True,
+                 run_root: Callable[[list[str]], runner.Result] = runner.run_root):
         super().__init__()
         self.resize(880, 990)
         self.dev_root, self.sys_root, self.etc_root, self.usr_root = dev_root, sys_root, etc_root, usr_root
         self.config_dir = config_dir or config_home()
-        self.run, self.terminal = run, terminal
+        self.run, self.terminal, self.run_root = run, terminal, run_root
+        self.boot_paths = boot.Paths(etc_root)
         self.settings = CecSettings(INFO, self)
         self.adapter: cec.Adapter | None = None
         self.audio_target = cec.TV                  # the audio system (5) once it answered a poll, else the TV
@@ -223,6 +226,31 @@ class MainWindow(QMainWindow):
         self.pause_box.toggled.connect(self.choose_pause)
         lay_picture.addWidget(self.pause_box)
 
+        at_boot = QGroupBox("At boot, before you log in")
+        self.boot_box = QCheckBox("Give the TV the board's name at boot")
+        self.boot_box.setToolTip("A small system service that runs once at boot, when the CEC adapter appears, "
+                                 "before the login screen")
+        self.boot_box.toggled.connect(self.choose_boot)
+        self.wake_box = QCheckBox("Also turn the TV on and switch it to the BC-250 at boot")
+        self.wake_box.setToolTip("Image View On and Active Source, before the login screen sets the picture")
+        self.wake_box.setChecked(True)
+        self.wake_box.toggled.connect(self.choose_wake)
+        self.boot_update_button = QPushButton("Update")
+        self.boot_update_button.setToolTip("Install this version of the boot service, with the name on the TV")
+        self.boot_update_button.clicked.connect(self.update_boot)
+        self.greeter_button = QPushButton("Display settings to the login screen…")
+        self.greeter_button.clicked.connect(self.copy_display_to_greeter)
+        boot_row = QHBoxLayout()
+        boot_row.addWidget(self.boot_box)
+        boot_row.addStretch(1)
+        boot_row.addWidget(self.boot_update_button)
+        boot_row.addWidget(self.greeter_button)
+        self.boot_note = hint_label("")
+        lay_boot = QVBoxLayout(at_boot)
+        lay_boot.addLayout(boot_row)
+        lay_boot.addWidget(self.wake_box)
+        lay_boot.addWidget(self.boot_note)
+
         automatic = QGroupBox("Automatic (Valve's CEC daemon)")
         self.mode_label = QLabel()
         self.mode_label.setWordWrap(True)
@@ -271,11 +299,12 @@ class MainWindow(QMainWindow):
         lay.addWidget(self.adapter_note)
         lay.addWidget(tv)
         lay.addWidget(picture)
+        lay.addWidget(at_boot)
         lay.addWidget(automatic)
         lay.addWidget(keys)
         lay.addStretch(1)
         version = QLabel(f"{APP_NAME} {__version__} · core {CORE_VERSION} · sends CEC messages when you press a "
-                         "button, and asks the TV's power while Restart the picture is on")
+                         "button or at boot, and asks the TV's power while Restart the picture is on")
         version.setStyleSheet("color:palette(placeholder-text);")
         lay.addWidget(version, 0, Qt.AlignmentFlag.AlignRight)
         scroll = QScrollArea()              # a smaller window scrolls instead of cutting off the wrapped texts
@@ -334,6 +363,7 @@ class MainWindow(QMainWindow):
         self.power_box.set_value("—")
         self.refresh_picture()
         self.refresh_mode()
+        self.refresh_boot()
 
     def output(self) -> display.Output | None:
         """KDE's view of the output the CEC adapter belongs to."""
@@ -486,7 +516,8 @@ class MainWindow(QMainWindow):
             self.power_box.set_value("No answer")
             return
         state = cec.power_status(self.cec_ctl(cec.give_power_status(device)).out)
-        self.power_box.set_value(state or "Unknown", "" if state else "The TV took the question but did not reply")
+        self.power_box.set_value(state[:1].upper() + state[1:] if state else "Unknown",   # "On", "Standby"
+                                 "" if state else "The TV took the question but did not reply")
         audio = self.cec_ctl(cec.poll(device, cec.AUDIO_SYSTEM))
         self.audio_target = cec.AUDIO_SYSTEM if cec.acked(audio.out) else cec.TV
         receiver = (" An AV receiver answered too; the volume buttons go to it."
@@ -514,6 +545,10 @@ class MainWindow(QMainWindow):
             self.show_result(problem)
             return
         bazzite.update_fragment(self.config_dir, osd_name=name)
+        at_boot = boot.installed(self.boot_paths)
+        if at_boot is not None and at_boot.name != name:
+            self.install_boot(name, at_boot.wake)
+            self.refresh_boot()
         if self.mode.cecd_running:                          # cecd owns the adapter: it takes the name at a restart
             bazzite.restart_cecd(self.run)
             self.show_result(f"Valve's CEC daemon restarted with the name {name}.")
@@ -563,6 +598,81 @@ class MainWindow(QMainWindow):
         if not result.ok:
             QMessageBox.warning(self, window_title("Background service"),
                                 f"The background service did not start:\n{result.out.strip()}")
+
+    # --- At boot ----------------------------------------------------------------------------------------------
+
+    def refresh_boot(self) -> None:
+        """The boot service as installed in /etc; reading it needs no password. While it is off, the wake switch is
+        only the choice it gets installed with."""
+        at_boot = boot.installed(self.boot_paths)
+        shown = ((self.boot_box, at_boot is not None),) + (((self.wake_box, at_boot.wake),) if at_boot else ())
+        for box, on in shown:
+            box.blockSignals(True)
+            box.setChecked(on)
+            box.blockSignals(False)
+        stale = at_boot is not None and (boot.outdated(self.boot_paths) or at_boot.name != self.osd_name())
+        self.boot_update_button.setVisible(stale)
+        greeter = boot.greeter_user(self.boot_paths)
+        self.greeter_button.setEnabled(bool(greeter) and self.kwin_outputs().is_file())
+        self.greeter_button.setToolTip(
+            "Copy this desktop's display settings (resolution, refresh rate, colour depth) to the login screen"
+            if greeter else "Only for KDE's login screen (Plasma Login or SDDM); this system has another one")
+        if at_boot is None:
+            text = ("Off: until you log in, nothing gives the TV the board's name (it may show \"Playback\") or "
+                    "turns it on. Switching it on installs a small system service and asks for your password.")
+        else:
+            text = (f"On: {boot.UNIT} gives the TV the name {at_boot.name}"
+                    + (" and turns it on" if at_boot.wake else "")
+                    + " when the CEC adapter appears, before the login screen. Each change asks for your password.")
+            if stale:
+                text += (" It was installed by another version of the app or with another name: Update installs "
+                         "this one.")
+        self.boot_note.setText(f"{escape(text)} The login screen has its own display settings: with 8 bits per "
+                               "colour chosen above, copy them to it, so the picture also comes back there.")
+
+    def kwin_outputs(self) -> Path:
+        return self.config_dir / boot.KWIN_OUTPUTS
+
+    def as_root(self, args: list[str], title: str) -> bool:
+        """Runs boot.py as root; a cancelled password or a failure shows a message and changes nothing here."""
+        result = self.run_root(boot.command(args))
+        problem = boot.answer(result.code, result.out)
+        if problem:
+            QMessageBox.warning(self, window_title(title), problem)
+        return not problem
+
+    def install_boot(self, name: str, wake: bool) -> bool:
+        return self.as_root(["install", "--name", name, *(["--wake"] if wake else [])], "At boot")
+
+    def choose_boot(self, on: bool) -> None:
+        if on:
+            self.install_boot(self.osd_name(), self.wake_box.isChecked())
+        else:
+            self.as_root(["uninstall"], "At boot")
+        self.refresh_boot()                         # as installed: unchanged when the password was cancelled
+
+    def choose_wake(self, on: bool) -> None:
+        at_boot = boot.installed(self.boot_paths)
+        if at_boot is not None:
+            self.install_boot(at_boot.name, on)
+            self.refresh_boot()
+
+    def update_boot(self) -> None:
+        at_boot = boot.installed(self.boot_paths)
+        self.install_boot(self.osd_name(), at_boot is not None and at_boot.wake)
+        self.refresh_boot()
+
+    def copy_display_to_greeter(self) -> None:
+        answer = QMessageBox.question(
+            self, window_title("Login screen"),
+            "Use this desktop's display settings on the login screen too?\n\nThe resolution, refresh rate and colour "
+            "depth you have now are copied to the login screen, as KDE's Apply Plasma Settings (System Settings, "
+            "Login Screen) does. With 8 bits per colour, a TV that is turned on while the login screen shows then "
+            "gets its picture too. It asks for your password.")
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        if self.as_root(["greeter-display", str(self.kwin_outputs())], "Login screen"):
+            self.show_result("The login screen uses this desktop's display settings from the next time it starts.")
 
     # --- Automatic --------------------------------------------------------------------------------------------
 

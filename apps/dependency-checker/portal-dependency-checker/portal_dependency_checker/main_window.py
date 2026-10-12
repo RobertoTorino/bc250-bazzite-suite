@@ -138,7 +138,7 @@ class DependencyWindow(QDialog):
         check: Callable[[], tuple[list[DependencyStatus], list[ToolStatus]]] | None = None,
     ):
         super().__init__(parent)
-        self.setWindowTitle("Portal dependency checker")
+        self.setWindowTitle("Dependency Checker")
         self.resize(820, 560)
         self.worker = UpdateChecker(self)
         self.worker.finished.connect(self._checked)
@@ -151,7 +151,7 @@ class DependencyWindow(QDialog):
 
         root = QVBoxLayout(self)
         header = QHBoxLayout()
-        title = QLabel("Portal dependency checker")
+        title = QLabel("Dependency Checker")
         title.setStyleSheet(header_font() + "font-size:22px; font-weight:800;")
         header.addWidget(title, 1)
         self.check_button = QPushButton("Check for updates")

@@ -18,7 +18,15 @@ case "$*" in
   *"import venv, ensurepip"*) exit 0 ;;
   "-m venv "*) d=$3; mkdir -p "$d/bin"; cat > "$d/bin/python" <<'Y'
 #!/bin/sh
-# stub venv python: pip installs and import checks succeed without doing anything
+# stub venv python: pip installs and import checks succeed without doing anything, as long as every
+# requirements file given with -r is there (pip itself would stop on a missing one).
+if [ "$1 $2" = "-m pip" ]; then
+    prev=
+    for a in "$@"; do
+        if [ "$prev" = -r ] && [ ! -f "$a" ]; then echo "ERROR: Could not open requirements file: $a" >&2; exit 1; fi
+        prev=$a
+    done
+fi
 case "$1" in -m|-c) exit 0 ;; esac
 exec /usr/bin/python3 "$@"
 Y

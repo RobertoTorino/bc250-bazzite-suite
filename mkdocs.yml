@@ -69,7 +69,7 @@ nav:
       - BC-250 Memory Manager: apps/memory-manager.md
       - BC-250 ACE Queues: apps/ace-queues.md
       - BC250 HDMI CEC: apps/hdmi-cec.md
-      - Portal dependency checker: apps/dependency-checker.md
+      - Dependency Checker: apps/dependency-checker.md
   - Development:
       - development/index.md
       - Bazzite Test script: development/bazzite-test.md

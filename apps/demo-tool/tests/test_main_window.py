@@ -345,3 +345,15 @@ def test_start_hides_window_and_global_shortcut_stops_recording(qapp, monkeypatc
     assert not window.recording
     assert window.isVisible()
     window.close()
+
+
+def test_a_second_launch_opens_no_window(monkeypatch):
+    """A double-click on the Desktop icon starts the app twice: the second launch hands over to the first."""
+    from PyQt6.QtWidgets import QApplication
+    import simple_demo_tool.__main__ as entry
+    app = QApplication.instance() or QApplication([])
+    asked = []
+    monkeypatch.setattr(entry, "QApplication", lambda argv: app)
+    monkeypatch.setattr(entry.instance, "already_running", lambda app_id: asked.append(app_id) or True)
+    monkeypatch.setattr(entry, "MainWindow", lambda *a, **k: (_ for _ in ()).throw(AssertionError("a second window")))
+    assert entry.main() == 0 and asked == [entry.APP_ID]

@@ -35,3 +35,17 @@ def test_tooltip_over_the_build_indicator(window):
     tip.show_text(QPoint(5, 5), w.build.toolTip(), w.build)
     assert tip.popup.isVisible() and tip.popup.parentWidget() is w
     tip.hide()
+
+
+def test_a_second_launch_opens_no_window(monkeypatch):
+    """A double-click on the Desktop icon starts the app twice: the second launch hands over to the first."""
+    from bc250_core import instance
+    import bc250_suite_releases.__main__ as entry
+    import bc250_suite_releases.main_window as main_window
+    app = QApplication.instance() or QApplication([])
+    asked = []
+    monkeypatch.setattr(entry, "create_app", lambda *a, **k: app)
+    monkeypatch.setattr(instance, "already_running", lambda app_id: asked.append(app_id) or True)
+    monkeypatch.setattr(main_window, "ReleaseWindow", lambda *a, **k: pytest.fail("a second window was opened"))
+    monkeypatch.setattr("sys.argv", ["bc250_suite_releases"])
+    assert entry.main() == 0 and asked == [entry.INFO.app_id]

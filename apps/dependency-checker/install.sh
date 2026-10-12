@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Installs Portal dependency checker as a desktop app, from a clone or the extracted release tarball:
+# Installs Dependency Checker as a desktop app, from a clone or the extracted release tarball:
 #
 #   ./install.sh                         # install or update
 #   ./install.sh --no-desktop-shortcut   # app menu entry only, no icon on the Desktop
@@ -14,7 +14,7 @@
 set -euo pipefail
 
 APP_ID="bc250-portal-dependency-checker"
-APP_NAME="Portal dependency checker"
+APP_NAME="Dependency Checker"
 DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 APP_DIR="$DATA_DIR/$APP_ID/app"
@@ -89,6 +89,7 @@ rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR"
 (cd "$APP_SOURCE" && tar --exclude='./.git' --exclude='./.idea' --exclude='./tests' --exclude='__pycache__' -cf - .) |
     tar -xf - -C "$APP_DIR"
+cp "$SRC/requirements.txt" "$APP_DIR/"              # one folder up from the app's own files
 mkdir -p "$APP_DIR/bc250_core"
 (cd "$CORE_SRC" && tar --exclude='__pycache__' -cf - .) | tar -xf - -C "$APP_DIR/bc250_core"
 

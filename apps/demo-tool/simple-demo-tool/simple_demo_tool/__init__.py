@@ -2,3 +2,4 @@
 """Simple Demo Tool: a standalone portal-install recording helper."""
 
 APP_NAME = "Simple Demo Tool"
+APP_ID = "simple-demo-tool"

@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from bc250_core import __version__ as CORE_VERSION
+from bc250_core import __version__ as CORE_VERSION, instance
 from bc250_core.app import create_app, exec_app
 from bc250_core.platform import data_home
 
@@ -19,6 +19,8 @@ def main() -> int:
     _args, qt_args = parser.parse_known_args()
 
     app = create_app(INFO, qt_args, lang="en")
+    if instance.already_running(INFO.app_id):       # a double-click on the Desktop icon starts it twice
+        return 0
     # With the menu entry of install.sh, the desktop file name gives the window its icon in the task bar. Without
     # it, no name: Qt would try to register it with the desktop portal, which only logs "App info not found".
     if not (data_home() / "applications" / f"{APP_ID}.desktop").is_file():
@@ -26,6 +28,7 @@ def main() -> int:
     from .main_window import ReleaseWindow
     window = ReleaseWindow()
     window.show()
+    server = instance.serve(INFO.app_id, window)  # noqa: F841 (kept alive while the app runs)
     return exec_app(app)
 
 

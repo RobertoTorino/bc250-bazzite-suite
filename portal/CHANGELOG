@@ -1,3 +1,11 @@
+Changelog: 12-10-2026 06:12:01
+
+A portal installed from a release installs the checkout-only apps (Suite Releases, BC-250 Installer Tests) too, instead of showing them greyed with "Needs a checkout". The first time one is installed or removed, it asks for the suite checkout folder, checks that it is one (apps/, core/, tools/stage_app.py), and remembers it in its state folder (suite-checkout); a folder that stops being a checkout is forgotten. Sources.apps_checkout is that folder: only the checkout-only apps use it, so the released apps still install from their pinned releases and the portal is not a local build. Such an install is recorded as "local", as from a portal of the checkout.
+
+Changelog: 12-10-2026 06:06:00
+
+apps.toml: the Portal dependency checker is listed as Dependency Checker.
+
 Changelog: 12-10-2026 00:04:54
 
 Release 0.9.11. Pins hdmi-cec-v0.1.3. app update HDMI-CEC

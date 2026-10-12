@@ -1,3 +1,11 @@
+Changelog: 12-10-2026 06:14:55
+
+Release 0.1.4. now also installs from the portal
+
+Changelog: 12-10-2026 06:06:00
+
+A double-click on the Desktop icon opened the window twice. The app carries a copy of bc250_core's instance.py now, as the apps that are not on bc250_core do, and a second launch brings the running window to the front and exits.
+
 Changelog: 11-10-2026 17:17:19
 
 Release 0.1.3.

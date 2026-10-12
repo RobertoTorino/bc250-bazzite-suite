@@ -25,6 +25,26 @@ def state_dir() -> Path:
     return data_home() / APP_ID / "portal"
 
 
+def is_suite(folder: Path) -> bool:
+    """Whether *folder* is a BC250 Bazzite Suite repository (a checkout)."""
+    return (folder / "apps").is_dir() and (folder / "tools" / "stage_app.py").is_file() and (folder / "core").is_dir()
+
+
+def remembered_checkout() -> Path | None:
+    """The suite checkout a portal installed from a release was shown, for the apps that run from a checkout
+    ([checkout.<key>] in apps.toml); None when it was not shown one, or the folder is no longer a checkout."""
+    try:
+        recorded = (state_dir() / CHECKOUT_FILE).read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    return Path(recorded) if recorded and is_suite(Path(recorded)) else None
+
+
+def remember_checkout(folder: Path) -> None:
+    state_dir().mkdir(parents=True, exist_ok=True)
+    (state_dir() / CHECKOUT_FILE).write_text(f"{folder}\n", encoding="utf-8")
+
+
 def suite_checkout() -> Path | None:
     """The suite repository when the portal runs from a checkout, or was installed from one (development): apps
     then install from the local source instead of a GitHub release."""
@@ -35,7 +55,4 @@ def suite_checkout() -> Path | None:
         recorded = ""
     if recorded:
         candidates.append(Path(recorded))
-    for suite in candidates:
-        if (suite / "apps").is_dir() and (suite / "tools" / "stage_app.py").is_file() and (suite / "core").is_dir():
-            return suite
-    return None
+    return next((suite for suite in candidates if is_suite(suite)), None)

@@ -1,3 +1,7 @@
+Changelog: 12-10-2026 06:06:00
+
+A double-click on the Desktop icon opened the window twice. The app carries a copy of bc250_core's instance.py now, as the apps that are not on bc250_core do, and a second launch brings the running window to the front and exits.
+
 Changelog: 11-10-2026 18:15:13
 
 A .checkout-only marker: it runs from the checkout and is never released. A portal from a checkout lists it under

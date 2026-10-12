@@ -45,7 +45,7 @@ uses. You do not need them.
 use the board.
 
 - <img src="portal/images/apps/demo-tool.png" width="20" height="20" alt=""/> **[Simple Demo Tool](apps/demo-tool)**: Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite.
-- <img src="portal/images/apps/portal-dependency-checker.png" width="20" height="20" alt=""/> **[Portal dependency checker](apps/dependency-checker)**: The suite's Python packages and external tools, which apps use them, and whether newer ones exist.
+- <img src="portal/images/apps/portal-dependency-checker.png" width="20" height="20" alt=""/> **[Dependency Checker](apps/dependency-checker)**: The suite's Python packages and external tools, which apps use them, and whether newer ones exist.
 - <img src="portal/images/apps/suite-releases.png" width="20" height="20" alt=""/> **[BC250 Suite Releases](apps/suite-releases)**: The release front end: versions, pins and the board checks of a release. Runs from a checkout of this repository.
 - <img src="portal/images/apps/installer-tests.png" width="20" height="20" alt=""/> **[BC-250 Installer Tests](tools/installer-tests/gui)**: Run the suite's installer tests one at a time, with their output live in the window. Runs from a checkout of this repository.
 
