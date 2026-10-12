@@ -58,7 +58,7 @@ def repo(tmp_path) -> Path:
     write(root / "apps/releases/.standalone", "Not in the portal.\n")
     write(root / "apps/releases/.checkout-only", "No releases.\n")
     write(root / "apps/alpha/alpha/ui.py", "from bc250_core import widgets\n")      # alpha bundles core, beta not
-    # A Rust crate, as BC250 Remote Play has: Cargo.lock repeats the crate's version, next to another crate's.
+    # A Rust crate, as BC250 Console Link has: Cargo.lock repeats the crate's version, next to another crate's.
     write(root / "apps/alpha/native/Cargo.toml", '[package]\nname = "alpha-core"\nversion = "0.1.0"\n')
     write(root / "apps/alpha/native/Cargo.lock", 'version = 4\n\n[[package]]\nname = "aes"\nversion = "0.1.0"\n\n'
                                                 '[[package]]\nname = "alpha-core"\nversion = "0.1.0"\n')

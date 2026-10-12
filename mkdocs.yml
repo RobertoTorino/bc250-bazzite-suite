@@ -71,7 +71,7 @@ nav:
       - BC250 HDMI CEC: apps/hdmi-cec.md
       - BC250 Bazzite SFTP Tools: apps/sftp-tools.md
       - Dependency Checker: apps/dependency-checker.md
-      - BC250 Remote Play: apps/remote-play.md
+      - BC250 Console Link: apps/console-link.md
   - Development:
       - development/index.md
       - Architecture and consistency: development/architecture.md

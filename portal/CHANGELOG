@@ -1,3 +1,7 @@
+Changelog: 13-10-2026 01:25:57
+
+The Remote Play entry is renamed: [apps.console-link], BC250 Console Link, tile Console Link, icon images/apps/console-link.png, launcher ~/.local/bin/bc250-console-link. Its pin is console-link-v0.1.2 with an empty checksum: that release is still to be tagged under the new name.
+
 Changelog: 13-10-2026 00:37:56
 
 Release 0.9.18. Pins remote-play-v0.1.2. bc250-remote-play beta2

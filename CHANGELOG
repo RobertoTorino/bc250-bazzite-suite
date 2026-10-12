@@ -1,3 +1,15 @@
+Changelog: 13-10-2026 01:25:57
+
+BC250 Remote Play is renamed BC250 Console Link (owner): apps/console-link, its installer test tools/installer-tests/console-link.sh, the manual page docs/apps/console-link.md, CI (its test matrix entry, the native job, shellcheck, the installer step), README, CLAUDE.md, the architecture chapter and requirements-dev.txt follow.
+
+Changelog: 13-10-2026 01:00:52
+
+CI: the native job's Python tests run from apps/remote-play, where the app's package imports (test_stream.py and test_senkusha.py need it; from native/ they failed to import).
+
+Changelog: 13-10-2026 00:47:43
+
+CI: the native job also runs BC250 Remote Play's network test tests (tests/test_senkusha.py).
+
 Changelog: 12-10-2026 23:37:12
 
 MIGRATION.md: BC250 Remote Play has a future iteration noted, an implementation of our own without chiaki-ng's code.

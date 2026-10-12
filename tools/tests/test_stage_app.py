@@ -19,7 +19,7 @@ def _suite(tmp_path: Path) -> Path:
     (app / "VERSION").write_text("0.1.0\n")
     (app / "tests").mkdir()
     (app / "tests" / "test_x.py").write_text("")
-    # A Rust crate with its build output, as BC250 Remote Play has one.
+    # A Rust crate with its build output, as BC250 Console Link has one.
     (app / "native" / "src").mkdir(parents=True)
     (app / "native" / "src" / "lib.rs").write_text("")
     (app / "native" / "target" / "release").mkdir(parents=True)

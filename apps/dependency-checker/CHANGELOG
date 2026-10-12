@@ -1,3 +1,11 @@
+Changelog: 13-10-2026 01:27:26
+
+Release 0.1.8.
+
+Changelog: 13-10-2026 01:25:57
+
+BC250 Remote Play is renamed BC250 Console Link: its entry [app.console-link] (launcher ~/.local/bin/bc250-console-link) and the owner of its packages.
+
 Changelog: 12-10-2026 22:00:05
 
 Release 0.1.7.

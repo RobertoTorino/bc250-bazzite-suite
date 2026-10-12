@@ -14,10 +14,10 @@ its manifest. **bazzite-test** is always installed and always listed first; ever
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
 - `apps/<name>/`: bazzite-test, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
-  system-overlay, bios-reader, ace-queues, memory-manager, hdmi-cec, sftp-tools, remote-play, demo-tool, dependency-checker, suite-releases. Each has its
-  own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; remote-play is AGPL-3.0, its protocol code ported from
+  system-overlay, bios-reader, ace-queues, memory-manager, hdmi-cec, sftp-tools, console-link, demo-tool, dependency-checker, suite-releases. Each has its
+  own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; console-link is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; the rest GPL-3.0-or-later), .gitignore. Simple
-  Demo Tool, the Dependency Checker and Remote Play are `development = true` in `portal/apps.toml`: the portal lists them
+  Demo Tool, the Dependency Checker and Console Link are `development = true` in `portal/apps.toml`: the portal lists them
   under "Development only". Suite Releases (the release front end) has `.standalone` and `.checkout-only`: it runs
   from the checkout, is never released, and is listed as `[checkout.suite-releases]`, also under "Development only":
   a portal from a release finds the checkout on the machine (it asks only when there is none) and remembers it, the
@@ -107,7 +107,7 @@ shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/
 shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
 shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh \
   apps/system-overlay/install.sh apps/bios-reader/install.sh apps/memory-manager/install.sh apps/hdmi-cec/install.sh apps/sftp-tools/install.sh \
-  apps/remote-play/install.sh apps/demo-tool/install.sh apps/suite-releases/*.sh
+  apps/console-link/install.sh apps/demo-tool/install.sh apps/suite-releases/*.sh
 shellcheck -S warning apps/ace-queues/bc250-ace-queues.sh apps/ace-queues/bc250-ace-queues-run \
   apps/ace-queues/install.sh apps/ace-queues/mesa/build-in-container.sh
 for t in tools/installer-tests/*.sh; do [ "${t##*/}" = shims.sh ] || bash "$t"; done   # every installer test

@@ -71,9 +71,9 @@ launchers = ["~/.local/bin/bc250-hdmi-cec"]
 name = "BC250 Bazzite SFTP Tools"
 launchers = ["~/.local/bin/bc250-bazzite-sftp-tools"]
 
-[app.remote-play]
-name = "BC250 Remote Play"
-launchers = ["~/.local/bin/bc250-remote-play"]
+[app.console-link]
+name = "BC250 Console Link"
+launchers = ["~/.local/bin/bc250-console-link"]
 
 [app.demo-tool]
 name = "Simple Demo Tool"
@@ -736,7 +736,7 @@ owner = "sftp-tools"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "remote-play"
+owner = "console-link"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
@@ -785,8 +785,8 @@ specifier = ">=3.4,<5"
 
 [[dependency]]
 name = "cryptography"
-description = "Cryptographic recipes and primitives for Python, on OpenSSL. BC250 Remote Play encrypts registration and the control connection of a Remote Play session with its AES and HMAC."
+description = "Cryptographic recipes and primitives for Python, on OpenSSL. BC250 Console Link encrypts registration and the control connection of a Remote Play session with its AES and HMAC."
 
 [[dependency.source]]
-owner = "remote-play"
+owner = "console-link"
 specifier = ">=42,<51"

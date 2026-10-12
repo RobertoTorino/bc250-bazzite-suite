@@ -209,19 +209,19 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-portal-dependency-checker"]
 launch = [["Open", "~/.local/bin/bc250-portal-dependency-checker"]]
 
-[apps.remote-play]
-name = "BC250 Remote Play"
-short = "Remote Play"
+[apps.console-link]
+name = "BC250 Console Link"
+short = "Console Link"
 summary = "Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session."
-tag = "remote-play-v0.1.2"
-sha256 = "fd42e67160575606d70f88bc7d3e7e668386bfdd1db470b572663689d7515926"
+tag = "console-link-v0.1.2"
+sha256 = ""
 required = false
 changes_board = false
 development = true
 install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
-detect = ["~/.local/bin/bc250-remote-play"]
-launch = [["Open", "~/.local/bin/bc250-remote-play"]]
+detect = ["~/.local/bin/bc250-console-link"]
+launch = [["Open", "~/.local/bin/bc250-console-link"]]
 
 [checkout.suite-releases]
 name = "BC250 Suite Releases"

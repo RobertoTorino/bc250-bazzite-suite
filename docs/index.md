@@ -49,7 +49,7 @@ need them to use the board.
 | App | What it does |
 |---|---|
 | ![](assets/apps/demo-tool.png){ .app-icon } [Simple Demo Tool](other-tools/simple-demo-tool.md) | Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite. |
-| ![](assets/apps/remote-play.png){ .app-icon } [BC250 Remote Play](apps/remote-play.md) | Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session. |
+| ![](assets/apps/console-link.png){ .app-icon } [BC250 Console Link](apps/console-link.md) | Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session. |
 | ![](assets/apps/portal-dependency-checker.png){ .app-icon } [Dependency Checker](apps/dependency-checker.md) | The suite's Python packages and external tools, which apps use them, and whether newer ones exist. |
 | ![](assets/apps/suite-releases.png){ .app-icon } [BC250 Suite Releases](portal.md#the-release-front-end) | The release front end: versions, pins and the board checks of a release. Runs from a checkout of this repository. |
 | ![](assets/apps/installer-tests.png){ .app-icon } BC-250 Installer Tests | Run the suite's installer tests one at a time, with their output live in the window. Runs from a checkout of this repository. |
@@ -60,5 +60,5 @@ app's chapter before you use it.
 
 ## License
 
-GPL-3.0-or-later, except BC-250 Persistent ACPI, which is MIT, and BC250 Remote Play, which is AGPL-3.0 (its
+GPL-3.0-or-later, except BC-250 Persistent ACPI, which is MIT, and BC250 Console Link, which is AGPL-3.0 (its
 protocol code comes from chiaki-ng). Each app has its own `LICENSE`.
