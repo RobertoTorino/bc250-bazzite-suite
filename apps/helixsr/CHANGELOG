@@ -1,3 +1,11 @@
+Changelog: 12-10-2026 09:09:15
+
+Release 0.2.4.
+
+Changelog: 12-10-2026 08:23:31
+
+install.sh takes --uninstall --purge (also the imported payload and the settings; the list of deployed games stays, so a reinstalled app can still restore them) and refuses to run as root, like every app's installer.
+
 Changelog: 11-10-2026 22:27:40
 
 Release 0.2.3.

@@ -23,8 +23,7 @@ from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import data_home
 from bc250_core.settings import SettingsStore
 from bc250_core.theme import BLUE, GREY, PURPLE
-from bc250_core.widgets import (ClickableLogo, MetricBox, StatusText, TextDialog, accent_button, hint_label,
-                                 page_header)
+from bc250_core.widgets import AppHeader, MetricBox, StatusText, TextDialog, accent_button, hint_label
 
 from . import APP_ID, APP_NAME, INFO, LOGO_PATH, __version__
 from . import cmos, privileged, system
@@ -60,18 +59,16 @@ class MainWindow(QMainWindow):
         self.settings = ManagerSettings(INFO, self)
         self.memory = system.read_memory(sys_root, proc_root)
 
-        header, _title = page_header(APP_NAME)
-        header.insertWidget(0, ClickableLogo(LOGO_PATH, 40))
+        header = AppHeader(LOGO_PATH, APP_NAME, __version__)
         self.badge = StatusText()
-        header.insertWidget(2, self.badge)
+        header.add_state(self.badge)
 
         self.vram_box = MetricBox("VRAM split", PURPLE)
         self.gtt_box = MetricBox("GTT (RAM the GPU may borrow)", BLUE)
         self.ram_box = MetricBox("System RAM", GREY)
         self.swap_box = MetricBox("Swap", GREY)
-        boxes = QHBoxLayout()
         for box in (self.vram_box, self.gtt_box, self.ram_box, self.swap_box):
-            boxes.addWidget(box)
+            header.add_second(box)
         self.details = hint_label("")
 
         mapped = QGroupBox("Memory map")
@@ -118,7 +115,6 @@ class MainWindow(QMainWindow):
         central = QWidget()
         lay = QVBoxLayout(central)
         lay.addLayout(header)
-        lay.addLayout(boxes)
         lay.addWidget(self.details)
         lay.addWidget(mapped)
         lay.addWidget(split)

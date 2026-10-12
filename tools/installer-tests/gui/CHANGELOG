@@ -1,3 +1,11 @@
+Changelog: 12-10-2026 08:23:31
+
+install.sh takes the options of every app's installer: --no-desktop-shortcut, --uninstall, --uninstall --purge (the app keeps no settings) and --help, given in any order.
+
+Changelog: 12-10-2026 08:07:21
+
+The window has the suite's header: the icon at 96 px (was 64) beside the title with the version, and the description line below it.
+
 Changelog: 12-10-2026 06:06:00
 
 A double-click on the Desktop icon opened the window twice. The app carries a copy of bc250_core's instance.py now, as the apps that are not on bc250_core do, and a second launch brings the running window to the front and exits.

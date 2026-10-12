@@ -1,3 +1,15 @@
+Changelog: 12-10-2026 09:09:15
+
+Release 0.1.2.
+
+Changelog: 12-10-2026 08:23:31
+
+install.sh in the app folder, like every app: it installs both windows (--bisect-only, --unlock-only), takes --no-desktop-shortcut, --uninstall and --uninstall --purge (also the results in ~/.local/share/bc250-cu-bisect, the settings, the --auto unit and the live-output autostart entry), and refuses to run as root. It runs packaging/bazzite/install-bisect-gui.sh and install-gui.sh, which stay and now refuse root too. tests/: the options as a command line, the --auto unit, the unlock gate (every rejection and the accepted retest) and both windows offscreen, with a fake unlock script; requirements-dev.txt. The manual's install steps use install.sh.
+
+Changelog: 12-10-2026 08:07:21
+
+Both windows have the suite's header: the icon at 96 px (was 64) beside the title, now 24 px with the version, and the description line below it.
+
 Changelog: 11-10-2026 19:25:11
 
 Release 0.1.1.

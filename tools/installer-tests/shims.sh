@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Shims for running the suite installers without root or network (CI, WSL). Usage: source shims.sh <root>
-# sudo becomes fakeroot (chown root:root is faked); python3 -m venv makes a stub venv whose pip does nothing.
+# sudo becomes fakeroot (chown root:root is faked); python3 -m venv makes a stub venv whose pip (python -m pip
+# or bin/pip) does nothing.
 # Needs fakeroot. Everything happens under <root>: HOME, XDG folders and the /opt and /var/log replacements.
 set -e
 ROOT=$1
@@ -30,7 +31,10 @@ fi
 case "$1" in -m|-c) exit 0 ;; esac
 exec /usr/bin/python3 "$@"
 Y
-     chmod +x "$d/bin/python"; exit 0 ;;
+     chmod +x "$d/bin/python"
+     # pip called directly (the cu-bisect installers): the same as "python -m pip".
+     printf '#!/bin/sh\nexec "$(dirname "$0")/python" -m pip "$@"\n' > "$d/bin/pip"
+     chmod +x "$d/bin/pip"; exit 0 ;;
 esac
 exec /usr/bin/python3 "$@"
 X

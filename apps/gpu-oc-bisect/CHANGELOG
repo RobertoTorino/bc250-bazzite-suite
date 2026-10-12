@@ -1,3 +1,15 @@
+Changelog: 12-10-2026 09:09:15
+
+Release 0.1.2.
+
+Changelog: 12-10-2026 08:23:31
+
+tests/: the sweep options as a command line and the hard rails, and the window offscreen (the start command, one-ladder sweeps, Install result and Reset only after their confirmation); requirements-dev.txt.
+
+Changelog: 12-10-2026 08:07:21
+
+The window has the suite's header: the icon at 96 px (was 64) beside the title, now 24 px with the version, and the description line below it.
+
 Changelog: 11-10-2026 19:25:11
 
 Release 0.1.1.

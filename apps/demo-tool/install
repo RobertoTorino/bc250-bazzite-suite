@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-# SPDX-License-Identifier: GPL-3.0-or-later
-exec bash "$(dirname "${BASH_SOURCE[0]}")/install.sh" "$@"

@@ -55,13 +55,13 @@ class MainWindow(QWidget):
         if LOGO_PATH.is_file():
             logo = QLabel()
             logo.setPixmap(QPixmap(str(LOGO_PATH)).scaled(
-                64, 64, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+                96, 96, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
             header.addWidget(logo)
         header_right = QVBoxLayout()
-        header_right.setSpacing(4)
+        header_right.setSpacing(6)
         title_row = QHBoxLayout()
-        title = QLabel(APP_NAME)
-        title.setStyleSheet("font-size:18px; font-weight:700;")
+        title = QLabel(f"{APP_NAME}  <span style='color:#9aa0a6; font-size:14px;'>v{__version__}</span>")
+        title.setStyleSheet("font-size:24px; font-weight:800; padding:0 2px;")
         title_row.addWidget(title)
         title_row.addStretch(1)
         help_btn = QPushButton(self.tr("Help"))

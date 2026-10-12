@@ -10,7 +10,7 @@ under "Development only". It does not use the suite's shared Python environment.
 From this folder, run:
 
 ```bash
-./install
+./install.sh
 ```
 
 The installer creates an app-specific Python environment under
@@ -31,7 +31,7 @@ for recordings. It does not use `sudo` or layer packages into Bazzite. Start the
    `sha256sum --check --ignore-missing SHA256SUMS`, and extract it into your Downloads folder. Simple Demo Tool
    automatically selects the newest extracted portal release there. Use **Find in Downloads** to rescan, or
    **Choose folder…** if you extracted it elsewhere. For local development, choose the suite repository folder
-   or `apps/demo-tool/simple-demo-tool`; the tool uses the checkout's root installer and portal manifest. The portal
+   or `apps/demo-tool`; the tool uses the checkout's root installer and portal manifest. The portal
    and selected app must not already be installed for a fresh-install recording.
 4. Start the demo and approve the system-wide stop shortcut if your desktop asks. OBS begins recording and the
    portal installer opens in a terminal. Simple Demo Tool hides, and the portal opens automatically when its
@@ -50,7 +50,7 @@ normal portal warnings under your control.
 
 ## Uninstall
 
-Run `./install --uninstall` from this folder. This removes the launcher, menu entry, Desktop shortcut, bundled
+`./install.sh --no-desktop-shortcut` leaves the Desktop icon out. Run `./install.sh --uninstall` from this folder. This removes the launcher, menu entry, Desktop shortcut, bundled
 icons, and the tool's own files. It leaves `~/SimpleVideoToolRecordings` and its videos untouched.
 
 ## Tests

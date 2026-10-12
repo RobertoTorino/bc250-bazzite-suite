@@ -1,3 +1,7 @@
+Changelog: 12-10-2026 08:07:21
+
+AppHeader in widgets: the first line of every app window, the icon at 96 px spanning the title row (name with the version, states, actions) and a second row (status boxes or main controls), as Bazzite Test and the Governor Manager draw it. test_widgets checks the layout.
+
 Changelog: 11-10-2026 20:58:28
 
 MetricBox centres its value and caption by default, like Bazzite Test's stats boxes; centred=False keeps them left-aligned. test_widgets checks the default; test_parity compares centred and left-aligned boxes with both governor's and helixsr's copies.

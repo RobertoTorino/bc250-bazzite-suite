@@ -1,3 +1,19 @@
+Changelog: 12-10-2026 09:09:15
+
+Release 0.1.6.
+
+Changelog: 12-10-2026 08:07:21
+
+The header is core's AppHeader, the same as the other apps', instead of its own copy of it.
+
+Changelog: 12-10-2026 07:46:06
+
+Python packages are looked up in OSV.dev for known vulnerabilities, each installed version once: a green "✓ CVE" when none is known, a red "✗ CVE" with each CVE ID linked to security.snyk.io (OSV IDs without a CVE link to osv.dev), its summary and the release that fixes it, and "CVE ?" when the check failed. One CVE that OSV.dev has as both a GHSA and a PYSEC entry is shown once. A vulnerable package's status is "Vulnerable", and a "Known CVEs" box counts them. Missing packages and tools get an Advice line: what to install and which features of the installed apps need it; a vulnerable package the release to update to.
+
+Changelog: 12-10-2026 07:39:58
+
+The app has the same layout as the other apps: the package is bc250_dependency_checker at the app's root (it was portal-dependency-checker/portal_dependency_checker), with dependencies.toml inside it and the icon as images/bc250-dependency-checker.png. Its ID, folders and launcher stay bc250-portal-dependency-checker, so an installed copy is updated in place. Python packages are now checked in the environment each installed app runs in, found from the app's launcher, instead of only in the checker's own; obsws-python and dbus-next showed "Not installed here" although Simple Demo Tool had them in its own venv. A package no installed app uses shows "Not needed", one missing from an app's environment "Missing", and a version outside the app's requirement "Wrong version". Tools are also looked for in ~/.local/bin and Homebrew, like Bazzite Test does, and speedtest and speedtest-cli are one entry (Bazzite Test needs one of them). Each tool's use per app is marked required or optional; a missing optional tool shows "Not installed", a missing required one "Missing", one no installed app uses "Not needed". Tools that work only as root (flashrom, umr, smartctl, fio, setpci, ras-mc-ctl, grub2-mkconfig) say "Needs root." in orange. The catalogue was checked against the apps: mangohud, vainfo, clinfo, rocminfo (Bazzite Test), ujust (HDMI CEC, Persistent ACPI) and grub2-mkconfig (Persistent ACPI) were missing. Every package and tool has a description, shown by the information button beside its name. The summary names the missing tools instead of counting them. The window has the header of the other apps: the icon at 96 px beside the title and a row with the counts and Check again.
+
 Changelog: 12-10-2026 06:14:55
 
 Release 0.1.5. now also installs from the portal

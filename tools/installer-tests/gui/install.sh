@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Install a launcher, app menu entry and Desktop icon for this checkout. Moving the checkout needs reinstalling.
+# Installs a launcher, app menu entry and Desktop icon for this checkout. Moving the checkout needs reinstalling.
+#
+#   ./install.sh                         launcher, app menu entry and Desktop icon
+#   ./install.sh --no-desktop-shortcut   launcher and app menu entry only
+#   ./install.sh --uninstall             remove them; the checkout stays
+#   ./install.sh --uninstall --purge     the same: the app keeps no settings
 set -euo pipefail
 
 APP=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
@@ -13,35 +18,34 @@ DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
 DESKTOP_ENTRY="$DESKTOP_DIR/$APP_ID.desktop"
 ICON="$APP/images/$APP_ID.png"
 shortcut=true
+uninstall=false
+purge=false
 
 info() { printf '\033[1;35m==>\033[0m %s\n' "$1"; }
 die() { printf '\033[1;31mERROR:\033[0m %s\n' "$1" >&2; exit 1; }
 
-case "${1:-}" in
-    "")
-        ;;
-    --no-desktop-shortcut)
-        shortcut=false
-        ;;
-    --uninstall)
-        info "Removing the launcher, app menu entry and Desktop icon"
-        rm -f -- "$LAUNCHER" "$MENU_ENTRY" "$DESKTOP_ENTRY"
-        command -v update-desktop-database >/dev/null 2>&1 &&
-            update-desktop-database -q "$DATA_DIR/applications" || true
-        info "$APP_NAME is uninstalled; the checkout is unchanged."
-        exit 0
-        ;;
-    -h|--help)
-        printf 'Usage: %s [--no-desktop-shortcut|--uninstall]\n' "$0"
-        exit 0
-        ;;
-    *)
-        die "Unknown option: $1 (use --help)."
-        ;;
-esac
+for arg in "$@"; do
+    case "$arg" in
+        --no-desktop-shortcut) shortcut=false ;;
+        --uninstall) uninstall=true ;;
+        --purge) purge=true ;;
+        -h|--help) sed -n '3,8p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) die "Unknown option: $arg (use --help)." ;;
+    esac
+done
+$purge && ! $uninstall && die "--purge only goes with --uninstall."
+[ "$(id -u)" -ne 0 ] || die "Run this as your own user, not with sudo."
+
+if $uninstall; then
+    info "Removing the launcher, app menu entry and Desktop icon"
+    rm -f -- "$LAUNCHER" "$MENU_ENTRY" "$DESKTOP_ENTRY"
+    command -v update-desktop-database >/dev/null 2>&1 &&
+        update-desktop-database -q "$DATA_DIR/applications" || true
+    info "$APP_NAME is uninstalled; the checkout is unchanged."
+    exit 0
+fi
 
 [ "$(uname -s)" = Linux ] || die "This installer creates Linux desktop entries."
-[ "$(id -u)" -ne 0 ] || die "Run this as your own user, not with sudo."
 [ -f "$APP/run.sh" ] && [ -f "$APP/images/$APP_ID.png" ] &&
     [ -f "$APP/installer_test_gui/__main__.py" ] ||
     die "Run install.sh from the complete installer test GUI folder."

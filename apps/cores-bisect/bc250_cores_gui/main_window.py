@@ -6,13 +6,13 @@ the persistence service."""
 from __future__ import annotations
 
 from PyQt6.QtCore import QByteArray, QSettings, Qt
-from PyQt6.QtGui import QCursor
+from PyQt6.QtGui import QCursor, QPixmap
 from PyQt6.QtWidgets import (
     QApplication, QFrame, QGridLayout, QHBoxLayout, QLabel, QMessageBox, QPlainTextEdit, QPushButton,
     QVBoxLayout, QWidget,
 )
 
-from . import APP_NAME, __version__
+from . import APP_NAME, LOGO_PATH, __version__
 from .gate import GateResult, check
 from .runner import UnlockRunner
 from .widgets import AboutDialog, SudoDialog
@@ -88,20 +88,32 @@ class MainWindow(QWidget):
 
         root = QVBoxLayout(self)
 
+        # The logo spans the title row and the description line below it, like every app of the suite.
+        header = QHBoxLayout()
+        header.setSpacing(14)
+        if LOGO_PATH.is_file():
+            logo = QLabel()
+            logo.setPixmap(QPixmap(str(LOGO_PATH)).scaled(
+                96, 96, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+            header.addWidget(logo)
+        header_right = QVBoxLayout()
+        header_right.setSpacing(6)
         header_row = QHBoxLayout()
-        header = QLabel(APP_NAME)
-        header.setStyleSheet("font-size:18px; font-weight:700;")
-        header_row.addWidget(header)
+        title = QLabel(f"{APP_NAME}  <span style='color:#9aa0a6; font-size:14px;'>v{__version__}</span>")
+        title.setStyleSheet("font-size:24px; font-weight:800; padding:0 2px;")
+        header_row.addWidget(title)
         header_row.addStretch(1)
         about_btn = QPushButton(self.tr("About"))
         about_btn.setFlat(True)
         about_btn.clicked.connect(self._on_about)
         header_row.addWidget(about_btn)
-        root.addLayout(header_row)
+        header_right.addLayout(header_row)
         sub = QLabel(self.tr(
             "Keeps the 8C/16T core unlock you already validated with bc250-cores-bisect.sh across reboots."))
         sub.setWordWrap(True)
-        root.addWidget(sub)
+        header_right.addWidget(sub)
+        header.addLayout(header_right, 1)
+        root.addLayout(header)
 
         gate_frame = QFrame()
         gate_frame.setFrameShape(QFrame.Shape.StyledPanel)

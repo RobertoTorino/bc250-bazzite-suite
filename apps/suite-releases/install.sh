@@ -7,6 +7,7 @@
 #   ./install.sh                         # launcher, app menu entry and Desktop icon
 #   ./install.sh --no-desktop-shortcut   # launcher and app menu entry only
 #   ./install.sh --uninstall             # remove them; the checkout and the settings stay
+#   ./install.sh --uninstall --purge     # also remove the settings; the checkout stays
 set -euo pipefail
 APP=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 REPO=$(cd "$APP/../.." && pwd -P)
@@ -14,6 +15,7 @@ REPO=$(cd "$APP/../.." && pwd -P)
 APP_ID="bc250-release"
 APP_NAME="BC250 Suite Releases"
 DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 LAUNCHER="$HOME/.local/bin/$APP_ID"
 MENU_ENTRY="$DATA_DIR/applications/$APP_ID.desktop"
 DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
@@ -24,21 +26,35 @@ info() { printf '\033[1;35m==>\033[0m %s\n' "$1"; }
 die()  { printf '\033[1;31mERROR:\033[0m %s\n' "$1" >&2; exit 1; }
 
 shortcut=true
-case "${1:-}" in
-    "") ;;
-    --no-desktop-shortcut) shortcut=false ;;
-    --uninstall)
-        info "Removing the launcher, the menu entry and the Desktop icon"
-        rm -f "$LAUNCHER" "$MENU_ENTRY" "$DESKTOP_ICON"
-        command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q "$DATA_DIR/applications" || true
+uninstall=false
+purge=false
+for arg in "$@"; do
+    case "$arg" in
+        --no-desktop-shortcut) shortcut=false ;;
+        --uninstall) uninstall=true ;;
+        --purge) purge=true ;;
+        -h|--help) sed -n '3,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) die "Unknown option: $arg (use --help)." ;;
+    esac
+done
+$purge && ! $uninstall && die "--purge only goes with --uninstall."
+[ "$(id -u)" -ne 0 ] || die "Run this as your own user, not with sudo."
+
+if $uninstall; then
+    info "Removing the launcher, the menu entry and the Desktop icon"
+    rm -f "$LAUNCHER" "$MENU_ENTRY" "$DESKTOP_ICON"
+    command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q "$DATA_DIR/applications" || true
+    if $purge; then
+        info "Removing the settings"
+        rm -rf "${CONFIG_DIR:?}/$APP_ID"
+        info "$APP_NAME is uninstalled; the checkout stays."
+    else
         info "$APP_NAME is uninstalled; the checkout and its settings stay."
-        exit 0 ;;
-    -h|--help) sed -n '3,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-    *) die "Unknown option: $1 (use --help)." ;;
-esac
+    fi
+    exit 0
+fi
 
 [ "$(uname -s)" = Linux ] || die "install.sh makes a Linux app menu entry; on Windows run apps/suite-releases/run.sh."
-[ "$(id -u)" -ne 0 ] || die "Run this as your own user, not with sudo."
 [ -x "$REPO/.venv-linux/bin/python" ] || [ -x "$REPO/.venv/bin/python" ] || [ -n "${PYTHON:-}" ] ||
     info "Note: no .venv-linux yet; create it (see CLAUDE.md) before you start the app."
 

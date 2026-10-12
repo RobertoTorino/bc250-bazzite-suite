@@ -3,8 +3,7 @@
 # Simple Demo Tool
 
 A standalone Qt app for recording BC250 Bazzite Suite installation demos on Bazzite. The suite portal lists it
-under "Development only". It uses its own Python environment. Its release unit is `apps/demo-tool/`, with the runnable package
-in `apps/demo-tool/simple-demo-tool/`.
+under "Development only". It uses its own Python environment.
 
 How to install and use it: [Simple Demo Tool in the manual](https://robertotorino.github.io/bc250-bazzite-suite/other-tools/simple-demo-tool/).
 

@@ -1,3 +1,23 @@
+Changelog: 12-10-2026 08:23:31
+
+Everything follows the architecture now (owner, the portal's own header excepted): every app has install.sh at its root with --no-desktop-shortcut, --uninstall, --uninstall --purge and --help, refusing root, and a tests/ folder in CI's pytest matrix (cu-bisect, cores-bisect and gpu-oc-bisect have tests now). tools/tests/test_layout.py checks the installers, the tests and the CI matrix; the installer tests cover the new options. tools/release.sh passes --purge on. The manual's Architecture and consistency chapter has a section on the technical layout of an app and code style; the Security chapter covers the Dependency Checker, the CVE check and how the suite handles root.
+
+Changelog: 12-10-2026 08:07:21
+
+The manual has a chapter Architecture and consistency (docs/development/architecture.md): the app folder, the package, the window header, core, the installer, the tests, versions, the steps for a new app and the checks that keep it all in line. CLAUDE.md points to it; MIGRATION.md lists what is left to bring in line. Every app window now has the same header (see the apps' CHANGELOGs).
+
+Changelog: 12-10-2026 07:56:08
+
+CLAUDE.md: the "Consistent architecture" rule (the same layout, code patterns and window header for every app). tools/tests/test_layout.py checks that every app has its packages and images/ at its root, without a wrapper folder; Simple Demo Tool and the Dependency Checker were moved to that layout. tools/tests/test_instance_copies.py no longer looks one folder deeper.
+
+Changelog: 12-10-2026 07:52:38
+
+CLAUDE.md: the suite answers for the portal and its apps, not for Bazzite; a system-wide Bazzite package is in scope only where one of our apps uses it.
+
+Changelog: 12-10-2026 07:51:06
+
+Every app has an installer test now: governor, helixsr, cu-bisect (its two installers and uninstallers, as the portal runs them), cores-bisect and gpu-oc-bisect had none, and BC-250 Installer Tests' own installer (installer-tests.sh) had none either. They install from the checkout and from a staged release, with and without the Desktop icon, and uninstall; the /opt apps also check the versioned copy, the refusal to run as root and --purge. CI runs each in its own step, and tools/tests/test_installer_tests.py fails when an app or portal entry has no installer test or CI leaves one out. The stub venv of shims.sh has a bin/pip too, which the cu-bisect installers call. CLAUDE.md runs the installer tests with a loop over the folder instead of a list (the list had left out dependency-checker.sh). BC-250 Installer Tests lists the new scripts by itself.
+
 Changelog: 12-10-2026 06:06:00
 
 The installer tests' stub venv accepted pip install -r with a requirements file that is not there, so the Dependency Checker's broken install.sh passed its test; it now fails as pip does. tools/tests/test_instance_copies.py also checks the instance.py copies one folder deeper (Simple Demo Tool) and in the installer tests' window.

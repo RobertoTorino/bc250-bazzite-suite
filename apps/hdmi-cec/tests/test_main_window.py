@@ -524,11 +524,12 @@ def test_no_horizontal_scrollbar(make, qapp):
         qapp.setFont(font)
 
 
-def test_buttons_are_green_while_they_can_be_used(make):
+def test_buttons_keep_the_desktops_look(make):
+    """Plain buttons in the desktop's own grey; Turn TV on has no outline of its own."""
+    from PyQt6.QtWidgets import QPushButton
     w = make(FakeBoard())
-    style = w.centralWidget().widget().styleSheet()
-    assert f"background:{main_window.GREEN}" in style and "QPushButton:disabled" in style
-    assert w.on_button.styleSheet() == ""                       # no outline of its own: like every other button
+    assert w.centralWidget().widget().styleSheet() == "" and w.on_button.styleSheet() == ""
+    assert not any(b.isCheckable() for b in w.centralWidget().widget().findChildren(QPushButton))
 
 
 def test_the_boot_note_shows_quotes_as_quotes(make):
@@ -537,9 +538,9 @@ def test_the_boot_note_shows_quotes_as_quotes(make):
 
 
 def test_the_four_boxes_have_four_colours(make):
-    """Left to right: dark blue, orange, off-white with dark text, purple."""
+    """Left to right: dark blue, orange, black, purple; white text on each."""
     w = make(FakeBoard())
     boxes = (w.adapter_box, w.address_box, w.display_box, w.power_box)
     colours = [box.styleSheet().split("background:")[1].split(";")[0] for box in boxes]
-    assert colours == [main_window.DARK_BLUE, main_window.ORANGE, main_window.OFF_WHITE, main_window.PURPLE]
-    assert f"color:{main_window.OFF_WHITE_TEXT}" in w.display_box.styleSheet()
+    assert colours == [main_window.DARK_BLUE, main_window.ORANGE, main_window.BLACK, main_window.PURPLE]
+    assert all("QLabel { color:white; }" in box.styleSheet() for box in boxes)

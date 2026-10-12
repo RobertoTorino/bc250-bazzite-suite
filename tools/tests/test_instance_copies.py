@@ -10,8 +10,7 @@ import pytest
 
 SUITE = Path(__file__).resolve().parents[2]
 CORE = SUITE / "core" / "bc250_core" / "instance.py"
-COPIES = sorted([*SUITE.glob("apps/*/*/instance.py"), *SUITE.glob("apps/*/*/*/instance.py"),
-                 *SUITE.glob("tools/installer-tests/gui/*/instance.py")])
+COPIES = sorted([*SUITE.glob("apps/*/*/instance.py"), *SUITE.glob("tools/installer-tests/gui/*/instance.py")])
 
 
 def body(path: Path) -> str:

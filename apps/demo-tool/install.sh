@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Install or remove Simple Demo Tool for the current user.
+# Installs Simple Demo Tool for the current user, from a clone or the extracted release tarball:
+#
+#   ./install.sh                         install or update
+#   ./install.sh --no-desktop-shortcut   app menu entry only, no icon on the Desktop
+#   ./install.sh --uninstall             remove the app
+#   ./install.sh --uninstall --purge     the same: the app keeps no settings
+#
+# Run it as your own user, not with sudo. Recordings in ~/SimpleVideoToolRecordings are never removed.
 set -euo pipefail
 
 APP_ID="simple-demo-tool"
@@ -16,43 +23,49 @@ SRC=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 info() { printf '\033[1;35m==>\033[0m %s\n' "$1"; }
 die() { printf '\033[1;31mERROR:\033[0m %s\n' "$1" >&2; exit 1; }
 
+usage() { sed -n '3,10p' "$0" | sed 's/^# \{0,1\}//'; }
+
+DESKTOP_SHORTCUT=true
+UNINSTALL=false
+PURGE=false
+for arg in "$@"; do
+    case "$arg" in
+        --no-desktop-shortcut) DESKTOP_SHORTCUT=false ;;
+        --uninstall) UNINSTALL=true ;;
+        --purge) PURGE=true ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage >&2; die "Unknown option: $arg (use --help)." ;;
+    esac
+done
+$PURGE && ! $UNINSTALL && die "--purge only goes with --uninstall."
 [ "$(id -u)" -ne 0 ] || die "Run this as your own user, not with sudo."
-case "${1:-}" in
-    "") ;;
-    --uninstall)
-        info "Removing Simple Demo Tool"
-        rm -f "$LAUNCHER" "$MENU_ENTRY" "$DESKTOP_ICON"
-        rm -rf -- "$APP_DIR"
-        command -v update-desktop-database >/dev/null 2>&1 &&
-            update-desktop-database -q "$DATA_DIR/applications" || true
-        info "Simple Demo Tool is uninstalled."
-        exit 0
-        ;;
-    -h|--help)
-        printf 'Usage: %s [--uninstall]\n' "$0"
-        exit 0
-        ;;
-    *)
-        die "Unknown option: $1 (use --help)."
-        ;;
-esac
+
+if $UNINSTALL; then
+    info "Removing Simple Demo Tool"
+    rm -f "$LAUNCHER" "$MENU_ENTRY" "$DESKTOP_ICON"
+    rm -rf -- "$APP_DIR"
+    command -v update-desktop-database >/dev/null 2>&1 &&
+        update-desktop-database -q "$DATA_DIR/applications" || true
+    info "Simple Demo Tool is uninstalled. The recordings in $RECORDINGS_DIR are kept."
+    exit 0
+fi
 
 [ "$(uname -s)" = Linux ] || die "Simple Demo Tool runs on Linux (Bazzite) only."
 [ -f "$SRC/VERSION" ] && [ -f "$SRC/requirements.txt" ] &&
-    [ -f "$SRC/simple-demo-tool/simple_demo_tool/__main__.py" ] &&
-    [ -f "$SRC/simple-demo-tool/images/simple-demo-tool.png" ] &&
-    [ -f "$SRC/simple-demo-tool/images/simple-demo-tool-128.png" ] ||
+    [ -f "$SRC/simple_demo_tool/__main__.py" ] &&
+    [ -f "$SRC/images/simple-demo-tool.png" ] &&
+    [ -f "$SRC/images/simple-demo-tool-128.png" ] ||
     die "Run install.sh from the complete Simple Demo Tool folder."
 command -v python3 >/dev/null 2>&1 || die "python3 is not installed."
 python3 -c 'import sys; raise SystemExit(sys.version_info < (3, 11))' ||
     die "Python 3.11 or newer is required."
 
 info "Installing app files in $APP_DIR"
-mkdir -p "$APP_DIR" "$RECORDINGS_DIR" "$HOME/.local/bin" "$DATA_DIR/applications" "$DESKTOP_DIR"
+mkdir -p "$APP_DIR" "$RECORDINGS_DIR" "$HOME/.local/bin" "$DATA_DIR/applications"
 rm -rf -- "$APP_DIR/simple_demo_tool"
-cp -R "$SRC/simple-demo-tool/simple_demo_tool" "$APP_DIR/simple_demo_tool"
+cp -R "$SRC/simple_demo_tool" "$APP_DIR/simple_demo_tool"
 rm -rf -- "$APP_DIR/images"
-cp -R "$SRC/simple-demo-tool/images" "$APP_DIR/images"
+cp -R "$SRC/images" "$APP_DIR/images"
 cp "$SRC/requirements.txt" "$APP_DIR/requirements.txt"
 
 VENV="$APP_DIR/venv"
@@ -85,9 +98,14 @@ Keywords=OBS;recording;Bazzite;demo;
 StartupNotify=true"
 printf '%s\n' "$DESKTOP_CONTENT" >"$MENU_ENTRY"
 chmod 644 "$MENU_ENTRY"
-printf '%s\n' "$DESKTOP_CONTENT" >"$DESKTOP_ICON"
-chmod 755 "$DESKTOP_ICON"
-command -v gio >/dev/null 2>&1 && gio set "$DESKTOP_ICON" metadata::trusted true 2>/dev/null || true
+if $DESKTOP_SHORTCUT && [ -d "$DESKTOP_DIR" ]; then
+    printf '%s\n' "$DESKTOP_CONTENT" >"$DESKTOP_ICON"
+    # KDE and GNOME only start Desktop launchers that are executable (GNOME also wants them trusted).
+    chmod 755 "$DESKTOP_ICON"
+    command -v gio >/dev/null 2>&1 && gio set "$DESKTOP_ICON" metadata::trusted true 2>/dev/null || true
+else
+    rm -f "$DESKTOP_ICON"
+fi
 command -v update-desktop-database >/dev/null 2>&1 &&
     update-desktop-database -q "$DATA_DIR/applications" || true
-info "Simple Demo Tool is installed. Start it from the desktop or app menu."
+info "Simple Demo Tool is installed. Start it from the app menu$($DESKTOP_SHORTCUT && echo ' or the Desktop')."

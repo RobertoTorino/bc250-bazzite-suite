@@ -104,8 +104,8 @@ def test_window_lists_all_installer_scripts_except_shims() -> None:
     window = MainWindow()
 
     assert not window.header_icon.pixmap().isNull()
-    assert window.header_icon.pixmap().width() <= 64
-    assert window.header_icon.pixmap().height() <= 64
+    assert window.header_icon.pixmap().width() <= 96
+    assert window.header_icon.pixmap().height() <= 96
     assert window.test_list.count() == len(discover_tests(TESTS_DIR))
     assert all(
         window.test_list.item(index).text() == ""

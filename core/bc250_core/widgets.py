@@ -145,6 +145,51 @@ class TextDialog(QDialog):
         layout.addWidget(buttons)
 
 
+class AppHeader(QHBoxLayout):
+    """The first line of every app window: the app's icon at 96 px on the left, spanning the title row (the name
+    with the version, then the app's states and, on the right, its actions) and a second row below it (status
+    boxes or the app's main controls). Bazzite Test's and the Governor Manager's header, shared."""
+
+    LOGO_PX = 96
+
+    def __init__(self, logo: str | Path, name: str, version: str = ""):
+        super().__init__()
+        self.setSpacing(14)
+        self.logo = ClickableLogo(logo, self.LOGO_PX)
+        self.logo.setCursor(Qt.CursorShape.ArrowCursor)
+        self.addWidget(self.logo)
+        right = QVBoxLayout()
+        right.setSpacing(6)
+        version_text = f"  <span style='color:#9aa0a6; font-size:14px;'>v{version}</span>" if version else ""
+        self.title = QLabel(f"{name}{version_text}")
+        self.title.setStyleSheet(header_font() + "font-size:24px; font-weight:800; padding:0 2px;")
+        self.title_row = QHBoxLayout()
+        self.title_row.addWidget(self.title)
+        self.title_row.addStretch(1)
+        self._states = 0
+        self.second_row = QHBoxLayout()
+        self.second_row.setSpacing(8)
+        right.addLayout(self.title_row)
+        right.addLayout(self.second_row)
+        self.addLayout(right, 1)
+
+    def add_state(self, widget: QWidget) -> None:
+        """Beside the title: a StatusText, a badge."""
+        self._states += 1
+        self.title_row.insertWidget(self._states, widget)
+
+    def add_action(self, widget: QWidget) -> None:
+        """At the right end of the title row: Refresh, Check again."""
+        self.title_row.addWidget(widget)
+
+    def add_second(self, item: QWidget | QHBoxLayout, stretch: int = 0) -> None:
+        """Left to right on the second row."""
+        if isinstance(item, QWidget):
+            self.second_row.addWidget(item, stretch)
+        else:
+            self.second_row.addLayout(item, stretch)
+
+
 def page_header(title: str) -> tuple[QHBoxLayout, QLabel]:
     header = QHBoxLayout()
     label = QLabel(title)

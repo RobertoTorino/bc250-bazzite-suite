@@ -100,6 +100,8 @@ desktop entry, the icon and a Desktop icon (`./install.sh --no-desktop-shortcut`
 **BC-250 HelixSR Manager** then appears in the application menu (and in Steam's
 Game Mode via *Add a Non-Steam Game* if you want it there). Run `./install.sh` again from a newer release to
 update, `./install.sh --uninstall` to remove it; the imported payload and the deployed games are left alone.
+`./install.sh --uninstall --purge` also removes the payload and the settings. The list of deployed games stays, so
+a reinstalled app can still restore them.
 
 ## Run from the repository
 

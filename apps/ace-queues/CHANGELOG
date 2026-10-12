@@ -1,3 +1,11 @@
+Changelog: 12-10-2026 09:09:14
+
+Release 0.1.6.
+
+Changelog: 12-10-2026 08:07:21
+
+The window has the suite's header: the icon at 96 px beside the title with the version, and a second row below it with the board, kernel and Mesa line (core's AppHeader; it was a 40 px icon in one line).
+
 Changelog: 11-10-2026 22:27:40
 
 Release 0.1.5.

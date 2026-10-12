@@ -1,3 +1,19 @@
+Changelog: 12-10-2026 09:09:15
+
+Release 0.1.5.
+
+Changelog: 12-10-2026 08:23:31
+
+install.sh takes the options of every app's installer: --no-desktop-shortcut, --uninstall, --uninstall --purge (the app keeps no settings; recordings are never removed) and --help; the Desktop folder is no longer created when it is missing.
+
+Changelog: 12-10-2026 08:07:21
+
+The window has the suite's header: the icon at 96 px (was 80) beside the title with the version, and the description line below it. The package has a __version__ now, which tools/check_versions.py keeps equal to VERSION.
+
+Changelog: 12-10-2026 07:56:08
+
+The app has the same layout as the other apps: the package simple_demo_tool and images/ sit in apps/demo-tool/ (they were in apps/demo-tool/simple-demo-tool/). The install wrapper is gone: install with ./install.sh, as for every app. The app ID, folders and launcher stay simple-demo-tool, so an installed copy is updated in place; choosing apps/demo-tool as the release folder still finds the checkout.
+
 Changelog: 12-10-2026 06:14:55
 
 Release 0.1.4. now also installs from the portal

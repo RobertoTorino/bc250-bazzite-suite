@@ -37,7 +37,7 @@ def test_validate_release_accepts_suite_checkout_and_tool_folder(tmp_path):
         '[apps.overlay]\nname = "Overlay"\ndetect = ["~/overlay"]\nlaunch = [["Open", "~/overlay"]]\n',
         encoding="utf-8",
     )
-    tool_folder = tmp_path / "apps" / "demo-tool" / "simple-demo-tool"
+    tool_folder = tmp_path / "apps" / "demo-tool"
     (tool_folder / "simple_demo_tool").mkdir(parents=True)
     (tool_folder / "simple_demo_tool" / "__main__.py").touch()
 

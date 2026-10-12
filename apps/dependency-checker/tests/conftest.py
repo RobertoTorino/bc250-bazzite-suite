@@ -13,7 +13,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 APP = Path(__file__).resolve().parents[1]
 SUITE = APP.parents[1]
-sys.path.insert(0, str(APP / "portal-dependency-checker"))
+sys.path.insert(0, str(APP))
 sys.path.insert(0, str(SUITE / "core"))
 
 

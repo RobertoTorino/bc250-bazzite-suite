@@ -32,7 +32,7 @@ from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout, QH
 from bc250_core.platform import launch_in_terminal
 from bc250_core.theme import BLUE, GREEN, GREY, ORANGE, RED
 from bc250_core.updates import UpdateChecker
-from bc250_core.widgets import ClickableLogo, Terminal, accent_button, hint_label, page_header
+from bc250_core.widgets import AppHeader, Terminal, accent_button, hint_label
 
 from . import APP_NAME, LOGO_PATH, SUITE, __version__
 from . import plan as rp
@@ -591,17 +591,17 @@ class ReleaseWindow(QMainWindow):
         self.start = start
         self.setWindowTitle(APP_NAME)
         self.resize(1100, 760)
-        header, _ = page_header(APP_NAME)
-        header.insertWidget(0, ClickableLogo(LOGO_PATH, 40))
-        self.status = QLabel()
-        header.addWidget(self.status)
+        header = AppHeader(LOGO_PATH, APP_NAME, __version__)
+        self.status = QLabel()                     # the working tree, clean or changed
+        header.add_second(self.status)
         self.build = BuildIndicator(self, runs_source, notify)
-        header.addWidget(self.build)
+        header.add_second(self.build)
+        header.second_row.addStretch(1)
         self.refresh_button = QPushButton("Refresh")
         self.refresh_button.setToolTip("Read the checkout and its tags again, for changes made in a terminal; "
                                        "what you entered stays")
         self.refresh_button.clicked.connect(self.refresh)
-        header.addWidget(self.refresh_button)
+        header.add_action(self.refresh_button)
         self.tabs = QTabWidget()
         self.apps_page = AppsPage(self)
         self.portal_page = PortalPage(self)

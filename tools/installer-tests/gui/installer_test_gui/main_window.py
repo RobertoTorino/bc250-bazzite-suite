@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from . import APP_ICON_PATH, APP_NAME, SUITE_ROOT, TESTS_DIR
+from . import APP_ICON_PATH, APP_NAME, SUITE_ROOT, TESTS_DIR, __version__
 from .runner import InstallerTestRunner, discover_tests
 
 
@@ -39,26 +39,31 @@ class MainWindow(QMainWindow):
 
         central = QWidget()
         layout = QVBoxLayout(central)
+        # The icon spans the title and the line below it, like every app of the suite.
         header = QHBoxLayout()
+        header.setSpacing(14)
         self.header_icon = QLabel()
         pixmap = QPixmap(str(APP_ICON_PATH))
         if not pixmap.isNull():
             self.header_icon.setPixmap(
                 pixmap.scaled(
-                    64,
-                    64,
+                    96,
+                    96,
                     Qt.AspectRatioMode.KeepAspectRatio,
                     Qt.TransformationMode.SmoothTransformation,
                 )
             )
-        self.header_icon.setFixedSize(72, 72)
+        self.header_icon.setFixedSize(96, 96)
         self.header_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.header_icon.setAccessibleName(f"{APP_NAME} icon")
         header.addWidget(self.header_icon)
-        heading = QLabel(f"<h2>{APP_NAME}</h2>"
-                         "<p>Choose installer checks to run. Output and exit status appear here.</p>")
-        heading.setTextFormat(Qt.TextFormat.RichText)
-        header.addWidget(heading, 1)
+        header_right = QVBoxLayout()
+        header_right.setSpacing(6)
+        title = QLabel(f"{APP_NAME}  <span style='color:#9aa0a6; font-size:14px;'>v{__version__}</span>")
+        title.setStyleSheet("font-size:24px; font-weight:800; padding:0 2px;")
+        header_right.addWidget(title)
+        header_right.addWidget(QLabel("Choose installer checks to run. Output and exit status appear here."))
+        header.addLayout(header_right, 1)
         layout.addLayout(header)
 
         warning = QLabel(

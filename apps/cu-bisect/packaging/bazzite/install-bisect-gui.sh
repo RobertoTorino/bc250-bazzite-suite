@@ -19,6 +19,11 @@ for arg in "$@"; do
   esac
 done
 
+if [ "$(id -u)" -eq 0 ]; then
+  echo "error: run this as your own user, not with sudo: the venv and the launcher belong in your home folder" >&2
+  exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 

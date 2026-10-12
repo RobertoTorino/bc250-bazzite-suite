@@ -27,9 +27,8 @@ from bc250_core import SUITE_MANUAL_URL, window_title
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import config_home, launch_in_terminal
 from bc250_core.settings import SettingsStore
-from bc250_core.theme import GREEN, ORANGE, PURPLE
-from bc250_core.widgets import (ClickableLogo, MetricBox, StatusText, TextDialog, hint_label,
-                                 page_header)
+from bc250_core.theme import ORANGE, PURPLE
+from bc250_core.widgets import AppHeader, MetricBox, StatusText, TextDialog, hint_label
 
 from . import APP_NAME, INFO, LOGO_PATH, ROOT, __version__
 from . import bazzite, boot, cec, display, keys, runner, service, tvinfo
@@ -46,15 +45,9 @@ AUTOMATIC = (
     ("uinput", "Use the TV remote as a keyboard (arrows, OK, back, play/pause)"),
     ("allow_standby", "Put the board to sleep when the TV goes to standby"),
 )
-# The four boxes at the top, left to right, each its own colour: dark blue, orange, off-white (dark text), purple.
+# The four boxes at the top, left to right, each its own colour: dark blue, orange, black, purple.
 DARK_BLUE = "#0d47a1"
-OFF_WHITE, OFF_WHITE_TEXT = "#f5f5f0", "#212121"
-# Every button of the window: green while it can be used, greyed out while it cannot (no adapter, cecd's mode, …).
-BUTTONS = (f"QPushButton {{ background:{GREEN}; color:white; border:1px solid {GREEN}; border-radius:6px; "
-           "padding:4px 12px; }"
-           "QPushButton:hover { background:#388e3c; border-color:#388e3c; }"
-           "QPushButton:pressed { background:#1b5e20; border-color:#1b5e20; }"
-           "QPushButton:disabled { background:palette(button); color:palette(mid); border-color:palette(mid); }")
+BLACK = "#000000"
 # What to do for the picture after the TV was off (display.py): key, label, explanation.
 PICTURE = (
     ("nothing", "Leave it as it is",
@@ -157,20 +150,16 @@ class MainWindow(QMainWindow):
         self.adapter: cec.Adapter | None = None
         self.audio_target = cec.TV                  # the audio system (5) once it answered a poll, else the TV
 
-        header, _title = page_header(APP_NAME)
-        header.insertWidget(0, ClickableLogo(LOGO_PATH, 40))
+        header = AppHeader(LOGO_PATH, APP_NAME, __version__)
         self.badge = StatusText()
-        header.insertWidget(2, self.badge)
+        header.add_state(self.badge)
 
         self.adapter_box = MetricBox("CEC adapter", DARK_BLUE)
         self.address_box = MetricBox("Physical address", ORANGE)
-        self.display_box = MetricBox("Display", OFF_WHITE)
-        self.display_box.setStyleSheet(f"QFrame {{ background:{OFF_WHITE}; border:1px solid palette(mid); border-radius:8px; }} "
-                                       f"QLabel {{ color:{OFF_WHITE_TEXT}; }}")
+        self.display_box = MetricBox("Display", BLACK)
         self.power_box = MetricBox("TV power", PURPLE)
-        boxes = QHBoxLayout()
         for box in (self.adapter_box, self.address_box, self.display_box, self.power_box):
-            boxes.addWidget(box)
+            header.add_second(box)
         self.adapter_note = hint_label("")
 
         tv = QGroupBox("TV")
@@ -306,10 +295,8 @@ class MainWindow(QMainWindow):
         self.listening = listen and self.listener.start()
 
         central = QWidget()
-        central.setStyleSheet(BUTTONS)              # the dialogs keep their own buttons
         lay = QVBoxLayout(central)
         lay.addLayout(header)
-        lay.addLayout(boxes)
         lay.addWidget(self.adapter_note)
         lay.addWidget(tv)
         lay.addWidget(picture)

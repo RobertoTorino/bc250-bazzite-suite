@@ -114,12 +114,14 @@ def test_version_must_match(tmp_path):
         br.build("bazzite-test-9.9.9", tmp_path)
 
 
-def test_demo_tool_release_keeps_nested_package_and_omits_suite_marker(tmp_path):
+def test_demo_tool_release_has_the_standard_layout_and_omits_suite_marker(tmp_path):
     br.build(DEMO_TOOL_TAG, tmp_path)
     names = members(tmp_path / f"{DEMO_TOOL_TAG}.tar.gz")
 
     assert f"{DEMO_TOOL_TAG}/install.sh" in names
-    assert f"{DEMO_TOOL_TAG}/simple-demo-tool/simple_demo_tool/__main__.py" in names
+    assert f"{DEMO_TOOL_TAG}/simple_demo_tool/__main__.py" in names
+    assert f"{DEMO_TOOL_TAG}/images/simple-demo-tool.png" in names
+    assert f"{DEMO_TOOL_TAG}/install" not in names
     assert f"{DEMO_TOOL_TAG}/.standalone" not in names
     assert not any("/tests/" in name for name in names)
 

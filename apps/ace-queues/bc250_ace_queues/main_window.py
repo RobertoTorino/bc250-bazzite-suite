@@ -16,8 +16,7 @@ from PyQt6.QtWidgets import (QApplication, QGridLayout, QLabel, QMainWindow, QMe
 from bc250_core import SUITE_MANUAL_URL, window_title
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.settings import SettingsStore
-from bc250_core.widgets import (ClickableLogo, StatusText, Terminal, accent_button, hint_label, page_header,
-                                set_button_active)
+from bc250_core.widgets import AppHeader, StatusText, Terminal, accent_button, hint_label, set_button_active
 
 from . import APP_NAME, INFO, LOGO_PATH, SCRIPT, __version__
 from .status import Status, parse, verdict
@@ -51,17 +50,17 @@ class MainWindow(QMainWindow):
         self._output = ""
         self.process: QProcess | None = None
 
-        header, _title = page_header(APP_NAME)
-        header.insertWidget(0, ClickableLogo(LOGO_PATH, 40))
+        header = AppHeader(LOGO_PATH, APP_NAME, __version__)
         self.pill = StatusText()
-        header.insertWidget(2, self.pill)
+        header.add_state(self.pill)
         self.refresh_button = QPushButton("Refresh")
         self.refresh_button.setToolTip("Read the state again")
         self.refresh_button.clicked.connect(self.refresh)
-        header.addWidget(self.refresh_button)
+        header.add_action(self.refresh_button)
 
         self.system = QLabel()
         self.system.setWordWrap(True)
+        header.add_second(self.system, 1)            # board, kernel and Mesa
         intro = hint_label(
             "Games use the BC-250's dedicated compute queues (async compute) through a patched RADV driver. It is "
             "built on this board and installed beside the system Mesa, which stays as it is. Games use it only "
@@ -124,7 +123,6 @@ class MainWindow(QMainWindow):
         central = QWidget()
         lay = QVBoxLayout(central)
         lay.addLayout(header)
-        lay.addWidget(self.system)
         lay.addWidget(intro)
         lay.addSpacing(6)
         lay.addLayout(grid)

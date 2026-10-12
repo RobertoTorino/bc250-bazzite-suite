@@ -30,6 +30,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from . import APP_NAME, __version__
 from .global_shortcut import GlobalShortcutManager
 from .workflow import (
     PORTAL_LAUNCHER,
@@ -81,16 +82,23 @@ class MainWindow(QMainWindow):
     def _build_ui(self) -> None:
         central = QWidget()
         layout = QVBoxLayout(central)
+        # The logo spans the title and the line below it, like every app of the suite.
         header = QHBoxLayout()
+        header.setSpacing(14)
         logo = QLabel()
         logo.setObjectName("app_logo")
-        logo.setPixmap(QPixmap(str(IMAGE_DIR / "simple-demo-tool-128.png")).scaledToHeight(80))
+        logo.setPixmap(QPixmap(str(IMAGE_DIR / "simple-demo-tool-128.png")).scaled(
+            96, 96, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
         header.addWidget(logo)
-        title = QLabel(
-            "<h1>Simple Demo Tool</h1>"
-            "<p>Prepare OBS, install a portal release, and record a real optional-app install.</p>"
-        )
-        header.addWidget(title, 1)
+        header_right = QVBoxLayout()
+        header_right.setSpacing(6)
+        title = QLabel(f"{APP_NAME}  <span style='color:#9aa0a6; font-size:14px;'>v{__version__}</span>")
+        title.setStyleSheet("font-size:24px; font-weight:800; padding:0 2px;")
+        header_right.addWidget(title)
+        intro = QLabel("Prepare OBS, install a portal release, and record a real optional-app install.")
+        intro.setWordWrap(True)
+        header_right.addWidget(intro)
+        header.addLayout(header_right, 1)
         layout.addLayout(header)
 
         obs_box = QGroupBox("1. OBS setup")
@@ -126,7 +134,7 @@ class MainWindow(QMainWindow):
         self.release_path = QLineEdit()
         self.release_path.setReadOnly(True)
         self.release_path.setPlaceholderText(
-            "Choose an extracted portal release, suite checkout, or apps/demo-tool/simple-demo-tool folder"
+            "Choose an extracted portal release, suite checkout, or apps/demo-tool folder"
         )
         choose_row.addWidget(self.release_path, 1)
         choose_button = QPushButton("Choose folder…")

@@ -41,5 +41,16 @@ check "exit 0" "[ $rc -eq 0 ]"
 check "launcher, menu entry and icon gone" "[ ! -e $L ] && [ ! -e $M ] && [ ! -e $I ]"
 check "checkout untouched" "[ -x $A/run.sh ] && [ -f $A/bc250_suite_releases/main_window.py ]"
 
-[ $fail -eq 0 ] && echo "ALL OK" || for n in 1 2 3 4; do echo "--- log$n"; cat "$T/log$n"; done
+echo "== 5. --purge"
+bash "$A/install.sh" --purge > "$T/log5" 2>&1; rc=$?
+check "--purge alone refused" "[ $rc -ne 0 ] && grep -q 'only goes with --uninstall' $T/log5"
+bash "$A/install.sh" > "$T/log5" 2>&1
+mkdir -p "$XDG_CONFIG_HOME/$APP" && touch "$XDG_CONFIG_HOME/$APP/$APP.ini"
+bash "$SUITE/tools/release.sh" --uninstall > "$T/log5" 2>&1
+check "plain uninstall keeps the settings" "[ -f $XDG_CONFIG_HOME/$APP/$APP.ini ]"
+bash "$SUITE/tools/release.sh" --uninstall --purge > "$T/log5" 2>&1; rc=$?
+check "exit 0" "[ $rc -eq 0 ]"
+check "settings gone, checkout untouched" "[ ! -e $XDG_CONFIG_HOME/$APP ] && [ -x $A/run.sh ]"
+
+[ $fail -eq 0 ] && echo "ALL OK" || for n in 1 2 3 4 5; do echo "--- log$n"; cat "$T/log$n"; done
 exit $fail

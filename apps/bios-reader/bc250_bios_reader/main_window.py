@@ -17,7 +17,7 @@ from bc250_core import SUITE_MANUAL_URL, window_title
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import data_home
 from bc250_core.settings import SettingsStore
-from bc250_core.widgets import ClickableLogo, StatusText, Terminal, accent_button, hint_label, page_header
+from bc250_core.widgets import AppHeader, StatusText, Terminal, accent_button, hint_label
 
 from . import APP_ID, APP_NAME, INFO, LOGO_PATH, __version__
 from . import bios as biosmod
@@ -45,10 +45,9 @@ class MainWindow(QMainWindow):
         self.settings = ReaderSettings(INFO, self)
         self.bios: biosmod.Bios | None = None
 
-        header, title = page_header(APP_NAME)
-        header.insertWidget(0, ClickableLogo(LOGO_PATH, 40))
+        header = AppHeader(LOGO_PATH, APP_NAME, __version__)
         self.badge = StatusText()
-        header.insertWidget(2, self.badge)
+        header.add_state(self.badge)
         self.read_button = accent_button("Read BIOS chip…", "Read the BIOS flash chip with flashrom (read-only)")
         self.read_button.clicked.connect(self.read_chip)
         self.open_button = QPushButton("Open dump…")
@@ -60,18 +59,17 @@ class MainWindow(QMainWindow):
         self.hidden_box = QCheckBox("Show hidden items")
         self.hidden_box.setToolTip("Also list the menus and settings the BIOS does not show (H)")
         self.hidden_box.toggled.connect(self._toggle_hidden)
-        for w in (self.hidden_box, self.board_button, self.open_button, self.read_button):
-            header.addWidget(w)
-
-        self.source = QLabel()
+        self.source = QLabel()                     # what is shown: the board, a dump or the chip
         self.source.setWordWrap(True)
+        header.add_second(self.source, 1)
+        for w in (self.hidden_box, self.board_button, self.open_button, self.read_button):
+            header.add_second(w)
         self.note = hint_label("")
         self.screen = BiosScreen()
 
         central = QWidget()
         lay = QVBoxLayout(central)
         lay.addLayout(header)
-        lay.addWidget(self.source)
         lay.addWidget(self.note)
         lay.addWidget(self.screen, 1)
         version = QLabel(f"{APP_NAME} {__version__} · core {CORE_VERSION} · reads only, changes nothing")

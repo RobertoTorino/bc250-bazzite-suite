@@ -54,6 +54,21 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
   apps read what the hardware reports and offer every option it supports (a CEC 2.0 TV, another display mode,
   a second adapter), and say so where an option does not apply, rather than leaving out what the owner's setup
   lacks. Recorded data from the owner's board makes good test fixtures; tests also cover other setups.
+- **Consistent architecture.** Every app is built the same way, so one that works is the pattern for the next:
+  - Layout: `apps/<name>/` holds its Python package(s) directly (`<package>/__main__.py`, no wrapper folder),
+    `images/`, `tests/`, `install.sh` and the four files; data the package reads (a catalogue, tables) sits in
+    the package or beside it in the app folder. `tools/tests/test_layout.py` checks the layout.
+  - Code: shared code comes from `bc250_core` (bundled per app); the installer writes a launcher in
+    `~/.local/bin` whose exec line names the app's python, a menu entry and an optional Desktop icon; every app has
+    its installer test (see Checks).
+  - Window: the first line is the app's icon at 96 px on the left, spanning the title (with the version) and a
+    second line below it (status boxes or the app's main controls).
+  A new app copies the structure of an existing one; any deviation is the owner's decision. The manual's
+  [Architecture and consistency](docs/development/architecture.md) describes it all, with the steps for a new app.
+- **Scope is the suite, not Bazzite.** We answer for the portal and its apps, not for Bazzite itself. A system-wide
+  Bazzite package is in scope only where one of our apps uses it (the Dependency Checker lists it then); its
+  updates and security fixes are Bazzite's. Our own code, and the Python packages in our apps' environments, are
+  ours.
 - **Ask** before decisions that are the owner's (what an app does, version numbers, repo layout, anything on the
   board). Do the obvious housekeeping without asking.
 
@@ -94,17 +109,13 @@ shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persisten
   apps/demo-tool/install.sh apps/suite-releases/*.sh
 shellcheck -S warning apps/ace-queues/bc250-ace-queues.sh apps/ace-queues/bc250-ace-queues-run \
   apps/ace-queues/install.sh apps/ace-queues/mesa/build-in-container.sh
-bash tools/installer-tests/bazzite-test.sh; bash tools/installer-tests/portal.sh
-bash tools/installer-tests/persistent-acpi.sh; bash tools/installer-tests/system-overlay.sh
-bash tools/installer-tests/bios-reader.sh; bash tools/installer-tests/ace-queues.sh
-bash tools/installer-tests/memory-manager.sh; bash tools/installer-tests/hdmi-cec.sh
-bash tools/installer-tests/demo-tool.sh
-bash tools/installer-tests/suite-releases.sh
-bash tools/installer-tests/release.sh
+for t in tools/installer-tests/*.sh; do [ "${t##*/}" = shims.sh ] || bash "$t"; done   # every installer test
 mkdocs build --strict                               # from the venv
 ```
 
-The installer tests need `fakeroot` (Linux). On Bazzite, `brew install shellcheck fakeroot`; brew's folder
+Every app (and every `portal/apps.toml` entry) has an installer test, `tools/installer-tests/<name>.sh`, and CI runs
+each one in its own step; a new app adds both (`tools/tests/test_installer_tests.py` checks it). BC-250 Installer
+Tests lists the scripts in that folder by itself. The installer tests need `fakeroot` (Linux). On Bazzite, `brew install shellcheck fakeroot`; brew's folder
 `/home/linuxbrew/.linuxbrew/bin` may need adding to PATH in a non-interactive shell. CI also checks the layout rules above: no CRLF in the index, every
 `.sh` is 100755, every former repo folder has its four files, workflows only in the root `.github/`. CI results
 can be read without `gh` through the public API:

@@ -97,7 +97,8 @@ the app under `~/.local/share/bc250-governor-manager`, the launcher `~/.local/bi
 a desktop entry, the icon and a Desktop icon (`./install.sh --no-desktop-shortcut` leaves the Desktop icon
 out). **BC-250 GPU Governor Manager** then appears in the application menu (and in
 Steam's Game Mode via *Add a Non-Steam Game* if you want it there). Run `./install.sh` again from a newer
-release to update, `./install.sh --uninstall` to remove it; the governor's `config.toml` is never touched.
+release to update, `./install.sh --uninstall` to remove it, `./install.sh --uninstall --purge` to also remove its
+settings, profiles and start-at-login entry. The governor's `config.toml` and its backups are never touched.
 
 ## Run from the repository
 
@@ -272,7 +273,7 @@ bc250_governor/
     dbus.py         busctl client for com.cyanskillfish.Governor
     process.py      subprocess helper
   fonts/            Inter (SIL OFL), used for the header on Linux
-install.sh          per-user installer (venv, launcher, desktop entry, icon); --uninstall removes it
+install.sh          per-user installer (venv, launcher, desktop entry, icon); --uninstall [--purge] removes it
 bc250-governor-manager.desktop  desktop entry template, Exec is filled in by install.sh
 tests/              pytest suite (offscreen Qt; bus, systemd and pkexec mocked)
 test.sh             runs it with the project venv

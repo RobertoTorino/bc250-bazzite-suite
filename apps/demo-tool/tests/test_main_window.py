@@ -84,7 +84,7 @@ def test_choose_local_tool_folder_loads_parent_suite_checkout(qapp, monkeypatch,
         '[apps.system-overlay]\nname = "Overlay"\ndetect = ["~/overlay"]\nlaunch = [["Open", "~/overlay"]]\n',
         encoding="utf-8",
     )
-    tool_folder = tmp_path / "apps" / "demo-tool" / "simple-demo-tool"
+    tool_folder = tmp_path / "apps" / "demo-tool"
     (tool_folder / "simple_demo_tool").mkdir(parents=True)
     (tool_folder / "simple_demo_tool" / "__main__.py").touch()
     monkeypatch.setattr(main_window, "obs_install_command", lambda: None)

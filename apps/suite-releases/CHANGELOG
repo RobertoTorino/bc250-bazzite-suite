@@ -1,3 +1,11 @@
+Changelog: 12-10-2026 08:23:31
+
+install.sh takes --uninstall --purge (also the settings in ~/.config/bc250-release; the checkout stays), also through tools/release.sh --uninstall --purge, and checks for root before it uninstalls too.
+
+Changelog: 12-10-2026 08:07:21
+
+The window has the suite's header: the icon at 96 px beside the title with the version, and a second row below it with the working tree's state and the GitHub build; Refresh stays at the right (core's AppHeader; it was a 40 px icon in one line).
+
 Changelog: 12-10-2026 05:57:00
 
 A double-click on the Desktop icon opened the window twice: Suite Releases was the one app on bc250_core without the single-instance guard. It now asks bc250_core.instance first, as the other apps do; a second launch brings the running window to the front and exits.

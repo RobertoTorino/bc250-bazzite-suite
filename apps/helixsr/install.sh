@@ -9,8 +9,12 @@
 #
 #   ./install.sh                         install or update
 #   ./install.sh --no-desktop-shortcut   app menu entry only, no icon on the Desktop
-#   ./install.sh --uninstall             remove everything it installed
+#   ./install.sh --uninstall             remove everything it installed; keeps the payload and settings
+#   ./install.sh --uninstall --purge     also remove the imported payload and the settings
 #   ./install.sh --run                   install and start the app
+#
+# Run it as your own user, not with sudo. Deployed games and the list of them (deployments.json) are never
+# touched, so a reinstalled app can still restore those games.
 
 set -euo pipefail
 
@@ -24,6 +28,7 @@ VENV_DIR="$APP_DIR/venv"
 APPS_DIR="$DATA_HOME/applications"
 ICON_DIR="$DATA_HOME/icons/hicolor/512x512/apps"
 DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 
 say()  { printf '\033[1;35m==>\033[0m %s\n' "$*"; }
 fail() { printf '\033[1;31merror:\033[0m %s\n' "$*" >&2; exit 1; }
@@ -32,6 +37,12 @@ uninstall() {
     say "Removing $APP_ID"
     rm -rf "$APP_DIR/venv" "$APP_DIR/bc250_bazzite_helixsr" "$APP_DIR/images"
     rm -f "$APP_DIR/requirements.txt" "$APP_DIR/LICENSE" "$APP_DIR/README.md"
+    if $PURGE; then
+        say "Removing the imported payload and the settings"
+        rm -rf "$APP_DIR/payload"
+        rm -f "$CONFIG_DIR/$APP_ID/$APP_ID.conf"
+        rmdir "$CONFIG_DIR/$APP_ID" 2>/dev/null || true
+    fi
     rmdir "$APP_DIR" 2>/dev/null || true
     rm -f "$BIN_DIR/$APP_ID" "$APPS_DIR/$APP_ID.desktop" "$ICON_DIR/$APP_ID.png" "$DESKTOP_DIR/$APP_ID.desktop"
     command -v update-desktop-database >/dev/null && update-desktop-database -q "$APPS_DIR" || true
@@ -46,15 +57,19 @@ uninstall() {
 RUN=false
 DESKTOP_SHORTCUT=true
 UNINSTALL=false
+PURGE=false
 for arg in "$@"; do
     case "$arg" in
         --uninstall) UNINSTALL=true ;;
+        --purge) PURGE=true ;;
         --run) RUN=true ;;
         --no-desktop-shortcut) DESKTOP_SHORTCUT=false ;;
-        -h|--help) sed -n '3,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '3,18p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) fail "unknown option: $arg (try --help)" ;;
     esac
 done
+$PURGE && ! $UNINSTALL && fail "--purge only goes with --uninstall"
+[[ "$(id -u)" -ne 0 ]] || fail "run this as your own user, not with sudo: the app, venv and launcher belong in your home folder"
 if $UNINSTALL; then uninstall; exit 0; fi
 
 [[ -f "$SRC_DIR/bc250_bazzite_helixsr/__main__.py" ]] || fail "run this script from the unpacked release directory"

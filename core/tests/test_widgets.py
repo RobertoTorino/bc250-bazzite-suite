@@ -3,11 +3,11 @@ from __future__ import annotations
 
 from PyQt6 import sip
 from PyQt6.QtCore import QPoint, Qt
-from PyQt6.QtWidgets import QPushButton, QTableWidget, QTableWidgetItem, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QTableWidget, QTableWidgetItem, QWidget
 
 from bc250_core import theme
 from bc250_core.widgets import (
-    MetricBox, RoundedToolTip, StatusPill, StatusText, Terminal, TextDialog, accent_button, hide_tooltip,
+    AppHeader, MetricBox, RoundedToolTip, StatusPill, StatusText, Terminal, TextDialog, accent_button, hide_tooltip,
     set_button_active, show_tooltip,
 )
 
@@ -130,3 +130,27 @@ def test_manual_tooltip_uses_installed_instance(qapp, monkeypatch):
     assert tip.popup.isVisible() and tip.label.text() == "chart value"
     hide_tooltip()
     assert not tip.popup.isVisible()
+
+
+def test_app_header_layout(qapp, tmp_path):
+    """Icon at 96 px spanning the title row (name, version, states, actions) and the second row."""
+    header = AppHeader(tmp_path / "missing.png", "BC-250 Test", "1.2.3")
+    state, action, box = StatusText("Ready"), QPushButton("Refresh"), MetricBox("Load", theme.BLUE)
+    header.add_state(state)
+    header.add_action(action)
+    second = QHBoxLayout()
+    header.add_second(box, 1)
+    header.add_second(second)
+    window = QWidget()
+    window.setLayout(header)
+    assert header.logo.width() == header.logo.height() == AppHeader.LOGO_PX == 96
+    assert header.logo.cursor().shape() == Qt.CursorShape.ArrowCursor
+    assert "BC-250 Test" in header.title.text() and "v1.2.3" in header.title.text()
+    row = [header.title_row.itemAt(i).widget() for i in range(header.title_row.count())]
+    assert row[0] is header.title and row[1] is state and row[2] is None and row[3] is action   # None: stretch
+    second_state = StatusText("Two")
+    header.add_state(second_state)
+    assert header.title_row.itemAt(2).widget() is second_state
+    assert header.second_row.itemAt(0).widget() is box and header.second_row.itemAt(1).layout() is second
+    assert "v" not in AppHeader(tmp_path / "x.png", "Name").title.text().replace("Name", "")
+    assert isinstance(header.title, QLabel)

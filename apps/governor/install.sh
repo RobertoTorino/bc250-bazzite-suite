@@ -7,8 +7,11 @@
 #
 #   ./install.sh                         install or update
 #   ./install.sh --no-desktop-shortcut   app menu entry only, no icon on the Desktop
-#   ./install.sh --uninstall             remove everything it installed
+#   ./install.sh --uninstall             remove everything it installed; keeps its settings and profiles
+#   ./install.sh --uninstall --purge     also remove its settings, profiles and the start-at-login entry
 #   ./install.sh --run                   install and start the app
+#
+# Run it as your own user, not with sudo. The governor's own config.toml and its backups are never touched.
 
 set -euo pipefail
 
@@ -22,6 +25,7 @@ VENV_DIR="$APP_DIR/venv"
 APPS_DIR="$DATA_HOME/applications"
 ICON_DIR="$DATA_HOME/icons/hicolor/512x512/apps"
 DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 
 say()  { printf '\033[1;35m==>\033[0m %s\n' "$*"; }
 fail() { printf '\033[1;31merror:\033[0m %s\n' "$*" >&2; exit 1; }
@@ -32,21 +36,30 @@ uninstall() {
     rm -f "$BIN_DIR/$APP_ID" "$APPS_DIR/$APP_ID.desktop" "$ICON_DIR/$APP_ID.png" "$DESKTOP_DIR/$APP_ID.desktop"
     command -v update-desktop-database >/dev/null && update-desktop-database -q "$APPS_DIR" || true
     command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$DATA_HOME/icons/hicolor" 2>/dev/null || true
+    if $PURGE; then
+        say "Removing the settings, profiles and the start-at-login entry"
+        rm -rf "${CONFIG_DIR:?}/$APP_ID"
+        rm -f "$CONFIG_DIR/autostart/$APP_ID.desktop"
+    fi
     say "Done. The governor's config.toml and backups were left untouched."
 }
 
 RUN=false
 DESKTOP_SHORTCUT=true
 UNINSTALL=false
+PURGE=false
 for arg in "$@"; do
     case "$arg" in
         --uninstall) UNINSTALL=true ;;
+        --purge) PURGE=true ;;
         --run) RUN=true ;;
         --no-desktop-shortcut) DESKTOP_SHORTCUT=false ;;
-        -h|--help) sed -n '3,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '3,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) fail "unknown option: $arg (try --help)" ;;
     esac
 done
+$PURGE && ! $UNINSTALL && fail "--purge only goes with --uninstall"
+[[ "$(id -u)" -ne 0 ]] || fail "run this as your own user, not with sudo: the app, venv and launcher belong in your home folder"
 if $UNINSTALL; then uninstall; exit 0; fi
 
 [[ -f "$SRC_DIR/bc250_governor/__main__.py" ]] || fail "run this script from the unpacked release directory"

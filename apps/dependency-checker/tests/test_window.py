@@ -3,10 +3,17 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import QEventLoop, QTimer
+from PyQt6.QtWidgets import QLabel
 
-from portal_dependency_checker import CATALOG
-from portal_dependency_checker.dependencies import DependencyStatus, ToolStatus, load_catalog, load_tools
-from portal_dependency_checker.main_window import DependencyWindow
+from bc250_dependency_checker import CATALOG
+from bc250_dependency_checker.dependencies import (
+    CheckResult, DependencyStatus, EnvironmentVersion, ToolStatus, Vulnerability, load_apps, load_catalog,
+    load_tools,
+)
+from bc250_dependency_checker.main_window import DependencyWindow, about_text, tool_advice
+
+SHARED = "/home/test/.local/share/bc250-bazzite-suite/venv"
+DEMO = "/home/test/.local/share/simple-demo-tool/venv"
 
 
 def _wait_for(predicate, ms=3000):
@@ -20,18 +27,144 @@ def _wait_for(predicate, ms=3000):
     return predicate()
 
 
+def _window(result: CheckResult) -> DependencyWindow:
+    window = DependencyWindow(load_catalog(CATALOG), load_tools(CATALOG), load_apps(CATALOG), check=lambda: result)
+    assert _wait_for(lambda: window.check_button.isEnabled())
+    return window
+
+
+def _catalog():
+    return ({d.name: d for d in load_catalog(CATALOG)}, {t.name: t for t in load_tools(CATALOG)})
+
+
 def test_window_displays_package_and_tool_results(qapp):
-    dependencies = load_catalog(CATALOG)
-    tools = load_tools(CATALOG)
-    results = [DependencyStatus(dependencies[0], "6.11.0", "6.12.0")]
-    tool_results = [ToolStatus(tools[0], "/home/test/flashrom/usr/bin/flashrom")]
-    window = DependencyWindow(dependencies, tools, check=lambda: (results, tool_results))
+    dependencies, tools = _catalog()
+    result = CheckResult(
+        [DependencyStatus(dependencies["PyQt6"], (EnvironmentVersion(SHARED, ("portal", "bazzite-test"), "6.11.0"),
+                                                  EnvironmentVersion(DEMO, ("demo-tool",), "6.11.0")), "6.12.0"),
+         DependencyStatus(dependencies["obsws-python"], (EnvironmentVersion(DEMO, ("demo-tool",), "1.8.0"),),
+                          "1.8.0"),
+         DependencyStatus(dependencies["dbus-next"], (), "0.2.3")],
+        [ToolStatus(tools["flashrom"], "/home/test/flashrom/usr/bin/flashrom"),
+         ToolStatus(tools["speedtest"], "/home/test/.local/bin/speedtest"),
+         ToolStatus(tools["mprime"]),
+         ToolStatus(tools["setpci"])],
+        frozenset({"portal", "bazzite-test", "demo-tool", "bios-reader", "cores-bisect"}),
+    )
+    window = _window(result)
     try:
-        assert _wait_for(lambda: window.check_button.isEnabled())
-        assert window.cards["PyQt6"].status.text() == "Update available"
-        assert window.cards["PyQt6"].latest.text() == "Latest on PyPI: 6.12.0"
+        pyqt = window.cards["PyQt6"]
+        assert pyqt.status.text() == "Update available"
+        assert pyqt.latest.text() == "Latest on PyPI: 6.12.0"
+        assert "BC-250 Bazzite Test" in pyqt.installed.text() and "Simple Demo Tool" in pyqt.installed.text()
+        assert window.cards["obsws-python"].status.text() == "Up to date"
+        assert window.cards["dbus-next"].status.text() == "Not needed"
         assert window.tool_cards["flashrom"].status.text() == "Available"
         assert window.tool_cards["flashrom"].location.text().endswith("/flashrom")
-        assert "1 Python packages and" in window.result_label.text()
+        assert window.tool_cards["speedtest"].status.text() == "Available"
+        assert window.tool_cards["mprime"].status.text() == "Not installed"
+        assert window.tool_cards["setpci"].status.text() == "Missing"
+        text = window.result_label.text()
+        assert "Missing, needed by an installed app:</b> setpci" in text
+        assert "Optional, not installed: mprime" in text
+        assert window.box_missing.value.text() == "1"
+        assert window.box_updates.value.text() == "1"
+    finally:
+        window.close()
+
+
+def test_missing_package_in_an_app_environment_is_reported(qapp):
+    dependencies, _tools = _catalog()
+    result = CheckResult(
+        [DependencyStatus(dependencies["dbus-next"], (EnvironmentVersion(DEMO, ("demo-tool",), ""),), "0.2.3")],
+        [], frozenset({"demo-tool"}))
+    window = _window(result)
+    try:
+        assert window.cards["dbus-next"].status.text() == "Missing"
+        assert "missing" in window.cards["dbus-next"].installed.text()
+        assert "Packages missing or at a wrong version:</b> dbus-next" in window.result_label.text()
+    finally:
+        window.close()
+
+
+def test_tools_that_need_root_say_so(qapp):
+    _dependencies, tools = _catalog()
+    window = _window(CheckResult([], [], frozenset()))
+    try:
+        def says_root(name):
+            return any("Needs root." in label.text() for label in window.tool_cards[name].findChildren(QLabel))
+        assert says_root("umr") and says_root("setpci")
+        assert not says_root("pkexec") and not says_root("stress-ng")
+        assert window.tool_cards["umr"].status.text() == "Not checked"
+    finally:
+        window.close()
+
+
+def test_about_popup_describes_the_purpose(qapp):
+    _dependencies, tools = _catalog()
+    apps = load_apps(CATALOG)
+    text = about_text(tools["cec-ctl"], apps)
+    assert "HDMI-CEC" in text and "BC250 HDMI CEC" in text and "(required)" in text
+    assert "Needs root." in about_text(tools["umr"], apps)
+    window = _window(CheckResult([], [], frozenset()))
+    try:
+        card = window.cards["obsws-python"]
+        card.about_button.click()
+        assert card.about_box is not None and card.about_box.isVisible()
+        assert "OBS" in card.about_box.text() and "Simple Demo Tool" in card.about_box.text()
+        card.about_box.close()
+    finally:
+        window.close()
+
+
+def test_cve_marks(qapp):
+    dependencies, _tools = _catalog()
+    cve = Vulnerability("CVE-2099-1234", "Leaks a header", "6.12.1",
+                        "https://security.snyk.io/vuln/?search=CVE-2099-1234")
+    result = CheckResult(
+        [DependencyStatus(dependencies["PyQt6"], (EnvironmentVersion(SHARED, ("portal",), "6.11.0", (), (cve,)),),
+                          "6.12.1"),
+         DependencyStatus(dependencies["obsws-python"], (EnvironmentVersion(DEMO, ("demo-tool",), "1.8.0"),), "1.8.0"),
+         DependencyStatus(dependencies["dbus-next"], (EnvironmentVersion(DEMO, ("demo-tool",), "0.2.3"),), "0.2.3",
+                          cve_error="offline")],
+        [], frozenset({"portal", "demo-tool"}))
+    window = _window(result)
+    try:
+        pyqt = window.cards["PyQt6"]
+        assert "✗ CVE" in pyqt.cve.text() and pyqt.status.text() == "Vulnerable"
+        assert "href='https://security.snyk.io/vuln/?search=CVE-2099-1234'>CVE-2099-1234</a> in 6.11.0" in \
+            pyqt.vulnerabilities.text()
+        assert "fixed in 6.12.1" in pyqt.vulnerabilities.text()
+        assert "Update PyQt6 6.11.0 to 6.12.1 or newer for Portal" in pyqt.advice.text()
+        assert "✓ CVE" in window.cards["obsws-python"].cve.text()
+        assert window.cards["obsws-python"].advice.isHidden()
+        assert "CVE ?" in window.cards["dbus-next"].cve.text()
+        assert window.box_cves.value.text() == "1"
+        assert "Known vulnerabilities:</b> PyQt6 6.11.0 (CVE-2099-1234)" in window.result_label.text()
+        assert "Vulnerability check failed: dbus-next" in window.result_label.text()
+    finally:
+        window.close()
+
+
+def test_missing_tools_advise_what_they_are_needed_for(qapp):
+    dependencies, tools = _catalog()
+    installed = frozenset({"bios-reader", "cores-bisect", "bazzite-test"})
+    advice = tool_advice(tools["stress-ng"], installed, load_apps(CATALOG))
+    assert advice.startswith("<b>Advice:</b> Install stress-ng to be able to use:")
+    assert "BC-250 Cores Bisect</a>: Verified CPU load during core testing. <b>(required)</b>" in advice
+    assert "BC-250 Bazzite Test</a>: CPU stress/load tests and CPU benchmark.</li>" in advice
+    assert "Install speedtest or speedtest-cli" in tool_advice(tools["speedtest"], installed, load_apps(CATALOG))
+    assert "Install a flashrom that has it" in tool_advice(tools["flashrom"], installed, load_apps(CATALOG),
+                                                           "No internal programmer found.")
+    assert tool_advice(tools["radeontop"], installed, load_apps(CATALOG)) == ""   # the governor is not installed
+    window = _window(CheckResult(
+        [DependencyStatus(dependencies["dbus-next"], (EnvironmentVersion(DEMO, ("demo-tool",), ""),), "0.2.3")],
+        [ToolStatus(tools["mprime"]), ToolStatus(tools["umr"], "/usr/bin/umr")], installed | {"demo-tool"}))
+    try:
+        assert "Install mprime to be able to use <a href=" in window.tool_cards["mprime"].advice.text()
+        assert "Prime95 torture test for a longer burn-in." in window.tool_cards["mprime"].advice.text()
+        assert window.tool_cards["umr"].advice.isHidden()
+        assert "Install Simple Demo Tool again from the portal to be able to use it" in \
+            window.cards["dbus-next"].advice.text()
     finally:
         window.close()

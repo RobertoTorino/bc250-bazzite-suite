@@ -27,7 +27,6 @@ DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
 DESKTOP_ICON="$DESKTOP_DIR/$APP_ID.desktop"
 
 SRC=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
-APP_SOURCE="$SRC/portal-dependency-checker"
 if [ -d "$SRC/bc250_core" ]; then CORE_SRC="$SRC/bc250_core"; else CORE_SRC="$SRC/../../core/bc250_core"; fi
 
 info() { printf '\033[1;35m==>\033[0m %s\n' "$1"; }
@@ -73,8 +72,8 @@ fi
 [ "$(uname -s)" = Linux ] || die "This app runs on Linux (Bazzite) only."
 [ -f "$SRC/requirements.txt" ] || die "requirements.txt is missing: run install.sh from a clone or the extracted release folder."
 [ -f "$SRC/VERSION" ] || die "VERSION is missing: run install.sh from a clone or the extracted release folder."
-for f in portal_dependency_checker/__main__.py images/portal-dependency-checker.png dependencies.toml; do
-    [ -f "$APP_SOURCE/$f" ] || die "portal-dependency-checker/$f is missing: run install.sh from a clone or the extracted release folder."
+for f in bc250_dependency_checker/__main__.py bc250_dependency_checker/dependencies.toml images/bc250-dependency-checker.png; do
+    [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from a clone or the extracted release folder."
 done
 [ -f "$CORE_SRC/__init__.py" ] || die "bc250_core is missing: run install.sh from a clone or the extracted release folder."
 CORE_SRC=$(cd "$CORE_SRC" && pwd -P)
@@ -87,11 +86,12 @@ info "Installing $APP_NAME $VERSION"
 info "Copying the app to $APP_DIR"
 rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR"
-(cd "$APP_SOURCE" && tar --exclude='./.git' --exclude='./.idea' --exclude='./tests' --exclude='__pycache__' -cf - .) |
-    tar -xf - -C "$APP_DIR"
-cp "$SRC/requirements.txt" "$APP_DIR/"              # one folder up from the app's own files
-mkdir -p "$APP_DIR/bc250_core"
-(cd "$CORE_SRC" && tar --exclude='__pycache__' -cf - .) | tar -xf - -C "$APP_DIR/bc250_core"
+(cd "$SRC" && tar --exclude='./.git' --exclude='./.idea' --exclude='./tests' --exclude='./.pytest_cache' \
+    --exclude='__pycache__' -cf - .) | tar -xf - -C "$APP_DIR"
+if [ "$CORE_SRC" != "$SRC/bc250_core" ]; then         # from the checkout: bundle core like a release
+    mkdir -p "$APP_DIR/bc250_core"
+    (cd "$CORE_SRC" && tar --exclude='__pycache__' -cf - .) | tar -xf - -C "$APP_DIR/bc250_core"
+fi
 
 if [ ! -x "$VENV/bin/python" ] || ! "$VENV/bin/python" -c 'import sys' 2>/dev/null; then
     info "Creating the suite venv in $VENV"
@@ -112,7 +112,7 @@ cat >"$LAUNCHER" <<EOF
 #!/usr/bin/env bash
 # $APP_NAME launcher, written by install.sh.
 cd "$APP_DIR" || { echo "$APP_NAME is not installed in $APP_DIR; run install.sh again." >&2; exit 1; }
-exec "$VENV/bin/python" -m portal_dependency_checker "\$@"
+exec "$VENV/bin/python" -m bc250_dependency_checker "\$@"
 EOF
 chmod 755 "$LAUNCHER"
 
@@ -123,7 +123,7 @@ Name=$APP_NAME
 GenericName=BC-250 dependency checker
 Comment=Check suite Python package updates and external tool availability
 Exec=$LAUNCHER
-Icon=$APP_DIR/images/portal-dependency-checker.png
+Icon=$APP_DIR/images/bc250-dependency-checker.png
 Terminal=false
 Categories=System;Utility;
 Keywords=BC-250;Bazzite;dependencies;updates;PyPI;

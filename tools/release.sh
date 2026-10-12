@@ -7,12 +7,12 @@
 #   tools/release.sh --list                       # the apps, their tags and what needs a release
 #   tools/release.sh --install                    # app menu entry and Desktop icon (apps/suite-releases/install.sh)
 #   tools/release.sh --install --no-desktop-shortcut
-#   tools/release.sh --uninstall                  # remove them again
+#   tools/release.sh --uninstall [--purge]        # remove them again (--purge: and the settings)
 set -euo pipefail
 APP="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)/apps/suite-releases"
 case "${1:-}" in
     --install) shift; exec bash "$APP/install.sh" "$@" ;;
-    --uninstall) exec bash "$APP/install.sh" --uninstall ;;
+    --uninstall) exec bash "$APP/install.sh" "$@" ;;      # --uninstall [--purge]
     -h|--help) sed -n '3,10p' "$0" | sed 's/^# \{0,1\}//' ;;
     *) exec bash "$APP/run.sh" "$@" ;;
 esac

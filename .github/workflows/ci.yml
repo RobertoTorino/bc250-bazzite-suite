@@ -32,6 +32,7 @@ jobs:
       fail-fast: false
       matrix:
         dir: [core, portal, tools, apps/bazzite-test, apps/governor, apps/helixsr, apps/persistent-acpi,
+              apps/cu-bisect, apps/cores-bisect, apps/gpu-oc-bisect,
               apps/demo-tool, apps/dependency-checker, apps/suite-releases,
               apps/system-overlay, apps/bios-reader, apps/ace-queues, apps/memory-manager, apps/hdmi-cec,
               tools/installer-tests/gui]   # every folder with tests/
@@ -133,6 +134,16 @@ jobs:
         run: sudo apt-get install -y -q fakeroot
       - name: bazzite-test installer
         run: bash tools/installer-tests/bazzite-test.sh
+      - name: governor installer
+        run: bash tools/installer-tests/governor.sh
+      - name: helixsr installer
+        run: bash tools/installer-tests/helixsr.sh
+      - name: cu-bisect installers
+        run: bash tools/installer-tests/cu-bisect.sh
+      - name: cores-bisect installer
+        run: bash tools/installer-tests/cores-bisect.sh
+      - name: gpu-oc-bisect installer
+        run: bash tools/installer-tests/gpu-oc-bisect.sh
       - name: portal installer
         run: bash tools/installer-tests/portal.sh
       - name: persistent-acpi installer
@@ -153,6 +164,8 @@ jobs:
         run: bash tools/installer-tests/dependency-checker.sh
       - name: Suite Releases installer
         run: bash tools/installer-tests/suite-releases.sh
+      - name: Installer Tests installer
+        run: bash tools/installer-tests/installer-tests.sh
       - name: release tarballs, end to end
         run: bash tools/installer-tests/release.sh
 

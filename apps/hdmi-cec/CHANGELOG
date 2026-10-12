@@ -1,3 +1,23 @@
+Changelog: 12-10-2026 09:09:15
+
+Release 0.1.6.
+
+Changelog: 12-10-2026 08:07:21
+
+The window has the suite's header: the icon at 96 px beside the title with the version, and a second row below it with the four boxes (core's AppHeader; it was a 40 px icon in one line, the boxes below it).
+
+Changelog: 12-10-2026 07:09:17
+
+The buttons are plain buttons in the desktop's own grey again, greyed out while they cannot be used. Green buttons (while clicked, then as on/off buttons) were tried and dropped: the colour could not show the state of the TV. Turn TV on keeps no purple outline.
+
+Changelog: 12-10-2026 07:07:24
+
+Every button of the window is an on/off button (checkable): grey, a click turns it green, the next click grey again. It still does its action on every click; the colour only shows how it was last switched, not the state of the TV.
+
+Changelog: 12-10-2026 07:03:21
+
+The Display box is black with white text instead of off-white. The buttons are grey in the desktop's own button colour and turn green only while they are clicked; a button that cannot be used is fainter, with grey text.
+
 Changelog: 12-10-2026 06:51:13
 
 Release 0.1.5. UI improvements

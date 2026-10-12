@@ -502,14 +502,20 @@ cd bc250-bazzite-suite/apps/cu-bisect
 python3 -m venv _python && _python/bin/pip install -r requirements.txt && _python/bin/python -m bc250_bisect_gui
 ```
 
-On Bazzite there's also a self-installer that sets up a private venv under `~/.local`, plus a launcher,
-app-menu entry, icon and Desktop icon (`--no-desktop-shortcut` leaves the Desktop icon out) — no `rpm-ostree` layering, nothing outside your home directory:
+On Bazzite, `install.sh` installs both windows (this one and the unlock GUI below) for your user: each gets a
+private venv under `~/.local`, a launcher, an app-menu entry, an icon and a Desktop icon. No `rpm-ostree` layering,
+nothing outside your home directory. Run it as your own user, not with sudo:
 
 ```bash
-bash packaging/bazzite/install-bisect-gui.sh    # installs for your user only
-bc250-bisect-gui                                # or launch it from the app menu
-bash packaging/bazzite/uninstall-bisect-gui.sh  # removes the launcher again (not any results)
+./install.sh                         # both windows
+./install.sh --bisect-only           # only the bisect window (--unlock-only: only the unlock window)
+./install.sh --no-desktop-shortcut   # app-menu entries only, no Desktop icons
+bc250-bisect-gui                     # or launch it from the app menu
+./install.sh --uninstall             # removes the apps again (not any results or settings)
+./install.sh --uninstall --purge     # also removes the results, settings, logs and autostart entries
 ```
+
+`install.sh` runs `packaging/bazzite/install-bisect-gui.sh` and `install-gui.sh`, which also work on their own.
 
 A terminal emulator is required to actually see/run the bisect (konsole, gnome-terminal, ptyxis,
 xfce4-terminal, foot, alacritty, kitty, x-terminal-emulator or xterm - `$TERMINAL` is tried first);
@@ -537,13 +543,9 @@ cd bc250-bazzite-suite/apps/cu-bisect
 python3 -m venv _python && _python/bin/pip install -r requirements.txt && _python/bin/python -m bc250_unlock_gui
 ```
 
-On Bazzite there's also a self-installer, same pattern as the bisect GUI above:
-
-```bash
-bash packaging/bazzite/install-gui.sh    # installs for your user only
-bc250-unlock-cu-gui                      # or launch it from the app menu
-bash packaging/bazzite/uninstall-gui.sh  # removes the app again (not the unlock itself)
-```
+On Bazzite, `./install.sh` (above) installs it together with the bisect window; `./install.sh --unlock-only`
+installs only this one. `./install.sh --uninstall` removes the app again, not the unlock itself. Launch it from
+the app menu or with `bc250-unlock-cu-gui`.
 
 Install/Uninstall run `bc250-cu-unlock.sh` through `sudo` (masked password prompt, passed to `sudo -S`
 only, never stored); nothing is installed with `rpm-ostree` for the GUI itself, a venv is enough.

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Entry point: python -m portal_dependency_checker."""
+"""Entry point: python -m bc250_dependency_checker."""
 
 from __future__ import annotations
 
@@ -9,13 +9,14 @@ from bc250_core.app import create_app, exec_app
 from PyQt6.QtWidgets import QMessageBox
 
 from . import APP_NAME, CATALOG, INFO, __version__
-from .dependencies import DependencyCatalogError, load_catalog, load_tools
+from .dependencies import DependencyCatalogError, load_apps, load_catalog, load_tools
 from .main_window import DependencyWindow
 
 
 def main() -> int:
     app = create_app(INFO, sys.argv[1:], lang="en")
     try:
+        apps = load_apps(CATALOG)
         dependencies = load_catalog(CATALOG)
         tools = load_tools(CATALOG)
     except DependencyCatalogError as exc:
@@ -23,7 +24,7 @@ def main() -> int:
         return 1
     if instance.already_running(INFO.app_id):
         return 0
-    window = DependencyWindow(dependencies, tools)
+    window = DependencyWindow(dependencies, tools, apps)
     window.show()
     server = instance.serve(INFO.app_id, window)  # noqa: F841 (kept alive while the app runs)
     return exec_app(app)
