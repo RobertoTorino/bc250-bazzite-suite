@@ -10,11 +10,11 @@ from pathlib import Path
 from types import ModuleType
 from typing import Callable
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QCloseEvent
-from PyQt6.QtWidgets import (QAbstractItemView, QGroupBox, QHBoxLayout, QHeaderView, QInputDialog, QLabel,
-                             QLineEdit, QMainWindow, QMessageBox, QPushButton, QTableWidget, QTableWidgetItem,
-                             QVBoxLayout, QWidget)
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QCloseEvent, QDesktopServices, QGuiApplication
+from PyQt6.QtWidgets import (QAbstractItemView, QDialog, QDialogButtonBox, QGroupBox, QHBoxLayout, QHeaderView,
+                             QInputDialog, QLabel, QLineEdit, QMainWindow, QMessageBox, QPushButton, QTableWidget,
+                             QTableWidgetItem, QVBoxLayout, QWidget)
 
 from bc250_core import SUITE_MANUAL_URL
 from bc250_core import __version__ as CORE_VERSION
@@ -24,7 +24,7 @@ from bc250_core.theme import ORANGE, PURPLE
 from bc250_core.updates import UpdateChecker
 from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, accent_button, hint_label
 
-from . import APP_ID, APP_NAME, INFO, LOGO_PATH, __version__, jobs
+from . import APP_ID, APP_NAME, INFO, LOGO_PATH, __version__, jobs, psn
 from .consoles import ConsoleStore, RegisteredConsole, parse_account_id, parse_login_pin, parse_pin
 from .discovery import Console
 from .jobs import Outcome
@@ -39,6 +39,41 @@ Runner = Callable[[Callable[[], Outcome], Callable[[Outcome], None]], bool]
 
 class RemotePlaySettings(SettingsStore):
     DEFAULTS = {"account_id": "", "address": ""}
+
+
+class AccountDialog(QDialog):
+    """Sony's sign-in in the browser, then the address it ends on pasted back: the way to the PSN account ID."""
+
+    def __init__(self, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.setWindowTitle(f"{APP_NAME}: find your account ID")
+        self.url = psn.login_url()
+        open_button = accent_button("Open Sony's sign-in", "Opens Sony's PlayStation sign-in page in your browser")
+        open_button.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(self.url, QUrl.ParsingMode.StrictMode)))
+        copy_button = QPushButton("Copy the link")
+        copy_button.setToolTip("For a browser on another device")
+        copy_button.clicked.connect(lambda: QGuiApplication.clipboard().setText(self.url))
+        self.redirect_edit = QLineEdit()
+        self.redirect_edit.setPlaceholderText("https://remoteplay.dl.playstation.net/remoteplay/redirect?code=…")
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        buttons.button(QDialogButtonBox.StandardButton.Ok).setText("Get account ID")
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        row = QHBoxLayout()
+        row.addWidget(open_button)
+        row.addWidget(copy_button)
+        row.addStretch(1)
+        lay = QVBoxLayout(self)
+        lay.addWidget(QLabel("1. Sign in with the PSN account you use on the console, on Sony's own page:"))
+        lay.addLayout(row)
+        lay.addWidget(QLabel("2. Sony then shows a page that only says \"redirect\". Copy that page's address from "
+                             "the address bar\n    and paste it here:"))
+        lay.addWidget(self.redirect_edit)
+        lay.addWidget(hint_label(
+            "The app sends the code in that address to Sony once, to read your account ID, and keeps only the ID. "
+            "The code works for a few minutes. This is the sign-in chiaki-ng uses."))
+        lay.addWidget(buttons)
+        self.resize(640, self.sizeHint().height())
 
 
 def _item(text: str) -> QTableWidgetItem:
@@ -113,22 +148,27 @@ class MainWindow(QMainWindow):
         self.account_edit = QLineEdit(self.settings.get("account_id"))
         self.account_edit.setPlaceholderText("PSN account ID: a number, or the 12-character code ending with =")
         self.pin_edit = QLineEdit()
-        self.pin_edit.setPlaceholderText("8-digit PIN from Link Device")
+        self.pin_edit.setPlaceholderText("8-digit PIN from the console")
         self.pin_edit.setMaxLength(9)
+        self.account_button = QPushButton("Find my account ID…")
+        self.account_button.setToolTip("Sign in to PSN in your browser to read your account ID")
+        self.account_button.clicked.connect(self.find_account_id)
         self.register_button = QPushButton("Register with selected console")
         self.register_button.clicked.connect(self.register)
         form = QHBoxLayout()
         form.addWidget(QLabel("Account ID:"))
         form.addWidget(self.account_edit, 2)
+        form.addWidget(self.account_button)
         form.addWidget(QLabel("PIN:"))
         form.addWidget(self.pin_edit, 1)
         form.addWidget(self.register_button)
         lay_register = QVBoxLayout(register)
         lay_register.addLayout(form)
         lay_register.addWidget(hint_label(
-            "On the console, open Settings > System > Remote Play > Link Device: it shows an 8-digit PIN for a few "
-            "minutes. The account ID is your PSN account's number, not your online name; the same code works in "
-            f"chiaki-ng. <a href='{MANUAL_URL}'>Where to find it</a>"))
+            "On a PS5, open Settings > System > Remote Play > Link Device; on a PS4, Settings > Remote Play "
+            "Connection Settings > Add Device: it shows an 8-digit PIN for a few minutes. The account ID is your "
+            "PSN account's number, not your online name: Find my account ID reads it through Sony's sign-in. "
+            f"<a href='{MANUAL_URL}'>More in the manual</a>"))
 
         mine = QGroupBox("Registered consoles")
         self.registered_table = _table(["Name", "Model", "Address", "Remote Play", "Login passcode"])
@@ -162,7 +202,8 @@ class MainWindow(QMainWindow):
         lay_mine.addLayout(buttons)
         lay_mine.addWidget(hint_label(
             "The keys from registration are stored in ~/.config/bc250-remote-play/consoles.json, readable only by "
-            "you. Remove a console here and under Link Device on the console to undo a registration."))
+            "you. Remove forgets them here; a PS5 also lists the board under Link Device, where it can be removed. "
+            "A PS4 only keeps a history, under Remote Play Connection Settings > Connection History."))
 
         self.log = Terminal()
         self.log.setMinimumHeight(120)
@@ -174,8 +215,8 @@ class MainWindow(QMainWindow):
         lay.addWidget(register)
         lay.addWidget(mine)
         lay.addWidget(self.log, 1)
-        version = QLabel(f"{APP_NAME} {__version__} · core {CORE_VERSION}\nTalks to consoles only when you press a "
-                         "button.")
+        version = QLabel(f"{APP_NAME} {__version__} · core {CORE_VERSION}\nTalks to consoles, and to Sony for the "
+                         "account ID, only when you press a button.")
         version.setAlignment(Qt.AlignmentFlag.AlignRight)
         version.setStyleSheet("color:palette(placeholder-text);")
         lay.addWidget(version, 0, Qt.AlignmentFlag.AlignRight)
@@ -264,7 +305,7 @@ class MainWindow(QMainWindow):
         idle = not self.busy
         found = self.selected_found() is not None
         registered = self.selected_registered() is not None
-        for button in (self.search_button, self.address_button):
+        for button in (self.search_button, self.address_button, self.account_button):
             button.setEnabled(idle)
         self.register_button.setEnabled(idle and found)
         for button in (self.wake_button, self.test_button, self.stream_button, self.rest_button):
@@ -298,6 +339,24 @@ class MainWindow(QMainWindow):
         if changed:
             self._show_registered()
         self._show_found()
+
+    def ask_redirect(self) -> str | None:
+        """The address Sony's sign-in ended on, or None when cancelled."""
+        dialog = AccountDialog(self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return None
+        return dialog.redirect_edit.text()
+
+    def find_account_id(self) -> None:
+        redirect = self.ask_redirect()
+        if redirect is None:
+            return
+        self.start("Asking Sony for the account ID…", lambda: self.ops.psn_account(redirect), self._account_done)
+
+    def _account_done(self, outcome: Outcome) -> None:
+        if outcome.ok:
+            self.account_edit.setText(outcome.value.code)
+            self.settings.set("account_id", outcome.value.code)
 
     def register(self) -> None:
         console = self.selected_found()

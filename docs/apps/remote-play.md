@@ -7,7 +7,8 @@
 Remote Play connects the **AMD BC-250** to a PS4 or PS5 on your network. The app finds the consoles, wakes them
 from rest mode, registers the board with them, and starts a Remote Play session.
 
-The app does not change how the board runs. It talks to a console only when you press a button. This version
+The app does not change how the board runs. It talks to a console, or to Sony for your account ID, only when you
+press a button. This version
 starts a session and its stream and closes them again: it counts the picture and sound that arrive, but does not
 show the picture, play the sound or take controller input.
 
@@ -19,10 +20,10 @@ show the picture, play the sound or take controller input.
   switches under Settings > Power Saving Settings > Set Features Available in Rest Mode.
 - **The same network:** the board and the console in one local network. Remote Play over the internet is not
   part of this app.
-- **Your PSN account ID:** the number of your PlayStation Network account, not your online name. The app takes the
+- **Your PSN account ID:** the number of your PlayStation Network account, not your online name. Sony does not
+  show it anywhere; **Find my account ID…** reads it through Sony's sign-in (see below). The app also takes the
   number itself (for example `4782394583276428394`) or the 12-character code that ends with `=`, the way chiaki-ng
-  shows it. chiaki-ng's PSN login gives you the code; it is the same for every console you register with this
-  account.
+  shows it. It is the same for every console you register with this account.
 
 ## Using it
 
@@ -36,10 +37,21 @@ The top row shows how many consoles answered the last search, how many the board
 - **Search at address:** asks one address. Use it when the search finds nothing, for example on a network that
   does not pass broadcasts (some mesh systems, a guest network, a VPN). The app remembers the address.
 
+**Find my account ID…** (next to the account ID):
+
+1. Press **Open Sony's sign-in**: your browser opens Sony's PlayStation sign-in page. Sign in with the PSN account
+   you use on the console. (**Copy the link** is for a browser on another device.)
+2. Sony then shows a page that only says "redirect". Copy that page's address from the browser's address bar,
+   paste it in the dialog and press **Get account ID**.
+
+The app sends the code in that address to Sony once, reads your account ID and fills it in. It keeps only the
+account ID, nothing of the sign-in. The code works for a few minutes and only once: if Sony refuses it, sign in
+again. This is the same sign-in chiaki-ng uses.
+
 **Register the board with a console:**
 
-1. On the console, open Settings > System > Remote Play > **Link Device**. It shows an 8-digit PIN for a few
-   minutes.
+1. On a PS5, open Settings > System > Remote Play > **Link Device**; on a PS4, Settings > Remote Play Connection
+   Settings > **Add Device**. It shows an 8-digit PIN for a few minutes.
 2. In the app, select the console in the list, enter your account ID and the PIN, and press **Register with
    selected console**.
 
@@ -58,8 +70,10 @@ wrong account ID is reported in the log at the bottom.
 - **Rest mode:** puts the console in rest mode, through a short session.
 - **Login passcode…:** when the PSN account on the console has a 4-digit login passcode, the console asks for it
   at the start of a session. Enter it here once.
-- **Remove:** forgets the console's keys on the board. To undo a registration completely, also remove the board on
-  the console, under Link Device.
+- **Remove:** forgets the console's keys on the board. A PS5 lists the board under Link Device: remove it there
+  too to undo the registration completely. A PS4 has no such list. It keeps a history of the connections under
+  Settings > Remote Play Connection Settings > **Connection History** (date, account, nearby or over the internet,
+  and the device, which shows as PC); the OPTIONS button there clears all entries at once.
 
 When a console gets another address from the router, the next search finds it, and the app updates the address of
 the registered console.
@@ -69,7 +83,7 @@ the registered console.
 - `~/.config/bc250-remote-play/consoles.json`: the registered consoles and their keys. Anyone with these keys can
   start a session with your account on the console, so the file is readable only by you.
 - `~/.config/bc250-remote-play/bc250-remote-play.ini`: your account ID, the last address you searched and the
-  window size.
+  window size. The account ID only identifies the account; it gives no access to it.
 
 ## When it does not work
 
@@ -77,8 +91,8 @@ the registered console.
   rest-mode switches on. Try **Search at address** with the console's address (the console shows it under
   Settings > Network > Connection Status). The console answers on UDP port 9303 to 9319 of the board: Bazzite's
   firewall lets these through by default, a stricter firewall zone may not.
-- **Registration: no answer:** Link Device must be open on the console while you register, and the PIN is only
-  valid for a few minutes.
+- **Registration: no answer:** the PIN screen (Link Device on a PS5, Add Device on a PS4) must be open on the
+  console while you register, and the PIN is only valid for a few minutes.
 - **Remote Play is already in use:** another device has a session with the console. Close it there.
 - **The console asks for the login passcode:** enter it with **Login passcode…**.
 - **Test stream: no answer on the stream port:** the stream uses UDP port 9296 of the console. Test session working

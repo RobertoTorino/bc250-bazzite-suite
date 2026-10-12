@@ -38,6 +38,7 @@ STREAMING_TYPES = {"h264": 1, "h265": 2, "h265_hdr": 3}
 
 # Ctrl message types (chiaki-ng's CtrlMessageType).
 SESSION_ID = 0x33
+INVALID_SESSION_ID = b"InvalidSessionId"     # what a PS4 Pro sent instead of an ID (owner's board, 12-10-2026)
 HEARTBEAT_REQ = 0xfe
 HEARTBEAT_REP = 0x1fe
 LOGIN_PIN_REQ = 0x4
@@ -258,14 +259,20 @@ class Session:
         if msg_type == HEARTBEAT_REQ:
             self.send(HEARTBEAT_REP)
         elif msg_type == SESSION_ID:
-            if payload[:1] != b"\x4a":                 # chiaki-ng only warns about this first byte
-                self.note(f"The session ID starts with {payload[:1].hex() or 'nothing'}, not 4a.")
+            # The first byte is the ID's length (a normal one has 74 characters, 0x4a); chiaki-ng skips it.
             text = payload[1:]
+            if payload[:1] and payload[0] != len(text):
+                self.note(f"The session ID message says {payload[0]} characters but has {len(text)}.")
             if 24 <= len(text) < 79 and text.isascii() and text.isalnum():
                 self.info.session_id = text.decode()
             else:                                       # chiaki-ng then makes one up: time and random bytes
                 self.info.session_id = f"{int(time.monotonic())}{base64.b64encode(self.random(48)).decode()}"
-                self.note("The console sent an unusual session ID; using a made-up one.")
+                if text == INVALID_SESSION_ID:
+                    self.note("The console sent no session ID (\"InvalidSessionId\"); using a made-up one, as "
+                              "chiaki-ng does. The console accepts the stream with it.")
+                else:
+                    self.note(f"The console sent an unusual session ID ({len(payload)} bytes: "
+                              f"{payload[:48].hex(' ')}{' …' if len(payload) > 48 else ''}); using a made-up one.")
             self.enable_features()
         elif msg_type == LOGIN_PIN_REQ:
             if not self.login_pin:

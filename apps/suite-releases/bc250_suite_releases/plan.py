@@ -216,8 +216,11 @@ def set_version(root: Path, unit: Unit, new: str) -> list[Path]:
     changed = [folder / "VERSION"]
     (folder / "VERSION").write_bytes(f"{new}\n".encode())
     for path in sorted(folder.rglob("*")):
-        pattern = check_versions.PATTERNS.get(path.suffix)
-        if pattern is None or not path.is_file() or "tests" in path.relative_to(folder).parts:
+        parts = path.relative_to(folder).parts
+        if not path.is_file() or "tests" in parts or "target" in parts:
+            continue
+        pattern = check_versions.version_pattern(path)       # Cargo.lock too: CI builds Rust with --locked
+        if pattern is None:
             continue
         text = path.read_text(encoding="utf-8")
         new_text = pattern.sub(lambda m: m.group(0).replace(f'"{m.group(1)}"', f'"{new}"'), text)

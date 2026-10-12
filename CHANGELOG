@@ -1,3 +1,11 @@
+Changelog: 12-10-2026 23:37:12
+
+MIGRATION.md: BC250 Remote Play has a future iteration noted, an implementation of our own without chiaki-ng's code.
+
+Changelog: 12-10-2026 23:09:42
+
+tools/check_versions.py also checks a Rust crate's own version in its Cargo.lock (tests in tools/tests/test_check_versions.py). The release of BC250 Remote Play 0.1.1 had bumped native/Cargo.toml but not Cargo.lock, and CI's native job, which builds with --locked, stopped on it.
+
 Changelog: 12-10-2026 22:47:04
 
 CI: the native job also runs BC250 Remote Play's stream tests (tests/test_stream.py) with the module it built, as they need it. The Remote Play installer test checks the installer's line about the native core.

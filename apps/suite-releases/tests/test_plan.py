@@ -58,6 +58,10 @@ def repo(tmp_path) -> Path:
     write(root / "apps/releases/.standalone", "Not in the portal.\n")
     write(root / "apps/releases/.checkout-only", "No releases.\n")
     write(root / "apps/alpha/alpha/ui.py", "from bc250_core import widgets\n")      # alpha bundles core, beta not
+    # A Rust crate, as BC250 Remote Play has: Cargo.lock repeats the crate's version, next to another crate's.
+    write(root / "apps/alpha/native/Cargo.toml", '[package]\nname = "alpha-core"\nversion = "0.1.0"\n')
+    write(root / "apps/alpha/native/Cargo.lock", 'version = 4\n\n[[package]]\nname = "aes"\nversion = "0.1.0"\n\n'
+                                                '[[package]]\nname = "alpha-core"\nversion = "0.1.0"\n')
     write(root / "docs/apps/alpha.md", "# Alpha\n")
     sh(root, "init", "-q", "-b", "main")
     sh(root, "add", "-A")
@@ -98,7 +102,10 @@ def test_set_version_changes_every_copy_but_tests(repo):
     alpha = unit(repo, "alpha")
     changed = rp.set_version(repo, alpha, "0.2.0")
     assert {p.relative_to(repo).as_posix() for p in changed} == {
-        "apps/alpha/VERSION", "apps/alpha/alpha/__init__.py", "apps/alpha/run.sh"}
+        "apps/alpha/VERSION", "apps/alpha/alpha/__init__.py", "apps/alpha/run.sh", "apps/alpha/native/Cargo.toml",
+        "apps/alpha/native/Cargo.lock"}
+    lock = (repo / "apps/alpha/native/Cargo.lock").read_text()
+    assert 'name = "alpha-core"\nversion = "0.2.0"' in lock and 'name = "aes"\nversion = "0.1.0"' in lock
     assert (repo / "apps/alpha/VERSION").read_text() == "0.2.0\n"
     assert (repo / "apps/alpha/alpha/__init__.py").read_text() == 'APP = "alpha"\n__version__ = "0.2.0"\n'
     assert (repo / "apps/alpha/run.sh").read_text().startswith('VERSION="0.2.0"\n')

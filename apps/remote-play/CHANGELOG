@@ -1,3 +1,35 @@
+Changelog: 13-10-2026 00:34:26
+
+Release 0.1.2.
+
+Changelog: 13-10-2026 00:28:25
+
+The PS4's connection history is named by its menu: Settings > Remote Play Connection Settings > Connection History, whose OPTIONS button clears all entries at once (the owner's PS4 Pro); clearing it keeps the registration, as Test session showed right after, in the hint under Registered consoles and the manual.
+
+Changelog: 13-10-2026 00:25:00
+
+The texts name the PS4's menus next to the PS5's: the PIN under Add Device (Remote Play Connection Settings), the error messages, the PIN field, the hint under Registered consoles, the uninstaller's goodbye and the manual. A PS4 lists no registered devices; its Remote Play menu keeps a connection history that can be cleared (seen on the owner's PS4 Pro: date, account, Nearby, device PC), so removing the board on the console is a PS5 step only.
+
+Changelog: 13-10-2026 00:22:31
+
+The app has its real icons (images/bc250-remote-play.png and -128.png, the owner's), in place of the placeholder.
+
+Changelog: 13-10-2026 00:04:22
+
+The session ID message is read as chiaki-ng's code implies: the first byte is the ID's length (0x4a, 74, for a normal ID), not a fixed marker; a length that does not match is noted. The owner's PS4 Pro sent the length 16 and the text InvalidSessionId (its bytes from the new log line): the console has no session ID to give, so the made-up one is used, as chiaki-ng does, and the log says so in plain words. That message is a test now (recorded bytes), and the fake console sends a 74-character ID as consoles do.
+
+Changelog: 12-10-2026 23:58:32
+
+First run on a real console (the owner's PS4, 12-10-2026): account ID through Sony's sign-in, registration, Test session and Test stream all worked (720p, 291 frames and 499 audio packets in 5 s; the console's key signature checks out). The PS4 sent a session ID message that starts with 10 instead of 4a, and the made-up session ID was used, as chiaki-ng does; the log line now shows that message's bytes (up to 48), to find out why.
+
+Changelog: 12-10-2026 23:34:35
+
+Find my account ID…: the PSN account ID through Sony's sign-in, as chiaki-ng does it (psn.py, from its scripts/psn-account-id.py and gui/src/psnaccountid.cpp). The browser opens Sony's sign-in page for the Remote Play client; the address Sony ends on ("redirect") is pasted back, and its one-time code is exchanged at Sony's token service for the account ID (user_id), which fills the account ID field. Only the account ID is kept, the token is dropped; the scope is chiaki-ng's narrowest (psn:clientapp). No new dependency (urllib) and no embedded browser. The registration hint names the PS4's menu (Remote Play Connection Settings > Add Device) next to the PS5's. Tests against a fake token service on localhost (tests/test_psn.py) and in the window test.
+
+Changelog: 12-10-2026 23:09:42
+
+native/Cargo.lock has the crate at 0.1.1, as Cargo.toml since the release; CI's cargo test --locked failed on the difference.
+
 Changelog: 12-10-2026 22:58:48
 
 Release 0.1.1.

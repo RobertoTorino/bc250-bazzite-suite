@@ -8,7 +8,7 @@ import threading
 import time
 from dataclasses import dataclass, field, replace
 
-from . import discovery, regist, session, stream
+from . import discovery, psn, regist, session, stream
 from .consoles import RegisteredConsole
 from .httpmsg import ProtocolError
 from .target import Target
@@ -35,6 +35,16 @@ def find(address: str = discovery.BROADCAST, timeout: float = 2.0, **ports) -> O
         where = "on the network" if address == discovery.BROADCAST else f"at {address}"
         return Outcome(True, f"No console answered {where}.", [])
     return Outcome(True, f"{len(consoles)} console{'s' if len(consoles) != 1 else ''} found.", consoles)
+
+
+def psn_account(redirect: str, **kwargs) -> Outcome:
+    """The account ID from Sony's sign-in: *redirect* is the address Sony sent the browser to."""
+    try:
+        account = psn.account_id(psn.code_from_redirect(redirect), **kwargs)
+    except psn.PsnError as error:
+        return Outcome(False, str(error))
+    name = f" ({account.online_id})" if account.online_id else ""
+    return Outcome(True, f"Account ID of your PSN account{name}: {account.code}, filled in for registration.", account)
 
 
 def register(console: discovery.Console, account_id: bytes, pin: int, **kwargs) -> Outcome:

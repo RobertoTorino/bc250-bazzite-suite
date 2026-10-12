@@ -84,8 +84,9 @@ class AppsPage(QWidget):
         lay = QVBoxLayout(self)
         lay.addWidget(hint_label(
             "Tick the apps to release and enter their version: a never-tagged version can be released as it is. "
-            "Apply writes VERSION, its copies (__version__, VERSION=, pyproject) and a \"Release x.y.z.\" "
-            "CHANGELOG entry with the notes, which become the release notes on GitHub. Core is bundled with the "
+            "Apply writes VERSION, its copies (__version__, VERSION=, pyproject, Cargo.toml and Cargo.lock) and a "
+            "\"Release x.y.z.\" CHANGELOG entry with the notes, which become the release notes on GitHub. Core is "
+            "bundled with the "
             "apps and gets a version only, no tag. <b>Needs release</b> (orange): something the app ships (its "
             "folder without tests, the core it bundles, its manual chapter) differs from its last tag, committed or "
             "not; hover it for the files."))

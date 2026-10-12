@@ -62,7 +62,7 @@ if $UNINSTALL; then
     if $PURGE; then
         info "Removing the settings and the registered consoles"
         rm -rf "${CONFIG_DIR:?}/$APP_ID"
-        info "$APP_NAME is uninstalled. The consoles still list the board under Link Device; remove it there too."
+        info "$APP_NAME is uninstalled. A PS5 still lists the board under Link Device; remove it there too."
     else
         info "$APP_NAME is uninstalled. Its settings and registered consoles are kept in $CONFIG_DIR/$APP_ID."
     fi

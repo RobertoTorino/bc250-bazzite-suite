@@ -131,7 +131,7 @@ def format_account_id(raw: bytes) -> str:
 def parse_pin(text: str) -> int:
     text = text.strip().replace(" ", "")
     if len(text) != 8 or not text.isdigit():
-        raise ValueError("The PIN has 8 digits: the console shows it under Link Device.")
+        raise ValueError("The PIN has 8 digits: the console shows it under Link Device (PS5) or Add Device (PS4).")
     return int(text)
 
 

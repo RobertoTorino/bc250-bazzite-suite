@@ -6,11 +6,12 @@ from types import SimpleNamespace
 import pytest
 from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
-from bc250_remote_play import jobs
+from bc250_remote_play import jobs, psn
 from bc250_remote_play.consoles import ConsoleStore, RegisteredConsole
 from bc250_remote_play.discovery import Console
 from bc250_remote_play.jobs import Outcome
-from bc250_remote_play.main_window import MainWindow
+from bc250_remote_play.main_window import AccountDialog, MainWindow
+from bc250_remote_play.psn import Account
 from bc250_remote_play.session import SessionInfo
 from bc250_remote_play.target import Target
 from fake_console import AMBASSADOR, MAC, REGIST_KEY, RP_KEY, RegistConsole, SessionConsole
@@ -41,6 +42,12 @@ class FakeOps:
     def register(self, console, account_id, pin):
         self.calls.append(("register", console.address, account_id, pin))
         return Outcome(True, "Registered.", _registered(console))
+
+    def psn_account(self, redirect):
+        self.calls.append(("psn_account", redirect))
+        if "code=" not in redirect:
+            return Outcome(False, "That address has no code in it.")
+        return Outcome(True, "Account ID found.", Account(bytes(range(1, 9)), "player"))
 
     def wake(self, console):
         self.calls.append(("wake", console.address))
@@ -220,3 +227,23 @@ def test_jobs_against_the_fake_console():
     closed.close()
     failed = jobs.test_session(outcome.value, seconds=0.1, port=closed.port, timeout=1.0)
     assert not failed.ok and "rest mode" in failed.message
+
+
+def test_find_account_id_fills_the_field(window, monkeypatch):
+    monkeypatch.setattr(window, "ask_redirect", lambda: "https://x/redirect?code=abc")
+    window.account_button.click()
+    assert window.account_edit.text() == "AQIDBAUGBwg=" and window.settings.get("account_id") == "AQIDBAUGBwg="
+    assert window.ops_fake.calls[-1] == ("psn_account", "https://x/redirect?code=abc")
+    monkeypatch.setattr(window, "ask_redirect", lambda: "nonsense")
+    window.account_button.click()
+    assert window.account_edit.text() == "AQIDBAUGBwg=" and "no code" in window.log.toPlainText()
+    monkeypatch.setattr(window, "ask_redirect", lambda: None)                 # cancelled: nothing happens
+    calls = len(window.ops_fake.calls)
+    window.account_button.click()
+    assert len(window.ops_fake.calls) == calls
+
+
+def test_account_dialog(qapp):
+    dialog = AccountDialog()
+    assert dialog.url == psn.login_url() and "redirect" in dialog.redirect_edit.placeholderText()
+    dialog.close()

@@ -26,6 +26,7 @@ def test_session_starts_and_answers_heartbeats(target, server_type):
         console.close()
     assert console.errors == []
     assert info.session_id == SESSION_ID[1:].decode() and info.server_type == server_type
+    assert not any("characters but has" in line for line in info.log)
     assert console.heartbeat_answered.is_set()
     init, ctrl = console.paths
     assert init.endswith("/sess/init") and ctrl.endswith("/sess/ctrl") and (("ps5" in init) == target.ps5)
@@ -95,7 +96,22 @@ def test_unusual_session_id_gets_a_made_up_one():
     finally:
         console.close()
     assert info.session_id and info.session_id != "short"
-    assert any("unusual" in line for line in info.log)
+    assert "The console sent an unusual session ID (6 bytes: 4a 73 68 6f 72 74); using a made-up one." in info.log
+    assert "The session ID message says 74 characters but has 5." in info.log
+
+
+def test_invalid_session_id_from_a_ps4():
+    """Recorded from the owner's PS4 Pro: the length byte, then the text InvalidSessionId."""
+    console = SessionConsole(target=Target.PS4_10, session_id=bytes.fromhex("10496e76616c696453657373696f6e4964"),
+                             server_type=1)
+    try:
+        with _session(console, Target.PS4_10) as started:
+            info = started.start()
+    finally:
+        console.close()
+    assert info.session_id and info.session_id != "InvalidSessionId"
+    assert any(line.startswith('The console sent no session ID ("InvalidSessionId")') for line in info.log)
+    assert not any("characters but has" in line for line in info.log)
 
 
 def test_goto_bed_reaches_the_console():

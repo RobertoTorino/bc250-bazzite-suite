@@ -1,3 +1,7 @@
+Changelog: 12-10-2026 23:09:42
+
+Apply also writes the new version into a Rust crate's own entry in its Cargo.lock (as tools/check_versions.py now checks it), so CI's cargo build with --locked keeps working after a release; the hint names Cargo.toml and Cargo.lock.
+
 Changelog: 12-10-2026 08:23:31
 
 install.sh takes --uninstall --purge (also the settings in ~/.config/bc250-release; the checkout stays), also through tools/release.sh --uninstall --purge, and checks for root before it uninstalls too.

@@ -20,7 +20,7 @@ NONCE = bytes(range(100, 116))
 REGIST_KEY = b"1a2b3c4d"                # as consoles send it: 8 hex digits as text
 RP_KEY = bytes(range(0x40, 0x50))
 MAC = bytes.fromhex("0cfe45a1b2c3")
-SESSION_ID = b"\x4a" + b"Ab1" * 10
+SESSION_ID = b"\x4a" + b"Ab1" * 24 + b"Xy"   # the length byte, then 74 characters as a console sends
 
 
 def free_port() -> int:
