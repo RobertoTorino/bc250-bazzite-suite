@@ -1,3 +1,7 @@
+Changelog: 12-10-2026 06:55:45
+
+Release 0.9.13. Pins hdmi-cec-v0.1.5. app update: hdmi-cec
+
 Changelog: 12-10-2026 06:40:31
 
 The portal no longer asks for the suite checkout when a checkout-only app is installed: it finds it (find_checkout), from the launcher of an installed checkout tool in ~/.local/bin (Suite Releases records its checkout there), else the first checkout in the home folder up to three folders deep, hidden folders skipped. It looks at startup, so the tiles know where they come from. Only when there is none does it ask, first whether to choose a folder at all. Asking for a folder straight away, at the first install, was not liked on the owner's board (12-10-2026).
