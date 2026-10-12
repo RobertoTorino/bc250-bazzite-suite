@@ -17,6 +17,11 @@ A=$D/$APP/app
 CONSOLES=$XDG_CONFIG_HOME/$APP/consoles.json
 printf '#!/bin/sh\necho "sudo called: $*" >&2\nexit 1\n' > "$T/shims/sudo"
 
+# cargo's build output, there after a local build of the native core: it must not be installed or staged. Made
+# here when missing (CI), and removed again at the end.
+TARGET=$SUITE/apps/remote-play/native/target
+[ -e "$TARGET" ] && made_target=false || { mkdir -p "$TARGET/release"; touch "$TARGET/release/marker"; made_target=true; }
+
 echo "== 1. install from the suite checkout"
 bash "$SUITE/apps/remote-play/install.sh" > "$T/log1" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
@@ -24,6 +29,8 @@ check "no sudo used" "! grep -q 'sudo called' $T/log1"
 check "app copied" "[ -f $A/bc250_remote_play/main_window.py ] && [ -f $A/bc250_remote_play/keys.py ] && [ -f $A/images/$APP.png ]"
 check "core bundled from checkout" "[ -f $A/bc250_core/theme.py ]"
 check "no tests or caches copied" "[ ! -d $A/tests ] && ! find $A -name __pycache__ | grep -q ."
+check "native core source copied, no build output" "[ -f $A/native/src/takion.rs ] && [ ! -e $A/native/target ]"
+check "native core built when Rust is there, a note when not" "grep -q 'native core' $T/log1"
 check "own venv, not the suite's" "[ -x $D/$APP/venv/bin/python ] && [ ! -e $D/bc250-bazzite-suite/venv ]"
 check "launcher uses the app's venv" "grep -qF '$APP/venv/bin/python\" -m bc250_remote_play' $HOME/.local/bin/$APP"
 check "launcher cds into the app" "grep -qF 'cd \"$A\"' $HOME/.local/bin/$APP"
@@ -37,6 +44,7 @@ echo "# release marker" >> "$T/stage/bc250_core/__init__.py"
 bash "$T/stage/install.sh" --no-desktop-shortcut > "$T/log2" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "the release's own core used" "grep -q 'release marker' $A/bc250_core/__init__.py"
+check "staged release has no build output" "[ -f $T/stage/native/Cargo.toml ] && [ ! -e $T/stage/native/target ]"
 check "license and key tables shipped" "[ -f $A/LICENSE ] && grep -q 'AFFERO' $A/LICENSE && [ -f $A/bc250_remote_play/keys.py ]"
 check "desktop icon removed" "[ ! -e $HOME/Desktop/$APP.desktop ]"
 
@@ -63,5 +71,6 @@ check "exit 0" "[ $rc -eq 0 ]"
 check "settings and consoles removed" "[ ! -e $XDG_CONFIG_HOME/$APP ] && [ ! -e $D/$APP ]"
 check "says to remove the board on the console too" "grep -q 'Link Device' $T/log5"
 
+$made_target && rm -rf "$TARGET"
 [ $fail -eq 0 ] && echo "ALL OK" || for n in 1 2 3 4 5; do echo "--- log$n"; cat "$T/log$n"; done
 exit $fail

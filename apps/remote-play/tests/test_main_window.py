@@ -50,6 +50,10 @@ class FakeOps:
         self.calls.append(("test_session", console.address))
         return Outcome(True, "Session started and closed.", SessionInfo(console.target, "PS5", "abc"), ["Session ID."])
 
+    def test_stream(self, console):
+        self.calls.append(("test_stream", console.address))
+        return Outcome(True, "Stream ran.", SessionInfo(console.target, "PS5", "abc"), ["STREAMINFO received."])
+
     def rest_mode(self, console):
         self.calls.append(("rest_mode", console.address))
         return Outcome(False, "No session.", SessionInfo(console.target), [])
@@ -155,10 +159,12 @@ def test_wake_test_and_rest(qapp, config_dir):
         w.test_button.click()
         assert w.session_box.value.text() == "OK" and w.console_box.value.text() == "PS5"
         assert "  Session ID." in w.log.toPlainText()
+        w.stream_button.click()
+        assert "  STREAMINFO received." in w.log.toPlainText()
         w.rest_button.click()
         assert w.session_box.value.text() == "Failed"
         assert w.badge.text() == "Failed"
-        assert [call[0] for call in ops.calls] == ["wake", "test_session", "rest_mode"]
+        assert [call[0] for call in ops.calls] == ["wake", "test_session", "test_stream", "rest_mode"]
     finally:
         w.close()
 

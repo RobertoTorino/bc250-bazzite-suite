@@ -3,9 +3,12 @@
 //! 9296, and its crypto. Each module names the chiaki-ng file it comes from; the tests compare every function with
 //! vectors printed by chiaki-ng's own C code (tests/takion_vectors.json of the app).
 
+pub mod connection;
 pub mod ecdh;
 pub mod gkcrypt;
 pub mod keystate;
+pub mod reorder;
+pub mod sendbuffer;
 pub mod seqnum;
 pub mod takion;
 

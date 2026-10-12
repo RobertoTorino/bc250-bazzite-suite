@@ -95,7 +95,8 @@ impl GkCrypt {
 
     /// Encrypts or decrypts (the same XOR) data that sits at key_pos in the stream.
     pub fn crypt(&self, key_pos: u64, data: &mut [u8]) {
-        for (byte, key) in data.iter_mut().zip(self.key_stream(key_pos, data.len())) {
+        let stream = self.key_stream(key_pos, data.len());
+        for (byte, key) in data.iter_mut().zip(stream) {
             *byte ^= key;
         }
     }

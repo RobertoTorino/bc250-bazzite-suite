@@ -5,7 +5,7 @@ Python."""
 
 APP_NAME = "BC250 Remote Play"
 APP_ID = "bc250-remote-play"
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from pathlib import Path
 

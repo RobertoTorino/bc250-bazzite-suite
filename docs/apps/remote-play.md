@@ -8,7 +8,8 @@ Remote Play connects the **AMD BC-250** to a PS4 or PS5 on your network. The app
 from rest mode, registers the board with them, and starts a Remote Play session.
 
 The app does not change how the board runs. It talks to a console only when you press a button. This version
-starts a session and closes it again; it does not show the console's picture or take controller input.
+starts a session and its stream and closes them again: it counts the picture and sound that arrive, but does not
+show the picture, play the sound or take controller input.
 
 ## What you need
 
@@ -50,6 +51,10 @@ wrong account ID is reported in the log at the bottom.
 - **Wake:** turns the console on from rest mode. It takes about 20 seconds; **Search** then shows it as On.
 - **Test session:** starts a Remote Play session, keeps it for 3 seconds and closes it. When it works, the board's
   registration and the connection to the console are in order. The log shows each step.
+- **Test stream:** starts a session and its stream, keeps the stream for 5 seconds and closes both. The board asks
+  for 1080p at 60 frames per second from a PS5 and 720p from a PS4. When it works, the log shows the resolutions
+  the console offers, and the message how many frames and sound packets arrived. It needs the app's native core
+  (see [Install and remove](#install-and-remove)).
 - **Rest mode:** puts the console in rest mode, through a short session.
 - **Login passcode…:** when the PSN account on the console has a 4-digit login passcode, the console asks for it
   at the start of a session. Enter it here once.
@@ -76,6 +81,9 @@ the registered console.
   valid for a few minutes.
 - **Remote Play is already in use:** another device has a session with the console. Close it there.
 - **The console asks for the login passcode:** enter it with **Login passcode…**.
+- **Test stream: no answer on the stream port:** the stream uses UDP port 9296 of the console. Test session working
+  but Test stream not points to a firewall or router between the two that blocks it.
+- **Test stream: the native core is not installed:** install Rust and run `install.sh` again (see below).
 
 ## Install and remove
 
@@ -89,6 +97,10 @@ The portal installs it, under Development only. By hand, from the extracted rele
 ```
 
 The app has its own Python environment in `~/.local/share/bc250-remote-play/venv`, with PyQt6 and cryptography.
+
+The stream runs on the app's native core, written in Rust. `install.sh` builds it into the app's environment when
+Rust is installed, which takes a minute or two the first time. Install Rust with [rustup](https://rustup.rs) (it
+installs in your home folder), then run `install.sh` again. Without it, everything but **Test stream** works.
 
 ## License
 

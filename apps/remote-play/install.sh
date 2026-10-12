@@ -11,7 +11,8 @@
 #  * ~/.local/share/bc250-remote-play/app: the app, with the bc250_core it was tested with (bundled in the
 #    release; taken from the suite checkout when run from there).
 #  * ~/.local/share/bc250-remote-play/venv: the app's own venv with PyQt6 and cryptography (the wheels bundle Qt
-#    and OpenSSL; nothing is layered).
+#    and OpenSSL; nothing is layered), and the native core for the stream, built from native/ when Rust (cargo,
+#    from rustup) is installed.
 #  * ~/.config/bc250-remote-play: its settings and consoles.json, the keys of the registered consoles (mode 0600).
 #  * ~/.local/bin/bc250-remote-play to start it from a terminal, plus an app menu entry and a Desktop icon.
 set -euo pipefail
@@ -86,7 +87,8 @@ info "Installing $APP_NAME $VERSION"
 info "Copying the app to $APP_DIR"
 rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR"
-(cd "$SRC" && tar --exclude='./.git' --exclude='./.idea' --exclude='./tests' --exclude='__pycache__' -cf - .) |
+(cd "$SRC" && tar --exclude='./.git' --exclude='./.idea' --exclude='./tests' --exclude='__pycache__' \
+    --exclude='./native/target' --exclude='./native/dist' -cf - .) |
     tar -xf - -C "$APP_DIR"
 if [ "$CORE_SRC" != "$SRC/bc250_core" ]; then         # from the checkout: bundle core like a release
     mkdir -p "$APP_DIR/bc250_core"
@@ -103,6 +105,24 @@ info "Installing PyQt6 and cryptography into the venv (downloads ~110 MB the fir
 "$VENV/bin/python" -m pip install -q --disable-pip-version-check --upgrade pip
 "$VENV/bin/python" -m pip install -q --disable-pip-version-check -r "$APP_DIR/requirements.txt"
 "$VENV/bin/python" -c 'import PyQt6.QtWidgets, cryptography' || die "PyQt6 or cryptography does not load from the venv."
+
+# The native core (Rust): the stream needs it, everything else works without. Built in a temporary folder, so the
+# app folder gets no build output; pip fetches maturin for the build.
+CARGO=$(command -v cargo || echo "$HOME/.cargo/bin/cargo")
+if [ -x "$CARGO" ]; then
+    info "Building the native core for the stream with Rust (takes a minute or two the first time)"
+    BUILD_DIR=$(mktemp -d)
+    if PATH="$(dirname "$CARGO"):$PATH" CARGO_TARGET_DIR="$BUILD_DIR" \
+        "$VENV/bin/python" -m pip install -q --disable-pip-version-check "$APP_DIR/native"; then
+        info "Native core installed"
+    else
+        info "Note: the native core did not build; the app works, but Test stream will say it is missing."
+    fi
+    rm -rf "$BUILD_DIR"
+else
+    info "Note: Rust is not installed, so the native core for the stream is not built. The app works, but Test"
+    info "stream will say it is missing. Install Rust (rustup) and run install.sh again to add it."
+fi
 
 # --- 3. Launcher, menu entry, Desktop icon ------------------------------------------------------
 info "Creating the launcher $LAUNCHER"

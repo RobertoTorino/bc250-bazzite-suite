@@ -64,6 +64,37 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: python -X faulthandler -m pytest -v tests        # -v: a crash log names the test
 
+  # BC250 Remote Play's native core (Rust, apps/remote-play/native): its own tests, clippy, and the Python module
+  # built into a wheel and tested from Python. Rust is preinstalled on ubuntu-latest. The pytest job above skips
+  # tests/test_native.py, which needs the built module.
+  native:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/remote-play/native
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: cargo test
+        run: cargo test --locked
+
+      - name: clippy
+        run: cargo clippy --locked --all-targets --features python -- -D warnings
+
+      - name: Build the Python module
+        run: |
+          python -m pip install -q "maturin>=1.5,<2"
+          maturin build --release --locked -o dist
+
+      - name: Test the module from Python
+        run: |
+          python -m pip install -q -r ../requirements-dev.txt dist/*.whl        # conftest.py uses PyQt6
+          python -m pytest -v ../tests/test_native.py ../tests/test_stream.py
+
   shell:
     runs-on: ubuntu-latest
     steps:

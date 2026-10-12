@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """The main window: the consoles on the network (search, also at one address), registering the board with one of
-them, and the registered consoles with Wake, Test session and Rest mode. Every network step runs off the GUI
-thread (jobs.py through core's UpdateChecker) and reports back in the log at the bottom."""
+them, and the registered consoles with Wake, Test session, Test stream and Rest mode. Every network step runs off
+the GUI thread (jobs.py through core's UpdateChecker) and reports back in the log at the bottom."""
 
 from __future__ import annotations
 
@@ -138,6 +138,10 @@ class MainWindow(QMainWindow):
         self.wake_button.clicked.connect(self.wake)
         self.test_button = accent_button("Test session", "Start a session, keep it a few seconds and close it")
         self.test_button.clicked.connect(self.test_session)
+        self.stream_button = QPushButton("Test stream")
+        self.stream_button.setToolTip("Start a session and its stream for a few seconds and count the video and audio "
+                                      "that arrive (nothing is shown yet)")
+        self.stream_button.clicked.connect(self.test_stream)
         self.rest_button = QPushButton("Rest mode")
         self.rest_button.setToolTip("Put the console in rest mode")
         self.rest_button.clicked.connect(self.rest_mode)
@@ -148,7 +152,7 @@ class MainWindow(QMainWindow):
         self.remove_button.setToolTip("Forget this console's keys on the board")
         self.remove_button.clicked.connect(self.remove)
         buttons = QHBoxLayout()
-        for button in (self.wake_button, self.test_button, self.rest_button):
+        for button in (self.wake_button, self.test_button, self.stream_button, self.rest_button):
             buttons.addWidget(button)
         buttons.addStretch(1)
         buttons.addWidget(self.passcode_button)
@@ -263,7 +267,7 @@ class MainWindow(QMainWindow):
         for button in (self.search_button, self.address_button):
             button.setEnabled(idle)
         self.register_button.setEnabled(idle and found)
-        for button in (self.wake_button, self.test_button, self.rest_button):
+        for button in (self.wake_button, self.test_button, self.stream_button, self.rest_button):
             button.setEnabled(idle and registered)
         for button in (self.passcode_button, self.remove_button):
             button.setEnabled(idle and registered)
@@ -326,6 +330,12 @@ class MainWindow(QMainWindow):
         if console is not None:
             self.start(f"Starting a session with {console.nickname or console.address}…",
                        lambda: self.ops.test_session(console), self._session_done)
+
+    def test_stream(self) -> None:
+        console = self.selected_registered()
+        if console is not None:
+            self.start(f"Starting a stream with {console.nickname or console.address}…",
+                       lambda: self.ops.test_stream(console), self._session_done)
 
     def rest_mode(self) -> None:
         console = self.selected_registered()

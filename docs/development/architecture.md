@@ -33,6 +33,7 @@ apps/<name>/
 │   ├── main_window.py         the window
 │   └── ...                    the app's own modules, and data it reads (a catalogue, tables)
 ├── images/                    <app-id>.png (512 px) and, for the portal, a 128 px version
+├── native/                    only an app with a native core (remote-play): a Rust crate, see below
 ├── tests/                     conftest.py and test_*.py
 ├── install.sh                 install, update and uninstall for your own user
 ├── requirements.txt           runtime Python packages (PyQt6, ...)
@@ -51,6 +52,11 @@ apps/<name>/
 - An app with a shell script as its engine keeps that script in the app folder too
   (`apps/cores-bisect/bc250-cores-bisect.sh`).
 - **No placeholder folders** for future work. Plans and status go in MIGRATION.md, not in the app or the manual.
+- **A native core** (only BC250 Remote Play so far) is a Rust crate in `native/`, with PyO3 for Python. Its protocol
+  code builds and tests without Python (`cargo test`); maturin builds the Python module from `native/pyproject.toml`
+  as a wheel for Python 3.10 and newer. Its version equals the app's VERSION (`tools/check_versions.py` reads
+  `Cargo.toml` and `pyproject.toml`). Cargo's build output, `native/target/`, is never installed or staged. CI's
+  `native` job runs the Rust tests, clippy and the module's Python tests.
 
 Checked by `tools/tests/test_layout.py` (packages and `images/` at the app root, no wrapper folder) and by CI's
 layout job (`VERSION`, `CHANGELOG`, `LICENSE` and `.gitignore` in every folder, LF line endings, executable `.sh`

@@ -1,3 +1,11 @@
+Changelog: 12-10-2026 22:47:04
+
+CI: the native job also runs BC250 Remote Play's stream tests (tests/test_stream.py) with the module it built, as they need it. The Remote Play installer test checks the installer's line about the native core.
+
+Changelog: 12-10-2026 22:12:19
+
+CI has a native job for BC250 Remote Play's Rust core: cargo test, clippy with warnings as errors, the Python wheel built with maturin and its tests. tools/stage_app.py leaves cargo's build output (target/) out of a release, checked by the new tools/tests/test_stage_app.py. The manual's Architecture chapter describes a native core in an app's native/ folder.
+
 Changelog: 12-10-2026 21:51:19
 
 New app in the suite: BC250 Remote Play (apps/remote-play, key remote-play, version 0.1.0), iteration 1: find, wake and register PS4 and PS5 consoles and start a Remote Play session, with the protocol ported from chiaki-ng. It is AGPL-3.0, the first app of the suite under that license (README, the manual's start page and CLAUDE.md say so). It has its own installer test (tools/installer-tests/remote-play.sh, a CI step), its entry in the CI pytest matrix and the shellcheck step, a manual chapter (docs/apps/remote-play.md) and its requirements in the root requirements-dev.txt. Not yet released: the version, the tag and the portal/VERSION bump are the owner's.

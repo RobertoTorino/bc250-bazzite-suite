@@ -27,6 +27,7 @@ from .target import REASON_RP_VERSION, REASON_UNKNOWN, Target, parse_rp_version,
 PORT = 9295
 TIMEOUT = 5.0
 SESSION_ID_TIMEOUT = 10.0
+STOP_CHECK = 0.25                       # how often keep_alive looks at its stop condition
 MAX_MESSAGE = 0x10000                   # chiaki-ng's receive buffer is smaller; anything larger is not a ctrl message
 OS_TYPE = "Win10.0.0"
 DID_PREFIX = bytes([0x00, 0x18, 0x00, 0x00, 0x00, 0x07, 0x00, 0x40, 0x00, 0x80])
@@ -297,11 +298,11 @@ class Session:
         self.note("Session ID received: the session is running.")
         return self.info.session_id
 
-    def keep_alive(self, seconds: float) -> None:
-        """Answer the console's heartbeats for *seconds*, as a running session does."""
+    def keep_alive(self, seconds: float, stop: Callable[[], bool] = lambda: False) -> None:
+        """Answer the console's heartbeats for *seconds*, as a running session does, or until *stop* says so."""
         deadline = time.monotonic() + seconds
-        while (remaining := deadline - time.monotonic()) > 0:
-            message = self.receive(remaining)
+        while (remaining := deadline - time.monotonic()) > 0 and not stop():
+            message = self.receive(min(remaining, STOP_CHECK))
             if message is not None:
                 self.handle(*message)
 
