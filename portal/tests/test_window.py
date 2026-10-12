@@ -346,29 +346,42 @@ def test_portal_offer_names_the_app_updates(qapp, home, settings_dir, tmp_path, 
 SUITE = Path(__file__).resolve().parents[2]                                  # this checkout
 
 
-def test_a_release_portal_asks_once_for_the_checkout(qapp, home, settings_dir, tmp_path, launched, monkeypatch):
-    """A portal installed from a release installs the checkout-only apps too: it asks for the checkout once."""
+def test_a_release_portal_finds_the_checkout_without_asking(qapp, home, settings_dir, tmp_path, launched,
+                                                            monkeypatch):
+    """A portal installed from a release installs the checkout-only apps too, from the checkout on this machine."""
     from bc250_portal import remembered_checkout
+    monkeypatch.setattr(mw.QFileDialog, "getExistingDirectory", lambda *a: pytest.fail("asked for a folder"))
+    monkeypatch.setattr(QMessageBox, "question", lambda *a: pytest.fail("asked a question"))
+    (home / ".local/bin/bc250-release").write_text(f'#!/bin/sh\nexec "{SUITE}/apps/suite-releases/run.sh"\n')
     entries = load(MANIFEST) + load_checkout(MANIFEST)
     sources = FakeSources(tmp_path / "work")                                # a release: no checkout of its own
     w = mw.MainWindow(entries, sources, Records(tmp_path / "installed.json"))
-    for key in ("suite-releases", "installer-tests"):
-        card = w.cards[key]
-        assert w.dev_grid.indexOf(card) >= 0 and card.status == "Not installed"
-        assert card.install_button.isEnabled() and "asks once for that folder" in card.icon.toolTip()
-    asked = []
-    monkeypatch.setattr(mw.QFileDialog, "getExistingDirectory", lambda *a: asked.append(a) or "")
-    w.install(w.cards["installer-tests"].entry)                             # cancelled: nothing happens
-    assert asked and sources.prepared == [] and remembered_checkout() is None
-    monkeypatch.setattr(mw.QFileDialog, "getExistingDirectory", lambda *a: asked.append(a) or str(SUITE))
     w.install(w.cards["installer-tests"].entry)
     assert wait_for(lambda: launched)
     assert sources.apps_checkout == SUITE and remembered_checkout() == SUITE
     assert launched[0][0].startswith(f"cd {SUITE / 'tools/installer-tests/gui'} && ")
     assert sources.prepared == ["installer-tests"] and w.pending.tag == "local"
-    assert "asks once" not in w.cards["suite-releases"].icon.toolTip()       # known now: no second question
     assert sources.folder(w.cards["governor"].entry).name == w.cards["governor"].entry.tag   # releases as before
-    assert len(asked) == 2
+    w.cancel_pending()
+    w.close()
+
+
+def test_without_a_checkout_it_asks_first(qapp, home, settings_dir, tmp_path, launched, monkeypatch):
+    from bc250_portal import remembered_checkout
+    entries = load(MANIFEST) + load_checkout(MANIFEST)
+    sources = FakeSources(tmp_path / "work")
+    w = mw.MainWindow(entries, sources, Records(tmp_path / "installed.json"))
+    card = w.cards["installer-tests"]
+    assert card.status == "Not installed" and card.install_button.isEnabled() and "found no checkout" in card.icon.toolTip()
+    asked = []
+    monkeypatch.setattr(QMessageBox, "question", lambda *a: asked.append(a[2]) or QMessageBox.StandardButton.No)
+    monkeypatch.setattr(mw.QFileDialog, "getExistingDirectory", lambda *a: pytest.fail("no folder without a yes"))
+    w.install(card.entry)
+    assert "found none" in asked[0] and sources.prepared == [] and remembered_checkout() is None
+    monkeypatch.setattr(QMessageBox, "question", lambda *a: QMessageBox.StandardButton.Yes)
+    monkeypatch.setattr(mw.QFileDialog, "getExistingDirectory", lambda *a: str(SUITE))
+    w.install(card.entry)
+    assert wait_for(lambda: launched) and remembered_checkout() == SUITE
     w.cancel_pending()
     w.close()
 
@@ -377,6 +390,7 @@ def test_a_folder_that_is_not_the_suite_is_refused(qapp, home, settings_dir, tmp
     from bc250_portal import remembered_checkout
     warned = []
     monkeypatch.setattr(QMessageBox, "warning", lambda _p, _t, text, *a: warned.append(text))
+    monkeypatch.setattr(QMessageBox, "question", lambda *a: QMessageBox.StandardButton.Yes)
     monkeypatch.setattr(mw.QFileDialog, "getExistingDirectory", lambda *a: str(tmp_path))
     entries = load(MANIFEST) + load_checkout(MANIFEST)
     sources = FakeSources(tmp_path / "work")

@@ -205,3 +205,25 @@ def test_remembered_checkout(tmp_path, monkeypatch):
     assert bc250_portal.remembered_checkout() == SUITE
     bc250_portal.remember_checkout(tmp_path)                                # no longer a checkout: forgotten
     assert bc250_portal.remembered_checkout() is None
+
+
+def fake_suite(folder: Path) -> Path:
+    for sub in ("apps", "core", "tools"):
+        (folder / sub).mkdir(parents=True)
+    (folder / "tools/stage_app.py").touch()
+    return folder
+
+
+def test_find_checkout(tmp_path):
+    from bc250_portal import find_checkout
+    home = tmp_path / "home"
+    (home / ".local/bin").mkdir(parents=True)
+    assert find_checkout(home) is None
+    fake_suite(home / ".cache/old/bc250-bazzite-suite")                      # hidden folders are not searched
+    fake_suite(home / "a/b/c/bc250-bazzite-suite")                          # too deep
+    assert find_checkout(home) is None
+    found = fake_suite(home / "IdeaProjects/bc250-bazzite-suite")
+    assert find_checkout(home) == found
+    elsewhere = fake_suite(tmp_path / "mnt/work/suite")                     # outside home: a launcher points there
+    (home / ".local/bin/bc250-release").write_text(f'#!/bin/sh\nexec "{elsewhere}/apps/suite-releases/run.sh"\n')
+    assert find_checkout(home) == elsewhere

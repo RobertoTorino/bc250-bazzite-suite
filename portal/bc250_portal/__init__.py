@@ -5,6 +5,7 @@ APP_NAME = "BC250 Bazzite Suite"
 APP_ID = "bc250-bazzite-suite"
 __version__ = "0.9.12"
 
+import re
 from pathlib import Path
 
 from bc250_core import AppInfo
@@ -38,6 +39,38 @@ def remembered_checkout() -> Path | None:
     except OSError:
         return None
     return Path(recorded) if recorded and is_suite(Path(recorded)) else None
+
+
+SEARCH_DEPTH = 3                        # ~/IdeaProjects/bc250-bazzite-suite is depth 2
+
+
+def find_checkout(home: Path | None = None) -> Path | None:
+    """A suite checkout on this machine, without asking: the one a checkout-only app's launcher in ~/.local/bin
+    runs from, else the first one in the home folder, up to SEARCH_DEPTH folders deep (hidden folders skipped)."""
+    home = home or Path.home()
+    for launcher in sorted((home / ".local" / "bin").glob("bc250-*")):
+        try:
+            text = launcher.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for quoted in re.findall(r'"(/[^"$]+)"', text):
+            for folder in Path(quoted).parents:
+                if is_suite(folder):
+                    return folder
+    level = [home]
+    for _depth in range(SEARCH_DEPTH):
+        below = []
+        for folder in level:
+            try:
+                children = sorted(c for c in folder.iterdir() if c.is_dir() and not c.name.startswith("."))
+            except OSError:
+                continue
+            for child in children:
+                if is_suite(child):
+                    return child
+            below += children
+        level = below
+    return None
 
 
 def remember_checkout(folder: Path) -> None:

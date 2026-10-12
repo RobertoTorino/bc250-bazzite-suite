@@ -1,3 +1,15 @@
+Changelog: 12-10-2026 06:51:13
+
+Release 0.1.5. UI improvements
+
+Changelog: 12-10-2026 06:49:44
+
+The four boxes at the top each have their own colour, left to right: dark blue (CEC adapter), orange (physical address), off-white with dark text and a thin border (display), purple (TV power). Display and TV power were both grey.
+
+Changelog: 12-10-2026 06:41:42
+
+The window had a horizontal scrollbar with KDE's font (Noto Sans 10): the line at the bottom needed 899 of the 880 pixels. It is three lines now, and a test checks that the window fits at 11 points. Every button of the window is green while it can be used and greyed out while it cannot; Turn TV on has no purple outline of its own any more. The At boot note showed &quot; and &#x27; for quotes: it was escaped as HTML but shown as plain text.
+
 Changelog: 12-10-2026 06:14:55
 
 Release 0.1.4. added a service so the TV turns on at boot

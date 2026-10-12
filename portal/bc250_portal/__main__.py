@@ -14,7 +14,7 @@ from bc250_core import __version__ as CORE_VERSION, instance
 from bc250_core.app import create_app, exec_app
 from bc250_core.updates import repo_slug
 
-from . import APP_NAME, INFO, MANIFEST, __version__, remembered_checkout, state_dir, suite_checkout
+from . import APP_NAME, INFO, MANIFEST, __version__, find_checkout, remembered_checkout, state_dir, suite_checkout
 from . import portal_update
 from .main_window import MainWindow
 from .manifest import ManifestError, load, load_checkout
@@ -50,11 +50,12 @@ def main() -> int:
     if args.source == "checkout" and checkout is None:
         QMessageBox.critical(None, APP_NAME, "--source checkout: the portal is not running from a suite checkout.")
         return 1
-    # The checkout-only apps run from a checkout: a portal without one of its own asks for it on their first
-    # install, and remembers it; the released apps still install from their pinned releases.
+    # The checkout-only apps run from a checkout: a portal without one of its own finds one on this machine (asking
+    # only when there is none); the released apps still install from their pinned releases.
     shown = entries + checkout_only
+    apps_checkout = None if checkout else local_build or remembered_checkout() or find_checkout()
     sources = Sources(state_dir() / "releases", checkout=checkout, download=http_download(INFO.user_agent),
-                      apps_checkout=None if checkout else local_build or remembered_checkout())
+                      apps_checkout=apps_checkout)
     # One instance: a second launch brings the running window to the front and exits.
     if instance.already_running(INFO.app_id):
         return 0

@@ -509,3 +509,37 @@ def test_display_settings_to_the_login_screen(make, etc_root, tmp_path, answer):
     w.greeter_button.click()
     assert w.run_root.greeter == [str(tmp_path / "config/kwinoutputconfig.json")]
     assert "login screen" in w.result.text()
+
+
+def test_no_horizontal_scrollbar(make, qapp):
+    """The window's lines fit its width, also with a larger font than KDE's default (Noto Sans 10)."""
+    from PyQt6.QtGui import QFont
+    font = qapp.font()
+    qapp.setFont(QFont(font.family(), 11))
+    try:
+        w = make(FakeBoard())
+        scroll = w.centralWidget()
+        assert scroll.widget().minimumSizeHint().width() <= w.width() - scroll.verticalScrollBar().sizeHint().width()
+    finally:
+        qapp.setFont(font)
+
+
+def test_buttons_are_green_while_they_can_be_used(make):
+    w = make(FakeBoard())
+    style = w.centralWidget().widget().styleSheet()
+    assert f"background:{main_window.GREEN}" in style and "QPushButton:disabled" in style
+    assert w.on_button.styleSheet() == ""                       # no outline of its own: like every other button
+
+
+def test_the_boot_note_shows_quotes_as_quotes(make):
+    w = make(FakeBoard())
+    assert '"Playback"' in w.boot_note.text() and "&quot;" not in w.boot_note.text()
+
+
+def test_the_four_boxes_have_four_colours(make):
+    """Left to right: dark blue, orange, off-white with dark text, purple."""
+    w = make(FakeBoard())
+    boxes = (w.adapter_box, w.address_box, w.display_box, w.power_box)
+    colours = [box.styleSheet().split("background:")[1].split(";")[0] for box in boxes]
+    assert colours == [main_window.DARK_BLUE, main_window.ORANGE, main_window.OFF_WHITE, main_window.PURPLE]
+    assert f"color:{main_window.OFF_WHITE_TEXT}" in w.display_box.styleSheet()

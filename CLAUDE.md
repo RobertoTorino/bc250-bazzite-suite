@@ -19,8 +19,8 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
   Tool and the Dependency Checker are `development = true` in `portal/apps.toml`: the portal lists them
   under "Development only". Suite Releases (the release front end) has `.standalone` and `.checkout-only`: it runs
   from the checkout, is never released, and is listed as `[checkout.suite-releases]`, also under "Development only":
-  a portal from a release asks once for the checkout folder and remembers it, the released apps still come from
-  their releases. Install every app through the portal, so what is installed stays in step. BC-250 Installer Tests (`tools/installer-tests/gui`) is
+  a portal from a release finds the checkout on the machine (it asks only when there is none) and remembers it, the
+  released apps still come from their releases. Install every app through the portal, so what is installed stays in step. BC-250 Installer Tests (`tools/installer-tests/gui`) is
   checkout-only the same way: `.checkout-only` and `[checkout.installer-tests]` with `folder`.
 - `core/bc250_core/`: shared Python code. It is **bundled per app** at release time (`tools/stage_app.py`), so each
   app runs on the core it was tested with; the shared venv `~/.local/share/bc250-bazzite-suite/venv` holds only

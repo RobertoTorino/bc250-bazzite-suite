@@ -27,8 +27,8 @@ from bc250_core import SUITE_MANUAL_URL, window_title
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import config_home, launch_in_terminal
 from bc250_core.settings import SettingsStore
-from bc250_core.theme import BLUE, GREY, PURPLE
-from bc250_core.widgets import (ClickableLogo, MetricBox, StatusText, TextDialog, accent_button, hint_label,
+from bc250_core.theme import GREEN, ORANGE, PURPLE
+from bc250_core.widgets import (ClickableLogo, MetricBox, StatusText, TextDialog, hint_label,
                                  page_header)
 
 from . import APP_NAME, INFO, LOGO_PATH, ROOT, __version__
@@ -46,6 +46,15 @@ AUTOMATIC = (
     ("uinput", "Use the TV remote as a keyboard (arrows, OK, back, play/pause)"),
     ("allow_standby", "Put the board to sleep when the TV goes to standby"),
 )
+# The four boxes at the top, left to right, each its own colour: dark blue, orange, off-white (dark text), purple.
+DARK_BLUE = "#0d47a1"
+OFF_WHITE, OFF_WHITE_TEXT = "#f5f5f0", "#212121"
+# Every button of the window: green while it can be used, greyed out while it cannot (no adapter, cecd's mode, …).
+BUTTONS = (f"QPushButton {{ background:{GREEN}; color:white; border:1px solid {GREEN}; border-radius:6px; "
+           "padding:4px 12px; }"
+           "QPushButton:hover { background:#388e3c; border-color:#388e3c; }"
+           "QPushButton:pressed { background:#1b5e20; border-color:#1b5e20; }"
+           "QPushButton:disabled { background:palette(button); color:palette(mid); border-color:palette(mid); }")
 # What to do for the picture after the TV was off (display.py): key, label, explanation.
 PICTURE = (
     ("nothing", "Leave it as it is",
@@ -153,17 +162,20 @@ class MainWindow(QMainWindow):
         self.badge = StatusText()
         header.insertWidget(2, self.badge)
 
-        self.adapter_box = MetricBox("CEC adapter", PURPLE)
-        self.address_box = MetricBox("Physical address", BLUE)
-        self.display_box = MetricBox("Display", GREY)
-        self.power_box = MetricBox("TV power", GREY)
+        self.adapter_box = MetricBox("CEC adapter", DARK_BLUE)
+        self.address_box = MetricBox("Physical address", ORANGE)
+        self.display_box = MetricBox("Display", OFF_WHITE)
+        self.display_box.setStyleSheet(f"QFrame {{ background:{OFF_WHITE}; border:1px solid palette(mid); border-radius:8px; }} "
+                                       f"QLabel {{ color:{OFF_WHITE_TEXT}; }}")
+        self.power_box = MetricBox("TV power", PURPLE)
         boxes = QHBoxLayout()
         for box in (self.adapter_box, self.address_box, self.display_box, self.power_box):
             boxes.addWidget(box)
         self.adapter_note = hint_label("")
 
         tv = QGroupBox("TV")
-        self.on_button = accent_button("Turn TV on", "Wake the TV and switch it to the BC-250")
+        self.on_button = QPushButton("Turn TV on")
+        self.on_button.setToolTip("Wake the TV and switch it to the BC-250")
         self.on_button.clicked.connect(self.tv_on)
         self.source_button = QPushButton("Switch to BC-250")
         self.source_button.setToolTip("Make the TV show the BC-250's input")
@@ -246,6 +258,7 @@ class MainWindow(QMainWindow):
         boot_row.addWidget(self.boot_update_button)
         boot_row.addWidget(self.greeter_button)
         self.boot_note = hint_label("")
+        self.boot_note.setTextFormat(Qt.TextFormat.PlainText)     # the name on the TV is shown as typed
         lay_boot = QVBoxLayout(at_boot)
         lay_boot.addLayout(boot_row)
         lay_boot.addWidget(self.wake_box)
@@ -293,6 +306,7 @@ class MainWindow(QMainWindow):
         self.listening = listen and self.listener.start()
 
         central = QWidget()
+        central.setStyleSheet(BUTTONS)              # the dialogs keep their own buttons
         lay = QVBoxLayout(central)
         lay.addLayout(header)
         lay.addLayout(boxes)
@@ -303,8 +317,9 @@ class MainWindow(QMainWindow):
         lay.addWidget(automatic)
         lay.addWidget(keys)
         lay.addStretch(1)
-        version = QLabel(f"{APP_NAME} {__version__} · core {CORE_VERSION} · sends CEC messages when you press a "
-                         "button or at boot, and asks the TV's power while Restart the picture is on")
+        version = QLabel(f"{APP_NAME} {__version__} · core {CORE_VERSION}\nSends CEC messages when you press a button "
+                         "or at boot,\nand asks the TV's power while Restart the picture is on.")
+        version.setAlignment(Qt.AlignmentFlag.AlignRight)
         version.setStyleSheet("color:palette(placeholder-text);")
         lay.addWidget(version, 0, Qt.AlignmentFlag.AlignRight)
         scroll = QScrollArea()              # a smaller window scrolls instead of cutting off the wrapped texts
@@ -627,7 +642,7 @@ class MainWindow(QMainWindow):
             if stale:
                 text += (" It was installed by another version of the app or with another name: Update installs "
                          "this one.")
-        self.boot_note.setText(f"{escape(text)} The login screen has its own display settings: with 8 bits per "
+        self.boot_note.setText(f"{text} The login screen has its own display settings: with 8 bits per "
                                "colour chosen above, copy them to it, so the picture also comes back there.")
 
     def kwin_outputs(self) -> Path:

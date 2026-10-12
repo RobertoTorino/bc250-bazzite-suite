@@ -39,7 +39,7 @@ from bc250_core.updates import ReleaseInfo, UpdateChecker, version_tuple
 from bc250_core.widgets import ClickableLogo, hint_label
 
 from . import desktop_icons, glyphs
-from . import APP_ICONS, APP_NAME, INFO, LOGO_PATH, __version__, is_suite, remember_checkout
+from . import APP_ICONS, APP_NAME, INFO, LOGO_PATH, __version__, find_checkout, is_suite, remember_checkout
 from .manifest import AppEntry
 from .portal_update import PortalUpdate
 from .sources import Records, SourceError, Sources, is_installed
@@ -254,8 +254,8 @@ class AppTile(QFrame):
                       "Installed from the suite checkout." if installed_tag == "local" else
                       "Installed (not by this portal, so its version is unknown).")
         if not available and not busy:
-            detail += (" It runs from a suite checkout and has no release: the portal asks once for that folder "
-                       "(the repository) when you install it.")
+            detail += (" It runs from a suite checkout and has no release, and the portal found no checkout in "
+                       "your home folder: it asks for one when you install it.")
         self.busy_label.setText(busy)
         self.busy_label.setVisible(bool(busy))
         self.icon.setIcon(self._icons[0 if installed else 1])
@@ -547,15 +547,21 @@ class MainWindow(QMainWindow):
             self._start(entry, "uninstall")
 
     def _know_checkout(self, entry: AppEntry) -> bool:
-        """A checkout-only app needs the suite checkout it runs from: a portal installed from a release asks for it
-        once, and remembers it."""
+        """A checkout-only app needs the suite checkout it runs from. A portal installed from a release looks for one
+        on this machine, and asks only when it finds none; it remembers the folder."""
         if self.sources.checkout_for_apps is not None:
             return True
-        chosen = QFileDialog.getExistingDirectory(
-            self, f"{APP_NAME}: your suite checkout for {entry.name}", str(Path.home()))
-        if not chosen:
-            return False
-        folder = Path(chosen)
+        folder = find_checkout()
+        if folder is None:
+            answer = QMessageBox.question(
+                self, APP_NAME, f"{entry.name} runs from a checkout of the suite's repository, and the portal found "
+                "none in your home folder.\n\nChoose the folder of your checkout?")
+            if answer != QMessageBox.StandardButton.Yes:
+                return False
+            chosen = QFileDialog.getExistingDirectory(self, f"{APP_NAME}: the suite checkout", str(Path.home()))
+            if not chosen:
+                return False
+            folder = Path(chosen)
         if not is_suite(folder):
             QMessageBox.warning(self, APP_NAME, f"{folder} is not a BC250 Bazzite Suite checkout: it needs apps/, "
                                 "core/ and tools/stage_app.py. Choose the folder of the repository itself.")

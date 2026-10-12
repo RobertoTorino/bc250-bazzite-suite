@@ -21,8 +21,9 @@ tile, left to right in the order of `apps.toml` and as many to a row as the wind
 the release front end [BC250 Suite Releases](#the-release-front-end) and BC-250 Installer Tests
 (`tools/installer-tests/gui`), a window that runs the installer tests one at a time. You do not need them to use
 the board. The last two run from a checkout of the repository and have no release. A portal installed from a
-release installs them too: the first time you install or remove one, it asks for the folder of your checkout (the
-repository itself) and remembers it. The other apps still install from their releases. A portal installed from the
+release installs them too, from the checkout it finds on this machine: the one an installed tool of the checkout
+runs from, or the first in your home folder, up to three folders deep (`~/IdeaProjects/bc250-bazzite-suite`, for
+example). Only when it finds none does it ask for the folder. It remembers the checkout. The other apps still install from their releases. A portal installed from the
 checkout uses its own checkout. The section is closed until you open it, and the portal remembers whether it was
 open.
 
