@@ -1,3 +1,7 @@
+Changelog: 13-10-2026 22:59:01
+
+Release 0.1.11.
+
 Changelog: 13-10-2026 22:02:36
 
 The catalogue knows BC-250 Mesh Shaders: its launcher, PyQt6 in its environment, and the tools it uses (pkexec, curl, podman).
