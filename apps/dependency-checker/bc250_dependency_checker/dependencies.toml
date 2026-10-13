@@ -80,6 +80,10 @@ launchers = ["~/.local/bin/bc250-bazzite-sftp-tools"]
 name = "BC250 Console Link"
 launchers = ["~/.local/bin/bc250-console-link"]
 
+[app.shadps4]
+name = "BC-250 shadPS4 Manager"
+launchers = ["~/.local/bin/bc250-shadps4-manager"]
+
 [app.demo-tool]
 name = "Simple Demo Tool"
 launchers = ["~/.local/bin/simple-demo-tool"]
@@ -743,6 +747,25 @@ need = "optional"
 usage = "Add to Game Mode (a Steam shortcut per console) and the PS button setting close Steam with steam -shutdown and start it again with bazzite-steam."
 anchor = "using-it"
 
+[[tool.source]]
+owner = "shadps4"
+need = "optional"
+usage = "Update Game Mode (a Steam shortcut per game) closes Steam with steam -shutdown and starts it again with bazzite-steam."
+anchor = "game-mode"
+
+[[tool]]
+name = "FUSE 2"
+description = "The FUSE 2 library (libfuse.so.2), with which an AppImage mounts itself. Checked by its library file."
+executables = []
+locations = ["/usr/lib64/libfuse.so.2", "/usr/lib/x86_64-linux-gnu/libfuse.so.2", "/usr/lib/libfuse.so.2"]
+probe = "path"
+
+[[tool.source]]
+owner = "shadps4"
+need = "optional"
+usage = "shadPS4 is an AppImage; without the library it unpacks itself to a temporary folder on every start, which is slower."
+anchor = "what-you-need"
+
 [[tool]]
 name = "Rust"
 description = "The Rust compiler and its build tool cargo (rustup puts them in ~/.cargo/bin). Checked by cargo."
@@ -809,6 +832,10 @@ specifier = ">=6.11,<7"
 
 [[dependency.source]]
 owner = "mesh-shaders"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
+owner = "shadps4"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]

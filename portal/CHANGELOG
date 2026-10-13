@@ -1,3 +1,7 @@
+Changelog: 14-10-2026 00:45:29
+
+Release 1.0.5. Pins bazzite-test-v0.1.8, system-overlay-v0.1.7, bios-reader-v0.1.7, ace-queues-v0.1.8, mesh-shaders-v0.1.2, memory-manager-v0.1.8, hdmi-cec-v0.1.8, sftp-tools-v0.1.2, shadps4-v0.1.0, dependency-checker-v0.1.12, console-link-v1.0.4.
+
 Changelog: 13-10-2026 23:39:45
 
 Release 1.0.4. Pins mesh-shaders-v0.1.1, console-link-v1.0.3.

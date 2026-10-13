@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Starts the shadPS4 that BC-250 shadPS4 Manager installed, with the arguments given:
+#
+#   bc250-shadps4-run -f true -g /path/to/game/eboot.bin   a game, full screen (the Game Mode shortcuts)
+#   bc250-shadps4-run -g /path/to/game/eboot.bin           a game, as shadPS4's settings say
+#   bc250-shadps4-run -b                                   shadPS4's own window (Big Picture), for its settings
+#
+# The Steam shortcuts run this, not the AppImage, so they keep working when the app brings another shadPS4.
+set -euo pipefail
+
+APPIMAGE="${XDG_DATA_HOME:-$HOME/.local/share}/bc250-shadps4-manager/emulator/current/Shadps4-sdl.AppImage"
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    sed -n '3,9p' "$0" | sed 's/^# \{0,1\}//'
+    exit 0
+fi
+[ -x "$APPIMAGE" ] || {
+    echo "shadPS4 is not installed: open BC-250 shadPS4 Manager and press Install." >&2
+    exit 1
+}
+# shadPS4 takes a folder named "user" in the current folder as its own folder (portable mode), so start it where
+# there is none: beside the AppImage.
+cd "$(dirname "$APPIMAGE")"
+# An AppImage mounts itself with FUSE 2 (libfuse.so.2, part of Bazzite); without it, it unpacks itself to a
+# temporary folder on every start instead.
+if command -v ldconfig >/dev/null 2>&1 && ! ldconfig -p 2>/dev/null | grep -q 'libfuse\.so\.2'; then
+    export APPIMAGE_EXTRACT_AND_RUN=1
+fi
+exec "$APPIMAGE" "$@"
