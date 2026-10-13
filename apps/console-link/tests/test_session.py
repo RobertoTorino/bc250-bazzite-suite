@@ -30,7 +30,7 @@ def test_session_starts_and_answers_heartbeats(target, server_type):
     assert console.heartbeat_answered.is_set()
     init, ctrl = console.paths
     assert init.endswith("/sess/init") and ctrl.endswith("/sess/ctrl") and (("ps5" in init) == target.ps5)
-    # RP-Auth is the registration key, padded to 16 bytes; RP-Did has chiaki-ng's prefix and suffix.
+    # RP-Auth is the registration key, padded to 16 bytes; RP-Did has the reference's prefix and suffix.
     assert console.decrypted["RP-Auth"] == REGIST_KEY.ljust(16, b"\0")
     did = console.decrypted["RP-Did"]
     assert len(did) == 32 and did.startswith(session.DID_PREFIX) and did.endswith(session.DID_SUFFIX)
@@ -40,7 +40,7 @@ def test_session_starts_and_answers_heartbeats(target, server_type):
         assert console.decrypted["RP-StreamingType"] == (1).to_bytes(4, "little")      # H.264
     else:
         assert "RP-StreamingType" not in console.decrypted
-    # After the session ID: microphone off twice and no display devices, as chiaki-ng sends them.
+    # After the session ID: microphone off twice and no display devices, as the reference sends them.
     sent = [msg_type for msg_type, _payload in console.messages]
     assert sent[-3:] == [session.MIC_TOGGLE, session.MIC_TOGGLE, session.DISPLAY_DEVICES]
 

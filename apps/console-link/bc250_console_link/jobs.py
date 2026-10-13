@@ -102,7 +102,7 @@ def rest_mode(console: RegisteredConsole, **kwargs) -> Outcome:
 
 
 def stream_profile(console: RegisteredConsole) -> stream.Profile:
-    """chiaki-ng's presets: 1080p at 15 Mbit/s for a PS5, 720p at 10 Mbit/s for a PS4 (a PS4 Pro could do 1080p)."""
+    """The reference's presets: 1080p at 15 Mbit/s for a PS5, 720p at 10 Mbit/s for a PS4 (a PS4 Pro could do 1080p)."""
     if console.ps5:
         return stream.Profile(1920, 1080, 60, 15000)
     return stream.Profile(1280, 720, 60, 10000)
@@ -114,7 +114,7 @@ def test_stream(console: RegisteredConsole, seconds: float = STREAM_SECONDS, str
     """Start a session, run the network test, then the stream for *seconds*, and close it all: proves the key
     exchange and that video and audio arrive (nothing is decoded or shown yet). The control connection keeps
     answering heartbeats in a second thread meanwhile. When the network test fails, the stream goes on with
-    chiaki-ng's values for that case, as chiaki-ng does."""
+    the reference's values for that case, as the reference does."""
     def hold(started: session.Session) -> str:
         stop = threading.Event()
         ctrl_error: list[Exception] = []
@@ -136,7 +136,7 @@ def test_stream(console: RegisteredConsole, seconds: float = STREAM_SECONDS, str
                 measured = test.run()
             except senkusha.SenkushaError as error:
                 measured = None
-                test.note(f"{error} The stream uses chiaki-ng's values for this case: MTU {stream.MTU}, "
+                test.note(f"{error} The stream uses safe values instead: MTU {stream.MTU}, "
                           f"{stream.RTT_MS} ms.")
             finally:
                 started.info.log.extend(test.log)
@@ -158,7 +158,9 @@ def test_stream(console: RegisteredConsole, seconds: float = STREAM_SECONDS, str
         stats = connection.stats
         sizes = ", ".join(f"{r.width}×{r.height}" for r in info.resolutions) or "no resolution"
         mbit = stats.frame_bytes * 8 / seconds / 1e6
+        decoded = (f"{stats.decoded} decoded ({'VA-API' if connection.decoder.hw else 'software'})"
+                   if connection.decoder is not None else "not decoded")
         return (f"Stream with {console.nickname or console.address} ran {seconds:g} s ({sizes}): "
-                f"{stats.frames} frames ({stats.fec_frames} rebuilt with FEC, {stats.frames_lost} lost), "
+                f"{stats.frames} frames ({stats.fec_frames} rebuilt with FEC, {stats.frames_lost} lost; {decoded}), "
                 f"{mbit:.1f} Mbit/s of video, {stats.audio_packets} audio packets. Nothing is shown yet.")
     return _session(console, hold, **kwargs)

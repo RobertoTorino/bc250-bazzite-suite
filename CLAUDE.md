@@ -70,6 +70,10 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
   Bazzite package is in scope only where one of our apps uses it (the Dependency Checker lists it then); its
   updates and security fixes are Bazzite's. Our own code, and the Python packages in our apps' environments, are
   ours.
+- **chiaki-ng is named only where licensing needs it:** Console Link's LICENSE, the License sections of its README
+  and manual chapter, the suite's license overview (README, docs/index.md) and this file. Everywhere else (code,
+  comments, tests, vectors, log messages, the manual, CHANGELOGs, MIGRATION.md) it is "the reference" (the reference
+  implementation); user-facing text does not mention it at all.
 - **Ask** before decisions that are the owner's (what an app does, version numbers, repo layout, anything on the
   board). Do the obvious housekeeping without asking.
 

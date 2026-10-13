@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// The video decoder over FFmpeg's libavcodec (as chiaki-ng's ffmpegdecoder.c uses it): H.264 or HEVC, with VA-API
+// The video decoder over FFmpeg's libavcodec (as the reference's ffmpegdecoder.c uses it): H.264 or HEVC, with VA-API
 // when the board's driver opens, else in software. A small C interface, so the Rust side (decoder.rs) needs neither
 // bindgen nor FFmpeg's struct layouts.
 
@@ -11,6 +11,7 @@
 #include <libavcodec/avcodec.h>
 #include <libavutil/hwcontext.h>
 #include <libavutil/imgutils.h>
+#include <libavutil/log.h>
 #include <libavutil/pixdesc.h>
 
 struct bc_decoder {
@@ -18,6 +19,7 @@ struct bc_decoder {
     AVBufferRef *hw_device;
     AVPacket *packet;
     AVFrame *frame;         // the last frame received
+    AVFrame *next;          // receiving into this keeps the last frame when there is none
     AVFrame *transferred;   // its picture in memory, for a VA-API frame
     int has_frame;
 };
@@ -34,6 +36,7 @@ void bc_decoder_free(struct bc_decoder *d)
         return;
     av_frame_free(&d->transferred);
     av_frame_free(&d->frame);
+    av_frame_free(&d->next);
     av_packet_free(&d->packet);
     avcodec_free_context(&d->ctx);
     av_buffer_unref(&d->hw_device);
@@ -55,6 +58,7 @@ int bc_decoder_new(int hevc, int hw, struct bc_decoder **out, int *hw_error)
 {
     *out = NULL;
     *hw_error = 0;
+    av_log_set_level(AV_LOG_FATAL);     // errors come back as return codes; FFmpeg's log would go to stderr
     const AVCodec *codec = avcodec_find_decoder(hevc ? AV_CODEC_ID_HEVC : AV_CODEC_ID_H264);
     if(!codec)
         return AVERROR_DECODER_NOT_FOUND;
@@ -64,8 +68,9 @@ int bc_decoder_new(int hevc, int hw, struct bc_decoder **out, int *hw_error)
     d->ctx = avcodec_alloc_context3(codec);
     d->packet = av_packet_alloc();
     d->frame = av_frame_alloc();
+    d->next = av_frame_alloc();
     d->transferred = av_frame_alloc();
-    if(!d->ctx || !d->packet || !d->frame || !d->transferred)
+    if(!d->ctx || !d->packet || !d->frame || !d->next || !d->transferred)
     {
         bc_decoder_free(d);
         return AVERROR(ENOMEM);
@@ -110,14 +115,13 @@ int bc_decoder_send(struct bc_decoder *d, const uint8_t *data, size_t size)
 // 1 and *info: a frame; 0: none ready; < 0: an error.
 int bc_decoder_receive(struct bc_decoder *d, struct bc_frame *info)
 {
-    int r = avcodec_receive_frame(d->ctx, d->frame);
+    int r = avcodec_receive_frame(d->ctx, d->next);
     if(r == AVERROR(EAGAIN) || r == AVERROR_EOF)
         return 0;
     if(r < 0)
-    {
-        d->has_frame = 0;
         return r;
-    }
+    av_frame_unref(d->frame);
+    av_frame_move_ref(d->frame, d->next);
     d->has_frame = 1;
     info->width = d->frame->width;
     info->height = d->frame->height;

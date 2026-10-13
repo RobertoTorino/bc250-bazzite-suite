@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Console Link for the BC-250: find the consoles on the network, wake them, register the board with one, and start
-and close a Remote Play session and its stream with it. The protocol is the one chiaki-ng implements (AGPL-3.0), ported to
-Python."""
+and close a Remote Play session and its stream with it. The protocol code is ported from the reference implementation
+(AGPL-3.0; see the README's License section)."""
 
 APP_NAME = "BC250 Console Link"
 APP_ID = "bc250-console-link"
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 from pathlib import Path
 

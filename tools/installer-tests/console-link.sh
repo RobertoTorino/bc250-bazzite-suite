@@ -36,7 +36,7 @@ check "app copied" "[ -f $A/bc250_console_link/main_window.py ] && [ -f $A/bc250
 check "core bundled from checkout" "[ -f $A/bc250_core/theme.py ]"
 check "no tests or caches copied" "[ ! -d $A/tests ] && ! find $A -name __pycache__ | grep -q ."
 check "native core source copied, no build output" "[ -f $A/native/src/takion.rs ] && [ ! -e $A/native/target ]"
-check "native core built when Rust is there, a note when not" "grep -q 'native core' $T/log1"
+check "native core built when Rust is there, a note when not" "grep -q 'native core' $T/log1 && ! grep -q 'from the release' $T/log1"
 check "own venv, not the suite's" "[ -x $D/$APP/venv/bin/python ] && [ ! -e $D/bc250-bazzite-suite/venv ]"
 check "launcher uses the app's venv" "grep -qF '$APP/venv/bin/python\" -m bc250_console_link' $HOME/.local/bin/$APP"
 check "launcher cds into the app" "grep -qF 'cd \"$A\"' $HOME/.local/bin/$APP"
@@ -50,10 +50,12 @@ check "core imports from the app copy" "(cd $A && /usr/bin/python3 -c 'import im
 echo "== 2. install a staged release (core bundled in the tarball) without the Desktop icon"
 rm -rf "$T/stage"; /usr/bin/python3 "$SUITE/tools/stage_app.py" console-link "$T/stage" > /dev/null
 echo "# release marker" >> "$T/stage/bc250_core/__init__.py"
+mkdir -p "$T/stage/native/wheel" && touch "$T/stage/native/wheel/bc250_console_link_core-0.1.0-cp310-abi3-linux_x86_64.whl"
 bash "$T/stage/install.sh" --no-desktop-shortcut > "$T/log2" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "the release's own core used" "grep -q 'release marker' $A/bc250_core/__init__.py"
 check "staged release has no build output" "[ -f $T/stage/native/Cargo.toml ] && [ ! -e $T/stage/native/target ]"
+check "the release's wheel installed, nothing built" "grep -q 'from the release (bc250_console_link_core-0.1.0-' $T/log2 && ! grep -q 'Building the native core' $T/log2"
 check "license and key tables shipped" "[ -f $A/LICENSE ] && grep -q 'AFFERO' $A/LICENSE && [ -f $A/bc250_console_link/keys.py ]"
 check "desktop icon removed" "[ ! -e $HOME/Desktop/$APP.desktop ]"
 

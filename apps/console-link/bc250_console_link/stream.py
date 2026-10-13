@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""The stream connection (chiaki-ng's lib/src/streamconnection.c), once the control connection has the session ID.
+"""The stream connection, once the control connection has the session ID.
 
 1. Takion on UDP 9296: the handshake (the native core, bc250_console_link_core.Takion).
 2. BIG: the session ID, the launch spec (resolution, frame rate, bitrate, codec) and our ECDH public key, signed
@@ -7,16 +7,19 @@
 3. STREAMINFO: the console's video headers per resolution and its audio header. We acknowledge it, report the
    controller and announce the microphone; from then on video and audio flow, and a heartbeat goes every second.
    The native core puts the video frames together (FEC rebuilds lost units), names the frames that never came or
-   could not be rebuilt, which go to the console as CORRUPTFRAME, and sends the congestion reports.
+   could not be rebuilt, which go to the console as CORRUPTFRAME, and sends the congestion reports. The frames go
+   to the video decoder (FFmpeg in the native core): the resolution's header from STREAMINFO first, then each frame.
+   It decodes with VA-API where the GPU has a video decoder, else in software (the BC-250 has none).
 4. DISCONNECT from either side ends it.
 
 The network test before this (Senkusha, senkusha.py) measures the MTU both ways and the round trip, which go into
-the launch spec; without it, the values are chiaki-ng's for a failed test: 1454 bytes and 1 ms."""
+the launch spec; without it, the values are the reference's for a failed test: 1454 bytes and 1 ms."""
 
 from __future__ import annotations
 
 import os
 import time
+from time import perf_counter
 from dataclasses import dataclass, field
 from typing import Callable
 
@@ -27,14 +30,14 @@ from .target import Target
 PORT = 9296
 EXPECT_TIMEOUT = 5.0
 HEARTBEAT_INTERVAL = 1.0
-MTU = 1454                              # chiaki-ng's values when the network test fails
+MTU = 1454                              # the reference's values when the network test fails
 RTT_MS = 1
 HANDSHAKE_KEY_SIZE = 16
 CHANNEL = 1
 CHANNEL_STREAMINFO_ACK = 9
 CHANNEL_FRAME_REPORTS = 2
 DATA_PROTOBUF = 0
-MTU_OVERHEAD = 50                       # chiaki-ng: the network's share of the MTU
+MTU_OVERHEAD = 50                       # the reference: the network's share of the MTU
 DATA_OVERHEAD = 26                      # type byte, message header and DATA header; a continuation has one less
 
 
@@ -72,6 +75,9 @@ class StreamStats:
     other_data: int = 0
     corrupt_sent: list[tuple[int, int]] = field(default_factory=list)       # frames reported to the console
     corrupt_reports: list[tuple[int, int]] = field(default_factory=list)
+    decoded: int = 0                    # pictures out of the decoder
+    decode_errors: int = 0
+    decode_seconds: float = 0.0
 
 
 class StreamConnection:
@@ -96,6 +102,9 @@ class StreamConnection:
         self.remote_reason: str | None = None
         self.log: list[str] = []
         self._early_streaminfo: tkproto.Message | None = None
+        self.decoder = None
+        self.decode_error: str | None = None
+        self._header = b""
 
     def __enter__(self) -> StreamConnection:
         return self
@@ -116,7 +125,7 @@ class StreamConnection:
         self.takion.send_data(data, channel=channel, flags=1)
 
     def send_big(self) -> None:
-        """BIG, split over several DATA messages when it does not fit the MTU (chiaki-ng's arithmetic)."""
+        """BIG, split over several DATA messages when it does not fit the MTU."""
         spec = launchspec.format_spec(self.target, self.profile.width, self.profile.height, self.profile.max_fps,
                                       self.profile.codec, self.profile.bitrate, self.mtu_in, self.rtt_ms,
                                       self.handshake_key)
@@ -148,16 +157,48 @@ class StreamConnection:
         else:
             self.stats.audio_packets += 1
 
+    def _decode(self, sample: bytes) -> None:
+        if self.decoder is None:
+            return
+        sample, self._header = self._header + sample, b""
+        started = perf_counter()
+        try:
+            self.stats.decoded += len(self.decoder.decode(sample))
+        except ValueError as error:
+            self.stats.decode_errors += 1
+            if self.decode_error is None:
+                self.decode_error = str(error)
+                self.note(f"The decoder refused a frame ({error}).")
+        self.stats.decode_seconds += perf_counter() - started
+
     def _on_frame(self, info: dict, data: bytes) -> None:
         self.stats.frames += 1
         self.stats.frame_bytes += len(data)
         self.stats.fec_frames += info["fec"]
         self.stats.frames_lost += info["frames_lost"]
+        self._decode(data)
 
     def _on_profile(self, index: int) -> None:
         resolutions = self.info.resolutions if self.info else []
         size = f"{resolutions[index].width}×{resolutions[index].height}" if index < len(resolutions) else "?"
         self.note(f"Video at {size} (resolution {index}).")
+        if index < len(resolutions):
+            # The reference sends the header as a sample of its own, which FFmpeg's H.264 decoder refuses (it has no
+            # picture); here it goes in front of the next frame, one access unit for the decoder.
+            self._header = resolutions[index].video_header
+
+    def _open_decoder(self) -> None:
+        if not getattr(self.core, "DECODER", False):
+            self.note("This native core has no video decoder (built without FFmpeg): the frames are not decoded.")
+            return
+        codec = "hevc" if self.target.ps5 and self.profile.codec in ("h265", "h265_hdr") else "h264"
+        try:
+            self.decoder = self.core.Decoder(codec, hw=True)
+        except ValueError as error:
+            self.note(f"The video decoder did not open ({error}).")
+            return
+        how = "VA-API" if self.decoder.hw else f"software (VA-API: {self.decoder.hw_error or 'not available'})"
+        self.note(f"Video decoder: FFmpeg {self.core.FFMPEG_VERSION}, {codec.upper()}, {how}.")
 
     def _on_corrupt(self, start: int, end: int) -> None:
         self.stats.corrupt_sent.append((start, end))
@@ -214,7 +255,7 @@ class StreamConnection:
 
     def _on_bang(self, message: tkproto.Message) -> bool:
         if message.type == tkproto.STREAMINFO and self._early_streaminfo is None:
-            self._early_streaminfo = message                 # chiaki-ng keeps one that comes before BANG
+            self._early_streaminfo = message                 # the reference keeps one that comes before BANG
             self.note("STREAMINFO came before BANG; kept for later.")
             return False
         bang = tkproto.bang(message)
@@ -229,7 +270,7 @@ class StreamConnection:
             raise StreamError("The console did not accept the encrypted key in BIG.")
         if not bang.ecdh_public_key or not bang.ecdh_signature:
             raise StreamError("The console's BANG has no key for the stream crypto.")
-        # chiaki-ng does not check this signature; this notes what the console does, without failing on it.
+        # The reference does not check this signature; this notes what the console does, without failing on it.
         signed = self.core.verify_signature(self.handshake_key, bang.ecdh_public_key, bang.ecdh_signature)
         self.note("The console's key signature " + ("checks out." if signed else "does not match (not required)."))
         try:
@@ -250,6 +291,7 @@ class StreamConnection:
         except tkproto.ProtoError as error:
             raise StreamError(f"The console's STREAMINFO is invalid: {error}.") from error
         self.info = info
+        self._open_decoder()
         self.takion.start_stream(len(info.resolutions))
         self.send(tkproto.streaminfo_ack(), CHANNEL_STREAMINFO_ACK)
         self.send(tkproto.controller_connection(self.dualsense))
@@ -296,9 +338,14 @@ class StreamConnection:
         if video is None:
             return "No video stream."
         reports = self.takion.stats()["congestion_reports"]
-        return (f"Video: {video['frames']} frames, {video['fec_recovered']} rebuilt with FEC, {video['fec_failed']} "
-                f"beyond repair, {video['frames_lost']} lost; {video['bad_units'] + video['old_packets']} units "
-                f"refused; {reports} congestion reports sent.")
+        summary = (f"Video: {video['frames']} frames, {video['fec_recovered']} rebuilt with FEC, {video['fec_failed']} "
+                   f"beyond repair, {video['frames_lost']} lost; {video['bad_units'] + video['old_packets']} units "
+                   f"refused; {reports} congestion reports sent.")
+        if self.decoder is not None:
+            calls = self.stats.frames + 1
+            summary += (f" Decoded {self.stats.decoded} pictures, {self.stats.decode_errors} errors, "
+                        f"{self.stats.decode_seconds / calls * 1000:.1f} ms per frame.")
+        return summary
 
     def close(self) -> None:
         if self.takion is None:

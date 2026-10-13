@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""The stream connection: the protobuf messages and the launch spec against vectors from chiaki-ng's own code
+"""The stream connection: the protobuf messages and the launch spec against vectors from the reference's own code
 (launchspec.c, rpcrypt.c, and the messages encoded with nanopb as streamconnection.c builds them, at commit
 c8bea2642d0e: tests/stream_vectors.json), then the whole connection against a fake console on localhost
 (fake_stream.py). The connection tests need the native core and are skipped without it."""
@@ -36,7 +36,7 @@ SESSION_ID = "Ab1" * 10
     ("controller_dualsense", tkproto.controller_connection(True)),
     ("microphone", tkproto.microphone(tkproto.MICROPHONE.save())),
 ])
-def test_messages_match_chiaki(name, built):
+def test_messages_match_reference(name, built):
     assert built == h(MESSAGES[name])
 
 
@@ -74,7 +74,7 @@ def test_bad_protobuf_is_refused():
 
 
 @pytest.mark.parametrize("name", ["ps5_1080p_hevc", "ps5_720p_avc_hdr", "ps4_720p"])
-def test_launch_spec_and_big_match_chiaki(name):
+def test_launch_spec_and_big_match_reference(name):
     v = VECTORS["launchspec"][name]
     target = Target(v["target"])
     codec = {0: "h264", 1: "h265", 2: "h265_hdr"}[v["codec"]]
@@ -97,6 +97,16 @@ def test_missing_native_core_says_what_to_do(monkeypatch):
 
 # --- The connection against a fake console ------------------------------------------------------------------------
 
+def test_a_core_without_decoder_is_noted():
+    class Core:                                         # a native core built without FFmpeg
+        DECODER = False
+    connection = stream.StreamConnection("127.0.0.1", Target.PS4_10, SESSION_ID, None, core=Core())
+    connection._open_decoder()
+    connection._on_frame({"fec": False, "frames_lost": 0}, b"frame")
+    assert connection.decoder is None and connection.stats.decoded == 0 and connection.stats.frames == 1
+    assert "This native core has no video decoder" in connection.log[0]
+
+
 @pytest.fixture
 def console_factory():
     pytest.importorskip("bc250_console_link_core", reason="the native core is not built: see native/pyproject.toml")
@@ -112,9 +122,9 @@ def console_factory():
         console.close()
 
 
-def _frame_bytes(*frames: int) -> int:
+def _frame_bytes(console, *frames: int) -> int:
     from fake_stream import frame_data
-    return sum(len(frame_data(frame)) for frame in frames)
+    return sum(len(frame_data(frame, console.codec)) for frame in frames)
 
 
 def _connection(console, timeout=2.0, **kwargs) -> stream.StreamConnection:
@@ -147,9 +157,17 @@ def test_stream_connects_runs_and_closes(console_factory, target):
     assert console.errors == []
     # Video came through as whole frames, audio as packets; the core sent congestion reports.
     assert connection.stats.frames == 3 and connection.stats.fec_frames == 0
-    assert connection.stats.frame_bytes == _frame_bytes(1, 2, 3)
+    assert connection.stats.frame_bytes == _frame_bytes(console, 1, 2, 3)
     assert connection.stats.corrupt_sent == [] and "Video at 1920×1080 (resolution 0)." in connection.log
     assert any(line.startswith("Video: 3 frames, 0 rebuilt with FEC") for line in connection.log)
+    # The frames decode: the clip's header from STREAMINFO, then its frames.
+    if connection.core.DECODER:
+        assert console.codec == ("hevc" if target.ps5 else "h264")
+        assert (connection.stats.decoded, connection.stats.decode_errors) == (3, 0)
+        assert any(line.startswith(f"Video decoder: FFmpeg") and console.codec.upper() in line
+                   for line in connection.log)
+    else:
+        assert connection.decoder is None and connection.stats.decoded == 0
     # Every 200 ms; frames 1 and 2 (5 units each) are counted once the next frame starts.
     reports = console.congestion_reports
     assert len(reports) >= 2 and sum(r for r, _ in reports) >= 10 and all(lost == 0 for _, lost in reports)
@@ -164,7 +182,7 @@ def test_lost_units_come_from_fec(console_factory):
         connection.connect()
         connection.run(0.5)
         assert connection.stats.frames == 3 and connection.stats.fec_frames == 1
-        assert connection.stats.frame_bytes == _frame_bytes(1, 2, 3)
+        assert connection.stats.frame_bytes == _frame_bytes(console, 1, 2, 3)
         assert connection.stats.corrupt_sent == []
 
 
@@ -174,7 +192,7 @@ def test_lost_frames_are_reported_to_the_console(console_factory):
         connection.connect()
         connection.run(0.5)
         assert connection.stats.frames == 2 and connection.stats.frames_lost == 2
-        # Frame 2 never came; frame 3 had too few units. Frame 4's start reports 2 to 3 again, as chiaki-ng does.
+        # Frame 2 never came; frame 3 had too few units. Frame 4's start reports 2 to 3 again, as the reference does.
         assert connection.stats.corrupt_sent == [(2, 2), (2, 3), (2, 3)]
     assert console.wait_until(lambda: console.received.count(tkproto.CORRUPTFRAME) == 3)
 
@@ -244,17 +262,17 @@ def test_stream_job_runs_session_and_stream(console_factory):
         ctrl.close()
         network.close()
     assert outcome.ok, outcome.message
-    assert "1920×1080" in outcome.message and "3 frames (0 rebuilt with FEC, 0 lost)" in outcome.message
+    assert "1920×1080" in outcome.message and "3 frames (0 rebuilt with FEC, 0 lost; " in outcome.message
     assert "Mbit/s of video, 3 audio packets" in outcome.message
     assert "Session ID received: the session is running." in outcome.log
     assert any(line.startswith("STREAMINFO received") for line in outcome.log)
-    # MTU out starts its search at MTU in (1300); chiaki-ng's search then stops one short of its upper bound.
+    # MTU out starts its search at MTU in (1300); the reference's search then stops one short of its upper bound.
     assert "Network test: MTU 1300 in, 1453 out." in outcome.log
     assert console.spec["streamResolutions"][0]["resolution"] == {"width": 1920, "height": 1080}
     assert console.spec["network"]["mtu"] == 1300 and console.spec["network"]["rtt"] == 0
     assert console.wait_until(lambda: console.disconnect_reason == "Client Disconnecting") and console.errors == []
 
-    # No network test: the stream goes on with chiaki-ng's values for that case.
+    # No network test: the stream goes on with the reference's values for that case.
     console = console_factory()
     silent_network = SenkushaConsole(Target.PS5_1, b"", b"", silent=True)
     ctrl = SessionConsole()
@@ -265,7 +283,7 @@ def test_stream_job_runs_session_and_stream(console_factory):
         ctrl.close()
         silent_network.close()
     assert fallback.ok, fallback.message
-    assert any("The stream uses chiaki-ng's values for this case: MTU 1454, 1 ms." in line for line in fallback.log)
+    assert any("The stream uses safe values instead: MTU 1454, 1 ms." in line for line in fallback.log)
     assert console.spec["network"]["mtu"] == 1454 and console.spec["network"]["rtt"] == 1
 
     # No stream port: the session works, the stream does not.

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""The network test (senkusha.py): its messages against vectors from chiaki-ng's code (nanopb, as senkusha.c builds
+"""The network test (senkusha.py): its messages against vectors from the reference's code (nanopb, as senkusha.c builds
 them: tests/stream_vectors.json), then whole runs against the console's side in fake_stream.py, which stands in for
 the network's MTU limits. The runs need the native core and are skipped without it."""
 
@@ -22,11 +22,11 @@ h = bytes.fromhex
     ("senkusha_big", tkproto.senkusha_big()),
     ("senkusha_echo_on", tkproto.echo_command(True)),
     ("senkusha_echo_off", tkproto.echo_command(False)),
-    ("senkusha_mtu_command", tkproto.mtu_command(3, 1015)),          # no num: chiaki-ng never sets its has-flag
+    ("senkusha_mtu_command", tkproto.mtu_command(3, 1015)),          # no num: the reference never sets its has-flag
     ("senkusha_client_mtu", tkproto.client_mtu_command(1, True, 1453, 1453)),
     ("senkusha_client_mtu_final", tkproto.client_mtu_command(2, False, 1454, 1453)),
 ])
-def test_messages_match_chiaki(name, built):
+def test_messages_match_reference(name, built):
     assert built == h(MESSAGES[name])
 
 

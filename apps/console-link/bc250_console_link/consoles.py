@@ -124,7 +124,7 @@ def migrate_old_config(config_home: Path, app_id: str) -> bool:
 
 def parse_account_id(text: str) -> bytes:
     """The PSN account ID as the 8 bytes registration sends: either the number PSN gives (decimal) or that number
-    already encoded the way chiaki-ng shows it (base64 of the 8 bytes, little-endian, e.g. "AAECAwQFBgc=")."""
+    already encoded the way the reference shows it (base64 of the 8 bytes, little-endian, e.g. "AAECAwQFBgc=")."""
     text = text.strip()
     if text.isdigit():
         value = int(text)

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! Serial number arithmetic (RFC 1982) for the 16- and 32-bit sequence numbers (chiaki-ng's seqnum.h).
+//! Serial number arithmetic (RFC 1982) for the 16- and 32-bit sequence numbers.
 
 macro_rules! seqnum {
     ($lt:ident, $gt:ident, $t:ty, $wide:ty, $bits:expr) => {

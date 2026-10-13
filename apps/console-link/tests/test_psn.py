@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """psn.py: the account ID through the PlayStation sign-in, against a fake token service on localhost that checks what
-chiaki-ng's script sends (the Remote Play client's credentials, the code, the redirect address)."""
+The reference's script sends (the Remote Play client's credentials, the code, the redirect address)."""
 
 from __future__ import annotations
 
@@ -66,7 +66,7 @@ def psn_service():
     server.server_close()
 
 
-def test_login_url_is_chiakis():
+def test_login_url_is_the_references():
     assert psn.login_url() == (
         "https://auth.api.sonyentertainmentnetwork.com/2.0/oauth/authorize?service_entity=urn:service-entity:psn"
         "&response_type=code&client_id=ba495a24-818c-472b-b12d-ff231c1b5745"

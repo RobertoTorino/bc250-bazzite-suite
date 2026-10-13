@@ -8,6 +8,10 @@ name: Release
 # has the same content (see docs/portal.md, "Checking a release"). A portal release bundles the bazzite-test release that portal/apps.toml pins (downloaded
 # from its own release and checked against the pin) and requires every pinned tag to exist.
 #
+# BC250 Console Link ships the wheel of its native core in the tarball (native/wheel, build_release.py checks it is
+# there): built here from the tag, with FFmpeg from its pinned sources (native/ffmpeg/build.sh), so installing
+# needs only pip.
+#
 # An app that ships a Windows executable (tools/build_windows_exe.py, WINDOWS_APPS) gets a second job on its tag:
 # it builds the .exe on Windows and adds <app-id>-<version>-windows.zip and its .sha256 to the release the first job
 # made. They are separate downloads; the portal and SHA256SUMS only know the tarball.
@@ -55,6 +59,16 @@ jobs:
           bt=$(python -c 'import tomllib; print(tomllib.load(open("portal/apps.toml", "rb"))["apps"]["bazzite-test"]["tag"])')
           mkdir -p bundle
           gh release download "$bt" --pattern "$bt.tar.gz" --pattern SHA256SUMS --dir bundle
+
+      - name: Native wheel (console-link releases)
+        if: startsWith(github.ref_name, 'console-link-v')
+        working-directory: apps/console-link/native
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q nasm libva-dev
+          ffmpeg/build.sh "$RUNNER_TEMP/ffmpeg"
+          python -m pip install -q "maturin>=1.5,<2"
+          BC250_FFMPEG_DIR="$RUNNER_TEMP/ffmpeg" maturin build --release --locked --compatibility linux \
+            --features python,pyo3/extension-module,decoder -o wheel
 
       - name: Build
         run: |

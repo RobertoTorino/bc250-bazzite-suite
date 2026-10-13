@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""The native core (native/, Rust through PyO3) as Python sees it, against the vectors printed by chiaki-ng's own C
+"""The native core (native/, Rust through PyO3) as Python sees it, against the vectors printed by the reference's own C
 code (gkcrypt.c, ecdh.c and takion.c at commit c8bea2642d0e, built with OpenSSL on 12-10-2026), and the FEC against
-frames recorded by chiaki-ng (fec_vectors.json). The Rust tests (cargo test) check the same vectors; these check the
-module the app imports.
+frames recorded by the reference (fec_vectors.json), and the video decoder against clips and their pictures as the
+system's FFmpeg decodes them (video_vectors.json; only when the core is built with it). The Rust tests (cargo test)
+check the same vectors; these check the module the app imports.
 
 The module is built from native/ (maturin build, then pip install the wheel); CI builds it before these tests. Without
 it they are skipped, with the reason."""
@@ -10,6 +11,7 @@ it they are skipped, with the reason."""
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 from pathlib import Path
 
@@ -141,3 +143,23 @@ def test_fec(v):
     assert all(encoded[i * size:(i + 1) * size] == units[i] for i in range(k, k + m) if i not in v["erasures"])
     with pytest.raises(ValueError, match="TooManyErasures"):
         core.fec_decode(damaged, size, k, m, list(range(m + 1)))
+
+
+@pytest.mark.skipif(not getattr(core, "DECODER", False), reason="the native core is built without the video decoder")
+@pytest.mark.parametrize("codec", ["h264", "hevc"])
+def test_decoder(codec):
+    clip = json.loads((Path(__file__).parent / "video_vectors.json").read_text(encoding="utf-8"))["clips"][codec]
+    decoder = core.Decoder(codec, hw=False)
+    assert not decoder.hw and decoder.hw_error is None
+    pictures = hashlib.sha256()
+    frames = 0
+    for sample in clip["samples"]:
+        for frame in decoder.decode(base64.b64decode(sample)):
+            assert (frame["width"], frame["height"], frame["hw"]) == (clip["width"], clip["height"], False)
+            fmt, width, height, data = decoder.image()
+            assert (fmt, width, height) == ("yuv420p", clip["width"], clip["height"])
+            pictures.update(data)
+            frames += 1
+    assert frames == clip["frames"] and pictures.hexdigest() == clip["sha256"]
+    with pytest.raises(ValueError, match="codec"):
+        core.Decoder("vp9")

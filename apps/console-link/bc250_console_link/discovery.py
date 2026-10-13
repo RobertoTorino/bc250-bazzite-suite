@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Finding consoles and waking them, over UDP (chiaki-ng's lib/src/discovery.c).
+"""Finding consoles and waking them, over UDP.
 
 A search is "SRCH * HTTP/1.1" to port 987 (PS4) or 9302 (PS5), broadcast or to one address; each console answers
 with its name, id, state (200: on, 620: in rest mode) and system version. A wake-up is "WAKEUP * HTTP/1.1" to the
@@ -19,7 +19,7 @@ PS4_PORT = 987
 PS5_PORT = 9302
 PS4_PROTOCOL = "00020020"
 PS5_PROTOCOL = "00030010"
-LOCAL_PORTS = range(9303, 9320)         # chiaki-ng binds the first free one of these, then any port
+LOCAL_PORTS = range(9303, 9320)         # the reference binds the first free one of these, then any port
 BROADCAST = "255.255.255.255"
 
 SocketFactory = Callable[[], socket.socket]

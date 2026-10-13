@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! The key exchange of the stream (chiaki-ng's ecdh.c): ECDH on secp256k1. Each side sends its public key
+//! The key exchange of the stream: ECDH on secp256k1. Each side sends its public key
 //! (uncompressed, 65 bytes) with HMAC-SHA256(handshake key, public key) as signature; the shared secret is the x
 //! coordinate of the shared point.
 //!
-//! chiaki-ng does not check the console's signature. verify() is here so the session can; whether a console's
+//! The reference does not check the console's signature. verify() is here so the session can; whether a console's
 //! signature is computed the same way is to be seen on a real console.
 
 use hmac::{Hmac, Mac};
@@ -70,7 +70,7 @@ mod tests {
     use crate::vectors::{hex, load};
 
     #[test]
-    fn matches_chiaki() {
+    fn matches_reference() {
         for v in load()["ecdh"].as_array().unwrap() {
             let ecdh = Ecdh::from_private(&hex(&v["private"])).unwrap();
             let handshake_key: [u8; 16] = hex(&v["handshake_key"]).try_into().unwrap();

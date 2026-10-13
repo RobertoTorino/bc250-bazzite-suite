@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! The 64-bit key position from the 32 bits a packet carries (chiaki-ng's ChiakiKeyState in gkcrypt.c): the high
+//! The 64-bit key position from the 32 bits a packet carries: the high
 //! half follows the low half across wrap-arounds, forwards and back.
 
 use crate::seqnum::{gt32, lt32};
@@ -40,7 +40,7 @@ mod tests {
     use crate::vectors;
 
     #[test]
-    fn matches_chiaki() {
+    fn matches_reference() {
         let mut state = KeyState::new();
         for pair in vectors::load()["key_state"].as_array().unwrap() {
             let low = pair[0].as_u64().unwrap() as u32;

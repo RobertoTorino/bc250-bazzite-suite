@@ -1,18 +1,22 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """The console's side of the stream connection on localhost, for the tests: the Takion handshake, BIG (it decrypts
 the launch spec to find the handshake key, as a console must), BANG with its own ECDH key, STREAMINFO, then a few
-video frames (split into units with FEC units, as a console does) and audio packets, encrypted and signed. It speaks Takion through the native core's packet functions and
+video frames (split into units with FEC units, as a console does) and audio packets, encrypted and signed. The
+video is a real clip (video_vectors.json) in the codec the launch spec asked for: its parameter sets as STREAMINFO's
+header, its access units as the frames. It speaks Takion through the native core's packet functions and
 records what the board sent."""
 
 from __future__ import annotations
 
 import base64
 import json
+import re
 import socket
 import struct
 import threading
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import bc250_console_link_core as core
 
@@ -21,14 +25,29 @@ from bc250_console_link.rpcrypt import RPCrypt
 from bc250_console_link.target import Target
 
 TAG = 0x5eed1e55
-VIDEO_HEADER = bytes(range(16))
+CLIPS = json.loads((Path(__file__).parent / "video_vectors.json").read_text(encoding="utf-8"))["clips"]
+PARAMETER_SETS = {"h264": {7, 8, 9}, "hevc": {32, 33, 34, 35}}       # with the access unit delimiter
 AUDIO_HEADER = tkproto.AudioHeader(2, 16, 48000, 480).save()
 UNIT_SIZE = 1000
 FEC_UNITS = 2
 
 
-def frame_data(frame: int) -> bytes:
-    return bytes((frame * 7 + i) % 251 for i in range(2500))
+def clip(codec: str) -> tuple[bytes, list[bytes]]:
+    """A clip's header (the first sample's parameter sets) and frames (the samples, the first without them)."""
+    samples = [base64.b64decode(sample) for sample in CLIPS[codec]["samples"]]
+    first = samples[0]
+    for match in re.finditer(rb"\x00\x00\x01", first):
+        byte = first[match.end()]
+        nal_type = byte & 0x1f if codec == "h264" else (byte >> 1) & 0x3f
+        if nal_type not in PARAMETER_SETS[codec]:
+            return first[:match.start()], [first[match.start():], *samples[1:]]
+    raise ValueError("no slice in the first sample")
+
+
+def frame_data(frame: int, codec: str = "h264") -> bytes:
+    """Frame 1 and on: the clip's frames, again from the start after its end."""
+    frames = clip(codec)[1]
+    return frames[(frame - 1) % len(frames)]
 
 
 def video_units(frame: bytes, unit_size: int = UNIT_SIZE, fec_units: int = FEC_UNITS) -> list[bytes]:
@@ -143,8 +162,12 @@ class StreamConsole:
         packet = bytes(header[:offset]) + self.send_crypt.crypt(key_pos + 16, data)
         self._send(core.packet_mac(self.send_crypt, packet, key_pos)[0])
 
+    @property
+    def codec(self) -> str:
+        return "hevc" if self.spec.get("videoCodec") == "hevc" else "h264"
+
     def send_streaminfo(self) -> None:
-        resolution = tkproto.uint(1, 1920) + tkproto.uint(2, 1080) + tkproto.blob(3, VIDEO_HEADER)
+        resolution = tkproto.uint(1, 1920) + tkproto.uint(2, 1080) + tkproto.blob(3, clip(self.codec)[0])
         payload = tkproto.blob(1, resolution) + tkproto.blob(2, AUDIO_HEADER) + tkproto.uint(3, 100)
         self.send_message(tkproto.message(tkproto.STREAMINFO, tkproto.F_STREAM_INFO, payload))
 
@@ -213,7 +236,7 @@ class StreamConsole:
     def _stream(self) -> None:
         packet_index = 0
         for frame in range(1, self.frames + 1):
-            units = video_units(frame_data(frame))
+            units = video_units(frame_data(frame, self.codec))
             for unit, data in enumerate(units):
                 if frame not in self.lose_frames and (frame, unit) not in self.lose_units:
                     self.send_av(True, packet_index, frame, unit, len(units), data, fec=FEC_UNITS)

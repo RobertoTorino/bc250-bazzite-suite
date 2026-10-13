@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! The stream crypto (chiaki-ng's gkcrypt.c). Each direction has its own instance (index 2: client to console,
+//! The stream crypto. Each direction has its own instance (index 2: client to console,
 //! 3: console to client), keyed from the ECDH secret and the handshake key:
 //!
 //! * encryption is AES-128-CTR addressed by byte position: block n of the key stream is AES(key_base, iv + n), the
@@ -7,7 +7,7 @@
 //! * every packet carries a 4-byte GMAC (AES-GCM tag with the packet as additional data and no plaintext) under a
 //!   key that is renewed every 45000 bytes of key position.
 //!
-//! chiaki-ng fills a key-stream buffer in a thread ahead of time; with AES-NI the key stream is cheap to make on
+//! The reference fills a key-stream buffer in a thread ahead of time; with AES-NI the key stream is cheap to make on
 //! the spot, so it is made per call here.
 
 use aes::cipher::{BlockEncrypt, KeyInit};
@@ -27,7 +27,7 @@ pub const GMAC_KEY_REFRESH_IV_OFFSET: u64 = 44910;
 
 type Gcm16 = AesGcm<Aes128, U16>;
 
-/// base + v, with base read as a 128-bit little-endian number (chiaki-ng's counter_add).
+/// base + v, with base read as a 128-bit little-endian number.
 pub fn counter_add(base: &[u8; 16], v: u64) -> [u8; 16] {
     u128::from_le_bytes(*base).wrapping_add(v as u128).to_le_bytes()
 }
@@ -140,7 +140,7 @@ mod tests {
     }
 
     #[test]
-    fn matches_chiaki() {
+    fn matches_reference() {
         for v in load()["gkcrypt"].as_array().unwrap() {
             let mut crypt = GkCrypt::new(v["index"].as_u64().unwrap() as u8, &arr(&v["handshake_key"]), &arr(&v["secret"]));
             assert_eq!(crypt.key_base.to_vec(), hex(&v["key_base"]));

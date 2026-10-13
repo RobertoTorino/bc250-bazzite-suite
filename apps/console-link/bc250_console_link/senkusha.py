@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""The network test before the stream, Senkusha (chiaki-ng's lib/src/senkusha.c): a Takion connection of version 7
+"""The network test before the stream, Senkusha: a Takion connection of version 7
 to UDP 9297, without crypto, that measures what the stream then asks for in its launch spec.
 
 1. TAKIONPROTOCOLREQUEST (version 9) and its acknowledgement, then a BIG with empty fields and the console's BANG.
@@ -7,9 +7,9 @@ to UDP 9297, without crypto, that measures what the stream then asks for in its 
    console with a pong carrying the same tag; echo off. The average is the round trip.
 3. MTU in: the console sends a video packet of the size asked for; a binary search between 576 and 1454 bytes.
 4. MTU out: the board sends pings of the size tried; the same search, starting at MTU in, then a final
-   CLIENT_MTU_COMMAND. As in chiaki-ng, a search that does not start at 1454 ends at 1453 at most.
+   CLIENT_MTU_COMMAND. As in the reference, a search that does not start at 1454 ends at 1453 at most.
 
-When it fails, chiaki-ng streams with 1454 bytes both ways and 1 ms (stream.MTU, stream.RTT_MS), and so does the
+When it fails, the reference streams with 1454 bytes both ways and 1 ms (stream.MTU, stream.RTT_MS), and so does the
 app."""
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ CHANNEL = 1
 CHANNEL_SENKUSHA = 8
 PING_CODEC = 0xff
 PING_UNITS = 0x800
-PADDING = b"BC-250"                     # filler of the large pings (chiaki-ng's is CHIAKI)
+PADDING = b"BC-250"                     # filler of the large pings
 
 
 class SenkushaError(StreamError):
@@ -52,7 +52,7 @@ class Measurement:
 
     @property
     def rtt_ms(self) -> int:
-        """As the launch spec gets it: whole milliseconds, rounded down (0 on a fast network, as in chiaki-ng)."""
+        """As the launch spec gets it: whole milliseconds, rounded down (0 on a fast network, as in the reference)."""
         return self.rtt_us // 1000
 
 
@@ -70,7 +70,7 @@ class Senkusha:
     # --- Events ---------------------------------------------------------------------------------------------
 
     def _wait(self, timeout: float, accept: Callable[[tuple], bool]) -> tuple | None:
-        """The first event *accept* takes within *timeout*, or None; the others are dropped, as in chiaki-ng's
+        """The first event *accept* takes within *timeout*, or None; the others are dropped, as in the reference's
         state machine."""
         deadline = time.monotonic() + timeout
         while (remaining := deadline - time.monotonic()) > 0:
@@ -186,7 +186,7 @@ class Senkusha:
             if self._message(self.timeout, lambda m: tkproto.bang(m) is not None) is None:
                 raise SenkushaError("The console sent no BANG for the network test.")
             rtt_us, pongs = self.rtt_test()
-            mtu_timeout = min(max(rtt_us * 5 / 1_000_000, 0.005), 0.5)      # chiaki-ng: 5 round trips, 5 to 500 ms
+            mtu_timeout = min(max(rtt_us * 5 / 1_000_000, 0.005), 0.5)      # the reference: 5 round trips, 5 to 500 ms
             mtu_in = self.mtu_in_test(mtu_timeout)
             mtu_out = self.mtu_out_test(mtu_in, mtu_timeout)
             self.note(f"Network test: MTU {mtu_in} in, {mtu_out} out.")

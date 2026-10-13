@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! The video receiver (chiaki-ng's videoreceiver.c): video packets in, whole frames out. A frame is flushed as soon
+//! The video receiver: video packets in, whole frames out. A frame is flushed as soon
 //! as enough of its units are there, or at its last unit, or when the next frame starts. Frames that never came or
 //! could not be rebuilt are reported to the console (CORRUPTFRAME, sent by the stream connection); the units per
 //! frame go to the packet counts for the congestion reports.
 //!
-//! Not here yet: chiaki-ng's look into the bitstream (bitstream.c), which swaps a missing reference frame for an
+//! Not here yet: the reference's look into the bitstream (bitstream.c), which swaps a missing reference frame for an
 //! older one and, after a failed FEC, can ask for a key frame and skip frames until it comes. That needs the
 //! decoder's side and comes with it.
 
@@ -113,7 +113,7 @@ impl VideoReceiver {
             FlushResult::FecFailed => {
                 let next_expected = self.frame_index_prev_complete.wrapping_add(1);
                 events.push(VideoEvent::Corrupt { start: next_expected, end: cur });
-                // chiaki-ng's arithmetic: the frame numbers as plain integers, so across the wrap this is negative.
+                // The reference's arithmetic: the frame numbers as plain integers, so across the wrap this is negative.
                 let lost = cur as i32 - next_expected as i32 + 1;
                 self.frames_lost += lost;
                 self.stats.frames_lost += lost as i64;

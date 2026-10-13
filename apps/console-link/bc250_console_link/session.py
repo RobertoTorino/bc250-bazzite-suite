@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Starting a Remote Play session (chiaki-ng's lib/src/session.c and ctrl.c), on the local network.
+"""Starting a Remote Play session, on the local network.
 
 1. Session request: GET .../sess/init on TCP 9295 with the registration key; the console answers with a nonce, or
    with the Remote Play version it wants (the request is then repeated with that version).
@@ -28,7 +28,7 @@ PORT = 9295
 TIMEOUT = 5.0
 SESSION_ID_TIMEOUT = 10.0
 STOP_CHECK = 0.25                       # how often keep_alive looks at its stop condition
-MAX_MESSAGE = 0x10000                   # chiaki-ng's receive buffer is smaller; anything larger is not a ctrl message
+MAX_MESSAGE = 0x10000                   # the reference's buffer is smaller; anything larger is not a ctrl message
 OS_TYPE = "Win10.0.0"
 DID_PREFIX = bytes([0x00, 0x18, 0x00, 0x00, 0x00, 0x07, 0x00, 0x40, 0x00, 0x80])
 DID_SUFFIX = bytes(6)
@@ -36,7 +36,7 @@ DID_SIZE = 32
 SERVER_TYPES = {0: "PS4", 1: "PS4 Pro", 2: "PS5"}
 STREAMING_TYPES = {"h264": 1, "h265": 2, "h265_hdr": 3}
 
-# Ctrl message types (chiaki-ng's CtrlMessageType).
+# Ctrl message types.
 SESSION_ID = 0x33
 INVALID_SESSION_ID = b"InvalidSessionId"     # what a PS4 Pro sent instead of an ID (owner's board, 12-10-2026)
 HEARTBEAT_REQ = 0xfe
@@ -146,7 +146,7 @@ class Session:
         if reason in (REASON_RP_VERSION, REASON_UNKNOWN) and server_version and server_version != version:
             server = parse_rp_version(server_version, target.ps5)
             if server.unknown and server_version == "5.0":
-                server = Target.PS4_9          # chiaki-ng: a PS4 that says 5.0 means 9.0
+                server = Target.PS4_9          # the reference: a PS4 that says 5.0 means 9.0
             raise VersionMismatch(server)
         if reason == REASON_RP_VERSION:
             raise VersionMismatch(Target.PS5_UNKNOWN if target.ps5 else Target.PS4_UNKNOWN)
@@ -183,7 +183,7 @@ class Session:
         target = self.info.target
         self.crypt = RPCrypt.for_session(target, nonce, self.rp_key)
         self.counter_local = self.counter_remote = 0
-        time.sleep(0.01)                                # chiaki-ng: the PS4 does not always react right away
+        time.sleep(0.01)                                # the reference: the PS4 does not always react right away
         auth = self._encrypt_b64(self.regist_key.ljust(KEY_SIZE, b"\0")[:KEY_SIZE])
         did = self._encrypt_b64(new_did(self.random))
         os_type = self._encrypt_b64(OS_TYPE.encode() + b"\0")
@@ -259,17 +259,17 @@ class Session:
         if msg_type == HEARTBEAT_REQ:
             self.send(HEARTBEAT_REP)
         elif msg_type == SESSION_ID:
-            # The first byte is the ID's length (a normal one has 74 characters, 0x4a); chiaki-ng skips it.
+            # The first byte is the ID's length (a normal one has 74 characters, 0x4a); the reference skips it.
             text = payload[1:]
             if payload[:1] and payload[0] != len(text):
                 self.note(f"The session ID message says {payload[0]} characters but has {len(text)}.")
             if 24 <= len(text) < 79 and text.isascii() and text.isalnum():
                 self.info.session_id = text.decode()
-            else:                                       # chiaki-ng then makes one up: time and random bytes
+            else:                                       # the reference then makes one up: time and random bytes
                 self.info.session_id = f"{int(time.monotonic())}{base64.b64encode(self.random(48)).decode()}"
                 if text == INVALID_SESSION_ID:
-                    self.note("The console sent no session ID (\"InvalidSessionId\"); using a made-up one, as "
-                              "chiaki-ng does. The console accepts the stream with it.")
+                    self.note("The console sent no session ID (\"InvalidSessionId\"); using a made-up one, which "
+                              "the console accepts for the stream.")
                 else:
                     self.note(f"The console sent an unusual session ID ({len(payload)} bytes: "
                               f"{payload[:48].hex(' ')}{' …' if len(payload) > 48 else ''}); using a made-up one.")
@@ -287,7 +287,7 @@ class Session:
             raise SessionError("The console did not accept the login passcode.")
 
     def enable_features(self) -> None:
-        """What chiaki-ng sends once the session ID is there: the microphone off (twice, as it does) and no
+        """What the reference sends once the session ID is there: the microphone off (twice, as it does) and no
         extra display devices."""
         self.send(MIC_TOGGLE, bytes([0, 1, 1, 89]))
         self.send(MIC_TOGGLE, bytes([0, 1, 1, 89]))

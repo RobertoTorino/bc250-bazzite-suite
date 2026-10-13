@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""The launch spec (chiaki-ng's lib/src/launchspec.c): the JSON in the BIG message that tells the console the
-resolution, frame rate, bitrate and codec to stream. Its text is chiaki-ng's byte for byte, placeholders included
+"""The launch spec: the JSON in the BIG message that tells the console the
+resolution, frame rate, bitrate and codec to stream. Its text is the reference's byte for byte, placeholders included
 (the account, region and title fields are not used on the local network)."""
 
 from __future__ import annotations

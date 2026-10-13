@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Which console and which Remote Play version a request is for. The numbers are chiaki-ng's (ChiakiTarget in
-lib/include/chiaki/common.h): they decide the request paths, the RP-Version header and the key tables."""
+"""Which console and which Remote Play version a request is for. The numbers are the reference's: they decide the
+request paths, the RP-Version header and the key tables."""
 
 from __future__ import annotations
 

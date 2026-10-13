@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! A live Takion connection (the connection half of chiaki-ng's takion.c): the handshake, then one thread that
+//! A live Takion connection (the connection half of the reference's takion.c): the handshake, then one thread that
 //! receives, checks each packet's GMAC, puts the data messages and the video in order, acknowledges data and sends
 //! unacknowledged messages again. What arrives goes out as events; sending works from any thread.
 //!
 //! Before the key exchange (BIG/BANG, carried by this connection) there is no crypto: packets are not signed and
-//! video and audio are held back (up to 32 packets) until `set_crypt`, as in chiaki-ng. The network test
-//! (Senkusha, version 7) runs without crypto: there video and audio go out as they come. chiaki-ng acknowledges a
+//! video and audio are held back (up to 32 packets) until `set_crypt`, as in the reference. The network test
+//! (Senkusha, version 7) runs without crypto: there video and audio go out as they come. The reference acknowledges a
 //! DATA message after its handler ran, so the BANG's acknowledgement goes out signed with the keys BANG brought;
 //! here the handler is the Python side, so without keys an acknowledgement waits for `set_crypt` (up to 100 ms).
 //!
 //! Once the stream runs (`start_stream`, after STREAMINFO), video goes through the video receiver (video.rs) and
 //! comes out as whole frames, audio packets are counted, and a congestion report goes to the console every 200 ms
-//! (chiaki-ng's streamconnection.c starts it right after the handshake; it has nothing to count before the stream).
+//!.
 
 use std::collections::VecDeque;
 use std::io::ErrorKind;
@@ -46,9 +46,9 @@ const DATA_ACK_PACKET_SIZE: usize = 1 + MESSAGE_HEADER_SIZE + 0xc;
 const ACK_WAIT_FOR_CRYPT: Duration = Duration::from_millis(100);
 const CONGESTION_INTERVAL: Duration = Duration::from_millis(200);
 const STOP_CHECK: Duration = Duration::from_millis(20);
-/// chiaki-ng's default for the most loss a congestion report admits (its setting "packet_loss_max").
+/// The reference's default for the most loss a congestion report admits (its setting "packet_loss_max").
 pub const PACKET_LOSS_MAX: f64 = 0.05;
-// The data channel chiaki-ng's DATA messages go on; STREAMINFOACK uses 9, frame reports 2.
+// The data channel the reference's DATA messages go on; STREAMINFOACK uses 9, frame reports 2.
 pub const CHANNEL_DEFAULT: u16 = 1;
 
 #[derive(Debug)]
@@ -387,7 +387,7 @@ fn send_congestion(shared: &Shared, word_0: u16, received: u16, lost: u16) -> Re
     shared.sock.send(&packet).map(|_| ()).map_err(SendError::Io)
 }
 
-/// chiaki-ng's congestion control thread: every 200 ms the packets received and lost since the last report.
+/// The reference's congestion control thread: every 200 ms the packets received and lost since the last report.
 fn report_congestion(shared: Arc<Shared>, packet_loss_max: f64) {
     let mut next = Instant::now() + CONGESTION_INTERVAL;
     while !shared.stop.load(Ordering::Relaxed) {
@@ -447,7 +447,7 @@ struct Receiving {
 
 impl Receiving {
     fn new(shared: Arc<Shared>, events: Sender<Event>) -> Self {
-        // chiaki-ng starts the data queue at the console's tag (not its initial sequence number).
+        // The reference starts the data queue at the console's tag (not its initial sequence number).
         let data_queue = ReorderQueue::new(DATA_QUEUE_SIZE_EXP, Bits::B32, shared.tag_remote as u64, DropStrategy::End);
         Self {
             shared,
@@ -611,7 +611,7 @@ impl Receiving {
     }
 
     /// Hands out the video packets in order. A missing packet is waited for up to about a frame; then the queue
-    /// skips to the next packet it has (chiaki-ng's takion_av_queue_flush_with_timeout).
+    /// skips to the next packet it has.
     fn flush_video(&mut self) {
         let Some(queue) = self.video_queue.as_mut() else { return };
         let mut out = Vec::new();
@@ -913,7 +913,7 @@ mod tests {
         assert_eq!(events[1], Event::Data { data_type: 0, channel: 1, data: b"signed".to_vec() });
         assert_eq!(connection.stats().mac_mismatch, 1);
 
-        // Each acknowledgement moves the key position by its packet size (29) plus 29 % 16, as in chiaki-ng.
+        // Each acknowledgement moves the key position by its packet size (29) plus 29 % 16, as in the reference.
         console.recv();                                     // the DATA_ACK, at 42
         let seq = connection.send_data(1, 1, b"big", false).unwrap();
         let mut packet = console.recv();

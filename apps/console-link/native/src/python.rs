@@ -446,9 +446,68 @@ impl Takion {
     }
 }
 
+/// The video decoder (decoder.rs): Decoder(codec="h264" or "hevc", hw=True). decode(sample) gives the frames it
+/// completed as dicts (width, height, hw); image() the last one's picture as (format, width, height, bytes).
+/// hw tells whether VA-API runs, hw_error why not when it was asked for.
+#[cfg(feature = "decoder")]
+#[pyclass(name = "Decoder", module = "bc250_console_link_core", unsendable)]
+struct Decoder(crate::decoder::Decoder);
+
+#[cfg(feature = "decoder")]
+fn decode_error(e: crate::decoder::DecodeError) -> PyErr {
+    PyValueError::new_err(e.message)
+}
+
+#[cfg(feature = "decoder")]
+#[pymethods]
+impl Decoder {
+    #[new]
+    #[pyo3(signature = (codec="h264", hw=true))]
+    fn new(codec: &str, hw: bool) -> PyResult<Self> {
+        let hevc = match codec {
+            "h264" => false,
+            "h265" | "hevc" => true,
+            _ => return Err(PyValueError::new_err("codec is h264 or hevc")),
+        };
+        crate::decoder::Decoder::new(hevc, hw).map(Self).map_err(decode_error)
+    }
+
+    #[getter]
+    fn hw(&self) -> bool {
+        self.0.hw()
+    }
+
+    #[getter]
+    fn hw_error(&self) -> Option<String> {
+        self.0.hw_error.as_ref().map(|e| e.message.clone())
+    }
+
+    fn decode<'py>(&mut self, py: Python<'py>, sample: &[u8]) -> PyResult<Vec<Bound<'py, PyDict>>> {
+        let frames = self.0.decode(sample).map_err(decode_error)?;
+        frames.into_iter().map(|frame| {
+            let dict = PyDict::new(py);
+            dict.set_item("width", frame.width)?;
+            dict.set_item("height", frame.height)?;
+            dict.set_item("hw", frame.hw)?;
+            Ok(dict)
+        }).collect()
+    }
+
+    fn image<'py>(&mut self, py: Python<'py>) -> PyResult<(String, u32, u32, Bound<'py, PyBytes>)> {
+        let image = self.0.image().map_err(decode_error)?;
+        Ok((image.format, image.width, image.height, bytes(py, &image.data)))
+    }
+}
+
 #[pymodule]
 fn bc250_console_link_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
+    m.add("DECODER", cfg!(feature = "decoder"))?;
+    #[cfg(feature = "decoder")]
+    {
+        m.add_class::<Decoder>()?;
+        m.add("FFMPEG_VERSION", crate::decoder::ffmpeg_version())?;
+    }
     m.add_class::<GkCrypt>()?;
     m.add_class::<Ecdh>()?;
     m.add_class::<KeyState>()?;

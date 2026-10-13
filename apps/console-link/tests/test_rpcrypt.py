@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""The crypto against vectors printed by chiaki-ng's own C code (lib/src/rpcrypt.c at commit c8bea2642d0e, built
+"""The crypto against vectors printed by the reference's own C code (lib/src/rpcrypt.c at commit c8bea2642d0e, built
 with OpenSSL on 12-10-2026): five targets, three seeds each, every derived value and a whole encrypted message.
-The consoles accept what chiaki-ng sends, so equal bytes are the proof the port is right."""
+The consoles accept what the reference sends, so equal bytes are the proof the port is right."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ def _id(vector: dict) -> str:
 
 
 @pytest.mark.parametrize("vector", VECTORS, ids=_id)
-def test_session_crypto_matches_chiaki(vector):
+def test_session_crypto_matches_reference(vector):
     target = Target(vector["target"])
     crypt = RPCrypt.for_session(target, bytes.fromhex(vector["nonce"]), bytes.fromhex(vector["morning"]))
     assert crypt.bright.hex() == vector["auth_bright"]
@@ -34,7 +34,7 @@ def test_session_crypto_matches_chiaki(vector):
 
 
 @pytest.mark.parametrize("vector", VECTORS, ids=_id)
-def test_regist_crypto_matches_chiaki(vector):
+def test_regist_crypto_matches_reference(vector):
     target = Target(vector["target"])
     ambassador = bytes.fromhex(vector["ambassador"])
     crypt = RPCrypt.for_regist(target, ambassador, vector["key_0_off"], vector["pin"])
@@ -61,7 +61,7 @@ def test_each_counter_gives_its_own_keystream():
 
 
 def test_hmac_key_per_target():
-    # chiaki-ng: an unknown PS5 version uses the PS4 key, only PS5 1.0 its own.
+    # The reference: an unknown PS5 version uses the PS4 key, only PS5 1.0 its own.
     assert hmac_key(Target.PS5_1) == keys.HMAC_PS5
     assert hmac_key(Target.PS5_UNKNOWN) == keys.HMAC_PS4
     assert hmac_key(Target.PS4_10) == keys.HMAC_PS4

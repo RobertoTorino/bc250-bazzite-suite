@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! A reorder queue for 16- or 32-bit sequence numbers (chiaki-ng's reorderqueue.c): items go in by sequence
+//! A reorder queue for 16- or 32-bit sequence numbers: items go in by sequence
 //! number, in any order, and come out in order once there is no gap before them. The queue holds 2^size_exp
 //! numbers from `begin`; what does not fit is dropped from the end (the newest, for the data messages) or from the
 //! begin (the oldest, for video, which moves on rather than wait).
@@ -158,7 +158,7 @@ impl<T> ReorderQueue<T> {
         self.slots[self.idx(self.bits.add(self.begin, index))].as_ref()
     }
 
-    /// Removes the item at begin + index. chiaki-ng's version calls the drop callback but leaves the slot set,
+    /// Removes the item at begin + index. The reference's version calls the drop callback but leaves the slot set,
     /// so the freed item could still be pulled; here the slot is emptied.
     pub fn drop_at(&mut self, index: u64) {
         if index >= self.count {

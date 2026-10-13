@@ -8,3 +8,6 @@ __pycache__/
 # The native core's build output (cargo, maturin)
 /native/target/
 /native/dist/
+
+# The wheel CI builds for a release (with FFmpeg), installed by install.sh
+/native/wheel/

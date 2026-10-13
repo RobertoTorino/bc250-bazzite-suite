@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! Takion packets (chiaki-ng's takion.c): the transport of the stream over UDP 9296, modelled on SCTP.
+//! Takion packets: the transport of the stream over UDP 9296, modelled on SCTP.
 //!
 //! The low nibble of the first byte is the packet type. Control packets carry one message: a 16-byte header (the
 //! peer's tag, the GMAC, the low 32 bits of the key position, chunk type and flags, size) and a payload. Video and
@@ -73,7 +73,7 @@ pub fn key_pos_offset(base_type: u8) -> Option<usize> {
     }
 }
 
-/// How far the local key position moves for data_size bytes. chiaki-ng adds data_size % 16, which is not a
+/// How far the local key position moves for data_size bytes. The reference adds data_size % 16, which is not a
 /// rounding up to whole blocks; the console expects these positions, so it is kept.
 pub fn key_pos_advance(data_size: usize) -> u64 {
     (data_size + data_size % BLOCK_SIZE) as u64
@@ -109,7 +109,7 @@ pub fn packet_mac(crypt: Option<&mut GkCrypt>, buf: &mut [u8], key_pos: u64) -> 
 }
 
 /// Checks a received packet's GMAC; on success the key position is committed and returned. Without crypto (before
-/// the key exchange) every packet passes, as in chiaki-ng.
+/// the key exchange) every packet passes, as in the reference.
 pub fn verify_packet(crypt: Option<&mut GkCrypt>, key_state: &mut KeyState, buf: &mut [u8]) -> Result<u64, TakionError> {
     let Some(crypt) = crypt else { return Ok(0) };
     let base_type = *buf.first().ok_or(TakionError::TooSmall)? & BASE_TYPE_MASK;
@@ -203,7 +203,7 @@ pub fn parse_init_ack(message: &Message) -> Result<Init, TakionError> {
         initial_seq_num: be32(p, 0xc),
         cookie: p[0x10..].to_vec(),
     };
-    // chiaki-ng's checks: a tag, and stream counts that fit ours.
+    // The reference's checks: a tag, and stream counts that fit ours.
     if init.tag == 0
         || init.outbound_streams == 0
         || init.inbound_streams == 0
@@ -310,7 +310,7 @@ pub struct AvPacket {
 
 pub const V7_AV_HEADER_SIZE: usize = 0x12;
 
-/// A version 7 video or audio header (chiaki-ng's chiaki_takion_v7_av_packet_format_header): what the network test
+/// A version 7 video or audio header: what the network test
 /// sends as its pings. As there, the unit fields use the video layout for audio too, and the key position is
 /// written in the machine's byte order (little-endian here) where every other field is big-endian.
 pub fn v7_av_header(packet: &AvPacket) -> Vec<u8> {
@@ -362,7 +362,7 @@ fn parse_av_v9_v12(v12: bool, buf: &[u8], key_state: &mut KeyState) -> Result<Av
         (true, false) => 0x13,
         (false, false) => 0x12,
     };
-    // chiaki-ng checks only this size; its audio path then reads past it when the nalu bit is set. Here the whole
+    // The reference checks only this size; its audio path then reads past it when the nalu bit is set. Here the whole
     // header, nalu bytes and haptics marker included, must be inside the packet.
     let mut needed = 1 + 0x11 + if packet.is_video { 3 } else { 1 };
     needed += if packet.uses_nalu_info_structs { 3 } else { 0 };
@@ -433,7 +433,7 @@ mod tests {
     use crate::vectors::{hex, load};
 
     #[test]
-    fn v7_header_matches_chiaki() {
+    fn v7_header_matches_reference() {
         for (name, v) in load()["v7_header"].as_object().unwrap() {
             let n = |key: &str| v[key].as_u64().unwrap();
             let packet = AvPacket {
@@ -455,7 +455,7 @@ mod tests {
     }
 
     #[test]
-    fn packet_mac_matches_chiaki() {
+    fn packet_mac_matches_reference() {
         let v = &load()["packet_mac"];
         let key: [u8; 16] = hex(&v["handshake_key"]).try_into().unwrap();
         let secret: [u8; 32] = hex(&v["secret"]).try_into().unwrap();
@@ -475,7 +475,7 @@ mod tests {
     }
 
     #[test]
-    fn av_parse_matches_chiaki() {
+    fn av_parse_matches_reference() {
         for case in load()["av"].as_array().unwrap() {
             let packet = hex(&case["packet"]);
             let version = match case["parser"].as_str().unwrap() {
@@ -506,7 +506,7 @@ mod tests {
 
     #[test]
     fn short_av_packets_are_refused() {
-        let mut packet = vec![0x13u8; 0x14];                 // audio, nalu bit: chiaki-ng would read past the end
+        let mut packet = vec![0x13u8; 0x14];                 // audio, nalu bit: the reference would read past the end
         assert_eq!(parse_av(12, &packet, &mut KeyState::new()), Err(TakionError::TooSmall));
         packet[0] = 0x02;
         assert_eq!(parse_av(9, &packet[..0x10], &mut KeyState::new()), Err(TakionError::TooSmall));
@@ -515,7 +515,7 @@ mod tests {
     }
 
     #[test]
-    fn congestion_matches_chiaki() {
+    fn congestion_matches_reference() {
         let v = &load()["congestion"];
         let n = |k: &str| v[k].as_u64().unwrap();
         let packet = congestion_packet(n("word_0") as u16, n("received") as u16, n("lost") as u16, n("key_pos"));
@@ -543,7 +543,7 @@ mod tests {
         assert_eq!(init.len(), 1 + 0x10 + 0x10);
         assert_eq!(&init[1..5], &[0, 0, 0, 0]);                           // to tag 0
         assert_eq!(init[0xd], CHUNK_INIT);
-        // The console's INIT_ACK, as chiaki-ng expects it: its tag, window, stream counts, sequence number, cookie.
+        // The console's INIT_ACK, as the reference expects it: its tag, window, stream counts, sequence number, cookie.
         let mut payload = Vec::new();
         payload.extend_from_slice(&0xcafe_u32.to_be_bytes());
         payload.extend_from_slice(&A_RWND.to_be_bytes());
@@ -560,7 +560,7 @@ mod tests {
     }
 
     #[test]
-    fn key_pos_advance_is_chiakis() {
+    fn key_pos_advance_is_the_references() {
         assert_eq!(key_pos_advance(16), 16);
         assert_eq!(key_pos_advance(20), 24);                               // 20 + 20 % 16, not 32
         assert_eq!(key_pos_advance(0x1d), 0x1d + 0xd);

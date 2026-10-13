@@ -65,8 +65,9 @@ jobs:
         run: python -X faulthandler -m pytest -v tests        # -v: a crash log names the test
 
   # BC250 Console Link's native core (Rust, apps/console-link/native): its own tests, clippy, and the Python module
-  # built into a wheel and tested from Python. Rust is preinstalled on ubuntu-latest. The pytest job above skips
-  # tests/test_native.py, which needs the built module.
+  # built into a wheel and tested from Python, all with the video decoder (FFmpeg from native/ffmpeg/build.sh, kept
+  # in the cache until the script changes); clippy also without it, as a clone without FFmpeg builds it. Rust is
+  # preinstalled on ubuntu-latest. The pytest job above skips tests/test_native.py, which needs the built module.
   native:
     runs-on: ubuntu-latest
     defaults:
@@ -79,16 +80,32 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: nasm and the libva headers
+        run: sudo apt-get update -q && sudo apt-get install -y -q nasm libva-dev
+
+      - name: FFmpeg cache
+        id: ffmpeg
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/bc250-console-link
+          key: ffmpeg-${{ runner.os }}-${{ hashFiles('apps/console-link/native/ffmpeg/build.sh') }}
+
+      - name: FFmpeg
+        if: steps.ffmpeg.outputs.cache-hit != 'true'
+        run: ffmpeg/build.sh
+
       - name: cargo test
-        run: cargo test --locked
+        run: cargo test --locked --features decoder
 
       - name: clippy
-        run: cargo clippy --locked --all-targets --features python -- -D warnings
+        run: |
+          cargo clippy --locked --all-targets --features python,decoder -- -D warnings
+          cargo clippy --locked --all-targets --features python -- -D warnings
 
       - name: Build the Python module
         run: |
           python -m pip install -q "maturin>=1.5,<2"
-          maturin build --release --locked -o dist
+          maturin build --release --locked --compatibility linux --features python,pyo3/extension-module,decoder -o dist
 
       - name: Test the module from Python
         working-directory: apps/console-link         # the app's package imports from here, as in test.sh

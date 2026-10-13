@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""The PSN account ID through the PlayStation sign-in (chiaki-ng's scripts/psn-account-id.py and
+"""The PSN account ID through the PlayStation sign-in (the reference's scripts/psn-account-id.py and
 gui/src/psnaccountid.cpp, after grill2010): PlayStation does not show the account ID anywhere, but the sign-in for
 the Remote Play app tells it.
 
@@ -8,7 +8,7 @@ the Remote Play app tells it.
 2. That code (short-lived, usable once) is exchanged for an access token at the PSN token service.
 3. The token's details hold user_id, the account ID; registration sends it as 8 bytes, little-endian.
 
-Only the account ID is kept: the token is used once and dropped. The scope is the narrowest chiaki-ng uses
+Only the account ID is kept: the token is used once and dropped. The scope is the narrowest the reference uses
 (psn:clientapp, its script's), enough for the account ID."""
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 
-# The official Remote Play client for Windows, as in chiaki-ng.
+# The official Remote Play client for Windows, as in the reference.
 CLIENT_ID = "ba495a24-818c-472b-b12d-ff231c1b5745"
 CLIENT_SECRET = "mvaiZkRsAsI1IBkY"
 AUTH_BASE = "https://auth.api.sonyentertainmentnetwork.com/2.0/oauth"
@@ -34,7 +34,7 @@ class PsnError(Exception):
 
 
 def login_url(auth_base: str = AUTH_BASE) -> str:
-    """The PlayStation sign-in page, the address exactly as chiaki-ng's script builds it."""
+    """The PlayStation sign-in page, the address exactly as the reference's script builds it."""
     return (f"{auth_base}/authorize?service_entity=urn:service-entity:psn&response_type=code&client_id={CLIENT_ID}"
             f"&redirect_uri={REDIRECT_URI}&scope={SCOPE}&request_locale=en_US&ui=pr&service_logo=ps"
             "&layout_type=popup&smcid=remoteplay&prompt=always&PlatformPrivacyWs1=minimal&")
@@ -68,7 +68,7 @@ class Account:
 
     @property
     def code(self) -> str:
-        """The form chiaki-ng shows: base64 of the 8 bytes."""
+        """The form the reference shows: base64 of the 8 bytes."""
         return base64.b64encode(self.account_id).decode()
 
 

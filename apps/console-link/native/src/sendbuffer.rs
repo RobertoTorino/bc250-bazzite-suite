@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! The data messages sent and not yet acknowledged (chiaki-ng's takionsendbuffer.c). A message is sent again when
+//! The data messages sent and not yet acknowledged. A message is sent again when
 //! no DATA_ACK came within 200 ms, up to 25 times; then it is given up. An acknowledgement covers its sequence
 //! number and every earlier one.
 
@@ -74,7 +74,7 @@ impl SendBuffer {
         acked
     }
 
-    /// What to send again now, and what is given up after the last try (acknowledged locally, as chiaki-ng does).
+    /// What to send again now, and what is given up after the last try (acknowledged locally, as the reference does).
     pub fn due(&mut self, now: Instant) -> Due {
         let mut due = Due::default();
         let mut i = 0;

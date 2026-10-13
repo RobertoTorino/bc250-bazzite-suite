@@ -5,8 +5,9 @@
     python3 tools/build_release.py <app>-v<x.y.z> <out-dir> [--bundle DIR]
 
 <out-dir> gets <tag>.tar.gz (unpacks into <tag>/), SHA256SUMS and notes.md. The tag's version must equal the app's
-VERSION. bazzite-test gets its engine checksum recorded (development/tools/build_info.py), which makes it a release
-build that refuses a changed engine. A portal tag needs --bundle: a folder with the pinned bazzite-test release
+VERSION. An app in NATIVE_WHEELS needs the wheel of its native core in that folder first, built by release.yml;
+it goes into the tarball, so the portal's checksum covers it. bazzite-test gets its engine checksum recorded
+(development/tools/build_info.py), which makes it a release build that refuses a changed engine. A portal tag needs --bundle: a folder with the pinned bazzite-test release
 (<tag>.tar.gz and SHA256SUMS, as published); it is verified against apps.toml and unpacked into bundled/.
 
 The tar inside is reproducible and the same on Linux and Windows: sorted entries, root:root, the commit time (or
@@ -35,6 +36,9 @@ MANIFEST = SUITE / "portal" / "apps.toml"
 # release.yml marks only portal releases as GitHub's "Latest", so this always opens the newest portal.
 LATEST_PORTAL_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite/releases/latest"
 _TAG = re.compile(r"^(?P<app>[a-z0-9-]+)-v(?P<version>\d+\.\d+\.\d+)$")
+# The app's folder for the wheel of its native core (Rust with FFmpeg inside), which release.yml builds before this
+# runs: users install it with pip and need no compiler. Its version is the app's.
+NATIVE_WHEELS = {"console-link": Path("native/wheel")}
 
 
 def _load(name: str, path: Path):
@@ -131,6 +135,20 @@ def bundle_bazzite_test(stage_dir: Path, bundle: Path) -> str:
     return entry.tag
 
 
+def native_wheel(app: str, src: Path, version: str) -> str | None:
+    """The name of the app's native wheel, None for an app without one; refuses a missing or stale wheel."""
+    if app not in NATIVE_WHEELS:
+        return None
+    folder = src / NATIVE_WHEELS[app]
+    wheels = sorted(folder.glob("*.whl"))
+    if len(wheels) != 1:
+        raise SystemExit(f"{app} ships the wheel of its native core: {folder} must hold exactly one .whl, built by "
+                         "release.yml (native/ffmpeg/build.sh, then maturin build with the feature decoder)")
+    if wheels[0].name.split("-")[1] != version:
+        raise SystemExit(f"{wheels[0].name} is not version {version}; build the wheel again")
+    return wheels[0].name
+
+
 def build(tag: str, out: Path, bundle: Path | None = None) -> Path:
     match = _TAG.match(tag)
     if not match:
@@ -142,6 +160,7 @@ def build(tag: str, out: Path, bundle: Path | None = None) -> Path:
     current = (src / "VERSION").read_text(encoding="utf-8").strip()
     if current != version:
         raise SystemExit(f"{tag}: {src.relative_to(SUITE)}/VERSION is {current}; bump it before tagging")
+    wheel = native_wheel(app, src, version)
     out.mkdir(parents=True, exist_ok=True)
     notes = [f"## {tag}", ""]
     if app != "portal":
@@ -160,6 +179,9 @@ def build(tag: str, out: Path, bundle: Path | None = None) -> Path:
             pins = "\n".join(f"- `{e.tag}`" for e in manifest.load(MANIFEST))
             notes += ["This portal release installs and pins these app releases:", "", pins, "",
                       f"`{bundled}` is included and installed with the portal.", ""]
+        if wheel is not None:
+            notes += [f"Includes its native core as `{wheel}`, built for Linux x86-64 with FFmpeg linked in "
+                      "(LGPL, from its own sources).", ""]
         if (stage_dir / "bc250_core").is_dir():
             core = (SUITE / "core" / "VERSION").read_text(encoding="utf-8").strip()
             notes += [f"Bundles the suite core `bc250_core` {core}.", ""]

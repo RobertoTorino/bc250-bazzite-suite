@@ -70,7 +70,7 @@ def test_payload_layout():
     assert crypt.decrypt(0, payload[0x1e0:]).startswith(b"Client-Type: " + regist.CLIENT_TYPE.encode())
 
 
-def test_request_header_is_chiakis():
+def test_request_header_is_the_references():
     header = regist.request_header(Target.PS5_1, 0x24f)
     assert header == (b"POST /sie/ps5/rp/sess/rgst HTTP/1.1\r\n HTTP/1.1\r\nHOST: 10.0.2.15\r\n"
                       b"User-Agent: remoteplay Windows\r\nConnection: close\r\nContent-Length: 591\r\n"

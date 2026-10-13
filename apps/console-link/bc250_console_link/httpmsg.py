@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 """The HTTP-like messages of Remote Play: discovery answers, the registration and session responses and the
-headers inside the registration payload. Parsed the way chiaki-ng's lib/src/http.c does: lines end at \\r or \\n,
+headers inside the registration payload. Parsed the way the reference's lib/src/http.c does: lines end at \\r or \\n,
 "Key: value", keys compared as sent."""
 
 from __future__ import annotations

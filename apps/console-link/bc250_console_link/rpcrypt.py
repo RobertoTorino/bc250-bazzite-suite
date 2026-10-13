@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""The Remote Play crypto of registration and the control connection, ported from chiaki-ng's lib/src/rpcrypt.c.
+"""The Remote Play crypto of registration and the control connection, ported from the reference's lib/src/rpcrypt.c.
 
 Both sides hold two 16-byte values: "bright" is the AES-128 key and "ambassador" goes into the IV. Each message is
 AES-128-CFB with IV = HMAC-SHA256(hmac_key, ambassador || counter as 8 bytes big-endian)[:16], the counter counting
-the messages in one direction. The names and the byte arithmetic are chiaki-ng's; the tests compare every function
-with vectors printed by chiaki-ng's own C code."""
+the messages in one direction. The names and the byte arithmetic are the reference's; the tests compare every function
+with vectors printed by the reference's own C code."""
 
 from __future__ import annotations
 
@@ -59,7 +59,7 @@ def aeropause(target: Target, key_1_off: int, ambassador: bytes) -> bytes:
 
 
 def hmac_key(target: Target) -> bytes:
-    # As chiaki-ng: only PS5 1.0 has its own key; an unknown PS5 version uses the PS4 one.
+    # As the reference: only PS5 1.0 has its own key; an unknown PS5 version uses the PS4 one.
     if target == Target.PS5_1:
         return keys.HMAC_PS5
     if target.pre10 and not target.unknown:
@@ -75,7 +75,7 @@ class RPCrypt:
 
     @classmethod
     def for_session(cls, target: Target, nonce: bytes, morning: bytes) -> RPCrypt:
-        """chiaki_rpcrypt_init_auth: the control connection's crypto."""
+        """The control connection's crypto (init_auth in the reference)."""
         bright, ambassador = bright_ambassador(target, nonce, morning)
         return cls(target, bright, ambassador)
 
@@ -85,7 +85,7 @@ class RPCrypt:
         if target.pre10:
             bright = bytearray(keys.REGIST_PS4_PRE10)
             first = 0
-            target = Target.PS4_9                       # chiaki-ng: representative, might not be the actual version
+            target = Target.PS4_9                       # the reference: representative, might not be the actual version
         else:
             if not 0 <= key_0_off < 0x20:
                 raise ValueError("key_0_off must be below 0x20")

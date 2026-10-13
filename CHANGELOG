@@ -1,3 +1,11 @@
+Changelog: 13-10-2026 02:23:15
+
+CLAUDE.md: a standing rule that Console Link's ported code's origin is named only where licensing needs it; the root CHANGELOG and MIGRATION.md follow it.
+
+Changelog: 13-10-2026 02:18:03
+
+Release tooling for an app that ships a native wheel (BC250 Console Link): release.yml builds the wheel on a console-link tag (FFmpeg from native/ffmpeg/build.sh, maturin with the feature decoder) into native/wheel, so it goes into the tarball and under the portal's checksum; build_release.py refuses a release in NATIVE_WHEELS without exactly one wheel of the app's version and names it in the notes. CI's native job builds FFmpeg (cached until build.sh changes) and tests, lints and builds the module with the decoder, and lints it without. The installer test checks that a release's wheel is installed and nothing built.
+
 Changelog: 13-10-2026 01:25:57
 
 BC250 Remote Play is renamed BC250 Console Link (owner): apps/console-link, its installer test tools/installer-tests/console-link.sh, the manual page docs/apps/console-link.md, CI (its test matrix entry, the native job, shellcheck, the installer step), README, CLAUDE.md, the architecture chapter and requirements-dev.txt follow.
@@ -12,7 +20,7 @@ CI: the native job also runs BC250 Remote Play's network test tests (tests/test_
 
 Changelog: 12-10-2026 23:37:12
 
-MIGRATION.md: BC250 Remote Play has a future iteration noted, an implementation of our own without chiaki-ng's code.
+MIGRATION.md: BC250 Remote Play has a future iteration noted, an implementation of our own without the reference's code.
 
 Changelog: 12-10-2026 23:09:42
 
@@ -28,7 +36,7 @@ CI has a native job for BC250 Remote Play's Rust core: cargo test, clippy with w
 
 Changelog: 12-10-2026 21:51:19
 
-New app in the suite: BC250 Remote Play (apps/remote-play, key remote-play, version 0.1.0), iteration 1: find, wake and register PS4 and PS5 consoles and start a Remote Play session, with the protocol ported from chiaki-ng. It is AGPL-3.0, the first app of the suite under that license (README, the manual's start page and CLAUDE.md say so). It has its own installer test (tools/installer-tests/remote-play.sh, a CI step), its entry in the CI pytest matrix and the shellcheck step, a manual chapter (docs/apps/remote-play.md) and its requirements in the root requirements-dev.txt. Not yet released: the version, the tag and the portal/VERSION bump are the owner's.
+New app in the suite: BC250 Remote Play (apps/remote-play, key remote-play, version 0.1.0), iteration 1: find, wake and register PS4 and PS5 consoles and start a Remote Play session, with the protocol ported from the reference. It is AGPL-3.0, the first app of the suite under that license (README, the manual's start page and CLAUDE.md say so). It has its own installer test (tools/installer-tests/remote-play.sh, a CI step), its entry in the CI pytest matrix and the shellcheck step, a manual chapter (docs/apps/remote-play.md) and its requirements in the root requirements-dev.txt. Not yet released: the version, the tag and the portal/VERSION bump are the owner's.
 
 Changelog: 12-10-2026 21:50:59
 

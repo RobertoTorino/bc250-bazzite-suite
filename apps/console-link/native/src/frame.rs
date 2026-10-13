@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! A video frame from its units (chiaki-ng's frameprocessor.c), and the packet counts for the congestion reports
+//! A video frame from its units, and the packet counts for the congestion reports
 //! (packetstats.c).
 //!
 //! A frame comes as units of one size: the source units, then the FEC units. Each source unit starts with two
@@ -39,7 +39,7 @@ impl FrameProcessor {
         Self { flushed: true, ..Default::default() }
     }
 
-    /// Starts a frame from its first packet. chiaki-ng keeps the last frame's state when this fails; here the
+    /// Starts a frame from its first packet. The reference keeps the last frame's state when this fails; here the
     /// frame is empty then, so its units are refused and its flush fails.
     pub fn alloc_frame(&mut self, packet: &AvPacket, data: &[u8]) -> Result<(), &'static str> {
         *self = Self { buf: std::mem::take(&mut self.buf), flushed: true, ..Default::default() };
@@ -97,7 +97,7 @@ impl FrameProcessor {
         Ok(())
     }
 
-    /// Units received and units missing, for the congestion reports. As in chiaki-ng, a frame without FEC units
+    /// Units received and units missing, for the congestion reports. As in the reference, a frame without FEC units
     /// counts one FEC unit expected.
     pub fn packet_counts(&self) -> (u64, u64) {
         let received = self.source_received + self.fec_received;
@@ -117,7 +117,7 @@ impl FrameProcessor {
         for i in 0..self.source_expected {
             let at = i * self.stride;
             let padding = u16::from_be_bytes([self.buf[at], self.buf[at + 1]]) as usize;
-            if padding < self.unit_size {           // else the unit stays as it was (chiaki-ng logs it)
+            if padding < self.unit_size {           // else the unit stays as it was (the reference logs it)
                 self.slots[i] = self.unit_size - padding;
             }
         }
@@ -125,7 +125,7 @@ impl FrameProcessor {
     }
 
     /// The frame: the source units without their padding size, with FEC first when units are missing.
-    /// chiaki-ng's frame can be flushed once; later units only count.
+    /// The reference's frame can be flushed once; later units only count.
     pub fn flush(&mut self) -> (FlushResult, Vec<u8>) {
         if self.source_expected == 0 || self.flushed {
             return (FlushResult::Failed, Vec::new());
@@ -171,7 +171,7 @@ impl PacketStats {
         }
     }
 
-    /// Received and lost, then counting starts again. The sequence part is chiaki-ng's arithmetic as it is: the
+    /// Received and lost, then counting starts again. The sequence part is the reference's arithmetic as it is: the
     /// difference wraps when the maximum is below the minimum, and more packets than the difference count the
     /// difference as lost.
     pub fn take(&mut self) -> (u64, u64) {
@@ -183,7 +183,7 @@ impl PacketStats {
     }
 }
 
-/// The congestion report from the counts (chiaki-ng's congestioncontrol.c): the loss reported is at most
+/// The congestion report from the counts: the loss reported is at most
 /// packet_loss_max of the packets, both numbers cut to 16 bits.
 pub fn congestion_report(received: u64, lost: u64, packet_loss_max: f64) -> (u16, u16) {
     let total = received.wrapping_add(lost);
@@ -297,7 +297,7 @@ pub(crate) mod tests {
         for _ in 0..3 {
             stats.push_seq(9);
         }
-        assert_eq!(stats.take(), (3, 1));           // more packets than the difference: chiaki-ng counts it lost
+        assert_eq!(stats.take(), (3, 1));           // more packets than the difference: the reference counts it lost
         assert_eq!(congestion_report(90, 10, 0.05), (95, 5));
         assert_eq!(congestion_report(99, 1, 0.05), (99, 1));
         assert_eq!(congestion_report(0, 0, 0.05), (0, 0));

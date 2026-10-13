@@ -74,7 +74,7 @@ class AccountDialog(QDialog):
         lay.addWidget(self.redirect_edit)
         lay.addWidget(hint_label(
             "The app sends the code in that address to PSN once, to read your account ID, and keeps only the ID. "
-            "The code works for a few minutes. This is the sign-in chiaki-ng uses."))
+            "The code works for a few minutes."))
         lay.addWidget(buttons)
         self.resize(640, self.sizeHint().height())
 

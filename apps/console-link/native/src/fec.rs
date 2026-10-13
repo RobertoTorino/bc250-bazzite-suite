@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! Forward error correction of the video frames (chiaki-ng's fec.c, which calls Jerasure): a Cauchy Reed-Solomon
+//! Forward error correction of the video frames: a Cauchy Reed-Solomon
 //! code over GF(2^8) with the primitive polynomial 0x11d, its coding matrix Jerasure's
 //! cauchy_original_coding_matrix (row i, column j: 1 / (i ^ (m + j))). A frame has k source units and m FEC units
-//! of the same size; any k of them give back the source units. The tests decode frames recorded by chiaki-ng
+//! of the same size; any k of them give back the source units. The tests decode frames recorded by the reference
 //! (tests/fec_vectors.json of the app, from its test/fec_test_cases.inl).
 
 pub const WORD_SIZE: u32 = 8;
@@ -217,7 +217,7 @@ mod tests {
     }
 
     #[test]
-    fn recorded_frames_decode_as_in_chiaki() {
+    fn recorded_frames_decode_as_in_the_reference() {
         let cases: serde_json::Value =
             serde_json::from_str(include_str!("../../tests/fec_vectors.json")).expect("valid vectors");
         for case in cases["cases"].as_array().unwrap() {

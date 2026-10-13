@@ -11,8 +11,9 @@
 #  * ~/.local/share/bc250-console-link/app: the app, with the bc250_core it was tested with (bundled in the
 #    release; taken from the suite checkout when run from there).
 #  * ~/.local/share/bc250-console-link/venv: the app's own venv with PyQt6 and cryptography (the wheels bundle Qt
-#    and OpenSSL; nothing is layered), and the native core for the stream, built from native/ when Rust (cargo,
-#    from rustup) is installed.
+#    and OpenSSL; nothing is layered), and the native core for the stream: from a release, its wheel (native/wheel,
+#    built by CI with FFmpeg for the video inside); from a clone, built from native/ when Rust (cargo, from rustup)
+#    is installed, with the video decoder when native/ffmpeg/build.sh has built FFmpeg.
 #  * ~/.config/bc250-console-link: its settings and consoles.json, the keys of the registered consoles (mode 0600).
 #  * ~/.local/bin/bc250-console-link to start it from a terminal, plus an app menu entry and a Desktop icon.
 set -euo pipefail
@@ -120,13 +121,28 @@ info "Installing PyQt6 and cryptography into the venv (downloads ~110 MB the fir
 "$VENV/bin/python" -m pip install -q --disable-pip-version-check -r "$APP_DIR/requirements.txt"
 "$VENV/bin/python" -c 'import PyQt6.QtWidgets, cryptography' || die "PyQt6 or cryptography does not load from the venv."
 
-# The native core (Rust): the stream needs it, everything else works without. Built in a temporary folder, so the
-# app folder gets no build output; pip fetches maturin for the build.
+# The native core (Rust): the stream needs it, everything else works without. A release brings it as a wheel; from
+# a clone it is built in a temporary folder, so the app folder gets no build output (pip fetches maturin for it).
+WHEEL=""
+[ ! -d "$APP_DIR/native/wheel" ] || WHEEL=$(find "$APP_DIR/native/wheel" -name '*.whl' | sort | tail -n 1)
 CARGO=$(command -v cargo || echo "$HOME/.cargo/bin/cargo")
-if [ -x "$CARGO" ]; then
-    info "Building the native core for the stream with Rust (takes a minute or two the first time)"
+FFMPEG_VERSION=$(sed -n 's/^FFMPEG_VERSION=//p' "$APP_DIR/native/ffmpeg/build.sh")
+FFMPEG_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/$APP_ID/ffmpeg-$FFMPEG_VERSION"
+if [ -n "$WHEEL" ]; then
+    info "Installing the native core for the stream from the release ($(basename "$WHEEL"))"
+    "$VENV/bin/python" -m pip install -q --disable-pip-version-check --force-reinstall --no-deps "$WHEEL" ||
+        info "Note: the native core did not install; the app works, but Test stream will say it is missing."
+elif [ -x "$CARGO" ]; then
+    features=python,pyo3/extension-module
+    if [ -f "$FFMPEG_DIR/lib/pkgconfig/libavcodec.pc" ]; then
+        features+=,decoder
+        info "Building the native core for the stream with Rust, with the video decoder (FFmpeg $FFMPEG_VERSION)"
+    else
+        info "Building the native core for the stream with Rust (takes a minute or two the first time); without"
+        info "the video decoder, which needs FFmpeg from native/ffmpeg/build.sh first"
+    fi
     BUILD_DIR=$(mktemp -d)
-    if PATH="$(dirname "$CARGO"):$PATH" CARGO_TARGET_DIR="$BUILD_DIR" \
+    if PATH="$(dirname "$CARGO"):$PATH" CARGO_TARGET_DIR="$BUILD_DIR" MATURIN_PEP517_ARGS="--features $features" \
         "$VENV/bin/python" -m pip install -q --disable-pip-version-check "$APP_DIR/native"; then
         info "Native core installed"
     else

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""The key tables of the Remote Play crypto, as chiaki-ng has them (lib/src/rpcrypt.c, AGPL-3.0, commit
+"""The key tables of the Remote Play crypto, as the reference has them (lib/src/rpcrypt.c, AGPL-3.0, commit
 c8bea2642d0e). Generated from that file, not typed: the bytes are what the consoles expect, so they must not be
 edited by hand. The functions that use them are in rpcrypt.py."""
 

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""The protobuf messages of the stream connection (chiaki-ng's lib/protobuf/takion.proto, proto2), written and read
-by hand: the few messages the stream needs, encoded field by field as nanopb does in chiaki-ng's
+"""The protobuf messages of the stream connection, written and read
+by hand: the few messages the stream needs, encoded field by field as nanopb does in the reference's
 streamconnection.c (required fields always, optional ones only when set, in field order).
 
 Every message is a TakionMessage: field 1 is its type, and the payload sits in the field of that type."""
@@ -93,26 +93,26 @@ def corrupt_frame(start: int, end: int) -> bytes:
 
 
 def controller_connection(dualsense: bool) -> bytes:
-    """The controller is connected; chiaki-ng sends no controller ID."""
+    """The controller is connected; the reference sends no controller ID."""
     return message(CONTROLLERCONNECTION, F_CONTROLLER_CONNECTION,
                    uint(2, 1) + uint(3, DUALSENSE if dualsense else DUALSHOCK4))
 
 
 def microphone(audio_header: bytes) -> bytes:
-    """A STREAMINFO from our side: the microphone's audio header (chiaki-ng's stream_connection_enable_microphone)."""
+    """A STREAMINFO from our side: the microphone's audio header."""
     return message(STREAMINFO, F_STREAM_INFO, blob(2, audio_header))
 
 
 def big(client_version: int, session_key: str, launch_spec: str, ecdh_public_key: bytes,
         ecdh_signature: bytes) -> bytes:
     """BIG, the client's opening message: the session ID from the control connection, the launch spec and the
-    public key for the stream's key exchange. The encrypted key is four zero bytes, as in chiaki-ng."""
+    public key for the stream's key exchange. The encrypted key is four zero bytes, as in the reference."""
     payload = (uint(1, client_version) + blob(2, session_key) + blob(3, launch_spec) + blob(4, bytes(4))
                + blob(5, ecdh_public_key) + blob(6, ecdh_signature))
     return message(BIG, F_BIG, payload)
 
 
-# --- The network test (Senkusha), as chiaki-ng's senkusha.c builds them ------------------------------------------
+# --- The network test (Senkusha), as the reference's senkusha.c builds them ------------------------------------------
 
 def protocol_request(versions: list[int]) -> bytes:
     """The Takion versions we speak; a repeated field, one entry per version (not packed)."""
@@ -133,7 +133,7 @@ def echo_command(state: bool) -> bytes:
 
 
 def mtu_command(request_id: int, mtu: int) -> bytes:
-    """Asks the console for a video packet of *mtu* bytes (IP and UDP included). chiaki-ng sets num = 1 without
+    """Asks the console for a video packet of *mtu* bytes (IP and UDP included). The reference sets num = 1 without
     its has-flag, so num is not sent; neither is it here."""
     return _senkusha(MTU_COMMAND, F_MTU, uint(1, request_id) + uint(2, mtu))
 
@@ -297,7 +297,7 @@ def corrupt_range(msg: Message) -> tuple[int, int] | None:
     return _one(p, 1, int, 0), _one(p, 2, int, 0)
 
 
-# --- The audio header (chiaki-ng's audio.c) ---------------------------------------------------------------------
+# --- The audio header ---------------------------------------------------------------------
 
 AUDIO_HEADER_SIZE = 14
 
@@ -321,7 +321,7 @@ class AudioHeader:
         return bytes([self.channels, self.bits]) + struct.pack(">III", self.rate, self.frame_size, self.unknown)
 
 
-# What chiaki-ng announces for the microphone: mono, 16 bits, 48 kHz, 480 samples (10 ms) per frame. Its
-# chiaki_audio_header_save writes bits and channels the other way round from load, and calls set(16, 1, ...), so the
+# What the reference announces for the microphone: mono, 16 bits, 48 kHz, 480 samples (10 ms) per frame. Its
+# header save writes bits and channels the other way round from load, and calls set(16, 1, ...), so the
 # bytes say one channel of 16 bits in load's order.
 MICROPHONE = AudioHeader(channels=1, bits=16, rate=48000, frame_size=480)

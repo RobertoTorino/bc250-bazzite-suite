@@ -56,7 +56,10 @@ apps/<name>/
   code builds and tests without Python (`cargo test`); maturin builds the Python module from `native/pyproject.toml`
   as a wheel for Python 3.10 and newer. Its version equals the app's VERSION (`tools/check_versions.py` reads
   `Cargo.toml` and `pyproject.toml`). Cargo's build output, `native/target/`, is never installed or staged. CI's
-  `native` job runs the Rust tests, clippy and the module's Python tests.
+  `native` job runs the Rust tests, clippy and the module's Python tests. Console Link's video decoder (cargo
+  feature `decoder`) links FFmpeg statically, built by `native/ffmpeg/build.sh` from pinned sources; the release
+  workflow builds the wheel with it into `native/wheel/`, which ships in the tarball (`tools/build_release.py`
+  refuses the release without it), and `install.sh` installs that wheel, so users need no compiler.
 
 Checked by `tools/tests/test_layout.py` (packages and `images/` at the app root, no wrapper folder) and by CI's
 layout job (`VERSION`, `CHANGELOG`, `LICENSE` and `.gitignore` in every folder, LF line endings, executable `.sh`

@@ -23,8 +23,8 @@ show the picture, play the sound or take controller input.
   part of this app.
 - **Your PSN account ID:** the number of your PlayStation Network account, not your online name. PlayStation
   does not show it anywhere; **Find my account ID…** reads it through the PlayStation sign-in (see below). The app
-  also takes the number itself (for example `4782394583276428394`) or the 12-character code that ends with `=`, the
-  way chiaki-ng shows it. It is the same for every console you register with this account.
+  also takes the number itself (for example `4782394583276428394`) or the 12-character code that ends with `=`, as
+  other Remote Play apps show it. It is the same for every console you register with this account.
 
 ## Using it
 
@@ -47,7 +47,7 @@ The top row shows how many consoles answered the last search, how many the board
 
 The app sends the code in that address to PSN once, reads your account ID and fills it in. It keeps only the
 account ID, nothing of the sign-in. The code works for a few minutes and only once: if PSN refuses it, sign in
-again. This is the same sign-in chiaki-ng uses.
+again.
 
 **Register the board with a console:**
 
@@ -69,8 +69,10 @@ wrong account ID is reported in the log at the bottom.
   for those. The board asks for 1080p at 60 frames per second from a PS5 and 720p from a PS4. When it works, the
   log shows the network test's results and the resolutions the console offers, and the message how many frames
   and sound packets arrived. Frames with a few packets lost are rebuilt from the spare packets the console sends
-  along; the message counts those and the frames lost. When the network test fails, the stream still runs, with
-  safe values. It needs the app's native core (see [Install and remove](#install-and-remove)).
+  along; the message counts those and the frames lost. The frames are decoded, not shown yet: with the GPU's video
+  decoder where it has one (VA-API), else by the processor. The BC-250 has none, so on the board it is always
+  the processor; the log names which and how long a frame takes. When the network test fails, the stream still
+  runs, with safe values. It needs the app's native core (see [Install and remove](#install-and-remove)).
 - **Rest mode:** puts the console in rest mode, through a short session.
 - **Login passcode…:** when the PSN account on the console has a 4-digit login passcode, the console asks for it
   at the start of a session. Enter it here once.
@@ -105,7 +107,7 @@ the registered console.
 - **Test stream: no answer on the stream port:** the stream uses UDP port 9296 of the console, the network test
   port 9297. Test session working but Test stream not points to a firewall or router between the two that blocks
   them.
-- **Test stream: the native core is not installed:** install Rust and run `install.sh` again (see below).
+- **Test stream: the native core is not installed:** install the app again through the portal (see below).
 
 ## Install and remove
 
@@ -120,9 +122,14 @@ The portal installs it, under Development only. By hand, from the extracted rele
 
 The app has its own Python environment in `~/.local/share/bc250-console-link/venv`, with PyQt6 and cryptography.
 
-The stream runs on the app's native core, written in Rust. `install.sh` builds it into the app's environment when
-Rust is installed, which takes a minute or two the first time. Install Rust with [rustup](https://rustup.rs) (it
-installs in your home folder), then run `install.sh` again. Without it, everything but **Test stream** works.
+The stream runs on the app's native core, written in Rust, with FFmpeg inside for the video. A release brings it
+ready to install, so `install.sh` needs nothing else for it.
+
+From a clone of the suite, `install.sh` builds the native core when Rust is installed
+([rustup](https://rustup.rs) installs it in your home folder), which takes a minute or two the first time. The
+video decoder needs FFmpeg built first, once: `native/ffmpeg/build.sh` downloads FFmpeg's sources, checks them and
+builds it into `~/.cache/bc250-console-link` (with `nasm` installed, decoding is about twice as fast). Without the
+native core, everything but **Test stream** works; without the decoder, Test stream does not decode the frames.
 
 ## Disclaimer
 
@@ -133,3 +140,7 @@ PlayStation, PS4, PS5 and PSN are trademarks of their owner.
 
 AGPL-3.0. The protocol code is ported from [chiaki-ng](https://github.com/streetpea/chiaki-ng), which is
 AGPL-3.0-only with an OpenSSL exception; those files keep that license, the app's own files are AGPL-3.0-or-later.
+The files marked `SPDX-License-Identifier: AGPL-3.0-only` are modified from chiaki-ng's code (ported to Python and
+Rust); the code and its tests call chiaki-ng "the reference".
+The native core links [FFmpeg](https://ffmpeg.org) (LGPL-2.1-or-later), built from its own sources by
+`native/ffmpeg/build.sh` with only its LGPL parts.

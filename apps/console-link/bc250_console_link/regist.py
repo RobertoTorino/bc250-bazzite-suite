@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""Registering the board with a console (chiaki-ng's lib/src/regist.c), on the local network.
+"""Registering the board with a console, on the local network.
 
 The console shows an 8-digit PIN: a PS5 under Settings > System > Remote Play > Link Device, a PS4 under
 Settings > Remote Play Connection Settings > Add Device. The board says "SRC2"/"SRC3"
@@ -22,10 +22,10 @@ from .target import Target, reason_text, rp_version
 
 PORT = 9295
 TIMEOUT = 3.0
-SEARCH_PAUSE = 0.1                      # chiaki-ng: the PS4 does not take the request right after answering
+SEARCH_PAUSE = 0.1                      # the reference: the PS4 does not take the request right after answering
 CLIENT_TYPE = "dabfa2ec873de5839bee8d3f4c0239c4282c07c25c6077a2931afcf0adc0d34f"
 INNER_OFFSET = 0x1e0
-LOCAL_ADDRESS = "10.0.2.15"             # chiaki-ng sends this fixed address in the Host header on the local network
+LOCAL_ADDRESS = "10.0.2.15"             # the reference sends this fixed address in the Host header on the local network
 
 
 class RegistError(Exception):
@@ -53,7 +53,7 @@ def path(target: Target) -> str:
 
 def build_payload(target: Target, ambassador: bytes, account_id: bytes, pin: int) -> tuple[bytes, RPCrypt]:
     """The request body and the crypto that also decrypts the answer. The first 0x1e0 bytes may be anything
-    (chiaki-ng: 'A'); the seeds sit at fixed places in it and two of its bytes choose the table rows."""
+    (the reference: 'A'); the seeds sit at fixed places in it and two of its bytes choose the table rows."""
     if len(account_id) != 8:
         raise ValueError("the PSN account ID has 8 bytes")
     buf = bytearray(b"A" * INNER_OFFSET)
@@ -74,7 +74,7 @@ def build_payload(target: Target, ambassador: bytes, account_id: bytes, pin: int
 
 
 def request_header(target: Target, payload_size: int, local_address: str = LOCAL_ADDRESS) -> bytes:
-    # The doubled " HTTP/1.1" is in chiaki-ng's request and the consoles accept it; kept as sent there.
+    # The doubled " HTTP/1.1" is in the reference's request and the consoles accept it; kept as sent there.
     header = (f"POST {path(target)} HTTP/1.1\r\n HTTP/1.1\r\nHOST: {local_address}\r\n"
               f"User-Agent: remoteplay Windows\r\nConnection: close\r\nContent-Length: {payload_size}\r\n")
     if target >= Target.PS4_9 and rp_version(target):
