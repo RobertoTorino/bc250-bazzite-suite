@@ -49,6 +49,24 @@ Owner's answers (13-10-2026):
    the keyboard (Escape; the owner used the Windows key), and there is no way to quit from the controller.
 2. Button combinations: wanted, on the list (below).
 
+Console Link against its plan (owner asked, 13-10-2026). The plan of 12-10-2026: iteration 1 (find, wake,
+register, session), iteration 2 (the stream), end goal a regular portal tile once the stream works. Built and
+tried on the board: all of iteration 1 except a PS5; of iteration 2 the network test, the encrypted connection,
+FEC, the decoder (software on the BC-250), picture, sound, controller in and out (buttons, sticks, touchpad,
+motion, rumble, light bar), the controller test, privacy, Game Mode, the statistics file; the stream is smooth at
+1080p/60 since the GIL fix; the tile moves to Gaming. Left from the plan itself:
+1. **Recovery from lost packets**: the reference's look into the bitstream (a missing reference frame swapped for
+   an older one; after a failed FEC, a key frame asked for and frames skipped until it comes). request_idr exists
+   but nothing calls it. Not seen on a cable (no frames lost); on Wi-Fi or a busy network the picture would smear
+   until the next key frame. The core gap before more users or Wi-Fi.
+2. **A PS5**: registration, session and stream never tried (no hardware); DualSense adaptive triggers and haptics.
+3. **The microphone**: announced to the console, none sent.
+4. Smaller: Remove does not remove the console's Game Mode shortcut; the PS button in Game Mode; the open board
+   tests below.
+Added since the plan (owner's): controller combinations, the window redesign, several players, stream settings,
+internet streaming, handhelds, a Steam release (on hold). Order (owner, 13-10-2026): the several-players
+experiment, then stream settings; recovery from lost packets recommended right after.
+
 On the list, next: **controller button combinations** for the stream window, each a hold of about 2 s so a game
 never triggers it by accident; which buttons is the owner's call. Actions to cover: leave or enter full screen,
 end the stream (and with --stream quit the app), mute, and in Game Mode send the PS button (Steam keeps it there).
@@ -69,11 +87,26 @@ Compared with Asobi: Remote Play (owner, 13-10-2026; a proprietary client on Ste
 triggers, manual bitrate, low-latency modes, audio delay): ideas to weigh, the owner's call each:
 - **Several controllers as separate players** (Asobi: up to 4): Console Link combines all controllers into one.
   The biggest gap for couch play; the protocol sends one controller state, so to check what the console accepts.
+  Owner (13-10-2026): worth looking into. Findings (13-10-2026), from the reference's code and protocol file: the
+  reference only ever sends one controller. The protocol has room for more: a CONTROLLERCONNECTION message with a
+  controller_id (the reference leaves it out) and a controller type; byte 3 of a controller-state packet is the
+  number of states in it (always 1 in the reference); the state starts with 0xa0, a button event with 0x80, a touch
+  with 0xc0/0xd0, whose low bits may be a controller number. Nobody documents it publicly; Asobi shows it works.
+  To find out on the owner's console, with an experiment build (a hidden option, not for users): announce a second
+  controller (CONTROLLERCONNECTION, controller_id 1, DualShock 4); the PS4 should then ask "Who is using this
+  controller?". Then try the second controller's input three ways: two states in one packet; the low bits of the
+  state and event bytes as the controller number; a second feedback channel. What the console reacts to decides
+  the design.
 - **Stream settings** (resolution, frame rate, bitrate by hand, a low-latency choice) and an **audio delay**
   setting: already on the list as stream settings; Console Link has 1080p/60 and gyro without a paid tier.
-- **Internet streaming** (PSN hole punching): on the list already.
+  Owner (13-10-2026): worth looking into. What the protocol takes: resolution 360p, 540p, 720p or 1080p (PS5 also
+  higher), 30 or 60 fps, the bitrate, H.264 or HEVC. A low-latency mode would be the app's own: a shorter sound
+  buffer (40 ms now), FFmpeg's low-delay decoding, no picture held back. Audio delay: the sound buffer's target
+  moved by the chosen milliseconds.
+- **Internet streaming** (PSN hole punching): on the list already (owner, 13-10-2026: good).
 - **A release on Steam** (Steamworks: a fee per app and Valve's review): a Game Mode entry, Steam's updates and
-  Steam Input without our shortcut; a large decision, more for a handheld version than for the board.
+  Steam Input without our shortcut; a large decision, more for a handheld version than for the board. Owner
+  (13-10-2026): on hold until the handheld version.
 - **Not recommended: PS Plus Premium cloud streaming.** It uses Sony's servers without Sony's consent; for an
   open-source app in a public repository a legal and takedown risk.
 - Not worth it here: frame generation, 2D-to-3D, screen filters, upscaling to 4K.
