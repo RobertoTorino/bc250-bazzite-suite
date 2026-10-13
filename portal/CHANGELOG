@@ -1,3 +1,7 @@
+Changelog: 13-10-2026 14:36:57
+
+Release 1.0.0. Pins dependency-checker-v0.1.9, console-link-v1.0.0.
+
 Changelog: 13-10-2026 11:45:43
 
 Withdrawn releases (owner's decisions, 13-10-2026): apps.toml takes withdrawn = "<reason>" in an app's entry (not for the required app nor checkout-only apps; manifest.py). A withdrawn app's tile shows App not available in red, with the reason; it cannot be installed or opened and shows no update. At start the portal removes a withdrawn app that is installed, after saying why, with the app's own uninstaller in a terminal, one app after another; one that could not be removed keeps its Uninstall button and is tried again at the next start. The portal update button names the apps a newer portal withdraws ("withdraws ..."), with the reason in its tooltip. Older portals ignore the field. Tests: the field and its rules, the tile, the removal at start, a removal that fails, the update comparison.
