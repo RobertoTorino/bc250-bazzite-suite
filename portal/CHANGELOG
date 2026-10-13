@@ -1,3 +1,7 @@
+Changelog: 13-10-2026 22:54:04
+
+Release 1.0.2. Pins helixsr-v0.2.5, console-link-v1.0.2.
+
 Changelog: 13-10-2026 22:46:12
 
 BC-250 Mesh Shaders has its own icon: images/apps/mesh-shaders.png is the app's 128 px icon (it was a placeholder).
