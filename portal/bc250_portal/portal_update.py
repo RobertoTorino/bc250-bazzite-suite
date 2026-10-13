@@ -22,6 +22,7 @@ class AppChange:
     old: str                            # "0.1.0"; "" for an app the new portal adds
     new: str                            # "0.1.1"
     short: str = ""                     # the name on its tile, when apps.toml sets one ("HDMI-CEC")
+    withdrawn: str = ""                 # why the new portal withdraws it (it removes the app from the board)
 
 
 @dataclass(frozen=True)
@@ -33,9 +34,12 @@ class PortalUpdate:
         """ "updates ACE Queues and Memory Manager", "updates 4 apps, adds BIOS Reader", or "" """
         if not self.changes:
             return ""
-        updated = [c.short or short(c.name) for c in self.changes if c.old]
+        updated = [c.short or short(c.name) for c in self.changes if c.old and not c.withdrawn]
         added = [c.short or short(c.name) for c in self.changes if not c.old]
+        withdrawn = [c.short or short(c.name) for c in self.changes if c.withdrawn]
         parts = []
+        if withdrawn:
+            parts.append("withdraws " + (and_list(withdrawn) if len(withdrawn) <= 2 else f"{len(withdrawn)} apps"))
         if updated:
             parts.append("updates " + (and_list(updated) if len(updated) <= 2 else f"{len(updated)} apps"))
         if added:
@@ -44,7 +48,8 @@ class PortalUpdate:
 
     def details(self) -> str:
         """One line per app, for the tooltip."""
-        return "\n".join(f"{c.name}: {c.old} → {c.new}" if c.old else f"{c.name}: new, {c.new}"
+        return "\n".join(f"{c.name}: not available any more ({c.withdrawn}); removed from the board" if c.withdrawn
+                         else f"{c.name}: {c.old} → {c.new}" if c.old else f"{c.name}: new, {c.new}"
                          for c in self.changes or [])
 
 
@@ -57,12 +62,16 @@ def and_list(names: list[str]) -> str:
 
 
 def compare(current: list[AppEntry], new: list[AppEntry]) -> list[AppChange]:
-    """The apps whose pinned release differs, in the new portal's order; removed apps are left out."""
+    """The apps whose pinned release differs or that the new portal withdraws, in the new portal's order; removed
+    apps are left out."""
     pinned = {e.key: e for e in current}
     out = []
     for entry in new:
         old = pinned.get(entry.key)
-        if old is None:
+        if entry.withdrawn:
+            if old is not None and not old.withdrawn:
+                out.append(AppChange(entry.name, old.version, entry.version, entry.short, entry.withdrawn))
+        elif old is None:
             out.append(AppChange(entry.name, "", entry.version, entry.short))
         elif old.tag != entry.tag:
             out.append(AppChange(entry.name, old.version, entry.version, entry.short))

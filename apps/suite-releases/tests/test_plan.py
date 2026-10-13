@@ -177,6 +177,37 @@ def test_commands():
     assert order == sorted(order)                             # commit, test, push and tag, then check the release
 
 
+def test_withdrawal(repo):
+    now = datetime.datetime(2026, 10, 13, 12, 0, tzinfo=datetime.timezone.utc)
+    units = rp.load_units(repo)
+    assert [u.key for u in rp.withdrawable(repo, units)] == ["beta"]             # alpha is the required app
+    beta = unit(repo, "beta")
+    before = (repo / "portal/apps.toml").read_text()
+    changed = rp.withdraw(repo, beta, 'Privacy: shows the "account ID".', now)
+    text = (repo / "portal/apps.toml").read_text()
+    assert text == before.replace('[apps.beta]\nname = "beta"\nsummary = "s"\n',
+                                  '[apps.beta]\nname = "beta"\nsummary = "s"\n'
+                                  'withdrawn = "Privacy: shows the \\"account ID\\"."\n')
+    assert rp.withdrawn_reason(repo, "beta") == 'Privacy: shows the "account ID".'
+    assert [p.relative_to(repo).as_posix() for p in changed] == ["portal/apps.toml", "apps/beta/CHANGELOG"]
+    assert (repo / "apps/beta/CHANGELOG").read_text().startswith(
+        'Changelog: 13-10-2026 14:00:00\n\nWithdrawn: beta-v0.1.0. Privacy: shows the "account ID".\n')
+    # The portal release that follows: a minor bump, and its CHANGELOG entry names the withdrawal.
+    assert rp.changed_withdrawals(repo, "pushed") == [("beta-v0.1.0", 'Privacy: shows the "account ID".')]
+    assert rp.portal_minimum(repo, "pushed", "0.1.0") == ("0.2.0", "beta was withdrawn")
+    assert rp.portal_text("0.2.0", [], "", rp.changed_withdrawals(repo, "pushed")) == (
+        'Release 0.2.0. Withdraws beta-v0.1.0: Privacy: shows the "account ID".')
+    commands = rp.withdraw_commands("beta-v0.1.0", "Privacy.", now)
+    assert ("gh release edit beta-v0.1.0 --prerelease --title 'Withdrawn: beta-v0.1.0' --notes 'Withdrawn on "
+            "13-10-2026: Privacy. Do not install this release.'") in commands
+    # Taken back: apps.toml as it was, and a CHANGELOG entry that says so.
+    rp.withdraw(repo, beta, "", now)
+    assert (repo / "portal/apps.toml").read_text() == before
+    assert "Withdrawal of beta-v0.1.0 taken back." in (repo / "apps/beta/CHANGELOG").read_text()
+    with pytest.raises(ValueError, match="no \\[apps.gamma\\]"):
+        rp.set_withdrawn(before, "gamma", "x")
+
+
 # --- The window -------------------------------------------------------------------------------------------------
 
 launched: list[str] = []
@@ -559,3 +590,24 @@ def test_window_build_indicator_notifies_when_a_run_ends(repo, tmp_path):
     assert build.state == "unreachable" and "offline" in build.toolTip()
     w.close()
     assert main_window.ReleaseWindow(repo, runs_source=None).build.isHidden()
+
+
+def test_window_withdraws_and_tests(window, repo, monkeypatch):
+    page = window.withdraw_page
+    assert [page.app_box.itemText(i) for i in range(page.app_box.count())] == ["beta-v0.1.0"]
+    assert page.state.text() == "Not withdrawn." and not page.back_button.isEnabled()
+    warned = []
+    from PyQt6.QtWidgets import QMessageBox
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: warned.append(a[2]))
+    page.withdraw_button.click()                                    # no reason: refused
+    assert warned and rp.withdrawn_reason(repo, "beta") == ""
+    page.reason_edit.setText("Security: a key in the log.")
+    page.withdraw_button.click()
+    assert rp.withdrawn_reason(repo, "beta") == "Security: a key in the log."
+    assert page.state.text() == "Withdrawn: Security: a key in the log." and page.back_button.isEnabled()
+    assert "gh release edit beta-v0.1.0 --prerelease" in page.output.toPlainText()
+    launched.clear()
+    page.test_button.click()
+    assert launched == [f"{repo / rp.CHECK_SCRIPT} local"] and "App not available" in page.output.toPlainText()
+    page.back_button.click()
+    assert rp.withdrawn_reason(repo, "beta") == "" and page.state.text() == "Not withdrawn."

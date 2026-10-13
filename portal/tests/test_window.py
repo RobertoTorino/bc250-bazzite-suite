@@ -467,3 +467,66 @@ def test_an_install_with_icons_off_removes_the_new_icon(qapp, home, settings_dir
     w._check_pending()
     assert not (desktop / "bc250-hdmi-cec.desktop").exists() and (desktop / "bc250-bazzite-suite.desktop").exists()
     w.close()
+
+
+def _withdrawn_window(home, tmp_path, installed: bool):
+    entries = [replace(e, withdrawn="Privacy: shows the account ID.") if e.key == "helixsr" else e
+               for e in load(MANIFEST)]
+    if installed:
+        (home / ".local" / "bin" / "bc250-bazzite-helixsr-gui").write_text("#!/bin/sh\n")
+    return mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
+
+
+def test_a_withdrawn_app_is_not_available(qapp, home, settings_dir, tmp_path, launched, monkeypatch):
+    w = _withdrawn_window(home, tmp_path, installed=False)
+    try:
+        card = w.cards["helixsr"]
+        assert not card.withdrawn.isHidden() and card.withdrawn.text() == "App not available"
+        assert card.status == "App not available" and not card.install_button.isEnabled()
+        assert "Privacy: shows the account ID." in card.install_button.toolTip()
+        assert "It cannot be installed." in card.icon.toolTip()
+        assert w.cards["governor"].withdrawn.isHidden()
+        w.remove_withdrawn()                                # not installed: nothing to remove
+        assert launched == []
+    finally:
+        w.close()
+
+
+def test_the_portal_removes_a_withdrawn_app(qapp, home, settings_dir, tmp_path, launched, monkeypatch):
+    told = []
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: told.append(a[2]))
+    w = _withdrawn_window(home, tmp_path, installed=True)
+    try:
+        assert wait_for(lambda: launched)                   # at start, after telling why
+        assert told and "is not available any more" in told[0] and "Privacy: shows the account ID." in told[0]
+        line, exit_file = launched[0]
+        assert line.endswith("&& bash install.sh --uninstall")
+        card = w.cards["helixsr"]
+        assert not card.icon.isEnabled() and card.dot.isHidden()          # no opening, no update
+        (home / ".local" / "bin" / "bc250-bazzite-helixsr-gui").unlink()
+        exit_file.write_text("0\n")
+        w._check_pending()
+        assert card.status == "App not available" and "It cannot be installed." in card.icon.toolTip()
+        w.remove_withdrawn()
+        assert len(launched) == 1 and len(told) == 1        # removed: not again
+    finally:
+        w.close()
+
+
+def test_a_withdrawn_app_that_could_not_be_removed_stays_removable(qapp, home, settings_dir, tmp_path, launched,
+                                                                     monkeypatch):
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
+    warned = []
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: warned.append(a[2]))
+    w = _withdrawn_window(home, tmp_path, installed=True)
+    try:
+        assert wait_for(lambda: launched)
+        launched[0][1].write_text("1\n")
+        w._check_pending()
+        assert warned and "exit status 1" in warned[0]
+        card = w.cards["helixsr"]
+        assert card.uninstall_button.isEnabled()            # the user can try again by hand
+        assert "The portal removes it from the board." in card.icon.toolTip()
+        assert len(launched) == 1                           # tried once per start, not in a loop
+    finally:
+        w.close()

@@ -3,9 +3,13 @@
 and close a Remote Play session and its stream with it. The protocol code is ported from the reference implementation
 (AGPL-3.0; see the README's License section)."""
 
+from . import steam_env
+
+steam_env.settle()                      # before Qt loads: started by Steam, the app leaves Steam's libraries
+
 APP_NAME = "BC250 Console Link"
 APP_ID = "bc250-console-link"
-__version__ = "0.1.4"
+__version__ = "1.0.0"
 
 from pathlib import Path
 

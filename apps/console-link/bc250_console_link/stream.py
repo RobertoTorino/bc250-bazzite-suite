@@ -6,10 +6,14 @@
    with a random handshake key. The console answers BANG with its public key; both sides derive the stream keys.
 3. STREAMINFO: the console's video headers per resolution and its audio header. We acknowledge it, report the
    controller and announce the microphone; from then on video and audio flow, and a heartbeat goes every second.
+   The native core sends the controller's state from then on, at least every 200 ms (idle until set_controller:
+   without it a PS4 pauses the stream). The console sends the controller's rumble and pad info (the light bar's
+   colour, the player number, a request to reset the motion), which go to on_controller.
    The native core puts the video frames together (FEC rebuilds lost units), names the frames that never came or
    could not be rebuilt, which go to the console as CORRUPTFRAME, and sends the congestion reports. The frames go
    to the video decoder (FFmpeg in the native core): the resolution's header from STREAMINFO first, then each frame.
-   It decodes with VA-API where the GPU has a video decoder, else in software (the BC-250 has none).
+   It decodes with VA-API where the GPU has a video decoder, else in software (the BC-250 has none). The sound
+   comes as Opus frames in order (10 ms each), decoded to 16-bit PCM with the audio header from STREAMINFO.
 4. DISCONNECT from either side ends it.
 
 The network test before this (Senkusha, senkusha.py) measures the MTU both ways and the round trip, which go into
@@ -26,6 +30,7 @@ from typing import Callable
 from . import launchspec, tkproto
 from .rpcrypt import RPCrypt
 from .target import Target
+from .video import Picture
 
 PORT = 9296
 EXPECT_TIMEOUT = 5.0
@@ -37,6 +42,8 @@ CHANNEL = 1
 CHANNEL_STREAMINFO_ACK = 9
 CHANNEL_FRAME_REPORTS = 2
 DATA_PROTOBUF = 0
+DATA_RUMBLE = 7
+DATA_PAD_INFO = 9
 MTU_OVERHEAD = 50                       # the reference: the network's share of the MTU
 DATA_OVERHEAD = 26                      # type byte, message header and DATA header; a continuation has one less
 
@@ -72,10 +79,14 @@ class StreamStats:
     frames_lost: int = 0
     audio_packets: int = 0
     haptics_packets: int = 0
-    other_data: int = 0
+    other_data: int = 0                 # trigger effects (a DualSense's adaptive triggers): not used yet
+    rumble: int = 0
+    pad_info: int = 0
     corrupt_sent: list[tuple[int, int]] = field(default_factory=list)       # frames reported to the console
     corrupt_reports: list[tuple[int, int]] = field(default_factory=list)
     decoded: int = 0                    # pictures out of the decoder
+    audio_frames: int = 0               # 10 ms frames of sound, decoded
+    audio_lost: int = 0                 # frames that never came, played as silence
     decode_errors: int = 0
     decode_seconds: float = 0.0
 
@@ -86,12 +97,21 @@ class StreamConnection:
     def __init__(self, host: str, target: Target, session_id: str, crypt: RPCrypt, profile: Profile | None = None,
                  dualsense: bool = False, port: int = PORT, timeout: float = EXPECT_TIMEOUT,
                  mtu_in: int | None = None, mtu_out: int | None = None, rtt_ms: int = RTT_MS,
-                 random: Callable[[int], bytes] = os.urandom, core=None):
+                 random: Callable[[int], bytes] = os.urandom, core=None,
+                 on_picture: Callable[[Picture], None] | None = None,
+                 picture_wanted: Callable[[], bool] = lambda: True,
+                 on_sound: Callable[[bytes, int, int], None] | None = None):
         self.host, self.target, self.session_id, self.crypt = host, target, session_id, crypt
         self.profile = profile or Profile()
         self.dualsense, self.port, self.timeout, self.random = dualsense, port, timeout, random
         self.mtu_in, self.mtu_out, self.rtt_ms = mtu_in or MTU, mtu_out or MTU, rtt_ms
         self.core = core or _core()
+        self.on_picture, self.picture_wanted = on_picture, picture_wanted
+        self.on_sound = on_sound              # (16-bit PCM interleaved, rate, channels)
+        self.on_controller: Callable[..., None] | None = None
+        self.led: tuple[int, int, int] = (0, 0, 0)
+        self.player_index = 0
+        self.audio_decoder = None
         self.takion = None
         self.handshake_key = b""
         self.ecdh = None
@@ -147,6 +167,54 @@ class StreamConnection:
     def request_idr(self) -> None:
         self.send(tkproto.idr_request(), CHANNEL_FRAME_REPORTS)
 
+    def drive_controllers(self, output: Callable[..., None] | None) -> None:
+        """From now on the console's rumble and pad info go to *output*: ("rumble", left, right) with 0 to 255,
+        ("led", (r, g, b)), ("player", index) and ("motion_reset",). The light bar and the player number the console
+        has set so far go to it at once."""
+        self.on_controller = output
+        if output is not None:
+            if self.led != (0, 0, 0):
+                output("led", self.led)
+            if self.player_index:
+                output("player", self.player_index)
+
+    def _controller_output(self, *what) -> None:
+        if self.on_controller is not None:
+            self.on_controller(*what)
+
+    def _on_rumble(self, data: bytes) -> None:
+        if len(data) < 3:
+            self.note(f"The console sent a rumble message of {len(data)} bytes (3 at least).")
+            return
+        self.stats.rumble += 1
+        self._controller_output("rumble", data[1], data[2])          # byte 0 is not known
+
+    def _on_pad_info(self, data: bytes) -> None:
+        """The reference's two layouts: 25 bytes (the sequence number of the feedback packet it answers, a
+        timestamp, then the player number at 8, the colour at 9 and the motion reset at 12) and 17 bytes (the player
+        number, the colour and the motion reset from the start)."""
+        if len(data) == 0x19:
+            player, led, reset = data[8], tuple(data[9:12]), bool(data[12])
+        elif len(data) == 0x11:
+            player, led, reset = data[0], tuple(data[1:4]), bool(data[4])
+        else:
+            self.note(f"The console sent pad info of {len(data)} bytes (25 or 17 expected).")
+            return
+        self.stats.pad_info += 1
+        if reset:
+            self._controller_output("motion_reset")
+        if led != self.led:
+            self.led = led
+            self._controller_output("led", led)
+        if player != self.player_index:
+            self.player_index = player
+            self._controller_output("player", player)
+
+    def set_controller(self, **state) -> None:
+        """The controller as it is now (the native core's Takion.set_controller_state: buttons, l2, r2, left, right,
+        touches, gyro, accel, orient); what is left out is idle."""
+        self.takion.set_controller_state(**state)
+
     # --- Receiving ------------------------------------------------------------------------------------------
 
     def _count_av(self, header: dict) -> None:
@@ -163,7 +231,10 @@ class StreamConnection:
         sample, self._header = self._header + sample, b""
         started = perf_counter()
         try:
-            self.stats.decoded += len(self.decoder.decode(sample))
+            frames = self.decoder.decode(sample)
+            self.stats.decoded += len(frames)
+            if frames and self.on_picture is not None and self.picture_wanted():
+                self.on_picture(Picture.from_image(self.decoder.image()))
         except ValueError as error:
             self.stats.decode_errors += 1
             if self.decode_error is None:
@@ -177,6 +248,22 @@ class StreamConnection:
         self.stats.fec_frames += info["fec"]
         self.stats.frames_lost += info["frames_lost"]
         self._decode(data)
+
+    def _on_audio(self, data: bytes | None) -> None:
+        self.stats.audio_frames += 1
+        self.stats.audio_lost += data is None
+        if self.audio_decoder is None:
+            return
+        try:
+            pcm = self.audio_decoder.decode(data)
+        except ValueError as error:
+            self.stats.decode_errors += 1
+            if self.decode_error is None:
+                self.decode_error = str(error)
+                self.note(f"The sound decoder refused a frame ({error}).")
+            return
+        if self.on_sound is not None:
+            self.on_sound(pcm, self.audio.rate, self.audio.channels)
 
     def _on_profile(self, index: int) -> None:
         resolutions = self.info.resolutions if self.info else []
@@ -199,6 +286,10 @@ class StreamConnection:
             return
         how = "VA-API" if self.decoder.hw else f"software (VA-API: {self.decoder.hw_error or 'not available'})"
         self.note(f"Video decoder: FFmpeg {self.core.FFMPEG_VERSION}, {codec.upper()}, {how}.")
+        try:
+            self.audio_decoder = self.core.AudioDecoder(self.audio.rate, self.audio.channels, self.audio.frame_size)
+        except (ValueError, AttributeError) as error:
+            self.note(f"The sound decoder did not open ({error}).")
 
     def _on_corrupt(self, start: int, end: int) -> None:
         self.stats.corrupt_sent.append((start, end))
@@ -221,12 +312,20 @@ class StreamConnection:
                 self._on_corrupt(event[1], event[2])
             elif kind == "profile":
                 self._on_profile(event[1])
+            elif kind == "audio":
+                self._on_audio(event[2])
             elif kind == "closed":
                 raise StreamError(f"The stream connection closed: {event[1]}.")
             elif kind == "data":
                 _kind, data_type, _channel, data = event
+                if data_type == DATA_RUMBLE:
+                    self._on_rumble(data)
+                    continue
+                if data_type == DATA_PAD_INFO:
+                    self._on_pad_info(data)
+                    continue
                 if data_type != DATA_PROTOBUF:
-                    self.stats.other_data += 1     # rumble, pad info, trigger effects: not used yet
+                    self.stats.other_data += 1
                     continue
                 try:
                     message = tkproto.parse(data)
@@ -337,10 +436,15 @@ class StreamConnection:
         video = self.takion.video_stats() if self.takion else None
         if video is None:
             return "No video stream."
-        reports = self.takion.stats()["congestion_reports"]
+        stats = self.takion.stats()
         summary = (f"Video: {video['frames']} frames, {video['fec_recovered']} rebuilt with FEC, {video['fec_failed']} "
                    f"beyond repair, {video['frames_lost']} lost; {video['bad_units'] + video['old_packets']} units "
-                   f"refused; {reports} congestion reports sent.")
+                   f"refused; {stats['congestion_reports']} congestion reports sent. Controller: "
+                   f"{stats['feedback_states']} states and {stats['feedback_history']} button packets sent.")
+        audio = self.takion.audio_stats()
+        if audio is not None:
+            summary += (f" Sound: {audio['frames']} frames of 10 ms, {audio['lost']} lost, {audio['refused']} "
+                        "packets refused.")
         if self.decoder is not None:
             calls = self.stats.frames + 1
             summary += (f" Decoded {self.stats.decoded} pictures, {self.stats.decode_errors} errors, "
@@ -352,6 +456,10 @@ class StreamConnection:
             return
         try:
             self.note(self.video_summary())
+            audio = self.takion.audio_stats()
+            if audio is not None:                       # the stream's audio packets, counted by the native core
+                self.stats.audio_packets += audio["packets"]
+                self.stats.haptics_packets += audio["haptics"]
             if self.remote_reason is None:
                 self.send(tkproto.disconnect())
         except OSError:

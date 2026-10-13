@@ -196,8 +196,13 @@ class AppTile(QFrame):
         self.board = QLabel("changes the board")
         self.board.setStyleSheet(f"color:{ORANGE}; font-size:11px; font-weight:700;")
         self.board.setToolTip("It changes how the board runs; the portal asks first before installing or opening it.")
-        self.board.setVisible(entry.changes_board)
+        self.board.setVisible(entry.changes_board and not entry.withdrawn)
         under.addWidget(self.board, 0, Qt.AlignmentFlag.AlignHCenter)
+        self.withdrawn = QLabel("App not available")
+        self.withdrawn.setStyleSheet(f"color:{RED}; font-size:11px; font-weight:700;")
+        self.withdrawn.setToolTip(f"Its release was withdrawn: {entry.withdrawn}" if entry.withdrawn else "")
+        self.withdrawn.setVisible(bool(entry.withdrawn))
+        under.addWidget(self.withdrawn, 0, Qt.AlignmentFlag.AlignHCenter)
         self.busy_label = QLabel()
         self.busy_label.setStyleSheet(f"color:{BLUE}; font-size:11px; font-weight:700;")
         self.busy_label.hide()
@@ -239,11 +244,16 @@ class AppTile(QFrame):
         portal that does not know a checkout yet; it asks for one when the app is installed or removed."""
         entry = self.entry
         # An update needs a known, different tag: an app installed some other way has none recorded.
-        update = installed and bool(installed_tag) and bool(entry.tag) and installed_tag not in (entry.tag, "local")
+        update = (installed and bool(installed_tag) and bool(entry.tag) and installed_tag not in (entry.tag, "local")
+                  and not entry.withdrawn)
         self.dot.setVisible(update)
         self.dot.setToolTip(f"Update available: {entry.tag} (installed {installed_tag})." if update else "")
         if busy:
             self.status, detail = busy, busy
+        elif entry.withdrawn:
+            self.status = "App not available"
+            detail = (f"App not available: its release was withdrawn ({entry.withdrawn}). "
+                      + ("The portal removes it from the board." if installed else "It cannot be installed."))
         elif not installed:
             self.status, detail = "Not installed", "Not installed: install it with the button beside the icon."
         elif update:
@@ -259,7 +269,7 @@ class AppTile(QFrame):
         self.busy_label.setText(busy)
         self.busy_label.setVisible(bool(busy))
         self.icon.setIcon(self._icons[0 if installed else 1])
-        opens = installed and not busy and bool(entry.launch)
+        opens = installed and not busy and bool(entry.launch) and not entry.withdrawn
         self.icon.setEnabled(opens)
         self.icon.setCursor(Qt.CursorShape.PointingHandCursor if opens else Qt.CursorShape.ArrowCursor)
         how = ("Click to open it." if len(entry.launch) == 1 else
@@ -274,8 +284,9 @@ class AppTile(QFrame):
             ("Install", self._ink())
         draw = glyphs.reinstall if entry.required and installed and not update else glyphs.install
         self.install_button.setIcon(draw(ink))
-        self.install_button.setToolTip(f"{action} {entry.name}" + (f" ({entry.tag})" if entry.tag else ""))
-        self.install_button.setEnabled(not busy)
+        self.install_button.setToolTip(f"{action} {entry.name}" + (f" ({entry.tag})" if entry.tag else "")
+                                       if not entry.withdrawn else f"App not available: {entry.withdrawn}")
+        self.install_button.setEnabled(not busy and not entry.withdrawn)
         self.uninstall_button.setEnabled(installed and not busy)
         return update
 
@@ -297,6 +308,7 @@ class MainWindow(QMainWindow):
         self.worker = UpdateChecker(self)               # generic: runs one job off the GUI thread
         self.worker.finished.connect(self._prepared)
         self._job: tuple[AppEntry, str] | None = None
+        self._withdrawal_tried: set[str] = set()        # withdrawn apps the portal tried to remove this time
         self.settings = open_settings(INFO, self)
         self.setWindowTitle(INFO.display_name)
         self.resize(900, 720)
@@ -407,6 +419,7 @@ class MainWindow(QMainWindow):
         if portal_check is not None:
             self.portal_checker.start(portal_check)
         QTimer.singleShot(0, self.settle_icons)          # once the window shows: it may ask
+        QTimer.singleShot(0, self.remove_withdrawn)
 
     # ------------------------------------------------------------------------------------------- layout
     @staticmethod
@@ -531,6 +544,21 @@ class MainWindow(QMainWindow):
         except OSError as exc:
             QMessageBox.warning(self, APP_NAME, f"The Desktop icons could not be changed:\n\n{exc}")
 
+    def remove_withdrawn(self) -> None:
+        """A withdrawn app still on the board goes, one at a time, with its own uninstaller (the portal's uninstall,
+        without the question): the next one when this one has ended. One that cannot be removed stays listed with
+        its Uninstall button."""
+        if self.busy():
+            return
+        for entry in self.entries:
+            if entry.withdrawn and is_installed(entry) and entry.key not in self._withdrawal_tried:
+                self._withdrawal_tried.add(entry.key)
+                QMessageBox.information(
+                    self, APP_NAME, f"{entry.name} is not available any more: its release was withdrawn.\n\n"
+                    f"{entry.withdrawn}\n\nThe portal removes it now; its uninstaller runs in a terminal.")
+                self._start(entry, "uninstall")
+                return
+
     def install(self, entry: AppEntry) -> None:
         if self.busy() or not self._confirm_board_change(entry, f"Install {entry.name}"):
             return
@@ -637,6 +665,7 @@ class MainWindow(QMainWindow):
         if not ok:
             QMessageBox.warning(self, APP_NAME, f"The {pending.action} of {entry.name} ended with exit status "
                                 f"{status or '?'}. Its terminal window shows what happened.")
+        self.remove_withdrawn()                         # the next withdrawn app, if any
 
     def _on_refresh(self) -> None:
         if self.pending is not None:

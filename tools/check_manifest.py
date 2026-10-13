@@ -12,8 +12,9 @@
   the app's VERSION: the release that is about to be tagged. The portal release workflow passes --require-tags.
 * With --base REF (the previous commit, or the PR base): when apps.toml changed since REF, portal/VERSION must have
   been bumped at least as much as the largest app bump it pins: an app patch release needs at least a portal patch
-  release, an app minor release at least a portal minor release, and so on. Any other change to apps.toml (an
-  added or removed app, a new checksum, other commands) needs at least a patch bump."""
+  release, an app minor release at least a portal minor release, and so on. An added, removed or withdrawn app
+  needs at least a minor bump (a withdrawn one is removed from the boards); any other change to apps.toml (a new
+  checksum, other commands) at least a patch bump."""
 
 from __future__ import annotations
 
@@ -116,6 +117,8 @@ def required_bump(old_text: str, new_text: str) -> tuple[int, str]:
             if need < 2:
                 need, why = 2, f"{key} was {'added' if key in new else 'removed'}"
             continue
+        if new[key].withdrawn != old[key].withdrawn and need < 2:
+            need, why = 2, f"{key} was {'withdrawn' if new[key].withdrawn else 'no longer withdrawn'}"
         level = bump_level(old[key].version, new[key].version)
         if level < 0:
             return -1, f"{key} moves back from {old[key].tag} to {new[key].tag}"

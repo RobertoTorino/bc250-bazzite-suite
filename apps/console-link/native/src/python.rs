@@ -13,8 +13,10 @@ use pyo3::IntoPyObjectExt;
 use crate::connection::{self, ConnectError, Event};
 use crate::ecdh;
 use crate::fec;
+use crate::feedback;
 use crate::gkcrypt;
 use crate::keystate;
+use crate::orientation;
 use crate::takion::{self, Message, TakionError};
 use crate::video::VideoEvent;
 
@@ -316,6 +318,43 @@ fn resolve(host: &str, port: u16) -> PyResult<SocketAddr> {
         .ok_or_else(|| PyOSError::new_err(format!("{host}: no address")))
 }
 
+/// One controller's motion (orientation.rs): update() with each gyro or accelerometer sample (rad/s, g, a 32-bit
+/// microsecond clock); gyro, accel and orientation (x, y, z, w) are what set_controller_state takes.
+#[pyclass(name = "OrientationTracker", module = "bc250_console_link_core")]
+#[derive(Default)]
+struct OrientationTracker(orientation::Tracker);
+
+#[pymethods]
+impl OrientationTracker {
+    #[new]
+    fn new() -> Self {
+        Self::default()
+    }
+
+    #[pyo3(signature = (gyro, accel, timestamp_us, accel_zero=(0.0, 0.0, 0.0), accel_zero_applied=false))]
+    fn update(&mut self, gyro: (f32, f32, f32), accel: (f32, f32, f32), timestamp_us: u32,
+              accel_zero: (f32, f32, f32), accel_zero_applied: bool) {
+        self.0.update([gyro.0, gyro.1, gyro.2], [accel.0, accel.1, accel.2],
+                      [accel_zero.0, accel_zero.1, accel_zero.2], accel_zero_applied, timestamp_us);
+    }
+
+    #[getter]
+    fn gyro(&self) -> (f32, f32, f32) {
+        (self.0.gyro[0], self.0.gyro[1], self.0.gyro[2])
+    }
+
+    #[getter]
+    fn accel(&self) -> (f32, f32, f32) {
+        (self.0.accel[0], self.0.accel[1], self.0.accel[2])
+    }
+
+    #[getter]
+    fn orientation(&self) -> (f32, f32, f32, f32) {
+        let [x, y, z, w] = self.0.console_orientation();
+        (x, y, z, w)
+    }
+}
+
 /// A live Takion connection (connection.rs). The constructor connects and runs the handshake, without the GIL;
 /// TimeoutError when the console does not answer, ConnectionError when it answers wrongly.
 #[pyclass(name = "Takion", module = "bc250_console_link_core", frozen)]
@@ -382,6 +421,44 @@ impl Takion {
         self.0.start_stream(profiles, packet_loss_max).map_err(|e| PyOSError::new_err(e.to_string()))
     }
 
+    /// The controller as it is now: buttons as the reference numbers them (bit 0 cross ... bit 15 PS), L2 and R2 from
+    /// 0 to 255, the sticks as (x, y) from -32768 to 32767, up to two fingers on the touchpad as (id, x, y), the gyro
+    /// in rad/s, the accelerometer in g and the orientation as a quaternion (x, y, z, w). It goes to the console
+    /// once the stream runs, at once when it changes and at least every 200 ms.
+    #[pyo3(signature = (buttons=0, l2=0, r2=0, left=(0, 0), right=(0, 0), touches=Vec::new(), gyro=(0.0, 0.0, 0.0),
+                        accel=(0.0, 1.0, 0.0), orient=(0.0, 0.0, 0.0, 1.0)))]
+    #[allow(clippy::too_many_arguments)]
+    fn set_controller_state(&self, buttons: u32, l2: u8, r2: u8, left: (i16, i16), right: (i16, i16),
+                            touches: Vec<(u8, u16, u16)>, gyro: (f32, f32, f32), accel: (f32, f32, f32),
+                            orient: (f32, f32, f32, f32)) -> PyResult<()> {
+        if touches.len() > feedback::TOUCHES_MAX {
+            return Err(PyValueError::new_err("at most two touches"));
+        }
+        let mut state = feedback::ControllerState::idle();
+        state.buttons = buttons & 0xffff;
+        (state.l2, state.r2) = (l2, r2);
+        (state.left_x, state.left_y, state.right_x, state.right_y) = (left.0, left.1, right.0, right.1);
+        for (slot, (id, x, y)) in state.touches.iter_mut().zip(touches) {
+            *slot = feedback::Touch { id: (id & 0x7f) as i8, x, y };
+        }
+        state.gyro = [gyro.0, gyro.1, gyro.2];
+        state.accel = [accel.0, accel.1, accel.2];
+        state.orient = [orient.0, orient.1, orient.2, orient.3];
+        self.0.set_controller_state(state);
+        Ok(())
+    }
+
+    /// The audio receiver's counters once the stream runs, else None.
+    fn audio_stats<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyDict>>> {
+        let Some(s) = self.0.audio_stats() else { return Ok(None) };
+        let dict = PyDict::new(py);
+        for (name, value) in [("packets", s.packets), ("frames", s.frames), ("lost", s.lost), ("refused", s.refused),
+                              ("haptics", s.haptics)] {
+            dict.set_item(name, value)?;
+        }
+        Ok(Some(dict))
+    }
+
     /// The video receiver's counters once the stream runs, else None.
     fn video_stats<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyDict>>> {
         let Some(s) = self.0.video_stats() else { return Ok(None) };
@@ -399,7 +476,8 @@ impl Takion {
     /// The next event or None after timeout seconds: ("data", data_type, channel, bytes), ("data_ack", seq_num),
     /// ("av", header dict, decrypted bytes) or ("closed", reason). Once the stream runs, "av" is audio only and
     /// video comes as ("frame", {"index", "fec", "frames_lost"}, bytes), ("profile", resolution index) and
-    /// ("corrupt", first frame, last frame), the frames to report to the console.
+    /// ("corrupt", first frame, last frame), the frames to report to the console; audio comes as ("audio", index,
+    /// Opus frame or None for a lost one).
     #[pyo3(signature = (timeout=0.0))]
     fn next_event<'py>(&self, py: Python<'py>, timeout: f64) -> PyResult<Option<Bound<'py, PyTuple>>> {
         let timeout = Duration::from_secs_f64(timeout.max(0.0));
@@ -422,12 +500,17 @@ impl Takion {
             Event::Video(VideoEvent::Corrupt { start, end }) => {
                 vec!["corrupt".into_py_any(py)?, start.into_py_any(py)?, end.into_py_any(py)?]
             }
+            Event::Audio(frame) => vec![
+                "audio".into_py_any(py)?, frame.index.into_py_any(py)?,
+                frame.data.map(|data| bytes(py, &data)).into_py_any(py)?,
+            ],
         };
         Ok(Some(PyTuple::new(py, items)?))
     }
 
     /// Counters: packets received, MAC mismatches, invalid packets, data and video dropped, video skipped after
-    /// the reorder timeout, messages resent and given up, congestion reports sent.
+    /// the reorder timeout, messages resent and given up, congestion reports, controller states and history packets
+    /// sent.
     fn stats<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
         let s = self.0.stats();
         let dict = PyDict::new(py);
@@ -435,6 +518,7 @@ impl Takion {
             ("received", s.received), ("mac_mismatch", s.mac_mismatch), ("invalid", s.invalid),
             ("data_dropped", s.data_dropped), ("video_dropped", s.video_dropped), ("video_skipped", s.video_skipped),
             ("resent", s.resent), ("given_up", s.given_up), ("congestion_reports", s.congestion_reports),
+            ("feedback_states", s.feedback_states), ("feedback_history", s.feedback_history),
         ] {
             dict.set_item(name, value)?;
         }
@@ -508,6 +592,28 @@ impl Decoder {
     }
 }
 
+/// The sound's decoder (decoder.rs): AudioDecoder(rate, channels, frame_size) from the stream's audio header;
+/// decode(frame) gives 16-bit PCM, interleaved, as bytes (a frame of silence for None, a lost frame).
+#[cfg(feature = "decoder")]
+#[pyclass(name = "AudioDecoder", module = "bc250_console_link_core", unsendable)]
+struct AudioDecoder(crate::decoder::AudioDecoder);
+
+#[cfg(feature = "decoder")]
+#[pymethods]
+impl AudioDecoder {
+    #[new]
+    fn new(rate: u32, channels: u32, frame_size: u32) -> PyResult<Self> {
+        crate::decoder::AudioDecoder::new(rate, channels, frame_size).map(Self).map_err(decode_error)
+    }
+
+    #[pyo3(signature = (frame=None))]
+    fn decode<'py>(&mut self, py: Python<'py>, frame: Option<&[u8]>) -> PyResult<Bound<'py, PyBytes>> {
+        let pcm = self.0.decode(frame).map_err(decode_error)?;
+        let raw: Vec<u8> = pcm.iter().flat_map(|sample| sample.to_le_bytes()).collect();
+        Ok(bytes(py, &raw))
+    }
+}
+
 #[pymodule]
 fn bc250_console_link_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
@@ -515,11 +621,13 @@ fn bc250_console_link_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     #[cfg(feature = "decoder")]
     {
         m.add_class::<Decoder>()?;
+        m.add_class::<AudioDecoder>()?;
         m.add("FFMPEG_VERSION", crate::decoder::ffmpeg_version())?;
     }
     m.add_class::<GkCrypt>()?;
     m.add_class::<Ecdh>()?;
     m.add_class::<KeyState>()?;
+    m.add_class::<OrientationTracker>()?;
     m.add_function(wrap_pyfunction!(verify_signature, m)?)?;
     m.add_function(wrap_pyfunction!(packet_mac, m)?)?;
     m.add_function(wrap_pyfunction!(verify_packet, m)?)?;
@@ -545,6 +653,8 @@ fn bc250_console_link_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
         ("PACKET_VIDEO", takion::PACKET_VIDEO),
         ("PACKET_AUDIO", takion::PACKET_AUDIO),
         ("PACKET_CONGESTION", takion::PACKET_CONGESTION),
+        ("PACKET_FEEDBACK_HISTORY", takion::PACKET_FEEDBACK_HISTORY),
+        ("PACKET_FEEDBACK_STATE", takion::PACKET_FEEDBACK_STATE),
         ("CHUNK_DATA", takion::CHUNK_DATA),
         ("CHUNK_INIT", takion::CHUNK_INIT),
         ("CHUNK_INIT_ACK", takion::CHUNK_INIT_ACK),

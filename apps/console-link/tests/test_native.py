@@ -145,6 +145,21 @@ def test_fec(v):
         core.fec_decode(damaged, size, k, m, list(range(m + 1)))
 
 
+@pytest.mark.skipif(not getattr(core, "DECODER", False), reason="the native core is built without the decoders")
+def test_audio_decoder():
+    v = json.loads((Path(__file__).parent / "audio_vectors.json").read_text(encoding="utf-8"))
+    decoder = core.AudioDecoder(v["rate"], v["channels"], v["frame_size"])
+    pcm = b"".join(decoder.decode(base64.b64decode(frame)) for frame in v["frames"])
+    reference = base64.b64decode(v["pcm"])
+    skip = v["pre_skip"] * v["channels"] * 2
+    ours = pcm[skip:skip + len(reference)]
+    pairs = zip(memoryview(ours).cast("h"), memoryview(reference).cast("h"))
+    assert len(ours) == len(reference) and all(abs(a - b) <= 1 for a, b in pairs)
+    assert decoder.decode(None) == bytes(480 * 2 * 2)               # a lost frame: 10 ms of silence
+    with pytest.raises(ValueError):
+        core.AudioDecoder(48000, 0, 480)
+
+
 @pytest.mark.skipif(not getattr(core, "DECODER", False), reason="the native core is built without the video decoder")
 @pytest.mark.parametrize("codec", ["h264", "hevc"])
 def test_decoder(codec):
@@ -164,3 +179,24 @@ def test_decoder(codec):
     assert frames == clip["frames"] and pictures.hexdigest() == clip["sha256"]
     with pytest.raises(ValueError, match="codec"):
         core.Decoder("vp9")
+
+
+ORIENTATION = json.loads((Path(__file__).parent / "orientation_vectors.json").read_text(encoding="utf-8"))
+
+
+def test_orientation_tracker_matches_reference():
+    """The tracker as the module gives it, against the reference's orientation.c (orientation_vectors.json)."""
+    tracker = core.OrientationTracker()
+    assert tracker.accel == (0.0, 1.0, 0.0) and abs(tracker.orientation[0]) < 1e-7
+    for sample in ORIENTATION["samples"]:
+        if sample["gyro"]:
+            tracker.update(tuple(sample["data"]), tracker.accel, sample["timestamp"], accel_zero_applied=True)
+        else:
+            tracker.update(tracker.gyro, tuple(sample["data"]), sample["timestamp"])
+        assert list(tracker.orientation) == pytest.approx(sample["orient"], rel=1e-6, abs=1e-9)
+        assert list(tracker.accel) == pytest.approx(sample["state_accel"], rel=1e-6)
+    zero = ORIENTATION["zero"]
+    tracker = core.OrientationTracker()
+    tracker.update((0, 0, 0), (0.3, 1.2, 0.1), 1000, accel_zero=tuple(zero["zero"]))
+    tracker.update((0.5, 0, 0), (0.3, 1.2, 0.1), 5000, accel_zero=tuple(zero["zero"]))
+    assert list(tracker.orientation) == pytest.approx(zero["orient"], rel=1e-6, abs=1e-9)

@@ -671,6 +671,19 @@ need = "optional"
 usage = "The sound when a transfer completes; without it the app uses Qt's beep."
 anchor = "what-it-needs"
 
+[[tool]]
+name = "SDL3"
+description = "The Simple DirectMedia Layer library (libSDL3): reads game controllers, with one button layout for every kind. Checked by its library file."
+executables = []
+locations = ["/usr/lib64/libSDL3.so.0", "/usr/lib/x86_64-linux-gnu/libSDL3.so.0", "/usr/lib/libSDL3.so.0"]
+probe = "path"
+
+[[tool.source]]
+owner = "console-link"
+need = "optional"
+usage = "Reads the controllers on the board for the stream; without it the console sees a controller lying still."
+anchor = "what-you-need"
+
 [[dependency]]
 name = "PyQt6"
 description = "The Python bindings of the Qt 6 toolkit. Every suite app draws its windows with it; the wheels include Qt itself, so nothing is layered onto the system."

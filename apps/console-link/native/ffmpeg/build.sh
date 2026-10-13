@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Builds the FFmpeg that the native core's video decoder links statically (cargo feature "decoder"): FFmpeg's own
-# sources, pinned and checked, configured as small as the stream needs: the H.264 and HEVC decoders with VA-API.
+# sources, pinned and checked, configured as small as the stream needs: the H.264 and HEVC decoders with VA-API,
+# and the Opus decoder for the sound (which needs libswresample).
 # LGPL only (no --enable-gpl, no external codec libraries). libva stays the system's, linked dynamically, so the
 # board's own drivers decode.
 #
@@ -86,11 +87,14 @@ fi
 cd "$WORK/ffmpeg-$FFMPEG_VERSION"
 ./configure --prefix="$PREFIX" --enable-static --disable-shared --enable-pic \
     --disable-programs --disable-doc --disable-network --disable-autodetect --disable-everything \
-    --disable-avdevice --disable-avformat --disable-avfilter --disable-swresample --disable-swscale \
-    --enable-decoder=h264,hevc --enable-parser=h264,hevc \
+    --disable-avdevice --disable-avformat --disable-avfilter --disable-swscale \
+    --enable-decoder=h264,hevc,opus --enable-parser=h264,hevc \
     --enable-vaapi --enable-hwaccel=h264_vaapi,hevc_vaapi \
     "${asm[@]}" > "$WORK/configure.log" || { tail -30 "$WORK/configure.log" ffbuild/config.log >&2; die "configure failed"; }
 grep -q '^CONFIG_VAAPI=yes' ffbuild/config.mak || die "configure did not enable VA-API"
+for decoder in H264 HEVC OPUS; do                   # configure drops a decoder whose dependencies are off
+    grep -q "^CONFIG_${decoder}_DECODER=yes" ffbuild/config.mak || die "configure did not enable the $decoder decoder"
+done
 make -j"$(nproc)" > "$WORK/make.log" 2>&1 || { tail -30 "$WORK/make.log" >&2; die "make failed"; }
 make install > /dev/null
 [ -n "$VA_PKG" ] && cp "$VA_PKG"/*.pc "$PREFIX/lib/pkgconfig/"

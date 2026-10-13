@@ -10,18 +10,21 @@
 //! here the handler is the Python side, so without keys an acknowledgement waits for `set_crypt` (up to 100 ms).
 //!
 //! Once the stream runs (`start_stream`, after STREAMINFO), video goes through the video receiver (video.rs) and
-//! comes out as whole frames, audio packets are counted, and a congestion report goes to the console every 200 ms
-//!.
+//! comes out as whole frames, audio through the audio receiver (audio.rs) as Opus frames in order, and a congestion
+//! report goes to the console every 200 ms. The reference starts the reports right after the handshake; there is
+//! nothing to count before the stream. The controller state goes out from then on too (feedback.rs), on a thread of
+//! its own: at least every 200 ms, and at once when it changes.
 
 use std::collections::VecDeque;
 use std::io::ErrorKind;
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, Sender};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Condvar, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
+use crate::feedback::{self, ControllerState};
 use crate::frame::{self, PacketStats};
 use crate::gkcrypt::{GkCrypt, BLOCK_SIZE, ECDH_SECRET_SIZE, HANDSHAKE_KEY_SIZE};
 use crate::keystate::KeyState;
@@ -32,6 +35,7 @@ use crate::takion::{
     DATA_TYPE_PAD_INFO, DATA_TYPE_PROTOBUF, DATA_TYPE_RUMBLE, DATA_TYPE_TRIGGER_EFFECTS, MESSAGE_HEADER_SIZE,
     PACKET_AUDIO, PACKET_CONTROL, PACKET_VIDEO,
 };
+use crate::audio::{AudioFrame, AudioReceiver, AudioStats};
 use crate::video::{VideoEvent, VideoReceiver, VideoStats};
 
 pub const PORT: u16 = 9296;
@@ -92,10 +96,12 @@ pub enum Event {
     Data { data_type: u8, channel: u16, data: Vec<u8> },
     /// One of our DATA messages was acknowledged.
     DataAck(u32),
-    /// A video or audio packet, decrypted; video in order of packet index. Once the stream runs, only audio.
+    /// A video or audio packet, decrypted; video in order of packet index. Only until the stream runs.
     Av { packet: AvPacket, data: Vec<u8> },
     /// Once the stream runs: a frame, a resolution switch or frames to report as corrupt.
     Video(VideoEvent),
+    /// Once the stream runs: the next Opus frame of the sound, in order (no data: lost).
+    Audio(AudioFrame),
     /// The receiving thread stopped: closed, or the socket failed.
     Closed(String),
 }
@@ -111,6 +117,8 @@ pub struct Stats {
     pub resent: u64,
     pub given_up: u64,
     pub congestion_reports: u64,
+    pub feedback_states: u64,
+    pub feedback_history: u64,
 }
 
 struct SendState {
@@ -134,9 +142,17 @@ struct Shared {
     packet_stats: Mutex<PacketStats>,
 }
 
+/// The controller state for the feedback thread; the sender exists once the stream runs.
+struct Feedback {
+    state: ControllerState,
+    sender: Option<feedback::Sender>,
+    stop: bool,
+}
+
 struct Stream {
     video: VideoReceiver,
-    pending: VecDeque<VideoEvent>,
+    audio: AudioReceiver,
+    pending: VecDeque<Event>,
 }
 
 pub struct Connection {
@@ -145,6 +161,8 @@ pub struct Connection {
     thread: Mutex<Option<JoinHandle<()>>>,
     stream: Mutex<Option<Stream>>,
     congestion: Mutex<Option<JoinHandle<()>>>,
+    feedback: Arc<(Mutex<Feedback>, Condvar)>,
+    feedback_thread: Mutex<Option<JoinHandle<()>>>,
 }
 
 fn is_timeout(error: &std::io::Error) -> bool {
@@ -248,6 +266,11 @@ impl Connection {
             thread: Mutex::new(Some(thread)),
             stream: Mutex::new(None),
             congestion: Mutex::new(None),
+            feedback: Arc::new((
+                Mutex::new(Feedback { state: ControllerState::idle(), sender: None, stop: false }),
+                Condvar::new(),
+            )),
+            feedback_thread: Mutex::new(None),
         })
     }
 
@@ -309,25 +332,54 @@ impl Connection {
     }
 
     /// The stream runs: video from now on through the video receiver (profiles: the resolutions in STREAMINFO),
-    /// and congestion reports every 200 ms, the loss reported at most packet_loss_max.
+    /// congestion reports every 200 ms, the loss reported at most packet_loss_max, and the controller state.
     pub fn start_stream(&self, profiles: usize, packet_loss_max: f64) -> Result<(), SendError> {
         let mut congestion = self.congestion.lock().unwrap();
         if congestion.is_some() {
             return Ok(());
         }
-        *self.stream.lock().unwrap() = Some(Stream { video: VideoReceiver::new(profiles), pending: VecDeque::new() });
+        *self.stream.lock().unwrap() =
+            Some(Stream { video: VideoReceiver::new(profiles), audio: AudioReceiver::new(), pending: VecDeque::new() });
         let shared = Arc::clone(&self.shared);
         let thread = std::thread::Builder::new()
             .name("congestion".into())
             .spawn(move || report_congestion(shared, packet_loss_max))
             .map_err(SendError::Io)?;
         *congestion = Some(thread);
+        {
+            let mut feedback = self.feedback.0.lock().unwrap();
+            let mut sender = feedback::Sender::new(self.shared.version, Instant::now());
+            sender.set(feedback.state);
+            feedback.sender = Some(sender);
+        }
+        let (shared, state) = (Arc::clone(&self.shared), Arc::clone(&self.feedback));
+        let thread = std::thread::Builder::new()
+            .name("feedback".into())
+            .spawn(move || send_feedback(shared, state))
+            .map_err(SendError::Io)?;
+        *self.feedback_thread.lock().unwrap() = Some(thread);
         Ok(())
+    }
+
+    /// The controller as it is now; it goes to the console once the stream runs.
+    pub fn set_controller_state(&self, state: ControllerState) {
+        let (lock, cond) = &*self.feedback;
+        let mut feedback = lock.lock().unwrap();
+        feedback.state = state;
+        if let Some(sender) = feedback.sender.as_mut() {
+            sender.set(state);
+            cond.notify_one();
+        }
     }
 
     /// The video receiver's counters, once the stream runs.
     pub fn video_stats(&self) -> Option<VideoStats> {
         self.stream.lock().unwrap().as_ref().map(|stream| stream.video.stats)
+    }
+
+    /// The audio receiver's counters, once the stream runs.
+    pub fn audio_stats(&self) -> Option<AudioStats> {
+        self.stream.lock().unwrap().as_ref().map(|stream| stream.audio.stats)
     }
 
     /// The next event, waiting up to timeout; None when there was none.
@@ -337,7 +389,7 @@ impl Connection {
         loop {
             if let Some(stream) = self.stream.lock().unwrap().as_mut() {
                 if let Some(event) = stream.pending.pop_front() {
-                    return Some(Event::Video(event));
+                    return Some(event);
                 }
             }
             let event = match events.recv_timeout(deadline.saturating_duration_since(Instant::now())) {
@@ -350,15 +402,21 @@ impl Connection {
             let mut packet_stats = self.shared.packet_stats.lock().unwrap();
             if !packet.is_video {
                 packet_stats.push_seq(packet.frame_index);
-                return Some(Event::Av { packet, data });
+                stream.pending.extend(stream.audio.packet(&packet, &data).into_iter().map(Event::Audio));
+                continue;
             }
-            stream.pending.extend(stream.video.packet(&packet, &data, &mut packet_stats));
+            stream.pending.extend(stream.video.packet(&packet, &data, &mut packet_stats).into_iter().map(Event::Video));
         }
     }
 
-    /// Stops the receiving thread and the congestion reports; the last event is Closed.
+    /// Stops the receiving thread, the congestion reports and the controller state; the last event is Closed.
     pub fn close(&self) {
         self.shared.stop.store(true, Ordering::Relaxed);
+        self.feedback.0.lock().unwrap().stop = true;
+        self.feedback.1.notify_one();
+        if let Some(thread) = self.feedback_thread.lock().unwrap().take() {
+            let _ = thread.join();
+        }
         if let Some(thread) = self.thread.lock().unwrap().take() {
             let _ = thread.join();
         }
@@ -402,6 +460,49 @@ fn report_congestion(shared: Arc<Shared>, packet_loss_max: f64) {
             shared.stats.lock().unwrap().congestion_reports += 1;
         }
         next = Instant::now() + CONGESTION_INTERVAL;
+    }
+}
+
+/// The reference's feedback sender thread: waits until the controller changes or a packet is due, then sends what
+/// feedback::Sender says. Nothing goes out without the stream keys.
+fn send_feedback(shared: Arc<Shared>, feedback: Arc<(Mutex<Feedback>, Condvar)>) {
+    let (lock, cond) = &*feedback;
+    let mut state = lock.lock().unwrap();
+    while let Some(sender) = state.sender.as_ref() {
+        if !state.stop && !sender.ready() {
+            let wait = sender.wait(Instant::now());
+            state = cond
+                .wait_timeout_while(state, wait, |f| !f.stop && !f.sender.as_ref().is_some_and(|s| s.ready()))
+                .unwrap()
+                .0;
+        }
+        if state.stop {
+            break;
+        }
+        let packets = state.sender.as_mut().map(|s| s.step(Instant::now())).unwrap_or_default();
+        drop(state);
+        for mut packet in packets {
+            let is_state = packet[0] == takion::PACKET_FEEDBACK_STATE;
+            let sent = {
+                let mut send = shared.send.lock().unwrap();
+                if send.crypt.is_none() {
+                    false
+                } else {
+                    let key_pos = advance(&mut send, feedback::key_pos_size(&packet));
+                    feedback::seal(send.crypt.as_mut().unwrap(), &mut packet, key_pos);
+                    shared.sock.send(&packet).is_ok()
+                }
+            };
+            if sent {
+                let mut stats = shared.stats.lock().unwrap();
+                if is_state {
+                    stats.feedback_states += 1;
+                } else {
+                    stats.feedback_history += 1;
+                }
+            }
+        }
+        state = lock.lock().unwrap();
     }
 }
 
@@ -842,14 +943,25 @@ mod tests {
             };
             console.send(&[takion::v7_av_header(&header), unit.clone()].concat());
         }
-        let audio = AvPacket { frame_index: 9, units_in_frame_total: 1, ..Default::default() };
-        console.send(&[takion::v7_av_header(&audio), vec![1, 2, 3]].concat());
+        // Audio: Opus frames of 3 bytes, one per packet (version 7 has 10 bits for the units: 3 << 8 | 1 fits).
+        for index in 1..=3u16 {
+            let audio = AvPacket {
+                frame_index: index, codec: crate::audio::CODEC_OPUS, units_in_frame_total: 1,
+                units_in_frame_fec: 3 << 8 | 1, ..Default::default()
+            };
+            console.send(&[takion::v7_av_header(&audio), vec![index as u8; 3]].concat());
+        }
 
-        let mut events = [next(&connection), next(&connection), next(&connection)];
-        events.sort_by_key(|e| !matches!(e, Event::Av { .. }));
-        assert!(matches!(&events[0], Event::Av { packet, .. } if packet.frame_index == 9));
-        assert_eq!(events[1], Event::Video(VideoEvent::Profile(0)));
-        assert_eq!(events[2], Event::Video(VideoEvent::Frame { index: 1, data: frame, fec: true, frames_lost: 0 }));
+        let mut events: Vec<Event> = (0..5).map(|_| next(&connection)).collect();
+        events.sort_by_key(|e| !matches!(e, Event::Video(_)));
+        assert_eq!(events[0], Event::Video(VideoEvent::Profile(0)));
+        assert_eq!(events[1], Event::Video(VideoEvent::Frame { index: 1, data: frame, fec: true, frames_lost: 0 }));
+        let audio: Vec<_> = events[2..].iter().map(|e| match e {
+            Event::Audio(frame) => (frame.index, frame.data.clone()),
+            other => panic!("{other:?}"),
+        }).collect();
+        assert_eq!(audio, [(1, Some(vec![1; 3])), (2, Some(vec![2; 3])), (3, Some(vec![3; 3]))]);
+        assert_eq!(connection.audio_stats().unwrap().frames, 3);
         assert_eq!(connection.video_stats().unwrap().fec_recovered, 1);
 
         let report = console.recv();

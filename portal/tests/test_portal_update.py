@@ -36,6 +36,18 @@ def test_compare_names_the_changed_apps():
     assert pu.compare(current, current) == []
 
 
+def test_compare_names_a_withdrawn_app():
+    current = load(MANIFEST)
+    new = [replace(e, withdrawn="Privacy: shows the account ID.") if e.key == "console-link" else e for e in current]
+    changes = pu.compare(current, new)
+    assert [(c.name, c.withdrawn) for c in changes] == [("BC250 Console Link", "Privacy: shows the account ID.")]
+    update = pu.PortalUpdate(RELEASE, changes)
+    assert update.summary() == "withdraws Console Link"
+    assert update.details() == ("BC250 Console Link: not available any more (Privacy: shows the account ID.); "
+                                "removed from the board")
+    assert pu.compare(new, new) == []                       # withdrawn already: nothing new
+
+
 def test_summary_and_details():
     two = pu.PortalUpdate(RELEASE, [pu.AppChange("BC-250 ACE Queues", "0.1.0", "0.1.1"),
                                     pu.AppChange("BC-250 Memory Manager", "0.1.0", "0.1.1")])

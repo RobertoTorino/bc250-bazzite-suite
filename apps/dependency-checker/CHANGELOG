@@ -1,3 +1,11 @@
+Changelog: 13-10-2026 14:27:47
+
+Release 0.1.9.
+
+Changelog: 13-10-2026 09:40:13
+
+SDL3 in the catalogue, checked by its library file: BC250 Console Link reads the board's controllers with it (optional; without it the console sees a controller lying still).
+
 Changelog: 13-10-2026 01:27:26
 
 Release 0.1.8.

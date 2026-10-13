@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // The video decoder over FFmpeg's libavcodec (as the reference's ffmpegdecoder.c uses it): H.264 or HEVC, with VA-API
-// when the board's driver opens, else in software. A small C interface, so the Rust side (decoder.rs) needs neither
-// bindgen nor FFmpeg's struct layouts.
+// when the board's driver opens, else in software; and the Opus decoder for the sound. A small C interface, so the
+// Rust side (decoder.rs) needs neither bindgen nor FFmpeg's struct layouts.
 
 #include <errno.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <libavcodec/avcodec.h>
+#include <libavutil/channel_layout.h>
+#include <libavutil/common.h>
 #include <libavutil/hwcontext.h>
 #include <libavutil/imgutils.h>
 #include <libavutil/log.h>
@@ -172,4 +175,86 @@ int bc_decoder_image_copy(struct bc_decoder *d, uint8_t *buf, size_t size)
         return AVERROR(EINVAL);
     return av_image_copy_to_buffer(buf, (int)size, (const uint8_t * const *)f->data, f->linesize, f->format,
                                    f->width, f->height, 1);
+}
+
+// --- Sound: Opus (the reference uses libopus; FFmpeg's own decoder here) ------------------------------------------
+
+// An Opus decoder for raw frames of rate and channels as the stream's audio header gives them.
+int bc_audio_new(int rate, int channels, struct bc_decoder **out)
+{
+    *out = NULL;
+    av_log_set_level(AV_LOG_FATAL);
+    const AVCodec *codec = avcodec_find_decoder(AV_CODEC_ID_OPUS);
+    if(!codec)
+        return AVERROR_DECODER_NOT_FOUND;
+    struct bc_decoder *d = av_mallocz(sizeof(*d));
+    if(!d)
+        return AVERROR(ENOMEM);
+    d->ctx = avcodec_alloc_context3(codec);
+    d->packet = av_packet_alloc();
+    d->frame = av_frame_alloc();
+    if(!d->ctx || !d->packet || !d->frame)
+    {
+        bc_decoder_free(d);
+        return AVERROR(ENOMEM);
+    }
+    d->ctx->sample_rate = rate;
+    av_channel_layout_default(&d->ctx->ch_layout, channels);
+    int r = avcodec_open2(d->ctx, codec, NULL);
+    if(r < 0)
+    {
+        bc_decoder_free(d);
+        return r;
+    }
+    *out = d;
+    return 0;
+}
+
+static int16_t to_s16(float sample)
+{
+    return av_clip_int16(lrintf(sample * 32768.0f));
+}
+
+// One Opus frame into out, 16-bit samples interleaved: at most capacity samples per channel; *samples gets how many
+// per channel it wrote.
+int bc_audio_decode(struct bc_decoder *d, const uint8_t *data, size_t size, int16_t *out, size_t capacity,
+                    int *samples)
+{
+    *samples = 0;
+    if(size == 0 || size > INT32_MAX - AV_INPUT_BUFFER_PADDING_SIZE)
+        return AVERROR(EINVAL);
+    int r = av_new_packet(d->packet, (int)size);
+    if(r < 0)
+        return r;
+    memcpy(d->packet->data, data, size);
+    r = avcodec_send_packet(d->ctx, d->packet);
+    av_packet_unref(d->packet);
+    if(r < 0)
+        return r;
+    int channels = d->ctx->ch_layout.nb_channels;
+    while((r = avcodec_receive_frame(d->ctx, d->frame)) >= 0)
+    {
+        AVFrame *f = d->frame;
+        int n = f->nb_samples;
+        if((size_t)(*samples + n) > capacity)
+            n = (int)(capacity - (size_t)*samples);
+        for(int i = 0; i < n; i++)
+            for(int c = 0; c < channels; c++)
+            {
+                float sample;
+                if(f->format == AV_SAMPLE_FMT_FLTP)
+                    sample = ((const float *)f->extended_data[c])[i];
+                else if(f->format == AV_SAMPLE_FMT_FLT)
+                    sample = ((const float *)f->extended_data[0])[i * channels + c];
+                else
+                {
+                    av_frame_unref(f);
+                    return AVERROR(ENOSYS);
+                }
+                out[(size_t)(*samples + i) * channels + c] = to_s16(sample);
+            }
+        *samples += n;
+        av_frame_unref(f);
+    }
+    return r == AVERROR(EAGAIN) || r == AVERROR_EOF ? 0 : r;
 }

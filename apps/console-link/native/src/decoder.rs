@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! The video decoder (decoder.c over FFmpeg, as the reference's ffmpegdecoder.c): the stream's header from STREAMINFO
+//! The decoders (decoder.c over FFmpeg): video as the reference's ffmpegdecoder.c, the stream's header from STREAMINFO
 //! first, then the frames. With VA-API when the board's driver opens, else in software. Built only with the cargo
 //! feature "decoder", which links the FFmpeg of ffmpeg/build.sh statically.
 
@@ -29,6 +29,9 @@ extern "C" {
                         colorspace: *mut c_int, full_range: *mut c_int) -> c_int;
     fn bc_decoder_image_copy(d: *mut RawDecoder, buf: *mut u8, size: usize) -> c_int;
     fn bc_decoder_ffmpeg_version() -> *const c_char;
+    fn bc_audio_new(rate: c_int, channels: c_int, out: *mut *mut RawDecoder) -> c_int;
+    fn bc_audio_decode(d: *mut RawDecoder, data: *const u8, size: usize, out: *mut i16, capacity: usize,
+                       samples: *mut c_int) -> c_int;
     fn bc_decoder_error(code: c_int, buf: *mut c_char, size: usize);
 }
 
@@ -165,6 +168,51 @@ impl Drop for Decoder {
     }
 }
 
+/// The sound's decoder: Opus frames (one 10 ms frame per unit of an audio packet) into 16-bit PCM, interleaved.
+pub struct AudioDecoder {
+    raw: *mut RawDecoder,
+    pub rate: u32,
+    pub channels: u32,
+    pub frame_size: u32,
+}
+
+// SAFETY: as Decoder.
+unsafe impl Send for AudioDecoder {}
+
+impl AudioDecoder {
+    /// From the stream's audio header: rate, channels and samples per frame.
+    pub fn new(rate: u32, channels: u32, frame_size: u32) -> Result<Self, DecodeError> {
+        if channels == 0 || channels > 8 || frame_size == 0 || frame_size > 5760 {
+            return Err(DecodeError { code: -22, message: "an audio header the decoder cannot take".into() });
+        }
+        let mut raw = ptr::null_mut();
+        // SAFETY: out-pointer to a local; on success raw is a decoder we own.
+        check(unsafe { bc_audio_new(rate as c_int, channels as c_int, &mut raw) })?;
+        Ok(Self { raw, rate, channels, frame_size })
+    }
+
+    /// One frame's PCM; None (a lost frame) gives a frame of silence, where the reference's libopus conceals it.
+    pub fn decode(&mut self, frame: Option<&[u8]>) -> Result<Vec<i16>, DecodeError> {
+        let capacity = self.frame_size as usize;
+        let mut pcm = vec![0i16; capacity * self.channels as usize];
+        let Some(data) = frame.filter(|data| !data.is_empty()) else { return Ok(pcm) };
+        let mut samples = 0;
+        // SAFETY: raw is valid; pcm holds capacity samples per channel; data is copied before the call returns.
+        check(unsafe {
+            bc_audio_decode(self.raw, data.as_ptr(), data.len(), pcm.as_mut_ptr(), capacity, &mut samples)
+        })?;
+        pcm.truncate(samples as usize * self.channels as usize);
+        Ok(pcm)
+    }
+}
+
+impl Drop for AudioDecoder {
+    fn drop(&mut self) {
+        // SAFETY: raw came from bc_audio_new and is freed once.
+        unsafe { bc_decoder_free(self.raw) }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     //! Clips encoded with x264 and x265 (tests/video_vectors.json), checked against the system FFmpeg's decode of
@@ -214,6 +262,28 @@ mod tests {
             let digest: String = hash.finalize().iter().map(|b| format!("{b:02x}")).collect();
             assert_eq!(digest, clip["sha256"].as_str().unwrap(), "{name}");
         }
+    }
+
+    #[test]
+    fn opus_decodes_as_ffmpeg_does() {
+        let v: serde_json::Value =
+            serde_json::from_str(include_str!("../../tests/audio_vectors.json")).expect("valid vectors");
+        let channels = v["channels"].as_u64().unwrap() as u32;
+        let mut decoder = AudioDecoder::new(48000, channels, v["frame_size"].as_u64().unwrap() as u32).unwrap();
+        let mut ours = Vec::new();
+        for frame in v["frames"].as_array().unwrap() {
+            let pcm = decoder.decode(Some(&base64(frame.as_str().unwrap()))).unwrap();
+            assert_eq!(pcm.len(), 480 * channels as usize);
+            ours.extend(pcm);
+        }
+        let reference: Vec<i16> = base64(v["pcm"].as_str().unwrap())
+            .chunks(2).map(|b| i16::from_le_bytes([b[0], b[1]])).collect();
+        let skip = v["pre_skip"].as_u64().unwrap() as usize * channels as usize;
+        let ours = &ours[skip..skip + reference.len()];
+        assert!(ours.iter().zip(&reference).all(|(a, b)| (a - b).abs() <= 1), "PCM differs from FFmpeg's");
+        assert!(reference.iter().any(|&s| s.abs() > 1000), "the clip is not silent");
+        assert_eq!(decoder.decode(None).unwrap(), vec![0; 960]);            // a lost frame: silence
+        assert!(AudioDecoder::new(48000, 0, 480).is_err());
     }
 
     #[test]

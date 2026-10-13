@@ -11,7 +11,12 @@ A release has two steps, because an app's checksum only exists once GitHub has b
 2. Portal: pin each released app in portal/apps.toml (tag and sha256, as tools/pin_app.py), bump portal/VERSION at
    least as much as tools/check_manifest.py asks, and a CHANGELOG entry listing the pins. Commit, test on a board
    (check-release.sh local), then push and tag portal-v<x.y.z>, and check the published release
-   (check-release.sh release)."""
+   (check-release.sh release).
+
+A withdrawal (owner's decisions, 13-10-2026): an app release that must not be used any more (privacy, security, any
+reason) is marked withdrawn in portal/apps.toml with the reason, and on GitHub (a pre-release titled "Withdrawn: ...",
+so no update check offers it; the release itself stays). The next portal release shows the app as not available and
+removes it from the boards that have it. Test it on a board with Test withdrawal before that portal is pushed."""
 
 from __future__ import annotations
 
@@ -19,6 +24,7 @@ import datetime
 import importlib.util
 import json
 import re
+import shlex
 import urllib.error
 import urllib.request
 import subprocess
@@ -257,11 +263,80 @@ def release_text(version: str, notes: str) -> str:
     return f"Release {version}." + (f" {notes.strip()}" if notes.strip() else "")
 
 
-def portal_text(version: str, pins: list[str], notes: str) -> str:
+def portal_text(version: str, pins: list[str], notes: str, withdrawn: list[tuple[str, str]] = ()) -> str:
     text = f"Release {version}."
     if pins:
         text += " Pins " + ", ".join(pins) + "."
+    for tag, reason in withdrawn:
+        text += f" Withdraws {tag}: {reason.rstrip('.')}."
     return text + (f" {notes.strip()}" if notes.strip() else "")
+
+
+# --- Withdrawing a release -------------------------------------------------------------------------------------
+
+_BLOCK = re.compile(r"^\[apps\.(?P<key>[a-z0-9-]+)\]\s*$")
+
+
+def set_withdrawn(text: str, key: str, reason: str) -> str:
+    """apps.toml with [apps.<key>] marked withdrawn for *reason* (after its summary line), or unmarked when
+    *reason* is empty; everything else stays as it is."""
+    lines = text.splitlines(keepends=True)
+    start = next((i for i, line in enumerate(lines) if (m := _BLOCK.match(line)) and m["key"] == key), None)
+    if start is None:
+        raise ValueError(f"apps.toml has no [apps.{key}]")
+    end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("[")), len(lines))
+    block = [line for line in lines[start:end] if not line.startswith("withdrawn ")]
+    if reason.strip():
+        at = next((i + 1 for i, line in enumerate(block) if line.startswith("summary ")), 1)
+        block.insert(at, f"withdrawn = {json.dumps(reason.strip(), ensure_ascii=False)}\n")
+    return "".join(lines[:start] + block + lines[end:])
+
+
+def withdrawable(root: Path, units: list[Unit]) -> list[Unit]:
+    """The apps a portal pins that can be withdrawn: never the required one (Bazzite Test, always installed)."""
+    required = {e.key for e in check_manifest.manifest.load(root / "portal" / "apps.toml") if e.required}
+    return [u for u in units if u.kind == "app" and not u.standalone and u.pinned_tag and u.key not in required]
+
+
+def withdrawn_reason(root: Path, key: str) -> str:
+    entries = check_manifest.manifest.load(root / "portal" / "apps.toml")
+    return next((e.withdrawn for e in entries if e.key == key), "")
+
+
+def withdraw(root: Path, unit: Unit, reason: str, now: datetime.datetime | None = None) -> list[Path]:
+    """Marks the app's pinned release withdrawn (or, with no reason, takes that back) in apps.toml, with a CHANGELOG
+    entry in the app. Returns the files changed."""
+    path = root / "portal" / "apps.toml"
+    path.write_bytes(set_withdrawn(path.read_text(encoding="utf-8"), unit.key, reason).encode("utf-8"))
+    text = (f"Withdrawn: {unit.pinned_tag}. {reason.strip()}" if reason.strip() else
+            f"Withdrawal of {unit.pinned_tag} taken back.")
+    return [path, add_changelog_entry(root, unit, text, now)]
+
+
+def changed_withdrawals(root: Path, base: str) -> list[tuple[str, str]]:
+    """(tag, reason) of the apps withdrawn since *base*: what the portal release that follows withdraws."""
+    old_text = git(root, "show", f"{base}:portal/apps.toml") or ""
+    old = {e.key: e.withdrawn for e in check_manifest.manifest.parse(old_text)} if old_text else {}
+    new = check_manifest.manifest.load(root / "portal" / "apps.toml")
+    return [(e.tag, e.withdrawn) for e in new if e.withdrawn and not old.get(e.key)]
+
+
+def withdraw_commands(tag: str, reason: str, now: datetime.datetime | None = None) -> str:
+    """What stays the owner's: mark the GitHub release (it stays, as a pre-release, so no update check offers it),
+    then the portal release that removes the app from the boards."""
+    date = amsterdam_now(now).strftime("%d-%m-%Y")
+    notes = f"Withdrawn on {date}: {reason.strip()} Do not install this release."
+    return "\n".join([
+        "# 1. Mark the release withdrawn on GitHub (it stays; a pre-release is offered by no update check):",
+        f"gh release edit {tag} --prerelease --title {shlex.quote('Withdrawn: ' + tag)} "
+        f"--notes {shlex.quote(notes)}",
+        "",
+        "# 2. Test it on a BC-250 with the app installed: Test withdrawal (check-release.sh local). The portal must",
+        "#    show the app as \"App not available\" and remove it. Take back undoes the mark after a test.",
+        "",
+        "# 3. Then a portal release (2. Pin and portal: Bump portal, at least a minor version): it lists the",
+        "#    withdrawal in its CHANGELOG entry; commit, push and tag it as usual.",
+    ])
 
 
 # --- Step 2: pins and the portal -------------------------------------------------------------------------------

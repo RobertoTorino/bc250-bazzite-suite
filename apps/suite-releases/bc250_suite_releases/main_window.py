@@ -351,7 +351,8 @@ class PortalPage(QWidget):
             changed = rp.set_version(root, portal, new)
             log.append(f"portal: {new} in " + ", ".join(str(p.relative_to(root)) for p in changed))
         pins = rp.changed_pins(root, self.release_window.base())
-        text = rp.portal_text(new, pins, self.portal_notes.text())
+        withdrawn = rp.changed_withdrawals(root, self.release_window.base())
+        text = rp.portal_text(new, pins, self.portal_notes.text(), withdrawn)
         rp.add_changelog_entry(root, portal, text)
         log += [f"portal: CHANGELOG entry \"{text}\"", "",
                 run_check(root, "tools/check_versions.py"),
@@ -359,6 +360,117 @@ class PortalPage(QWidget):
                 "Then:", rp.portal_commands(f"portal-v{new}")]
         self.output.set_text("\n".join(log))
         self.release_window.reload()
+
+
+class WithdrawPage(QWidget):
+    """Withdrawing a release: marked in apps.toml (and, with the commands shown, on GitHub); tested on a board before
+    the portal release that removes it from the boards."""
+
+    def __init__(self, window: "ReleaseWindow"):
+        super().__init__()
+        self.release_window = window
+        self.app_box = QComboBox()
+        self.app_box.currentIndexChanged.connect(lambda _: self._show_state())
+        self.state = QLabel()
+        self.reason_edit = QLineEdit()
+        self.reason_edit.setPlaceholderText("Why: what is wrong with this release (shown on the boards)")
+        self.withdraw_button = accent_button("Withdraw", "Mark the pinned release withdrawn in apps.toml, with a "
+                                             "CHANGELOG entry in the app")
+        self.withdraw_button.clicked.connect(self.withdraw)
+        self.back_button = QPushButton("Take back")
+        self.back_button.setToolTip("Remove the mark again (after a test, or a mistake)")
+        self.back_button.clicked.connect(self.take_back)
+        self.test_button = QPushButton("Test withdrawal")
+        self.test_button.setToolTip("On a board with the app installed: install the portal from this checkout and "
+                                    "start it (check-release.sh local); it must show the app as not available and "
+                                    "remove it")
+        self.test_button.clicked.connect(self.test)
+        if not sys.platform.startswith("linux"):
+            self.test_button.setEnabled(False)
+            self.test_button.setToolTip("Runs on the board: Linux only")
+        self.output = Terminal()
+        row = QHBoxLayout()
+        row.addWidget(QLabel("App:"))
+        row.addWidget(self.app_box)
+        row.addWidget(self.state, 1)
+        reason_row = QHBoxLayout()
+        reason_row.addWidget(self.reason_edit, 1)
+        reason_row.addWidget(self.withdraw_button)
+        reason_row.addWidget(self.back_button)
+        reason_row.addWidget(self.test_button)
+        lay = QVBoxLayout(self)
+        lay.addWidget(hint_label(
+            "For a release that must not be used any more (privacy, security, any reason):<br>"
+            "<b>1.</b> Withdraw: apps.toml marks the pinned release withdrawn, with the reason the boards show.<br>"
+            "<b>2.</b> Test withdrawal on a BC-250 that has the app installed: the portal from this checkout shows "
+            "it as \"App not available\" and removes it. Take back undoes the mark.<br>"
+            "<b>3.</b> Mark the release on GitHub with the command shown (it stays, as a pre-release, so no update "
+            "check offers it), then release the portal in step 2: it removes the app from the boards."))
+        lay.addLayout(row)
+        lay.addLayout(reason_row)
+        lay.addWidget(self.output, 1)
+        self.units: list[rp.Unit] = []
+
+    def fill(self, units: list[rp.Unit]) -> None:
+        current = self.app_box.currentData()
+        self.units = rp.withdrawable(self.release_window.root, units)
+        self.app_box.blockSignals(True)
+        self.app_box.clear()
+        for unit in self.units:
+            self.app_box.addItem(unit.pinned_tag, unit.key)
+        if current in [u.key for u in self.units]:
+            self.app_box.setCurrentIndex([u.key for u in self.units].index(current))
+        self.app_box.blockSignals(False)
+        self._show_state()
+
+    def unit(self) -> rp.Unit | None:
+        key = self.app_box.currentData()
+        return next((u for u in self.units if u.key == key), None)
+
+    def _show_state(self) -> None:
+        unit = self.unit()
+        reason = rp.withdrawn_reason(self.release_window.root, unit.key) if unit else ""
+        self.state.setText(f"Withdrawn: {reason}" if reason else "Not withdrawn.")
+        self.state.setStyleSheet(f"color:{ORANGE}; font-weight:600;" if reason else "")
+        self.withdraw_button.setEnabled(unit is not None and not reason)
+        self.back_button.setEnabled(bool(reason))
+
+    def withdraw(self) -> None:
+        unit = self.unit()
+        reason = self.reason_edit.text().strip()
+        if unit is None:
+            return
+        if not reason:
+            QMessageBox.warning(self, "Withdraw", "Say why the release is withdrawn: the boards show it.")
+            return
+        changed = rp.withdraw(self.release_window.root, unit, reason)
+        root = self.release_window.root
+        self.output.set_text("\n".join([f"{unit.pinned_tag}: withdrawn in " +
+                                        ", ".join(str(p.relative_to(root)) for p in changed), "",
+                                        rp.withdraw_commands(unit.pinned_tag, reason)]))
+        self.reason_edit.clear()
+        self.release_window.reload()
+
+    def take_back(self) -> None:
+        unit = self.unit()
+        if unit is None:
+            return
+        rp.withdraw(self.release_window.root, unit, "")
+        self.output.set_text(f"{unit.pinned_tag}: no longer withdrawn in portal/apps.toml (and a CHANGELOG entry). "
+                             "Marked on GitHub already? Edit that release back: gh release edit "
+                             f"{unit.pinned_tag} --prerelease=false --title {unit.pinned_tag}")
+        self.release_window.reload()
+
+    def test(self) -> None:
+        script = shlex.quote(str(self.release_window.root / rp.CHECK_SCRIPT))
+        try:
+            self.release_window.launch(f"{script} local")
+        except RuntimeError as exc:
+            self.output.set_text(str(exc))
+            return
+        self.output.set_text("A terminal installs the portal from this checkout and starts it. With the app "
+                             "installed, the portal says it is not available any more and removes it; its tile then "
+                             "shows \"App not available\". Close the portal there to finish.")
 
 
 def start_app(command: list[str], env: dict[str, str], cwd: Path, log: Path) -> subprocess.Popen:
@@ -608,6 +720,8 @@ class ReleaseWindow(QMainWindow):
         self.portal_page = PortalPage(self)
         self.tabs.addTab(self.apps_page, "1. Apps")
         self.tabs.addTab(self.portal_page, "2. Pin and portal")
+        self.withdraw_page = WithdrawPage(self)
+        self.tabs.addTab(self.withdraw_page, "3. Withdraw")
         self.run_page = RunPage(self)
         self.tabs.addTab(self.run_page, "Run from checkout")
         # Opening step 2 reads the tags again, so tags pushed from a terminal meanwhile show up; step 1 keeps what
@@ -654,6 +768,7 @@ class ReleaseWindow(QMainWindow):
         units = rp.load_units(self.root)
         self.apps_page.fill(units)
         self.portal_page.fill(units)
+        self.withdraw_page.fill(units)
         docs = rp.docs_target(self.root)
         self.run_page.fill(rp.launch_targets(self.root) + ([docs] if docs else []))
         problems = rp.bad_tags(self.root, units)

@@ -16,12 +16,18 @@ from . import APP_NAME, INFO, __version__
 def main() -> int:
     parser = argparse.ArgumentParser(prog="bc250_console_link", description=f"{APP_NAME} {__version__}")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__} (core {CORE_VERSION})")
-    _args, qt_args = parser.parse_known_args()
+    parser.add_argument("--stream", metavar="CONSOLE",
+                        help="stream from a registered console (its name, host id or address) full screen, without "
+                             "the main window: what a Steam shortcut for Game Mode runs")
+    args, qt_args = parser.parse_known_args()
 
     from .consoles import migrate_old_config
     migrate_old_config(config_home(), INFO.app_id)      # before Qt opens the settings file
     # English only so far, Qt's own menu texts included.
     app = create_app(INFO, qt_args, lang="en")
+    if args.stream:
+        from . import direct
+        return direct.run(args.stream, app)
     if instance.already_running(INFO.app_id):
         return 0
     from .main_window import MainWindow

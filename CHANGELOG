@@ -1,3 +1,7 @@
+Changelog: 13-10-2026 11:45:43
+
+Withdrawing a release, for every app (owner's decisions, 13-10-2026): the GitHub release stays and is marked withdrawn (a pre-release named Withdrawn: <tag>, which no update check offers); portal/apps.toml marks the app's entry withdrawn with the reason; a new portal release shows the app as App not available and removes it from boards that have it; Suite Releases has a Withdraw tab with Test withdrawal. tools/check_manifest.py: a withdrawn (or no longer withdrawn) app needs at least a minor portal release. The manual: Withdrawing a release (portal.md).
+
 Changelog: 13-10-2026 02:23:15
 
 CLAUDE.md: a standing rule that Console Link's ported code's origin is named only where licensing needs it; the root CHANGELOG and MIGRATION.md follow it.

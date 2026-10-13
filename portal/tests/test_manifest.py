@@ -51,6 +51,16 @@ def test_rejects(change, message):
         parse(MINIMAL.replace(*change, 1))
 
 
+def test_a_withdrawn_release():
+    assert parse(MINIMAL)[1].withdrawn == ""
+    withdrawn = parse(MINIMAL.replace('name = "CU"', 'name = "CU"\nwithdrawn = " Shows the account ID. "', 1))
+    assert withdrawn[1].withdrawn == "Shows the account ID." and withdrawn[1].tag == "cu-bisect-v1.2.3"
+    with pytest.raises(ManifestError, match="must say why"):
+        parse(MINIMAL.replace('name = "CU"', 'name = "CU"\nwithdrawn = ""', 1))
+    with pytest.raises(ManifestError, match="required app cannot be withdrawn"):
+        parse(MINIMAL.replace('name = "BT"', 'name = "BT"\nwithdrawn = "broken"', 1))
+
+
 def test_short_name_for_the_tile():
     assert parse(MINIMAL)[1].short == ""
     assert parse(MINIMAL.replace('name = "CU"', 'name = "CU"\nshort = "C-U"', 1))[1].short == "C-U"

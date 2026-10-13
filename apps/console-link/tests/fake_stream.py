@@ -3,7 +3,8 @@
 the launch spec to find the handshake key, as a console must), BANG with its own ECDH key, STREAMINFO, then a few
 video frames (split into units with FEC units, as a console does) and audio packets, encrypted and signed. The
 video is a real clip (video_vectors.json) in the codec the launch spec asked for: its parameter sets as STREAMINFO's
-header, its access units as the frames. It speaks Takion through the native core's packet functions and
+header, its access units as the frames. The sound is a real Opus clip (audio_vectors.json): each packet a new 10 ms
+frame and an FEC copy of the one before. It speaks Takion through the native core's packet functions and
 records what the board sent."""
 
 from __future__ import annotations
@@ -26,6 +27,9 @@ from bc250_console_link.target import Target
 
 TAG = 0x5eed1e55
 CLIPS = json.loads((Path(__file__).parent / "video_vectors.json").read_text(encoding="utf-8"))["clips"]
+SOUND = json.loads((Path(__file__).parent / "audio_vectors.json").read_text(encoding="utf-8"))
+OPUS = [base64.b64decode(frame) for frame in SOUND["frames"]]
+CODEC_OPUS = 5
 PARAMETER_SETS = {"h264": {7, 8, 9}, "hevc": {32, 33, 34, 35}}       # with the access unit delimiter
 AUDIO_HEADER = tkproto.AudioHeader(2, 16, 48000, 480).save()
 UNIT_SIZE = 1000
@@ -85,6 +89,8 @@ class StreamConsole:
     big_fragments: int = 0
     heartbeats: int = 0
     congestion_reports: list[tuple[int, int]] = field(default_factory=list)     # (received, lost)
+    feedback_states: list[tuple[int, bytes]] = field(default_factory=list)      # (sequence number, payload)
+    feedback_history: list[tuple[int, int, bytes]] = field(default_factory=list)    # (seq. number, events, payload)
     disconnect_reason: str | None = None
     errors: list[str] = field(default_factory=list)
 
@@ -142,17 +148,28 @@ class StreamConsole:
         packet, _mac, _old = core.packet_mac(self.send_crypt, packet, key_pos)
         self._send(packet)
 
+    def send_data(self, data_type: int, data: bytes) -> None:
+        """A DATA message of another type than protobuf: 7 rumble, 9 pad info."""
+        key_pos = self._advance(len(data))
+        packet = bytearray(core.data_packet(self.tag_client, key_pos, 1, self.seq_num, 1, data))
+        packet[25] = data_type                      # after the message header, sequence number, channel and 0, 0
+        self.seq_num += 1
+        packet, _mac, _old = core.packet_mac(self.send_crypt, bytes(packet), key_pos)
+        self._send(packet)
+
     def _ack(self, seq_num: int) -> None:
         key_pos = self._advance(29)
         packet = core.data_ack_packet(self.tag_client, key_pos, seq_num, core.A_RWND)
         self._send(core.packet_mac(self.send_crypt, packet, key_pos)[0])
 
     def send_av(self, video: bool, packet_index: int, frame_index: int, unit: int, units: int, data: bytes,
-                haptics: bool = False, fec: int = 0) -> None:
+                haptics: bool = False, fec: int = 0, codec: int = 0) -> None:
+        """For audio, fec is the units field: unit size << 8 | FEC units << 4 | source units."""
         header = bytearray(0x20 if video else 0x18)
         header[0] = core.PACKET_VIDEO if video else core.PACKET_AUDIO
         struct.pack_into(">HHI", header, 1, packet_index, frame_index,
-                         (unit << 21 | (units - 1) << 10 | fec) if video else (unit << 24 | (units - 1) << 16))
+                         (unit << 21 | (units - 1) << 10 | fec) if video else (unit << 24 | (units - 1) << 16 | fec))
+        header[9] = codec
         key_pos = self.key_pos
         self.key_pos += core.key_pos_advance(len(data))
         struct.pack_into(">I", header, 0xe, key_pos & 0xffffffff)
@@ -165,6 +182,11 @@ class StreamConsole:
     @property
     def codec(self) -> str:
         return "hevc" if self.spec.get("videoCodec") == "hevc" else "h264"
+
+    def send_audio(self, index: int) -> None:
+        """Audio frame *index* (from 1) and an FEC copy of the one before it."""
+        new, before = OPUS[(index - 1) % len(OPUS)], OPUS[(index - 2) % len(OPUS)]
+        self.send_av(False, index, index, 0, 2, new + before, fec=len(new) << 8 | 1 << 4 | 1, codec=CODEC_OPUS)
 
     def send_streaminfo(self) -> None:
         resolution = tkproto.uint(1, 1920) + tkproto.uint(2, 1080) + tkproto.blob(3, clip(self.codec)[0])
@@ -241,11 +263,28 @@ class StreamConsole:
                 if frame not in self.lose_frames and (frame, unit) not in self.lose_units:
                     self.send_av(True, packet_index, frame, unit, len(units), data, fec=FEC_UNITS)
                 packet_index += 1
-            self.send_av(False, frame, frame, 0, 1, b"audio %d" % frame)
+            self.send_audio(frame)
         if self.version == 12:
             self.send_av(False, self.frames, self.frames, 0, 1, b"haptics", haptics=True)
 
+    def _feedback(self, packet: bytes) -> None:
+        """A controller packet: signed with its key position in place, the payload encrypted 16 bytes after it."""
+        key_pos = struct.unpack(">I", packet[4:8])[0]
+        unsigned = packet[:8] + bytes(4) + packet[12:]
+        if self.recv_crypt is None or self.recv_crypt.gmac(key_pos, unsigned) != packet[8:12]:
+            self.errors.append("MAC: a controller packet")
+            return
+        seq_num, count = struct.unpack(">HB", packet[1:4])
+        payload = self.recv_crypt.crypt(key_pos + 16, packet[12:])
+        if packet[0] == core.PACKET_FEEDBACK_STATE:
+            self.feedback_states.append((seq_num, payload))
+        else:
+            self.feedback_history.append((seq_num, count, payload))
+
     def _handle(self, packet: bytes) -> None:
+        if packet[0] in (core.PACKET_FEEDBACK_STATE, core.PACKET_FEEDBACK_HISTORY):
+            self._feedback(packet)
+            return
         try:
             core.verify_packet(self.recv_crypt, self.key_state, packet)
         except ValueError as error:

@@ -34,6 +34,11 @@ class AppEntry:
     detect: tuple[str, ...] = ()
     launch: tuple[tuple[str, str], ...] = ()
     short: str = ""                             # the name on its tile; "": the name without the suite prefix
+    # withdrawn = "<reason>" in apps.toml: the release was withdrawn (privacy, security or another problem). The
+    # portal shows the app as not available, offers no install, and removes it from a board that has it; the GitHub
+    # release stays, marked withdrawn (a pre-release named "Withdrawn: ...", which no update check offers). Not for
+    # the required app, nor for [checkout.*] apps. "": not withdrawn.
+    withdrawn: str = ""
 
     @property
     def version(self) -> str:
@@ -80,6 +85,11 @@ def _entry(key: str, raw: dict, table: str = "apps") -> AppEntry:
     short = raw.get("short", "")
     if not isinstance(short, str):
         raise ManifestError(f"[{table}.{key}] short must be a string")
+    withdrawn = raw.get("withdrawn", "")
+    if "withdrawn" in raw and (not isinstance(withdrawn, str) or not withdrawn.strip()):
+        raise ManifestError(f"[{table}.{key}] withdrawn must say why the release was withdrawn")
+    if withdrawn and checkout_only:
+        raise ManifestError(f"[{table}.{key}] is never released, so it cannot be withdrawn")
     launch = raw.get("launch", [])
     if not isinstance(launch, list) or not all(isinstance(item, list) and len(item) == 2 and
                                                all(isinstance(s, str) and s for s in item) for item in launch):
@@ -91,11 +101,14 @@ def _entry(key: str, raw: dict, table: str = "apps") -> AppEntry:
                      install=_strings(key, "install", raw.get("install")),
                      uninstall=_strings(key, "uninstall", raw.get("uninstall")),
                      detect=_strings(key, "detect", raw.get("detect")),
-                     launch=tuple((label, command) for label, command in launch), short=short.strip())
+                     launch=tuple((label, command) for label, command in launch), short=short.strip(),
+                     withdrawn=withdrawn.strip())
     if not entry.install or not entry.uninstall or not entry.detect:
         raise ManifestError(f"[{table}.{key}] install, uninstall and detect must not be empty")
     if entry.required and entry.development:
         raise ManifestError(f"[{table}.{key}] the required app cannot be a development app")
+    if entry.required and entry.withdrawn:
+        raise ManifestError(f"[{table}.{key}] the required app cannot be withdrawn: pin a release that works")
     return entry
 
 

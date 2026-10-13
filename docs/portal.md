@@ -12,6 +12,10 @@ tile, left to right in the order of `apps.toml` and as many to a row as the wind
   this portal pins.
 - **A red dot** in the icon: an update is available.
 - **changes the board**, in orange under the icon, for apps that change how the board runs.
+- **App not available**, in red under the icon: the release of this app was withdrawn because of a problem
+  (privacy, security or another reason; hover over it to read which). It cannot be installed or opened. When it is
+  installed, the portal says so at start and removes it with the app's own uninstaller in a terminal. If that
+  fails, the Uninstall button stays, to try again.
 - **The buttons beside the icon:** Install (an arrow into a tray) and Uninstall (a bin). For an installed app,
   Install reinstalls it, or updates it when the arrow is red. Bazzite Test has only Reinstall (a circular
   arrow): it is removed together with the portal.
@@ -130,7 +134,9 @@ The comment at the top of [`apps.toml`](https://github.com/RobertoTorino/bc250-b
   next release, which means its version equals that app's `VERSION`.
 - **Version bumps.** A change to `apps.toml` needs a `portal/VERSION` bump at least as large as the largest app
   bump it pins: an app patch release needs at least a portal patch release, an app minor release at least a
-  portal minor release, and so on.
+  portal minor release, and so on. An added, removed or withdrawn app needs at least a minor portal release.
+- **Withdrawn releases.** `withdrawn = "<reason>"` in an app's entry withdraws its pinned release (see
+  [Withdrawing a release](#withdrawing-a-release)). Not for Bazzite Test, which is always installed.
 
 Releasing an app and pinning it in the portal:
 
@@ -260,6 +266,22 @@ the checksum, installs it and starts it. The board then runs the official releas
 that the portal starts, that its version is the new one, and that the apps install. To go back to the checkout,
 run `./install.sh` in the repository root (or Test updates). A portal from the checkout shows an orange
 banner at the top, "Local build"; the published release has none.
+
+### Withdrawing a release
+
+A release that must not be used any more, because of a privacy, security or any other problem, is withdrawn.
+The release stays on GitHub, so its history is kept, but nothing installs it any more:
+
+1. In BC250 Suite Releases, tab **3. Withdraw**: choose the app's pinned release, write why, and press
+   **Withdraw**. This adds `withdrawn = "<reason>"` to its entry in `apps.toml` and a CHANGELOG entry to the app.
+   **Take back** removes it again.
+2. **Test withdrawal** on a BC-250 with the app installed: it installs the portal from the checkout and starts it
+   (`check-release.sh local`). The portal must say the app is not available any more, remove it, and then show
+   **App not available** on its tile.
+3. Mark the release on GitHub with the command the tab shows: `gh release edit <tag> --prerelease --title
+   "Withdrawn: <tag>" --notes "..."`. A pre-release is skipped by every update check, so no app offers it.
+4. Release the portal (tab **2**, at least a minor version): its CHANGELOG entry names the withdrawal. A board
+   that updates to it removes the app; the portal update button says so beforehand ("withdraws ...").
 
 ### Checking a release
 

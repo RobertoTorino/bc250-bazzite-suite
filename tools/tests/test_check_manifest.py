@@ -82,6 +82,14 @@ def test_added_app_needs_minor():
     assert errors(new, "0.1.0", "0.2.0") == []
 
 
+def test_withdrawn_app_needs_minor():
+    new = BASE.replace('name = "Gov"', 'name = "Gov"\nwithdrawn = "Privacy: shows the account ID."')
+    assert errors(new, "0.1.0", "0.1.1") and "governor was withdrawn" in errors(new, "0.1.0", "0.1.1")[0]
+    assert errors(new, "0.1.0", "0.2.0") == []
+    back = cm.bump_errors(new, BASE, "0.2.0", "0.2.1")                  # taken back: a minor bump too
+    assert back and "governor was no longer withdrawn" in back[0]
+
+
 def test_app_moving_back_is_refused():
     result = errors(BASE.replace("governor-v0.4.0", "governor-v0.3.9"), "0.1.0", "1.0.0")
     assert result and "moves back" in result[0]

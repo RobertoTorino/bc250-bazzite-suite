@@ -4,14 +4,17 @@
 //! tests compare every function with vectors printed by the reference's own C code (tests/takion_vectors.json of the
 //! app) and the FEC with frames recorded by the reference (tests/fec_vectors.json).
 
+pub mod audio;
 pub mod connection;
 #[cfg(feature = "decoder")]
 pub mod decoder;
 pub mod ecdh;
 pub mod fec;
+pub mod feedback;
 pub mod frame;
 pub mod gkcrypt;
 pub mod keystate;
+pub mod orientation;
 pub mod reorder;
 pub mod sendbuffer;
 pub mod seqnum;

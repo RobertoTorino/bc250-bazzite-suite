@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """The stream connection: the protobuf messages and the launch spec against vectors from the reference's own code
 (launchspec.c, rpcrypt.c, and the messages encoded with nanopb as streamconnection.c builds them, at commit
-c8bea2642d0e: tests/stream_vectors.json), then the whole connection against a fake console on localhost
-(fake_stream.py). The connection tests need the native core and are skipped without it."""
+c8bea2642d0e: tests/stream_vectors.json; the controller's packets from feedback.c: tests/feedback_vectors.json),
+then the whole connection against a fake console on localhost (fake_stream.py). The connection tests need the native
+core and are skipped without it."""
 
 from __future__ import annotations
 
 import json
+import re
+import threading
 import sys
 from pathlib import Path
 
@@ -17,6 +20,7 @@ from bc250_console_link.rpcrypt import RPCrypt
 from bc250_console_link.target import Target
 
 VECTORS = json.loads((Path(__file__).parent / "stream_vectors.json").read_text(encoding="utf-8"))
+FEEDBACK = json.loads((Path(__file__).parent / "feedback_vectors.json").read_text(encoding="utf-8"))
 MESSAGES = VECTORS["messages"]
 h = bytes.fromhex
 NONCE = bytes(range(100, 116))
@@ -172,8 +176,91 @@ def test_stream_connects_runs_and_closes(console_factory, target):
     reports = console.congestion_reports
     assert len(reports) >= 2 and sum(r for r, _ in reports) >= 10 and all(lost == 0 for _, lost in reports)
     assert connection.stats.audio_packets == 3
+    assert (connection.stats.audio_frames, connection.stats.audio_lost) == (3, 0)      # after the prefill of 3
     assert connection.stats.haptics_packets == (1 if target.ps5 else 0)
     assert "The console's key signature checks out." in connection.log
+    # The controller, idle, every 200 ms from STREAMINFO on: the state the reference formats, no button events.
+    idle = h(FEEDBACK["state"][0]["v12" if target.ps5 else "v9"])
+    states = console.feedback_states
+    assert len(states) >= 4 and [seq for seq, _ in states] == list(range(len(states)))
+    assert all(payload == idle for _, payload in states) and console.feedback_history == []
+    # The summary is written just before the core stops, so one more state may follow it.
+    sent = [int(m[1]) for line in connection.log if (m := re.search(r"Controller: (\d+) states and 0 button", line))]
+    assert len(sent) == 1 and len(states) - 1 <= sent[0] <= len(states)
+
+
+def test_controller_buttons_reach_the_console(console_factory):
+    console = console_factory(Target.PS4_10)
+    with _connection(console) as connection:
+        connection.connect()
+        connection.set_controller(buttons=1, left=(1000, -1000))             # cross, and the left stick
+        connection.run(0.05)
+        connection.set_controller()                                          # all released
+        connection.run(0.35)
+    # The press and the release in packets of their own, each repeated after 20, 50, 100 and 200 ms until the next
+    # comes: the press (held 50 ms) once or twice, the release four times.
+    press, release = (1, "8088ff"), (2, "8088008088ff")
+    assert console.wait_until(lambda: [p.hex() for _, _, p in console.feedback_history].count(release[1]) == 5)
+    assert [seq for seq, _, _ in console.feedback_history] == list(range(len(console.feedback_history)))
+    packets = [(count, payload.hex()) for _, count, payload in console.feedback_history]
+    assert packets[0] == press and packets.count(press) <= 3 and packets[packets.count(press):] == [release] * 5
+    # The stick at once, then back to the centre at once (well before the next 200 ms).
+    payloads = [payload for _, payload in console.feedback_states]
+    moved = [i for i, payload in enumerate(payloads) if payload[0x11:0x15] == h("03e8fc18")]
+    assert len(moved) == 1 and payloads[moved[0] + 1] == h(FEEDBACK["state"][0]["v9"])
+    assert console.errors == []
+
+
+def test_shoulders_right_stick_and_touchpad_reach_the_console(console_factory):
+    console = console_factory(Target.PS4_10)
+    with _connection(console) as connection:
+        connection.connect()
+        connection.set_controller(buttons=1 << 8, right=(-32768, 32767), touches=[(0, 960, 471)])
+        connection.run(0.05)
+        connection.set_controller(buttons=(1 << 9) | (1 << 14), right=(-32768, 32767), touches=[(0, 1000, 500)])
+        connection.run(0.05)
+    assert console.wait_until(lambda: len(console.feedback_history) >= 5)
+    events = b"".join(payload for _, _, payload in console.feedback_history)
+    # L1 down, the finger down, then L1 up, the finger moved, R1 and the touchpad click down (feedback.c's codes).
+    for event in ("8084ff", "d0003c01d7", "808400", "d0003e81f4", "8085ff", "80b1"):
+        assert h(event) in events, event
+    # The right stick in the state: bytes 0x15 to 0x18, big-endian.
+    assert any(payload[0x15:0x19] == h("80007fff") for _, payload in console.feedback_states)
+
+
+def test_rumble_and_pad_info_go_to_the_controllers(console_factory):
+    console = console_factory(Target.PS4_10)
+    outputs = []
+    with _connection(console) as connection:
+        connection.connect()
+        # Before anyone drives the controllers: the light bar and player number are kept for later.
+        console.send_data(stream.DATA_PAD_INFO, bytes([1, 0x10, 0x20, 0x30, 0]) + bytes(12))             # 17 bytes
+        connection.run(0.1)
+        connection.drive_controllers(lambda *what: outputs.append(what))
+        assert outputs == [("led", (0x10, 0x20, 0x30)), ("player", 1)]
+        console.send_data(stream.DATA_RUMBLE, bytes([0, 0x80, 0xff]))
+        # 25 bytes: the feedback packet it answers and a timestamp first; a motion reset and a new colour, the same
+        # player.
+        console.send_data(stream.DATA_PAD_INFO, bytes(8) + bytes([1, 0, 0, 0xff, 1]) + bytes(12))
+        console.send_data(stream.DATA_RUMBLE, bytes([0, 0]))                    # too short: noted, nothing sent
+        console.send_data(stream.DATA_PAD_INFO, bytes(5))                       # neither layout: noted
+        console.send_data(11, bytes(25))                                        # trigger effects: not used yet
+        connection.run(0.2)
+    assert outputs[2:] == [("rumble", 0x80, 0xff), ("motion_reset",), ("led", (0, 0, 0xff))]
+    assert (connection.stats.rumble, connection.stats.pad_info, connection.stats.other_data) == (1, 2, 1)
+    assert "The console sent a rumble message of 2 bytes (3 at least)." in connection.log
+    assert "The console sent pad info of 5 bytes (25 or 17 expected)." in connection.log
+
+
+def test_motion_reaches_the_console(console_factory):
+    console = console_factory(Target.PS4_10)
+    moving = FEEDBACK["state"][2]                       # gyro, accelerometer and orientation from the reference
+    with _connection(console) as connection:
+        connection.connect()
+        connection.set_controller(gyro=tuple(moving["state"]["gyro"]), accel=tuple(moving["state"]["accel"]),
+                                  orient=tuple(moving["state"]["orient"]))
+        connection.run(0.05)
+    assert console.wait_until(lambda: any(p == h(moving["v9"]) for _, p in console.feedback_states))
 
 
 def test_lost_units_come_from_fec(console_factory):
@@ -269,8 +356,57 @@ def test_stream_job_runs_session_and_stream(console_factory):
     # MTU out starts its search at MTU in (1300); the reference's search then stops one short of its upper bound.
     assert "Network test: MTU 1300 in, 1453 out." in outcome.log
     assert console.spec["streamResolutions"][0]["resolution"] == {"width": 1920, "height": 1080}
+    assert console.spec["videoCodec"] == "avc"                    # H.264 from a PS5 too (owner, 13-10-2026)
     assert console.spec["network"]["mtu"] == 1300 and console.spec["network"]["rtt"] == 0
     assert console.wait_until(lambda: console.disconnect_reason == "Client Disconnecting") and console.errors == []
+
+    # A PS4 Pro gets 1080p as a PS5 does, a PS4 720p.
+    ps4 = RegisteredConsole("Y", "PS4", "127.0.0.1", Target.PS4_10, REGIST_KEY, RP_KEY)
+    assert (jobs.stream_profile(ps4).width, jobs.stream_profile(ps4, "PS4").height) == (1280, 720)
+    assert (jobs.stream_profile(ps4, "PS4 Pro").height, jobs.stream_profile(ps4, "PS4 Pro").bitrate) == (1080, 15000)
+    for server_type, height in ((1, 1080), (0, 720)):              # SERVER_TYPES: 1 PS4 Pro, 0 PS4
+        console = console_factory(Target.PS4_10)
+        network = SenkushaConsole(Target.PS4_10, b"", b"")
+        ctrl = SessionConsole(target=Target.PS4_10, server_type=server_type)
+        try:
+            ran = jobs.test_stream(ps4, seconds=0.3, stream_port=console.port, senkusha_port=network.port,
+                                   port=ctrl.port, timeout=2.0)
+        finally:
+            ctrl.close()
+            network.close()
+        assert ran.ok, ran.message
+        assert console.spec["streamResolutions"][0]["resolution"]["height"] == height
+
+    # Stream: the pictures go to the window until it closes (here: once it has two); a controller holds cross.
+    from fake_gamepad import FakePad, FakeSdl
+    from bc250_console_link.gamepad import Reading, SOUTH
+    pad = FakeSdl({0: FakePad("PS5 Controller", Reading(buttons=frozenset({SOUTH})))})
+    console = console_factory(frames=6)
+    network = SenkushaConsole(Target.PS5_1, b"", b"")
+    ctrl = SessionConsole()
+    pictures, sound, stop = [], [], threading.Event()
+
+    def deliver(picture):
+        pictures.append(picture)
+        if len(pictures) == 2:
+            stop.set()
+    try:
+        watched = jobs.watch_stream(registered, deliver, lambda: True, stop, lambda *pcm: sound.append(pcm), pad,
+                                    stream_port=console.port, senkusha_port=network.port, port=ctrl.port, timeout=2.0)
+    finally:
+        ctrl.close()
+        network.close()
+    assert watched.ok, watched.message
+    assert watched.message.startswith("Stream with PS5 ended after ") and "rebuilt with FEC" in watched.message
+    if getattr(__import__("bc250_console_link_core"), "DECODER", False):
+        assert len(pictures) >= 2                   # the stop is looked at between heartbeats, at most 1 s later
+        assert (pictures[0].format, pictures[0].width, pictures[0].height) == ("yuv420p", 160, 96)
+        assert len(pictures[0].planes()) == 3
+        # The sound: after the 3 frames of prefill, every frame in order, 10 ms of 48 kHz stereo each.
+        assert len(sound) >= 3 and all((len(pcm), rate, channels) == (1920, 48000, 2) for pcm, rate, channels in sound)
+    assert console.wait_until(lambda: console.disconnect_reason == "Client Disconnecting")
+    assert "Controller: PS5 Controller." in watched.log and pad.quit_called
+    assert console.feedback_history[0][1:] == (1, bytes.fromhex("8088ff"))
 
     # No network test: the stream goes on with the reference's values for that case.
     console = console_factory()

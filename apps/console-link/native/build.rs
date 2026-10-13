@@ -32,7 +32,7 @@ mod decoder {
         }
 
         let output = Command::new("pkg-config")
-            .args(["--static", "--cflags", "--libs", "libavcodec", "libavutil"])
+            .args(["--static", "--cflags", "--libs", "libavcodec", "libswresample", "libavutil"])
             .env("PKG_CONFIG_PATH", &pkgconfig)
             .env("PKG_CONFIG_ALLOW_SYSTEM_LIBS", "1")
             .output()
@@ -49,11 +49,13 @@ mod decoder {
             }
         }
         build.compile("bc250_decoder");
+        let own = dir.join("lib");
         for flag in flags.split_whitespace() {
             if let Some(path) = flag.strip_prefix("-L") {
                 println!("cargo:rustc-link-search=native={path}");
             } else if let Some(lib) = flag.strip_prefix("-l") {
-                let kind = if lib.starts_with("av") { "static" } else { "dylib" };
+                // FFmpeg's own libraries statically; the system's (libva, libm) dynamically.
+                let kind = if own.join(format!("lib{lib}.a")).exists() { "static" } else { "dylib" };
                 println!("cargo:rustc-link-lib={kind}={lib}");
             } else if flag == "-pthread" {
                 println!("cargo:rustc-link-lib=dylib=pthread");
