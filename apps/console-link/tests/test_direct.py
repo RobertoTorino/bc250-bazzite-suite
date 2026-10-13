@@ -89,7 +89,7 @@ class FakeOps:
         progress("Waking PS4-728 from rest mode…")
         return self.on
 
-    def watch_stream(self, console, deliver, wanted, stop, play, figures=None, stats_dir=None):
+    def watch_stream(self, console, deliver, wanted, stop, play, figures=None, stats_dir=None, played=None):
         self.console = console
         stop.wait(0.2)
         self.stopped = stop.is_set()

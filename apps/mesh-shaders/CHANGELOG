@@ -1,3 +1,11 @@
+Changelog: 13-10-2026 23:35:17
+
+Release 0.1.1.
+
+Changelog: 13-10-2026 23:19:18
+
+The app looks for a newer DirectMesh release (owner, 13-10-2026: the developer is active; notify only). At start, unless switched off (Look for a newer DirectMesh release at start, or --no-update-check), one request to GitHub's release list of lonewolf0622/bc250meshtaskwork; the Build step says "DirectMesh v1.x is out" with a link to its release notes, that the release it builds is the newest, or why the check failed, with a link to check again. The app keeps building the release it pins: a new one comes with a new version of the app. updates.py has its own lookup on core's github_fetch, since DirectMesh tags have two or three numbers (directmesh-v1.3, directmesh-v1.3.1) and core's latest_release() reads three. The manual has a section New DirectMesh releases.
+
 Changelog: 13-10-2026 22:47:54
 
 Release 0.1.0.

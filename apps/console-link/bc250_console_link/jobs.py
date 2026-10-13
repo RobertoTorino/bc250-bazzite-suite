@@ -13,8 +13,8 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Callable
 
-from . import (LOGO_PATH, __version__, discovery, gamepad, privacy, psn, regist, senkusha, session, steam_settings,
-               steam_shortcuts, stream, stream_options, stream_stats)
+from . import (LOGO_PATH, __version__, discovery, gamepad, history, privacy, psn, regist, senkusha, session,
+               steam_settings, steam_shortcuts, stream, stream_options, stream_stats)
 from .consoles import RegisteredConsole
 from .httpmsg import ProtocolError
 from .target import Target
@@ -297,17 +297,25 @@ def watch_stream(console: RegisteredConsole, deliver: Callable[[Picture], None],
                  stream_timeout: float = stream.EXPECT_TIMEOUT, senkusha_port: int = senkusha.PORT,
                  figures: Callable[[], dict] | None = None, stats_dir: Path | None = None,
                  players: stream.PlayerExperiment = stream.PlayerExperiment(), simulated_loss: float = 0.0,
-                 **kwargs) -> Outcome:
+                 played: history.HistoryStore | None = None, **kwargs) -> Outcome:
     """The stream until *stop* is set (the stream window closes): each decoded picture goes to *deliver* while
     *wanted* says the window has taken the last one, the sound to *play* (PCM, rate, channels). The board's
     controllers play, read through *gamepads* (SDL3; None: the console sees a controller lying still). With
-    *stats_dir*, the stream's statistics file goes there, with the window's *figures*."""
+    *stats_dir*, the stream's statistics file goes there, with the window's *figures*. With *played*, the games
+    the console runs meanwhile and their time go into that history (history.py)."""
     def hold(started: session.Session) -> str:
         began = time.monotonic()
-        connection, _info = _run_stream(console, started, math.inf, stop.is_set, stream_port, stream_timeout,
-                                        senkusha_port, gamepads, figures, stats_dir, on_picture=deliver,
-                                        picture_wanted=wanted, on_sound=play, players=players,
-                                        simulated_loss=simulated_loss)
+        tracker = (history.Tracker(played, console.key, console.nickname or console.target.console,
+                                   lambda: discovery.search(console.address, history.SEARCH_TIMEOUT)).start()
+                   if played is not None else None)
+        try:
+            connection, _info = _run_stream(console, started, math.inf, stop.is_set, stream_port, stream_timeout,
+                                            senkusha_port, gamepads, figures, stats_dir, on_picture=deliver,
+                                            picture_wanted=wanted, on_sound=play, players=players,
+                                            simulated_loss=simulated_loss)
+        finally:
+            if tracker is not None:
+                tracker.stop()
         seconds = time.monotonic() - began
         return (f"Stream with {console.nickname or console.address} ended after {seconds:.0f} s: "
                 f"{_stream_summary(connection, seconds)}.")

@@ -101,8 +101,18 @@ the launch options to the game again.
 - **A kernel update:** games with the launch options start with the system Mesa until you run the test again.
 - **A Mesa update of the system:** changes nothing for the driver: it is built from the Mesa release its DirectMesh
   release is made for.
-- **An update of the app** can bring a newer DirectMesh release. The Build step then says so: build and install
-  again, then run the test.
+- **An update of the app** can bring a newer DirectMesh release (see [New DirectMesh releases](#new-directmesh-releases)).
+  The Build step then says so: build and install again, then run the test.
+
+## New DirectMesh releases
+
+Each version of the app builds one DirectMesh release, whose patch it brings along; the Build step names it. When the
+app starts, it asks GitHub whether DirectMesh has a newer release (one small request), and the Build step says what
+it found: **DirectMesh v1.x is out**, with a link to its release notes, or that the one it builds is the newest.
+
+The app does not build a newer release by itself. A new version of the app brings it, from the portal, once its
+patch has been checked; then build, install and test again. Clear **Look for a newer DirectMesh release at start**
+to stop the request; the link in the Build step looks once.
 
 ## If something goes wrong
 

@@ -35,6 +35,8 @@ from .consoles import ConsoleStore, RegisteredConsole, parse_account_id, parse_l
 from .discovery import Console
 from .jobs import Outcome
 from .controller_test import ControllerTest
+from .history import HistoryStore
+from .history_dialog import HistoryDialog
 from .options_dialog import StreamOptionsDialog
 from .stream_view import StreamWindow
 from .target import rp_version, software_version
@@ -191,6 +193,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.resize(900, 860)
         self.store = ConsoleStore((config_dir or config_home()) / APP_ID)
+        self.history = HistoryStore(self.store.path.parent)
         self.ops = ops
         self.settings = RemotePlaySettings(INFO, self)
         self.checker = UpdateChecker(self)
@@ -321,8 +324,12 @@ class MainWindow(QMainWindow):
         self.controller_button.setToolTip("Every button, stick, trigger and the touchpad live, the motors and the "
                                           "light bar, and whether a Sony controller is genuine or fake")
         self.controller_button.clicked.connect(self.test_controller)
+        self.history_button = QPushButton("History…")
+        self.history_button.setToolTip("The games played through the app and the time played")
+        self.history_button.clicked.connect(self.show_history)
         controller_row = QHBoxLayout()
         controller_row.addWidget(self.controller_button)
+        controller_row.addWidget(self.history_button)
         controller_row.addWidget(self.steam_box)
         controller_row.addStretch(1)
         lay_mine = QVBoxLayout(mine)
@@ -652,7 +659,11 @@ class MainWindow(QMainWindow):
 
         self.start(f"Streaming from {name}…",
                    lambda: self.ops.watch_stream(console, window.deliver, window.wanted, stop, window.play,
-                                                 figures=window.figures, stats_dir=stream_stats.folder()), done)
+                                                 figures=window.figures, stats_dir=stream_stats.folder(),
+                                                 played=self.history), done)
+
+    def show_history(self) -> None:
+        HistoryDialog(self.history, self).exec()
 
     def edit_options(self) -> None:
         console = self.selected_registered()

@@ -18,6 +18,7 @@ from bc250_core.platform import config_home
 
 from . import APP_ID, APP_NAME, jobs, stream_stats
 from .consoles import ConsoleStore, RegisteredConsole
+from .history import HistoryStore
 from .stream import PlayerExperiment
 from .stream_view import KEYS, StreamWindow
 
@@ -41,9 +42,10 @@ class DirectStream:
     """The window and the thread that wakes the console and runs the stream. *ops* is jobs (a stand-in in tests)."""
 
     def __init__(self, console: RegisteredConsole, app: QApplication, ops=jobs, full_screen: bool = True,
-                 players: PlayerExperiment = PlayerExperiment(), simulated_loss: float = 0.0):
+                 players: PlayerExperiment = PlayerExperiment(), simulated_loss: float = 0.0,
+                 played: HistoryStore | None = None):
         self.console, self.app, self.ops, self.players = console, app, ops, players
-        self.simulated_loss = simulated_loss
+        self.simulated_loss, self.played = simulated_loss, played
         self.stop = threading.Event()
         self.messenger = Messenger()
         self.window = StreamWindow(f"{console.nickname or 'Console'} · {APP_NAME}", self._closed,
@@ -85,7 +87,8 @@ class DirectStream:
         self.outcome = self.ops.watch_stream(on.value, window.deliver, window.wanted, self.stop, window.play,
                                              figures=window.figures, stats_dir=stream_stats.folder(),
                                              **({"players": self.players} if self.players.on else {}),
-                                             **({"simulated_loss": self.simulated_loss} if self.simulated_loss else {}))
+                                             **({"simulated_loss": self.simulated_loss} if self.simulated_loss else {}),
+                                             **({"played": self.played} if self.played is not None else {}))
         if not self.stop.is_set():                      # ended by the console or a fault, not by closing
             self.messenger.status.emit(f"{self.outcome.message} Close this window to go back.")
 
@@ -94,7 +97,8 @@ def run(wanted: str, app: QApplication, config_dir: Path | None = None,
         players: PlayerExperiment = PlayerExperiment(), simulated_loss: float = 0.0) -> int:
     """The direct start: 2 when no registered console matches *wanted*. *players*: the several-players experiment;
     *simulated_loss*: the share of video packets dropped on purpose, in percent, to try the recovery."""
-    consoles = ConsoleStore((config_dir or config_home()) / APP_ID).load()
+    folder = (config_dir or config_home()) / APP_ID
+    consoles = ConsoleStore(folder).load()
     console = find_console(consoles, wanted)
     if console is None:
         from PyQt6.QtWidgets import QMessageBox
@@ -102,5 +106,5 @@ def run(wanted: str, app: QApplication, config_dir: Path | None = None,
         QMessageBox.critical(None, APP_NAME, f"No registered console is called {wanted!r}. Registered: {names}.")
         return 2
     direct = DirectStream(console, app, players=players,     # noqa: F841 (kept alive while the app runs)
-                          simulated_loss=simulated_loss)
+                          simulated_loss=simulated_loss, played=HistoryStore(folder))
     return exec_app(app)

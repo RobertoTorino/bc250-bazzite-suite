@@ -14,15 +14,17 @@ from . import APP_NAME, INFO, __version__
 
 def main() -> int:
     parser = argparse.ArgumentParser(prog="bc250_mesh_shaders", description=f"{APP_NAME} {__version__}")
+    parser.add_argument("--no-update-check", action="store_true",
+                        help="do not look for a newer DirectMesh release at start (overrides the saved setting)")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__} (core {CORE_VERSION})")
-    _, qt_args = parser.parse_known_args()
+    args, qt_args = parser.parse_known_args()
 
     # English only so far, Qt's own menu texts included.
     app = create_app(INFO, qt_args, lang="en")
     if instance.already_running(INFO.app_id):
         return 0
     from .main_window import MainWindow
-    window = MainWindow()
+    window = MainWindow(check_updates=False if args.no_update_check else None)
     window.show()
     server = instance.serve(INFO.app_id, window)  # noqa: F841 (kept alive while the app runs)
     return exec_app(app)

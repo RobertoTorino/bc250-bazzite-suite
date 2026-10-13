@@ -132,9 +132,13 @@ wrong account ID is reported in the log at the bottom.
   does nothing here is the controller's fault, not the app's. For a Sony DualShock 4 or DualSense it also shows whether the controller is genuine or fake (**Genuine DS4v1**, **Genuine DS4v2**,
   **Fake DS4**, ...), from its firmware information (build date and versions) and the calibration of its motion
   sensors, which fake controllers get wrong. A controller whose answers do not match is shown as fake.
+- **History…:** the games played through the app, per console, with the time played and when last played, the
+  newest first, and the total. During a stream the app asks the console every 30 seconds what it runs and adds the
+  time to that game; time on the home screen is not counted. Streams from the Game Mode shortcut count too; play on
+  the console itself does not. **Clear history** forgets it all.
 - **Add to Game Mode:** a Steam shortcut for the selected console, so it can be played from Bazzite's Game Mode
-  like a game: it is in the library under **Non-Steam**, with artwork the app draws (its logo, the console's name
-  and model). Starting it wakes the console when it is in rest mode and streams it full screen; **Exit game** in
+  like a game: it is in the library under **Non-Steam**, with the app's artwork and the console's name and model
+  on it. Starting it wakes the console when it is in rest mode and streams it full screen; **Exit game** in
   Steam's menu ends it. Steam has to close for the change: the app asks, closes it and starts it again. After a
   change of the console's name, press **Update in Game Mode**. It needs the app installed through the portal (the
   shortcut runs `~/.local/bin/bc250-console-link`). From a terminal, `bc250-console-link --stream <console>` does
@@ -158,6 +162,8 @@ the registered console.
   start a session with your account on the console, so the file is readable only by you.
 - `~/.config/bc250-console-link/bc250-console-link.ini`: your account ID, the last address you searched and the
   window size. The account ID only identifies the account; it gives no access to it.
+- `~/.config/bc250-console-link/history.json`: the games played through the app and their time (**History…**).
+  Which games you played when is personal, so the file is readable only by you; **Clear history** removes it.
 - `~/.local/state/bc250-console-link/streams/`: a statistics file for each stream, one line per second (see
   [When it does not work](#when-it-does-not-work)); the newest 20 are kept. They hold no account details, and the
   console's address only masked.
@@ -176,7 +182,8 @@ name.
 What the app sends, and to whom:
 
 - **To your consoles, on your own network:** the account ID once, when you register; after that the keys from
-  registration, to start a session, and the stream itself (your controller's input and nothing else).
+  registration, to start a session, and the stream itself (your controller's input and nothing else). During a
+  stream the app also asks the console what it runs, for the history; that answer stays on the board.
 - **To PlayStation (PSN), only with Find my account ID:** the one-time code from the sign-in, once, to read your
   account ID and online ID. The sign-in itself happens in your browser; the app never sees your password.
 - **Nobody else.** The app has no statistics, no crash reports and no connection to anything but your consoles and,

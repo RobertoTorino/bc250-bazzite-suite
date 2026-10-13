@@ -21,7 +21,7 @@ RUN = "/usr/local/bin/bc250-mesh-shaders-run %command%"
 def window(qapp, board, monkeypatch):
     for key, value in board.env.items():
         monkeypatch.setenv(key, value)
-    w = MainWindow(SCRIPT)
+    w = MainWindow(SCRIPT, check_updates=False)
     yield w
     w.close()
 
@@ -86,7 +86,7 @@ def test_switches_go_into_the_launch_options(window, board, monkeypatch):
     assert "<b>Switches:</b> No indexed mesh draws, Hide mesh shaders." in window.use_state.text()
     window.copy_launch_options()
     assert QApplication.clipboard().text() == expected
-    assert MainWindow(SCRIPT).launch_options() == expected                  # kept in the settings
+    assert MainWindow(SCRIPT, check_updates=False).launch_options() == expected     # kept in the settings
 
     monkeypatch.setattr(SwitchesDialog, "chosen", lambda self: [])
     window.on_switches()
@@ -139,3 +139,60 @@ def test_not_authorised(window):
     window.process = object()
     window._finished(126)
     assert window.running.text().startswith("Not authorised")
+
+
+def releases(*tags: str) -> list[dict]:
+    return [{"tag_name": tag, "html_url": f"https://github.com/x/releases/tag/{tag}",
+             "published_at": "2026-10-20T10:00:00Z"} for tag in tags]
+
+
+def checked(qapp, board, monkeypatch, answer) -> MainWindow:
+    """A window that looked for a newer DirectMesh release at start, GitHub answering *answer* (or raising it)."""
+    for key, value in board.env.items():
+        monkeypatch.setenv(key, value)
+
+    def fetch(url: str):
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+    w = MainWindow(SCRIPT, fetch=fetch)
+    for _ in range(500):
+        qapp.processEvents()
+        if w.release is not None:
+            break
+        w.update_checker._thread and w.update_checker._thread.wait(10)
+    assert w.release is not None
+    return w
+
+
+def test_a_newer_directmesh_is_announced(qapp, board, monkeypatch):
+    w = checked(qapp, board, monkeypatch, releases("directmesh-v1.4", "directmesh-v1.3.1"))
+    text = w.build_state.text()
+    assert "<b>DirectMesh v1.4 is out</b> (2026-10-20): a newer version of this app brings it" in text
+    assert "href='https://github.com/x/releases/tag/directmesh-v1.4'" in text
+    w.close()
+
+
+def test_the_pinned_directmesh_is_the_newest(qapp, board, monkeypatch):
+    w = checked(qapp, board, monkeypatch, releases("directmesh-v1.3.1", "directmesh-v1.3"))
+    assert "DirectMesh v1.3.1 is the newest release. <a href='#check'>Check again</a>" in w.build_state.text()
+    w.close()
+
+
+def test_a_failed_check_says_so(qapp, board, monkeypatch):
+    import urllib.error
+    w = checked(qapp, board, monkeypatch, urllib.error.URLError("Name or service not known"))
+    assert "Could not look for a newer DirectMesh release: no connection (Name or service not known)." in \
+        w.build_state.text()
+    w.close()
+
+
+def test_no_check_at_start_when_switched_off(window, monkeypatch):
+    assert window.release is None and not window.update_checker.running
+    assert "<a href='#check'>Look for a newer DirectMesh release</a>" in window.build_state.text()
+    window.auto_check.setChecked(False)
+    assert window.settings.get(main_window.CHECK_AT_START) is False
+    started = []
+    monkeypatch.setattr(window, "check_for_updates", lambda: started.append(True))
+    window._link("#check")
+    assert started == [True]

@@ -1,3 +1,11 @@
+Changelog: 13-10-2026 23:35:17
+
+Release 1.0.3.
+
+Changelog: 13-10-2026 23:33:25
+
+History… (owner, 13-10-2026): the games played through the app, per console, with the time played and when last played, the newest first, and the total; Clear history forgets it. During a stream (from the window or the Game Mode shortcut) history.py asks the console every 30 s what it runs (the discovery answer's running-app name and title ID, as the Console box) and credits the time since the last answer to that game; the home screen is not counted, and a missing answer counts as the same game. Kept in ~/.config/bc250-console-link/history.json, mode 0600. The manual describes it, with the file under Where it keeps what and the question to the console under Privacy. Tests: the store, the tracker's crediting, watch_stream keeping the history, the dialog, the button.
+
 Changelog: 13-10-2026 22:47:54
 
 Release 1.0.2.

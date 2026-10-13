@@ -164,6 +164,11 @@ Console box (13-10-2026, owner's request): built; passed on the board (13-10-202
 with the PS4 Pro on and a game running (the running app's name and title ID from discovery). Not available from the console over the
 network: disk size and free space.
 
+History… (owner, 13-10-2026): built, see the console-link CHANGELOG. Open on the board (reinstall from the
+checkout): stream a game a few minutes and open History…; whether the console answers the search during a stream
+(the game's name and time show; nothing shows when it does not); a game switch during one stream; the Game Mode
+shortcut's stream counted too.
+
 Next, in the order discussed: the window redesign (the owner's new mock), and later DualSense/PS5 (when the hardware is there) and the portal on handhelds.
 
 Nice to have, low priority (owner, 13-10-2026):

@@ -70,7 +70,7 @@ class FakeOps:
         self.calls.append(("test_stream", console.address))
         return Outcome(True, "Stream ran.", SessionInfo(console.target, "PS5", "abc"), ["STREAMINFO received."])
 
-    def watch_stream(self, console, deliver, wanted, stop, play=None, figures=None, stats_dir=None):
+    def watch_stream(self, console, deliver, wanted, stop, play=None, figures=None, stats_dir=None, played=None):
         """Delivers one picture, then ends as when the console stops the stream (stop not set)."""
         self.calls.append(("watch_stream", console.address, stop.is_set()))
         if wanted():
@@ -428,6 +428,16 @@ def test_controller_test_opens_from_the_window(window, monkeypatch):
     window._update_buttons()
     assert not window.controller_button.isEnabled()                # not during a stream or another job
 
+
+
+def test_history_opens_from_the_window(window, config_dir, monkeypatch):
+    from bc250_console_link.history_dialog import HistoryDialog
+    opened = []
+    monkeypatch.setattr(HistoryDialog, "exec", lambda self: opened.append(self) or 0)
+    assert window.history.path == config_dir / "bc250-console-link" / "history.json"
+    window.history_button.click()
+    assert len(opened) == 1 and opened[0].store is window.history
+    opened[0].close()
 
 def test_add_to_game_mode(qapp, config_dir, tmp_path, monkeypatch):
     from test_steam_settings import _steam

@@ -8,21 +8,25 @@ import subprocess
 from html import escape
 from pathlib import Path
 
-from PyQt6.QtCore import QProcess, Qt
-from PyQt6.QtGui import QCloseEvent
-from PyQt6.QtWidgets import (QApplication, QDialog, QGridLayout, QLabel, QMainWindow, QMessageBox, QPushButton,
-                             QVBoxLayout, QWidget)
+from PyQt6.QtCore import QProcess, Qt, QUrl
+from PyQt6.QtGui import QCloseEvent, QDesktopServices
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QDialog, QGridLayout, QLabel, QMainWindow, QMessageBox,
+                             QPushButton, QVBoxLayout, QWidget)
 
 from bc250_core import SUITE_MANUAL_URL, window_title
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.settings import SettingsStore
+from bc250_core.updates import Fetch, UpdateChecker
 from bc250_core.widgets import AppHeader, StatusText, Terminal, accent_button, hint_label, set_button_active
 
 from . import APP_NAME, INFO, LOGO_PATH, SCRIPT, __version__
 from .status import Status, parse, verdict
 from .switches import SWITCHES, Switch, SwitchesDialog, launch_options
+from .updates import Release, is_newer, latest_release
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/mesh-shaders/"
+CHECK_AT_START = "updates/check_on_start"
+CHECK_LINK = "#check"
 NOT_AUTHORISED = (126, 127)             # pkexec: the password dialog was cancelled or refused
 
 # What runs, by action: (arguments, needs root, text while it runs)
@@ -35,14 +39,20 @@ ACTIONS = {
 
 
 class MeshSettings(SettingsStore):
-    DEFAULTS: dict = {switch.setting: False for switch in SWITCHES}
+    DEFAULTS: dict = {CHECK_AT_START: True, **{switch.setting: False for switch in SWITCHES}}
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, script: Path = SCRIPT):
+    def __init__(self, script: Path = SCRIPT, check_updates: bool | None = None, fetch: Fetch | None = None):
+        """*check_updates*: look for a newer DirectMesh release now (None: as the setting says); *fetch*: the
+        GitHub request, for tests."""
         super().__init__()
         self.resize(900, 700)
         self.script = script
+        self.fetch = fetch
+        self.release: Release | None = None          # the newest DirectMesh release, once looked up
+        self.update_checker = UpdateChecker(self)
+        self.update_checker.finished.connect(self._release_checked)
         self.settings = MeshSettings(INFO, self)
         self.status = Status()
         self.action = ""
@@ -71,6 +81,9 @@ class MainWindow(QMainWindow):
         grid.setHorizontalSpacing(14)
         grid.setVerticalSpacing(10)
         self.build_state, self.install_state, self.test_state, self.use_state = (self._state_label() for _ in range(4))
+        self.build_state.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse
+                                                 | Qt.TextInteractionFlag.LinksAccessibleByMouse)
+        self.build_state.linkActivated.connect(self._link)
         self.build_button = accent_button("Build", "Build RADV with DirectMesh in a podman container")
         self.build_button.clicked.connect(self.on_build)
         self.install_button = QPushButton("Install")
@@ -114,6 +127,11 @@ class MainWindow(QMainWindow):
                 grid.addWidget(button, row, column, centre)
             grid.setRowMinimumHeight(row, height)
 
+        self.auto_check = QCheckBox("Look for a newer DirectMesh release at start")
+        self.auto_check.setToolTip("One small request to GitHub each time the app starts")
+        self.auto_check.setChecked(self.settings.get(CHECK_AT_START))
+        self.auto_check.toggled.connect(lambda on: self.settings.set(CHECK_AT_START, on))
+
         self.running = QLabel()
         self.running.setStyleSheet("font-weight:600;")
         self.output = Terminal()
@@ -125,6 +143,7 @@ class MainWindow(QMainWindow):
         lay.addWidget(intro)
         lay.addSpacing(6)
         lay.addLayout(grid)
+        lay.addWidget(self.auto_check)
         lay.addSpacing(6)
         lay.addWidget(self.running)
         lay.addWidget(self.output, 1)
@@ -137,6 +156,8 @@ class MainWindow(QMainWindow):
         if geometry is not None:
             self.restoreGeometry(geometry)
         self.refresh()
+        if self.settings.get(CHECK_AT_START) if check_updates is None else check_updates:
+            self.check_for_updates()
 
     @staticmethod
     def _state_label() -> QLabel:
@@ -178,7 +199,7 @@ class MainWindow(QMainWindow):
             if s.build_outdated:
                 build += f" <b>This version of the app builds DirectMesh {escape(s.directmesh)}:</b> build again " \
                          "to get it."
-        self.build_state.setText(build)
+        self.build_state.setText(f"{build}<br>{self._release_line()}")
 
         if not s.installed:
             install = "Not installed." if s.built else "Not installed: build it first."
@@ -206,6 +227,22 @@ class MainWindow(QMainWindow):
         self.use_state.setText(use)
         self._fit_states()
         self._update_buttons()
+
+    def _release_line(self) -> str:
+        """What the check for a newer DirectMesh release found, with a link to check again or to the release."""
+        pinned = self.status.directmesh.split(",")[0]
+        again = f"<a href='{CHECK_LINK}'>Check again</a>"
+        release = self.release
+        if self.update_checker.running:
+            return "Looking for a newer DirectMesh release…"
+        if release is None:
+            return f"<a href='{CHECK_LINK}'>Look for a newer DirectMesh release</a>"
+        if release.error:
+            return f"Could not look for a newer DirectMesh release: {escape(release.error)}. {again}"
+        if is_newer(release, pinned):
+            return (f"<b>DirectMesh {escape(release.version)} is out</b> ({escape(release.published)}): a newer version "
+                    f"of this app brings it, from the portal. <a href='{escape(release.url)}'>Release notes</a>")
+        return f"DirectMesh {escape(release.version)} is the newest release. {again}"
 
     def _fit_states(self) -> None:
         """Each state text keeps the height its lines need at its width. Qt leaves wrapped text out of a window's
@@ -255,6 +292,21 @@ class MainWindow(QMainWindow):
 
     def on_test(self) -> None:
         self.run("test")
+
+    def check_for_updates(self) -> None:
+        fetch = self.fetch
+        if self.update_checker.start(lambda: latest_release(fetch)):
+            self.set_status(self.status)
+
+    def _release_checked(self, release: Release) -> None:
+        self.release = release
+        self.set_status(self.status)
+
+    def _link(self, href: str) -> None:
+        if href == CHECK_LINK:
+            self.check_for_updates()
+        else:
+            QDesktopServices.openUrl(QUrl(href))
 
     def on_switches(self) -> None:
         dialog = SwitchesDialog(self.chosen_switches(), self)
@@ -322,6 +374,7 @@ class MainWindow(QMainWindow):
             self.process.terminate()            # the build script then also stops its container
             if not self.process.waitForFinished(15000):
                 self.process.kill()
+        self.update_checker.stop()
         self.settings.set_window_state("geometry", self.saveGeometry())
         self.settings.sync()
         super().closeEvent(event)
