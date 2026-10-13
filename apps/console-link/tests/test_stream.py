@@ -330,7 +330,7 @@ def test_no_answer_on_the_stream_port(console_factory):
         connection.connect()
 
 
-def test_stream_job_runs_session_and_stream(console_factory):
+def test_stream_job_runs_session_and_stream(console_factory, tmp_path):
     """jobs.test_stream end to end: the control connection (fake_console.py) and the stream (fake_stream.py)."""
     from fake_console import REGIST_KEY, SessionConsole
     from fake_stream import SenkushaConsole
@@ -392,7 +392,8 @@ def test_stream_job_runs_session_and_stream(console_factory):
             stop.set()
     try:
         watched = jobs.watch_stream(registered, deliver, lambda: True, stop, lambda *pcm: sound.append(pcm), pad,
-                                    stream_port=console.port, senkusha_port=network.port, port=ctrl.port, timeout=2.0)
+                                    stream_port=console.port, senkusha_port=network.port, port=ctrl.port, timeout=2.0,
+                                    figures=lambda: {"shown": 1}, stats_dir=tmp_path / "streams")
     finally:
         ctrl.close()
         network.close()
@@ -407,6 +408,13 @@ def test_stream_job_runs_session_and_stream(console_factory):
     assert console.wait_until(lambda: console.disconnect_reason == "Client Disconnecting")
     assert "Controller: PS5 Controller." in watched.log and pad.quit_called
     assert console.feedback_history[0][1:] == (1, bytes.fromhex("8088ff"))
+    # The statistics file: its header (the address masked), and a line for the stream's last part at least.
+    [stats] = (tmp_path / "streams").glob("stream-*.txt")
+    text = stats.read_text()
+    assert f"Statistics of this stream, a line per second: {stats}" in watched.log
+    assert text.startswith("# BC250 Console Link ") and "# Asked for: 1920x1080, 60 fps" in text
+    assert registered.address not in text
+    assert any(" s | in " in line and "shown 0" in line and "controller " in line for line in text.splitlines())
 
     # No network test: the stream goes on with the reference's values for that case.
     console = console_factory()

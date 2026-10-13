@@ -5,13 +5,16 @@ window only shows the message and uses the value."""
 from __future__ import annotations
 
 import math
+import os
+import platform
 import threading
 import time
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Callable
 
-from . import LOGO_PATH, discovery, gamepad, psn, regist, senkusha, session, steam_settings, steam_shortcuts, stream
+from . import (LOGO_PATH, __version__, discovery, gamepad, privacy, psn, regist, senkusha, session, steam_settings,
+               steam_shortcuts, stream, stream_stats)
 from .consoles import RegisteredConsole
 from .httpmsg import ProtocolError
 from .target import Target
@@ -152,13 +155,40 @@ def stream_profile(console: RegisteredConsole, server_type: str = "") -> stream.
     return stream.Profile(1280, 720, 60, 10000)
 
 
+def _stats_header(console: RegisteredConsole, started: session.Session, connection: stream.StreamConnection,
+                  measured) -> list[str]:
+    profile = connection.profile
+    decoder = ("none" if connection.decoder is None else "VA-API" if connection.decoder.hw else "software")
+    core = getattr(connection.core, "__version__", "?")
+    online = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else os.cpu_count()
+    return [
+        f"BC250 Console Link {__version__}, native core {core}; started {time.strftime('%d-%m-%Y %H:%M:%S')}",
+        f"Console: {console.nickname or privacy.mask_address(console.address)} "
+        f"({'PS5' if console.ps5 else started.info.server_type or 'PS4'})",
+        f"Asked for: {profile.width}x{profile.height}, {profile.max_fps} fps, {profile.bitrate} kbit/s, "
+        f"{profile.codec}; decoder: {decoder}",
+        "Network test: " + (f"MTU {measured.mtu_in} in, {measured.mtu_out} out, round trip {measured.rtt_ms} ms"
+                            if measured else "failed, safe values used"),
+        f"Board: {stream_stats.cpu_model()}, {online} processors online; {platform.system()} {platform.release()}; "
+        f"desktop {os.environ.get('XDG_CURRENT_DESKTOP', '?')}"
+        + ("; started from Steam" if os.environ.get("BC250_LEFT_STEAM_LIBRARIES") or os.environ.get("SteamAppId")
+           else ""),
+        "Each line: one second of the stream (in: frames received; decode: time per frame; shown/skipped: pictures "
+        "drawn and replaced by a newer one before drawing; age: decoder to drawing; window late: the window's "
+        "longest delay; sound gaps: silence played because the buffer ran empty; controller: reads and the longest "
+        "gap between two; cpu: all cores, the busiest core, the app and its busy threads)",
+    ]
+
+
 def _run_stream(console: RegisteredConsole, started: session.Session, seconds: float, stop: Callable[[], bool],
                 stream_port: int, stream_timeout: float, senkusha_port: int,
-                gamepads: Callable[[], object] | None = None, **stream_options):
+                gamepads: Callable[[], object] | None = None, figures: Callable[[], dict] | None = None,
+                stats_dir: Path | None = None, **stream_options):
     """The network test, then the stream for *seconds* or until *stop*; the control connection keeps answering
     heartbeats in a second thread meanwhile. When the network test fails, the stream goes on with safe values, as
     the reference does. With *gamepads* (gamepad.Sdl, or a stand-in), the board's controllers play from STREAMINFO
-    on. Returns the connection (closed) and STREAMINFO."""
+    on. With *stats_dir*, a statistics file goes there (stream_stats.py), with the window's *figures* in it.
+    Returns the connection (closed) and STREAMINFO."""
     done = threading.Event()
     ctrl_error: list[Exception] = []
 
@@ -194,9 +224,24 @@ def _run_stream(console: RegisteredConsole, started: session.Session, seconds: f
             if gamepads is not None:
                 reader = gamepad.Reader(connection.set_controller, console.ps5, connection.note, gamepads).start()
                 connection.drive_controllers(reader.output)
+            recorder, stats_file = None, None
+            if stats_dir is not None:
+                try:
+                    path = stream_stats.new_path(stats_dir)
+                    stats_file = open(path, "w", encoding="utf-8")
+                    recorder = stream_stats.Recorder(
+                        stats_file, _stats_header(console, started, connection, measured), connection.figures,
+                        figures, reader.figures if reader is not None else None).start()
+                    connection.note(f"Statistics of this stream, a line per second: {path}")
+                except OSError as error:
+                    connection.note(f"No statistics file for this stream: {error}.")
             try:
                 connection.run(seconds, lambda: bool(ctrl_error) or stop())
             finally:
+                if recorder is not None:
+                    recorder.stop()
+                if stats_file is not None:
+                    stats_file.close()
                 if reader is not None:
                     connection.drive_controllers(None)
                     reader.stop()
@@ -237,15 +282,16 @@ def watch_stream(console: RegisteredConsole, deliver: Callable[[Picture], None],
                  stop: threading.Event, play: Callable[[bytes, int, int], None] | None = None,
                  gamepads: Callable[[], object] | None = gamepad.Sdl, stream_port: int = stream.PORT,
                  stream_timeout: float = stream.EXPECT_TIMEOUT, senkusha_port: int = senkusha.PORT,
-                 **kwargs) -> Outcome:
+                 figures: Callable[[], dict] | None = None, stats_dir: Path | None = None, **kwargs) -> Outcome:
     """The stream until *stop* is set (the stream window closes): each decoded picture goes to *deliver* while
     *wanted* says the window has taken the last one, the sound to *play* (PCM, rate, channels). The board's
-    controllers play, read through *gamepads* (SDL3; None: the console sees a controller lying still)."""
+    controllers play, read through *gamepads* (SDL3; None: the console sees a controller lying still). With
+    *stats_dir*, the stream's statistics file goes there, with the window's *figures*."""
     def hold(started: session.Session) -> str:
         began = time.monotonic()
         connection, _info = _run_stream(console, started, math.inf, stop.is_set, stream_port, stream_timeout,
-                                        senkusha_port, gamepads, on_picture=deliver, picture_wanted=wanted,
-                                        on_sound=play)
+                                        senkusha_port, gamepads, figures, stats_dir, on_picture=deliver,
+                                        picture_wanted=wanted, on_sound=play)
         seconds = time.monotonic() - began
         return (f"Stream with {console.nickname or console.address} ended after {seconds:.0f} s: "
                 f"{_stream_summary(connection, seconds)}.")

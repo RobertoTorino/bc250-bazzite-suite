@@ -566,8 +566,11 @@ impl Decoder {
         self.0.hw_error.as_ref().map(|e| e.message.clone())
     }
 
+    /// Decoding lets go of the GIL (a 1080p frame takes about 5 ms in software): the window, the sound output and
+    /// the controller reader run meanwhile.
     fn decode<'py>(&mut self, py: Python<'py>, sample: &[u8]) -> PyResult<Vec<Bound<'py, PyDict>>> {
-        let frames = self.0.decode(sample).map_err(decode_error)?;
+        let decoder = &mut self.0;
+        let frames = py.allow_threads(|| decoder.decode(sample)).map_err(decode_error)?;
         frames.into_iter().map(|frame| {
             let dict = PyDict::new(py);
             dict.set_item("width", frame.width)?;
@@ -580,7 +583,8 @@ impl Decoder {
     /// The last frame's picture: a dict with format, width, height, colorspace (FFmpeg's numbers), full_range and
     /// data (the planes one after another).
     fn image<'py>(&mut self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
-        let image = self.0.image().map_err(decode_error)?;
+        let decoder = &mut self.0;
+        let image = py.allow_threads(|| decoder.image()).map_err(decode_error)?;
         let dict = PyDict::new(py);
         dict.set_item("format", image.format)?;
         dict.set_item("width", image.width)?;
@@ -608,7 +612,8 @@ impl AudioDecoder {
 
     #[pyo3(signature = (frame=None))]
     fn decode<'py>(&mut self, py: Python<'py>, frame: Option<&[u8]>) -> PyResult<Bound<'py, PyBytes>> {
-        let pcm = self.0.decode(frame).map_err(decode_error)?;
+        let decoder = &mut self.0;
+        let pcm = py.allow_threads(|| decoder.decode(frame)).map_err(decode_error)?;
         let raw: Vec<u8> = pcm.iter().flat_map(|sample| sample.to_le_bytes()).collect();
         Ok(bytes(py, &raw))
     }

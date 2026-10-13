@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 SUITE = Path(__file__).resolve().parents[2]
@@ -50,6 +51,17 @@ def test_installers_take_the_standard_options_and_refuse_root():
             assert option in text, f"{installer.relative_to(SUITE)} does not handle {option.rstrip(')')}"
         assert "only goes with --uninstall" in text, f"{installer.relative_to(SUITE)} accepts --purge alone"
         assert "not with sudo" in text, f"{installer.relative_to(SUITE)} does not refuse to run as root"
+
+
+def test_installers_upgrade_the_python_packages():
+    """pip install -r with --upgrade: installing again brings each package to the newest version its requirements
+    allow, a security fix within the range included (owner's decision, 13-10-2026)."""
+    installers = sorted([*SUITE.glob("apps/*/install.sh"), *SUITE.glob("apps/*/packaging/*/*.sh"),
+                         SUITE / "portal" / "install.sh"])
+    calls = [(path, line) for path in installers for line in path.read_text(encoding="utf-8").splitlines()
+             if re.search(r"\bpip\"? install\b.* -r ", line) and not line.lstrip().startswith("#")]
+    assert len(calls) >= 18
+    assert [(path.relative_to(SUITE), line) for path, line in calls if "--upgrade -r" not in line] == []
 
 
 def test_every_app_has_tests_and_ci_runs_them():

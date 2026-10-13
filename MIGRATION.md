@@ -5,31 +5,81 @@
 Working notes for moving the seven BC-250 tools into this suite. Not part of the manual or the READMEs, which
 describe only what exists.
 
-## Resume here (13-10-2026, break)
+## Resume here (13-10-2026, after the break)
 
-Console Link, in the working tree, nothing committed or released (the owner holds the release until the board tests
-below are done). Since the last release: the controller state, controller input (SDL3), motion, rumble and light
-bar, privacy (masking, Show personal details), the Steam PS button setting, the controller test with the genuine
-check ("Genuine DS4v1", "Fake DS4"), the account ID from the clipboard, and Game Mode (Add to Game Mode, the direct
-start --stream, the fixes for Steam's library path and overlay). Suite-wide: withdrawing a release (portal, Suite
-Releases tab 3, check_manifest). Details in the console-link row and in Known issues below.
+Released by the owner during the break: console-link-v1.0.0 and portal-v1.0.0 (with dependency-checker-v0.1.9),
+with everything built before it (controller, motion, rumble and light bar, privacy, the Steam PS button setting,
+the controller test with the genuine check, the account ID from the clipboard, Game Mode, withdrawing a release).
 
-Questions to the owner, asked before the break:
-1. Navigation from Steam: what felt awkward (perhaps Big Picture, behind the stream, reacting to the controller too)?
-2. A controller combination to end the stream (and later to send PS in Game Mode), for example holding Share +
-   Options for 2 s: yes or no, and which buttons?
+Built since, in the working tree:
+- Console Link: the mouse pointer hides over the stream after 2 s still, and comes back when the mouse moves.
+  The manual names the desktop's own mute (the speaker on the task bar entry) beside M. Needs a Console Link
+  release (patch).
+- Console Link, performance (owner's board, 13-10-2026: Lumines Remastered from the Steam shortcut, full screen,
+  cable: the sound stuttered, the picture and the controller lagged, compared with playing on the console): a
+  statistics file per stream (stream_stats.py, a line per second in ~/.local/state/bc250-console-link/streams), and
+  the native core's decoders now let go of the GIL (they held it about 5 ms per 1080p frame, stalling the window,
+  the sound output and the controller reader). Open on the board: reinstall from the checkout (the native core
+  must be rebuilt: `bash apps/console-link/install.sh`), play Lumines a few minutes from the shortcut, and send the
+  newest file. Then, by what it shows: the sound reserve (the sink holds 30 ms and is fed from the GUI thread; a
+  bigger one or a thread of its own), the picture's path (decoder to drawing, the compositor), decoder threads,
+  720p as a choice (stream settings). The owner's second board (its SSD has a DRAM cache, this one's not) as a
+  second file to compare; the file shows disk waits and swapping, which is when the SSD would matter. Not the CPU unlock: decoding runs on one thread, so cores 7 and 8 only help
+  when the file shows all cores busy (owner asked, 13-10-2026; the board runs 6 cores).
+- Board result (13-10-2026, owner, after reinstalling from the checkout): no more sound or picture stutter, the
+  controller feels more responsive, Escape leaves full screen. So the GIL held while decoding was the cause. The
+  statistics file stays, for the next problem and for the second board. Explained for later (owner: useful for a
+  handheld version) in docs/development/console-link-stream.md: the threads, the GIL rule for the native core, and
+  how to read the statistics file on other hardware.
+- Dependency Checker: Console Link's FFmpeg (the version inside the native core), libva (required: the core links
+  it), Steam and Rust, beside SDL3; the status Needs update (owner's choice, 13-10-2026: action required, an app
+  needs a newer version or a release fixes a known vulnerability; Update available stays for the optional newer
+  version) and a table of every status in its manual. Needs a Dependency Checker release (patch, or minor for the
+  new status: the owner's call). Found 13-10-2026: most installers ran pip install -r without --upgrade, so a
+  reinstall did not bring a security fix within the allowed range. Owner (13-10-2026): the installers upgrade;
+  done in every installer (test_layout checks it). Needs a release of every app whose installer changed and of
+  the portal, whenever each is next released (the owner's call; nothing urgent unless a Needs update shows).
+- Portal: a Gaming section (`section = "gaming"` in apps.toml), open until closed, with Console Link moved there
+  from Development only (the owner's end goal for it: out of Development only once the stream works); apps.toml's
+  comment names the withdrawn field. Needs a portal release (check_manifest asks for the bump because apps.toml
+  changed; until then that check fails).
 
-Board tests still open (reinstall from the checkout first: `bash apps/console-link/install.sh`):
+Owner's answers (13-10-2026):
+1. Navigation: leaving full screen and quitting Console Link from the controller. Full screen is left only with
+   the keyboard (Escape; the owner used the Windows key), and there is no way to quit from the controller.
+2. Button combinations: wanted, on the list (below).
+
+On the list, next: **controller button combinations** for the stream window, each a hold of about 2 s so a game
+never triggers it by accident; which buttons is the owner's call. Actions to cover: leave or enter full screen,
+end the stream (and with --stream quit the app), mute, and in Game Mode send the PS button (Steam keeps it there).
+A proposal to put to the owner: hold PS + Options leave full screen, PS + Share end the stream, PS + touchpad
+click mute; in Game Mode, PS alone goes to Steam and a hold of Share + Options sends PS. To check: whether Steam
+in Game Mode lets a PS combination through at all.
+
+Board tests still open (reinstall from the checkout first: `bash apps/console-link/install.sh`, or the release):
 - The shortcut in Game Mode itself (picture, all controls with the browser search bar test, touchpad and motion,
-  Exit game); the window coming to the front and the key hints in the status line.
+  Exit game); the window coming to the front and the key hints in the status line; the pointer hiding.
 - Add to Game Mode with Steam running (the restart path), and Update in Game Mode with the owner's own pictures in
   apps/console-link/images/steam/ (sizes in the console-link row).
 - Test withdrawal in Suite Releases; the privacy masking and a copy from the log; a game with tilt; a motion reset.
+- The portal from the checkout: the Gaming section with Console Link.
 
-Next after that, in the order discussed: the controller combination (if wanted), then the redesign of the window
-(the controller test as a pill), the microphone, and later DualSense/PS5 (when the hardware is there) and the portal
-on handhelds. Releases (owner): Console Link (and its native core), the portal, Suite Releases and the Dependency
-Checker (SDL3).
+Compared with Asobi: Remote Play (owner, 13-10-2026; a proprietary client on Steam for Windows, Linux and SteamOS,
+1.0 on 9-10-2026; free tier 1080p/30 for Remote Play, a paid Premium for 60 fps, HDR, gyro, haptics, adaptive
+triggers, manual bitrate, low-latency modes, audio delay): ideas to weigh, the owner's call each:
+- **Several controllers as separate players** (Asobi: up to 4): Console Link combines all controllers into one.
+  The biggest gap for couch play; the protocol sends one controller state, so to check what the console accepts.
+- **Stream settings** (resolution, frame rate, bitrate by hand, a low-latency choice) and an **audio delay**
+  setting: already on the list as stream settings; Console Link has 1080p/60 and gyro without a paid tier.
+- **Internet streaming** (PSN hole punching): on the list already.
+- **A release on Steam** (Steamworks: a fee per app and Valve's review): a Game Mode entry, Steam's updates and
+  Steam Input without our shortcut; a large decision, more for a handheld version than for the board.
+- **Not recommended: PS Plus Premium cloud streaming.** It uses Sony's servers without Sony's consent; for an
+  open-source app in a public repository a legal and takedown risk.
+- Not worth it here: frame generation, 2D-to-3D, screen filters, upscaling to 4K.
+
+After the combinations, in the order discussed: the redesign of the window (the controller test as a pill), the
+microphone, and later DualSense/PS5 (when the hardware is there) and the portal on handhelds.
 
 ## Done
 

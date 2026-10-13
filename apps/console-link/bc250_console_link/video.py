@@ -11,7 +11,8 @@ as FFmpeg's players assume. Limited range (16 to 235 for Y, 16 to 240 for Cb and
 from __future__ import annotations
 
 import threading
-from dataclasses import dataclass
+from time import perf_counter
+from dataclasses import dataclass, field
 
 # FFmpeg's AVColorSpace numbers.
 BT709, UNSPECIFIED, BT470BG, SMPTE170M, BT2020_NCL, BT2020_CL = 1, 2, 5, 6, 9, 10
@@ -35,12 +36,13 @@ class Picture:
     data: bytes
     colorspace: int = UNSPECIFIED
     full_range: bool = False
+    made: float = field(default=0.0, compare=False)    # perf_counter() when it came out of the decoder
 
     @classmethod
     def from_image(cls, image: dict) -> Picture:
         """From the native decoder's image()."""
         return cls(image["format"], image["width"], image["height"], image["data"], image["colorspace"],
-                   image["full_range"])
+                   image["full_range"], perf_counter())
 
     @property
     def shown(self) -> bool:

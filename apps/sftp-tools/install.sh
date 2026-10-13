@@ -104,7 +104,7 @@ if [ ! -x "$VENV/bin/python" ] || ! "$VENV/bin/python" -c 'import sys' 2>/dev/nu
 fi
 info "Installing PyQt6 and paramiko into the venv (downloads ~100 MB the first time)"
 "$VENV/bin/python" -m pip install -q --disable-pip-version-check --upgrade pip
-"$VENV/bin/python" -m pip install -q --disable-pip-version-check -r "$APP_DIR/requirements.txt"
+"$VENV/bin/python" -m pip install -q --disable-pip-version-check --upgrade -r "$APP_DIR/requirements.txt"
 "$VENV/bin/python" -c 'import PyQt6.QtWidgets, paramiko' || die "PyQt6 or paramiko does not load from the venv."
 
 # --- 3. Launcher, menu entry, Desktop icon ------------------------------------------------------

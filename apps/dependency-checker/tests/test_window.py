@@ -131,7 +131,7 @@ def test_cve_marks(qapp):
     window = _window(result)
     try:
         pyqt = window.cards["PyQt6"]
-        assert "✗ CVE" in pyqt.cve.text() and pyqt.status.text() == "Vulnerable"
+        assert "✗ CVE" in pyqt.cve.text() and pyqt.status.text() == "Needs update"     # a release fixes it
         assert "href='https://security.snyk.io/vuln/?search=CVE-2099-1234'>CVE-2099-1234</a> in 6.11.0" in \
             pyqt.vulnerabilities.text()
         assert "fixed in 6.12.1" in pyqt.vulnerabilities.text()
@@ -166,5 +166,39 @@ def test_missing_tools_advise_what_they_are_needed_for(qapp):
         assert window.tool_cards["umr"].advice.isHidden()
         assert "Install Simple Demo Tool again from the portal to be able to use it" in \
             window.cards["dbus-next"].advice.text()
+    finally:
+        window.close()
+
+
+def test_needs_update_when_an_app_wants_newer_or_a_release_fixes_a_vulnerability(qapp):
+    dependencies, _tools = _catalog()
+    link = "/home/test/.local/share/bc250-console-link/venv"
+    sftp = "/home/test/.local/share/bc250-sftp-tools/venv"
+    fixed = Vulnerability("CVE-2026-1", "a hole", "3.4.1")
+    unfixed = Vulnerability("CVE-2026-2", "another hole")
+    result = CheckResult(
+        [DependencyStatus(dependencies["cryptography"],
+                          (EnvironmentVersion(link, ("console-link",), "41.0.0", ("console-link",), (),
+                                              ("console-link",)),), "46.0.0"),
+         DependencyStatus(dependencies["paramiko"], (EnvironmentVersion(sftp, ("sftp-tools",), "3.4.0", (),
+                                                                        (fixed,)),), "3.5.0"),
+         DependencyStatus(dependencies["obsws-python"], (EnvironmentVersion(DEMO, ("demo-tool",), "1.8.0", (),
+                                                                            (unfixed,)),), "1.8.0"),
+         DependencyStatus(dependencies["PyQt6"], (EnvironmentVersion(DEMO, ("demo-tool",), "7.0.0",
+                                                                     ("demo-tool",)),), "7.0.0")],
+        [], frozenset({"console-link", "sftp-tools", "demo-tool"}))
+    window = _window(result)
+    try:
+        crypto, paramiko = window.cards["cryptography"], window.cards["paramiko"]
+        assert crypto.status.text() == "Needs update"
+        assert "BC250 Console Link needs >=42,<51, installed is 41.0.0." in crypto.status.toolTip()
+        assert paramiko.status.text() == "Needs update"
+        assert "3.4.1 fixes known vulnerabilities in 3.4.0." in paramiko.status.toolTip()
+        assert window.cards["obsws-python"].status.text() == "Vulnerable"     # no release fixes it yet
+        assert window.cards["PyQt6"].status.text() == "Wrong version"          # too new: no update helps
+        assert window.box_needs_update.value.text() == "2"
+        text = window.result_label.text()
+        assert "Needs update:</b> cryptography, paramiko" in text
+        assert "wrong version:</b> PyQt6." in text                              # cryptography is under Needs update
     finally:
         window.close()

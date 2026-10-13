@@ -1,3 +1,11 @@
+Changelog: 13-10-2026 15:53:27
+
+Release 0.1.2.
+
+Changelog: 13-10-2026 15:51:48
+
+The installer installs the Python packages with pip --upgrade (owner's decision, 13-10-2026): installing again brings each package to the newest version its requirements allow, so a security fix within that range arrives with a reinstall from the portal.
+
 Changelog: 11-10-2026 19:25:11
 
 Release 0.1.1.

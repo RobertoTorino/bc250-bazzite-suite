@@ -73,7 +73,7 @@ if [ ! -x "$VENV/bin/python" ]; then
     python3 -m venv "$VENV" || die "Could not create the app's Python venv."
 fi
 info "Installing PyQt6 and the OBS WebSocket client in the app's own venv"
-"$VENV/bin/python" -m pip install --disable-pip-version-check -r "$APP_DIR/requirements.txt"
+"$VENV/bin/python" -m pip install --disable-pip-version-check --upgrade -r "$APP_DIR/requirements.txt"
 "$VENV/bin/python" -c 'import PyQt6.QtWidgets, PyQt6.QtMultimedia, PyQt6.QtMultimediaWidgets, obsws_python, dbus_next' ||
     die "The app dependencies did not import successfully."
 

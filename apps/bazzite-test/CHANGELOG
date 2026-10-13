@@ -1,3 +1,11 @@
+Changelog: 13-10-2026 15:53:27
+
+Release 0.1.7.
+
+Changelog: 13-10-2026 15:51:48
+
+The installer installs the Python packages with pip --upgrade (owner's decision, 13-10-2026): installing again brings each package to the newest version its requirements allow, so a security fix within that range arrives with a reinstall from the portal.
+
 Changelog: 12-10-2026 09:19:23
 
 Release 0.1.6.
@@ -401,7 +409,7 @@ moved to development/tools, and removed the version-tag.yml stub.
 README: the "no release yet" placeholder under "Download and install" is replaced by the real
 Bazzite instructions (the GUI is the product; the command line is development-only): download and
 verify with sha256sum -c, extract to /opt with sudo plus a stable /opt/bc250-bazzite-test symlink,
-one-time venv in ~/.local/share/bc250-bazzite-test/venv with pip install -r requirements.txt, run
+one-time venv in ~/.local/share/bc250-bazzite-test/venv with pip install --upgrade -r requirements.txt, run
 with python -m bc250_gui, optional test tools via development/tools/install-requirements.sh, and
 update and uninstall steps. A note explains why /opt: a release build refuses to run
 test-bazzite.sh unless the file and every folder above it are owned by root and writable by root

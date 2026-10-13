@@ -14,7 +14,8 @@ from bc250_dependency_checker import CATALOG, LOGO_PATH
 from bc250_dependency_checker.dependencies import (
     App, DependencyCatalogError, DependencyCheckError, DependencyStatus, EnvironmentVersion, ToolStatus,
     Vulnerability, check_dependencies, check_tools, environment_versions, find_executable, installed_environments,
-    known_vulnerabilities, latest_pypi_version, launcher_python, load_apps, load_catalog, load_tools, satisfies, tool_need,
+    known_vulnerabilities, latest_pypi_version, launcher_python, load_apps, load_catalog, load_tools, satisfies, too_old,
+    tool_need,
 )
 
 SUITE = Path(__file__).resolve().parents[3]
@@ -240,7 +241,9 @@ def test_package_version_that_misses_the_requirement_is_reported(tmp_path):
     result = check_dependencies([dependency], "agent", {"cores-bisect": (old,), "governor": (old,)},
                                 get_latest=lambda *_args: "6.11.0", get_vulnerabilities=NO_CVES)[0]
     # cores-bisect accepts >=6.5, the governor wants >=6.11.
-    assert result.unmet == (EnvironmentVersion(str(old), ("governor", "cores-bisect"), "6.9.1", ("governor",)),)
+    assert result.unmet == (EnvironmentVersion(str(old), ("governor", "cores-bisect"), "6.9.1", ("governor",), (),
+                                               ("governor",)),)                    # older than wanted: outdated
+    assert result.needs_update == result.unmet
 
 
 def test_package_checks_preserve_independent_results(tmp_path):
@@ -421,3 +424,76 @@ def test_a_failed_vulnerability_check_is_not_reported_as_clean(tmp_path):
     result = check_dependencies([dependency], "agent", {"portal": (venv,)}, get_latest=lambda *_args: "6.11.0",
                                 get_vulnerabilities=offline)[0]
     assert result.cve_error == "offline" and not result.cve_checked and not result.vulnerabilities
+
+
+@pytest.mark.parametrize(("stdout", "returncode", "stderr", "version", "note"), [
+    ("/venv/core.so\n7.1.2\n", 0, "", "7.1.2", ""),
+    ("/venv/core.so\n\n", 0, "", "", "The native core was built without the video decoder."),
+    ("", 1, "ImportError: libva.so.2: cannot open shared object file", "",
+     "The native core does not load: ImportError: libva.so.2: cannot open shared object file"),
+])
+def test_ffmpeg_is_asked_of_console_links_native_core(tmp_path, monkeypatch, stdout, returncode, stderr, version,
+                                                      note):
+    python = tmp_path / "home" / ".local" / "share" / "bc250-console-link" / "venv" / "bin" / "python"
+    python.parent.mkdir(parents=True)
+    python.write_text("#!/bin/sh\n", encoding="utf-8")
+    python.chmod(0o755)
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    calls = []
+
+    class Result:
+        pass
+
+    def run(command, **kwargs):
+        calls.append(command)
+        result = Result()
+        result.stdout, result.returncode, result.stderr = stdout, returncode, stderr
+        return result
+
+    monkeypatch.setattr(f"{PREFIX}.subprocess.run", run)
+    tool = next(tool for tool in load_tools(CATALOG) if tool.name == "FFmpeg")
+    status = check_tools([tool])[0]
+    assert calls[0][:3] == [str(python), "-I", "-c"] and "bc250_console_link_core" in calls[0][3]
+    assert (status.version, status.note) == (version, note)
+    assert status.path == ("/venv/core.so" if stdout else str(python))
+
+
+def test_ffmpeg_not_found_without_the_app_or_its_core(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    tool = next(tool for tool in load_tools(CATALOG) if tool.name == "FFmpeg")
+    assert check_tools([tool])[0] == ToolStatus(tool)                       # the app is not installed
+    python = tmp_path / "home" / ".local" / "share" / "bc250-console-link" / "venv" / "bin" / "python"
+    python.parent.mkdir(parents=True)
+    python.write_text("#!/bin/sh\n", encoding="utf-8")
+    python.chmod(0o755)
+
+    class Result:
+        stdout, returncode, stderr = "", 1, "ModuleNotFoundError: No module named 'bc250_console_link_core'"
+
+    monkeypatch.setattr(f"{PREFIX}.subprocess.run", lambda *args, **kwargs: Result())
+    assert check_tools([tool])[0] == ToolStatus(tool)                       # installed without its native core
+
+
+def test_console_link_lists_what_the_stream_needs():
+    tools = {tool.name: tool for tool in load_tools(CATALOG)}
+    needs = {name: tool_need(tools[name], {"console-link"}) for name in ("FFmpeg", "libva", "SDL3", "Steam", "Rust")}
+    assert needs == {"FFmpeg": "required", "libva": "required", "SDL3": "optional", "Steam": "optional",
+                     "Rust": "optional"}
+
+
+@pytest.mark.parametrize(("version", "specifier", "expected"), [
+    ("41.0.0", ">=42,<51", True), ("51.0.0", ">=42,<51", False), ("46.0.0", ">=42,<51", False),
+    ("1.2", "~=1.3", True), ("1.3", ">1.3", True), ("1.4", "==1.5", True), ("1.6", "==1.5", False),
+    ("", ">=1", False),
+])
+def test_too_old_only_when_a_newer_version_would_do(version, specifier, expected):
+    assert too_old(version, specifier) is expected
+
+
+def test_environment_needs_update():
+    fixed = Vulnerability("CVE-1", fixed="3.4.1")
+    assert EnvironmentVersion("v", ("a",), "3.4.0", (), (fixed,)).needs_update
+    assert not EnvironmentVersion("v", ("a",), "3.4.1", (), (fixed,)).needs_update    # the fix is installed
+    assert not EnvironmentVersion("v", ("a",), "3.4.0", (), (Vulnerability("CVE-2"),)).needs_update
+    assert EnvironmentVersion("v", ("a",), "1.0", ("a",), (), ("a",)).needs_update
+    assert not EnvironmentVersion("v", ("a",), "", ("a",), (), ("a",)).needs_update   # missing, not outdated

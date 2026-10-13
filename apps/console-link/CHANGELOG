@@ -1,3 +1,23 @@
+Changelog: 13-10-2026 15:53:27
+
+Release 1.0.1.
+
+Changelog: 13-10-2026 15:51:48
+
+The installer installs the Python packages with pip --upgrade (owner's decision, 13-10-2026): installing again brings each package to the newest version its requirements allow, so a security fix within that range arrives with a reinstall from the portal.
+
+Changelog: 13-10-2026 15:42:31
+
+The stutter fix explained for developers (owner, 13-10-2026): docs/development/console-link-stream.md, the stream's threads, why the GIL made sound, picture and controller wait while a frame decoded, the rule that the native core lets go of it in every longer call, and how to read the statistics file on any hardware.
+
+Changelog: 13-10-2026 15:18:31
+
+Stream statistics (owner's board, 13-10-2026: with Lumines Remastered from the Steam shortcut, full screen, on a cable, the sound stuttered and the picture and the controller lagged; the end-of-stream summary has only totals, and none at all from the shortcut): every stream writes a file with a line per second in ~/.local/state/bc250-console-link/streams (the newest 20 kept, the address masked). stream_stats.py: frames received, Mbit/s, the longest gap between two frames, lost and FEC; decode time per frame, average and longest; sound frames received and lost; pictures shown and skipped, their age from decoder to drawing; the window's longest delay (a 10 ms timer); the sound buffer, its gaps and drops; the controller reader's reads and longest gap; the processor (all cores, the busiest, the app and its busy threads, the clock); waiting on the disk (iowait, pages swapped in and out, the app's page faults read from the disk: owner, 13-10-2026, this board's SSD has no DRAM cache, which matters only when the board swaps or reads from the disk during the stream). The header: versions, the console (address masked), what was asked for, the decoder, the network test, the board and whether Steam started it. Found while building it: the native core held Python's lock (the GIL) while decoding, about 5 ms per 1080p frame, so the window, the sound output and the controller reader waited meanwhile; the video and sound decoders and the picture copy now let go of it. The manual: the file under Where it keeps what and When it does not work. Tests: the files kept, the processor's figures from a /proc made in a temp folder, the line, the recorder, the file from a stream against the fake console.
+
+Changelog: 13-10-2026 15:06:45
+
+The mouse pointer hides over the stream's picture after 2 seconds without moving and comes back when the mouse moves (owner, 13-10-2026). The manual says so, and that the desktop's own mute (the speaker on the task bar entry, the volume control) works beside M. Test: hidden, and back on a movement.
+
 Changelog: 13-10-2026 14:27:47
 
 Release 1.0.0.

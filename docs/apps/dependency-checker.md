@@ -22,16 +22,38 @@ system tool only because one of the suite's apps uses it.
 apps also look. Each app says whether it needs the tool (required) or uses it when it is there (optional); the
 links open the app's manual, which says how to install it. Tools that do their work only as root are marked
 **Needs root.**; the apps run them through sudo or pkexec, which ask for your password. Where a tool has two
-forms, one is enough: Bazzite Test's internet speed test runs Ookla's `speedtest` or `speedtest-cli`.
+forms, one is enough: Bazzite Test's internet speed test runs Ookla's `speedtest` or `speedtest-cli`. A library
+that an app brings itself is listed too: BC250 Console Link carries FFmpeg inside its native core, so the checker
+asks the installed core which FFmpeg version it holds and shows it on the card. When the core does not load (the
+system's libva missing, for example), the card says so.
 
-Under a missing package or tool, an **Advice** line says what to install and which features of the installed apps
-need it.
+Under a missing package or tool, or one that needs an update, an **Advice** line says what to install and which
+features of the installed apps need it.
 
 Click the information button beside a name for what the package or tool is and what each app uses it for. The
 line at the bottom names the tools that are not there, those an installed app needs apart from the optional ones.
 
 The checker is read-only. It does not install or update packages or tools. It sends the names and versions of the
 Python packages to PyPI and OSV.dev, nothing else.
+
+## What the statuses mean
+
+Each card has one status, the most urgent that applies. The boxes at the top count them.
+
+| Status | For | Meaning |
+|---|---|---|
+| **Up to date** | package | Installed where the apps need it, at PyPI's latest version, no known vulnerability. |
+| **Update available** | package | PyPI has a newer version. Nothing is wrong: the installed one meets the apps' requirements and has no known vulnerability. Newer versions come with an app release, after they are tested. |
+| **Needs update** | package | It must be updated: an installed app needs a newer version than the one installed, or a newer release fixes a known vulnerability of it. The status's tooltip and the Advice line say which, and to which version. |
+| **Vulnerable** | package | An installed version has a known vulnerability that no release fixes yet. |
+| **Wrong version** | package | An installed version does not meet an app's requirement in a way an update does not fix (newer than the app allows). Install that app again from the portal. |
+| **Missing** | package | Not in the Python environment of an installed app that uses it. Install that app again from the portal. |
+| **Missing** | tool | Not found, and an installed app needs it. |
+| **Not installed** | tool | Not found, but the installed apps only use it when it is there: they work without it. It stays so until you install the tool; the app's manual, linked on the card, says how. |
+| **Available** | tool | Found; the card shows where (and the version, where the check can read one, as for FFmpeg). |
+| **Unsupported build** | tool | Found, but in a form the app cannot use, for example a flashrom without the internal programmer, or a Console Link native core built without its video decoder. |
+| **Not needed** | both | No installed app uses it. |
+| **Check failed** | package | PyPI could not be reached (no network). |
 
 ## Install
 

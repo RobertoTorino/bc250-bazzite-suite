@@ -127,7 +127,7 @@ if [ ! -x "$VENV/bin/python" ] || ! "$VENV/bin/python" -c 'import sys' 2>/dev/nu
 fi
 info "Installing PyQt6 into the venv"
 "$VENV/bin/python" -m pip install -q --disable-pip-version-check --upgrade pip
-"$VENV/bin/python" -m pip install -q --disable-pip-version-check -r "$LINK/requirements.txt"
+"$VENV/bin/python" -m pip install -q --disable-pip-version-check --upgrade -r "$LINK/requirements.txt"
 "$VENV/bin/python" -c 'import PyQt6.QtWidgets' ||
     die "PyQt6 does not load from the venv; see the error above."
 

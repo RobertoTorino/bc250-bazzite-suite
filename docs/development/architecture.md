@@ -209,7 +209,9 @@ It installs:
 - **The app** under `~/.local/share/<app-id>/`, or root-owned under `/opt/<app-id>-v<version>` (with a link
   `/opt/<app-id>`) when the app runs scripts as root, so a normal user cannot change code that sudo runs.
 - **Python:** PyQt6 in the suite's shared venv `~/.local/share/bc250-bazzite-suite/venv`. An app with its own
-  packages has its own venv. The shared venv goes when the last app that uses it is removed.
+  packages has its own venv. The shared venv goes when the last app that uses it is removed. pip runs with
+  `--upgrade`, so installing again brings every package to the newest version the requirements allow, a security
+  fix within that range included.
 - **A launcher** `~/.local/bin/<app-id>` that changes into the app folder and runs
   `exec "<venv>/bin/python" -m <package>`. Keep that `exec` line: the Dependency Checker reads it to find the
   app's Python environment.

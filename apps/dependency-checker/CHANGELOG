@@ -1,3 +1,19 @@
+Changelog: 13-10-2026 15:53:27
+
+Release 0.1.10.
+
+Changelog: 13-10-2026 15:51:48
+
+The installer installs the Python packages with pip --upgrade (owner's decision, 13-10-2026): installing again brings each package to the newest version its requirements allow, so a security fix within that range arrives with a reinstall from the portal.
+
+Changelog: 13-10-2026 15:45:38
+
+Needs update (owner, 13-10-2026: a status for action required): a package must be updated when an installed app needs a newer version than the one installed (too_old: below a lower bound of the app's specifier) or when a newer release fixes a known vulnerability of the installed version. It comes before Wrong version (now only a version an update does not fix, newer than allowed) and Vulnerable (now only when no release fixes it yet); Update available stays for a newer version that is not needed. The status's tooltip says why and to which version; a red Needs update box beside Missing counts them, and the line at the bottom names them. The manual has a table of every status (owner asked what Not installed and Available mean). Tests: too old or too new, an environment that needs an update, the card, the box and the line; two tests follow the change (an older PyQt6 than wanted, a vulnerability with a fix).
+
+Changelog: 13-10-2026 15:37:48
+
+Console Link's dependencies (owner, 13-10-2026: every new dependency in the checker): FFmpeg (required; it is inside the app's native core, so the new probe console-link-ffmpeg asks the installed core through the app's python which FFmpeg it holds and the card shows the version; a core built without the video decoder or one that does not load is said so), libva (required: the native core links libva and libva-drm and does not load without them), Steam (optional: Add to Game Mode and the PS button setting run steam and bazzite-steam) and Rust (optional: cargo builds the native core when the app is installed from a checkout). SDL3 was there already. Tool cards show a version when the check finds one. The manual says how a library an app brings itself is checked. Tests: the probe with a version, without the decoder, not loading, and without the app or its core; Console Link's needs.
+
 Changelog: 13-10-2026 14:27:47
 
 Release 0.1.9.

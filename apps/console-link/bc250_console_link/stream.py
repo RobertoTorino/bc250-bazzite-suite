@@ -89,6 +89,8 @@ class StreamStats:
     audio_lost: int = 0                 # frames that never came, played as silence
     decode_errors: int = 0
     decode_seconds: float = 0.0
+    decode_max: float = 0.0             # the longest decode since figures() last read it
+    frame_gap_max: float = 0.0          # the longest wait between two frames since then
 
 
 class StreamConnection:
@@ -125,6 +127,7 @@ class StreamConnection:
         self.decoder = None
         self.decode_error: str | None = None
         self._header = b""
+        self._last_frame: float | None = None
 
     def __enter__(self) -> StreamConnection:
         return self
@@ -240,9 +243,15 @@ class StreamConnection:
             if self.decode_error is None:
                 self.decode_error = str(error)
                 self.note(f"The decoder refused a frame ({error}).")
-        self.stats.decode_seconds += perf_counter() - started
+        took = perf_counter() - started
+        self.stats.decode_seconds += took
+        self.stats.decode_max = max(self.stats.decode_max, took)
 
     def _on_frame(self, info: dict, data: bytes) -> None:
+        now = perf_counter()
+        if self._last_frame is not None:
+            self.stats.frame_gap_max = max(self.stats.frame_gap_max, now - self._last_frame)
+        self._last_frame = now
         self.stats.frames += 1
         self.stats.frame_bytes += len(data)
         self.stats.fec_frames += info["fec"]
@@ -430,6 +439,17 @@ class StreamConnection:
             if message is not None and message.type not in (tkproto.STREAMINFOACK, tkproto.CONNECTIONQUALITY,
                                                              tkproto.HEARTBEAT):
                 self.note(f"Message type {message.type} received.")
+
+    def figures(self) -> dict:
+        """For the statistics file (stream_stats.py), from its thread: the counters, and the maxima since the last
+        call, which start again."""
+        stats = self.stats
+        figures = {"frames": stats.frames, "frame_bytes": stats.frame_bytes, "frames_lost": stats.frames_lost,
+                   "fec_frames": stats.fec_frames, "decoded": stats.decoded, "decode_seconds": stats.decode_seconds,
+                   "decode_max": stats.decode_max, "frame_gap_max": stats.frame_gap_max,
+                   "audio_frames": stats.audio_frames, "audio_lost": stats.audio_lost}
+        stats.decode_max = stats.frame_gap_max = 0.0
+        return figures
 
     def video_summary(self) -> str:
         """The native core's view of the video and the congestion reports, for the log."""

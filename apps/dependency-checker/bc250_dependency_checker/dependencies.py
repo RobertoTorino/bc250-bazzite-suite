@@ -24,7 +24,7 @@ OSV_VULN = "https://osv.dev/vulnerability/{id}"
 OSV_PAGES = 5
 TIMEOUT = 15
 NEEDS = ("required", "optional")
-PROBES = ("", "flashrom-internal", "path")
+PROBES = ("", "flashrom-internal", "path", "console-link-ffmpeg")
 # Where the apps look for tools besides PATH (bazzite-test's find_tool): a launch from the menu or the portal may
 # not have them on PATH. sbin for tools that live there on other distributions.
 SEARCH_DIRS = ("~/.local/bin", "/home/linuxbrew/.linuxbrew/bin", "/usr/local/sbin", "/usr/sbin")
@@ -98,6 +98,17 @@ class EnvironmentVersion:
     version: str
     unmet: tuple[str, ...] = ()         # owners whose specifier the version does not satisfy
     vulnerabilities: tuple[Vulnerability, ...] = ()
+    outdated: tuple[str, ...] = ()      # of those, the owners that want a newer version than this one
+
+    @property
+    def fixes(self) -> tuple[Vulnerability, ...]:
+        """The known vulnerabilities a newer release fixes."""
+        return tuple(vuln for vuln in self.vulnerabilities if vuln.fixed and compare(vuln.fixed, self.version) > 0)
+
+    @property
+    def needs_update(self) -> bool:
+        """It must be updated: an app wants a newer version, or a newer release fixes a known vulnerability."""
+        return bool(self.version and (self.outdated or self.fixes))
 
 
 @dataclass(frozen=True)
@@ -135,6 +146,11 @@ class DependencyStatus:
         return tuple(env for env in self.environments if env.version and env.unmet)
 
     @property
+    def needs_update(self) -> tuple[EnvironmentVersion, ...]:
+        """The environments where it must be updated (EnvironmentVersion.needs_update)."""
+        return tuple(env for env in self.environments if env.needs_update)
+
+    @property
     def update_available(self) -> bool:
         return any(env.version and compare(self.latest, env.version) > 0 for env in self.environments)
 
@@ -144,6 +160,7 @@ class ToolStatus:
     tool: ExternalTool
     path: str = ""
     note: str = ""
+    version: str = ""
 
 
 @dataclass(frozen=True)
@@ -353,6 +370,22 @@ def satisfies(version: str, specifier: str) -> bool:
     return True
 
 
+def too_old(version: str, specifier: str) -> bool:
+    """Whether a version misses a specifier because it is older than a lower bound (>=, >, ==, ~=), so a newer one
+    would do; not when it is too new."""
+    if not release(version):
+        return False
+    for part in specifier.split(","):
+        match = _SPECIFIER.fullmatch(part)
+        if not match or "*" in match.group(2) or not release(match.group(2)):
+            continue
+        op, want = match.group(1), match.group(2)
+        order = compare(version, want)
+        if (op in (">=", "~=", ">", "==") and order < 0) or (op == ">" and order == 0):
+            return True
+    return False
+
+
 def package_environments(
     dependency: Dependency,
     environments: dict[str, tuple[Path, ...]],
@@ -369,8 +402,9 @@ def package_environments(
     for venv, owners in by_venv.items():
         version = get_versions(venv).get(_normalized(dependency.name), "")
         unmet = tuple(owner for owner in owners if version and not satisfies(version, specifiers[owner]))
+        outdated = tuple(owner for owner in unmet if too_old(version, specifiers[owner]))
         vulnerabilities = get_vulnerabilities(version) if version else ()
-        result.append(EnvironmentVersion(str(venv), tuple(owners), version, unmet, vulnerabilities))
+        result.append(EnvironmentVersion(str(venv), tuple(owners), version, unmet, vulnerabilities, outdated))
     return tuple(result)
 
 
@@ -527,9 +561,39 @@ def check_tools(tools: list[ExternalTool]) -> list[ToolStatus]:
                 statuses.append(ToolStatus(tool, str(candidates[0]), "No internal programmer found."))
             else:
                 statuses.append(ToolStatus(tool))
+        elif tool.probe == "console-link-ffmpeg":
+            statuses.append(console_link_ffmpeg(tool, candidates))
         else:
             statuses.append(ToolStatus(tool, str(candidates[0]) if candidates else ""))
     return statuses
+
+
+# Run with the app's python, in isolated mode: the native core's file and the FFmpeg it was built with ("" when built
+# without the video decoder). Importing it loads the system's libva too, so a missing libva shows here as well.
+_CORE_PROBE = ("import os, bc250_console_link_core as core; print(os.path.dirname(core.__file__)); "
+               "print(getattr(core, 'FFMPEG_VERSION', '') if getattr(core, 'DECODER', False) else '')")
+
+
+def console_link_ffmpeg(tool: ExternalTool, pythons: list[Path]) -> ToolStatus:
+    """FFmpeg inside Console Link's native core: the core is asked, through the app's own python (the tool's
+    location), which FFmpeg it carries. Not found when the app or its core is not installed."""
+    for python in pythons:
+        try:
+            result = subprocess.run([str(python), "-I", "-c", _CORE_PROBE], capture_output=True, text=True,
+                                    timeout=20, check=False, cwd=Path.home())
+        except (OSError, subprocess.SubprocessError):
+            continue
+        lines = result.stdout.splitlines()
+        if result.returncode != 0 or not lines:
+            reason = (result.stderr.strip().splitlines() or ["it does not load"])[-1]
+            if "No module named" in reason:
+                continue
+            return ToolStatus(tool, str(python), f"The native core does not load: {reason[:160]}")
+        version = lines[1].strip() if len(lines) > 1 else ""
+        if not version:
+            return ToolStatus(tool, lines[0], "The native core was built without the video decoder.")
+        return ToolStatus(tool, lines[0], version=version)
+    return ToolStatus(tool)
 
 
 def check_all(dependencies: list[Dependency], tools: list[ExternalTool], apps: dict[str, App],

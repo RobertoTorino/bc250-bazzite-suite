@@ -94,6 +94,20 @@ def package_advice(result: DependencyStatus, apps: dict[str, App]) -> str:
     return ("<b>Advice:</b> " + " ".join(dict.fromkeys(parts))) if parts else ""
 
 
+def needs_update_text(result: DependencyStatus, apps: dict[str, App]) -> str:
+    """Why the package must be updated, per environment: the app wants a newer one, or a release fixes a known
+    vulnerability."""
+    reasons = []
+    specifiers = {source.owner: source.specifier for source in result.dependency.sources}
+    for env in result.needs_update:
+        for owner in env.outdated:
+            reasons.append(f"{_app_name(owner, apps)} needs {specifiers[owner]}, installed is {env.version}.")
+        if env.fixes:
+            fixed = max((vuln.fixed for vuln in env.fixes), key=release)
+            reasons.append(f"{fixed} fixes known vulnerabilities in {env.version}.")
+    return " ".join(dict.fromkeys(reasons))
+
+
 def about_text(item: Dependency | ExternalTool, apps: dict[str, App]) -> str:
     """The description shown by the card's information button: what it is, and what each app uses it for."""
     parts = [f"<p>{escape(item.description)}</p>"]
@@ -221,6 +235,8 @@ class DependencyCard(_Card):
             owners = _names([_app_name(owner, apps) for env in result.missing for owner in env.owners])
             self.status.set_status("Missing", "bad", f"Not in the environment of {owners}. Install that app again "
                                    "from the portal.")
+        elif result.needs_update:
+            self.status.set_status("Needs update", "bad", needs_update_text(result, apps))
         elif result.unmet:
             self.status.set_status("Wrong version", "bad", "An installed version does not meet the app's "
                                    "requirement. Install that app again from the portal.")
@@ -288,6 +304,8 @@ class ExternalToolCard(_Card):
         need = tool_need(self.tool, installed)
         if result.note:
             self.status.set_status("Unsupported build", "warn", result.note)
+        elif result.path and result.version:
+            self.status.set_status("Available", "ok", f"Version {result.version}, found at {result.path}")
         elif result.path:
             self.status.set_status("Available", "ok", f"Found at {result.path}")
         elif need == "required":
@@ -299,6 +317,8 @@ class ExternalToolCard(_Card):
         else:
             self.status.set_status("Not needed", "neutral", "No installed app uses it.")
         found = _short_path(result.path) if result.path else "not found"
+        if result.version:
+            found += f" (version {result.version})"
         self.location.setText(f"Detected: {found}")
         missing = not result.path or bool(result.note)
         self._show_advice(tool_advice(self.tool, installed, self.apps, result.note) if missing else "")
@@ -349,9 +369,11 @@ class DependencyWindow(QMainWindow):
         self.box_packages = MetricBox("Python packages", PURPLE)
         self.box_tools = MetricBox("Tools available", BLUE)
         self.box_missing = MetricBox("Missing", GREY)
+        self.box_needs_update = MetricBox("Needs update", GREY)
         self.box_updates = MetricBox("Updates on PyPI", GREY)
         self.box_cves = MetricBox("Known CVEs", GREY)
-        for box in (self.box_packages, self.box_tools, self.box_missing, self.box_updates, self.box_cves):
+        for box in (self.box_packages, self.box_tools, self.box_missing, self.box_needs_update, self.box_updates,
+                    self.box_cves):
             header.add_second(box, 1)
         self.check_button = QPushButton("Check again")
         self.check_button.setToolTip("Look for the apps, their packages and tools again, and ask PyPI")
@@ -422,7 +444,9 @@ class DependencyWindow(QMainWindow):
 
         packages = result.packages
         failed = [item.dependency.name for item in packages if item.error]
-        broken = [item.dependency.name for item in packages if item.missing or item.unmet]
+        needs_update = [item.dependency.name for item in packages if item.needs_update and not item.missing]
+        broken = [item.dependency.name for item in packages
+                  if item.missing or (item.unmet and item.dependency.name not in needs_update)]
         updates = [item.dependency.name for item in packages if item.update_available]
         missing, optional = summary(result)
         available = sum(bool(item.path) and not item.note for item in result.tools)
@@ -432,6 +456,9 @@ class DependencyWindow(QMainWindow):
         missing_count = len(missing) + len(broken)
         self.box_missing.set_value(str(missing_count), _names(broken + missing) or "Nothing an installed app needs.")
         _set_box_colour(self.box_missing, RED if missing_count else GREY)
+        self.box_needs_update.set_value(str(len(needs_update)), _names(needs_update) or
+                                        "Nothing must be updated.")
+        _set_box_colour(self.box_needs_update, RED if needs_update else GREY)
         self.box_updates.set_value(str(len(updates)), _names(updates) or "Everything is at PyPI's latest version.")
         vulnerable = [f"{item.dependency.name} {version} ({vuln.id})" for item in packages
                       for version, vuln in item.vulnerabilities]
@@ -445,6 +472,8 @@ class DependencyWindow(QMainWindow):
         lines = [f"Checked {len(packages)} Python packages and {len(result.tools)} external tools."]
         if broken:
             lines.append(f"<b>Packages missing or at a wrong version:</b> {escape(_names(broken))}.")
+        if needs_update:
+            lines.append(f"<b>Needs update:</b> {escape(_names(needs_update))}.")
         if missing:
             lines.append(f"<b>Missing, needed by an installed app:</b> {escape(_names(missing))}.")
         if optional:
@@ -455,7 +484,7 @@ class DependencyWindow(QMainWindow):
             lines.append(f"PyPI check failed: {escape(_names(failed))}.")
         if cve_failed:
             lines.append(f"Vulnerability check failed: {escape(_names(cve_failed))}.")
-        if not (broken or missing or optional or failed or vulnerable or cve_failed):
+        if not (broken or needs_update or missing or optional or failed or vulnerable or cve_failed):
             lines.append(f"<span style='color:{GREEN};'>Every package and tool the installed apps use is "
                          "there.</span>")
         self.result_label.setText(" ".join(lines))

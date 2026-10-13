@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The portal window: bazzite-test fixed in first place, then one tile per optional app, and the development apps in
-their own section that opens on request.
+"""The portal window: bazzite-test fixed in first place, then one tile per optional app, the gaming apps in a section
+of their own (open until closed), and the development apps in theirs (opens on request).
 
 Install, update and uninstall run the app's own installer in a terminal window (they may ask for the sudo
 password and print what they do); the portal watches for the exit file the terminal writes and then refreshes.
@@ -50,8 +50,9 @@ SYMBOL_PX = 28                  # the Install / Uninstall / Reinstall symbols be
 DOT_PX = 16                     # the red update dot inside the icon
 TILE_WIDTH = 216                # the tiles flow left to right, as many to a row as fit
 TILE_SPACING = 12
-DEV_FRAME_MARGIN = 24           # the development section's frame and margins take this much of the width
+DEV_FRAME_MARGIN = 24           # a section's frame and margins (Gaming, Development only) take this much of the width
 DEV_OPEN_KEY = "portal/development_open"
+GAMING_OPEN_KEY = "portal/gaming_open"
 DESKTOP_ICONS_KEY = "portal/desktop_icons"
 APP_ICON_FILES = {"dependency-checker": "portal-dependency-checker"}
 LAUNCH_ICON_FILES = {("cu-bisect", "Unlock"): "cu-unlock", ("cores-bisect", "Unlock"): "cores-unlock"}  # else the app's
@@ -371,32 +372,26 @@ class MainWindow(QMainWindow):
             card.open_clicked.connect(self.open_app)
             self.cards[entry.key] = card
 
-        # Development only: tools for working on the suite, not for using the board. Closed until asked for, and
-        # set apart by a dashed frame.
-        self.dev_toggle = QToolButton()
-        self.dev_toggle.setText("Development only")
-        self.dev_toggle.setCheckable(True)
-        self.dev_toggle.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        self.dev_toggle.setAutoRaise(True)
-        self.dev_toggle.setStyleSheet("color:palette(placeholder-text); font-weight:700;")
-        self.dev_toggle.setToolTip("Tools for working on the suite itself. Not needed to use the board.")
-        self.dev_toggle.toggled.connect(self._show_development)
-        column.addSpacing(10)
-        column.addWidget(self.dev_toggle, 0, Qt.AlignmentFlag.AlignLeft)
-        self.dev_box = QFrame()
-        self.dev_box.setObjectName("dev")
-        self.dev_box.setStyleSheet("QFrame#dev { border:1px dashed palette(mid); border-radius:8px; }")
-        dev_column = QVBoxLayout(self.dev_box)
-        dev_column.addWidget(hint_label("For working on the BC250 Bazzite Suite: recording demos, checking its "
-                                        "dependencies, making releases, running the installer tests. You do not need these to use the "
-                                        "board."))
-        self.dev_grid = self._tile_grid()
-        dev_column.addLayout(self.dev_grid)
-        column.addWidget(self.dev_box)
+        # Gaming: the apps for playing, open until closed. Development only: tools for working on the suite, not
+        # for using the board, closed until asked for and set apart by a dashed frame.
+        self.gaming_toggle, self.gaming_box, self.gaming_grid = self._section(
+            column, "Gaming", "Apps for playing on the board.", None,
+            "QFrame#gaming { border:1px solid palette(mid); border-radius:8px; }", "gaming")
+        self.dev_toggle, self.dev_box, self.dev_grid = self._section(
+            column, "Development only", "Tools for working on the suite itself. Not needed to use the board.",
+            "For working on the BC250 Bazzite Suite: recording demos, checking its dependencies, making releases, "
+            "running the installer tests. You do not need these to use the board.",
+            "QFrame#dev { border:1px dashed palette(mid); border-radius:8px; }", "dev")
         column.addStretch(1)
+        self.has_gaming = any(e.section == "gaming" for e in entries)
         self.has_development = any(e.development for e in entries)
+        self.gaming_toggle.toggled.connect(self._show_gaming)
+        self.dev_toggle.toggled.connect(self._show_development)
+        self.gaming_toggle.setVisible(self.has_gaming)
         self.dev_toggle.setVisible(self.has_development)
+        self.gaming_toggle.setChecked(self.settings.value(GAMING_OPEN_KEY, True, type=bool))
         self.dev_toggle.setChecked(self.settings.value(DEV_OPEN_KEY, False, type=bool))
+        self._show_gaming(self.gaming_toggle.isChecked())
         self._show_development(self.dev_toggle.isChecked())
 
         scroll = QScrollArea()
@@ -431,25 +426,56 @@ class MainWindow(QMainWindow):
         grid.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         return grid
 
+    @staticmethod
+    def _section(column: QVBoxLayout, title: str, tooltip: str, hint: str | None, style: str,
+                 name: str) -> tuple[QToolButton, QFrame, QGridLayout]:
+        """A section of tiles under the apps: its toggle (title and arrow) and its framed box with the grid."""
+        toggle = QToolButton()
+        toggle.setText(title)
+        toggle.setCheckable(True)
+        toggle.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        toggle.setAutoRaise(True)
+        toggle.setStyleSheet("color:palette(placeholder-text); font-weight:700;")
+        toggle.setToolTip(tooltip)
+        column.addSpacing(10)
+        column.addWidget(toggle, 0, Qt.AlignmentFlag.AlignLeft)
+        box = QFrame()
+        box.setObjectName(name)
+        box.setStyleSheet(style)
+        box_column = QVBoxLayout(box)
+        if hint:
+            box_column.addWidget(hint_label(hint))
+        grid = MainWindow._tile_grid()
+        box_column.addLayout(grid)
+        column.addWidget(box)
+        return toggle, box, grid
+
     def column_count(self, width: int) -> int:
         return max(1, (width + TILE_SPACING) // (TILE_WIDTH + TILE_SPACING))
 
     def reflow(self) -> None:
         """The tiles in file order (bazzite-test first), left to right and then down, in as many columns as fit;
-        the development apps likewise in their own section."""
+        the gaming and the development apps likewise in their own sections."""
         # The scroll area's width less a scroll bar, whether one shows or not: a bar that comes and goes cannot
-        # switch the layout back and forth. The development section is the narrower (its frame), so it decides.
+        # switch the layout back and forth. The sections are the narrower (their frames), so they decide.
         width = self.scroll.width() - self.scroll.verticalScrollBar().sizeHint().width() - DEV_FRAME_MARGIN
         columns = self.column_count(width)
         if columns == self.columns:
             return
         self.columns = columns
-        for grid, tiles in ((self.grid, [c for c in self.cards.values() if not c.entry.development]),
-                            (self.dev_grid, [c for c in self.cards.values() if c.entry.development])):
+        cards = self.cards.values()
+        for grid, tiles in ((self.grid, [c for c in cards if not c.entry.development and not c.entry.section]),
+                            (self.gaming_grid, [c for c in cards if c.entry.section == "gaming"]),
+                            (self.dev_grid, [c for c in cards if c.entry.development])):
             while grid.count():
                 grid.takeAt(0)
             for i, tile in enumerate(tiles):
                 grid.addWidget(tile, i // columns, i % columns)
+
+    def _show_gaming(self, show: bool) -> None:
+        self.gaming_toggle.setArrowType(Qt.ArrowType.DownArrow if show else Qt.ArrowType.RightArrow)
+        self.gaming_box.setVisible(show and self.has_gaming)
+        self.settings.setValue(GAMING_OPEN_KEY, show)
 
     def _show_development(self, show: bool) -> None:
         self.dev_toggle.setArrowType(Qt.ArrowType.DownArrow if show else Qt.ArrowType.RightArrow)

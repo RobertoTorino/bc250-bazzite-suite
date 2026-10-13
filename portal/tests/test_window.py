@@ -280,7 +280,7 @@ def test_no_portal_offer_when_not_newer_or_offline(qapp, home, settings_dir, tmp
 
 def test_tiles_flow_in_file_order(window, qapp):
     window.show()
-    regular = [card for card in window.cards.values() if not card.entry.development]
+    regular = [card for card in window.cards.values() if not card.entry.development and not card.entry.section]
     for width in (1400, 700, 300, 1400):
         window.resize(width, 720)
         qapp.processEvents()
@@ -296,13 +296,32 @@ def test_tiles_flow_in_file_order(window, qapp):
 
 def test_development_apps_apart_and_closed(window, qapp):
     dev = {key for key, card in window.cards.items() if card.entry.development}
-    assert dev == {"demo-tool", "dependency-checker", "console-link"}
+    assert dev == {"demo-tool", "dependency-checker"}
     assert all(window.dev_grid.indexOf(window.cards[key]) >= 0 for key in dev)
     assert all(window.grid.indexOf(window.cards[key]) < 0 for key in dev)
     assert not window.dev_toggle.isHidden() and window.dev_box.isHidden()   # closed until asked for
     window.dev_toggle.click()
     assert not window.dev_box.isHidden()
     assert window.settings.value(mw.DEV_OPEN_KEY, type=bool)                 # remembered
+
+
+def test_gaming_apps_apart_and_open(window, qapp):
+    gaming = {key for key, card in window.cards.items() if card.entry.section == "gaming"}
+    assert gaming == {"console-link"}
+    assert all(window.gaming_grid.indexOf(window.cards[key]) >= 0 for key in gaming)
+    assert all(window.grid.indexOf(window.cards[key]) < 0 and window.dev_grid.indexOf(window.cards[key]) < 0
+               for key in gaming)
+    assert not window.gaming_toggle.isHidden() and not window.gaming_box.isHidden()     # open until closed
+    window.gaming_toggle.click()
+    assert window.gaming_box.isHidden()
+    assert not window.settings.value(mw.GAMING_OPEN_KEY, type=bool)                    # remembered
+
+
+def test_no_gaming_section_without_gaming_apps(qapp, home, settings_dir, tmp_path, launched):
+    entries = [e for e in load(MANIFEST) if not e.section]
+    w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
+    assert w.gaming_toggle.isHidden() and w.gaming_box.isHidden()
+    w.close()
 
 
 def test_no_development_section_without_development_apps(qapp, home, settings_dir, tmp_path, launched):

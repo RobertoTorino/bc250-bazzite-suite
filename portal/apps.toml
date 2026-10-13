@@ -15,6 +15,8 @@
 #   required        installed with the portal and always listed first (only bazzite-test)
 #   changes_board   true: the portal warns before installing or opening it
 #   development     true: listed under "Development only", apart from the apps for using the board
+#   section         optional: "gaming" lists it under "Gaming" (not for the required app nor development apps)
+#   withdrawn       optional: "<reason>" when the pinned release was withdrawn; the portal removes the app
 #   install         shell commands run in a terminal from the extracted release folder, in order
 #   uninstall       idem, for removal
 #   detect          paths whose existence means "installed" (any of them)
@@ -217,7 +219,7 @@ tag = "console-link-v1.0.0"
 sha256 = "a42c95059eeec5129601060643b57ff813098dccc967521dc306b56d1e3ca7e6"
 required = false
 changes_board = false
-development = true
+section = "gaming"
 install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-console-link"]

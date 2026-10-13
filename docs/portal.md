@@ -20,7 +20,10 @@ tile, left to right in the order of `apps.toml` and as many to a row as the wind
   Install reinstalls it, or updates it when the arrow is red. Bazzite Test has only Reinstall (a circular
   arrow): it is removed together with the portal.
 
-**Development only**, below the apps, opens a separate section with tools for working on the suite:
+**Gaming**, below the apps, holds the apps for playing: [BC250 Console Link](apps/console-link.md). It is open
+until you close it, and the portal remembers whether it was open.
+
+**Development only**, below that, opens a separate section with tools for working on the suite:
 [Simple Demo Tool](other-tools/simple-demo-tool.md), [Dependency Checker](apps/dependency-checker.md)
 the release front end [BC250 Suite Releases](#the-release-front-end) and BC-250 Installer Tests
 (`tools/installer-tests/gui`), a window that runs the installer tests one at a time. You do not need them to use
@@ -313,7 +316,7 @@ should list it under "Development only". Such a tool outside `apps/` (like
 Add an install.sh that supports --uninstall and puts a launcher in ~/.local/bin/, plus tests under tests/.        
 Add the app to ./test.sh, the CI shellcheck list and an installer test in tools/installer-tests/.       
 Add its [apps.<name>] card to portal/apps.toml: name, summary, changes_board (and development = true for a tool
-that belongs under "Development only"), install/uninstall/detect/launch,          
+that belongs under "Development only", or section = "gaming" for an app for playing), install/uninstall/detect/launch,          
 and tag = "<name>-v<VERSION>" with sha256 left empty. CI accepts a tag that doesn't exist yet as long as it matches the app's VERSION.        
 Run all the checks and hand over.
 

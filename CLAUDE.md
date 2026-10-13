@@ -17,8 +17,8 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
   system-overlay, bios-reader, ace-queues, memory-manager, hdmi-cec, sftp-tools, console-link, demo-tool, dependency-checker, suite-releases. Each has its
   own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; console-link is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; the rest GPL-3.0-or-later), .gitignore. Simple
-  Demo Tool, the Dependency Checker and Console Link are `development = true` in `portal/apps.toml`: the portal lists them
-  under "Development only". Suite Releases (the release front end) has `.standalone` and `.checkout-only`: it runs
+  Demo Tool and the Dependency Checker are `development = true` in `portal/apps.toml`: the portal lists them
+  under "Development only". Console Link is `section = "gaming"`: listed under "Gaming". Suite Releases (the release front end) has `.standalone` and `.checkout-only`: it runs
   from the checkout, is never released, and is listed as `[checkout.suite-releases]`, also under "Development only":
   a portal from a release finds the checkout on the machine (it asks only when there is none) and remembers it, the
   released apps still come from their releases. Install every app through the portal, so what is installed stays in step. BC-250 Installer Tests (`tools/installer-tests/gui`) is

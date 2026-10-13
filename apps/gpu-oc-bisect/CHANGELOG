@@ -1,3 +1,11 @@
+Changelog: 13-10-2026 15:53:27
+
+Release 0.1.3.
+
+Changelog: 13-10-2026 15:51:48
+
+The installer installs the Python packages with pip --upgrade (owner's decision, 13-10-2026): installing again brings each package to the newest version its requirements allow, so a security fix within that range arrives with a reinstall from the portal.
+
 Changelog: 12-10-2026 09:19:23
 
 Release 0.1.2.
@@ -81,5 +89,5 @@ buttons: "Show status" (--status), "Install result" (--install, with a confirmat
 handing off), "Uninstall" (--uninstall) and a red "Reset" (--reset, with a confirmation popup
 warning that all saved results and logs will be permanently deleted). A "Help" button shows the
 script's own --help text so the GUI never drifts out of sync. Bazzite-purple (#8b4fd8) hover
-accent app-wide, same as the other project GUIs. Start: pip install -r requirements.txt, then
+accent app-wide, same as the other project GUIs. Start: pip install --upgrade -r requirements.txt, then
 python -m bc250_gpu_oc_gui.

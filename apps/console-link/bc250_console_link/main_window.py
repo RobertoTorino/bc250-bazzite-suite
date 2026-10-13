@@ -29,7 +29,8 @@ from bc250_core.theme import ORANGE, PURPLE
 from bc250_core.updates import UpdateChecker
 from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, accent_button, hint_label
 
-from . import APP_ID, APP_NAME, INFO, LOGO_PATH, __version__, jobs, privacy, psn, steam_settings, steam_shortcuts
+from . import (APP_ID, APP_NAME, INFO, LOGO_PATH, __version__, jobs, privacy, psn, steam_settings, steam_shortcuts,
+               stream_stats)
 from .consoles import ConsoleStore, RegisteredConsole, parse_account_id, parse_login_pin, parse_pin
 from .discovery import Console
 from .jobs import Outcome
@@ -638,7 +639,8 @@ class MainWindow(QMainWindow):
             self._stream_stop = None
 
         self.start(f"Streaming from {name}…",
-                   lambda: self.ops.watch_stream(console, window.deliver, window.wanted, stop, window.play), done)
+                   lambda: self.ops.watch_stream(console, window.deliver, window.wanted, stop, window.play,
+                                                 figures=window.figures, stats_dir=stream_stats.folder()), done)
 
     def _stream_window_gone(self) -> None:
         self.stream_window = None

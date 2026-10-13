@@ -146,7 +146,7 @@ mkdir -p "$VENV_USERS"
 touch "$VENV_USERS/$APP_ID"
 info "Installing PyQt6 into the venv (downloads ~100 MB the first time)"
 "$VENV/bin/python" -m pip install -q --disable-pip-version-check --upgrade pip
-"$VENV/bin/python" -m pip install -q --disable-pip-version-check -r "$APP_DIR/requirements.txt"
+"$VENV/bin/python" -m pip install -q --disable-pip-version-check --upgrade -r "$APP_DIR/requirements.txt"
 "$VENV/bin/python" -c 'import PyQt6.QtWidgets' || die "PyQt6 does not load from the venv."
 
 # --- 3. Launcher, menu entry, Desktop icon ------------------------------------------------------

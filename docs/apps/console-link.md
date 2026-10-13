@@ -88,9 +88,11 @@ wrong account ID is reported in the log at the bottom.
   frame takes. When the network test fails, the stream still runs, with safe values. It needs the app's native core
   (see [Install and remove](#install-and-remove)).
 - **Stream:** the same start, then the console's picture in a window of its own, until you close it. **F11** or a
-  double click switches to full screen, **Escape** back. The line under the picture shows its size and how many
+  double click switches to full screen, **Escape** back. The mouse pointer hides over the picture after 2 seconds
+  without moving, and comes back when you move the mouse. The line under the picture shows its size and how many
   pictures per second are shown. The sound plays on the board's default audio output (the TV over HDMI, for
-  example); **M** mutes it. The controllers on the board play: the buttons (the PS button too), the sticks, L2
+  example); **M** mutes it. The desktop's own mute works too: the speaker on the stream's entry in the task bar,
+  or the app in the volume control. The controllers on the board play: the buttons (the PS button too), the sticks, L2
   and R2 and the touchpad, its click included. Controllers connected during the stream are picked up within a
   second; the log names each one. Several controllers act as one. When Steam comes to the front on the PS
   button, switch that off with **Steam comes to the front on the PS button** under the registered consoles (see
@@ -133,6 +135,9 @@ the registered console.
   start a session with your account on the console, so the file is readable only by you.
 - `~/.config/bc250-console-link/bc250-console-link.ini`: your account ID, the last address you searched and the
   window size. The account ID only identifies the account; it gives no access to it.
+- `~/.local/state/bc250-console-link/streams/`: a statistics file for each stream, one line per second (see
+  [When it does not work](#when-it-does-not-work)); the newest 20 are kept. They hold no account details, and the
+  console's address only masked.
 
 ## Privacy
 
@@ -190,12 +195,18 @@ board.
   (Settings > Controller > Show Advanced Settings > **Guide Button Focus Steam**): the app closes Steam for the
   change, after asking, and starts it again in the background. In Game Mode Steam always keeps the PS button for
   its menu.
+- **The sound stutters, or the picture or the controller lags:** every stream writes a statistics file, one line
+  per second, in `~/.local/state/bc250-console-link/streams/` (the log names it when you start from the app; the
+  newest file is the last stream). Each line shows the frames received and how evenly they came, the time to decode
+  a frame, the pictures shown and skipped and how old they were when drawn, how late the window ran, gaps in the
+  sound (silence because its buffer ran empty), the controller's reads, how busy the processor and the app's
+  threads were, and whether the board waited on the disk (swapping when memory runs short). Send the file with a question: it shows which part falls behind, and when.
 - **The stream ends with "Server shutting down" after you press PS:** the controller most likely connected to the
   console, not to the board. Connect it to the board (see [What you need](#what-you-need)).
 
 ## Install and remove
 
-The portal installs it, under Development only. By hand, from the extracted release folder:
+The portal installs it, under Gaming. By hand, from the extracted release folder:
 
 ```bash
 ./install.sh                         # install or update

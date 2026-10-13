@@ -45,7 +45,7 @@ cp "$REPO_ROOT/images/bc250-cores-unlock.png" "$APP_SRC/images/"
 echo "==> Creating venv in $VENV_DIR"
 python3 -m venv "$VENV_DIR"
 "$VENV_DIR/bin/pip" install --quiet --upgrade pip
-"$VENV_DIR/bin/pip" install --quiet -r "$APP_SRC/requirements.txt"
+"$VENV_DIR/bin/pip" install --quiet --upgrade -r "$APP_SRC/requirements.txt"
 
 echo "==> Installing launcher: $LAUNCHER"
 mkdir -p "$BIN_HOME"

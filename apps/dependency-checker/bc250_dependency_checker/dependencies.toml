@@ -7,7 +7,8 @@
 #                launcher's exec line is the app's Python environment; no launcher means the app is not installed.
 #                core has none: it is bundled with each app and runs in that app's environment.
 # [[tool]]       name, description (shown when the name is clicked), executables (any one of them will do) and/or
-#                locations, probe, root (true: it does its work only as root, through sudo or pkexec), and per app
+#                locations, probe ("path": a library file; "flashrom-internal"; "console-link-ffmpeg": the FFmpeg
+#                in Console Link's native core, asked through the app's python), root (true: it does its work only as root, through sudo or pkexec), and per app
 #                a [[tool.source]] with need ("required" or "optional"), usage and an optional manual anchor.
 # [[dependency]] a Python package: name, description, and per app a [[dependency.source]] with its specifier.
 
@@ -683,6 +684,55 @@ owner = "console-link"
 need = "optional"
 usage = "Reads the controllers on the board for the stream; without it the console sees a controller lying still."
 anchor = "what-you-need"
+
+[[tool]]
+name = "FFmpeg"
+description = "The audio and video codec library. BC250 Console Link carries its own inside the app's native core (decoders only, LGPL, built from pinned sources), so nothing is installed on the system for it; checked by asking the installed core which version it holds."
+executables = []
+locations = ["~/.local/share/bc250-console-link/venv/bin/python"]
+probe = "console-link-ffmpeg"
+
+[[tool.source]]
+owner = "console-link"
+need = "required"
+usage = "Decodes the stream's picture (H.264) and sound (Opus); without it there is no stream. It comes with the app: install the app again through the portal when it is missing."
+anchor = "install-and-remove"
+
+[[tool]]
+name = "libva"
+description = "The VA-API library, the way to a GPU's video decoder. Part of Bazzite. Checked by its library files."
+executables = []
+locations = ["/usr/lib64/libva.so.2", "/usr/lib/x86_64-linux-gnu/libva.so.2", "/usr/lib/libva.so.2"]
+probe = "path"
+
+[[tool.source]]
+owner = "console-link"
+need = "required"
+usage = "The native core links it (with libva-drm) to use a GPU's video decoder where there is one; the BC-250 has none and decodes in software, but the core does not load without the library."
+anchor = "install-and-remove"
+
+[[tool]]
+name = "Steam"
+description = "Valve's game client. Bazzite starts it with bazzite-steam."
+executables = ["steam", "bazzite-steam"]
+
+[[tool.source]]
+owner = "console-link"
+need = "optional"
+usage = "Add to Game Mode (a Steam shortcut per console) and the PS button setting close Steam with steam -shutdown and start it again with bazzite-steam."
+anchor = "using-it"
+
+[[tool]]
+name = "Rust"
+description = "The Rust compiler and its build tool cargo (rustup puts them in ~/.cargo/bin). Checked by cargo."
+executables = ["cargo"]
+locations = ["~/.cargo/bin/cargo"]
+
+[[tool.source]]
+owner = "console-link"
+need = "optional"
+usage = "Only to build the native core when the app is installed from a checkout of the repository; a release brings it built."
+anchor = "install-and-remove"
 
 [[dependency]]
 name = "PyQt6"

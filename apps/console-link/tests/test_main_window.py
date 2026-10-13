@@ -70,7 +70,7 @@ class FakeOps:
         self.calls.append(("test_stream", console.address))
         return Outcome(True, "Stream ran.", SessionInfo(console.target, "PS5", "abc"), ["STREAMINFO received."])
 
-    def watch_stream(self, console, deliver, wanted, stop, play=None):
+    def watch_stream(self, console, deliver, wanted, stop, play=None, figures=None, stats_dir=None):
         """Delivers one picture, then ends as when the console stops the stream (stop not set)."""
         self.calls.append(("watch_stream", console.address, stop.is_set()))
         if wanted():

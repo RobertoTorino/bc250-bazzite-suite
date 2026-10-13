@@ -61,6 +61,19 @@ def test_a_withdrawn_release():
         parse(MINIMAL.replace('name = "BT"', 'name = "BT"\nwithdrawn = "broken"', 1))
 
 
+def test_a_section_of_its_own():
+    assert parse(MINIMAL)[1].section == ""
+    assert parse(MINIMAL.replace('name = "CU"', 'name = "CU"\nsection = "gaming"', 1))[1].section == "gaming"
+    with pytest.raises(ManifestError, match="section must be one of gaming"):
+        parse(MINIMAL.replace('name = "CU"', 'name = "CU"\nsection = "games"', 1))
+    with pytest.raises(ManifestError, match="not for the required app nor for development apps"):
+        parse(MINIMAL.replace('name = "CU"', 'name = "CU"\nsection = "gaming"\ndevelopment = true', 1))
+    with pytest.raises(ManifestError, match="not for the required app"):
+        parse(MINIMAL.replace('name = "BT"', 'name = "BT"\nsection = "gaming"', 1))
+    with pytest.raises(ManifestError, match="not for the required app nor for development apps"):
+        parse_checkout(CHECKOUT.replace('summary = "s"', 'summary = "s"\nsection = "gaming"'))
+
+
 def test_short_name_for_the_tile():
     assert parse(MINIMAL)[1].short == ""
     assert parse(MINIMAL.replace('name = "CU"', 'name = "CU"\nshort = "C-U"', 1))[1].short == "C-U"

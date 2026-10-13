@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import QApplication
 from bc250_core.app import exec_app
 from bc250_core.platform import config_home
 
-from . import APP_ID, APP_NAME, jobs
+from . import APP_ID, APP_NAME, jobs, stream_stats
 from .consoles import ConsoleStore, RegisteredConsole
 from .stream_view import KEYS, StreamWindow
 
@@ -67,7 +67,8 @@ class DirectStream:
             return
         self.messenger.status.emit(f"{on.message} Starting the stream…")
         window = self.window
-        self.outcome = self.ops.watch_stream(on.value, window.deliver, window.wanted, self.stop, window.play)
+        self.outcome = self.ops.watch_stream(on.value, window.deliver, window.wanted, self.stop, window.play,
+                                             figures=window.figures, stats_dir=stream_stats.folder())
         if not self.stop.is_set():                      # ended by the console or a fault, not by closing
             self.messenger.status.emit(f"{self.outcome.message} Close this window to go back.")
 

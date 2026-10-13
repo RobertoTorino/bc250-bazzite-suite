@@ -168,13 +168,17 @@ class Renderer:
         program.release()
 
 
+CURSOR_HIDE_MS = 2000
+
+
 class PictureNotifier(QObject):
     """Tells the view, from the stream's thread, that a picture is waiting (a queued signal)."""
     arrived = pyqtSignal()
 
 
 class StreamView(QOpenGLWidget):
-    """Shows the newest picture of a PictureSlot; black until the first one."""
+    """Shows the newest picture of a PictureSlot; black until the first one. The mouse pointer hides over the
+    picture once it has not moved for CURSOR_HIDE_MS, and comes back when it moves."""
 
     def __init__(self, slot: PictureSlot, parent: QWidget | None = None):
         super().__init__(parent)
@@ -182,7 +186,20 @@ class StreamView(QOpenGLWidget):
         self.renderer = Renderer()
         self.error: str | None = None
         self.shown = 0
+        self.age_max = self.age_sum = 0.0       # how old the pictures were when drawn, since figures() last read
+        self.age_count = 0
         self.setMinimumSize(320, 180)
+        self.setMouseTracking(True)
+        self.cursor_timer = QTimer(self)
+        self.cursor_timer.setSingleShot(True)
+        self.cursor_timer.setInterval(CURSOR_HIDE_MS)
+        self.cursor_timer.timeout.connect(lambda: self.setCursor(Qt.CursorShape.BlankCursor))
+        self.cursor_timer.start()
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        self.unsetCursor()
+        self.cursor_timer.start()
+        super().mouseMoveEvent(event)
 
     def initializeGL(self) -> None:
         try:
@@ -197,10 +214,16 @@ class StreamView(QOpenGLWidget):
         if picture is not None and picture.shown:
             self.renderer.upload(picture)
             self.shown += 1
+            if picture.made:
+                age = time.perf_counter() - picture.made
+                self.age_max = max(self.age_max, age)
+                self.age_sum += age
+                self.age_count += 1
         ratio = self.devicePixelRatioF()
         self.renderer.paint(round(self.width() * ratio), round(self.height() * ratio))
 
 
+BEAT_MS = 10                    # the window's own timer, to see how late it runs (a busy window draws and plays late)
 KEYS = "F11 full screen, Esc leaves it, M mutes; closing the window ends the stream"
 
 
@@ -231,6 +254,34 @@ class StreamWindow(QWidget):
         self.rate_timer.timeout.connect(self._show_rate)
         self.rate_timer.start(1000)
         self.detail = ""
+        self.late_max = 0.0                     # how late the window ran its timer, since figures() last read
+        self._beat = time.monotonic()
+        self.beat_timer = QTimer(self)
+        self.beat_timer.setTimerType(Qt.TimerType.PreciseTimer)
+        self.beat_timer.timeout.connect(self._on_beat)
+        self.beat_timer.start(BEAT_MS)
+
+    def _on_beat(self) -> None:
+        now = time.monotonic()
+        self.late_max = max(self.late_max, now - self._beat - BEAT_MS / 1000)
+        self._beat = now
+
+    def figures(self) -> dict:
+        """For the statistics file, from its thread: pictures shown and skipped, their age when drawn, how late the
+        window ran, and the sound buffer; the maxima start again."""
+        view, slot = self.view, self.slot
+        figures = {"shown": view.shown, "replaced": slot.replaced, "age_max": view.age_max,
+                   "age_sum": view.age_sum, "age_count": view.age_count, "late_max": self.late_max,
+                   "muted": self.sound.muted}
+        view.age_max = view.age_sum = 0.0
+        view.age_count = 0
+        self.late_max = 0.0
+        buffer = self.sound.buffer
+        if buffer is not None:
+            figures.update(sound_buffered_ms=buffer.ms(buffer.buffered),
+                           sound_silence_ms=buffer.ms(buffer.silence_bytes),
+                           sound_dropped_ms=buffer.ms(buffer.dropped_bytes))
+        return figures
 
     def deliver(self, picture: Picture) -> None:
         """From the stream's thread: the newest picture."""
@@ -302,6 +353,7 @@ class StreamWindow(QWidget):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.rate_timer.stop()
+        self.beat_timer.stop()
         self.sound.stop()
         self.on_close()
         super().closeEvent(event)

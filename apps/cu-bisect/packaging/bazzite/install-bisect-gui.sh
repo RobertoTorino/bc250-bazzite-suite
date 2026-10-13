@@ -61,7 +61,7 @@ cp "$REPO_ROOT/images/bc250-cu-bisect.png" "$APP_SRC/images/bc250-cu-bisect.png"
 echo "==> Creating venv in $VENV_DIR"
 python3 -m venv "$VENV_DIR"
 "$VENV_DIR/bin/pip" install --quiet --upgrade pip
-"$VENV_DIR/bin/pip" install --quiet -r "$APP_SRC/requirements.txt"
+"$VENV_DIR/bin/pip" install --quiet --upgrade -r "$APP_SRC/requirements.txt"
 
 echo "==> Checking PyQt6 can actually be imported in this venv"
 if ! "$VENV_DIR/bin/python" -c "from PyQt6.QtWidgets import QApplication" 2>"$APP_DIR/import-check.log"; then

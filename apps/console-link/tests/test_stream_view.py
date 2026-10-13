@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """stream_view.py: the shader's colours, the plane layout and the orientation, drawn into an offscreen framebuffer
 and read back (skipped where no OpenGL context opens, as on CI's runners without a GPU); the letterbox; the
-window's handling of pictures, full screen and closing."""
+window's handling of pictures, full screen and closing; the pointer hiding over the picture."""
 
 from __future__ import annotations
 
 import pytest
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QKeyEvent, QOffscreenSurface, QOpenGLContext
+from PyQt6.QtCore import QEvent, QPointF, Qt
+from PyQt6.QtGui import QKeyEvent, QMouseEvent, QOffscreenSurface, QOpenGLContext
 from PyQt6.QtOpenGL import QOpenGLFramebufferObject
 
 from bc250_console_link.stream_view import Renderer, RendererError, StreamWindow, letterbox
@@ -101,3 +101,15 @@ def test_window_takes_pictures_and_ends_the_stream_on_close(qapp):
     assert not window.isFullScreen() and not window.status.isHidden()
     window.close()
     assert closed == [True]
+
+
+def test_pointer_hides_over_a_still_picture_and_comes_back_when_moved(qapp):
+    window = StreamWindow("PS4", lambda: None)
+    view = window.view
+    assert view.cursor_timer.isActive() and view.cursor().shape() != Qt.CursorShape.BlankCursor
+    view.cursor_timer.timeout.emit()                                    # 2 s without a movement
+    assert view.cursor().shape() == Qt.CursorShape.BlankCursor
+    view.mouseMoveEvent(QMouseEvent(QEvent.Type.MouseMove, QPointF(5, 5), QPointF(5, 5), Qt.MouseButton.NoButton,
+                                    Qt.MouseButton.NoButton, Qt.KeyboardModifier.NoModifier))
+    assert view.cursor().shape() != Qt.CursorShape.BlankCursor and view.cursor_timer.isActive()
+    window.close()

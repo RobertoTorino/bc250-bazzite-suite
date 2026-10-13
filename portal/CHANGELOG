@@ -1,3 +1,11 @@
+Changelog: 13-10-2026 15:51:48
+
+The installer installs the Python packages with pip --upgrade (owner's decision, 13-10-2026): installing the portal again brings the shared venv's packages to the newest version their requirements allow, a security fix within that range included.
+
+Changelog: 13-10-2026 15:06:45
+
+A Gaming section (owner, 13-10-2026): apps.toml's new field section = "gaming" lists an app there, below the apps and above Development only, in a solid frame; open until closed, and remembered like Development only. Not for the required app nor development apps. BC250 Console Link moves there from Development only. apps.toml's comment also names the withdrawn field. Tests: the field and its checks, the section, open and remembered, hidden without gaming apps.
+
 Changelog: 13-10-2026 14:36:57
 
 Release 1.0.0. Pins dependency-checker-v0.1.9, console-link-v1.0.0.

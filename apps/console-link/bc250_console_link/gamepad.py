@@ -421,6 +421,8 @@ class Reader:
         self.stopping = threading.Event()
         self.thread = threading.Thread(target=self._run, name="gamepad", daemon=True)
         self.states_sent = 0
+        self.polls = 0
+        self.gap_max = 0.0                      # the longest time between two reads since figures() last read it
 
     def start(self) -> Reader:
         self.thread.start()
@@ -438,6 +440,12 @@ class Reader:
         if self.thread.is_alive():
             self.thread.join(timeout=2)
 
+    def figures(self) -> dict:
+        """For the statistics file: the reads so far and the longest gap between two since the last call."""
+        figures = {"polls": self.polls, "gap_max": self.gap_max}
+        self.gap_max = 0.0
+        return figures
+
     def _run(self) -> None:
         try:
             sdl = self.backend()
@@ -453,7 +461,13 @@ class Reader:
         last = None
         try:
             next_scan = time.monotonic()
+            previous = None
             while not self.stopping.is_set():
+                began = time.monotonic()
+                if previous is not None:
+                    self.gap_max = max(self.gap_max, began - previous)
+                previous = began
+                self.polls += 1
                 samples = sdl.update()
                 if time.monotonic() >= next_scan:
                     self._scan(sdl, pads)
