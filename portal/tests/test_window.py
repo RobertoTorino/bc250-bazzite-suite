@@ -305,9 +305,17 @@ def test_development_apps_apart_and_closed(window, qapp):
     assert window.settings.value(mw.DEV_OPEN_KEY, type=bool)                 # remembered
 
 
+def test_board_tools_in_a_section_open_until_closed(window, qapp):
+    assert window.tools_toggle.text() == "BC250 Bazzite tools"
+    assert not window.tools_box.isHidden() and window.grid.indexOf(window.cards["bazzite-test"]) == 0
+    window.tools_toggle.click()
+    assert window.tools_box.isHidden()
+    assert not window.settings.value(mw.TOOLS_OPEN_KEY, type=bool)                     # remembered
+
+
 def test_gaming_apps_apart_and_open(window, qapp):
     gaming = {key for key, card in window.cards.items() if card.entry.section == "gaming"}
-    assert gaming == {"console-link"}
+    assert gaming == {"helixsr", "mesh-shaders", "console-link"}
     assert all(window.gaming_grid.indexOf(window.cards[key]) >= 0 for key in gaming)
     assert all(window.grid.indexOf(window.cards[key]) < 0 and window.dev_grid.indexOf(window.cards[key]) < 0
                for key in gaming)

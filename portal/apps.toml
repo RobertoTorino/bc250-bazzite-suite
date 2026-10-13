@@ -58,6 +58,7 @@ tag = "helixsr-v0.2.4"
 sha256 = "7f5d3213095eb4159bb48d6a36bd5b804b4c7e8a63b66c3b792e3848c2d71d1e"
 required = false
 changes_board = false
+section = "gaming"
 install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-bazzite-helixsr-gui"]
@@ -146,6 +147,19 @@ install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-ace-queues"]
 launch = [["Open", "~/.local/bin/bc250-ace-queues"]]
+
+[apps.mesh-shaders]
+name = "BC-250 Mesh Shaders"
+summary = "Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use."
+tag = "mesh-shaders-v0.1.0"
+sha256 = ""
+required = false
+changes_board = true
+section = "gaming"
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-mesh-shaders"]
+launch = [["Open", "~/.local/bin/bc250-mesh-shaders"]]
 
 [apps.memory-manager]
 name = "BC-250 Memory Manager"

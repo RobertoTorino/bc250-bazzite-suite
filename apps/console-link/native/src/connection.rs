@@ -18,12 +18,13 @@
 use std::collections::VecDeque;
 use std::io::ErrorKind;
 use std::net::{SocketAddr, UdpSocket};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, Sender};
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
+use crate::bitstream;
 use crate::feedback::{self, ControllerState};
 use crate::frame::{self, PacketStats};
 use crate::gkcrypt::{GkCrypt, BLOCK_SIZE, ECDH_SECRET_SIZE, HANDSHAKE_KEY_SIZE};
@@ -114,6 +115,10 @@ pub struct Stats {
     pub data_dropped: u64,
     pub video_dropped: u64,
     pub video_skipped: u64,
+    pub video_simulated_lost: u64,          // dropped on purpose (set_simulated_loss)
+    /// Video packets that came while the queue was waiting for exactly them: late, not lost. How often the wait
+    /// for a missing packet (VIDEO_REORDER_TIMEOUT) pays off.
+    pub video_late: u64,
     pub resent: u64,
     pub given_up: u64,
     pub congestion_reports: u64,
@@ -140,6 +145,10 @@ struct Shared {
     crypt_remote: Mutex<Option<GkCrypt>>,
     stats: Mutex<Stats>,
     packet_stats: Mutex<PacketStats>,
+    /// For trying the recovery from lost packets on a network that loses none (not for users): the share of video
+    /// packets dropped on arrival, in hundredths of a percent, and the state of the random numbers that pick them.
+    video_loss: AtomicU32,
+    loss_random: AtomicU64,
 }
 
 /// The controller state for the feedback thread; the sender exists once the stream runs.
@@ -147,6 +156,28 @@ struct Feedback {
     state: ControllerState,
     sender: Option<feedback::Sender>,
     stop: bool,
+    players: PlayerExperiment,
+    second: Option<feedback::Sender>,               // PlayerExperiment::Marked: the second controller's sender
+}
+
+impl Feedback {
+    fn ready(&self) -> bool {
+        self.sender.as_ref().is_some_and(|s| s.ready()) || self.second.as_ref().is_some_and(|s| s.ready())
+    }
+}
+
+/// The several-players experiment (not for users): how a second controller's input goes to the console, to find
+/// out what the console accepts. The reference knows one controller only.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PlayerExperiment {
+    /// One controller, as the reference.
+    Off,
+    /// The second controller's input is not sent (the console is only told it connected).
+    Announce,
+    /// The second controller's states and events in packets of their own, mark in the first byte of each.
+    Marked(u8),
+    /// The second controller's state in the first one's FEEDBACK_STATE packets (two states, byte 3 = 2).
+    Packed,
 }
 
 struct Stream {
@@ -243,6 +274,8 @@ impl Connection {
             tag_local,
             tag_remote,
             stop: AtomicBool::new(false),
+            video_loss: AtomicU32::new(0),
+            loss_random: AtomicU64::new(0x9e37_79b9_7f4a_7c15),
             send: Mutex::new(SendState {
                 crypt: None,
                 key_pos: 0,
@@ -267,7 +300,8 @@ impl Connection {
             stream: Mutex::new(None),
             congestion: Mutex::new(None),
             feedback: Arc::new((
-                Mutex::new(Feedback { state: ControllerState::idle(), sender: None, stop: false }),
+                Mutex::new(Feedback { state: ControllerState::idle(), sender: None, stop: false,
+                                      players: PlayerExperiment::Off, second: None }),
                 Condvar::new(),
             )),
             feedback_thread: Mutex::new(None),
@@ -333,13 +367,19 @@ impl Connection {
 
     /// The stream runs: video from now on through the video receiver (profiles: the resolutions in STREAMINFO),
     /// congestion reports every 200 ms, the loss reported at most packet_loss_max, and the controller state.
-    pub fn start_stream(&self, profiles: usize, packet_loss_max: f64) -> Result<(), SendError> {
+    /// The stream runs: headers are the parameter sets of each resolution in STREAMINFO (bitstream::header; the video
+    /// receiver looks into the frames with them), hevc the codec.
+    pub fn start_stream(&self, headers: &[Vec<u8>], hevc: bool, packet_loss_max: f64) -> Result<(), SendError> {
         let mut congestion = self.congestion.lock().unwrap();
         if congestion.is_some() {
             return Ok(());
         }
         *self.stream.lock().unwrap() =
-            Some(Stream { video: VideoReceiver::new(profiles), audio: AudioReceiver::new(), pending: VecDeque::new() });
+            Some(Stream {
+                video: VideoReceiver::new(headers.iter().map(|h| bitstream::header(h, hevc)).collect()),
+                audio: AudioReceiver::new(),
+                pending: VecDeque::new(),
+            });
         let shared = Arc::clone(&self.shared);
         let thread = std::thread::Builder::new()
             .name("congestion".into())
@@ -351,6 +391,9 @@ impl Connection {
             let mut sender = feedback::Sender::new(self.shared.version, Instant::now());
             sender.set(feedback.state);
             feedback.sender = Some(sender);
+            if let PlayerExperiment::Marked(mark) = feedback.players {
+                feedback.second = Some(feedback::Sender::marked(self.shared.version, Instant::now(), mark));
+            }
         }
         let (shared, state) = (Arc::clone(&self.shared), Arc::clone(&self.feedback));
         let thread = std::thread::Builder::new()
@@ -370,6 +413,38 @@ impl Connection {
             sender.set(state);
             cond.notify_one();
         }
+    }
+
+    /// For trying the recovery from lost packets (not for users): drop this share of the video packets on arrival,
+    /// in percent.
+    pub fn set_simulated_loss(&self, percent: f64) {
+        self.shared.video_loss.store((percent.clamp(0.0, 100.0) * 100.0).round() as u32, Ordering::Relaxed);
+    }
+
+    /// The several-players experiment, chosen before the stream starts.
+    pub fn set_player_experiment(&self, players: PlayerExperiment) {
+        self.feedback.0.lock().unwrap().players = players;
+    }
+
+    /// The several-players experiment: the second controller as it is now (ignored when the experiment is off or
+    /// only announces it).
+    pub fn set_second_controller_state(&self, state: ControllerState) {
+        let (lock, cond) = &*self.feedback;
+        let mut feedback = lock.lock().unwrap();
+        match feedback.players {
+            PlayerExperiment::Marked(_) => {
+                if let Some(second) = feedback.second.as_mut() {
+                    second.set(state);
+                }
+            }
+            PlayerExperiment::Packed => {
+                if let Some(sender) = feedback.sender.as_mut() {
+                    sender.set_extra(state);
+                }
+            }
+            PlayerExperiment::Off | PlayerExperiment::Announce => return,
+        }
+        cond.notify_one();
     }
 
     /// The video receiver's counters, once the stream runs.
@@ -469,17 +544,19 @@ fn send_feedback(shared: Arc<Shared>, feedback: Arc<(Mutex<Feedback>, Condvar)>)
     let (lock, cond) = &*feedback;
     let mut state = lock.lock().unwrap();
     while let Some(sender) = state.sender.as_ref() {
-        if !state.stop && !sender.ready() {
-            let wait = sender.wait(Instant::now());
-            state = cond
-                .wait_timeout_while(state, wait, |f| !f.stop && !f.sender.as_ref().is_some_and(|s| s.ready()))
-                .unwrap()
-                .0;
+        if !state.stop && !state.ready() {
+            let now = Instant::now();
+            let wait = state.second.as_ref().map_or(sender.wait(now), |second| sender.wait(now).min(second.wait(now)));
+            state = cond.wait_timeout_while(state, wait, |f| !f.stop && !f.ready()).unwrap().0;
         }
         if state.stop {
             break;
         }
-        let packets = state.sender.as_mut().map(|s| s.step(Instant::now())).unwrap_or_default();
+        let now = Instant::now();
+        let mut packets = state.sender.as_mut().map(|s| s.step(now)).unwrap_or_default();
+        if let Some(second) = state.second.as_mut() {
+            packets.extend(second.step(now));
+        }
         drop(state);
         for mut packet in packets {
             let is_state = packet[0] == takion::PACKET_FEEDBACK_STATE;
@@ -699,16 +776,37 @@ impl Receiving {
         if !av.is_video {
             return self.emit(Event::Av { packet: av, data });
         }
-        let queue = self.video_queue.get_or_insert_with(|| {
+        if self.simulated_loss() {
+            return self.stat(|s| s.video_simulated_lost += 1);
+        }
+        self.video_queue.get_or_insert_with(|| {
             let begin = av.packet_index.wrapping_sub(av.unit_index);
             ReorderQueue::new(VIDEO_QUEUE_SIZE_EXP, Bits::B16, begin as u64, DropStrategy::Begin)
         });
         let index = av.packet_index as u64;
+        if self.video_wait.is_some_and(|(_, head)| head == index) {
+            self.stat(|s| s.video_late += 1);
+        }
+        let queue = self.video_queue.as_mut().expect("made just above");
         let before = queue.dropped();
         queue.push(index, VideoEntry { packet: av, data });
         let dropped = queue.dropped() - before;
         self.stat(|s| s.video_dropped += dropped);
         self.flush_video();
+    }
+
+    /// Whether the simulated loss drops this video packet (xorshift64 random numbers).
+    fn simulated_loss(&self) -> bool {
+        let share = self.shared.video_loss.load(Ordering::Relaxed);
+        if share == 0 {
+            return false;
+        }
+        let mut x = self.shared.loss_random.load(Ordering::Relaxed);
+        x ^= x << 13;
+        x ^= x >> 7;
+        x ^= x << 17;
+        self.shared.loss_random.store(x, Ordering::Relaxed);
+        (x % 10000) < share as u64
     }
 
     /// Hands out the video packets in order. A missing packet is waited for up to about a frame; then the queue
@@ -933,7 +1031,7 @@ mod tests {
     fn stream_assembles_frames_and_reports_congestion() {
         let mut console = Console::new();
         let connection = connect_version(&mut console, 0, 7, false);
-        connection.start_stream(1, PACKET_LOSS_MAX).unwrap();
+        connection.start_stream(&[Vec::new()], false, PACKET_LOSS_MAX).unwrap();
         let frame: Vec<u8> = (0..2500u32).map(|i| (i * 13) as u8).collect();
         let units = crate::frame::tests::units(&frame, 1000, 1);
         for (i, unit) in units.iter().enumerate().filter(|(i, _)| *i != 1) {     // unit 1 lost: FEC rebuilds it

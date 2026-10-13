@@ -14,7 +14,7 @@ its manifest. **bazzite-test** is always installed and always listed first; ever
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
 - `apps/<name>/`: bazzite-test, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
-  system-overlay, bios-reader, ace-queues, memory-manager, hdmi-cec, sftp-tools, console-link, demo-tool, dependency-checker, suite-releases. Each has its
+  system-overlay, bios-reader, ace-queues, mesh-shaders, memory-manager, hdmi-cec, sftp-tools, console-link, demo-tool, dependency-checker, suite-releases. Each has its
   own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; console-link is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; the rest GPL-3.0-or-later), .gitignore. Simple
   Demo Tool and the Dependency Checker are `development = true` in `portal/apps.toml`: the portal lists them
@@ -35,7 +35,7 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
   and say what is ready; don't offer to commit.
 - **Releases are the owner's, all of it.** See [Releases](#releases): Claude prepares code, never a release.
 - **Warn before board changes.** Apps that change how the board runs (CU/core unlocks, GPU governor, GPU
-  overclocking, ACPI override, the patched RADV of ace-queues, the VRAM split of memory-manager) are marked `changes_board` and the portal asks first. Frame it as standard caution:
+  overclocking, ACPI override, the patched RADV of ace-queues, the DirectMesh RADV of mesh-shaders, the VRAM split of memory-manager) are marked `changes_board` and the portal asks first. Frame it as standard caution:
   the apps are software-only and reversible, not "risky".
 - **The current releases are the baseline.** They were tested extensively on two boards. Moving code must not
   change behaviour; a finding in existing code is "a code path to check", not a known failure. Prove "unchanged"
@@ -114,6 +114,8 @@ shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persisten
   apps/console-link/install.sh apps/demo-tool/install.sh apps/suite-releases/*.sh
 shellcheck -S warning apps/ace-queues/bc250-ace-queues.sh apps/ace-queues/bc250-ace-queues-run \
   apps/ace-queues/install.sh apps/ace-queues/mesa/build-in-container.sh
+shellcheck -S warning apps/mesh-shaders/bc250-mesh-shaders.sh apps/mesh-shaders/bc250-mesh-shaders-run \
+  apps/mesh-shaders/install.sh apps/mesh-shaders/mesa/build-in-container.sh
 for t in tools/installer-tests/*.sh; do [ "${t##*/}" = shims.sh ] || bash "$t"; done   # every installer test
 mkdocs build --strict                               # from the venv
 ```

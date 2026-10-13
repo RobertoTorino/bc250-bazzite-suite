@@ -4,7 +4,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
-from PyQt6.QtWidgets import QInputDialog, QMessageBox
+from PyQt6.QtWidgets import QDialog, QInputDialog, QMessageBox
 
 from bc250_console_link import jobs, psn, steam_settings
 from bc250_console_link.consoles import ConsoleStore, RegisteredConsole
@@ -35,8 +35,8 @@ class FakeOps:
     def __init__(self, found=(PS5, PS4)):
         self.found, self.calls = list(found), []
 
-    def steam_shortcut(self, console, steam):
-        self.calls.append(("steam_shortcut", console.address))
+    def steam_shortcut(self, console, steam, remove=False):
+        self.calls.append(("steam_shortcut", console.address) + (("remove",) if remove else ()))
         return Outcome(True, "In Steam.")
 
     def steam_guide_focus(self, on, steam):
@@ -278,6 +278,31 @@ def test_passcode_and_remove(qapp, config_dir, monkeypatch):
         w.close()
 
 
+def test_stream_settings_are_kept_with_the_console(qapp, config_dir, monkeypatch):
+    from bc250_console_link.options_dialog import StreamOptionsDialog
+    from bc250_console_link.stream_options import StreamOptions
+    store = ConsoleStore(config_dir / "bc250-console-link")
+    store.put(_registered(PS5))
+    w = MainWindow(config_dir=config_dir, ops=FakeOps(), run=_now)
+    try:
+        assert not w.options_button.isEnabled()
+        w.registered_table.selectRow(0)
+        assert w.options_button.isEnabled()
+        chosen = StreamOptions(resolution=720, fps=30, screen="fill")
+        monkeypatch.setattr(StreamOptionsDialog, "exec", lambda self: QDialog.DialogCode.Accepted)
+        monkeypatch.setattr(StreamOptionsDialog, "options", lambda self: chosen)
+        w.options_button.click()
+        assert store.load()[0].options == chosen
+        assert "Stream settings for Living room PS5: 720p, 30 fps, 10 Mbit/s (automatic), fill." in w.log.toPlainText()
+        w.registered_table.selectRow(0)
+        monkeypatch.setattr(StreamOptionsDialog, "exec", lambda self: QDialog.DialogCode.Rejected)
+        monkeypatch.setattr(StreamOptionsDialog, "options", lambda self: StreamOptions())
+        w.options_button.click()                                            # Cancel: nothing changes
+        assert store.load()[0].options == chosen
+    finally:
+        w.close()
+
+
 def test_buttons_are_off_while_a_job_runs(window):
     seen = []
 
@@ -430,3 +455,62 @@ def test_add_to_game_mode(qapp, config_dir, tmp_path, monkeypatch):
     w.registered_table.selectRow(0)
     assert not w.game_mode_button.isEnabled()                       # no Steam
     w.close()
+
+
+def test_remove_offers_to_remove_the_game_mode_shortcut(qapp, config_dir, tmp_path, monkeypatch):
+    from bc250_console_link import steam_shortcuts
+    from test_steam_settings import _steam
+    steam = _steam(tmp_path, "0")
+    monkeypatch.setattr(steam_settings, "find_steam", lambda: steam)
+    monkeypatch.setattr(steam_settings, "steam_running", lambda: False)
+    store = ConsoleStore(config_dir / "bc250-console-link")
+    ops = FakeOps()
+    asked = []
+
+    def answer(yes):                                        # Remove's own question: yes; the shortcut's: *yes*
+        def question(parent, title, text, *rest):
+            asked.append(text)
+            return QMessageBox.StandardButton.Yes if yes or len(asked) == 1 else QMessageBox.StandardButton.No
+        return question
+
+    for has_shortcut, yes, removed in ((False, True, False), (True, False, False), (True, True, True)):
+        store.put(_registered(PS4))
+        monkeypatch.setattr(steam_shortcuts, "has_shortcut", lambda s, c, has=has_shortcut: has)
+        monkeypatch.setattr(QMessageBox, "question", answer(yes))
+        asked.clear()
+        ops.calls.clear()
+        w = MainWindow(config_dir=config_dir, ops=ops, run=_now)
+        try:
+            w.registered_table.selectRow(0)
+            w.remove_button.click()
+            assert store.load() == []
+            # The first question is Remove's own; the second one, only with a shortcut, asks about Steam.
+            assert len(asked) == 1 + has_shortcut
+            assert not has_shortcut or "is still in Steam for Game Mode. Remove it too?" in asked[1]
+            assert (("steam_shortcut", PS4.address, "remove") in ops.calls) is removed
+        finally:
+            w.close()
+
+
+def test_console_box_shows_model_software_and_what_runs(qapp, config_dir):
+    store = ConsoleStore(config_dir / "bc250-console-link")
+    store.put(_registered(PS4))
+    running = Console(PS4.address, False, "ready", host_name="PS4-Pro", host_id=PS4.host_id, host_type="PS4",
+                      system_version="14008001", running_app="Lumines Remastered", running_title_id="CUSA12345")
+    ops = FakeOps(found=(running,))
+    w = MainWindow(config_dir=config_dir, ops=ops, run=_now)
+    try:
+        assert w.console_box.caption.text() == "Console" and w.console_box.value.text() == "—"
+        w.registered_table.selectRow(0)
+        assert w.console_box.value.text() == "PS4"                     # not searched yet: no software version
+        assert "Search to see them" in w.console_box.toolTip()
+        w.search_button.click()
+        assert w.found_table.item(0, 4).text() == "14.00"               # the System column, decoded
+        assert w.console_box.value.text() == "PS4 · 14.00"
+        tooltip = w.console_box.toolTip()
+        assert "System software: 14.00" in tooltip and "Running: Lumines Remastered (CUSA12345)" in tooltip
+        w.registered_table.selectRow(0)
+        w.test_button.click()                                           # the session names the exact model
+        assert w.console_box.value.text() == "PS5 · 14.00"              # (the fake session says PS5)
+    finally:
+        w.close()

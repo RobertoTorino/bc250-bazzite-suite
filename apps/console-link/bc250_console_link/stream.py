@@ -22,6 +22,7 @@ the launch spec; without it, the values are the reference's for a failed test: 1
 from __future__ import annotations
 
 import os
+import sys
 import time
 from time import perf_counter
 from dataclasses import dataclass, field
@@ -71,6 +72,36 @@ class Profile:
     codec: str = "h264"
 
 
+PLAYER_MODES = ("off", "announce", "marked", "packed")
+RAW_NOTES = 40                          # the experiment's raw notes of what the console sends, at most
+
+
+@dataclass(frozen=True)
+class PlayerExperiment:
+    """The several-players experiment (not for users): how a second controller goes to the console, to find out what
+    the console accepts. announce: the console is told a second controller connected (CONTROLLERCONNECTION with
+    controller_id), its input is not sent; marked: also its input, in packets of its own with *mark* in the first
+    byte of each state and event; packed: also its state, in the first one's state packets (two states in one)."""
+    mode: str = "off"
+    controller_id: int = 1
+    mark: int = 1
+
+    @classmethod
+    def parse(cls, text: str) -> PlayerExperiment:
+        """MODE[:CONTROLLER_ID[:MARK]], as --player-experiment takes it."""
+        mode, *numbers = text.split(":")
+        if mode not in PLAYER_MODES or len(numbers) > 2:
+            raise ValueError(f"MODE[:CONTROLLER_ID[:MARK]] with MODE one of {', '.join(PLAYER_MODES)}")
+        values = [int(n) for n in numbers]
+        if any(not 0 <= v <= 15 for v in values):
+            raise ValueError("CONTROLLER_ID and MARK are 0 to 15")
+        return cls(mode, *values)
+
+    @property
+    def on(self) -> bool:
+        return self.mode != "off"
+
+
 @dataclass
 class StreamStats:
     frames: int = 0                     # whole video frames
@@ -82,6 +113,7 @@ class StreamStats:
     other_data: int = 0                 # trigger effects (a DualSense's adaptive triggers): not used yet
     rumble: int = 0
     pad_info: int = 0
+    pad_info_unknown: int = 0           # in a layout not known yet (a PS4's 7 bytes)
     corrupt_sent: list[tuple[int, int]] = field(default_factory=list)       # frames reported to the console
     corrupt_reports: list[tuple[int, int]] = field(default_factory=list)
     decoded: int = 0                    # pictures out of the decoder
@@ -102,7 +134,9 @@ class StreamConnection:
                  random: Callable[[int], bytes] = os.urandom, core=None,
                  on_picture: Callable[[Picture], None] | None = None,
                  picture_wanted: Callable[[], bool] = lambda: True,
-                 on_sound: Callable[[bytes, int, int], None] | None = None):
+                 on_sound: Callable[[bytes, int, int], None] | None = None,
+                 players: PlayerExperiment = PlayerExperiment(), low_latency: bool = False,
+                 simulated_loss: float = 0.0):
         self.host, self.target, self.session_id, self.crypt = host, target, session_id, crypt
         self.profile = profile or Profile()
         self.dualsense, self.port, self.timeout, self.random = dualsense, port, timeout, random
@@ -110,6 +144,10 @@ class StreamConnection:
         self.core = core or _core()
         self.on_picture, self.picture_wanted = on_picture, picture_wanted
         self.on_sound = on_sound              # (16-bit PCM interleaved, rate, channels)
+        self.players = players
+        self.low_latency = low_latency          # the stream settings: the decoder's low-delay mode
+        self.simulated_loss = simulated_loss    # for trying the recovery (not for users): % of video packets dropped
+        self._raw_notes = 0
         self.on_controller: Callable[..., None] | None = None
         self.led: tuple[int, int, int] = (0, 0, 0)
         self.player_index = 0
@@ -137,6 +175,18 @@ class StreamConnection:
 
     def note(self, text: str) -> None:
         self.log.append(text)
+        if self.players.on or self.simulated_loss:     # the trials run from a terminal: what happens, as it happens
+            print(f"[{time.strftime('%H:%M:%S')}] {text}", file=sys.stderr, flush=True)
+
+    def _raw(self, what: str, data: bytes) -> None:
+        """The experiment: what the console sends, raw, the first RAW_NOTES times."""
+        if self.players.on and self._raw_notes < RAW_NOTES:
+            self._raw_notes += 1
+            self.note(f"Experiment: the console sent {what}: {data.hex(' ')}")
+
+    @property
+    def hevc(self) -> bool:
+        return self.target.ps5 and self.profile.codec in ("h265", "h265_hdr")
 
     @property
     def version(self) -> int:
@@ -190,18 +240,25 @@ class StreamConnection:
             self.note(f"The console sent a rumble message of {len(data)} bytes (3 at least).")
             return
         self.stats.rumble += 1
+        self._raw("rumble", data)
         self._controller_output("rumble", data[1], data[2])          # byte 0 is not known
 
     def _on_pad_info(self, data: bytes) -> None:
         """The reference's two layouts: 25 bytes (the sequence number of the feedback packet it answers, a
         timestamp, then the player number at 8, the colour at 9 and the motion reset at 12) and 17 bytes (the player
-        number, the colour and the motion reset from the start)."""
+        number, the colour and the motion reset from the start). A PS4 also sends 7 bytes (00 00 00 40 01 00 00 on the
+        owner's PS4 Pro, 13-10-2026) at the stream's start and when a PS press hands it a controller; their meaning is
+        not known, so they are counted and noted once."""
+        self._raw("pad info", data)
         if len(data) == 0x19:
             player, led, reset = data[8], tuple(data[9:12]), bool(data[12])
         elif len(data) == 0x11:
             player, led, reset = data[0], tuple(data[1:4]), bool(data[4])
         else:
-            self.note(f"The console sent pad info of {len(data)} bytes (25 or 17 expected).")
+            self.stats.pad_info_unknown += 1
+            if self.stats.pad_info_unknown == 1:
+                self.note(f"The console sent pad info of {len(data)} bytes, a layout not known yet "
+                          f"({data.hex(' ')}); such messages are left aside.")
             return
         self.stats.pad_info += 1
         if reset:
@@ -212,6 +269,10 @@ class StreamConnection:
         if player != self.player_index:
             self.player_index = player
             self._controller_output("player", player)
+
+    def set_second_controller(self, **state) -> None:
+        """The several-players experiment: the second controller, as set_controller."""
+        self.takion.set_second_controller_state(**state)
 
     def set_controller(self, **state) -> None:
         """The controller as it is now (the native core's Takion.set_controller_state: buttons, l2, r2, left, right,
@@ -287,14 +348,16 @@ class StreamConnection:
         if not getattr(self.core, "DECODER", False):
             self.note("This native core has no video decoder (built without FFmpeg): the frames are not decoded.")
             return
-        codec = "hevc" if self.target.ps5 and self.profile.codec in ("h265", "h265_hdr") else "h264"
+        codec = "hevc" if self.hevc else "h264"
         try:
-            self.decoder = self.core.Decoder(codec, hw=True)
+            # low_delay only when asked: an older native core takes no such argument.
+            self.decoder = self.core.Decoder(codec, hw=True, **({"low_delay": True} if self.low_latency else {}))
         except ValueError as error:
             self.note(f"The video decoder did not open ({error}).")
             return
         how = "VA-API" if self.decoder.hw else f"software (VA-API: {self.decoder.hw_error or 'not available'})"
-        self.note(f"Video decoder: FFmpeg {self.core.FFMPEG_VERSION}, {codec.upper()}, {how}.")
+        self.note(f"Video decoder: FFmpeg {self.core.FFMPEG_VERSION}, {codec.upper()}, {how}"
+                  f"{', low delay' if self.low_latency else ''}.")
         try:
             self.audio_decoder = self.core.AudioDecoder(self.audio.rate, self.audio.channels, self.audio.frame_size)
         except (ValueError, AttributeError) as error:
@@ -319,6 +382,8 @@ class StreamConnection:
                 self._count_av(event[1])
             elif kind == "corrupt":
                 self._on_corrupt(event[1], event[2])
+            elif kind == "idr":
+                self.request_idr()
             elif kind == "profile":
                 self._on_profile(event[1])
             elif kind == "audio":
@@ -335,6 +400,7 @@ class StreamConnection:
                     continue
                 if data_type != DATA_PROTOBUF:
                     self.stats.other_data += 1
+                    self._raw(f"data type {data_type}", data)
                     continue
                 try:
                     message = tkproto.parse(data)
@@ -400,9 +466,19 @@ class StreamConnection:
             raise StreamError(f"The console's STREAMINFO is invalid: {error}.") from error
         self.info = info
         self._open_decoder()
-        self.takion.start_stream(len(info.resolutions))
+        if self.players.on:
+            self.takion.set_player_experiment("off" if self.players.mode == "announce" else self.players.mode,
+                                              self.players.mark)
+        self.takion.start_stream([r.video_header for r in info.resolutions], hevc=self.hevc)
+        if self.simulated_loss:
+            self.takion.set_simulated_loss(self.simulated_loss)
+            self.note(f"Trying the recovery: {self.simulated_loss:g}% of the video packets are dropped on purpose.")
         self.send(tkproto.streaminfo_ack(), CHANNEL_STREAMINFO_ACK)
         self.send(tkproto.controller_connection(self.dualsense))
+        if self.players.on:
+            self.send(tkproto.controller_connection(self.dualsense, self.players.controller_id))
+            self.note(f"Experiment {self.players.mode}: a second controller announced (controller_id "
+                      f"{self.players.controller_id}, mark {self.players.mark}).")
         self.send(tkproto.microphone(tkproto.MICROPHONE.save()))
         sizes = ", ".join(f"{r.width}×{r.height}" for r in info.resolutions) or "no resolution"
         self.note(f"STREAMINFO received ({sizes}; audio {self.audio.channels} channels at {self.audio.rate} Hz).")
@@ -439,6 +515,8 @@ class StreamConnection:
             if message is not None and message.type not in (tkproto.STREAMINFOACK, tkproto.CONNECTIONQUALITY,
                                                              tkproto.HEARTBEAT):
                 self.note(f"Message type {message.type} received.")
+                if self.players.on:
+                    self.note(f"Experiment: message type {message.type}: {message.payloads}")
 
     def figures(self) -> dict:
         """For the statistics file (stream_stats.py), from its thread: the counters, and the maxima since the last
@@ -449,6 +527,10 @@ class StreamConnection:
                    "decode_max": stats.decode_max, "frame_gap_max": stats.frame_gap_max,
                    "audio_frames": stats.audio_frames, "audio_lost": stats.audio_lost}
         stats.decode_max = stats.frame_gap_max = 0.0
+        video = self.takion.video_stats() if self.takion else None
+        if video is not None:
+            figures.update(fec_failed=video["fec_failed"], idr_requests=video["idr_requests"],
+                           frames_skipped=video["frames_skipped"], missing_reference=video["missing_reference"])
         return figures
 
     def video_summary(self) -> str:
@@ -459,7 +541,15 @@ class StreamConnection:
         stats = self.takion.stats()
         summary = (f"Video: {video['frames']} frames, {video['fec_recovered']} rebuilt with FEC, {video['fec_failed']} "
                    f"beyond repair, {video['frames_lost']} lost; {video['bad_units'] + video['old_packets']} units "
-                   f"refused; {stats['congestion_reports']} congestion reports sent. Controller: "
+                   f"refused; {stats['congestion_reports']} congestion reports sent. Recovery: "
+                   f"{video['idr_requests']} key frames asked for, {video['frames_skipped']} frames skipped waiting "
+                   f"for one, {video['missing_reference']} without their reference"
+                   + (f", {video['references_changed']} pointed at an older one" if video["references_changed"] else "")
+                   + ("; the frames' headers were not read as expected, so frames were not checked for a lost "
+                      "reference" if video.get("references_untrusted") else "")
+                   + f"; {stats['video_skipped']} video packets never came, {stats['video_late']} came late"
+                   + (f"; {stats['video_simulated_lost']} video packets dropped on purpose"
+                      if stats["video_simulated_lost"] else "") + ". Controller: "
                    f"{stats['feedback_states']} states and {stats['feedback_history']} button packets sent.")
         audio = self.takion.audio_stats()
         if audio is not None:

@@ -68,6 +68,7 @@ nav:
       - BC-250 BIOS Reader: apps/bios-reader.md
       - BC-250 Memory Manager: apps/memory-manager.md
       - BC-250 ACE Queues: apps/ace-queues.md
+      - BC-250 Mesh Shaders: apps/mesh-shaders.md
       - BC250 HDMI CEC: apps/hdmi-cec.md
       - BC250 Bazzite SFTP Tools: apps/sftp-tools.md
       - Dependency Checker: apps/dependency-checker.md

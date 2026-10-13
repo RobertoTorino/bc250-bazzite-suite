@@ -60,6 +60,10 @@ launchers = ["~/.local/bin/bc250-bios-reader"]
 name = "BC-250 ACE Queues"
 launchers = ["~/.local/bin/bc250-ace-queues"]
 
+[app.mesh-shaders]
+name = "BC-250 Mesh Shaders"
+launchers = ["~/.local/bin/bc250-mesh-shaders"]
+
 [app.memory-manager]
 name = "BC-250 Memory Manager"
 launchers = ["~/.local/bin/bc250-memory-manager"]
@@ -123,6 +127,11 @@ usage = "Password prompt for privileged configuration, service actions and safe-
 owner = "ace-queues"
 need = "required"
 usage = "Password prompt for installing and removing the patched driver."
+
+[[tool.source]]
+owner = "mesh-shaders"
+need = "required"
+usage = "Password prompt for installing and removing the DirectMesh driver."
 
 [[tool]]
 name = "umr"
@@ -625,15 +634,27 @@ need = "required"
 usage = "Download Mesa source and signatures for the driver build."
 anchor = "before-you-start"
 
+[[tool.source]]
+owner = "mesh-shaders"
+need = "required"
+usage = "Download Mesa source and signatures for the driver build."
+anchor = "before-you-start"
+
 [[tool]]
 name = "podman"
-description = "Runs containers without a daemon. ACE Queues builds the patched Mesa driver in a Fedora container, so nothing is layered onto the system for the build."
+description = "Runs containers without a daemon. ACE Queues and Mesh Shaders build their patched Mesa driver in a Fedora container, so nothing is layered onto the system for the build."
 executables = ["podman"]
 
 [[tool.source]]
 owner = "ace-queues"
 need = "required"
 usage = "Build the patched driver in a Fedora container."
+anchor = "before-you-start"
+
+[[tool.source]]
+owner = "mesh-shaders"
+need = "required"
+usage = "Build the DirectMesh driver in a Fedora container."
 anchor = "before-you-start"
 
 [[tool]]
@@ -784,6 +805,10 @@ specifier = ">=6.11,<7"
 
 [[dependency.source]]
 owner = "ace-queues"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
+owner = "mesh-shaders"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]

@@ -1,0 +1,30 @@
+Changelog: 13-10-2026 22:47:54
+
+Release 0.1.0.
+
+Changelog: 13-10-2026 22:46:12
+
+The owner's icons replace the placeholder: images/bc250-mesh-shaders.png (512 px, the window header, menu entry and Desktop icon) and images/bc250-mesh-shaders-128.png (128 px, also the portal's and the manual's icon).
+
+Changelog: 13-10-2026 22:17:49
+
+The test is the app's own (owner's decision, 13-10-2026): bc250-mesh-test no longer comes with a copy of BC-250 ACE Queues' test (acetest/ is gone). Besides the four draws it now gives every queue of the dedicated compute family work at the same time: a copy into an image and back through the driver's copy shaders, and dispatches with a partial last workgroup (meshtest/mesh-test.comp), compared word for word after the draws. So the compute queues DirectMesh opens and the task shaders' compute side are busy at once, which the copied test never did. Without a dedicated compute family the test checks the draws alone and says so; --compute-on-graphics runs the compute work on the graphics queue, for trying the test on a driver without one (checked on lavapipe, with a wrong value and a wrong tile each caught). The manual's test section says so.
+
+Changelog: 13-10-2026 22:02:36
+
+New app mesh-shaders (BC-250 Mesh Shaders): mesh shaders for games on the BC-250 through RADV with DirectMesh
+(lonewolf0622/bc250meshtaskwork, MIT). bc250-mesh-shaders.sh builds Mesa 26.2.1, the release DirectMesh v1.3.1 is
+made for, with its patch (mesa/bc250-directmesh-mesa-26.2.1.patch, checked against the SHA-256 the release
+publishes) in a Fedora container, the Mesa source checked against the Mesa release maintainers' signature. It
+installs the driver in /usr/local/lib/bc250-mesh-shaders beside the system Mesa and tests it on the running
+kernel: first the ACE queue test of BC-250 ACE Queues (acetest/, a copy; DirectMesh opens the compute queues, and
+draws with task shaders run part of their work there), then its own mesh test (meshtest/: a 16 x 16 grid of tiles
+drawn with task and mesh shaders, with a mesh shader alone at the largest meshlet size, and both indirectly, every
+pixel compared, ten device lifetimes), plus a kernel-log check for ring timeouts and resets. Games use the driver
+through the launch options wrapper bc250-mesh-shaders-run, which only selects it when the test passed with the
+running kernel and the installed driver, and logs the driver switches a game was started with. Switches… puts the
+driver's switches (RADV_BC250_MESH_IDXPASS, RADV_BC250_MESH_SAFE_COMPACT, RADV_BC250_MESH_SAFE_ADAPTIVE,
+RADV_DIRECTMESH, RADV_DEBUG=nomeshshader) in front of the launch options, for comparisons. The app knows both PCI
+ids of the BC-250's GPU (1002:13fe and 1002:143f). There is no "all apps" switch: only the games given the launch
+options use the driver. The installer puts the app root-owned in /opt with its bc250_core and uses the suite's
+shared venv. The logo is a placeholder.

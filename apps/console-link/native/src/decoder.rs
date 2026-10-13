@@ -20,7 +20,8 @@ struct RawFrame {
 }
 
 extern "C" {
-    fn bc_decoder_new(hevc: c_int, hw: c_int, out: *mut *mut RawDecoder, hw_error: *mut c_int) -> c_int;
+    fn bc_decoder_new(hevc: c_int, hw: c_int, low_delay: c_int, out: *mut *mut RawDecoder, hw_error: *mut c_int)
+        -> c_int;
     fn bc_decoder_free(d: *mut RawDecoder);
     fn bc_decoder_hw(d: *mut RawDecoder) -> c_int;
     fn bc_decoder_send(d: *mut RawDecoder, data: *const u8, size: usize) -> c_int;
@@ -98,11 +99,12 @@ pub struct Decoder {
 unsafe impl Send for Decoder {}
 
 impl Decoder {
-    pub fn new(hevc: bool, hw: bool) -> Result<Self, DecodeError> {
+    /// low_delay: FFmpeg's low-delay mode (the stream settings' low latency).
+    pub fn new(hevc: bool, hw: bool, low_delay: bool) -> Result<Self, DecodeError> {
         let mut raw = ptr::null_mut();
         let mut hw_error = 0;
         // SAFETY: out-pointers to locals; on success raw is a decoder we own.
-        check(unsafe { bc_decoder_new(hevc as c_int, hw as c_int, &mut raw, &mut hw_error) })?;
+        check(unsafe { bc_decoder_new(hevc as c_int, hw as c_int, low_delay as c_int, &mut raw, &mut hw_error) })?;
         Ok(Self { raw, last: None, hw_error: (hw_error < 0).then(|| error(hw_error)) })
     }
 
@@ -220,30 +222,17 @@ mod tests {
     use super::*;
     use sha2::{Digest, Sha256};
 
-    fn base64(text: &str) -> Vec<u8> {
-        let value = |c: u8| match c {
-            b'A'..=b'Z' => c - b'A',
-            b'a'..=b'z' => c - b'a' + 26,
-            b'0'..=b'9' => c - b'0' + 52,
-            b'+' => 62,
-            b'/' => 63,
-            _ => panic!("not base64"),
-        };
-        let digits: Vec<u8> = text.bytes().filter(|&c| c != b'=').map(value).collect();
-        let mut out = Vec::new();
-        for chunk in digits.chunks(4) {
-            let n = chunk.iter().enumerate().fold(0u32, |n, (i, &d)| n | (d as u32) << (18 - 6 * i));
-            out.extend_from_slice(&n.to_be_bytes()[1..chunk.len()]);
-        }
-        out
-    }
+    use crate::vectors::base64;
 
     #[test]
     fn clips_decode_as_ffmpeg_does() {
         let vectors: serde_json::Value =
             serde_json::from_str(include_str!("../../tests/video_vectors.json")).expect("valid vectors");
-        for (name, clip) in vectors["clips"].as_object().unwrap() {
-            let mut decoder = Decoder::new(name == "hevc", false).unwrap();
+        // The same pictures with the low-delay mode (the stream settings' low latency): it only stops FFmpeg from
+        // holding frames back, and the clips hold none back.
+        let clips = vectors["clips"].as_object().unwrap();
+        for ((name, clip), low_delay) in clips.iter().flat_map(|clip| [(clip, false), (clip, true)]) {
+            let mut decoder = Decoder::new(name == "hevc", false, low_delay).unwrap();
             assert!(!decoder.hw());
             let mut hash = Sha256::new();
             let mut frames = 0;
@@ -288,7 +277,7 @@ mod tests {
 
     #[test]
     fn garbage_is_an_error_not_a_crash() {
-        let mut decoder = Decoder::new(false, false).unwrap();
+        let mut decoder = Decoder::new(false, false, false).unwrap();
         assert!(decoder.image().is_err());
         let result = decoder.decode(&[0, 0, 0, 1, 0x65, 0xff, 0xff, 0xff]);
         assert!(result.map(|frames| frames.is_empty()).unwrap_or(true));

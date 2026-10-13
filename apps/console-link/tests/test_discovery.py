@@ -95,3 +95,11 @@ def test_wake_sends_the_packet_to_the_console():
     finally:
         console.close()
     assert console.received and console.received[0].startswith(b"WAKEUP")
+
+
+def test_software_version_of_a_ps4():
+    from bc250_console_link.target import software_version
+    assert software_version("14008001", False) == "14.00"           # the owner's PS4 Pro on 14.00
+    assert software_version("09508001", False) == "9.50"
+    assert software_version("08050001", True) == ""                 # a PS5 reports a Remote Play generation there
+    assert software_version("", False) == software_version("1400", False) == software_version("x4008001", False) == ""

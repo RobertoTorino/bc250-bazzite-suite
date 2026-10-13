@@ -21,6 +21,7 @@ from PyQt6.QtOpenGLWidgets import QOpenGLWidget
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 from .sound_out import SoundPlayer
+from .stream_options import StreamOptions
 from .video import Picture, PictureSlot, color_matrix
 
 GL_TEXTURE_2D = 0x0DE1
@@ -73,14 +74,16 @@ class RendererError(Exception):
     pass
 
 
-def letterbox(picture: tuple[int, int], area: tuple[int, int]) -> tuple[int, int, int, int]:
-    """The viewport (x, y, width, height; y from the bottom, as OpenGL counts) that shows a picture of that size
-    whole and centred in the area, at its own aspect ratio."""
+def letterbox(picture: tuple[int, int], area: tuple[int, int], screen: str = "fit") -> tuple[int, int, int, int]:
+    """The viewport (x, y, width, height; y from the bottom, as OpenGL counts) for a picture of that size in the
+    area, centred: whole at its own aspect ratio (fit), the whole area (stretch), or the whole area at its own
+    aspect ratio with the edges outside it (fill: the viewport is larger than the area)."""
     pw, ph = picture
     aw, ah = area
-    if pw <= 0 or ph <= 0 or aw <= 0 or ah <= 0:
+    if pw <= 0 or ph <= 0 or aw <= 0 or ah <= 0 or screen == "stretch":
         return 0, 0, max(aw, 0), max(ah, 0)
-    if aw * ph >= ah * pw:              # the area is wider: bars left and right
+    wider = aw * ph >= ah * pw          # the area is wider than the picture
+    if wider == (screen != "fill"):     # fit and wider, or fill and narrower: as high as the area
         width, height = round(ah * pw / ph), ah
     else:
         width, height = aw, round(aw * ph / pw)
@@ -135,8 +138,9 @@ class Renderer:
         self.picture = Picture(picture.format, picture.width, picture.height, b"", picture.colorspace,
                                picture.full_range)
 
-    def paint(self, width: int, height: int) -> None:
-        """Into the current framebuffer of width × height pixels: black, and the last picture letterboxed."""
+    def paint(self, width: int, height: int, screen: str = "fit") -> None:
+        """Into the current framebuffer of width × height pixels: black, and the last picture placed as *screen*
+        says (letterbox)."""
         gl = self.gl
         gl.glViewport(0, 0, width, height)
         gl.glClearColor(0.0, 0.0, 0.0, 1.0)
@@ -144,7 +148,7 @@ class Renderer:
         picture = self.picture
         if picture is None:
             return
-        gl.glViewport(*letterbox((picture.width, picture.height), (width, height)))
+        gl.glViewport(*letterbox((picture.width, picture.height), (width, height), screen))
         program = self.programs[picture.format]
         program.bind()
         matrix, offset = color_matrix(picture.matrix_name, picture.full_range)
@@ -186,6 +190,7 @@ class StreamView(QOpenGLWidget):
         self.renderer = Renderer()
         self.error: str | None = None
         self.shown = 0
+        self.screen = "fit"                     # the stream settings' fit of the picture (letterbox)
         self.age_max = self.age_sum = 0.0       # how old the pictures were when drawn, since figures() last read
         self.age_count = 0
         self.setMinimumSize(320, 180)
@@ -220,7 +225,7 @@ class StreamView(QOpenGLWidget):
                 self.age_sum += age
                 self.age_count += 1
         ratio = self.devicePixelRatioF()
-        self.renderer.paint(round(self.width() * ratio), round(self.height() * ratio))
+        self.renderer.paint(round(self.width() * ratio), round(self.height() * ratio), self.screen)
 
 
 BEAT_MS = 10                    # the window's own timer, to see how late it runs (a busy window draws and plays late)
@@ -231,14 +236,16 @@ class StreamWindow(QWidget):
     """The stream's window: the view and a status line under it, and the sound. F11 or a double click toggle full
     screen, Escape leaves it, M mutes the sound. Closing the window calls on_close, which ends the stream."""
 
-    def __init__(self, title: str, on_close: Callable[[], None], parent: QWidget | None = None):
+    def __init__(self, title: str, on_close: Callable[[], None], parent: QWidget | None = None,
+                 options: StreamOptions = StreamOptions()):
         super().__init__(parent, Qt.WindowType.Window)
         self.setWindowTitle(title)
         self.on_close = on_close
         self.slot = PictureSlot()
-        self.sound = SoundPlayer(self)
+        self.sound = SoundPlayer(self, options.audio_delay, options.low_latency)
         self.notifier = PictureNotifier()
         self.view = StreamView(self.slot)
+        self.view.screen = options.screen
         self.notifier.arrived.connect(self.view.update)
         self.status = QLabel("Starting the stream…")
         self.status.setContentsMargins(8, 4, 8, 4)

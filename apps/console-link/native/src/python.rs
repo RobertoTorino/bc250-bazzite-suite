@@ -10,7 +10,7 @@ use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyDict, PyTuple};
 use pyo3::IntoPyObjectExt;
 
-use crate::connection::{self, ConnectError, Event};
+use crate::connection::{self, ConnectError, Event, PlayerExperiment};
 use crate::ecdh;
 use crate::fec;
 use crate::feedback;
@@ -355,6 +355,27 @@ impl OrientationTracker {
     }
 }
 
+/// A controller state from Python's arguments (Takion.set_controller_state).
+#[allow(clippy::too_many_arguments)]
+fn controller_state(buttons: u32, l2: u8, r2: u8, left: (i16, i16), right: (i16, i16), touches: Vec<(u8, u16, u16)>,
+                    gyro: (f32, f32, f32), accel: (f32, f32, f32), orient: (f32, f32, f32, f32))
+                    -> PyResult<feedback::ControllerState> {
+    if touches.len() > feedback::TOUCHES_MAX {
+        return Err(PyValueError::new_err("at most two touches"));
+    }
+    let mut state = feedback::ControllerState::idle();
+    state.buttons = buttons & 0xffff;
+    (state.l2, state.r2) = (l2, r2);
+    (state.left_x, state.left_y, state.right_x, state.right_y) = (left.0, left.1, right.0, right.1);
+    for (slot, (id, x, y)) in state.touches.iter_mut().zip(touches) {
+        *slot = feedback::Touch { id: (id & 0x7f) as i8, x, y };
+    }
+    state.gyro = [gyro.0, gyro.1, gyro.2];
+    state.accel = [accel.0, accel.1, accel.2];
+    state.orient = [orient.0, orient.1, orient.2, orient.3];
+    Ok(state)
+}
+
 /// A live Takion connection (connection.rs). The constructor connects and runs the handshake, without the GIL;
 /// TimeoutError when the console does not answer, ConnectionError when it answers wrongly.
 #[pyclass(name = "Takion", module = "bc250_console_link_core", frozen)]
@@ -414,11 +435,11 @@ impl Takion {
         self.0.send_congestion(word_0, received, lost).map_err(|e| PyOSError::new_err(e.to_string()))
     }
 
-    /// The stream runs (after STREAMINFO, with its number of resolutions): video comes as frames from now on, and
-    /// congestion reports go every 200 ms.
-    #[pyo3(signature = (profiles, packet_loss_max=connection::PACKET_LOSS_MAX))]
-    fn start_stream(&self, profiles: usize, packet_loss_max: f64) -> PyResult<()> {
-        self.0.start_stream(profiles, packet_loss_max).map_err(|e| PyOSError::new_err(e.to_string()))
+    /// The stream runs (after STREAMINFO, with each resolution's video header and whether the codec is HEVC): video
+    /// comes as frames from now on, and congestion reports go every 200 ms.
+    #[pyo3(signature = (headers, hevc=false, packet_loss_max=connection::PACKET_LOSS_MAX))]
+    fn start_stream(&self, headers: Vec<Vec<u8>>, hevc: bool, packet_loss_max: f64) -> PyResult<()> {
+        self.0.start_stream(&headers, hevc, packet_loss_max).map_err(|e| PyOSError::new_err(e.to_string()))
     }
 
     /// The controller as it is now: buttons as the reference numbers them (bit 0 cross ... bit 15 PS), L2 and R2 from
@@ -431,20 +452,41 @@ impl Takion {
     fn set_controller_state(&self, buttons: u32, l2: u8, r2: u8, left: (i16, i16), right: (i16, i16),
                             touches: Vec<(u8, u16, u16)>, gyro: (f32, f32, f32), accel: (f32, f32, f32),
                             orient: (f32, f32, f32, f32)) -> PyResult<()> {
-        if touches.len() > feedback::TOUCHES_MAX {
-            return Err(PyValueError::new_err("at most two touches"));
-        }
-        let mut state = feedback::ControllerState::idle();
-        state.buttons = buttons & 0xffff;
-        (state.l2, state.r2) = (l2, r2);
-        (state.left_x, state.left_y, state.right_x, state.right_y) = (left.0, left.1, right.0, right.1);
-        for (slot, (id, x, y)) in state.touches.iter_mut().zip(touches) {
-            *slot = feedback::Touch { id: (id & 0x7f) as i8, x, y };
-        }
-        state.gyro = [gyro.0, gyro.1, gyro.2];
-        state.accel = [accel.0, accel.1, accel.2];
-        state.orient = [orient.0, orient.1, orient.2, orient.3];
+        let state = controller_state(buttons, l2, r2, left, right, touches, gyro, accel, orient)?;
         self.0.set_controller_state(state);
+        Ok(())
+    }
+
+    /// For trying the recovery from lost packets (not for users): this share of the video packets, in percent, is
+    /// dropped on arrival.
+    fn set_simulated_loss(&self, percent: f64) {
+        self.0.set_simulated_loss(percent);
+    }
+
+    /// The several-players experiment (not for users), before start_stream: "off", "announce", "marked" (the second
+    /// controller in packets of its own, mark in the first byte) or "packed" (both states in one packet).
+    #[pyo3(signature = (mode, mark=1))]
+    fn set_player_experiment(&self, mode: &str, mark: u8) -> PyResult<()> {
+        let players = match mode {
+            "off" => PlayerExperiment::Off,
+            "announce" => PlayerExperiment::Announce,
+            "marked" => PlayerExperiment::Marked(mark),
+            "packed" => PlayerExperiment::Packed,
+            _ => return Err(PyValueError::new_err("mode is off, announce, marked or packed")),
+        };
+        self.0.set_player_experiment(players);
+        Ok(())
+    }
+
+    /// The several-players experiment: the second controller, with set_controller_state's arguments.
+    #[pyo3(signature = (buttons=0, l2=0, r2=0, left=(0, 0), right=(0, 0), touches=Vec::new(), gyro=(0.0, 0.0, 0.0),
+                        accel=(0.0, 1.0, 0.0), orient=(0.0, 0.0, 0.0, 1.0)))]
+    #[allow(clippy::too_many_arguments)]
+    fn set_second_controller_state(&self, buttons: u32, l2: u8, r2: u8, left: (i16, i16), right: (i16, i16),
+                                   touches: Vec<(u8, u16, u16)>, gyro: (f32, f32, f32), accel: (f32, f32, f32),
+                                   orient: (f32, f32, f32, f32)) -> PyResult<()> {
+        let state = controller_state(buttons, l2, r2, left, right, touches, gyro, accel, orient)?;
+        self.0.set_second_controller_state(state);
         Ok(())
     }
 
@@ -466,17 +508,21 @@ impl Takion {
         for (name, value) in [
             ("frames", s.frames), ("bytes", s.bytes), ("fec_recovered", s.fec_recovered), ("fec_failed", s.fec_failed),
             ("old_packets", s.old_packets), ("bad_profile", s.bad_profile), ("bad_units", s.bad_units),
+            ("idr_requests", s.idr_requests), ("frames_skipped", s.frames_skipped),
+            ("missing_reference", s.missing_reference), ("references_changed", s.references_changed),
         ] {
             dict.set_item(name, value)?;
         }
         dict.set_item("frames_lost", s.frames_lost)?;
+        dict.set_item("references_untrusted", s.references_untrusted)?;
         Ok(Some(dict))
     }
 
     /// The next event or None after timeout seconds: ("data", data_type, channel, bytes), ("data_ack", seq_num),
     /// ("av", header dict, decrypted bytes) or ("closed", reason). Once the stream runs, "av" is audio only and
     /// video comes as ("frame", {"index", "fec", "frames_lost"}, bytes), ("profile", resolution index) and
-    /// ("corrupt", first frame, last frame), the frames to report to the console; audio comes as ("audio", index,
+    /// ("corrupt", first frame, last frame), the frames to report to the console, and ("idr",) when a key frame is to
+    /// be asked for; audio comes as ("audio", index,
     /// Opus frame or None for a lost one).
     #[pyo3(signature = (timeout=0.0))]
     fn next_event<'py>(&self, py: Python<'py>, timeout: f64) -> PyResult<Option<Bound<'py, PyTuple>>> {
@@ -500,6 +546,7 @@ impl Takion {
             Event::Video(VideoEvent::Corrupt { start, end }) => {
                 vec!["corrupt".into_py_any(py)?, start.into_py_any(py)?, end.into_py_any(py)?]
             }
+            Event::Video(VideoEvent::RequestIdr) => vec!["idr".into_py_any(py)?],
             Event::Audio(frame) => vec![
                 "audio".into_py_any(py)?, frame.index.into_py_any(py)?,
                 frame.data.map(|data| bytes(py, &data)).into_py_any(py)?,
@@ -517,6 +564,7 @@ impl Takion {
         for (name, value) in [
             ("received", s.received), ("mac_mismatch", s.mac_mismatch), ("invalid", s.invalid),
             ("data_dropped", s.data_dropped), ("video_dropped", s.video_dropped), ("video_skipped", s.video_skipped),
+            ("video_simulated_lost", s.video_simulated_lost), ("video_late", s.video_late),
             ("resent", s.resent), ("given_up", s.given_up), ("congestion_reports", s.congestion_reports),
             ("feedback_states", s.feedback_states), ("feedback_history", s.feedback_history),
         ] {
@@ -530,7 +578,7 @@ impl Takion {
     }
 }
 
-/// The video decoder (decoder.rs): Decoder(codec="h264" or "hevc", hw=True). decode(sample) gives the frames it
+/// The video decoder (decoder.rs): Decoder(codec="h264" or "hevc", hw=True, low_delay=False). decode(sample) gives the frames it
 /// completed as dicts (width, height, hw); image() the last one's picture.
 /// hw tells whether VA-API runs, hw_error why not when it was asked for.
 #[cfg(feature = "decoder")]
@@ -546,14 +594,14 @@ fn decode_error(e: crate::decoder::DecodeError) -> PyErr {
 #[pymethods]
 impl Decoder {
     #[new]
-    #[pyo3(signature = (codec="h264", hw=true))]
-    fn new(codec: &str, hw: bool) -> PyResult<Self> {
+    #[pyo3(signature = (codec="h264", hw=true, low_delay=false))]
+    fn new(codec: &str, hw: bool, low_delay: bool) -> PyResult<Self> {
         let hevc = match codec {
             "h264" => false,
             "h265" | "hevc" => true,
             _ => return Err(PyValueError::new_err("codec is h264 or hevc")),
         };
-        crate::decoder::Decoder::new(hevc, hw).map(Self).map_err(decode_error)
+        crate::decoder::Decoder::new(hevc, hw, low_delay).map(Self).map_err(decode_error)
     }
 
     #[getter]

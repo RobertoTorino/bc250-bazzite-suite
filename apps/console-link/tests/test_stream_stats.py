@@ -86,6 +86,9 @@ def test_the_line_per_second():
                     "sound in 100 frames, lost 2 | shown 58, skipped 2, age avg 5 max 9 ms | window late max 41 ms | "
                     "sound buffer 12 ms, gaps 30 ms, dropped 0 ms | controller 250 reads, longest gap 7 ms")
     assert stream_stats.line({}, {}, {}, {}, {}, {}, 1.0) == ""
+    recovering = dict(stream_now, fec_failed=1, idr_requests=1, frames_skipped=4, missing_reference=0)
+    assert "| recovery: FEC failed 1, key frames asked 1, skipped 4, no reference 0 |" in \
+        stream_stats.line(recovering, stream_before, {}, {}, {}, {}, 1.0)
 
 
 def test_recorder_writes_a_header_and_a_line_per_second(tmp_path):

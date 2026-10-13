@@ -409,8 +409,11 @@ class Reader:
     def __init__(self, send: Callable[..., None], ps5: bool, note: Callable[[str], None],
                  backend: Callable[[], object] = Sdl, poll_interval: float = POLL_INTERVAL,
                  scan_interval: float = SCAN_INTERVAL, trackers: Callable[[], object] | None = _trackers(),
-                 watch: Callable[[dict], None] | None = None):
+                 watch: Callable[[dict], None] | None = None, send_second: Callable[..., None] | None = None):
         self.send, self.ps5, self.note, self.watch = send, ps5, note, watch
+        # The several-players experiment: the first controller goes to send, the second to send_second, the rest
+        # nowhere. Without it every controller acts as one.
+        self.send_second = send_second
         self.infos: dict[int, PadInfo] = {}
         self.batteries: dict[int, tuple[str, int]] = {}
         self.backend, self.poll_interval, self.scan_interval = backend, poll_interval, scan_interval
@@ -457,8 +460,8 @@ class Reader:
             self.note("Without the app's native core the controllers' motion is not passed on.")
         pads: dict[int, object] = {}
         motions: dict[int, Motion] = {}
-        touches = Touches()
-        last = None
+        touches, touches_second = Touches(), Touches()
+        last = last_second = None
         try:
             next_scan = time.monotonic()
             previous = None
@@ -499,6 +502,14 @@ class Reader:
                 if self.watch is not None:
                     self.watch({pad_id: (self.infos[pad_id], reading, self.batteries.get(pad_id, ("unknown", -1)))
                                 for pad_id, reading in readings.items() if pad_id in self.infos})
+                if self.send_second is not None:
+                    order = sorted(readings)
+                    second = {p: readings[p] for p in order[1:2]}
+                    readings = {p: readings[p] for p in order[:1]}
+                    state_second = controller_state(second, touches_second, self.ps5)
+                    if state_second != last_second:
+                        self.send_second(**state_second)
+                        last_second = state_second
                 state = controller_state(readings, touches, self.ps5)
                 if state != last:
                     self.send(**state)

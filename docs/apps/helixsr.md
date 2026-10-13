@@ -85,7 +85,8 @@ the network files built by its `helixsr-setup.sh`; see the
 
 ## Install on Bazzite
 
-Install it from the BC250 Bazzite Suite portal. Or download `helixsr-v<version>.tar.gz` from the suite's
+Install it from the BC250 Bazzite Suite portal, where it is under Gaming. Or download
+`helixsr-v<version>.tar.gz` from the suite's
 [releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases), unpack it and run the installer:
 
 ```shell

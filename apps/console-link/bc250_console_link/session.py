@@ -84,6 +84,7 @@ class SessionInfo:
     target: Target
     server_type: str = ""
     session_id: str = ""
+    network: str = ""                   # the network test before a stream, for the window ("" without one)
     log: list[str] = field(default_factory=list)
 
 

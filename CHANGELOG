@@ -1,3 +1,11 @@
+Changelog: 13-10-2026 22:17:49
+
+HelixSR Manager and Mesh Shaders move to the Gaming section of the portal (owner, 13-10-2026): README and the manual's index list them there.
+
+Changelog: 13-10-2026 22:02:36
+
+New app mesh-shaders (BC-250 Mesh Shaders): mesh shaders for games through RADV with DirectMesh beside the system Mesa, built on the board and tested before use (changes the board). CI runs its tests and its installer test (tools/installer-tests/mesh-shaders.sh) and shellchecks its scripts at warning level; the manual has its chapter (docs/apps/mesh-shaders.md), the README and the manual's index list it; CLAUDE.md lists it with its checks.
+
 Changelog: 13-10-2026 15:51:55
 
 Every installer installs its Python packages with pip --upgrade (owner's decision, 13-10-2026; governor and helixsr did already): installing again brings each package to the newest version its requirements allow, so a security fix within that range (the Dependency Checker's Needs update) arrives with a reinstall from the portal. The 14 apps' installers, cu-bisect's and cores-bisect's packaging scripts and the portal's; tools/tests/test_layout.py checks every one; the manual's Architecture and consistency says so.

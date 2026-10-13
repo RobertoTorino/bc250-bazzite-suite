@@ -8,9 +8,10 @@ from __future__ import annotations
 from PyQt6.QtCore import QIODevice, QObject, pyqtSignal
 from PyQt6.QtMultimedia import QAudio, QAudioFormat, QAudioSink, QMediaDevices
 
-from .sound import SoundBuffer
+from .sound import LOW_LATENCY_MAX_MS, LOW_LATENCY_TARGET_MS, MAX_MS, TARGET_MS, SoundBuffer
 
 SINK_BUFFER_MS = 30
+LOW_LATENCY_SINK_BUFFER_MS = 20
 
 
 class SoundDevice(QIODevice):
@@ -36,8 +37,9 @@ class SoundDevice(QIODevice):
 class SoundPlayer(QObject):
     start_requested = pyqtSignal(int, int)
 
-    def __init__(self, parent: QObject | None = None):
+    def __init__(self, parent: QObject | None = None, delay_ms: int = 0, low_latency: bool = False):
         super().__init__(parent)
+        self.delay_ms, self.low_latency = delay_ms, low_latency       # the stream settings
         self.buffer: SoundBuffer | None = None
         self.sink: QAudioSink | None = None
         self.device: SoundDevice | None = None
@@ -66,11 +68,15 @@ class SoundPlayer(QObject):
         if output.isNull() or not output.isFormatSupported(fmt):
             self.error = "no audio output takes 16-bit sound at this rate" if not output.isNull() else "no audio output"
             return
-        buffer = SoundBuffer(rate, channels)
+        if self.low_latency:
+            buffer = SoundBuffer(rate, channels, LOW_LATENCY_MAX_MS, LOW_LATENCY_TARGET_MS, self.delay_ms)
+        else:
+            buffer = SoundBuffer(rate, channels, MAX_MS, TARGET_MS, self.delay_ms)
         self.device = SoundDevice(buffer, self)
         self.device.open(QIODevice.OpenModeFlag.ReadOnly)
         self.sink = QAudioSink(output, fmt, self)
-        self.sink.setBufferSize(buffer.frame_bytes * rate * SINK_BUFFER_MS // 1000)
+        sink_ms = LOW_LATENCY_SINK_BUFFER_MS if self.low_latency else SINK_BUFFER_MS
+        self.sink.setBufferSize(buffer.frame_bytes * rate * sink_ms // 1000)
         self.sink.start(self.device)
         if self.sink.error() != QAudio.Error.NoError:
             self.error = f"the audio output did not start ({self.sink.error().name})"

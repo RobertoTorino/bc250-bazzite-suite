@@ -85,6 +85,10 @@ def test_letterbox_arithmetic():
     assert letterbox((1280, 720), (1000, 1000)) == (0, 219, 1000, 562)
     assert letterbox((1280, 720), (2000, 720)) == (360, 0, 1280, 720)
     assert letterbox((0, 0), (100, 50)) == (0, 0, 100, 50)
+    # The stream settings' other fits: the whole area, distorted; or the whole area with the edges cut off.
+    assert letterbox((1280, 720), (1000, 1000), "stretch") == (0, 0, 1000, 1000)
+    assert letterbox((1280, 720), (1000, 1000), "fill") == (-389, 0, 1778, 1000)
+    assert letterbox((1280, 720), (2000, 720), "fill") == (0, -203, 2000, 1125)
 
 
 def test_window_takes_pictures_and_ends_the_stream_on_close(qapp):

@@ -31,7 +31,6 @@ installed app.
 |---|---|
 | ![](assets/apps/bazzite-test.png){ .app-icon } [BC-250 Bazzite Test](apps/bazzite-test.md) | Read-only diagnostics, stress test and benchmarks. Always installed. |
 | ![](assets/apps/governor.png){ .app-icon } [BC-250 GPU Governor Manager](apps/governor.md) | Manage the cyan-skillfish GPU governor: tuning, safe points, profiles, backups. **Changes the board.** |
-| ![](assets/apps/helixsr.png){ .app-icon } [BC-250 HelixSR Manager](apps/helixsr.md) | Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games. |
 | ![](assets/apps/cu-bisect.png){ .app-icon } [BC-250 CU Bisect](apps/cu-bisect.md) | Tell bad CUs apart from an unstable CU unlock, and apply a tested unlock. **Changes the board.** |
 | ![](assets/apps/cores-bisect.png){ .app-icon } [BC-250 Cores Bisect](apps/cores-bisect.md) | Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock. **Changes the board.** |
 | ![](assets/apps/gpu-oc-bisect.png){ .app-icon } [BC-250 GPU OC Bisect](apps/gpu-oc-bisect.md) | Find your board's safe GPU overclock and undervolt, one step at a time. **Changes the board.** |
@@ -47,6 +46,8 @@ installed app.
 
 | App | What it does |
 |---|---|
+| ![](assets/apps/helixsr.png){ .app-icon } [BC-250 HelixSR Manager](apps/helixsr.md) | Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games. |
+| ![](assets/apps/mesh-shaders.png){ .app-icon } [BC-250 Mesh Shaders](apps/mesh-shaders.md) | Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use. **Changes the board.** |
 | ![](assets/apps/console-link.png){ .app-icon } [BC250 Console Link](apps/console-link.md) | Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session. |
 
 **Development only**: tools for working on the suite, in their own section of the [portal](portal.md). You do not

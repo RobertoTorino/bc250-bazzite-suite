@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Callable
 
 from . import (LOGO_PATH, __version__, discovery, gamepad, privacy, psn, regist, senkusha, session, steam_settings,
-               steam_shortcuts, stream, stream_stats)
+               steam_shortcuts, stream, stream_options, stream_stats)
 from .consoles import RegisteredConsole
 from .httpmsg import ProtocolError
 from .target import Target
@@ -148,11 +148,12 @@ def rest_mode(console: RegisteredConsole, **kwargs) -> Outcome:
 
 
 def stream_profile(console: RegisteredConsole, server_type: str = "") -> stream.Profile:
-    """The reference's presets: 1080p at 15 Mbit/s for a PS5, 720p at 10 Mbit/s for a PS4. A PS4 Pro gets 1080p too
+    """What the stream asks for, from the console's stream settings (stream_options.py). Automatic is the
+    reference's presets: 1080p at 15 Mbit/s for a PS5, 720p at 10 Mbit/s for a PS4; a PS4 Pro gets 1080p too
     (owner, 13-10-2026); the console says it is one when the control connection opens (*server_type*)."""
-    if console.ps5 or server_type == "PS4 Pro":
-        return stream.Profile(1920, 1080, 60, 15000)
-    return stream.Profile(1280, 720, 60, 10000)
+    options = console.options
+    height = options.height(console.ps5, server_type)
+    return stream.Profile(stream_options.width(height), height, options.fps, options.kbps(height))
 
 
 def _stats_header(console: RegisteredConsole, started: session.Session, connection: stream.StreamConnection,
@@ -165,15 +166,21 @@ def _stats_header(console: RegisteredConsole, started: session.Session, connecti
         f"BC250 Console Link {__version__}, native core {core}; started {time.strftime('%d-%m-%Y %H:%M:%S')}",
         f"Console: {console.nickname or privacy.mask_address(console.address)} "
         f"({'PS5' if console.ps5 else started.info.server_type or 'PS4'})",
+        f"Settings: {console.options.describe(console.ps5, started.info.server_type)}",
         f"Asked for: {profile.width}x{profile.height}, {profile.max_fps} fps, {profile.bitrate} kbit/s, "
-        f"{profile.codec}; decoder: {decoder}",
+        f"{profile.codec}; decoder: {decoder}"
+        + (f"; several-players experiment {connection.players}" if connection.players.on else "")
+        + (f"; {connection.simulated_loss:g}% of the video packets dropped on purpose" if connection.simulated_loss
+           else ""),
         "Network test: " + (f"MTU {measured.mtu_in} in, {measured.mtu_out} out, round trip {measured.rtt_ms} ms"
                             if measured else "failed, safe values used"),
         f"Board: {stream_stats.cpu_model()}, {online} processors online; {platform.system()} {platform.release()}; "
         f"desktop {os.environ.get('XDG_CURRENT_DESKTOP', '?')}"
         + ("; started from Steam" if os.environ.get("BC250_LEFT_STEAM_LIBRARIES") or os.environ.get("SteamAppId")
            else ""),
-        "Each line: one second of the stream (in: frames received; decode: time per frame; shown/skipped: pictures "
+        "Each line: one second of the stream (in: frames received; decode: time per frame; recovery: frames FEC "
+        "could not rebuild, key frames asked for, frames skipped until one came, frames without their reference; "
+        "shown/skipped: pictures "
         "drawn and replaced by a newer one before drawing; age: decoder to drawing; window late: the window's "
         "longest delay; sound gaps: silence played because the buffer ran empty; controller: reads and the longest "
         "gap between two; cpu: all cores, the busiest core, the app and its busy threads)",
@@ -183,7 +190,7 @@ def _stats_header(console: RegisteredConsole, started: session.Session, connecti
 def _run_stream(console: RegisteredConsole, started: session.Session, seconds: float, stop: Callable[[], bool],
                 stream_port: int, stream_timeout: float, senkusha_port: int,
                 gamepads: Callable[[], object] | None = None, figures: Callable[[], dict] | None = None,
-                stats_dir: Path | None = None, **stream_options):
+                stats_dir: Path | None = None, **connection_options):
     """The network test, then the stream for *seconds* or until *stop*; the control connection keeps answering
     heartbeats in a second thread meanwhile. When the network test fails, the stream goes on with safe values, as
     the reference does. With *gamepads* (gamepad.Sdl, or a stand-in), the board's controllers play from STREAMINFO
@@ -212,17 +219,23 @@ def _run_stream(console: RegisteredConsole, started: session.Session, seconds: f
             test.note(f"{error} The stream uses safe values instead: MTU {stream.MTU}, {stream.RTT_MS} ms.")
         finally:
             started.info.log.extend(test.log)
+        started.info.network = (f"round trip {measured.rtt_us / 1000:.2f} ms, packets up to {measured.mtu_in} bytes "
+                                f"in and {measured.mtu_out} out" if measured else "the network test failed")
         profile = replace(stream_profile(console, started.info.server_type), codec=started.codec)
         connection = stream.StreamConnection(
             console.address, started.info.target, started.info.session_id, started.crypt, profile,
             port=stream_port, timeout=stream_timeout, mtu_in=measured and measured.mtu_in,
             mtu_out=measured and measured.mtu_out, rtt_ms=measured.rtt_ms if measured else stream.RTT_MS,
-            **stream_options)
+            low_latency=console.options.low_latency, **connection_options)
         with connection:
             info = connection.connect()
             reader = None
             if gamepads is not None:
-                reader = gamepad.Reader(connection.set_controller, console.ps5, connection.note, gamepads).start()
+                players = connection.players
+                second = (None if not players.on else (lambda **_state: None) if players.mode == "announce"
+                          else connection.set_second_controller)
+                reader = gamepad.Reader(connection.set_controller, console.ps5, connection.note, gamepads,
+                                        send_second=second).start()
                 connection.drive_controllers(reader.output)
             recorder, stats_file = None, None
             if stats_dir is not None:
@@ -282,7 +295,9 @@ def watch_stream(console: RegisteredConsole, deliver: Callable[[Picture], None],
                  stop: threading.Event, play: Callable[[bytes, int, int], None] | None = None,
                  gamepads: Callable[[], object] | None = gamepad.Sdl, stream_port: int = stream.PORT,
                  stream_timeout: float = stream.EXPECT_TIMEOUT, senkusha_port: int = senkusha.PORT,
-                 figures: Callable[[], dict] | None = None, stats_dir: Path | None = None, **kwargs) -> Outcome:
+                 figures: Callable[[], dict] | None = None, stats_dir: Path | None = None,
+                 players: stream.PlayerExperiment = stream.PlayerExperiment(), simulated_loss: float = 0.0,
+                 **kwargs) -> Outcome:
     """The stream until *stop* is set (the stream window closes): each decoded picture goes to *deliver* while
     *wanted* says the window has taken the last one, the sound to *play* (PCM, rate, channels). The board's
     controllers play, read through *gamepads* (SDL3; None: the console sees a controller lying still). With
@@ -291,7 +306,8 @@ def watch_stream(console: RegisteredConsole, deliver: Callable[[Picture], None],
         began = time.monotonic()
         connection, _info = _run_stream(console, started, math.inf, stop.is_set, stream_port, stream_timeout,
                                         senkusha_port, gamepads, figures, stats_dir, on_picture=deliver,
-                                        picture_wanted=wanted, on_sound=play)
+                                        picture_wanted=wanted, on_sound=play, players=players,
+                                        simulated_loss=simulated_loss)
         seconds = time.monotonic() - began
         return (f"Stream with {console.nickname or console.address} ended after {seconds:.0f} s: "
                 f"{_stream_summary(connection, seconds)}.")

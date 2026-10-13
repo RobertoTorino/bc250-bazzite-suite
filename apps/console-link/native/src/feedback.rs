@@ -235,6 +235,8 @@ pub fn touch_event(down: bool, id: u8, x: u16, y: u16) -> Vec<u8> {
 #[derive(Debug, Default)]
 pub struct HistoryBuffer {
     events: VecDeque<Vec<u8>>,
+    /// The several-players experiment: OR-ed into each event's first byte (0 for the reference's one controller).
+    pub mark: u8,
 }
 
 impl HistoryBuffer {
@@ -246,7 +248,8 @@ impl HistoryBuffer {
         self.events.is_empty()
     }
 
-    pub fn push(&mut self, event: Vec<u8>) {
+    pub fn push(&mut self, mut event: Vec<u8>) {
+        event[0] |= self.mark;
         self.events.push_front(event);
         self.events.truncate(HISTORY_BUFFER_SIZE);
     }
@@ -295,11 +298,21 @@ impl HistoryBuffer {
 
 /// A FEEDBACK_STATE packet, not yet sealed.
 pub fn state_packet(version: u8, seq_num: u16, state: &ControllerState) -> Vec<u8> {
+    states_packet(version, seq_num, &[*state], 0)
+}
+
+/// A FEEDBACK_STATE packet with several states (byte 3 counts them; the reference always sends one), the first
+/// byte of each OR-ed with mark: for the several-players experiment.
+pub fn states_packet(version: u8, seq_num: u16, states: &[ControllerState], mark: u8) -> Vec<u8> {
     let mut buf = vec![PACKET_FEEDBACK_STATE];
     buf.extend_from_slice(&seq_num.to_be_bytes());
-    buf.push(1);                                    // one state
+    buf.push(states.len() as u8);
     buf.extend_from_slice(&[0; 8]);                 // key position and GMAC
-    buf.extend_from_slice(&state_format(version, state));
+    for state in states {
+        let mut formatted = state_format(version, state);
+        formatted[0] |= mark;
+        buf.extend_from_slice(&formatted);
+    }
     buf
 }
 
@@ -344,6 +357,11 @@ pub struct Sender {
     last_history: Option<(u8, Vec<u8>, Instant)>,
     tail_resends: usize,
     pub overflows: u64,
+    /// The several-players experiment: OR-ed into the first byte of each state and event this sender sends.
+    mark: u8,
+    /// The several-players experiment: a second controller's state, sent in the same FEEDBACK_STATE packets.
+    extra: Option<ControllerState>,
+    extra_changed: bool,
 }
 
 impl Sender {
@@ -362,7 +380,29 @@ impl Sender {
             last_history: None,
             tail_resends: HISTORY_TAIL.len(),
             overflows: 0,
+            mark: 0,
+            extra: None,
+            extra_changed: false,
         }
+    }
+
+    /// A sender for another controller in the several-players experiment: mark goes into the first byte of its
+    /// states and events.
+    pub fn marked(version: u8, now: Instant, mark: u8) -> Self {
+        let mut sender = Sender::new(version, now);
+        sender.mark = mark;
+        sender.history.mark = mark;
+        sender
+    }
+
+    /// The several-players experiment: a second controller's state, sent beside this one in each FEEDBACK_STATE.
+    pub fn set_extra(&mut self, state: ControllerState) {
+        if self.extra.is_some_and(|extra| extra.same_feedback_state(&state)) {
+            return;
+        }
+        self.extra = Some(state);
+        self.extra_changed = true;
+        self.changed = true;
     }
 
     /// A new controller state; the same input as before changes nothing.
@@ -404,11 +444,13 @@ impl Sender {
         if self.changed {
             self.changed = false;
             // Only the buttons changed: no state packet, as in the reference, even when one is due.
-            send_state = !self.state.same_feedback_state(&self.state_sent);
+            send_state = !self.state.same_feedback_state(&self.state_sent) || self.extra_changed;
+            self.extra_changed = false;
         }
         let mut packets = Vec::new();
         if send_state {
-            packets.push(state_packet(self.version, self.state_seq_num, &self.state));
+            let states: Vec<ControllerState> = std::iter::once(self.state).chain(self.extra).collect();
+            packets.push(states_packet(self.version, self.state_seq_num, &states, self.mark));
             self.state_seq_num = self.state_seq_num.wrapping_add(1);
             self.state_sent = self.state;
             self.last_state = now;
@@ -609,5 +651,49 @@ mod tests {
         }
         assert_eq!((sender.queue.len(), sender.overflows), (HISTORY_PACKET_QUEUE_SIZE, 3));
         assert_eq!(sender.queue[0].1[..3], [0x80, 0x86, 4]);
+    }
+
+    // The several-players experiment.
+
+    #[test]
+    fn two_states_in_one_packet_and_marked_first_bytes() {
+        let mut second = ControllerState::idle();
+        second.left_x = 0x1234;
+        let packet = states_packet(9, 7, &[ControllerState::idle(), second], 1);
+        assert_eq!(packet.len(), HEADER_SIZE + 2 * STATE_SIZE_V9);
+        assert_eq!(packet[..4], [PACKET_FEEDBACK_STATE, 0, 7, 2]);
+        assert_eq!((packet[HEADER_SIZE], packet[HEADER_SIZE + STATE_SIZE_V9]), (0xa1, 0xa1));
+        assert_eq!(packet[HEADER_SIZE + STATE_SIZE_V9 + 0x11..][..2], [0x12, 0x34]);
+        assert_eq!(state_packet(9, 7, &second), states_packet(9, 7, &[second], 0));    // the reference's packet
+    }
+
+    #[test]
+    fn a_marked_sender_marks_its_states_and_events() {
+        let now = Instant::now();
+        let mut sender = Sender::marked(9, now, 2);
+        let mut state = ControllerState::idle();
+        state.buttons = BUTTON_CROSS;
+        state.left_x = 100;
+        sender.set(state);
+        let packets = sender.step(now);
+        assert_eq!(packets.len(), 2);
+        assert_eq!(packets[0][HEADER_SIZE], 0xa2);                                // the state
+        assert_eq!(packets[1][HEADER_SIZE..HEADER_SIZE + 3], [0x82, 0x88, 0xff]);  // cross pressed
+    }
+
+    #[test]
+    fn a_second_state_goes_out_with_the_first() {
+        let now = Instant::now();
+        let mut sender = Sender::new(9, now);
+        assert!(sender.step(now).is_empty());
+        let mut second = ControllerState::idle();
+        second.right_y = -5;
+        sender.set_extra(second);
+        assert!(sender.ready());
+        let packets = sender.step(now);
+        assert_eq!(packets.len(), 1);
+        assert_eq!((packets[0][3], packets[0].len()), (2, HEADER_SIZE + 2 * STATE_SIZE_V9));
+        sender.set_extra(second);                                                 // the same: nothing new
+        assert!(!sender.ready());
     }
 }

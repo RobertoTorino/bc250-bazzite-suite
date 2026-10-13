@@ -35,12 +35,16 @@ board.
 ## Using it
 
 The top row shows how many consoles answered the last search, how many the board is registered with, how the
-**last session** went and the **console type** the console reported.
+**last session** went, and **Console**: the selected registered console's model and system software (**PS4 Pro ·
+14.00**; the exact model once a session has run). Hold the mouse over it for more: its state and what runs on it
+(the game's name and title ID) as the last search found them, its Remote Play version and the last stream's
+network test. A PS5 does not report its system software this way, so for a PS5 the box shows the model only.
 
 **Consoles on the network:**
 
 - **Search:** asks every PS4 and PS5 on the network to answer. Each one is listed with its name, model, address,
-  state (**On** or **Rest mode**) and system version, and whether the board is registered with it.
+  state (**On** or **Rest mode**) and system software (a PS4's, 14.00 for example; a PS5 reports a code instead),
+  and whether the board is registered with it.
 - **Search at address:** asks one address. Use it when the search finds nothing, for example on a network that
   does not pass broadcasts (some mesh systems, a guest network, a VPN). The app remembers the address.
 
@@ -79,11 +83,13 @@ wrong account ID is reported in the log at the bottom.
   registration and the connection to the console are in order. The log shows each step.
 - **Test stream:** starts a session, runs a short network test, then the stream for 5 seconds, and closes it all.
   The network test measures the round trip and the largest packets that pass each way, and the stream asks for
-  those. The board asks for 1080p at 60 frames per second from a PS5 and a PS4 Pro and 720p from a PS4, all in
-  H.264, which the board decodes faster than HEVC. When it works, the log shows the network test's results and the
+  those. The board asks for what the console's **Stream settings…** say: by default 1080p at 60 frames per second
+  from a PS5 and a PS4 Pro and 720p from a PS4, all in H.264, which the board decodes faster than HEVC. When it works, the log shows the network test's results and the
   resolutions the console offers, and the message how many frames and sound packets arrived. Frames with a few
   packets lost are rebuilt from the spare packets the console sends along; the message counts those and the frames
-  lost. The frames are decoded but not shown: with the GPU's video decoder where it has one (VA-API), else by the
+  lost. When a frame cannot be rebuilt, the board asks the console for a fresh key frame (a picture that needs no
+  earlier one) and leaves out the frames until it comes, and it leaves out any frame whose earlier frame was lost,
+  so the picture freezes for a moment instead of smearing; the message counts those too. The frames are decoded but not shown: with the GPU's video decoder where it has one (VA-API), else by the
   processor. The BC-250 has none, so on the board it is always the processor; the log names which and how long a
   frame takes. When the network test fails, the stream still runs, with safe values. It needs the app's native core
   (see [Install and remove](#install-and-remove)).
@@ -102,6 +108,21 @@ wrong account ID is reported in the log at the bottom.
   it (on a controller with motors and a light bar). A DualSense's adaptive triggers do not work yet. Without a
   controller, the console sees one lying still with nothing pressed. Closing the window ends the
   stream; the log then has the same counts as Test stream, and how many controller packets went out.
+- **Stream settings…:** how the selected console streams, from its next stream on (the Game Mode shortcut's
+  too). Each console keeps its own.
+    - **Resolution:** Automatic asks for 1080p from a PS5 or a PS4 Pro and 720p from a PS4; or 360p, 540p, 720p,
+      1080p. Lower is lighter for the network and the board. A PS4 that is not a Pro streams at most 720p.
+    - **Frame rate:** 60 or 30 frames per second.
+    - **Bitrate:** Automatic (2, 6, 10 or 15 Mbit/s by resolution) or your own, 1 to 50 Mbit/s. More is sharper in
+      busy scenes and needs a better network; on Wi-Fi less is safer.
+    - **Picture:** Fit shows the whole picture with black bars where the screen's shape differs; Stretch fills the
+      screen and distorts the picture; Fill fills the screen and cuts off the picture's edges. The console always
+      sends 16:9.
+    - **Audio delay:** plays the sound later, up to 500 ms, for a TV or audio system that shows the picture later
+      than it plays the sound.
+    - **Low latency:** a shorter sound buffer and the decoder's low-delay mode: a little less delay, with more risk
+      of short gaps in the sound on a busy network or board.
+  **Restore Defaults** puts back the automatic settings.
 - **Controller test…:** every button, stick, trigger and the touchpad of the controllers on the board, live, and
   the motion sensors. Each button is ticked once it has been pressed; a stick that does not come back inside the
   small circle when you let go drifts. **Rumble left**, **Rumble right** and **Light bar** try the motors and the
@@ -121,7 +142,9 @@ wrong account ID is reported in the log at the bottom.
 - **Rest mode:** puts the console in rest mode, through a short session.
 - **Login passcode…:** when the PSN account on the console has a 4-digit login passcode, the console asks for it
   at the start of a session. Enter it here once.
-- **Remove:** forgets the console's keys on the board. A PS5 lists the board under Link Device: remove it there
+- **Remove:** forgets the console's keys on the board. When the console has a Game Mode shortcut, the app offers to
+  remove it from Steam too (Steam closes for it and starts again; in Game Mode itself, remove it in Desktop Mode
+  or in Steam). A PS5 lists the board under Link Device: remove it there
   too to undo the registration completely. A PS4 has no such list. It keeps a history of the connections under
   Settings > Remote Play Connection Settings > **Connection History** (date, account, nearby or over the internet,
   and the device, which shows as PC); the OPTIONS button there clears all entries at once.
@@ -131,7 +154,7 @@ the registered console.
 
 ## Where it keeps what
 
-- `~/.config/bc250-console-link/consoles.json`: the registered consoles and their keys. Anyone with these keys can
+- `~/.config/bc250-console-link/consoles.json`: the registered consoles, their keys and their stream settings. Anyone with these keys can
   start a session with your account on the console, so the file is readable only by you.
 - `~/.config/bc250-console-link/bc250-console-link.ini`: your account ID, the last address you searched and the
   window size. The account ID only identifies the account; it gives no access to it.

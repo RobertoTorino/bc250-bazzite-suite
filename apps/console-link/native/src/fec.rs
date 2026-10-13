@@ -189,24 +189,7 @@ pub fn encode(buf: &mut [u8], unit_size: usize, stride: usize, k: usize, m: usiz
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn base64(text: &str) -> Vec<u8> {
-        let value = |c: u8| match c {
-            b'A'..=b'Z' => c - b'A',
-            b'a'..=b'z' => c - b'a' + 26,
-            b'0'..=b'9' => c - b'0' + 52,
-            b'+' => 62,
-            b'/' => 63,
-            _ => panic!("not base64"),
-        };
-        let digits: Vec<u8> = text.bytes().filter(|&c| c != b'=').map(value).collect();
-        let mut out = Vec::new();
-        for chunk in digits.chunks(4) {
-            let n = chunk.iter().enumerate().fold(0u32, |n, (i, &d)| n | (d as u32) << (18 - 6 * i));
-            out.extend_from_slice(&n.to_be_bytes()[1..chunk.len()]);
-        }
-        out
-    }
+    use crate::vectors::base64;
 
     #[test]
     fn field_arithmetic() {

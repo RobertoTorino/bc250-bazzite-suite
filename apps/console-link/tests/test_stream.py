@@ -228,6 +228,61 @@ def test_shoulders_right_stick_and_touchpad_reach_the_console(console_factory):
     assert any(payload[0x15:0x19] == h("80007fff") for _, payload in console.feedback_states)
 
 
+@pytest.mark.parametrize("text, expected", [
+    ("announce", ("announce", 1, 1)), ("marked:2", ("marked", 2, 1)), ("packed:1:3", ("packed", 1, 3)),
+])
+def test_player_experiment_options(text, expected):
+    players = stream.PlayerExperiment.parse(text)
+    assert (players.mode, players.controller_id, players.mark) == expected and players.on
+    assert not stream.PlayerExperiment().on
+    for bad in ("two", "marked:16", "marked:1:2:3", "marked:x"):
+        with pytest.raises(ValueError):
+            stream.PlayerExperiment.parse(bad)
+
+
+def test_player_experiment_marked_sends_the_second_controller_apart(console_factory, capsys):
+    console = console_factory(Target.PS4_10)
+    with _connection(console, players=stream.PlayerExperiment("marked", 1, 1)) as connection:
+        connection.connect()
+        connection.set_controller(left=(1000, 0))
+        connection.set_second_controller(buttons=1, left=(-1000, 0))        # cross on the second controller
+        connection.run(0.1)
+    # Announced twice: the first controller as the reference does, the second with its controller_id.
+    assert console.wait_until(lambda: len(console.controller_connections) == 2)
+    first, second = console.controller_connections
+    assert 1 not in first and second[1] == [1] and second[2] == [1]
+    assert console.wait_until(lambda: any(p[:2] == h("8188") for _, _, p in console.feedback_history))
+    marks = {payload[0] for _, payload in console.feedback_states}
+    assert marks == {0xa0, 0xa1}                                            # each controller's states, marked
+    assert not any(p[:2] == h("8088") for _, _, p in console.feedback_history)   # the first pressed nothing
+    assert "Experiment marked: a second controller announced" in capsys.readouterr().err
+    assert console.errors == []
+
+
+def test_player_experiment_packed_sends_two_states_in_one_packet(console_factory):
+    console = console_factory(Target.PS4_10)
+    with _connection(console, players=stream.PlayerExperiment("packed")) as connection:
+        connection.connect()
+        connection.set_second_controller(right=(0, 1234))
+        connection.run(0.1)
+    assert console.wait_until(lambda: any(len(p) == 2 * 0x19 for _, p in console.feedback_states))
+    pair = next(p for _, p in console.feedback_states if len(p) == 2 * 0x19)
+    assert pair[0] == pair[0x19] == 0xa0 and pair[0x19 + 0x17:0x19 + 0x19] == h("04d2")
+    assert console.errors == []
+
+
+def test_low_latency_opens_the_decoder_in_low_delay_mode(console_factory):
+    if not getattr(__import__("bc250_console_link_core"), "DECODER", False):
+        pytest.skip("this native core has no decoder")
+    console = console_factory(Target.PS4_10, frames=3)
+    pictures = []
+    with _connection(console, low_latency=True, on_picture=pictures.append) as connection:
+        connection.connect()
+        connection.run(0.5)
+    assert any(line.startswith("Video decoder: FFmpeg") and line.endswith(", low delay.") for line in connection.log)
+    assert pictures and console.errors == []
+
+
 def test_rumble_and_pad_info_go_to_the_controllers(console_factory):
     console = console_factory(Target.PS4_10)
     outputs = []
@@ -243,13 +298,17 @@ def test_rumble_and_pad_info_go_to_the_controllers(console_factory):
         # player.
         console.send_data(stream.DATA_PAD_INFO, bytes(8) + bytes([1, 0, 0, 0xff, 1]) + bytes(12))
         console.send_data(stream.DATA_RUMBLE, bytes([0, 0]))                    # too short: noted, nothing sent
-        console.send_data(stream.DATA_PAD_INFO, bytes(5))                       # neither layout: noted
+        seven = bytes.fromhex("00000040010000")                                 # a PS4's 7 bytes (owner's PS4 Pro)
+        console.send_data(stream.DATA_PAD_INFO, seven)                          # neither layout: noted once
+        console.send_data(stream.DATA_PAD_INFO, seven)
         console.send_data(11, bytes(25))                                        # trigger effects: not used yet
         connection.run(0.2)
     assert outputs[2:] == [("rumble", 0x80, 0xff), ("motion_reset",), ("led", (0, 0, 0xff))]
     assert (connection.stats.rumble, connection.stats.pad_info, connection.stats.other_data) == (1, 2, 1)
     assert "The console sent a rumble message of 2 bytes (3 at least)." in connection.log
-    assert "The console sent pad info of 5 bytes (25 or 17 expected)." in connection.log
+    unknown = [line for line in connection.log if "pad info of 7 bytes" in line]
+    assert unknown == ["The console sent pad info of 7 bytes, a layout not known yet (00 00 00 40 01 00 00); such "
+                       "messages are left aside."] and connection.stats.pad_info_unknown == 2
 
 
 def test_motion_reaches_the_console(console_factory):
@@ -273,15 +332,42 @@ def test_lost_units_come_from_fec(console_factory):
         assert connection.stats.corrupt_sent == []
 
 
-def test_lost_frames_are_reported_to_the_console(console_factory):
-    console = console_factory(frames=4, lose_frames={2}, lose_units={(3, 0), (3, 1), (3, 2)})
+def test_lost_frames_are_reported_to_the_console_and_a_key_frame_asked_for(console_factory):
+    # The clip has a key frame every 6: frames 1 and 7 here.
+    console = console_factory(frames=8, lose_frames={2}, lose_units={(3, 0), (3, 1), (3, 2)})
     with _connection(console) as connection:
         connection.connect()
         connection.run(0.5)
-        assert connection.stats.frames == 2 and connection.stats.frames_lost == 2
-        # Frame 2 never came; frame 3 had too few units. Frame 4's start reports 2 to 3 again, as the reference does.
-        assert connection.stats.corrupt_sent == [(2, 2), (2, 3), (2, 3)]
-    assert console.wait_until(lambda: console.received.count(tkproto.CORRUPTFRAME) == 3)
+        video = connection.takion.video_stats()
+        # Frame 2 never came; frame 3 had too few units: the console is told, and asked for a key frame. Frames 4 to
+        # 6 depend on the lost ones and are skipped; 7 is the key frame, 8 follows it.
+        assert connection.stats.frames == 3 and connection.stats.frames_lost == 2
+        assert (video["idr_requests"], video["frames_skipped"], video["fec_failed"]) == (1, 3, 1)
+        # Each frame's start reports the frames since the last one handed out again, as the reference does.
+        assert connection.stats.corrupt_sent[:3] == [(2, 2), (2, 3), (2, 3)]
+    assert console.wait_until(lambda: console.received.count(tkproto.IDRREQUEST) == 1)
+
+
+def test_late_and_lost_video_packets_are_counted_apart(console_factory):
+    console = console_factory(frames=4, late_units={(2, 0)}, lose_units={(3, 1)})
+    with _connection(console) as connection:
+        connection.connect()
+        connection.run(0.5)
+        stats = connection.takion.stats()
+        # The late unit was waited for and came; the lost one was waited for and skipped, FEC rebuilt its frame.
+        assert stats["video_late"] == 1 and stats["video_skipped"] == 1
+        assert connection.stats.frames == 4 and connection.stats.fec_frames == 1
+        assert "1 video packets never came, 1 came late" in connection.video_summary()
+
+
+def test_simulated_loss_drops_video_packets_on_purpose(console_factory, capsys):
+    console = console_factory(frames=6)
+    with _connection(console, simulated_loss=100.0) as connection:
+        connection.connect()
+        connection.run(0.5)
+        assert connection.takion.stats()["video_simulated_lost"] > 0 and connection.stats.frames == 0
+        assert "dropped on purpose" in connection.video_summary()
+    assert "Trying the recovery: 100% of the video packets are dropped on purpose." in capsys.readouterr().err
 
 
 def test_streaminfo_before_bang_is_kept(console_factory):
@@ -399,6 +485,7 @@ def test_stream_job_runs_session_and_stream(console_factory, tmp_path):
         network.close()
     assert watched.ok, watched.message
     assert watched.message.startswith("Stream with PS5 ended after ") and "rebuilt with FEC" in watched.message
+    assert watched.value.network.startswith("round trip ") and " bytes in and " in watched.value.network
     if getattr(__import__("bc250_console_link_core"), "DECODER", False):
         assert len(pictures) >= 2                   # the stop is looked at between heartbeats, at most 1 s later
         assert (pictures[0].format, pictures[0].width, pictures[0].height) == ("yuv420p", 160, 96)

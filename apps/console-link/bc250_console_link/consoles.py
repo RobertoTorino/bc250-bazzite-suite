@@ -15,6 +15,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from .regist import Registration
+from .stream_options import StreamOptions
 from .target import Target
 
 FILE_NAME = "consoles.json"
@@ -31,6 +32,7 @@ class RegisteredConsole:
     mac: bytes = b""
     rp_key_type: int = 0
     login_pin: str = ""
+    options: StreamOptions = StreamOptions()   # the stream settings (stream_options.py)
 
     @property
     def ps5(self) -> bool:
@@ -52,6 +54,7 @@ class RegisteredConsole:
         data["target"] = int(self.target)
         for name in ("regist_key", "rp_key", "mac"):
             data[name] = getattr(self, name).hex()
+        data["options"] = self.options.to_json()
         return data
 
     @classmethod
@@ -60,7 +63,8 @@ class RegisteredConsole:
                    address=str(data["address"]), target=Target(int(data["target"])),
                    regist_key=bytes.fromhex(data["regist_key"]), rp_key=bytes.fromhex(data["rp_key"]),
                    mac=bytes.fromhex(data.get("mac", "")), rp_key_type=int(data.get("rp_key_type", 0)),
-                   login_pin=str(data.get("login_pin", "")))
+                   login_pin=str(data.get("login_pin", "")),
+                   options=StreamOptions.from_json(data.get("options")))
 
 
 class ConsoleStore:

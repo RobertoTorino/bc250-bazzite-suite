@@ -1,3 +1,51 @@
+Changelog: 13-10-2026 22:47:54
+
+Release 1.0.2.
+
+Changelog: 13-10-2026 22:43:36
+
+A new wide picture from the owner (images/steam/wide.png, 920 × 430) without the title at the bottom, so the console's name band no longer covers it.
+
+Changelog: 13-10-2026 22:05:08
+
+A new banner from the owner (images/steam/hero.png): the title on one line, lower, out of the part Steam crops or covers at the top.
+
+Changelog: 13-10-2026 21:41:15
+
+A new banner from the owner (images/steam/hero.png, 3840 × 1240): the app's title at the top left. Steam lays the logo image over the banner; on the board: check the two do not overlap.
+
+Changelog: 13-10-2026 21:16:51
+
+The owner's own pictures for the Game Mode shortcut in images/steam/ (portrait 1200 × 1800, wide 920 × 430, banner 3840 × 1240, logo 720 × 720, transparent), used instead of the drawn ones; the console's name and model are written over the portrait. The wide one still has the app's title where the name band goes: the owner makes a new one without it.
+
+Changelog: 13-10-2026 19:24:20
+
+The Console box (owner, 13-10-2026: a small system info in the window): Console type becomes Console, showing the selected registered console's model and system software (PS4 Pro · 14.00), with a tooltip: the state and what runs on it (the game's name and title ID, which discovery already reported), the Remote Play version and the last stream's network test (round trip, packet sizes). The System column shows a PS4's software version instead of the raw code: target.software_version reads 14008001 as 14.00 (the owner's PS4 Pro on 14.00 answered 14008001 to the board's search); a PS5 reports a Remote Play generation there (08050001), so its code stays as it is. Disk size and free space are not reported by anything the console offers on the network. Tests: the version, the box before and after a search and a session, the System column, the network test from a stream.
+
+Changelog: 13-10-2026 18:38:03
+
+Remove also offers to remove the console's Game Mode shortcut (it would start a console no longer registered): asked after the console is forgotten, Steam closed for it and started again (jobs.steam_shortcut with remove, as before unused); in Game Mode the log says to remove it in Desktop Mode or in Steam. The manual says so. Test: without a shortcut nothing is asked; with one, declined or done.
+
+Changelog: 13-10-2026 18:30:38
+
+Fix (owner's board, 13-10-2026: streams started with --stream, as the Game Mode shortcut does, ended without their summary when the window was closed, one without the statistics file's last line): closing the window quit the app at once, cutting the stream's own end short (the session closed, the console told). Now the app quits once the stream has closed, within 5 seconds. Also counted: video packets that came late while waited for, apart from those that never came (the log's summary), to find out on Wi-Fi whether waiting up to a frame for a missing packet pays off. Tests: closing waits for the stream; a late and a lost packet (the fake console sends units late).
+
+Changelog: 13-10-2026 18:05:08
+
+Recovery from lost packets (owner, 13-10-2026; the plan's open part of iteration 2): the reference's look into the bitstream, in the native core. bitstream.rs reads the stream's parameter sets (STREAMINFO's headers, now handed to start_stream) and each frame's first slice header: key frame or not, and which earlier frame it refers to (H.264's reference list modification; HEVC's short-term reference set). The video receiver keeps the last 16 frames handed out; a P frame whose reference is not among them is not handed out (HEVC: pointed at an older one when there is one, as in the reference); after a frame FEC could not rebuild, the console is asked for a key frame (IDRREQUEST, the reference's IDR on FEC failure, always on here) and the frames until it comes are skipped; asked again after 60 frames without one (a deliberate addition); and a fail-safe of our own: a reference found missing while nothing was lost since the last key frame means the headers were misread, so the check stays off for that stream and the log says so (the console's own parameter sets are in no test yet). Deliberate differences in the bitstream: H.264 slice headers read as the standard writes them, with the parameter sets' fields that decide which fields come, where the reference assumes the console's usual values; scaling matrices skipped instead of refused; every HEVC key frame type taken as one. Checked on frames recorded from a console (the FEC vectors: P slices) and on the decoder's x264 and x265 clips (a key frame every 6). The log's summary, the statistics file (recovery per second) and the manual say so. For trying it on a network that loses nothing (not for users): --simulate-loss PERCENT with --stream drops that share of the video packets on arrival. Tests: Exp-Golomb and emulation prevention, H.264 SPS, PPS and slices with and without a reference change, HEVC's reference changed in place, the recorded and encoded frames, the receiver's three cases, the whole recovery against the fake console (a key frame asked for once, three frames skipped, the stream on from the next key frame), the simulated loss. The test helpers share one base64 decoder.
+
+Changelog: 13-10-2026 16:54:26
+
+Stream settings (owner's decisions, 13-10-2026: per console, in a dialog; resolution, frame rate, bitrate, audio delay, low latency and the picture's fit): Stream settings… beside Stream. stream_options.py: StreamOptions kept with the console in consoles.json (older files get the defaults), so the Game Mode shortcut streams with them too; Automatic is the reference's presets as before; a PS4 that is not a Pro streams at most 720p whatever is chosen. jobs.stream_profile asks for them; the log and the statistics file name them. Audio delay: the sound buffer first fills to the delay, after the start and after every gap, with its drop limits moved up by the same. Low latency: a shorter sound buffer (target 20 ms, at most 60, the output's own 20 ms) and FFmpeg's low-delay mode (native core: Decoder(low_delay=True), bc_decoder_new's new argument). Picture: fit (as before), stretch, or fill (the viewport larger than the window, the edges cut off). options_dialog.py: the dialog, with Restore Defaults. The manual describes each setting. Tests: the settings and their limits, kept with the console, what the stream asks for, the dialog, the window's button (saved, Cancel keeps), the fits, the audio delay, the low-delay decoder against the fake console and on the reference clips (the same pictures).
+
+Changelog: 13-10-2026 16:44:32
+
+Pad info of 7 bytes (owner's board, 13-10-2026: the owner's PS4 Pro sends 00 00 00 40 01 00 00 at the stream's start and when a PS press hands it a controller, a layout the reference does not know): counted and noted once per stream instead of at every message. Test: two such messages, one note.
+
+Changelog: 13-10-2026 16:11:03
+
+The several-players experiment (owner, 13-10-2026: find out whether the console takes a second controller as a second player; not for users): a hidden option, --player-experiment MODE[:CONTROLLER_ID[:MARK]] with --stream, run from a terminal. announce: a second CONTROLLERCONNECTION with a controller_id (the reference sends none), the second controller's input kept apart and not sent; marked: also its input, through a second feedback sender whose states and events carry the mark in their first byte (0xa1, 0x81, ...); packed: also its state, as a second state in the first one's FEEDBACK_STATE packets (byte 3 = 2). In the experiment the notes go to the terminal as they happen, with the raw bytes of what the console sends (rumble, pad info, other data, unknown messages, the first 40), and the statistics file's header names it. Without the option nothing changes. The native core: feedback.rs states_packet with several states and a mark, Sender::marked and set_extra; connection.rs PlayerExperiment and the second sender; python.rs set_player_experiment and set_second_controller_state. Tests: the packets (Rust), the option, marked and packed against the fake console (which now records every CONTROLLERCONNECTION), the reader keeping the second controller apart.
+
 Changelog: 13-10-2026 15:53:27
 
 Release 1.0.1.

@@ -52,3 +52,27 @@ def test_player_without_an_audio_output(qapp, monkeypatch):
     assert player.error == "no audio output" and player.buffer is None
     player.push(bytes(TEN_MS), 48000, 2)                         # later sound is dropped, not queued
     player.stop()
+
+
+def test_audio_delay_holds_the_sound_back():
+    buffer = SoundBuffer(48000, 2, delay_ms=50)                 # 50 ms = 9600 bytes
+    ten_ms = bytes(range(240)) * 8                              # 10 ms of 48 kHz stereo: 1920 bytes
+    buffer.push(ten_ms * 4)                                     # 40 ms: not enough yet, silence
+    assert buffer.read(1920) == bytes(1920) and buffer.buffered == 4 * 1920
+    buffer.push(ten_ms)                                         # 50 ms: it plays, from the oldest
+    assert buffer.read(1920) == ten_ms
+    assert buffer.read(4 * 1920) == ten_ms * 4                  # all of it
+    assert buffer.read(1920) == bytes(1920)                     # a gap: filling again from here
+    buffer.push(ten_ms)
+    assert buffer.read(1920) == bytes(1920)
+    # The drop limits move up by the delay: 150 ms of sound is kept, 160 ms drops to the target of 90.
+    full = SoundBuffer(48000, 2, delay_ms=50)
+    full.push(ten_ms * 15)
+    assert full.dropped_bytes == 0
+    full.push(ten_ms)
+    assert full.buffered == 9 * 1920
+
+
+def test_player_takes_the_settings(qapp):
+    player = sound_out.SoundPlayer(None, delay_ms=80, low_latency=True)
+    assert (player.delay_ms, player.low_latency) == (80, True)

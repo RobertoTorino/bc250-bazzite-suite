@@ -92,10 +92,12 @@ def corrupt_frame(start: int, end: int) -> bytes:
     return message(CORRUPTFRAME, F_CORRUPT, uint(1, start) + uint(2, end))
 
 
-def controller_connection(dualsense: bool) -> bytes:
-    """The controller is connected; the reference sends no controller ID."""
+def controller_connection(dualsense: bool, controller_id: int | None = None) -> bytes:
+    """The controller is connected; the reference sends no controller ID. With one: the several-players
+    experiment's second controller."""
+    ident = uint(1, controller_id) if controller_id is not None else b""
     return message(CONTROLLERCONNECTION, F_CONTROLLER_CONNECTION,
-                   uint(2, 1) + uint(3, DUALSENSE if dualsense else DUALSHOCK4))
+                   ident + uint(2, 1) + uint(3, DUALSENSE if dualsense else DUALSHOCK4))
 
 
 def microphone(audio_header: bytes) -> bytes:

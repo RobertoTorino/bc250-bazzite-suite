@@ -159,10 +159,17 @@ def line(stream_now: dict, stream_before: dict, window: dict, window_before: dic
         mbit = _delta(stream_now, stream_before, "frame_bytes") * 8 / max(seconds, 1e-6) / 1e6
         decoded = _delta(stream_now, stream_before, "decoded")
         decode_ms = _delta(stream_now, stream_before, "decode_seconds") * 1000 / max(frames, 1)
-        parts.append(f"in {frames:.0f} frames {mbit:.1f} Mbit/s, longest gap {stream_now.get('frame_gap_max', 0) * 1000:.0f} ms, "
+        gap_ms = stream_now.get("frame_gap_max", 0) * 1000
+        parts.append(f"in {frames:.0f} frames {mbit:.1f} Mbit/s, longest gap {gap_ms:.0f} ms, "
                      f"lost {_delta(stream_now, stream_before, 'frames_lost'):.0f}, "
                      f"FEC {_delta(stream_now, stream_before, 'fec_frames'):.0f}")
         parts.append(f"decode {decoded:.0f} avg {decode_ms:.1f} max {stream_now.get('decode_max', 0) * 1000:.1f} ms")
+        if "idr_requests" in stream_now:
+            failed = _delta(stream_now, stream_before, "fec_failed")
+            parts.append(f"recovery: FEC failed {failed:.0f}, key frames asked "
+                         f"{_delta(stream_now, stream_before, 'idr_requests'):.0f}, skipped "
+                         f"{_delta(stream_now, stream_before, 'frames_skipped'):.0f}, no reference "
+                         f"{_delta(stream_now, stream_before, 'missing_reference'):.0f}")
         parts.append(f"sound in {_delta(stream_now, stream_before, 'audio_frames'):.0f} frames, "
                      f"lost {_delta(stream_now, stream_before, 'audio_lost'):.0f}")
     if window:

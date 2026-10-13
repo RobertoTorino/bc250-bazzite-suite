@@ -7,9 +7,10 @@ stream window's status line. Closing the window ends the program."""
 from __future__ import annotations
 
 import threading
+import time
 from pathlib import Path
 
-from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QObject, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QApplication
 
 from bc250_core.app import exec_app
@@ -17,6 +18,7 @@ from bc250_core.platform import config_home
 
 from . import APP_ID, APP_NAME, jobs, stream_stats
 from .consoles import ConsoleStore, RegisteredConsole
+from .stream import PlayerExperiment
 from .stream_view import KEYS, StreamWindow
 
 
@@ -33,14 +35,19 @@ def find_console(consoles: list[RegisteredConsole], wanted: str) -> RegisteredCo
     return None
 
 
+CLOSE_TIMEOUT = 5.0                     # s the app waits, after the window closes, for the stream to close
+
 class DirectStream:
     """The window and the thread that wakes the console and runs the stream. *ops* is jobs (a stand-in in tests)."""
 
-    def __init__(self, console: RegisteredConsole, app: QApplication, ops=jobs, full_screen: bool = True):
-        self.console, self.app, self.ops = console, app, ops
+    def __init__(self, console: RegisteredConsole, app: QApplication, ops=jobs, full_screen: bool = True,
+                 players: PlayerExperiment = PlayerExperiment(), simulated_loss: float = 0.0):
+        self.console, self.app, self.ops, self.players = console, app, ops, players
+        self.simulated_loss = simulated_loss
         self.stop = threading.Event()
         self.messenger = Messenger()
-        self.window = StreamWindow(f"{console.nickname or 'Console'} · {APP_NAME}", self._closed)
+        self.window = StreamWindow(f"{console.nickname or 'Console'} · {APP_NAME}", self._closed,
+                                   options=console.options)
         self.messenger.status.connect(self._show)
         self.outcome = None
         if full_screen:
@@ -56,7 +63,15 @@ class DirectStream:
         self.window.status.setText(text)
 
     def _closed(self) -> None:
+        """The window closed: the stream stops, and the app quits once the stream has closed the session (the
+        console is told), within CLOSE_TIMEOUT. Quitting at once cut that short (owner's board, 13-10-2026)."""
         self.stop.set()
+        self._quit_when_done(time.monotonic() + CLOSE_TIMEOUT)
+
+    def _quit_when_done(self, deadline: float) -> None:
+        if self.thread.is_alive() and time.monotonic() < deadline:
+            QTimer.singleShot(50, lambda: self._quit_when_done(deadline))
+            return
         self.app.quit()
 
     def _run(self) -> None:
@@ -68,13 +83,17 @@ class DirectStream:
         self.messenger.status.emit(f"{on.message} Starting the stream…")
         window = self.window
         self.outcome = self.ops.watch_stream(on.value, window.deliver, window.wanted, self.stop, window.play,
-                                             figures=window.figures, stats_dir=stream_stats.folder())
+                                             figures=window.figures, stats_dir=stream_stats.folder(),
+                                             **({"players": self.players} if self.players.on else {}),
+                                             **({"simulated_loss": self.simulated_loss} if self.simulated_loss else {}))
         if not self.stop.is_set():                      # ended by the console or a fault, not by closing
             self.messenger.status.emit(f"{self.outcome.message} Close this window to go back.")
 
 
-def run(wanted: str, app: QApplication, config_dir: Path | None = None) -> int:
-    """The direct start: 2 when no registered console matches *wanted*."""
+def run(wanted: str, app: QApplication, config_dir: Path | None = None,
+        players: PlayerExperiment = PlayerExperiment(), simulated_loss: float = 0.0) -> int:
+    """The direct start: 2 when no registered console matches *wanted*. *players*: the several-players experiment;
+    *simulated_loss*: the share of video packets dropped on purpose, in percent, to try the recovery."""
     consoles = ConsoleStore((config_dir or config_home()) / APP_ID).load()
     console = find_console(consoles, wanted)
     if console is None:
@@ -82,5 +101,6 @@ def run(wanted: str, app: QApplication, config_dir: Path | None = None) -> int:
         names = ", ".join(c.nickname or c.address for c in consoles) or "none yet"
         QMessageBox.critical(None, APP_NAME, f"No registered console is called {wanted!r}. Registered: {names}.")
         return 2
-    direct = DirectStream(console, app)                 # noqa: F841 (kept alive while the app runs)
+    direct = DirectStream(console, app, players=players,     # noqa: F841 (kept alive while the app runs)
+                          simulated_loss=simulated_loss)
     return exec_app(app)

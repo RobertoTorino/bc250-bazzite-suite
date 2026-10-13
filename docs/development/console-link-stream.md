@@ -39,6 +39,21 @@ sound and picture was gone and the controller felt more responsive.
 The rule for the native core: every call that can take more than a fraction of a millisecond (decoding, copying a
 picture, waiting for a packet, a network handshake) lets go of the GIL. `next_event` and `connect` already did.
 
+## Lost packets
+
+The receiver (Rust, `video.rs`) rebuilds a frame from the console's spare FEC packets when a few of its packets are
+lost. When too many are, or a frame never arrives, two things keep the decoder from drawing garbage, both the
+reference's: `bitstream.rs` reads each frame's first slice header (key frame or not, and which earlier frame it
+refers to), and the receiver keeps the last 16 frames it handed out. A frame whose reference is not among them is
+not handed out (for HEVC it may be pointed at an older one instead). After a frame FEC could not rebuild, the console
+is asked for a key frame (IDRREQUEST) and the frames until it comes are skipped; when none has come after 60 frames,
+it is asked for again. The console is also told about every missing frame (CORRUPTFRAME) and may answer by referring
+to an older frame.
+
+To try it on a network that loses nothing, the direct start takes a hidden option that drops a share of the video
+packets on arrival: `bc250-console-link --stream "<console>" --simulate-loss 5` (percent). The terminal shows the
+log as it happens and the statistics file has the recovery per second.
+
 ## Measuring it
 
 Each stream writes a statistics file, one line per second, in `~/.local/state/bc250-console-link/streams/`
@@ -48,6 +63,7 @@ for:
 | Field | Healthy | What a bad value points to |
 |---|---|---|
 | `in … longest gap` | about 17 ms at 60 fps | The network or the console: frames arrive in bursts. |
+| `recovery` | all 0 | Frames FEC could not rebuild, key frames asked for, frames skipped until one came, frames without their reference: the network loses packets (Wi-Fi, a busy link). A few now and then are handled; many point to the network. |
 | `decode avg / max` | well under the frame time (16.7 ms at 60 fps) | The decoder is too slow for the resolution: a lower resolution, a hardware decoder (VA-API), or decoder threads. |
 | `shown / skipped` | shown close to the frames in, few skipped | The window draws slower than the frames come. |
 | `age avg / max` | a few ms | Time from decoder to drawing: the window is busy. |

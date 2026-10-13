@@ -19,7 +19,18 @@ def main() -> int:
     parser.add_argument("--stream", metavar="CONSOLE",
                         help="stream from a registered console (its name, host id or address) full screen, without "
                              "the main window: what a Steam shortcut for Game Mode runs")
+    # Not for users: the several-players experiment (stream.PlayerExperiment), with --stream, from a terminal.
+    parser.add_argument("--player-experiment", metavar="MODE[:ID[:MARK]]", help=argparse.SUPPRESS)
+    # Not for users: with --stream, drop this share (percent) of the video packets, to try the recovery from loss.
+    parser.add_argument("--simulate-loss", metavar="PERCENT", type=float, default=0.0, help=argparse.SUPPRESS)
     args, qt_args = parser.parse_known_args()
+    from .stream import PlayerExperiment
+    players = PlayerExperiment()
+    if args.player_experiment:
+        try:
+            players = PlayerExperiment.parse(args.player_experiment)
+        except ValueError as error:
+            parser.error(f"--player-experiment: {error}")
 
     from .consoles import migrate_old_config
     migrate_old_config(config_home(), INFO.app_id)      # before Qt opens the settings file
@@ -27,7 +38,7 @@ def main() -> int:
     app = create_app(INFO, qt_args, lang="en")
     if args.stream:
         from . import direct
-        return direct.run(args.stream, app)
+        return direct.run(args.stream, app, players=players, simulated_loss=max(0.0, min(args.simulate_loss, 100.0)))
     if instance.already_running(INFO.app_id):
         return 0
     from .main_window import MainWindow

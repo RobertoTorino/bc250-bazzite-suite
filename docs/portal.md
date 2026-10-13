@@ -20,7 +20,11 @@ tile, left to right in the order of `apps.toml` and as many to a row as the wind
   Install reinstalls it, or updates it when the arrow is red. Bazzite Test has only Reinstall (a circular
   arrow): it is removed together with the portal.
 
-**Gaming**, below the apps, holds the apps for playing: [BC250 Console Link](apps/console-link.md). It is open
+**BC250 Bazzite tools** holds the apps for the board, Bazzite Test first. Like the sections below it, it folds
+away when you click its name; it is open until you close it, and the portal remembers whether it was open.
+
+**Gaming**, below the apps, holds the apps for playing: [BC-250 HelixSR Manager](apps/helixsr.md),
+[BC-250 Mesh Shaders](apps/mesh-shaders.md) and [BC250 Console Link](apps/console-link.md). It is open
 until you close it, and the portal remembers whether it was open.
 
 **Development only**, below that, opens a separate section with tools for working on the suite:

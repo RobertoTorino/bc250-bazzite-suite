@@ -295,3 +295,20 @@ def test_real_sdl_opens_and_closes():
             done.set()
     threading.Thread(target=run).start()
     assert done.wait(5) and isinstance(result["ids"], list)
+
+
+def test_player_experiment_keeps_the_second_controller_apart():
+    first = FakePad("PS4 Controller", Reading(buttons=frozenset({gamepad.SOUTH})))
+    second = FakePad("PS4 Controller", Reading(buttons=frozenset({gamepad.EAST})))
+    third = FakePad("PS4 Controller", Reading(buttons=frozenset({gamepad.NORTH})))
+    sdl = FakeSdl({3: first, 5: second, 9: third})
+    sent, sent_second, notes = [], [], []
+    reader = gamepad.Reader(lambda **s: sent.append(s), False, notes.append, sdl, poll_interval=0.001,
+                            scan_interval=0.01, trackers=FakeTracker,
+                            send_second=lambda **s: sent_second.append(s)).start()
+    try:
+        assert _wait(lambda: sent and sent_second)
+    finally:
+        reader.stop()
+    # By connection order: the first controller to send, the second to send_second, the third nowhere.
+    assert sent[-1]["buttons"] == 1 and sent_second[-1]["buttons"] == 2

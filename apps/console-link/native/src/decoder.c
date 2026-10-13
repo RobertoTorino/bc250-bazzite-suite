@@ -57,7 +57,8 @@ void bc_decoder_error(int code, char *buf, size_t size)
 }
 
 // hevc: 0 for H.264. hw: try VA-API; *hw_error gets its error when that fails (the decoder then runs in software).
-int bc_decoder_new(int hevc, int hw, struct bc_decoder **out, int *hw_error)
+// low_delay: FFmpeg's low-delay mode (no frames held back for reordering; the stream's settings, low latency).
+int bc_decoder_new(int hevc, int hw, int low_delay, struct bc_decoder **out, int *hw_error)
 {
     *out = NULL;
     *hw_error = 0;
@@ -86,6 +87,8 @@ int bc_decoder_new(int hevc, int hw, struct bc_decoder **out, int *hw_error)
         else
             d->ctx->hw_device_ctx = av_buffer_ref(d->hw_device);
     }
+    if(low_delay)
+        d->ctx->flags |= AV_CODEC_FLAG_LOW_DELAY;
     int r = avcodec_open2(d->ctx, codec, NULL);
     if(r < 0)
     {

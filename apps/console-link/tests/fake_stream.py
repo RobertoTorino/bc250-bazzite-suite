@@ -70,7 +70,7 @@ class StreamConsole:
     """target and the session crypto's nonce and RP-Key, to read the launch spec. Behaviour switches: silent (no
     INIT_ACK), refuse_version, early_streaminfo (sent before BANG), wrong_signature (BANG's key signed with another
     key), disconnect_after (heartbeats before it sends DISCONNECT). Frames are numbered from 1; lose_units
-    (frame, unit) and lose_frames stand in for the network."""
+    (frame, unit) and lose_frames stand in for the network, late_units (frame, unit) for packets that come late."""
     target: Target
     nonce: bytes
     rp_key: bytes
@@ -82,6 +82,7 @@ class StreamConsole:
     frames: int = 3
     lose_units: set[tuple[int, int]] = field(default_factory=set)
     lose_frames: set[int] = field(default_factory=set)
+    late_units: set[tuple[int, int]] = field(default_factory=set)      # sent after the rest of their frame
     big: dict = field(default_factory=dict)
     spec: dict = field(default_factory=dict)
     client_signature_ok: bool | None = None
@@ -91,6 +92,7 @@ class StreamConsole:
     congestion_reports: list[tuple[int, int]] = field(default_factory=list)     # (received, lost)
     feedback_states: list[tuple[int, bytes]] = field(default_factory=list)      # (sequence number, payload)
     feedback_history: list[tuple[int, int, bytes]] = field(default_factory=list)    # (seq. number, events, payload)
+    controller_connections: list[dict] = field(default_factory=list)   # CONTROLLERCONNECTION payloads, decoded
     disconnect_reason: str | None = None
     errors: list[str] = field(default_factory=list)
 
@@ -259,10 +261,16 @@ class StreamConsole:
         packet_index = 0
         for frame in range(1, self.frames + 1):
             units = video_units(frame_data(frame, self.codec))
+            late = []
             for unit, data in enumerate(units):
-                if frame not in self.lose_frames and (frame, unit) not in self.lose_units:
+                if (frame, unit) in self.late_units:
+                    late.append((packet_index, unit, data))
+                elif frame not in self.lose_frames and (frame, unit) not in self.lose_units:
                     self.send_av(True, packet_index, frame, unit, len(units), data, fec=FEC_UNITS)
                 packet_index += 1
+            for index, unit, data in late:                  # after the frame's others: late, not lost
+                time.sleep(0.003)
+                self.send_av(True, index, frame, unit, len(units), data, fec=FEC_UNITS)
             self.send_audio(frame)
         if self.version == 12:
             self.send_av(False, self.frames, self.frames, 0, 1, b"haptics", haptics=True)
@@ -313,7 +321,9 @@ class StreamConsole:
         if msg.type == tkproto.BIG:
             self._read_big(data)
         elif msg.type == tkproto.CONTROLLERCONNECTION:
-            self._stream()
+            self.controller_connections.append(msg.payload(tkproto.F_CONTROLLER_CONNECTION))
+            if len(self.controller_connections) == 1:      # the stream starts with the first controller
+                self._stream()
         elif msg.type == tkproto.HEARTBEAT:
             self.heartbeats += 1
             if self.disconnect_after is not None and self.heartbeats >= self.disconnect_after:

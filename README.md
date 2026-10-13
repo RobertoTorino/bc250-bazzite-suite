@@ -30,7 +30,6 @@ uses. You do not need them.
 
 - <img src="portal/images/apps/bazzite-test.png" width="20" height="20" alt=""/> **[BC-250 Bazzite Test](apps/bazzite-test)**: Read-only diagnostics, stress test and benchmarks. Always installed.
 - <img src="portal/images/apps/governor.png" width="20" height="20" alt=""/> **[BC-250 GPU Governor Manager](apps/governor)**: Manage the cyan-skillfish GPU governor: tuning, safe points, profiles, backups.
-- <img src="portal/images/apps/helixsr.png" width="20" height="20" alt=""/> **[BC-250 HelixSR Manager](apps/helixsr)**: Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games.
 - <img src="portal/images/apps/cu-bisect.png" width="20" height="20" alt=""/> **[BC-250 CU Bisect](apps/cu-bisect)**: Tell bad CUs apart from an unstable CU unlock, and apply a tested unlock.
 - <img src="portal/images/apps/cores-bisect.png" width="20" height="20" alt=""/> **[BC-250 Cores Bisect](apps/cores-bisect)**: Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock.
 - <img src="portal/images/apps/gpu-oc-bisect.png" width="20" height="20" alt=""/> **[BC-250 GPU OC Bisect](apps/gpu-oc-bisect)**: Find your board's safe GPU overclock and undervolt, one step at a time.
@@ -44,6 +43,8 @@ uses. You do not need them.
 
 **Gaming**: apps for playing, in their own section of the portal.
 
+- <img src="portal/images/apps/helixsr.png" width="20" height="20" alt=""/> **[BC-250 HelixSR Manager](apps/helixsr)**: Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games.
+- <img src="portal/images/apps/mesh-shaders.png" width="20" height="20" alt=""/> **[BC-250 Mesh Shaders](apps/mesh-shaders)**: Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use.
 - <img src="portal/images/apps/console-link.png" width="20" height="20" alt=""/> **[BC250 Console Link](apps/console-link)**: Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session.
 
 **Development only**: tools for working on the suite, in their own section of the portal. You do not need them to

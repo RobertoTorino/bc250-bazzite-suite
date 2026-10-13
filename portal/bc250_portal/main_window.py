@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The portal window: bazzite-test fixed in first place, then one tile per optional app, the gaming apps in a section
-of their own (open until closed), and the development apps in theirs (opens on request).
+"""The portal window: three sections of tiles, each folding away: BC250 Bazzite tools (bazzite-test fixed in first
+place, then one tile per optional app; open until closed), Gaming (open until closed) and Development only (opens
+on request).
 
 Install, update and uninstall run the app's own installer in a terminal window (they may ask for the sudo
 password and print what they do); the portal watches for the exit file the terminal writes and then refreshes.
@@ -50,9 +51,10 @@ SYMBOL_PX = 28                  # the Install / Uninstall / Reinstall symbols be
 DOT_PX = 16                     # the red update dot inside the icon
 TILE_WIDTH = 216                # the tiles flow left to right, as many to a row as fit
 TILE_SPACING = 12
-DEV_FRAME_MARGIN = 24           # a section's frame and margins (Gaming, Development only) take this much of the width
+DEV_FRAME_MARGIN = 24           # a section's frame and margins take this much of the width
 DEV_OPEN_KEY = "portal/development_open"
 GAMING_OPEN_KEY = "portal/gaming_open"
+TOOLS_OPEN_KEY = "portal/tools_open"
 DESKTOP_ICONS_KEY = "portal/desktop_icons"
 APP_ICON_FILES = {"dependency-checker": "portal-dependency-checker"}
 LAUNCH_ICON_FILES = {("cu-bisect", "Unlock"): "cu-unlock", ("cores-bisect", "Unlock"): "cores-unlock"}  # else the app's
@@ -361,8 +363,10 @@ class MainWindow(QMainWindow):
         content = QWidget()
         column = QVBoxLayout(content)
         column.setContentsMargins(0, 0, 0, 0)
-        self.grid = self._tile_grid()
-        column.addLayout(self.grid)
+        # BC250 Bazzite tools: the apps for the board, Bazzite Test first, open until closed (owner, 13-10-2026).
+        self.tools_toggle, self.tools_box, self.grid = self._section(
+            column, "BC250 Bazzite tools", "The apps for the BC-250 board, Bazzite Test first.", None,
+            "QFrame#tools { border:1px solid palette(mid); border-radius:8px; }", "tools")
         self.columns = 0
         self.cards: dict[str, AppTile] = {}
         for entry in entries:
@@ -385,6 +389,9 @@ class MainWindow(QMainWindow):
         column.addStretch(1)
         self.has_gaming = any(e.section == "gaming" for e in entries)
         self.has_development = any(e.development for e in entries)
+        self.tools_toggle.toggled.connect(self._show_tools)
+        self.tools_toggle.setChecked(self.settings.value(TOOLS_OPEN_KEY, True, type=bool))
+        self._show_tools(self.tools_toggle.isChecked())
         self.gaming_toggle.toggled.connect(self._show_gaming)
         self.dev_toggle.toggled.connect(self._show_development)
         self.gaming_toggle.setVisible(self.has_gaming)
@@ -471,6 +478,11 @@ class MainWindow(QMainWindow):
                 grid.takeAt(0)
             for i, tile in enumerate(tiles):
                 grid.addWidget(tile, i // columns, i % columns)
+
+    def _show_tools(self, show: bool) -> None:
+        self.tools_toggle.setArrowType(Qt.ArrowType.DownArrow if show else Qt.ArrowType.RightArrow)
+        self.tools_box.setVisible(show)
+        self.settings.setValue(TOOLS_OPEN_KEY, show)
 
     def _show_gaming(self, show: bool) -> None:
         self.gaming_toggle.setArrowType(Qt.ArrowType.DownArrow if show else Qt.ArrowType.RightArrow)

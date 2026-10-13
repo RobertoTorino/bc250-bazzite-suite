@@ -35,8 +35,9 @@ from .consoles import ConsoleStore, RegisteredConsole, parse_account_id, parse_l
 from .discovery import Console
 from .jobs import Outcome
 from .controller_test import ControllerTest
+from .options_dialog import StreamOptionsDialog
 from .stream_view import StreamWindow
-from .target import rp_version
+from .target import rp_version, software_version
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/console-link/"
 DARK_BLUE = "#0d47a1"
@@ -198,6 +199,7 @@ class MainWindow(QMainWindow):
         self.busy = False
         self.run = run or self._run_threaded
         self.found: list[Console] = []
+        self.console_info: dict[str, dict[str, str]] = {}      # per registered console: server_type, network
         self.registered: list[RegisteredConsole] = self.store.load()
         self.masker = privacy.Masker()
         self.masker.remember(account=self.settings.get("account_id"), address=self.settings.get("address"))
@@ -213,7 +215,7 @@ class MainWindow(QMainWindow):
         self.found_box = MetricBox("On the network", DARK_BLUE)
         self.registered_box = MetricBox("Registered", ORANGE)
         self.session_box = MetricBox("Last session", BLACK)
-        self.console_box = MetricBox("Console type", PURPLE)
+        self.console_box = MetricBox("Console", PURPLE)
         for box in (self.found_box, self.registered_box, self.session_box, self.console_box):
             header.add_second(box)
 
@@ -270,6 +272,7 @@ class MainWindow(QMainWindow):
         mine = QGroupBox("Registered consoles")
         self.registered_table = _table(["Name", "Model", "Address", "Remote Play", "Login passcode"])
         self.registered_table.itemSelectionChanged.connect(self._update_buttons)
+        self.registered_table.itemSelectionChanged.connect(self._show_console_box)
         self.wake_button = QPushButton("Wake")
         self.wake_button.setToolTip("Turn the console on from rest mode")
         self.wake_button.clicked.connect(self.wake)
@@ -282,6 +285,10 @@ class MainWindow(QMainWindow):
         self.watch_button = accent_button("Stream", "Show the console's picture and play its sound until you close "
                                           "the window; the controllers on the board play")
         self.watch_button.clicked.connect(self.watch)
+        self.options_button = QPushButton("Stream settings…")
+        self.options_button.setToolTip("Resolution, frame rate, bitrate, the picture's fit, audio delay and low "
+                                       "latency for this console's streams")
+        self.options_button.clicked.connect(self.edit_options)
         self.stream_window: StreamWindow | None = None
         self._stream_stop: threading.Event | None = None
         self.game_mode_button = QPushButton("Add to Game Mode")
@@ -298,8 +305,8 @@ class MainWindow(QMainWindow):
         self.remove_button.setToolTip("Forget this console's keys on the board")
         self.remove_button.clicked.connect(self.remove)
         buttons = QHBoxLayout()
-        for button in (self.wake_button, self.test_button, self.stream_button, self.watch_button, self.rest_button,
-                       self.game_mode_button):
+        for button in (self.wake_button, self.test_button, self.stream_button, self.watch_button, self.options_button,
+                       self.rest_button, self.game_mode_button):
             buttons.addWidget(button)
         buttons.addStretch(1)
         buttons.addWidget(self.passcode_button)
@@ -359,6 +366,7 @@ class MainWindow(QMainWindow):
         self._show_found()
         self._show_registered()
         self.session_box.set_value("—")
+        self._show_console_box()
         self._set_badge("Ready", "neutral")
         self._update_buttons()
 
@@ -490,7 +498,8 @@ class MainWindow(QMainWindow):
         self.found_table.setRowCount(len(self.found))
         for row, console in enumerate(self.found):
             values = (console.host_name or "—", console.model, self._address(console.address), STATES[console.state],
-                      console.system_version or "—", "yes" if self._registered_for(console) else "no")
+                      software_version(console.system_version, console.ps5) or console.system_version or "—",
+                      "yes" if self._registered_for(console) else "no")
             for col, value in enumerate(values):
                 self.found_table.setItem(row, col, _item(value))
         self.found_box.set_value(str(len(self.found)))
@@ -516,7 +525,7 @@ class MainWindow(QMainWindow):
         self.register_button.setEnabled(idle and found)
         for button in (self.wake_button, self.test_button, self.stream_button, self.watch_button, self.rest_button):
             button.setEnabled(idle and registered)
-        for button in (self.passcode_button, self.remove_button):
+        for button in (self.passcode_button, self.remove_button, self.options_button):
             button.setEnabled(idle and registered)
         self.game_mode_button.setEnabled(idle and registered and self.steam is not None
                                          and not steam_settings.game_mode())
@@ -556,6 +565,7 @@ class MainWindow(QMainWindow):
         if changed:
             self._show_registered()
         self._show_found()
+        self._show_console_box()
 
     def ask_redirect(self) -> str | None:
         """The address the PlayStation sign-in ended on, or None when cancelled."""
@@ -608,13 +618,15 @@ class MainWindow(QMainWindow):
         console = self.selected_registered()
         if console is not None:
             self.start(f"Starting a session with {console.nickname or console.address}…",
-                       lambda: self.ops.test_session(console), self._session_done)
+                       lambda: self.ops.test_session(console),
+                       lambda outcome: self._session_done(outcome, console))
 
     def test_stream(self) -> None:
         console = self.selected_registered()
         if console is not None:
             self.start(f"Starting a stream with {console.nickname or console.address}…",
-                       lambda: self.ops.test_stream(console), self._session_done)
+                       lambda: self.ops.test_stream(console),
+                       lambda outcome: self._session_done(outcome, console))
 
     def watch(self) -> None:
         console = self.selected_registered()
@@ -622,7 +634,7 @@ class MainWindow(QMainWindow):
             return
         name = self.shown(console.nickname or console.address)
         stop = threading.Event()
-        window = StreamWindow(f"{name} · {APP_NAME}", stop.set, self)
+        window = StreamWindow(f"{name} · {APP_NAME}", stop.set, self, console.options)
         if not self.steam_box.isHidden() and self.steam_box.isEnabled() and self.steam_box.isChecked():
             self.say("Steam comes to the front when you press PS: switch off \"Steam comes to the front on the PS "
                      "button\" below so the PS button only goes to the console.")
@@ -633,7 +645,7 @@ class MainWindow(QMainWindow):
         window.bring_forward()
 
         def done(outcome: Outcome) -> None:
-            self._session_done(outcome)
+            self._session_done(outcome, console)
             if self.stream_window is not None:                 # still open: the stream ended on its own
                 self.stream_window.status.setText(outcome.message)
             self._stream_stop = None
@@ -642,6 +654,19 @@ class MainWindow(QMainWindow):
                    lambda: self.ops.watch_stream(console, window.deliver, window.wanted, stop, window.play,
                                                  figures=window.figures, stats_dir=stream_stats.folder()), done)
 
+    def edit_options(self) -> None:
+        console = self.selected_registered()
+        if console is None:
+            return
+        name = self.shown(console.nickname or console.address)
+        dialog = StreamOptionsDialog(console, name, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        options = dialog.options()
+        self.registered = self.store.put(replace(console, options=options))
+        self._show_registered()
+        self.say(f"Stream settings for {name}: {options.describe(console.ps5)}.")
+
     def _stream_window_gone(self) -> None:
         self.stream_window = None
 
@@ -649,13 +674,52 @@ class MainWindow(QMainWindow):
         console = self.selected_registered()
         if console is not None:
             self.start(f"Putting {console.nickname or console.address} in rest mode…",
-                       lambda: self.ops.rest_mode(console), self._session_done)
+                       lambda: self.ops.rest_mode(console),
+                       lambda outcome: self._session_done(outcome, console))
 
-    def _session_done(self, outcome: Outcome) -> None:
+    def _session_done(self, outcome: Outcome, console: RegisteredConsole) -> None:
         self.session_box.set_value("OK" if outcome.ok else "Failed", outcome.message)
-        server_type = getattr(outcome.value, "server_type", "")
-        if server_type:
-            self.console_box.set_value(server_type)
+        for name in ("server_type", "network"):
+            value = getattr(outcome.value, name, "")
+            if value:
+                self.console_info.setdefault(console.key, {})[name] = value
+        self._show_console_box()
+
+    def _found_for(self, console: RegisteredConsole) -> Console | None:
+        """The search's answer from a registered console (by host id, else address)."""
+        for found in self.found:
+            if (console.host_id and found.host_id == console.host_id) or found.address == console.address:
+                return found
+        return None
+
+    def _show_console_box(self) -> None:
+        """The Console box: the selected registered console's model (exact once a session said it, PS4 Pro) and
+        system software; the tooltip what the last search and session told about it."""
+        console = self.selected_registered()
+        if console is None:
+            self.console_box.set_value("—", "Select a registered console.")
+            return
+        info = self.console_info.get(console.key, {})
+        found = self._found_for(console)
+        model = info.get("server_type") or console.target.console
+        version = software_version(found.system_version, console.ps5) if found else ""
+        lines = [f"{console.nickname or 'Console'}: {model}"]
+        if found is None:
+            lines.append("System software, state and what runs: Search to see them.")
+        else:
+            if version:
+                lines.append(f"System software: {version}")
+            else:
+                lines.append(f"System software: not reported (the console says {found.system_version or 'nothing'})")
+            lines.append("State: " + STATES[found.state])
+            if found.state == "ready":
+                running = (f"{found.running_app} ({found.running_title_id})" if found.running_app else
+                           found.running_title_id or "nothing (the home screen)")
+                lines.append(f"Running: {running}")
+        lines.append(f"Remote Play: {rp_version(console.target) or 'unknown'}")
+        if info.get("network"):
+            lines.append(f"Last network test: {info['network']}")
+        self.console_box.set_value(f"{model} · {version}" if version else model, self.shown("\n".join(lines)))
 
     def set_passcode(self) -> None:
         console = self.selected_registered()
@@ -687,6 +751,24 @@ class MainWindow(QMainWindow):
         self._show_found()
         self._update_buttons()
         self.say(f"Removed {console.nickname or console.address}.")
+        self._remove_shortcut(console)
+
+    def _remove_shortcut(self, console: RegisteredConsole) -> None:
+        """After Remove: the console's Game Mode shortcut, which would start a console no longer registered, goes too
+        when the user agrees (Steam closes for it). In Game Mode Steam is the session, so it stays until then."""
+        steam = self.steam
+        if steam is None or not steam_shortcuts.has_shortcut(steam, console):
+            return
+        name = steam_shortcuts.shortcut_name(console)
+        if steam_settings.game_mode():
+            self.say(f"\"{name}\" is still in Steam; remove it in Desktop Mode, or in Steam itself.")
+            return
+        restart = (" Steam closes for it and starts again in the background right after."
+                   if steam_settings.steam_running() else "")
+        if QMessageBox.question(self, APP_NAME, f"\"{name}\" is still in Steam for Game Mode. Remove it too?"
+                                f"{restart}") != QMessageBox.StandardButton.Yes:
+            return
+        self.start("Removing the Steam shortcut…", lambda: self.ops.steam_shortcut(console, steam, remove=True))
 
     def closeEvent(self, event: QCloseEvent) -> None:
         if self._stream_stop is not None:

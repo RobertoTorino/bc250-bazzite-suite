@@ -4,6 +4,7 @@ stream window with stand-ins for the network steps."""
 
 from __future__ import annotations
 
+import threading
 import time
 
 from bc250_console_link import direct, jobs
@@ -135,3 +136,25 @@ def test_run_with_an_unknown_console(qapp, tmp_path, monkeypatch):
     ConsoleStore(tmp_path / "bc250-console-link").put(PS4)
     assert direct.run("Living room", qapp, config_dir=tmp_path) == 2
     assert shown == ["No registered console is called 'Living room'. Registered: PS4-728."]
+
+
+def test_closing_waits_for_the_stream_to_close(qapp):
+    class App:
+        quits = 0
+
+        def quit(self):
+            App.quits += 1
+
+    ops = FakeOps(Outcome(True, "PS4-728 is on.", PS4), Outcome(True, "Stream ended."))
+    closing = threading.Event()
+
+    def watch_stream(console, deliver, wanted, stop, play, **kwargs):
+        stop.wait(5)
+        closing.wait(5)                                     # the session closing, after the stop
+        return ops.streamed
+    ops.watch_stream = watch_stream
+    stream = direct.DirectStream(PS4, App(), ops, full_screen=False)
+    stream.window.close()
+    assert not _until(qapp, lambda: App.quits, timeout=0.3)     # the stream has not closed yet: no quit
+    closing.set()
+    assert _until(qapp, lambda: App.quits == 1) and not stream.thread.is_alive()
