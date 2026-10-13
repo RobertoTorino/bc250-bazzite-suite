@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """The native core (native/, Rust through PyO3) as Python sees it, against the vectors printed by chiaki-ng's own C
-code (gkcrypt.c, ecdh.c and takion.c at commit c8bea2642d0e, built with OpenSSL on 12-10-2026). The Rust tests
-(cargo test) check the same vectors; these check the module the app imports.
+code (gkcrypt.c, ecdh.c and takion.c at commit c8bea2642d0e, built with OpenSSL on 12-10-2026), and the FEC against
+frames recorded by chiaki-ng (fec_vectors.json). The Rust tests (cargo test) check the same vectors; these check the
+module the app imports.
 
 The module is built from native/ (maturin build, then pip install the wheel); CI builds it before these tests. Without
 it they are skipped, with the reason."""
 
 from __future__ import annotations
 
+import base64
 import json
 from pathlib import Path
 
@@ -16,6 +18,7 @@ import pytest
 core = pytest.importorskip("bc250_console_link_core", reason="the native core is not built: see native/pyproject.toml")
 
 VECTORS = json.loads((Path(__file__).parent / "takion_vectors.json").read_text(encoding="utf-8"))
+FEC = json.loads((Path(__file__).parent / "fec_vectors.json").read_text(encoding="utf-8"))["cases"]
 h = bytes.fromhex
 
 
@@ -125,3 +128,16 @@ def test_v7_header(name):
                                units_fec=v["units_fec"], codec=v["codec"], key_pos=v["key_pos"],
                                word_at_0x18=v["word_at_0x18"], adaptive_stream_index=v["adaptive_stream_index"])
     assert header == h(v["header"])
+
+
+@pytest.mark.parametrize("v", FEC, ids=lambda v: f"k{v['k']}m{v['m']}-{'-'.join(map(str, v['erasures']))}")
+def test_fec(v):
+    k, m, size = v["k"], v["m"], v["unit_size"]
+    frame = base64.b64decode(v["frame"])
+    units = [frame[i * size:(i + 1) * size] for i in range(k + m)]
+    damaged = b"".join(bytes([0x42]) * size if i in v["erasures"] else unit for i, unit in enumerate(units))
+    assert core.fec_decode(damaged, size, k, m, v["erasures"]) == frame[:k * size]
+    encoded = core.fec_encode(frame[:k * size], size, k, m)
+    assert all(encoded[i * size:(i + 1) * size] == units[i] for i in range(k, k + m) if i not in v["erasures"])
+    with pytest.raises(ValueError, match="TooManyErasures"):
+        core.fec_decode(damaged, size, k, m, list(range(m + 1)))

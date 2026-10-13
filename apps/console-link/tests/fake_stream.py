@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """The console's side of the stream connection on localhost, for the tests: the Takion handshake, BIG (it decrypts
 the launch spec to find the handshake key, as a console must), BANG with its own ECDH key, STREAMINFO, then a few
-video and audio packets, encrypted and signed. It speaks Takion through the native core's packet functions and
+video frames (split into units with FEC units, as a console does) and audio packets, encrypted and signed. It speaks Takion through the native core's packet functions and
 records what the board sent."""
 
 from __future__ import annotations
@@ -23,13 +23,31 @@ from bc250_console_link.target import Target
 TAG = 0x5eed1e55
 VIDEO_HEADER = bytes(range(16))
 AUDIO_HEADER = tkproto.AudioHeader(2, 16, 48000, 480).save()
+UNIT_SIZE = 1000
+FEC_UNITS = 2
+
+
+def frame_data(frame: int) -> bytes:
+    return bytes((frame * 7 + i) % 251 for i in range(2500))
+
+
+def video_units(frame: bytes, unit_size: int = UNIT_SIZE, fec_units: int = FEC_UNITS) -> list[bytes]:
+    """A frame as the console sends it: source units of its padding size (two bytes) and data, the last one shorter,
+    then the FEC units over them padded to the unit size."""
+    chunk = unit_size - 2
+    parts = [frame[i:i + chunk] for i in range(0, len(frame), chunk)]
+    source = b"".join(struct.pack(">H", chunk - len(p)) + p.ljust(chunk, b"\0") for p in parts)
+    coded = core.fec_encode(source, unit_size, len(parts), fec_units)
+    units = [coded[i * unit_size:(i + 1) * unit_size] for i in range(len(parts) + fec_units)]
+    return [unit[:2 + len(part)] for unit, part in zip(units, parts)] + units[len(parts):]
 
 
 @dataclass
 class StreamConsole:
     """target and the session crypto's nonce and RP-Key, to read the launch spec. Behaviour switches: silent (no
     INIT_ACK), refuse_version, early_streaminfo (sent before BANG), wrong_signature (BANG's key signed with another
-    key), disconnect_after (heartbeats before it sends DISCONNECT)."""
+    key), disconnect_after (heartbeats before it sends DISCONNECT). Frames are numbered from 1; lose_units
+    (frame, unit) and lose_frames stand in for the network."""
     target: Target
     nonce: bytes
     rp_key: bytes
@@ -39,12 +57,15 @@ class StreamConsole:
     wrong_signature: bool = False
     disconnect_after: int | None = None
     frames: int = 3
+    lose_units: set[tuple[int, int]] = field(default_factory=set)
+    lose_frames: set[int] = field(default_factory=set)
     big: dict = field(default_factory=dict)
     spec: dict = field(default_factory=dict)
     client_signature_ok: bool | None = None
     received: list[int] = field(default_factory=list)      # message types from the board, in order
     big_fragments: int = 0
     heartbeats: int = 0
+    congestion_reports: list[tuple[int, int]] = field(default_factory=list)     # (received, lost)
     disconnect_reason: str | None = None
     errors: list[str] = field(default_factory=list)
 
@@ -108,11 +129,11 @@ class StreamConsole:
         self._send(core.packet_mac(self.send_crypt, packet, key_pos)[0])
 
     def send_av(self, video: bool, packet_index: int, frame_index: int, unit: int, units: int, data: bytes,
-                haptics: bool = False) -> None:
+                haptics: bool = False, fec: int = 0) -> None:
         header = bytearray(0x20 if video else 0x18)
         header[0] = core.PACKET_VIDEO if video else core.PACKET_AUDIO
         struct.pack_into(">HHI", header, 1, packet_index, frame_index,
-                         (unit << 21 | (units - 1) << 10) if video else (unit << 24 | (units - 1) << 16))
+                         (unit << 21 | (units - 1) << 10 | fec) if video else (unit << 24 | (units - 1) << 16))
         key_pos = self.key_pos
         self.key_pos += core.key_pos_advance(len(data))
         struct.pack_into(">I", header, 0xe, key_pos & 0xffffffff)
@@ -191,9 +212,11 @@ class StreamConsole:
 
     def _stream(self) -> None:
         packet_index = 0
-        for frame in range(self.frames):
-            for unit in range(2):
-                self.send_av(True, packet_index, frame, unit, 2, b"video %d.%d" % (frame, unit))
+        for frame in range(1, self.frames + 1):
+            units = video_units(frame_data(frame))
+            for unit, data in enumerate(units):
+                if frame not in self.lose_frames and (frame, unit) not in self.lose_units:
+                    self.send_av(True, packet_index, frame, unit, len(units), data, fec=FEC_UNITS)
                 packet_index += 1
             self.send_av(False, frame, frame, 0, 1, b"audio %d" % frame)
         if self.version == 12:
@@ -204,6 +227,9 @@ class StreamConsole:
             core.verify_packet(self.recv_crypt, self.key_state, packet)
         except ValueError as error:
             self.errors.append(f"MAC: {error}")
+            return
+        if packet[0] == core.PACKET_CONGESTION:
+            self.congestion_reports.append(struct.unpack(">HH", packet[3:7]))
             return
         message = core.parse_message(packet[1:], TAG, self.key_state)
         if message["chunk_type"] == core.CHUNK_DATA_ACK:

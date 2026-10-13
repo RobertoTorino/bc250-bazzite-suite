@@ -6,6 +6,8 @@
    with a random handshake key. The console answers BANG with its public key; both sides derive the stream keys.
 3. STREAMINFO: the console's video headers per resolution and its audio header. We acknowledge it, report the
    controller and announce the microphone; from then on video and audio flow, and a heartbeat goes every second.
+   The native core puts the video frames together (FEC rebuilds lost units), names the frames that never came or
+   could not be rebuilt, which go to the console as CORRUPTFRAME, and sends the congestion reports.
 4. DISCONNECT from either side ends it.
 
 The network test before this (Senkusha, senkusha.py) measures the MTU both ways and the round trip, which go into
@@ -61,11 +63,14 @@ class Profile:
 
 @dataclass
 class StreamStats:
-    video_packets: int = 0
+    frames: int = 0                     # whole video frames
+    frame_bytes: int = 0
+    fec_frames: int = 0                 # frames with units rebuilt by FEC
+    frames_lost: int = 0
     audio_packets: int = 0
     haptics_packets: int = 0
-    frames: set[int] = field(default_factory=set)
     other_data: int = 0
+    corrupt_sent: list[tuple[int, int]] = field(default_factory=list)       # frames reported to the console
     corrupt_reports: list[tuple[int, int]] = field(default_factory=list)
 
 
@@ -137,24 +142,44 @@ class StreamConnection:
 
     def _count_av(self, header: dict) -> None:
         if header["video"]:
-            self.stats.video_packets += 1
-            self.stats.frames.add(header["frame_index"])
-        elif header["haptics"]:
+            return                                  # video before STREAMINFO: no frames to put it in yet
+        if header["haptics"]:
             self.stats.haptics_packets += 1
         else:
             self.stats.audio_packets += 1
 
+    def _on_frame(self, info: dict, data: bytes) -> None:
+        self.stats.frames += 1
+        self.stats.frame_bytes += len(data)
+        self.stats.fec_frames += info["fec"]
+        self.stats.frames_lost += info["frames_lost"]
+
+    def _on_profile(self, index: int) -> None:
+        resolutions = self.info.resolutions if self.info else []
+        size = f"{resolutions[index].width}×{resolutions[index].height}" if index < len(resolutions) else "?"
+        self.note(f"Video at {size} (resolution {index}).")
+
+    def _on_corrupt(self, start: int, end: int) -> None:
+        self.stats.corrupt_sent.append((start, end))
+        self.send(tkproto.corrupt_frame(start, end), CHANNEL_FRAME_REPORTS)
+
     def poll(self, timeout: float) -> tkproto.Message | None:
-        """The next protobuf message, or None after *timeout*. Video and audio are counted; a DISCONNECT from the
-        console or a closed connection raises StreamError."""
+        """The next protobuf message, or None after *timeout*. Frames and audio are counted, corrupt frames reported;
+        a DISCONNECT from the console or a closed connection raises StreamError."""
         deadline = time.monotonic() + timeout
         while True:
             event = self.takion.next_event(max(0.0, deadline - time.monotonic()))
             if event is None:
                 return None
             kind = event[0]
-            if kind == "av":
+            if kind == "frame":
+                self._on_frame(event[1], event[2])
+            elif kind == "av":
                 self._count_av(event[1])
+            elif kind == "corrupt":
+                self._on_corrupt(event[1], event[2])
+            elif kind == "profile":
+                self._on_profile(event[1])
             elif kind == "closed":
                 raise StreamError(f"The stream connection closed: {event[1]}.")
             elif kind == "data":
@@ -225,6 +250,7 @@ class StreamConnection:
         except tkproto.ProtoError as error:
             raise StreamError(f"The console's STREAMINFO is invalid: {error}.") from error
         self.info = info
+        self.takion.start_stream(len(info.resolutions))
         self.send(tkproto.streaminfo_ack(), CHANNEL_STREAMINFO_ACK)
         self.send(tkproto.controller_connection(self.dualsense))
         self.send(tkproto.microphone(tkproto.MICROPHONE.save()))
@@ -264,10 +290,21 @@ class StreamConnection:
                                                              tkproto.HEARTBEAT):
                 self.note(f"Message type {message.type} received.")
 
+    def video_summary(self) -> str:
+        """The native core's view of the video and the congestion reports, for the log."""
+        video = self.takion.video_stats() if self.takion else None
+        if video is None:
+            return "No video stream."
+        reports = self.takion.stats()["congestion_reports"]
+        return (f"Video: {video['frames']} frames, {video['fec_recovered']} rebuilt with FEC, {video['fec_failed']} "
+                f"beyond repair, {video['frames_lost']} lost; {video['bad_units'] + video['old_packets']} units "
+                f"refused; {reports} congestion reports sent.")
+
     def close(self) -> None:
         if self.takion is None:
             return
         try:
+            self.note(self.video_summary())
             if self.remote_reason is None:
                 self.send(tkproto.disconnect())
         except OSError:

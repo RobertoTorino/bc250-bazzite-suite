@@ -68,8 +68,9 @@ wrong account ID is reported in the log at the bottom.
   all. The network test measures the round trip and the largest packets that pass each way, and the stream asks
   for those. The board asks for 1080p at 60 frames per second from a PS5 and 720p from a PS4. When it works, the
   log shows the network test's results and the resolutions the console offers, and the message how many frames
-  and sound packets arrived. When the network test fails, the stream still runs, with safe values. It needs the
-  app's native core (see [Install and remove](#install-and-remove)).
+  and sound packets arrived. Frames with a few packets lost are rebuilt from the spare packets the console sends
+  along; the message counts those and the frames lost. When the network test fails, the stream still runs, with
+  safe values. It needs the app's native core (see [Install and remove](#install-and-remove)).
 - **Rest mode:** puts the console in rest mode, through a short session.
 - **Login passcode…:** when the PSN account on the console has a 4-digit login passcode, the console asks for it
   at the start of a session. Enter it here once.

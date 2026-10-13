@@ -1,3 +1,11 @@
+Changelog: 13-10-2026 02:02:34
+
+Release 0.1.3.
+
+Changelog: 13-10-2026 01:53:29
+
+The video frames in the native core (iteration 2): fec.rs, the Cauchy Reed-Solomon FEC over GF(2^8) that chiaki-ng gets from Jerasure, written from its definition (polynomial 0x11d, Jerasure's original Cauchy matrix) and checked against eight frames recorded by chiaki-ng (tests/fec_vectors.json, from its test/fec_test_cases.inl; our encoder also gives the console's FEC units); frame.rs, the frame processor (units into frames, FEC when units are missing) and the packet counts; video.rs, the video receiver (frame order, flush when enough units are there, CORRUPTFRAME for frames that never came or could not be rebuilt); and the congestion reports every 200 ms, the loss reported at most 5 % (chiaki-ng's default). The connection starts all of it with start_stream at STREAMINFO; from then on video comes out as whole frames, and the Python side sends the CORRUPTFRAME reports. chiaki-ng's arithmetic kept as it is: a frame without FEC units counts one FEC unit expected, and the audio counts take the sequence difference as lost when more packets came than it. Differences: a frame whose first packet is invalid is empty here (chiaki-ng keeps the last frame's state). Not yet: chiaki-ng's look into the bitstream (a missing reference frame swapped for an older one, a key frame asked for after a failed FEC), which comes with the decoder. Test stream now reports frames, frames rebuilt with FEC, frames lost and the video bitrate; the log has the video receiver's counts. Python: fec_encode and fec_decode, Takion.start_stream and video_stats, the events "frame", "profile" and "corrupt". Tests: the FEC, frame and video modules, a connection test with a lost unit, and the fake console sends real frames with FEC units and can lose units and frames.
+
 Changelog: 13-10-2026 01:27:26
 
 Release 0.1.2.

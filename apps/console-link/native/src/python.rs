@@ -12,9 +12,11 @@ use pyo3::IntoPyObjectExt;
 
 use crate::connection::{self, ConnectError, Event};
 use crate::ecdh;
+use crate::fec;
 use crate::gkcrypt;
 use crate::keystate;
 use crate::takion::{self, Message, TakionError};
+use crate::video::VideoEvent;
 
 fn error(err: TakionError) -> PyErr {
     PyValueError::new_err(format!("{err:?}"))
@@ -288,6 +290,24 @@ fn data_cont_packet<'py>(py: Python<'py>, tag_remote: u32, key_pos: u64, chunk_f
     bytes(py, &takion::data_cont_packet(tag_remote, key_pos, chunk_flags, seq_num, channel, data))
 }
 
+/// The m FEC units for k source units of unit_size bytes each, one after another in buf: buf with them added.
+#[pyfunction]
+fn fec_encode<'py>(py: Python<'py>, buf: &[u8], unit_size: usize, k: usize, m: usize) -> PyResult<Bound<'py, PyBytes>> {
+    let mut units = buf.to_vec();
+    units.resize(unit_size * (k + m), 0);
+    fec::encode(&mut units, unit_size, unit_size, k, m).map_err(|e| PyValueError::new_err(format!("{e:?}")))?;
+    Ok(bytes(py, &units))
+}
+
+/// The k source units rebuilt from k + m units of unit_size bytes, those at the indexes in erasures missing.
+#[pyfunction]
+fn fec_decode<'py>(py: Python<'py>, buf: &[u8], unit_size: usize, k: usize, m: usize, erasures: Vec<usize>)
+    -> PyResult<Bound<'py, PyBytes>> {
+    let mut units = buf.to_vec();
+    fec::decode(&mut units, unit_size, unit_size, k, m, &erasures).map_err(|e| PyValueError::new_err(format!("{e:?}")))?;
+    Ok(bytes(py, &units[..unit_size * k]))
+}
+
 fn resolve(host: &str, port: u16) -> PyResult<SocketAddr> {
     (host, port)
         .to_socket_addrs()
@@ -355,8 +375,31 @@ impl Takion {
         self.0.send_congestion(word_0, received, lost).map_err(|e| PyOSError::new_err(e.to_string()))
     }
 
+    /// The stream runs (after STREAMINFO, with its number of resolutions): video comes as frames from now on, and
+    /// congestion reports go every 200 ms.
+    #[pyo3(signature = (profiles, packet_loss_max=connection::PACKET_LOSS_MAX))]
+    fn start_stream(&self, profiles: usize, packet_loss_max: f64) -> PyResult<()> {
+        self.0.start_stream(profiles, packet_loss_max).map_err(|e| PyOSError::new_err(e.to_string()))
+    }
+
+    /// The video receiver's counters once the stream runs, else None.
+    fn video_stats<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyDict>>> {
+        let Some(s) = self.0.video_stats() else { return Ok(None) };
+        let dict = PyDict::new(py);
+        for (name, value) in [
+            ("frames", s.frames), ("bytes", s.bytes), ("fec_recovered", s.fec_recovered), ("fec_failed", s.fec_failed),
+            ("old_packets", s.old_packets), ("bad_profile", s.bad_profile), ("bad_units", s.bad_units),
+        ] {
+            dict.set_item(name, value)?;
+        }
+        dict.set_item("frames_lost", s.frames_lost)?;
+        Ok(Some(dict))
+    }
+
     /// The next event or None after timeout seconds: ("data", data_type, channel, bytes), ("data_ack", seq_num),
-    /// ("av", header dict, decrypted bytes) or ("closed", reason).
+    /// ("av", header dict, decrypted bytes) or ("closed", reason). Once the stream runs, "av" is audio only and
+    /// video comes as ("frame", {"index", "fec", "frames_lost"}, bytes), ("profile", resolution index) and
+    /// ("corrupt", first frame, last frame), the frames to report to the console.
     #[pyo3(signature = (timeout=0.0))]
     fn next_event<'py>(&self, py: Python<'py>, timeout: f64) -> PyResult<Option<Bound<'py, PyTuple>>> {
         let timeout = Duration::from_secs_f64(timeout.max(0.0));
@@ -368,19 +411,30 @@ impl Takion {
             Event::DataAck(seq_num) => vec!["data_ack".into_py_any(py)?, seq_num.into_py_any(py)?],
             Event::Av { packet, data } => vec!["av".into_py_any(py)?, av_dict(py, &packet)?.into_py_any(py)?, bytes(py, &data).into_py_any(py)?],
             Event::Closed(reason) => vec!["closed".into_py_any(py)?, reason.into_py_any(py)?],
+            Event::Video(VideoEvent::Frame { index, data, fec, frames_lost }) => {
+                let info = PyDict::new(py);
+                info.set_item("index", index)?;
+                info.set_item("fec", fec)?;
+                info.set_item("frames_lost", frames_lost)?;
+                vec!["frame".into_py_any(py)?, info.into_py_any(py)?, bytes(py, &data).into_py_any(py)?]
+            }
+            Event::Video(VideoEvent::Profile(index)) => vec!["profile".into_py_any(py)?, index.into_py_any(py)?],
+            Event::Video(VideoEvent::Corrupt { start, end }) => {
+                vec!["corrupt".into_py_any(py)?, start.into_py_any(py)?, end.into_py_any(py)?]
+            }
         };
         Ok(Some(PyTuple::new(py, items)?))
     }
 
     /// Counters: packets received, MAC mismatches, invalid packets, data and video dropped, video skipped after
-    /// the reorder timeout, messages resent and given up.
+    /// the reorder timeout, messages resent and given up, congestion reports sent.
     fn stats<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
         let s = self.0.stats();
         let dict = PyDict::new(py);
         for (name, value) in [
             ("received", s.received), ("mac_mismatch", s.mac_mismatch), ("invalid", s.invalid),
             ("data_dropped", s.data_dropped), ("video_dropped", s.video_dropped), ("video_skipped", s.video_skipped),
-            ("resent", s.resent), ("given_up", s.given_up),
+            ("resent", s.resent), ("given_up", s.given_up), ("congestion_reports", s.congestion_reports),
         ] {
             dict.set_item(name, value)?;
         }
@@ -415,6 +469,8 @@ fn bc250_console_link_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(parse_av, m)?)?;
     m.add_function(wrap_pyfunction!(data_cont_packet, m)?)?;
     m.add_function(wrap_pyfunction!(v7_av_header, m)?)?;
+    m.add_function(wrap_pyfunction!(fec_encode, m)?)?;
+    m.add_function(wrap_pyfunction!(fec_decode, m)?)?;
     m.add_class::<Takion>()?;
     for (name, value) in [
         ("PACKET_CONTROL", takion::PACKET_CONTROL),

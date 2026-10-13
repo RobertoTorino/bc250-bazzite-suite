@@ -112,6 +112,11 @@ def console_factory():
         console.close()
 
 
+def _frame_bytes(*frames: int) -> int:
+    from fake_stream import frame_data
+    return sum(len(frame_data(frame)) for frame in frames)
+
+
 def _connection(console, timeout=2.0, **kwargs) -> stream.StreamConnection:
     crypt = RPCrypt.for_session(console.target, NONCE, RP_KEY)
     return stream.StreamConnection("127.0.0.1", console.target, SESSION_ID, crypt, port=console.port, timeout=timeout,
@@ -140,11 +145,38 @@ def test_stream_connects_runs_and_closes(console_factory, target):
                                     tkproto.STREAMINFO]
     assert console.heartbeats >= 2 and console.wait_until(lambda: console.disconnect_reason == "Client Disconnecting")
     assert console.errors == []
-    # Video and audio came through, decrypted and in order.
-    assert connection.stats.video_packets == 6 and connection.stats.frames == {0, 1, 2}
+    # Video came through as whole frames, audio as packets; the core sent congestion reports.
+    assert connection.stats.frames == 3 and connection.stats.fec_frames == 0
+    assert connection.stats.frame_bytes == _frame_bytes(1, 2, 3)
+    assert connection.stats.corrupt_sent == [] and "Video at 1920×1080 (resolution 0)." in connection.log
+    assert any(line.startswith("Video: 3 frames, 0 rebuilt with FEC") for line in connection.log)
+    # Every 200 ms; frames 1 and 2 (5 units each) are counted once the next frame starts.
+    reports = console.congestion_reports
+    assert len(reports) >= 2 and sum(r for r, _ in reports) >= 10 and all(lost == 0 for _, lost in reports)
     assert connection.stats.audio_packets == 3
     assert connection.stats.haptics_packets == (1 if target.ps5 else 0)
     assert "The console's key signature checks out." in connection.log
+
+
+def test_lost_units_come_from_fec(console_factory):
+    console = console_factory(lose_units={(2, 0), (2, 3)})
+    with _connection(console) as connection:
+        connection.connect()
+        connection.run(0.5)
+        assert connection.stats.frames == 3 and connection.stats.fec_frames == 1
+        assert connection.stats.frame_bytes == _frame_bytes(1, 2, 3)
+        assert connection.stats.corrupt_sent == []
+
+
+def test_lost_frames_are_reported_to_the_console(console_factory):
+    console = console_factory(frames=4, lose_frames={2}, lose_units={(3, 0), (3, 1), (3, 2)})
+    with _connection(console) as connection:
+        connection.connect()
+        connection.run(0.5)
+        assert connection.stats.frames == 2 and connection.stats.frames_lost == 2
+        # Frame 2 never came; frame 3 had too few units. Frame 4's start reports 2 to 3 again, as chiaki-ng does.
+        assert connection.stats.corrupt_sent == [(2, 2), (2, 3), (2, 3)]
+    assert console.wait_until(lambda: console.received.count(tkproto.CORRUPTFRAME) == 3)
 
 
 def test_streaminfo_before_bang_is_kept(console_factory):
@@ -212,7 +244,8 @@ def test_stream_job_runs_session_and_stream(console_factory):
         ctrl.close()
         network.close()
     assert outcome.ok, outcome.message
-    assert "1920×1080" in outcome.message and "3 frames in 6 video packets, 3 audio packets" in outcome.message
+    assert "1920×1080" in outcome.message and "3 frames (0 rebuilt with FEC, 0 lost)" in outcome.message
+    assert "Mbit/s of video, 3 audio packets" in outcome.message
     assert "Session ID received: the session is running." in outcome.log
     assert any(line.startswith("STREAMINFO received") for line in outcome.log)
     # MTU out starts its search at MTU in (1300); chiaki-ng's search then stops one short of its upper bound.

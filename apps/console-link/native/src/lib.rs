@@ -1,16 +1,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 //! The stream layer of Remote Play, ported from chiaki-ng (AGPL-3.0): Takion, the SCTP-like transport over UDP
-//! 9296, and its crypto. Each module names the chiaki-ng file it comes from; the tests compare every function with
-//! vectors printed by chiaki-ng's own C code (tests/takion_vectors.json of the app).
+//! 9296, its crypto, and the video frames with their FEC. Each module names the chiaki-ng file it comes from; the
+//! tests compare every function with vectors printed by chiaki-ng's own C code (tests/takion_vectors.json of the
+//! app) and the FEC with frames recorded by chiaki-ng (tests/fec_vectors.json).
 
 pub mod connection;
 pub mod ecdh;
+pub mod fec;
+pub mod frame;
 pub mod gkcrypt;
 pub mod keystate;
 pub mod reorder;
 pub mod sendbuffer;
 pub mod seqnum;
 pub mod takion;
+pub mod video;
 
 #[cfg(feature = "python")]
 mod python;

@@ -5,7 +5,7 @@ Python."""
 
 APP_NAME = "BC250 Console Link"
 APP_ID = "bc250-console-link"
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 from pathlib import Path
 

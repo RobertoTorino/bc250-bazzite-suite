@@ -8,7 +8,12 @@
 //! (Senkusha, version 7) runs without crypto: there video and audio go out as they come. chiaki-ng acknowledges a
 //! DATA message after its handler ran, so the BANG's acknowledgement goes out signed with the keys BANG brought;
 //! here the handler is the Python side, so without keys an acknowledgement waits for `set_crypt` (up to 100 ms).
+//!
+//! Once the stream runs (`start_stream`, after STREAMINFO), video goes through the video receiver (video.rs) and
+//! comes out as whole frames, audio packets are counted, and a congestion report goes to the console every 200 ms
+//! (chiaki-ng's streamconnection.c starts it right after the handshake; it has nothing to count before the stream).
 
+use std::collections::VecDeque;
 use std::io::ErrorKind;
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -17,6 +22,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
+use crate::frame::{self, PacketStats};
 use crate::gkcrypt::{GkCrypt, BLOCK_SIZE, ECDH_SECRET_SIZE, HANDSHAKE_KEY_SIZE};
 use crate::keystate::KeyState;
 use crate::reorder::{Bits, DropStrategy, ReorderQueue};
@@ -26,6 +32,7 @@ use crate::takion::{
     DATA_TYPE_PAD_INFO, DATA_TYPE_PROTOBUF, DATA_TYPE_RUMBLE, DATA_TYPE_TRIGGER_EFFECTS, MESSAGE_HEADER_SIZE,
     PACKET_AUDIO, PACKET_CONTROL, PACKET_VIDEO,
 };
+use crate::video::{VideoEvent, VideoReceiver, VideoStats};
 
 pub const PORT: u16 = 9296;
 pub const EXPECT_TIMEOUT: Duration = Duration::from_millis(5000);
@@ -37,6 +44,10 @@ const POSTPONE_MAX: usize = 32;
 const RECEIVE_SIZE: usize = 1500;
 const DATA_ACK_PACKET_SIZE: usize = 1 + MESSAGE_HEADER_SIZE + 0xc;
 const ACK_WAIT_FOR_CRYPT: Duration = Duration::from_millis(100);
+const CONGESTION_INTERVAL: Duration = Duration::from_millis(200);
+const STOP_CHECK: Duration = Duration::from_millis(20);
+/// chiaki-ng's default for the most loss a congestion report admits (its setting "packet_loss_max").
+pub const PACKET_LOSS_MAX: f64 = 0.05;
 // The data channel chiaki-ng's DATA messages go on; STREAMINFOACK uses 9, frame reports 2.
 pub const CHANNEL_DEFAULT: u16 = 1;
 
@@ -81,8 +92,10 @@ pub enum Event {
     Data { data_type: u8, channel: u16, data: Vec<u8> },
     /// One of our DATA messages was acknowledged.
     DataAck(u32),
-    /// A video or audio packet, decrypted; video in order of packet index.
+    /// A video or audio packet, decrypted; video in order of packet index. Once the stream runs, only audio.
     Av { packet: AvPacket, data: Vec<u8> },
+    /// Once the stream runs: a frame, a resolution switch or frames to report as corrupt.
+    Video(VideoEvent),
     /// The receiving thread stopped: closed, or the socket failed.
     Closed(String),
 }
@@ -97,6 +110,7 @@ pub struct Stats {
     pub video_skipped: u64,
     pub resent: u64,
     pub given_up: u64,
+    pub congestion_reports: u64,
 }
 
 struct SendState {
@@ -117,12 +131,20 @@ struct Shared {
     send: Mutex<SendState>,
     crypt_remote: Mutex<Option<GkCrypt>>,
     stats: Mutex<Stats>,
+    packet_stats: Mutex<PacketStats>,
+}
+
+struct Stream {
+    video: VideoReceiver,
+    pending: VecDeque<VideoEvent>,
 }
 
 pub struct Connection {
     shared: Arc<Shared>,
     events: Mutex<Receiver<Event>>,
     thread: Mutex<Option<JoinHandle<()>>>,
+    stream: Mutex<Option<Stream>>,
+    congestion: Mutex<Option<JoinHandle<()>>>,
 }
 
 fn is_timeout(error: &std::io::Error) -> bool {
@@ -212,6 +234,7 @@ impl Connection {
             }),
             crypt_remote: Mutex::new(None),
             stats: Mutex::new(Stats::default()),
+            packet_stats: Mutex::new(PacketStats::default()),
         });
         let (sender, receiver) = channel();
         let worker = Arc::clone(&shared);
@@ -219,7 +242,13 @@ impl Connection {
             .name("takion".into())
             .spawn(move || Receiving::new(worker, sender).run())
             .map_err(ConnectError::Io)?;
-        Ok(Self { shared, events: Mutex::new(receiver), thread: Mutex::new(Some(thread)) })
+        Ok(Self {
+            shared,
+            events: Mutex::new(receiver),
+            thread: Mutex::new(Some(thread)),
+            stream: Mutex::new(None),
+            congestion: Mutex::new(None),
+        })
     }
 
     pub fn tag_local(&self) -> u32 {
@@ -276,26 +305,64 @@ impl Connection {
     }
 
     pub fn send_congestion(&self, word_0: u16, received: u16, lost: u16) -> Result<(), SendError> {
-        let mut send = self.shared.send.lock().unwrap();
-        let key_pos = advance(&mut send, takion::CONGESTION_PACKET_SIZE);
-        let mut packet = takion::congestion_packet(word_0, received, lost, key_pos);
-        takion::packet_mac(send.crypt.as_mut(), &mut packet, key_pos).expect("a congestion packet");
-        self.shared.sock.send(&packet).map(|_| ()).map_err(SendError::Io)
+        send_congestion(&self.shared, word_0, received, lost)
+    }
+
+    /// The stream runs: video from now on through the video receiver (profiles: the resolutions in STREAMINFO),
+    /// and congestion reports every 200 ms, the loss reported at most packet_loss_max.
+    pub fn start_stream(&self, profiles: usize, packet_loss_max: f64) -> Result<(), SendError> {
+        let mut congestion = self.congestion.lock().unwrap();
+        if congestion.is_some() {
+            return Ok(());
+        }
+        *self.stream.lock().unwrap() = Some(Stream { video: VideoReceiver::new(profiles), pending: VecDeque::new() });
+        let shared = Arc::clone(&self.shared);
+        let thread = std::thread::Builder::new()
+            .name("congestion".into())
+            .spawn(move || report_congestion(shared, packet_loss_max))
+            .map_err(SendError::Io)?;
+        *congestion = Some(thread);
+        Ok(())
+    }
+
+    /// The video receiver's counters, once the stream runs.
+    pub fn video_stats(&self) -> Option<VideoStats> {
+        self.stream.lock().unwrap().as_ref().map(|stream| stream.video.stats)
     }
 
     /// The next event, waiting up to timeout; None when there was none.
     pub fn next_event(&self, timeout: Duration) -> Option<Event> {
-        match self.events.lock().unwrap().recv_timeout(timeout) {
-            Ok(event) => Some(event),
-            Err(RecvTimeoutError::Timeout) => None,
-            Err(RecvTimeoutError::Disconnected) => None,
+        let deadline = Instant::now() + timeout;
+        let events = self.events.lock().unwrap();
+        loop {
+            if let Some(stream) = self.stream.lock().unwrap().as_mut() {
+                if let Some(event) = stream.pending.pop_front() {
+                    return Some(Event::Video(event));
+                }
+            }
+            let event = match events.recv_timeout(deadline.saturating_duration_since(Instant::now())) {
+                Ok(event) => event,
+                Err(RecvTimeoutError::Timeout) | Err(RecvTimeoutError::Disconnected) => return None,
+            };
+            let Event::Av { packet, data } = event else { return Some(event) };
+            let mut stream = self.stream.lock().unwrap();
+            let Some(stream) = stream.as_mut() else { return Some(Event::Av { packet, data }) };
+            let mut packet_stats = self.shared.packet_stats.lock().unwrap();
+            if !packet.is_video {
+                packet_stats.push_seq(packet.frame_index);
+                return Some(Event::Av { packet, data });
+            }
+            stream.pending.extend(stream.video.packet(&packet, &data, &mut packet_stats));
         }
     }
 
-    /// Stops the receiving thread; the last event is Closed.
+    /// Stops the receiving thread and the congestion reports; the last event is Closed.
     pub fn close(&self) {
         self.shared.stop.store(true, Ordering::Relaxed);
         if let Some(thread) = self.thread.lock().unwrap().take() {
+            let _ = thread.join();
+        }
+        if let Some(thread) = self.congestion.lock().unwrap().take() {
             let _ = thread.join();
         }
     }
@@ -310,6 +377,32 @@ impl Drop for Connection {
 fn getrandom_tag(tag: &mut [u8; 4]) {
     use rand_core::{OsRng, RngCore};
     OsRng.fill_bytes(tag);
+}
+
+fn send_congestion(shared: &Shared, word_0: u16, received: u16, lost: u16) -> Result<(), SendError> {
+    let mut send = shared.send.lock().unwrap();
+    let key_pos = advance(&mut send, takion::CONGESTION_PACKET_SIZE);
+    let mut packet = takion::congestion_packet(word_0, received, lost, key_pos);
+    takion::packet_mac(send.crypt.as_mut(), &mut packet, key_pos).expect("a congestion packet");
+    shared.sock.send(&packet).map(|_| ()).map_err(SendError::Io)
+}
+
+/// chiaki-ng's congestion control thread: every 200 ms the packets received and lost since the last report.
+fn report_congestion(shared: Arc<Shared>, packet_loss_max: f64) {
+    let mut next = Instant::now() + CONGESTION_INTERVAL;
+    while !shared.stop.load(Ordering::Relaxed) {
+        let now = Instant::now();
+        if now < next {
+            std::thread::sleep((next - now).min(STOP_CHECK));
+            continue;
+        }
+        let (received, lost) = shared.packet_stats.lock().unwrap().take();
+        let (received, lost) = frame::congestion_report(received, lost, packet_loss_max);
+        if send_congestion(&shared, 0, received, lost).is_ok() {
+            shared.stats.lock().unwrap().congestion_reports += 1;
+        }
+        next = Instant::now() + CONGESTION_INTERVAL;
+    }
 }
 
 fn send_ack(shared: &Shared, send: &mut SendState, seq_num: u32) {
@@ -733,6 +826,36 @@ mod tests {
         }
         connection.send_raw(&packet).unwrap();
         assert_eq!(console.recv(), packet);
+    }
+
+    #[test]
+    fn stream_assembles_frames_and_reports_congestion() {
+        let mut console = Console::new();
+        let connection = connect_version(&mut console, 0, 7, false);
+        connection.start_stream(1, PACKET_LOSS_MAX).unwrap();
+        let frame: Vec<u8> = (0..2500u32).map(|i| (i * 13) as u8).collect();
+        let units = crate::frame::tests::units(&frame, 1000, 1);
+        for (i, unit) in units.iter().enumerate().filter(|(i, _)| *i != 1) {     // unit 1 lost: FEC rebuilds it
+            let header = AvPacket {
+                is_video: true, packet_index: i as u16, frame_index: 1, unit_index: i as u16,
+                units_in_frame_total: units.len() as u16, units_in_frame_fec: 1, ..Default::default()
+            };
+            console.send(&[takion::v7_av_header(&header), unit.clone()].concat());
+        }
+        let audio = AvPacket { frame_index: 9, units_in_frame_total: 1, ..Default::default() };
+        console.send(&[takion::v7_av_header(&audio), vec![1, 2, 3]].concat());
+
+        let mut events = [next(&connection), next(&connection), next(&connection)];
+        events.sort_by_key(|e| !matches!(e, Event::Av { .. }));
+        assert!(matches!(&events[0], Event::Av { packet, .. } if packet.frame_index == 9));
+        assert_eq!(events[1], Event::Video(VideoEvent::Profile(0)));
+        assert_eq!(events[2], Event::Video(VideoEvent::Frame { index: 1, data: frame, fec: true, frames_lost: 0 }));
+        assert_eq!(connection.video_stats().unwrap().fec_recovered, 1);
+
+        let report = console.recv();
+        assert_eq!((report[0], report.len()), (takion::PACKET_CONGESTION, takion::CONGESTION_PACKET_SIZE));
+        connection.close();
+        assert!(connection.stats().congestion_reports >= 1);
     }
 
     #[test]

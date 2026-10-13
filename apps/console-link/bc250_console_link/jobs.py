@@ -157,7 +157,8 @@ def test_stream(console: RegisteredConsole, seconds: float = STREAM_SECONDS, str
             raise session.SessionError(f"The control connection broke off during the stream: {ctrl_error[0]}")
         stats = connection.stats
         sizes = ", ".join(f"{r.width}×{r.height}" for r in info.resolutions) or "no resolution"
+        mbit = stats.frame_bytes * 8 / seconds / 1e6
         return (f"Stream with {console.nickname or console.address} ran {seconds:g} s ({sizes}): "
-                f"{len(stats.frames)} frames in {stats.video_packets} video packets, {stats.audio_packets} audio "
-                "packets. Nothing is shown yet.")
+                f"{stats.frames} frames ({stats.fec_frames} rebuilt with FEC, {stats.frames_lost} lost), "
+                f"{mbit:.1f} Mbit/s of video, {stats.audio_packets} audio packets. Nothing is shown yet.")
     return _session(console, hold, **kwargs)
