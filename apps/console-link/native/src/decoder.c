@@ -145,13 +145,17 @@ static const AVFrame *picture(struct bc_decoder *d, int *r)
 }
 
 // The last frame's picture: its pixel format's name (yuv420p in software, nv12 from VA-API) and size in bytes,
-// planes one after another without padding. bc_decoder_image_copy then copies it.
-int bc_decoder_image(struct bc_decoder *d, char *format, size_t format_size, size_t *size)
+// planes one after another without padding; its colour matrix (FFmpeg's AVColorSpace: 1 BT.709, 5 and 6 BT.601,
+// 9 BT.2020, 2 unspecified) and whether it uses the full range of values. bc_decoder_image_copy then copies it.
+int bc_decoder_image(struct bc_decoder *d, char *format, size_t format_size, size_t *size, int *colorspace,
+                     int *full_range)
 {
     int r;
     const AVFrame *f = picture(d, &r);
     if(!f)
         return r;
+    *colorspace = d->frame->colorspace;
+    *full_range = d->frame->color_range == AVCOL_RANGE_JPEG;
     const char *name = av_get_pix_fmt_name(f->format);
     snprintf(format, format_size, "%s", name ? name : "?");
     r = av_image_get_buffer_size(f->format, f->width, f->height, 1);

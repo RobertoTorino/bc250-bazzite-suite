@@ -25,7 +25,8 @@ extern "C" {
     fn bc_decoder_hw(d: *mut RawDecoder) -> c_int;
     fn bc_decoder_send(d: *mut RawDecoder, data: *const u8, size: usize) -> c_int;
     fn bc_decoder_receive(d: *mut RawDecoder, info: *mut RawFrame) -> c_int;
-    fn bc_decoder_image(d: *mut RawDecoder, format: *mut c_char, format_size: usize, size: *mut usize) -> c_int;
+    fn bc_decoder_image(d: *mut RawDecoder, format: *mut c_char, format_size: usize, size: *mut usize,
+                        colorspace: *mut c_int, full_range: *mut c_int) -> c_int;
     fn bc_decoder_image_copy(d: *mut RawDecoder, buf: *mut u8, size: usize) -> c_int;
     fn bc_decoder_ffmpeg_version() -> *const c_char;
     fn bc_decoder_error(code: c_int, buf: *mut c_char, size: usize);
@@ -78,6 +79,9 @@ pub struct Image {
     pub width: u32,
     pub height: u32,
     pub data: Vec<u8>,
+    /// FFmpeg's AVColorSpace: 1 BT.709, 5 and 6 BT.601, 9 BT.2020, 2 unspecified.
+    pub colorspace: i32,
+    pub full_range: bool,
 }
 
 pub struct Decoder {
@@ -139,16 +143,18 @@ impl Decoder {
     pub fn image(&mut self) -> Result<Image, DecodeError> {
         let frame = self.last.ok_or_else(|| DecodeError { code: -22, message: "no frame decoded yet".into() })?;
         let mut format = [0 as c_char; 32];
-        let mut size = 0usize;
-        // SAFETY: raw is valid; format and size are locals of the given sizes.
-        check(unsafe { bc_decoder_image(self.raw, format.as_mut_ptr(), format.len(), &mut size) })?;
+        let (mut size, mut colorspace, mut full_range) = (0usize, 0, 0);
+        // SAFETY: raw is valid; the out-pointers are locals, format of the given size.
+        check(unsafe {
+            bc_decoder_image(self.raw, format.as_mut_ptr(), format.len(), &mut size, &mut colorspace, &mut full_range)
+        })?;
         let mut data = vec![0u8; size];
         // SAFETY: data has the size bc_decoder_image asked for.
         let written = check(unsafe { bc_decoder_image_copy(self.raw, data.as_mut_ptr(), data.len()) })?;
         data.truncate(written as usize);
         // SAFETY: snprintf wrote a NUL-terminated string.
         let format = unsafe { CStr::from_ptr(format.as_ptr()) }.to_string_lossy().into_owned();
-        Ok(Image { format, width: frame.width, height: frame.height, data })
+        Ok(Image { format, width: frame.width, height: frame.height, data, colorspace, full_range: full_range != 0 })
     }
 }
 

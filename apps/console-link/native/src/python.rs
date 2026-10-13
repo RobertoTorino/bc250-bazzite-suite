@@ -447,7 +447,7 @@ impl Takion {
 }
 
 /// The video decoder (decoder.rs): Decoder(codec="h264" or "hevc", hw=True). decode(sample) gives the frames it
-/// completed as dicts (width, height, hw); image() the last one's picture as (format, width, height, bytes).
+/// completed as dicts (width, height, hw); image() the last one's picture.
 /// hw tells whether VA-API runs, hw_error why not when it was asked for.
 #[cfg(feature = "decoder")]
 #[pyclass(name = "Decoder", module = "bc250_console_link_core", unsendable)]
@@ -493,9 +493,18 @@ impl Decoder {
         }).collect()
     }
 
-    fn image<'py>(&mut self, py: Python<'py>) -> PyResult<(String, u32, u32, Bound<'py, PyBytes>)> {
+    /// The last frame's picture: a dict with format, width, height, colorspace (FFmpeg's numbers), full_range and
+    /// data (the planes one after another).
+    fn image<'py>(&mut self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
         let image = self.0.image().map_err(decode_error)?;
-        Ok((image.format, image.width, image.height, bytes(py, &image.data)))
+        let dict = PyDict::new(py);
+        dict.set_item("format", image.format)?;
+        dict.set_item("width", image.width)?;
+        dict.set_item("height", image.height)?;
+        dict.set_item("colorspace", image.colorspace)?;
+        dict.set_item("full_range", image.full_range)?;
+        dict.set_item("data", bytes(py, &image.data))?;
+        Ok(dict)
     }
 }
 

@@ -156,9 +156,10 @@ def test_decoder(codec):
     for sample in clip["samples"]:
         for frame in decoder.decode(base64.b64decode(sample)):
             assert (frame["width"], frame["height"], frame["hw"]) == (clip["width"], clip["height"], False)
-            fmt, width, height, data = decoder.image()
-            assert (fmt, width, height) == ("yuv420p", clip["width"], clip["height"])
-            pictures.update(data)
+            image = decoder.image()
+            assert (image["format"], image["width"], image["height"]) == ("yuv420p", clip["width"], clip["height"])
+            assert image["colorspace"] == 2 and not image["full_range"]     # x264/x265 leave the matrix unset
+            pictures.update(image["data"])
             frames += 1
     assert frames == clip["frames"] and pictures.hexdigest() == clip["sha256"]
     with pytest.raises(ValueError, match="codec"):
