@@ -1,3 +1,7 @@
+Changelog: 14-10-2026 00:21:55
+
+MIGRATION.md: candidates for new apps, investigated from the owner's list: a PS4 emulator manager first, a save backup in SFTP Tools, a streaming resolution switch later; a controller Bluetooth helper and an exploit host not taken.
+
 Changelog: 13-10-2026 22:17:49
 
 HelixSR Manager and Mesh Shaders move to the Gaming section of the portal (owner, 13-10-2026): README and the manual's index list them there.

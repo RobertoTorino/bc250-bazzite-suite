@@ -4,7 +4,7 @@ Read-only: nothing on the board or in the BIOS changes."""
 
 APP_NAME = "BC-250 BIOS Reader"
 APP_ID = "bc250-bios-reader"
-__version__ = "0.1.6"
+__version__ = "0.1.7"
 
 from pathlib import Path
 

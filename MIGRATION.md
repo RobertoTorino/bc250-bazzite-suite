@@ -245,6 +245,47 @@ Nice to have, low priority (owner, 13-10-2026):
   exist, so it looks like PyQt6/sip on Python 3.14, not one app. To check: a normal window close on a real desktop,
   `coredumpctl`, other PyQt6 or Python versions. Deleting the window and the instance server before exit did not help.
 
+## Candidates for new apps
+
+Investigated 14-10-2026 from the owner's list; nothing decided or built. Which one to build is the owner's call.
+Anything chosen is a portal tile like every other app (installed through the portal, not a `ujust` command, which is
+Bazzite's).
+
+- **PS4 emulator manager (recommended first).** Installs a pinned, checksummed release of an open-source PS4
+  emulator (Flathub or AppImage, not a nightly that can break without notice), writes presets for the BC-250
+  (Vulkan through RADV on Cyan Skillfish/gfx1013, frame caps; the 16 GB GDDR6 is shared between CPU and GPU, so the
+  split from memory-manager matters), and adds games from a chosen folder to Steam as Non-Steam shortcuts for Game
+  Mode. Gaming section, `changes_board = false`. The emulator needs system modules dumped from the user's own PS4:
+  the app cannot ship or download them, only point to the folder and check it. Steam shortcuts: Console Link's
+  `steam_shortcuts.py` already writes them (with its tests); moving it into `bc250_core` would serve both (moving
+  code: prove it unchanged). Game compatibility is the emulator's, the manual says so. Logic to take from the
+  owner's Windows launcher Nexus (GPL-3.0, the owner's own, read 14-10-2026): the game scan (`eboot.bin` found
+  recursively, the parent folder's name as the title without a leading `[PS4]`, paths already known skipped; better
+  here: the title and title ID from `sce_sys/param.sfo` beside it, the title ID as the Steam shortcut's stable key);
+  the launch line `-f true -g "<eboot.bin>"` (fullscreen, then the game; the options changed between versions, so
+  check them against the pinned release); two launch entries, a game and the emulator's own settings window with
+  no game; config changes as single keys in the emulator's own file, the rest kept (with a backup and undo, like
+  the governor's profiles). Not taken from Nexus: window and monitor handling (KWin and gamescope do it), play
+  time (Steam counts it), the controller tester (Console Link's is further), the Windows audio and process tools.
+- **Save backup from a PS4 (small, fits SFTP Tools).** A scheduled pull of save files from the user's own console
+  over FTP into a folder on the board. Better as an FTP source and a timer in SFTP Tools than as a new app. Not
+  taken: receiving, checking and sorting game dumps (PKG files), which works with decrypted game images, legally
+  unclear in most countries, for little board-specific value.
+- **Streaming host resolution switch (later, narrowed).** Bazzite already ships Sunshine (`ujust setup-sunshine`),
+  so no setup app. What would be ours: Sunshine's prep and undo commands that set the board's output to the
+  connecting client's resolution (1280×800, 1080p60, ...), on KDE (`kscreen-doctor`) and in gamescope, worth it only
+  if the BC-250's display modes need care. Controller passthrough over the stream: gyro and touchpad exist,
+  adaptive triggers to check before promising them.
+- **Controller Bluetooth helper (not taken).** The BC-250 has no Bluetooth: it depends on the user's USB adapter,
+  not the board. Haptics and the touchpad in Game Mode come from the kernel driver and Steam Input, disconnects
+  from BlueZ, the kernel or the adapter's firmware, all Bazzite's scope. At most, the Dependency Checker or
+  bazzite-test could report the adapter and its driver.
+- **Exploit host and DNS redirect for a PS4 (not taken).** Serving console exploits and intercepting a console's
+  traffic is a takedown and reputation risk for a public repository of careful, reversible board tools, and has
+  nothing to do with the BC-250.
+- **Console registration and Game Mode shortcuts (already built).** Console Link registers consoles, streams and
+  adds Game Mode shortcuts; gaps go into Console Link.
+
 ## Details for later steps
 
 From the original proposal (not in the repository).

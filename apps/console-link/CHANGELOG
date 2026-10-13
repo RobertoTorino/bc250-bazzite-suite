@@ -1,3 +1,11 @@
+Changelog: 14-10-2026 00:37:33
+
+Release 1.0.4.
+
+Changelog: 14-10-2026 00:16:26
+
+Fix (CI, 13-10-2026: the console-link tests crashed now and then with a segmentation fault, 2 of 3 runs since console-link-v1.0.3): the stream view's timer that hides the pointer called a lambda holding the view, which Qt does not disconnect when it deletes the window (Delete on close), so the timer could fire on a deleted view. It calls a method of the view now, which Qt disconnects with it. Reproduced locally by leaving a main window to the garbage collector before test_stream_window (it crashed every time, and passes with the fix).
+
 Changelog: 13-10-2026 23:35:17
 
 Release 1.0.3.

@@ -198,8 +198,11 @@ class StreamView(QOpenGLWidget):
         self.cursor_timer = QTimer(self)
         self.cursor_timer.setSingleShot(True)
         self.cursor_timer.setInterval(CURSOR_HIDE_MS)
-        self.cursor_timer.timeout.connect(lambda: self.setCursor(Qt.CursorShape.BlankCursor))
+        self.cursor_timer.timeout.connect(self._hide_cursor)   # a method: Qt drops it with the view
         self.cursor_timer.start()
+
+    def _hide_cursor(self) -> None:
+        self.setCursor(Qt.CursorShape.BlankCursor)
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         self.unsetCursor()
