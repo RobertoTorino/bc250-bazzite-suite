@@ -215,7 +215,6 @@ launch = [["Open", "~/.local/bin/simple-demo-tool"]]
 [apps.shadps4]
 name = "BC-250 shadPS4 Manager"
 summary = "PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found and added to Game Mode."
-short = "shadPS4 Manager"
 tag = "shadps4-v0.1.0"
 sha256 = ""
 required = false

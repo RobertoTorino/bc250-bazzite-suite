@@ -4,7 +4,9 @@ sce_sys/param.sfo with its title, title ID (CUSA00001) and version.
 
 The scan follows the owner's Windows launcher Nexus (an eboot.bin found below a folder, the folder's name as the
 title without a leading "[PS4]", a path found twice counted once); here the title and ID come from param.sfo when it
-is there. Updates (category "gp") sit in a folder of their own beside the game and are not games to start.
+is there. Updates and mods are not games to start: shadPS4 lays them over the game from a folder beside it, named
+like the game's with "-UPDATE", "-patch" or "-mods" added (fs.cpp in 0.19.0); an update's param.sfo also says
+category "gp".
 
 param.sfo: a 20-byte header ("\\0PSF", version, start of the key table, start of the data table, number of entries),
 then 16 bytes per entry (key offset u16, format u16, length u32, room u32, data offset u32), little-endian. Format
@@ -21,6 +23,7 @@ from pathlib import Path
 MAX_DEPTH = 5                           # as deep as shadPS4 itself looks for a game in a game folder
 TEXT, TEXT_SPECIAL, NUMBER = 0x0204, 0x0004, 0x0404
 _PREFIX = re.compile(r"^\[PS4\]\s*", re.IGNORECASE)
+OVERLAYS = ("-UPDATE", "-patch", "-mods")
 
 
 @dataclass(frozen=True)
@@ -62,7 +65,9 @@ def read_sfo(data: bytes) -> dict[str, str | int]:
 
 
 def read_game(eboot: Path) -> Game | None:
-    """The game in eboot's folder; None for an update or add-on."""
+    """The game in eboot's folder; None for an update, a mod or an add-on."""
+    if eboot.parent.name.endswith(OVERLAYS):
+        return None
     try:
         sfo = read_sfo((eboot.parent / "sce_sys" / "param.sfo").read_bytes())
     except OSError:
