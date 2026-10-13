@@ -215,8 +215,8 @@ launch = [["Open", "~/.local/bin/simple-demo-tool"]]
 [apps.dependency-checker]
 name = "Dependency Checker"
 summary = "The suite's Python packages and external tools, which apps use them, and whether newer ones exist."
-tag = "dependency-checker-v0.1.10"
-sha256 = "03deadbb43202e9bb53756bbb3f77a57f29af01f09e2bc6f8090e4c95f25a2c5"
+tag = "dependency-checker-v0.1.11"
+sha256 = "9543980fd79c0ee9e25b659952bc28996a4c0f124ced959d658da521bd9e7028"
 required = false
 changes_board = false
 development = true
