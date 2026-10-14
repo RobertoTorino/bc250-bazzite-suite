@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The window on folders made in a temp folder: the states before and after installing, the games in the table, the
-plan for Game Mode, installing through the worker, and Steam's shortcuts changed with a fake "close Steam"."""
+plan for Game Mode, installing through the worker, Steam's shortcuts changed with a fake "close Steam", and the
+blue look."""
 
 from __future__ import annotations
 
@@ -18,8 +19,8 @@ from PyQt6.QtWidgets import QMessageBox
 from conftest import make_game
 
 from bc250_core import steam
-from bc250_shadps4 import emulator, shortcuts, userdata
-from bc250_shadps4.main_window import MainWindow
+from bc250_shadps4_manager import emulator, shortcuts, style, userdata
+from bc250_shadps4_manager.main_window import MainWindow
 
 
 @pytest.fixture
@@ -177,4 +178,17 @@ def test_add_folder_through_shadps4(qapp, folders, tmp_path):
     folders["run"].write_text("#!/bin/sh\necho no >&2\nexit 3\n")
     window.add_folder(tmp_path / "x")
     assert "exit code 3" in window.running.text() and "no" in window.running.text()
+    window.close()
+
+
+def test_the_blue_look(qapp, folders):
+    _install(folders["home"])
+    window = _window(folders)
+    assert style.BLUE in window.styleSheet()
+    assert window.install_button.property("primary") and window.steam_button.property("primary")
+    assert style.BLUE in window.emulator_box.styleSheet()
+    assert f"color:{style.BLUE}" in window.emulator_state.text()                   # the release notes link
+    steps = (window.install_button, window.remove_button, window.modules_button, window.folder_button)
+    assert len({(b.width(), b.height()) for b in steps}) == 1                       # one size, padding included
+    assert window.install_button.width() >= window.install_button.sizeHint().width()
     window.close()

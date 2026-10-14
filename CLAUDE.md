@@ -14,7 +14,7 @@ its manifest. **bazzite-test** is always installed and always listed first; ever
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
 - `apps/<name>/`: bazzite-test, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
-  system-overlay, bios-reader, ace-queues, mesh-shaders, memory-manager, hdmi-cec, sftp-tools, console-link, shadps4, demo-tool, dependency-checker, suite-releases. Each has its
+  system-overlay, bios-reader, ace-queues, mesh-shaders, memory-manager, hdmi-cec, sftp-tools, console-link, shadps4-manager, demo-tool, dependency-checker, suite-releases. Each has its
   own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; console-link is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; the rest GPL-3.0-or-later), .gitignore. Simple
   Demo Tool, the Dependency Checker and the shadPS4 Manager are `development = true` in `portal/apps.toml`: the portal
@@ -116,7 +116,7 @@ shellcheck -S warning apps/ace-queues/bc250-ace-queues.sh apps/ace-queues/bc250-
   apps/ace-queues/install.sh apps/ace-queues/mesa/build-in-container.sh
 shellcheck -S warning apps/mesh-shaders/bc250-mesh-shaders.sh apps/mesh-shaders/bc250-mesh-shaders-run \
   apps/mesh-shaders/install.sh apps/mesh-shaders/mesa/build-in-container.sh
-shellcheck -S warning apps/shadps4/install.sh apps/shadps4/bc250-shadps4-run
+shellcheck -S warning apps/shadps4-manager/install.sh apps/shadps4-manager/bc250-shadps4-run
 for t in tools/installer-tests/*.sh; do [ "${t##*/}" = shims.sh ] || bash "$t"; done   # every installer test
 mkdocs build --strict                               # from the venv
 ```

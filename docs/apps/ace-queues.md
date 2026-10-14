@@ -29,8 +29,8 @@ depends on the game: only games that use async compute gain anything.
 
 ## Using it
 
-Install the app from the BC250 Bazzite Suite portal, or from a clone or release folder, as your own user (not with
-sudo):
+Install the app from the BC250 Bazzite Suite portal, where it is under Gaming, or from a clone or release folder,
+as your own user (not with sudo):
 
 ```bash
 ./install.sh                         # app menu entry and Desktop icon

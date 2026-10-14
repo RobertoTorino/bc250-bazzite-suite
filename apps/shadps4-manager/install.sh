@@ -36,7 +36,7 @@ DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
 DESKTOP_ICON="$DESKTOP_DIR/$APP_ID.desktop"
 
 SRC=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
-# bc250_core: bundled next to bc250_shadps4 in a release; in the suite checkout it lives in core/.
+# bc250_core: bundled next to bc250_shadps4_manager in a release; in the suite checkout it lives in core/.
 if [ -d "$SRC/bc250_core" ]; then CORE_SRC="$SRC/bc250_core"; else CORE_SRC="$SRC/../../core/bc250_core"; fi
 
 info() { printf '\033[1;35m==>\033[0m %s\n' "$1"; }
@@ -84,7 +84,7 @@ fi
 
 # --- Checks ------------------------------------------------------------------------------------
 [ "$(uname -s)" = Linux ] || die "This app runs on Linux (Bazzite) only."
-for f in requirements.txt VERSION bc250_shadps4/__main__.py "$RUN_NAME" "images/$APP_ID.png"; do
+for f in requirements.txt VERSION bc250_shadps4_manager/__main__.py "$RUN_NAME" "images/$APP_ID.png"; do
     [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from a clone or the extracted release folder."
 done
 [ -f "$CORE_SRC/__init__.py" ] || die "bc250_core is missing: run install.sh from a clone or the extracted release folder."
@@ -127,9 +127,9 @@ mkdir -p "$(dirname "$LAUNCHER")"
 cat >"$LAUNCHER" <<EOF
 #!/usr/bin/env bash
 # $APP_NAME launcher, written by install.sh. Starts from the app folder, so python -m never picks up a
-# bc250_shadps4 folder from the current directory, and imports the bc250_core bundled there.
+# bc250_shadps4_manager folder from the current directory, and imports the bc250_core bundled there.
 cd "$APP_DIR" || { echo "$APP_NAME is not installed in $APP_DIR; run install.sh again." >&2; exit 1; }
-exec "$VENV/bin/python" -m bc250_shadps4 "\$@"
+exec "$VENV/bin/python" -m bc250_shadps4_manager "\$@"
 EOF
 chmod 755 "$LAUNCHER"
 install -m 755 "$SRC/$RUN_NAME" "$RUN"

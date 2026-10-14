@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from bc250_shadps4 import emulator
+from bc250_shadps4_manager import emulator
 
 
 def _zip(member: str = emulator.MEMBER, data: bytes = b"#!/bin/sh\necho shadPS4\n") -> bytes:

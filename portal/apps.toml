@@ -143,6 +143,7 @@ tag = "ace-queues-v0.1.8"
 sha256 = "eee264911907038dc6e926295fdd875bdeabbd9d5870512a508668fc9091b79c"
 required = false
 changes_board = true
+section = "gaming"
 install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-ace-queues"]
@@ -212,19 +213,6 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/simple-demo-tool"]
 launch = [["Open", "~/.local/bin/simple-demo-tool"]]
 
-[apps.shadps4]
-name = "BC-250 shadPS4 Manager"
-summary = "PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found and added to Game Mode."
-tag = "shadps4-v0.1.0"
-sha256 = "7d3a0eecc49ace182f929a1fc57c1de6341368857e3c9ad725c3a5ec3539429c"
-required = false
-changes_board = false
-development = true
-install = ["bash install.sh"]
-uninstall = ["bash install.sh --uninstall"]
-detect = ["~/.local/bin/bc250-shadps4-manager"]
-launch = [["Open", "~/.local/bin/bc250-shadps4-manager"]]
-
 [apps.dependency-checker]
 name = "Dependency Checker"
 summary = "The suite's Python packages and external tools, which apps use them, and whether newer ones exist."
@@ -251,6 +239,19 @@ install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-console-link"]
 launch = [["Open", "~/.local/bin/bc250-console-link"]]
+
+[apps.shadps4-manager]
+name = "BC-250 shadPS4 Manager"
+summary = "PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found and added to Game Mode."
+tag = "shadps4-manager-v0.1.0"
+sha256 = ""
+required = false
+changes_board = false
+section = "gaming"
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-shadps4-manager"]
+launch = [["Open", "~/.local/bin/bc250-shadps4-manager"]]
 
 [checkout.suite-releases]
 name = "BC250 Suite Releases"

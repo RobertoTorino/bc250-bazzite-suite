@@ -73,7 +73,7 @@ nav:
       - BC250 Bazzite SFTP Tools: apps/sftp-tools.md
       - Dependency Checker: apps/dependency-checker.md
       - BC250 Console Link: apps/console-link.md
-      - BC-250 shadPS4 Manager: apps/shadps4.md
+      - BC-250 shadPS4 Manager: apps/shadps4-manager.md
   - Development:
       - development/index.md
       - Architecture and consistency: development/architecture.md

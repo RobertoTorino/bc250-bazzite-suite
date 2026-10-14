@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The main window: shadPS4 itself, the system modules and the game folders as three steps with their state and
 buttons, then the games found, each with a box for Game Mode. Downloading shadPS4 and changing Steam's files run off
-the GUI thread; nothing here needs root."""
+the GUI thread; nothing here needs root. The look is the app's own blue (style.py)."""
 
 from __future__ import annotations
 
@@ -20,12 +20,12 @@ from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import bin_home, xdg_open
 from bc250_core.settings import SettingsStore
 from bc250_core.updates import UpdateChecker
-from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, accent_button, hint_label
+from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, hint_label
 
-from . import APP_NAME, INFO, LOGO_PATH, ROOT, __version__, emulator, shortcuts, userdata
+from . import APP_NAME, INFO, LOGO_PATH, ROOT, __version__, emulator, shortcuts, style, userdata
 from .games import Game, scan
 
-MANUAL_URL = f"{SUITE_MANUAL_URL}apps/shadps4/"
+MANUAL_URL = f"{SUITE_MANUAL_URL}apps/shadps4-manager/"
 FOLDER_TIMEOUT = 60
 STEAM_TIP = "Add the ticked games to Steam and take out the others; Steam closes for it and starts again"
 
@@ -65,25 +65,24 @@ class MainWindow(QMainWindow):
         self.refresh_button.setToolTip("Read the state again and look for games")
         self.refresh_button.clicked.connect(self.refresh)
         header.add_action(self.refresh_button)
-        self.emulator_box = MetricBox("shadPS4")
-        self.modules_box = MetricBox("System modules")
-        self.games_box = MetricBox("Games")
-        self.steam_box = MetricBox("In Game Mode")
+        self.emulator_box = MetricBox("shadPS4", style.BLUE)
+        self.modules_box = MetricBox("System modules", style.BLUE)
+        self.games_box = MetricBox("Games", style.BLUE)
+        self.steam_box = MetricBox("In Game Mode", style.BLUE)
         for box in (self.emulator_box, self.modules_box, self.games_box, self.steam_box):
             header.add_second(box)
         intro = hint_label(
             "PS4 games on the BC-250 with the shadPS4 emulator. The app installs the shadPS4 release it was tried "
             "with, finds your games and puts them in Steam, so they start from Game Mode. Games, saves and system "
-            "modules come from your own PS4; the app never downloads them. "
-            f"<a href='{MANUAL_URL}'>Manual</a>")
+            "modules come from your own PS4; the app never downloads them. " + style.link(self, MANUAL_URL, "Manual"))
 
         grid = QGridLayout()
-        grid.setColumnStretch(1, 1)
+        grid.setColumnStretch(2, 1)
         grid.setHorizontalSpacing(14)
         grid.setVerticalSpacing(10)
         self.emulator_state, self.modules_state, self.folders_state = (self._state_label() for _ in range(3))
-        self.install_button = accent_button("Install", f"Download shadPS4 {emulator.VERSION} from GitHub "
-                                                       f"(about {emulator.SIZE_MB} MB) and check it")
+        self.install_button = style.primary_button("Install", f"Download shadPS4 {emulator.VERSION} from GitHub "
+                                                              f"(about {emulator.SIZE_MB} MB) and check it")
         self.install_button.clicked.connect(self.on_install)
         self.remove_button = QPushButton("Remove")
         self.remove_button.setToolTip("Remove the installed shadPS4; its own folder (saves, settings) stays")
@@ -94,26 +93,20 @@ class MainWindow(QMainWindow):
         self.folder_button = QPushButton("Add folder…")
         self.folder_button.setToolTip("Add a folder with games to shadPS4's game folders")
         self.folder_button.clicked.connect(self.on_add_folder)
-        rows = [("1. shadPS4", self.emulator_state, [self.install_button, self.remove_button]),
-                ("2. System modules", self.modules_state, [self.modules_button]),
-                ("3. Game folders", self.folders_state, [self.folder_button])]
-        # As in BC-250 Mesh Shaders: one line per step, its buttons the size of the widest plain one, in two
-        # columns on the right.
-        everything = [b for _, _, buttons in rows for b in buttons]
-        width = max(b.sizeHint().width() for b in everything)
-        height = max(b.sizeHint().height() for b in everything if b is not self.install_button)
+        rows = [("shadPS4", self.emulator_state, [self.install_button, self.remove_button]),
+                ("System modules", self.modules_state, [self.modules_button]),
+                ("Game folders", self.folders_state, [self.folder_button])]
         centre = Qt.AlignmentFlag.AlignVCenter
         for row, (name, state, buttons) in enumerate(rows):
             label = QLabel(name)
             label.setStyleSheet("font-weight:700;")
             for text in (label, state):
                 text.setAlignment(Qt.AlignmentFlag.AlignLeft | centre)
-            grid.addWidget(label, row, 0)
-            grid.addWidget(state, row, 1)
-            for column, button in zip((3, 2), reversed(buttons)):
-                button.setFixedSize(width, height)
+            grid.addWidget(style.step_badge(row + 1), row, 0, centre)
+            grid.addWidget(label, row, 1)
+            grid.addWidget(state, row, 2)
+            for column, button in zip((4, 3), reversed(buttons)):
                 grid.addWidget(button, row, column, centre)
-            grid.setRowMinimumHeight(row, height)
 
         self.table = QTableWidget(0, 5)
         self.table.setHorizontalHeaderLabels(["Game Mode", "Game", "ID", "Version", "Folder"])
@@ -121,6 +114,8 @@ class MainWindow(QMainWindow):
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.verticalHeader().setVisible(False)
+        self.table.setAlternatingRowColors(True)
+        self.table.setShowGrid(False)
         head = self.table.horizontalHeader()
         for column, mode in enumerate((QHeaderView.ResizeMode.ResizeToContents, QHeaderView.ResizeMode.Stretch,
                                        QHeaderView.ResizeMode.ResizeToContents,
@@ -136,7 +131,7 @@ class MainWindow(QMainWindow):
         self.shad_button = QPushButton("shadPS4 settings")
         self.shad_button.setToolTip("Open shadPS4's own window (Big Picture): its settings and game list")
         self.shad_button.clicked.connect(self.on_open_shadps4)
-        self.steam_button = accent_button("Update Game Mode", STEAM_TIP)
+        self.steam_button = style.primary_button("Update Game Mode", STEAM_TIP)
         self.steam_button.clicked.connect(self.on_update_steam)
         buttons = QHBoxLayout()
         buttons.addWidget(self.play_button)
@@ -166,6 +161,18 @@ class MainWindow(QMainWindow):
         version.setStyleSheet("color:palette(placeholder-text);")
         lay.addWidget(version, 0, Qt.AlignmentFlag.AlignRight)
         self.setCentralWidget(central)
+        style.apply(self)
+        # As in BC-250 Mesh Shaders: the buttons of the steps the size of the widest, in two columns on the right.
+        # Sized here, in the window, so their size includes the style sheet's padding.
+        steps = [b for _, _, buttons in rows for b in buttons]
+        for button in steps:
+            button.ensurePolished()
+        width = max(b.sizeHint().width() for b in steps)
+        height = max(b.sizeHint().height() for b in steps)
+        for row in range(len(rows)):
+            grid.setRowMinimumHeight(row, height)
+        for button in steps:
+            button.setFixedSize(width, height)
 
         geometry = self.settings.window_state("geometry")
         if geometry is not None:
@@ -206,7 +213,7 @@ class MainWindow(QMainWindow):
             self.emulator_box.set_value(self.version)
         else:
             self.emulator_state.setText(f"shadPS4 {pinned} is installed. "
-                                        f"<a href='{emulator.RELEASE_PAGE}'>Release notes</a>")
+                                        + style.link(self, emulator.RELEASE_PAGE, "Release notes"))
             self.emulator_box.set_value(pinned)
         self.emulator_state.setOpenExternalLinks(True)
 

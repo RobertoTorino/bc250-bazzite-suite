@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from conftest import make_game, make_sfo
 
-from bc250_shadps4.games import Game, read_game, read_sfo, scan
+from bc250_shadps4_manager.games import Game, read_game, read_sfo, scan
 
 
 def test_param_sfo_is_read():
@@ -23,7 +23,6 @@ def test_a_game_from_its_param_sfo_or_its_folder(tmp_path):
 
 
 def test_updates_mods_and_add_ons_are_not_games(tmp_path):
-    assert read_game(make_game(tmp_path / "a", "Patch", category="gp")) is None
     assert read_game(make_game(tmp_path / "b", "DLC", category="ac")) is None
     assert read_game(make_game(tmp_path / "CUSA00900-UPDATE", "Bloodborne")) is None
     assert read_game(make_game(tmp_path / "CUSA00900-patch", None)) is None
@@ -41,6 +40,21 @@ def test_scan_finds_games_sorted_once_and_not_too_deep(tmp_path):
     (tmp_path / "link").symlink_to(root / "zeta")
     games = scan([root, root / "zeta", tmp_path / "link", tmp_path / "missing"])
     assert [g.title for g in games] == ["alpha", "Five deep", "Zeta"]           # by title, case aside
+
+
+def test_an_update_beside_its_game_is_left_out(tmp_path):
+    root = tmp_path / "games"
+    make_game(root / "base", "Bloodborne", "CUSA00900", "01.00")
+    make_game(root / "update", "Bloodborne", "CUSA00900", "01.09", category="gp")
+    assert [(g.title, g.version) for g in scan([root])] == [("Bloodborne", "01.00")]
+
+
+def test_a_game_with_its_update_in_it_is_a_game(tmp_path):
+    """Dumped from a PS4 with the update installed: param.sfo says "gp", and there is no other game with its ID
+    (LUMINES REMASTERED, CUSA11624, on the owner's board, 14-10-2026)."""
+    eboot = make_game(tmp_path / "games" / "CUSA11624", "LUMINES REMASTERED", "CUSA11624", "01.05", category="gp")
+    assert scan([tmp_path / "games"]) == [Game(eboot, "LUMINES REMASTERED", "CUSA11624", "01.05")]
+    assert read_game(eboot).patched
 
 
 def test_the_games_own_pictures(tmp_path, qapp):

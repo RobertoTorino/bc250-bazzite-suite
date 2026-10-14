@@ -10,8 +10,8 @@ from pathlib import Path
 from conftest import make_game
 
 from bc250_core import steam
-from bc250_shadps4 import LOGO_PATH, shortcuts
-from bc250_shadps4.games import Game, read_game
+from bc250_shadps4_manager import LOGO_PATH, shortcuts
+from bc250_shadps4_manager.games import Game, read_game
 
 RUN = Path("/home/u/.local/bin/bc250-shadps4-run")
 OTHER = {"appid": -1234, "AppName": "RetroArch", "Exe": '"/usr/bin/retroarch"', "LaunchOptions": "-g x"}

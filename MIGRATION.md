@@ -281,8 +281,11 @@ Bazzite's).
   The owner's icons are in (14-10-2026). Open on the board: Install, a game from the desktop (Play) and
   from Game Mode (the shortcut, full screen, Exit game), the artwork in Steam, whether Steam's environment for a
   non-Steam game (its library path, its overlay) disturbs the AppImage, as it did Console Link's Qt; then the presets.
-  Release (owner): portal-v1.0.5 pins `shadps4-v0.1.0`, which has no tag yet, so CI's "Portal manifest" check
-  fails until it is released (or the pin waits for it).
+  Released as `shadps4-v0.1.0`. Renamed (owner, 14-10-2026) to `shadps4-manager` (package
+  `bc250_shadps4_manager`) and moved to Gaming; the app's own blue #006FCD (owner). Release (owner): the next
+  version as `shadps4-manager-v<x.y.z>` and a portal minor bump (the key changed); until then `apps.toml` pins
+  `shadps4-manager-v0.1.0` without sha256. A board with the old install shows it as installed, version unknown,
+  until it is installed again from the portal.
 - **Save backup from a PS4 (small, fits SFTP Tools).** A scheduled pull of save files from the user's own console
   over FTP into a folder on the board. Better as an FTP source and a timer in SFTP Tools than as a new app. Not
   taken: receiving, checking and sorting game dumps (PKG files), which works with decrypted game images, legally

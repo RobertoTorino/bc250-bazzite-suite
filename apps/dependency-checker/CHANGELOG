@@ -1,3 +1,15 @@
+Changelog: 14-10-2026 10:56:03
+
+Release 0.1.14.
+
+Changelog: 14-10-2026 10:45:26
+
+The catalogue names BC-250 shadPS4 Manager by its new key, shadps4-manager (its app, its PyQt6 and the tools it uses).
+
+Changelog: 14-10-2026 10:19:37
+
+The Check again button in the header is now an icon (a refresh arrow) the same size as the boxes beside it; its name stays in the tooltip.
+
 Changelog: 14-10-2026 09:30:47
 
 Release 0.1.13.

@@ -2,7 +2,7 @@
 
 # BC-250 shadPS4 Manager
 
-![BC-250 shadPS4 Manager](../assets/shadps4/bc250-shadps4-manager.png){ .app-logo }
+![BC-250 shadPS4 Manager](../assets/shadps4-manager/bc250-shadps4-manager.png){ .app-logo }
 
 Plays **PS4 games** on the **AMD BC-250** with [shadPS4](https://github.com/shadps4-emu/shadPS4), an open-source
 PS4 emulator. The app installs the shadPS4 release it was tried with, finds the games in your game folders and adds
@@ -35,11 +35,28 @@ The window has three steps, then the list of games.
    own window lists the games too. A game may sit up to five folders deep.
 
 The table lists every game found: its title and ID (CUSA…) from the game's own files, its version and its folder.
-Updates are not listed: shadPS4 uses an update by itself when it sits beside the game, in a folder named like the
-game's with `-UPDATE` (or `-patch`) added.
+Updates and mods are not listed as games: see [Game updates and mods](#game-updates-and-mods).
 
 - **Play** (or a double-click) starts the chosen game on the desktop.
 - **shadPS4 settings** opens shadPS4's own window (Big Picture), with its settings and its game list.
+
+### Game updates and mods
+
+Put a game's update in a folder of its own beside the game, named like the game's folder with `-UPDATE` added
+(`-patch` works too). shadPS4 finds it there and uses it when it starts the game: the update's files take the place
+of the game's, and the game's own folder stays as it is. Mods go the same way, in a folder ending in `-mods`.
+
+```
+shadps4_games/
+├── CUSA11624/            the game: eboot.bin, sce_sys, ...
+├── CUSA11624-UPDATE/     its update: its own eboot.bin, sce_sys and the files it changes
+└── CUSA11624-mods/       mods for it
+```
+
+Nothing more is needed: you do not add these folders as game folders, and the table lists the game once. An update
+found beside its game (the same ID, CUSA…) is left out of the table whatever its folder is called. A game copied
+from a PS4 that had its update installed already has the update in it: it needs no `-UPDATE` folder and is listed
+with the update's version.
 
 ### Game Mode
 
@@ -82,7 +99,7 @@ brings it.
 
 ## Install and remove
 
-Install the app from the [portal](../portal.md). Removing it takes out the app and the shadPS4 it installed;
+Install the app from the [portal](../portal.md), where it is under Gaming. Removing it takes out the app and the shadPS4 it installed;
 shadPS4's own folder (your saves) and your games stay. The games in Game Mode then no longer start: take them out
 first by unticking them and pressing **Update Game Mode**.
 

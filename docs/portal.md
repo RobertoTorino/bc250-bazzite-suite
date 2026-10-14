@@ -24,12 +24,12 @@ tile, left to right in the order of `apps.toml` and as many to a row as the wind
 away when you click its name; it is open until you close it, and the portal remembers whether it was open.
 
 **Gaming**, below the apps, holds the apps for playing: [BC-250 HelixSR Manager](apps/helixsr.md),
-[BC-250 Mesh Shaders](apps/mesh-shaders.md) and [BC250 Console Link](apps/console-link.md). It is open
-until you close it, and the portal remembers whether it was open.
+[BC-250 ACE Queues](apps/ace-queues.md), [BC-250 Mesh Shaders](apps/mesh-shaders.md),
+[BC250 Console Link](apps/console-link.md) and [BC-250 shadPS4 Manager](apps/shadps4-manager.md). It is open until
+you close it, and the portal remembers whether it was open.
 
 **Development only**, below that, opens a separate section with tools for working on the suite:
-[Simple Demo Tool](other-tools/simple-demo-tool.md), [BC-250 shadPS4 Manager](apps/shadps4.md),
-[Dependency Checker](apps/dependency-checker.md)
+[Simple Demo Tool](other-tools/simple-demo-tool.md), [Dependency Checker](apps/dependency-checker.md),
 the release front end [BC250 Suite Releases](#the-release-front-end) and BC-250 Installer Tests
 (`tools/installer-tests/gui`), a window that runs the installer tests one at a time. You do not need them to use
 the board. The last two run from a checkout of the repository and have no release. A portal installed from a

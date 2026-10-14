@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent.parent
 LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
 
 # Settings in ~/.config/bc250-shadps4-manager/bc250-shadps4-manager.ini
-INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="shadps4-v",
+INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="shadps4-manager-v",
                settings_ini=True, languages={"en": "English"})
 
 __all__ = ["APP_ID", "APP_NAME", "INFO", "LOGO_PATH", "ROOT", "__version__"]

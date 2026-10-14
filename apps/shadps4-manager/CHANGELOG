@@ -1,3 +1,15 @@
+Changelog: 14-10-2026 10:56:03
+
+Release 0.1.0.
+
+Changelog: 14-10-2026 10:52:57
+
+The manual has a section on game updates and mods: where they go (a folder beside the game ending in -UPDATE, -patch or -mods), with an example layout, and how the game list treats them.
+
+Changelog: 14-10-2026 10:45:26
+
+The app's folder is apps/shadps4-manager and its package bc250_shadps4_manager, so its key, release tags (shadps4-manager-v<x.y.z>, also what the update check looks for), installer test and manual chapter (apps/shadps4-manager/) all carry its name; the launcher, the run wrapper bc250-shadps4-run (which the Game Mode shortcuts start), the folders and the settings keep theirs. The game list now shows a game copied from a PS4 that had its update installed: its param.sfo says category "gp", as an update's does, and the scan dropped every such folder (LUMINES REMASTERED, CUSA11624, on the owner's board). A "gp" folder is now left out only when its game, with the same title ID, is found too; updates in a folder named with -UPDATE, -patch or -mods are left out as before. The window has its own look in the blue #006FCD (style.py): the status boxes, the table's header and selection, the links and the main buttons (Install, Update Game Mode) filled in it, the other buttons outlined in it, and the three steps numbered in blue circles. Tests: a "gp" game alone and beside its game, and the look.
+
 Changelog: 14-10-2026 09:30:47
 
 Release 0.1.0.

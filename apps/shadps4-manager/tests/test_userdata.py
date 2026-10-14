@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import json
 
-from bc250_shadps4 import userdata
+from bc250_shadps4_manager import userdata
 
 # The part of a config.json written by shadPS4 0.19.0 that the app reads (two game folders, one switched off).
 CONFIG = {"General": {"install_dirs": [{"enabled": True, "path": "/run/media/games/PS4"},

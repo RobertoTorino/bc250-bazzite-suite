@@ -1,3 +1,11 @@
+Changelog: 14-10-2026 10:45:26
+
+BC-250 shadPS4 Manager is listed under "Gaming" instead of "Development only", and its key is shadps4-manager (its folder's new name): the pin is shadps4-manager-v0.1.0, the next release, with no sha256 yet; its tile icon is images/apps/shadps4-manager.png. A board that installed it under the old key shows it as installed, with no version known, until it is installed again from the portal.
+
+Changelog: 14-10-2026 10:20:44
+
+BC-250 ACE Queues is listed under "Gaming", beside BC-250 Mesh Shaders.
+
 Changelog: 14-10-2026 09:37:31
 
 Release 1.0.6. Pins dependency-checker-v0.1.13, console-link-v1.0.5.

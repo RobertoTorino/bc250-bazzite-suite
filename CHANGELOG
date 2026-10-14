@@ -1,3 +1,11 @@
+Changelog: 14-10-2026 10:45:26
+
+apps/shadps4 is apps/shadps4-manager (package bc250_shadps4_manager): the manifest key, the installer test (tools/installer-tests/shadps4-manager.sh), the manual chapter (docs/apps/shadps4-manager.md), the portal icon, CI, the Dependency Checker's catalogue and CLAUDE.md follow. BC-250 shadPS4 Manager moves from "Development only" to "Gaming" in the portal, the README, the manual's overview and the portal chapter. The app finds games dumped with their update in them, and has a look of its own in #006FCD (see its CHANGELOG).
+
+Changelog: 14-10-2026 10:24:33
+
+The README, the manual's overview and portal chapter, and the ACE Queues chapter list BC-250 ACE Queues under Gaming, as the portal does.
+
 Changelog: 14-10-2026 00:50:42
 
 New app shadps4 (BC-250 shadPS4 Manager), under Development only in the portal: PS4 games with the shadPS4 emulator (see its CHANGELOG). CI runs its tests and its installer test (tools/installer-tests/shadps4.sh) and shellchecks install.sh and bc250-shadps4-run at warning level; the manual has its chapter (docs/apps/shadps4.md), the README, the manual's index and the portal chapter list it; CLAUDE.md lists it with its checks. Core has a steam module, moved from BC250 Console Link. MIGRATION.md: what the app takes from the owner's Windows launcher Nexus, and its state.

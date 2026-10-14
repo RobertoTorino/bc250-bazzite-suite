@@ -9,9 +9,10 @@ from pathlib import Path
 from urllib.parse import quote
 
 from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QMainWindow, QMessageBox, QPushButton, QScrollArea, QStyle, QToolButton,
-    QVBoxLayout, QWidget,
+    QFrame, QHBoxLayout, QLabel, QMainWindow, QMessageBox, QPushButton, QScrollArea, QSizePolicy, QStyle,
+    QToolButton, QVBoxLayout, QWidget,
 )
 
 from bc250_core.text import window_title
@@ -375,11 +376,17 @@ class DependencyWindow(QMainWindow):
         for box in (self.box_packages, self.box_tools, self.box_missing, self.box_needs_update, self.box_updates,
                     self.box_cves):
             header.add_second(box, 1)
-        self.check_button = QPushButton("Check again")
-        self.check_button.setToolTip("Look for the apps, their packages and tools again, and ask PyPI")
-        self.check_button.setMinimumHeight(36)
+        # An icon-only button the size of the boxes beside it
+        self.check_button = QPushButton()
+        self.check_button.setIcon(QIcon.fromTheme(
+            "view-refresh", self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload)))
+        self.check_button.setIconSize(QSize(32, 32))
+        self.check_button.setAccessibleName("Check again")
+        self.check_button.setToolTip("Check again: look for the apps, their packages and tools again, and ask PyPI")
+        self.check_button.setMinimumWidth(120)
+        self.check_button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         self.check_button.clicked.connect(self.check_updates)
-        header.add_second(self.check_button)
+        header.add_second(self.check_button, 1)
         root.addLayout(header)
         root.addWidget(hint_label(
             "Each app's Python packages are checked in the environment that app runs in, compared with PyPI and "

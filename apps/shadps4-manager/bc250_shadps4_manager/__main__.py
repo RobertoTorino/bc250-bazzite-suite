@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Entry point: python -m bc250_shadps4"""
+"""Entry point: python -m bc250_shadps4_manager"""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from . import APP_NAME, INFO, __version__
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(prog="bc250_shadps4", description=f"{APP_NAME} {__version__}")
+    parser = argparse.ArgumentParser(prog="bc250_shadps4_manager", description=f"{APP_NAME} {__version__}")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__} (core {CORE_VERSION})")
     _args, qt_args = parser.parse_known_args()
 

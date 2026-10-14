@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Exercise apps/shadps4/install.sh: install from the checkout (core bundled, shared venv, the run wrapper, no sudo), a
-# staged release replacing it, the refusals, uninstall with another venv user (the installed shadPS4 removed;
-# shadPS4's own folder, the games and the settings kept) and --purge as the last venv user (the settings removed).
+# Exercise apps/shadps4-manager/install.sh: install from the checkout (core bundled, shared venv, the run wrapper,
+# no sudo), a staged release replacing it, the refusals, uninstall with another venv user (the installed shadPS4
+# removed; shadPS4's own folder, the games and the settings kept) and --purge as the last venv user (the settings
+# removed).
 # Runs with the shims from shims.sh (CI, or WSL on Windows).
 set -u
 SUITE=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-T=/tmp/bc250-shadps4-test
+T=/tmp/bc250-shadps4-manager-test
 # shellcheck source=tools/installer-tests/shims.sh
 source "$(dirname "${BASH_SOURCE[0]}")/shims.sh" "$T"; set +e
 fail=0
@@ -19,16 +20,16 @@ RUN=$HOME/.local/bin/bc250-shadps4-run
 printf '#!/bin/sh\necho "sudo called: $*" >&2\nexit 1\n' > "$T/shims/sudo"
 
 echo "== 1. install from the suite checkout"
-bash "$SUITE/apps/shadps4/install.sh" > "$T/log1" 2>&1; rc=$?
+bash "$SUITE/apps/shadps4-manager/install.sh" > "$T/log1" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "no sudo used" "! grep -q 'sudo called' $T/log1 && [ -z \"\$(ls -A $T/opt)\" ]"
-check "app copied" "[ -f $A/bc250_shadps4/main_window.py ] && [ -f $A/images/$APP.png ]"
+check "app copied" "[ -f $A/bc250_shadps4_manager/main_window.py ] && [ -f $A/images/$APP.png ]"
 check "core bundled from checkout" "[ -f $A/bc250_core/steam.py ]"
 check "no tests or caches copied" "[ ! -d $A/tests ] && ! find $A -name __pycache__ | grep -q ."
 check "shared venv and its user marker" "[ -x $D/bc250-bazzite-suite/venv/bin/python ] && [ -f $D/bc250-bazzite-suite/venv-users/$APP ]"
-check "launcher uses shared venv" "grep -qF 'bc250-bazzite-suite/venv/bin/python\" -m bc250_shadps4' $HOME/.local/bin/$APP"
+check "launcher uses shared venv" "grep -qF 'bc250-bazzite-suite/venv/bin/python\" -m bc250_shadps4_manager' $HOME/.local/bin/$APP"
 check "launcher cds into the app" "grep -qF 'cd \"$A\"' $HOME/.local/bin/$APP"
-check "run wrapper installed, executable" "[ -x $RUN ] && cmp -s $RUN $SUITE/apps/shadps4/bc250-shadps4-run"
+check "run wrapper installed, executable" "[ -x $RUN ] && cmp -s $RUN $SUITE/apps/shadps4-manager/bc250-shadps4-run"
 check "menu entry" "grep -qx 'Exec=$HOME/.local/bin/$APP' $D/applications/$APP.desktop"
 check "desktop icon, executable" "[ -x $HOME/Desktop/$APP.desktop ]"
 check "core imports from the app copy" "(cd $A && /usr/bin/python3 -c 'import importlib.util as u, sys; s=u.find_spec(\"bc250_core\"); sys.exit(0 if s and s.origin.startswith(\"$A\") else 1)')"
@@ -45,7 +46,7 @@ check "starts the current shadPS4 with the arguments as given" "[ $rc -eq 0 ] &&
 check "started beside the AppImage (no portable user folder)" "grep -qxF \"dir: $D/$APP/emulator/0.19.0\" $T/run.log || grep -qxF \"dir: $D/$APP/emulator/current\" $T/run.log"
 
 echo "== 3. install a staged release (core bundled in the tarball) without the Desktop icon"
-rm -rf "$T/stage"; /usr/bin/python3 "$SUITE/tools/stage_app.py" shadps4 "$T/stage" > /dev/null
+rm -rf "$T/stage"; /usr/bin/python3 "$SUITE/tools/stage_app.py" shadps4-manager "$T/stage" > /dev/null
 echo "# release marker" >> "$T/stage/bc250_core/__init__.py"
 bash "$T/stage/install.sh" --no-desktop-shortcut > "$T/log3" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"

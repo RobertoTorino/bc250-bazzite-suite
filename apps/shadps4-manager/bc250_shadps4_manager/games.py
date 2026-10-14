@@ -5,8 +5,9 @@ sce_sys/param.sfo with its title, title ID (CUSA00001) and version.
 The scan follows the owner's Windows launcher Nexus (an eboot.bin found below a folder, the folder's name as the
 title without a leading "[PS4]", a path found twice counted once); here the title and ID come from param.sfo when it
 is there. Updates and mods are not games to start: shadPS4 lays them over the game from a folder beside it, named
-like the game's with "-UPDATE", "-patch" or "-mods" added (fs.cpp in 0.19.0); an update's param.sfo also says
-category "gp".
+like the game's with "-UPDATE", "-patch" or "-mods" added (fs.cpp in 0.19.0). An update's param.sfo says category
+"gp", but so does a game with its update already in it (dumped from a PS4 that had the update installed): a "gp"
+folder is left out only when its game, with the same title ID, is found too.
 
 param.sfo: a 20-byte header ("\\0PSF", version, start of the key table, start of the data table, number of entries),
 then 16 bytes per entry (key offset u16, format u16, length u32, room u32, data offset u32), little-endian. Format
@@ -17,7 +18,7 @@ from __future__ import annotations
 import os
 import re
 import struct
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 MAX_DEPTH = 5                           # as deep as shadPS4 itself looks for a game in a game folder
@@ -32,6 +33,7 @@ class Game:
     title: str
     title_id: str = ""
     version: str = ""
+    patched: bool = field(default=False, compare=False)     # category "gp": an update, or a game with it in it
 
     @property
     def folder(self) -> Path:
@@ -65,17 +67,18 @@ def read_sfo(data: bytes) -> dict[str, str | int]:
 
 
 def read_game(eboot: Path) -> Game | None:
-    """The game in eboot's folder; None for an update, a mod or an add-on."""
+    """The game in eboot's folder; None for an update or mod in a folder of its own name, or an add-on."""
     if eboot.parent.name.endswith(OVERLAYS):
         return None
     try:
         sfo = read_sfo((eboot.parent / "sce_sys" / "param.sfo").read_bytes())
     except OSError:
         sfo = {}
-    if str(sfo.get("CATEGORY", "")).startswith("gp") or sfo.get("CATEGORY") == "ac":
+    if sfo.get("CATEGORY") == "ac":
         return None
     title = str(sfo.get("TITLE") or "") or _PREFIX.sub("", eboot.parent.name).strip() or eboot.parent.name
-    return Game(eboot, title, str(sfo.get("TITLE_ID") or ""), str(sfo.get("APP_VER") or sfo.get("VERSION") or ""))
+    return Game(eboot, title, str(sfo.get("TITLE_ID") or ""), str(sfo.get("APP_VER") or sfo.get("VERSION") or ""),
+                str(sfo.get("CATEGORY", "")).startswith("gp"))
 
 
 def _eboots(root: Path, depth: int = MAX_DEPTH):
@@ -93,7 +96,8 @@ def _eboots(root: Path, depth: int = MAX_DEPTH):
 
 
 def scan(folders: list[Path]) -> list[Game]:
-    """Every game below the folders (a game found twice counted once), sorted by title."""
+    """Every game below the folders (a game found twice counted once, an update found beside its game left out),
+    sorted by title."""
     seen: set[Path] = set()
     games = []
     for folder in folders:
@@ -105,4 +109,6 @@ def scan(folders: list[Path]) -> list[Game]:
             game = read_game(eboot)
             if game is not None:
                 games.append(game)
+    with_game = {g.title_id for g in games if not g.patched and g.title_id}
+    games = [g for g in games if not (g.patched and g.title_id in with_game)]
     return sorted(games, key=lambda g: (g.title.casefold(), g.title_id, str(g.eboot)))

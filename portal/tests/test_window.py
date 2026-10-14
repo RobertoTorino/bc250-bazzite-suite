@@ -296,7 +296,7 @@ def test_tiles_flow_in_file_order(window, qapp):
 
 def test_development_apps_apart_and_closed(window, qapp):
     dev = {key for key, card in window.cards.items() if card.entry.development}
-    assert dev == {"demo-tool", "dependency-checker", "shadps4"}
+    assert dev == {"demo-tool", "dependency-checker"}
     assert all(window.dev_grid.indexOf(window.cards[key]) >= 0 for key in dev)
     assert all(window.grid.indexOf(window.cards[key]) < 0 for key in dev)
     assert not window.dev_toggle.isHidden() and window.dev_box.isHidden()   # closed until asked for
@@ -315,7 +315,7 @@ def test_board_tools_in_a_section_open_until_closed(window, qapp):
 
 def test_gaming_apps_apart_and_open(window, qapp):
     gaming = {key for key, card in window.cards.items() if card.entry.section == "gaming"}
-    assert gaming == {"helixsr", "mesh-shaders", "console-link"}
+    assert gaming == {"helixsr", "ace-queues", "mesh-shaders", "console-link", "shadps4-manager"}
     assert all(window.gaming_grid.indexOf(window.cards[key]) >= 0 for key in gaming)
     assert all(window.grid.indexOf(window.cards[key]) < 0 and window.dev_grid.indexOf(window.cards[key]) < 0
                for key in gaming)
