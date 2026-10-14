@@ -1,3 +1,7 @@
+Changelog: 14-10-2026 14:31:09
+
+A new look for the manual. The home page (docs/index.md, on the template tools/mkdocs/overrides/home.html) is a product page in Bazzite purple: a hero with a BC-250 board and a DualShock 4, a grid of what the apps do, the portal, Get started with the download, an FAQ, the license and a footer of links. The pictures are placeholders until the photos and the portal screenshot are in (docs/images/home/). The install steps move to a new Install page (docs/install.md) and the app tables to an apps overview (docs/apps/index.md); a new app gets a row there (the architecture chapter's step 8). Every page gets a flat deep purple header with a line in the suite's gradient, pill buttons and a pill search field. mkdocs.yml adds the template folder and Material's icon shortcodes (pymdownx.emoji).
+
 Changelog: 14-10-2026 14:13:40
 
 New tools/check_upstream.py: whether BC-250 Decky Loader Manager is still in step with Decky Loader. It compares the app's pin (loader.py) with Decky's latest stable release, the SHA-256 GitHub publishes for the pinned PluginLoader with the pinned one, and Decky's plugin_loader-release.service at the pinned tag and on main (which Decky's own updater installs) with loader.unit_text(); exit code 0 in step, 1 Decky moved, 2 could not check. A new workflow, .github/workflows/upstream.yml, runs it every Monday and by hand, reading only. Tests: tools/tests/test_check_upstream.py on a fake GitHub. The development chapter of the manual describes it; CLAUDE.md says who does what when Decky moves.

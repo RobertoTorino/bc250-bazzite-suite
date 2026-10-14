@@ -259,7 +259,8 @@ not run one.
 6. Add the app to `portal/apps.toml` (name, summary, `changes_board`, install, uninstall, detect, launch).
 7. Add the app to the Dependency Checker's catalogue (`[app.<name>]` with its launchers), its Python packages and
    the external tools it runs (`apps/dependency-checker/bc250_dependency_checker/dependencies.toml`).
-8. Write its manual chapter, `docs/apps/<name>.md`, and add it to `mkdocs.yml`.
+8. Write its manual chapter, `docs/apps/<name>.md`, add it to `mkdocs.yml`, and give it a row in the apps overview,
+   `docs/apps/index.md`.
 9. Run the checks from [Development](index.md) and every installer test.
 
 The tests in step 9 tell you what you missed: an app without an installer test, a catalogue that does not match

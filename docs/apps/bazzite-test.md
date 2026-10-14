@@ -16,7 +16,7 @@ writes one temporary file and removes it.
 ## Download and install
 
 BC-250 Bazzite Test is part of the [BC250 Bazzite Suite](https://github.com/RobertoTorino/bc250-bazzite-suite) and is always installed with it: install
-the suite's **portal** (see [Home](../index.md)), and this app comes along. It can also be installed on its own from
+the suite's **portal** (see [Install](../install.md)), and this app comes along. It can also be installed on its own from
 its release on the suite's [Releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases) page: `bazzite-test-v<version>.tar.gz` with a
 `SHA256SUMS` file. To be notified of new releases, click **Watch → Custom → Releases** on the suite page.
 

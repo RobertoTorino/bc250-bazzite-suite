@@ -3,6 +3,10 @@
 :root {
   --suite-primary: #5835CE;
   --suite-secondary: #8A2BE2;
+  --suite-ink: #120c22;
+  --suite-deep: #1e1340;
+  --suite-soft: #a98bff;
+  --suite-mist: #c9bfee;
   --suite-radius-small: 6px;
   --suite-radius-medium: 8px;
   --suite-radius-large: 12px;
@@ -28,17 +32,35 @@
 }
 
 [data-md-color-scheme="slate"] {
-  --md-typeset-a-color: #a98bff;
-  --md-default-bg-color: #17151f;
+  --md-typeset-a-color: var(--suite-soft);
+  --md-default-bg-color: #17141f;
 }
 
+/* The header in the deepest purple, with a line in the suite's gradient below it. */
 .md-header, .md-tabs {
-  background: linear-gradient(90deg, var(--suite-primary), var(--suite-secondary));
+  background: var(--suite-deep);
 }
 
 .md-header {
-  border-radius: var(--suite-radius-large);
-  margin: var(--suite-radius-small) var(--suite-radius-small) 0;
+  border-bottom: 3px solid;
+  border-image: linear-gradient(90deg, var(--suite-primary), var(--suite-secondary)) 1;
+}
+
+/* Buttons as pills. */
+.md-typeset .md-button {
+  border-radius: 2em;
+  padding: 0.55em 1.5em;
+  font-weight: 700;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.md-typeset .md-button:hover,
+.md-typeset .md-button:focus {
+  box-shadow: 0 0.5em 1em rgb(0 0 0 / 0.25);
+}
+
+.md-search__form {
+  border-radius: 2em;
 }
 
 .md-typeset h1, .md-typeset h2 {
@@ -64,7 +86,6 @@
 .md-typeset .highlight,
 .md-typeset pre,
 .md-typeset__table,
-.md-search__form,
 .md-search__output {
   border-radius: var(--suite-radius-medium);
 }
@@ -152,4 +173,269 @@
   .md-header__source {
     margin-right: 12.1rem;
   }
+}
+
+/* The home page (docs/index.md on tools/mkdocs/overrides/home.html): full-width sections, as on a product page. */
+.md-main__inner:has(> .home) {
+  max-width: none;
+  margin: 0;
+}
+
+.md-header:has(~ .md-container .home) {
+  border-bottom: 0;
+}
+
+.md-typeset .home-hero .headerlink,
+.md-typeset .home-card .headerlink {
+  display: none;
+}
+
+.md-typeset.home__article {
+  margin: 0;
+}
+
+.home-section__inner {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 3.2rem 0.8rem;
+}
+
+.md-typeset .home-section h2,
+.md-typeset .home-hero__lead,
+.md-typeset .home-hero__claim {
+  font-size: clamp(1.3rem, 4.2vw, 2.8rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0 0 1.2rem;
+  color: inherit;
+}
+
+/* The hero: deepest purple to the suite's two colours, fading into the page; the pictures on top, the words below. */
+.home-hero__pictures {
+  background: linear-gradient(180deg, var(--suite-deep) 0%, var(--suite-primary) 55%, var(--suite-secondary) 80%,
+    transparent 97%);
+  padding-top: 4rem;
+}
+
+.home-hero__pictures p {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 80vw;
+  max-width: 60rem;
+  margin: 0 auto;
+}
+
+.md-typeset .home-hero__board {
+  width: 66%;
+  filter: drop-shadow(0 1.5rem 2rem rgb(18 12 34 / 0.45));
+}
+
+.md-typeset .home-hero__controller {
+  width: 34%;
+  margin-left: -4%;
+  filter: drop-shadow(0 1.5rem 2rem rgb(18 12 34 / 0.45));
+}
+
+.home-hero__text {
+  width: fit-content;
+  max-width: 80vw;
+  margin: 0 auto;
+  padding: 1.6rem 0 3rem;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .home-hero__text {
+  color: #ffffff;
+}
+
+.md-typeset .home-hero__lead {
+  font-weight: 400;
+  margin: 0;
+}
+
+.md-typeset .home-hero__claim {
+  font-weight: 800;
+  margin: 0;
+}
+
+/* Lots in the suite: a dark section with a grid of cards, the app names in white. */
+.home-section--dark {
+  background: var(--suite-ink);
+  color: #ffffff;
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 2rem 2.4rem;
+  margin: 2rem 0 2.4rem;
+}
+
+.md-typeset .home-card h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.md-typeset .home-card h4 .twemoji svg {
+  width: 1.2em;
+  max-height: none;
+  fill: var(--suite-soft);
+}
+
+.md-typeset .home-card p {
+  margin: 0;
+  color: var(--suite-mist);
+}
+
+.md-typeset .home-section--dark a:not(.md-button),
+.md-typeset .home-section--accent a:not(.md-button) {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.md-typeset .home-section--dark a:not(.md-button):hover {
+  color: var(--suite-soft);
+}
+
+.md-typeset .home-section--dark .md-button,
+.md-typeset .home-section--accent .md-button {
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+.md-typeset .home-section--dark .md-button:hover,
+.md-typeset .home-section--accent .md-button:hover {
+  background-color: #ffffff;
+  border-color: #ffffff;
+  color: var(--suite-deep);
+}
+
+/* One portal for every app: words and a picture side by side, stacked on a narrow screen. */
+.home-split {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 2.4rem;
+  align-items: center;
+}
+
+.md-typeset .home-split__picture {
+  display: block;
+  width: 100%;
+}
+
+.home-split > p {
+  margin: 0;
+}
+
+@media screen and (max-width: 44.9375em) {
+  .home-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Get started: the suite's gradient, with a deep purple Download button. */
+.home-section--accent {
+  background: linear-gradient(135deg, var(--suite-primary), var(--suite-secondary));
+  color: #ffffff;
+}
+
+.md-typeset .home-section--accent .md-button--primary {
+  background-color: var(--suite-deep);
+  border-color: var(--suite-deep);
+}
+
+.md-typeset .home-section--accent .md-button + .md-button {
+  margin-left: 0.6rem;
+}
+
+/* FAQ: questions and answers in one readable column. */
+.home-faq .home-section__inner {
+  max-width: 44rem;
+}
+
+.md-typeset .home-faq h2:not(:first-child) {
+  font-size: 1.6rem;
+  margin-top: 2.4rem;
+}
+
+.md-typeset .home-faq h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 1.6rem 0 0.4rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.md-typeset .home-faq h2 + h3 {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.md-typeset .home-faq p {
+  margin: 0;
+  color: var(--md-default-fg-color--light);
+}
+
+/* The home page's footer: the suite on the left, columns of links on the right. */
+.home-footer {
+  background: var(--suite-ink);
+  color: #ffffff;
+}
+
+.home-footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 2.4rem 0.8rem;
+}
+
+.home-footer__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #ffffff;
+}
+
+.home-footer__columns {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(7rem, auto));
+  gap: 1.2rem 2.4rem;
+  font-size: 0.7rem;
+}
+
+.home-footer__columns h4 {
+  margin: 0 0 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--suite-soft);
+}
+
+.home-footer__columns a {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: var(--suite-mist);
+}
+
+.home-footer__columns a:hover {
+  color: #ffffff;
+}
+
+@media screen and (max-width: 44.9375em) {
+  .home-footer__columns {
+    grid-template-columns: repeat(2, minmax(7rem, 1fr));
+  }
+}
+
+.home-footer .md-footer-meta {
+  background: rgb(0 0 0 / 0.35);
 }
