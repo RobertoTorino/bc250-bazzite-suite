@@ -286,6 +286,16 @@ Bazzite's).
   version as `shadps4-manager-v<x.y.z>` and a portal minor bump (the key changed); until then `apps.toml` pins
   `shadps4-manager-v0.1.0` without sha256. A board with the old install shows it as installed, version unknown,
   until it is installed again from the portal.
+  shadNet (owner, 14-10-2026: the client side, not a server of our own). shadNet 0.1.0 is a server; shadPS4 0.19.0
+  has the client, and signs in from `config.json` (`shad_net_enabled`, `shadnet_server`) and `users.json` (per user
+  `shadnet_enabled`, `shadnet_npid`, `shadnet_password`), with no way of its own to enter an account or create one.
+  The app does both (protocol 1, plain TCP; registration needs a key when the server sets `RegistrationSecretKey`).
+  `srv.shadps4.net` answers with protocol 1; whether it takes registration without a key is not known yet (a test
+  registration was not sent). Not taken: a shadNet server app (only source and daily builds for Linux; ports).
+  Newer shadPS4 (owner, 14-10-2026): a notice in the app (stable releases only), no install; keeping in step stays
+  a new app version per shadPS4 release, tried on the board first. Open on the board: Create account and Try
+  sign-in against `srv.shadps4.net`, a game signing in (online trophies), the controller and the overlay through
+  the run wrapper (XWayland on the desktop).
 - **Save backup from a PS4 (small, fits SFTP Tools).** A scheduled pull of save files from the user's own console
   over FTP into a folder on the board. Better as an FTP source and a timer in SFTP Tools than as a new app. Not
   taken: receiving, checking and sorting game dumps (PKG files), which works with decrypted game images, legally
@@ -324,6 +334,10 @@ Bazzite's).
   with Link, Remove with and without the plugins, and `ujust setup-decky status` before and after. Release (owner):
   `decky-manager-v0.1.0` and a portal bump; until then `apps.toml` pins it without sha256 and check_manifest asks
   for the portal bump.
+  Keeping in step (owner, 14-10-2026): `tools/check_upstream.py`, weekly in `.github/workflows/upstream.yml`
+  (Mondays, and by hand), fails when Decky moved: a newer stable release, a replaced PluginLoader, or a changed
+  release unit at the pinned tag or on main. A move is a new decky-manager version with the new pin, tried on the
+  board first. Decky updating itself on a board stays allowed (owner): the app shows it and leaves it.
 
 ## Details for later steps
 

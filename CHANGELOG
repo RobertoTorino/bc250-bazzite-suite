@@ -1,3 +1,7 @@
+Changelog: 14-10-2026 14:13:40
+
+New tools/check_upstream.py: whether BC-250 Decky Loader Manager is still in step with Decky Loader. It compares the app's pin (loader.py) with Decky's latest stable release, the SHA-256 GitHub publishes for the pinned PluginLoader with the pinned one, and Decky's plugin_loader-release.service at the pinned tag and on main (which Decky's own updater installs) with loader.unit_text(); exit code 0 in step, 1 Decky moved, 2 could not check. A new workflow, .github/workflows/upstream.yml, runs it every Monday and by hand, reading only. Tests: tools/tests/test_check_upstream.py on a fake GitHub. The development chapter of the manual describes it; CLAUDE.md says who does what when Decky moves.
+
 Changelog: 14-10-2026 11:12:20
 
 New app decky-manager (BC-250 Decky Loader Manager), under Gaming in the portal: Decky Loader, the plugin loader for Steam's Game Mode, installed from a pinned release as a system service, with its state and its plugins (see its CHANGELOG). CI runs its tests and its installer test (tools/installer-tests/decky-manager.sh) and shellchecks its install.sh at warning level; the manual has its chapter (docs/apps/decky-manager.md), and the README, the manual's index and the portal chapter list it. CLAUDE.md lists it with its checks, and names the Gaming apps as apps.toml has them (shadPS4 Manager is no longer development only there).

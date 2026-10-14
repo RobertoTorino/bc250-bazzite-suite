@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """shadPS4's own folder, ~/.local/share/shadPS4 (its saves, settings and system modules): the game folders and the
-system module folder from its config.json, and which system modules are there. The app only reads it; shadPS4 writes
-it (a game folder is added through shadPS4's own --add-game-folder).
+system module folder from its config.json, which system modules are there, and the users and shadNet settings (its
+users.json). shadPS4 writes these files; the app writes only the shadNet settings, which shadPS4 has no place for
+(a game folder is added through shadPS4's own --add-game-folder). Both files are JSON as shadPS4 writes them (indented
+by two, no newline at the end), and every other setting in them stays as it is.
 
 System modules are libraries of the PS4's firmware (.sprx), which the app cannot ship: they come from the user's own
 console. shadPS4 0.19.0 loads these from the folder when a game asks for them (sysmodule_internal.cpp); for some it
@@ -10,10 +12,13 @@ has its own version and does without, for the others a game that needs one does 
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
 from bc250_core.platform import data_home
+
+from .shadnet import DEFAULT_SERVER
 
 # shadPS4 0.19.0 has no replacement of its own for these.
 NEEDED = (
@@ -86,3 +91,99 @@ def check_modules(folder: Path) -> Modules:
     except OSError:
         present = set()
     return Modules(folder, tuple(n for n in NEEDED if n in present), tuple(n for n in OPTIONAL if n in present))
+
+
+# --- Users and shadNet -----------------------------------------------------------------------------------------
+
+class UserDataError(Exception):
+    pass
+
+
+@dataclass(frozen=True)
+class User:
+    """One of shadPS4's users (users.json; 0.19.0 makes four, the first is player 1) with its shadNet account."""
+    user_id: int
+    name: str
+    npid: str = ""
+    password: str = ""
+    email: str = ""
+    shadnet: bool = False                   # shadNet switched on for this user
+
+
+def _users_list(data: dict) -> list:
+    users = data.get("Users")
+    listed = users.get("user") if isinstance(users, dict) else None
+    return listed if isinstance(listed, list) else []
+
+
+def read_users(home: Path) -> list[User]:
+    """shadPS4's users in its order; [] when it never ran (no users.json) or the file cannot be read."""
+    try:
+        data = json.loads((home / "users.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    if not isinstance(data, dict):
+        return []
+    return [User(int(u.get("user_id", 0)), str(u.get("user_name", "")), str(u.get("shadnet_npid", "")),
+                 str(u.get("shadnet_password", "")), str(u.get("shadnet_email", "")),
+                 bool(u.get("shadnet_enabled", False)))
+            for u in _users_list(data) if isinstance(u, dict) and isinstance(u.get("user_id"), int)]
+
+
+def shadnet_on(config: dict) -> bool:
+    """shadPS4's own switch for shadNet (its settings window's "Enable ShadNet"), for all users."""
+    return bool(_general(config).get("shad_net_enabled", False))
+
+
+def shadnet_server(config: dict) -> str:
+    server = _general(config).get("shadnet_server")
+    return server if isinstance(server, str) and server.strip() else DEFAULT_SERVER
+
+
+def _write_json(path: Path, data: dict) -> None:
+    """As shadPS4 writes it, through a temporary file, so a cut-off write never leaves half a file."""
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    temporary.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    temporary.replace(path)
+
+
+def save_shadnet(home: Path, user_id: int, npid: str, password: str, email: str, on: bool, server: str) -> None:
+    """The user's shadNet account in users.json, and in config.json the server and shadPS4's switch: on when the
+    user's shadNet is on, off when no user's is. shadPS4 must have run once (it makes both files) and must not run
+    now (it would write its own copy back). UserDataError when a file is missing or cannot be read or written."""
+    try:
+        config = json.loads((home / "config.json").read_text(encoding="utf-8"))
+        users = json.loads((home / "users.json").read_text(encoding="utf-8"))
+    except FileNotFoundError as error:
+        raise UserDataError("shadPS4 has not run yet: start it once (shadPS4 settings), then try again.") from error
+    except (OSError, ValueError) as error:
+        raise UserDataError(f"shadPS4's settings could not be read: {error}") from error
+    if not isinstance(config, dict) or not isinstance(users, dict):
+        raise UserDataError("shadPS4's settings are not what shadPS4 0.19.0 writes.")
+    listed = [u for u in _users_list(users) if isinstance(u, dict)]
+    user = next((u for u in listed if u.get("user_id") == user_id), None)
+    if user is None:
+        raise UserDataError(f"shadPS4 has no user {user_id}.")
+    user.update(shadnet_npid=npid, shadnet_password=password, shadnet_email=email, shadnet_enabled=on)
+    general = config.setdefault("General", {})
+    if not isinstance(general, dict):
+        raise UserDataError("shadPS4's settings are not what shadPS4 0.19.0 writes.")
+    general["shad_net_enabled"] = any(bool(u.get("shadnet_enabled")) for u in listed)
+    general["shadnet_server"] = server
+    try:
+        _write_json(home / "users.json", users)
+        _write_json(home / "config.json", config)
+    except OSError as error:
+        raise UserDataError(f"shadPS4's settings could not be written: {error}") from error
+
+
+def shadps4_running(proc: Path = Path("/proc")) -> bool:
+    """Whether shadPS4 runs (its AppImage, or the program inside it), which writes its own settings back."""
+    for entry in proc.glob("[0-9]*"):
+        try:
+            name = (entry / "comm").read_text(encoding="utf-8").strip()
+        except OSError:
+            continue
+        if name == "shadps4" or name.startswith("Shadps4-sdl"):
+            return True
+    return False

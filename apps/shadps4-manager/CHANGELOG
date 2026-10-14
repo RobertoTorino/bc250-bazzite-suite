@@ -1,3 +1,23 @@
+Changelog: 14-10-2026 14:23:32
+
+Release 0.1.1.
+
+Changelog: 14-10-2026 14:09:44
+
+shadNet, shadPS4's online service: a fourth step in the window says whether shadPS4 signs in and with which account, and Account… opens a window to set it up (shadnet_dialog.py): the server (shadPS4's srv.shadps4.net:31313 by default), which shadPS4 user, the shadNet name, password and email, and a registration key for a server that wants one. Create account makes the account on the server and Try sign-in signs in once, off the GUI thread (shadnet.py: shadNet's protocol 1 as shadPS4 0.19.0 speaks it, plain TCP, the two requests' protobuf messages encoded by hand, the server's error codes as plain sentences). Save writes the account into shadPS4's users.json and the server and its shadNet switch into config.json (userdata.save_shadnet: only those keys, written as shadPS4 writes them, through a temporary file; refused while shadPS4 runs, which writes its own copy back). Newer shadPS4 releases: when the window opens, the app asks GitHub for shadPS4's newest stable release (emulator.newer_release, through core's latest_release; daily builds left out) and, when it is newer than the pinned 0.19.0, says so in the first step with a link; it installs only the release it was tried with. The README and the manual (a shadNet section, New shadPS4 releases, What goes where) describe both. Tests: the protocol against a fake server (requests, errors, another server or version, no server), the server address and name rules, saving shadNet in shadPS4's files (other settings untouched, the switch, the format), whether shadPS4 runs, the release check, and the window and the shadNet window.
+
+Changelog: 14-10-2026 13:55:19
+
+The manual has a section How it works: why a game started from Steam reads the real controllers itself (Steam's virtual controller, its missing sensors and Steam's desktop layout) and why on the desktop it opens its window through XWayland (Steam's overlay sees only X11 windows). The Game Mode section links to it.
+
+Changelog: 14-10-2026 13:50:21
+
+Steam's overlay over a game started from Steam on the desktop: shadPS4 opened its window through Wayland (its log: VK_KHR_wayland_surface), which Steam does not see, so Shift+Tab and the PS button did nothing and there was no way to the game's page, controller layout or settings while it ran (owner's board, 14-10-2026). The run wrapper sets SDL_VIDEO_DRIVER=x11 when Steam starts it (SteamGameId) on a Wayland desktop with XWayland, unless SDL_VIDEO_DRIVER is set already; started outside Steam nothing changes. The manual says how to reach the overlay. Test: the wrapper on a Wayland desktop, outside Steam, X11 only, and with the user's own choice.
+
+Changelog: 14-10-2026 13:35:36
+
+Game Mode: the shortcut's logo on the banner (Steam's Properties > Customization > Logo) is the game's sce_sys/icon0.png, copied as it is; a game without one gets none and Steam shows its name. Update Game Mode is on for a game in Steam whose shortcut has no logo yet (made by an earlier version), so it gets one (shortcuts.logo_missing). Controllers: a game started from Steam got SDL told to ignore the real controllers and only Steam's virtual controller (28DE:11FF), without motion sensors or touchpad, which on the desktop followed Steam's Desktop Configuration, so the game got no controller input (owner's board, 14-10-2026: shadPS4 registered a pad without gyro, Steam's controller log showed its desktop layout active). The run wrapper now replaces Steam's list with Steam's virtual controller while a real controller is connected (in /proc/bus/input/devices), as BC250 Console Link does; with none, Steam's choice stands. Started outside Steam, nothing changes. Tests: the logo with and without icon0.png, a shortcut without its logo in the window, and the run wrapper with the board's input devices.
+
 Changelog: 14-10-2026 10:56:03
 
 Release 0.1.0.

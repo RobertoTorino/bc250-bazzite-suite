@@ -4,7 +4,7 @@ games in the chosen folders and adds them to Steam for Game Mode."""
 
 APP_NAME = "BC-250 shadPS4 Manager"
 APP_ID = "bc250-shadps4-manager"
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from pathlib import Path
 

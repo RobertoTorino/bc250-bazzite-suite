@@ -7,8 +7,9 @@ Install, update and uninstall run the app's own installer in a terminal window (
 password and print what they do); the portal watches for the exit file the terminal writes and then refreshes.
 An app that changes the board (unlocks, governor, ACPI) gets a warning before it is installed or opened.
 
-Updates: a red dot marks every tile whose installed app differs from the version this portal pins, the header counts
-them, and at start the portal looks for a newer portal release on GitHub (which is how newer app versions arrive).
+Updates: a red dot marks every tile whose installed app differs from the version this portal pins, a red circular
+arrow every installed app the portal has no record of (installed by hand, or under an earlier name of the app: its
+version is unknown, so it needs a reinstall), the header counts both, and at start the portal looks for a newer portal release on GitHub (which is how newer app versions arrive).
 
 Desktop icons: the portal's own icon is enough to reach every app, so the apps' icons on the Desktop are the user's
 choice ("App icons on the Desktop", desktop_icons.py). The first start asks when app icons are there; off, the portal
@@ -49,6 +50,7 @@ POLL_MS = 1000
 ICON_PX = 128                   # the app icon on its tile (the icon files are 128 x 128)
 SYMBOL_PX = 28                  # the Install / Uninstall / Reinstall symbols beside it
 DOT_PX = 16                     # the red update dot inside the icon
+BADGE_PX = 24                   # the red circular arrow inside the icon: a reinstall is needed
 TILE_WIDTH = 216                # the tiles flow left to right, as many to a row as fit
 TILE_SPACING = 12
 DEV_FRAME_MARGIN = 24           # a section's frame and margins take this much of the width
@@ -82,6 +84,17 @@ def red_dot(size: int = 10, tooltip: str = "") -> QLabel:
     dot.setToolTip(tooltip)
     dot.hide()
     return dot
+
+
+def reinstall_badge(size: int = BADGE_PX) -> QLabel:
+    """The red circular arrow that marks an app the portal has no record of: it needs a reinstall."""
+    badge = QLabel()
+    badge.setFixedSize(size, size)
+    badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    badge.setStyleSheet(f"background:{RED}; border-radius:{size // 2}px; border:2px solid palette(window);")
+    badge.setPixmap(glyphs.reinstall("white").pixmap(size - 8, size - 8))
+    badge.hide()
+    return badge
 
 
 def shell_line(folder: PurePath, commands: tuple[str, ...]) -> str:
@@ -140,7 +153,7 @@ def still_icon(pixmap: QPixmap) -> QIcon:
 
 class AppTile(QFrame):
     """One app, compact: its short name, its icon (click: open; hover: what it does; grey: not installed; red dot:
-    an update), "changes the board" under it when so, and beside it the symbol buttons: Install and Uninstall, or
+    an update; red circular arrow: a reinstall is needed), "changes the board" under it when so, and beside it the symbol buttons: Install and Uninstall, or
     only Reinstall for bazzite-test."""
 
     install_clicked = pyqtSignal(object)
@@ -196,6 +209,9 @@ class AppTile(QFrame):
         self.dot = red_dot(DOT_PX)
         self.dot.setParent(self.icon)
         self.dot.move(ICON_PX - DOT_PX - 4, ICON_PX - DOT_PX - 4)          # inside the icon, bottom right
+        self.badge = reinstall_badge()
+        self.badge.setParent(self.icon)
+        self.badge.move(ICON_PX - BADGE_PX - 4, ICON_PX - BADGE_PX - 4)    # in the same corner
         self.board = QLabel("changes the board")
         self.board.setStyleSheet(f"color:{ORANGE}; font-size:11px; font-weight:700;")
         self.board.setToolTip("It changes how the board runs; the portal asks first before installing or opening it.")
@@ -242,15 +258,21 @@ class AppTile(QFrame):
     def _ink(self) -> str:
         return self.palette().color(QPalette.ColorRole.ButtonText).name()
 
-    def show_state(self, installed: bool, installed_tag: str, busy: str = "", available: bool = True) -> bool:
-        """Show the app's state; True when an update is available. *available* False: a checkout-only app in a
-        portal that does not know a checkout yet; it asks for one when the app is installed or removed."""
+    def show_state(self, installed: bool, installed_tag: str, busy: str = "", available: bool = True) -> str:
+        """Show the app's state; "update" when an update is available, "reinstall" when a reinstall is needed, else
+        "". *available* False: a checkout-only app in a portal that does not know a checkout yet; it asks for one
+        when the app is installed or removed."""
         entry = self.entry
-        # An update needs a known, different tag: an app installed some other way has none recorded.
+        # An update needs a known, different tag. An app installed some other way (by hand, or under an earlier
+        # name of the app) has none recorded: its version is unknown, so it needs a reinstall.
         update = (installed and bool(installed_tag) and bool(entry.tag) and installed_tag not in (entry.tag, "local")
                   and not entry.withdrawn)
+        reinstall = installed and not installed_tag and not entry.withdrawn
         self.dot.setVisible(update)
         self.dot.setToolTip(f"Update available: {entry.tag} (installed {installed_tag})." if update else "")
+        self.badge.setVisible(reinstall)
+        self.badge.setToolTip("Reinstall needed: the portal did not install it, so its version is unknown."
+                              if reinstall else "")
         if busy:
             self.status, detail = busy, busy
         elif entry.withdrawn:
@@ -261,11 +283,14 @@ class AppTile(QFrame):
             self.status, detail = "Not installed", "Not installed: install it with the button beside the icon."
         elif update:
             self.status, detail = "Update", f"Update available: installed {installed_tag}, this portal pins {entry.tag}."
+        elif reinstall:
+            self.status = "Reinstall needed"
+            detail = ("Reinstall needed: it is installed, but not by this portal (by hand, or under an earlier name "
+                      "of the app), so its version is unknown. Reinstall it with the red button beside the icon.")
         else:
             self.status = "Installed"
-            detail = (f"Installed from {installed_tag}." if installed_tag not in ("", "local") else
-                      "Installed from the suite checkout." if installed_tag == "local" else
-                      "Installed (not by this portal, so its version is unknown).")
+            detail = (f"Installed from {installed_tag}." if installed_tag != "local" else
+                      "Installed from the suite checkout.")
         if not available and not busy:
             detail += (" It runs from a suite checkout and has no release, and the portal found no checkout in "
                        "your home folder: it asks for one when you install it.")
@@ -283,15 +308,15 @@ class AppTile(QFrame):
                              f"<p style='color:gray;'>{escape(detail)}<br>{escape(source)}"
                              + (f"<br>{escape(how)}" if installed else "") + "</p>")
 
-        action, ink = ("Update", RED) if update else ("Reinstall", self._ink()) if installed else \
-            ("Install", self._ink())
-        draw = glyphs.reinstall if entry.required and installed and not update else glyphs.install
+        action, ink = ("Update", RED) if update else ("Reinstall", RED) if reinstall else \
+            ("Reinstall", self._ink()) if installed else ("Install", self._ink())
+        draw = glyphs.reinstall if (entry.required and installed and not update) or reinstall else glyphs.install
         self.install_button.setIcon(draw(ink))
         self.install_button.setToolTip(f"{action} {entry.name}" + (f" ({entry.tag})" if entry.tag else "")
                                        if not entry.withdrawn else f"App not available: {entry.withdrawn}")
         self.install_button.setEnabled(not busy and not entry.withdrawn)
         self.uninstall_button.setEnabled(installed and not busy)
-        return update
+        return "update" if update else "reinstall" if reinstall else ""
 
 
 class MainWindow(QMainWindow):
@@ -504,7 +529,7 @@ class MainWindow(QMainWindow):
         return self.pending is not None or self._job is not None
 
     def refresh(self) -> None:
-        updates = 0
+        counts = {"update": 0, "reinstall": 0}
         for entry in self.entries:
             busy = ""
             if self._job and self._job[0] is entry:
@@ -513,14 +538,22 @@ class MainWindow(QMainWindow):
                 busy = "Installing…" if self.pending.action == "install" else "Removing…"
             card = self.cards[entry.key]
             available = not entry.checkout_only or self.sources.checkout_for_apps is not None
-            updates += card.show_state(is_installed(entry), self.records.get(entry.key), busy, available)
+            state = card.show_state(is_installed(entry), self.records.get(entry.key), busy, available)
+            if state:
+                counts[state] += 1
             if self.busy() and not busy:
                 card.install_button.setEnabled(False)
                 card.uninstall_button.setEnabled(False)
-        self.updates_label.setText(f"\u25cf {updates} update{'s' if updates != 1 else ''}")
-        self.updates_label.setToolTip("Apps whose installed version differs from the one this portal pins; "
-                                      "each has a red dot in its icon, and its Install button updates it.")
-        self.updates_label.setVisible(updates > 0)
+        updates, reinstalls = counts["update"], counts["reinstall"]
+        self.updates_label.setText("\u25cf " + ", ".join(
+            [f"{updates} update{'s' if updates != 1 else ''}"] * bool(updates)
+            + [f"{reinstalls} reinstall{'s' if reinstalls != 1 else ''}"] * bool(reinstalls)))
+        self.updates_label.setToolTip(
+            "Updates: apps whose installed version differs from the one this portal pins; each has a red dot in its "
+            "icon, and its Install button updates it. Reinstalls: apps the portal did not install (by hand, or under "
+            "an earlier name of the app), so their version is unknown; each has a red circular arrow in its icon, and "
+            "its red button reinstalls it.")
+        self.updates_label.setVisible(updates + reinstalls > 0)
 
     def _portal_checked(self, result: object) -> None:
         """A newer portal release brings newer pinned app versions; name them and offer its release page."""

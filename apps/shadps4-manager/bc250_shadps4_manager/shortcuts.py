@@ -4,8 +4,9 @@ full screen (bc250-shadps4-run -f true -g "<eboot.bin>"), with the game's own pi
 
 The file and its format are core's (bc250_core.steam). The shortcut runs the wrapper, not the AppImage, so its
 Steam number (from the program and the name) stays the same when the app brings another shadPS4. The artwork comes
-from the game's sce_sys: icon0.png (512 × 512) on the portrait and the wide picture, pic1.png (1920 × 1080, its
-background) on the banner and behind the wide one; without them the title is drawn on a dark background."""
+from the game's sce_sys: icon0.png (512 × 512) on the portrait and the wide picture and as the logo on the banner
+(Steam's Properties > Customization > Logo), pic1.png (1920 × 1080, its background) on the banner and behind the wide
+one; without them the title is drawn on a dark background."""
 
 from __future__ import annotations
 
@@ -70,6 +71,15 @@ def in_steam(folder: Path) -> dict[str, str]:
     return {_eboot(item): str(item.get("AppName", "")) for item in steam.shortcuts(folder) if ours(item)}
 
 
+def logo_missing(folder: Path, game: Game, name: str, run: Path) -> bool:
+    """Whether a Steam user lacks the logo of the game's shortcut (*name*: its name in Steam), as a shortcut made
+    before the app set one does; False for a game without icon0.png, which gets none."""
+    if game.picture("icon0.png") is None:
+        return False
+    number = entry(game, name, run, run)["appid"] & 0xFFFFFFFF
+    return any(not (config / "grid" / f"{number}_logo.png").is_file() for config in steam.user_folders(folder))
+
+
 def changes(add: Iterable[Game], remove: Iterable[Game], run: Path, logo: Path, existing: dict[str, str],
             art: bool = True) -> list[steam.Change]:
     """The changes for core's write_shortcuts: the games to add (or bring up to date) and to take out. The names
@@ -87,8 +97,8 @@ def changes(add: Iterable[Game], remove: Iterable[Game], run: Path, logo: Path, 
 # --- The artwork -----------------------------------------------------------------------------------------------
 
 def draw_art(game: Game, logo: Path) -> dict[str, bytes]:
-    """The portrait, the wide picture and the banner as PNG bytes (Steam shows the name where there is no logo
-    image, so none is made)."""
+    """The portrait, the wide picture and the banner as PNG bytes, and the game's icon0.png as the logo on the banner
+    (without it no logo: Steam shows the name there)."""
     from PyQt6.QtCore import QRectF, Qt
     from PyQt6.QtGui import QColor, QFont, QImage, QLinearGradient, QPainter
 
@@ -123,6 +133,9 @@ def draw_art(game: Game, logo: Path) -> dict[str, bytes]:
                              Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap, game.title)
         painter.end()
         images[suffix] = _png(image)
+    own = game.picture("icon0.png")
+    if own is not None and not icon.isNull():
+        images["_logo"] = own.read_bytes()      # the file as it is, as Steam copies a logo chosen in its settings
     return images
 
 

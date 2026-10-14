@@ -55,7 +55,7 @@ def test_add_then_take_out(tmp_path, qapp):
     assert shortcuts.in_steam(folder) == {str(first.eboot): "One", str(second.eboot): "Two"}
     config = steam.user_folders(folder)[0]
     assert sorted(p.name for p in (config / "grid").iterdir()) == sorted(
-        f"{n}{suffix}.png" for n in numbers for suffix in ("p", "", "_hero"))
+        [f"{n}{suffix}.png" for n in numbers for suffix in ("p", "", "_hero")] + [f"{numbers[0]}_logo.png"])
     item = steam.shortcuts(folder)[1]
     assert item["icon"] == str(first.picture("icon0.png"))                      # the game's own icon
     existing = shortcuts.in_steam(folder)
@@ -81,11 +81,24 @@ def test_artwork_sizes_with_and_without_the_games_pictures(tmp_path, qapp):
     from PyQt6.QtGui import QImage
     with_pictures = read_game(make_game(tmp_path / "a", "A", pictures=True))
     without = read_game(make_game(tmp_path / "b", "B"))
-    for game in (with_pictures, without):
+    for game, logo in ((with_pictures, {"_logo"}), (without, set())):
         art = shortcuts.draw_art(game, LOGO_PATH)
-        assert set(art) == {"p", "", "_hero"}
-        for suffix, data in art.items():
-            image = QImage.fromData(data, "PNG")
+        assert set(art) == {"p", "", "_hero"} | logo                             # a logo only from icon0.png
+        for suffix in ("p", "", "_hero"):
+            image = QImage.fromData(art[suffix], "PNG")
             assert (image.width(), image.height()) == steam.ART[suffix], suffix
-    hero = QImage.fromData(shortcuts.draw_art(with_pictures, LOGO_PATH)["_hero"], "PNG")
-    assert hero.pixelColor(10, 10).name() == "#00ff00"                           # pic1.png fills the banner
+    art = shortcuts.draw_art(with_pictures, LOGO_PATH)
+    assert QImage.fromData(art["_hero"], "PNG").pixelColor(10, 10).name() == "#00ff00"   # pic1.png fills the banner
+    logo = QImage.fromData(art["_logo"], "PNG")
+    assert (logo.width(), logo.height()) == (512, 512) and logo.pixelColor(10, 10).name() == "#ff0000"  # icon0.png
+
+
+def test_a_shortcut_made_without_a_logo(tmp_path, qapp):
+    folder = _steam(tmp_path)
+    game = read_game(make_game(tmp_path / "games" / "one", "One", "CUSA00001", pictures=True))
+    bare = read_game(make_game(tmp_path / "games" / "two", "Two", "CUSA00002"))
+    steam.write_shortcuts(folder, shortcuts.changes([game, bare], [], RUN, LOGO_PATH, {}, art=False))
+    assert shortcuts.logo_missing(folder, game, "One", RUN)
+    assert not shortcuts.logo_missing(folder, bare, "Two", RUN)                  # no icon0.png: no logo to miss
+    steam.write_shortcuts(folder, shortcuts.changes([game], [], RUN, LOGO_PATH, shortcuts.in_steam(folder)))
+    assert not shortcuts.logo_missing(folder, game, "One", RUN)

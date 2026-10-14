@@ -27,4 +27,27 @@ cd "$(dirname "$APPIMAGE")"
 if command -v ldconfig >/dev/null 2>&1 && ! ldconfig -p 2>/dev/null | grep -q 'libfuse\.so\.2'; then
     export APPIMAGE_EXTRACT_AND_RUN=1
 fi
+# A game started by Steam gets SDL told to ignore the controllers Steam handles, and Steam's virtual controller
+# (28DE:11FF) in their place: no motion sensors or touchpad, and on the desktop it follows Steam's Desktop
+# Configuration (mouse and keys), so the game got no controller input (owner's board, 14-10-2026). As BC250 Console
+# Link does: while a real controller is connected, shadPS4 reads it and leaves Steam's virtual one out. Without a
+# real one (a Steam Deck's own controls) Steam's choice stands.
+INPUT_DEVICES="${BC250_INPUT_DEVICES:-/proc/bus/input/devices}"      # another file only in the tests
+real_controller() {
+    # A joystick (js handler) that is not one of Steam's (vendor 28DE).
+    awk '/^I:/ { vendor = ""; for (i = 1; i <= NF; i++) if ($i ~ /^Vendor=/) vendor = tolower(substr($i, 8)) }
+         /^H:/ && / js[0-9]/ && vendor != "28de" { found = 1 }
+         END { exit !found }' "$INPUT_DEVICES" 2>/dev/null
+}
+if [ -n "${SDL_GAMECONTROLLER_IGNORE_DEVICES:-}${SDL_GAMECONTROLLER_IGNORE_DEVICES_EXCEPT:-}" ] && real_controller; then
+    unset SDL_GAMECONTROLLER_IGNORE_DEVICES_EXCEPT
+    export SDL_GAMECONTROLLER_IGNORE_DEVICES=0x28DE/0x11FF
+fi
+# On a Wayland desktop shadPS4 opens its window through Wayland itself, and Steam sees only X11 windows: no overlay
+# (Shift+Tab, the PS button) over a game it started, so no way to its page, controller layout or settings (owner's
+# board, 14-10-2026). A game Steam starts there opens its window through XWayland. Game Mode is X11 already.
+if [ -n "${SteamGameId:-}" ] && [ -n "${WAYLAND_DISPLAY:-}" ] && [ -n "${DISPLAY:-}" ] &&
+   [ -z "${SDL_VIDEO_DRIVER:-}" ]; then
+    export SDL_VIDEO_DRIVER=x11
+fi
 exec "$APPIMAGE" "$@"

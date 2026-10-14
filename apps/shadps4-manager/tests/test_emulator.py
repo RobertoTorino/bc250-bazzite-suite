@@ -97,3 +97,23 @@ def test_download_errors_say_what_happened(tmp_path):
         emulator.install(tmp_path, http)
     with pytest.raises(emulator.EmulatorError, match="download failed: Name or service not known"):
         emulator.install(tmp_path, offline)
+
+
+def _releases(tag: str):
+    """GitHub's answer for /releases/latest (only stable releases)."""
+    def fetch(url: str):
+        assert url == "https://api.github.com/repos/shadps4-emu/shadPS4/releases/latest"
+        return {"tag_name": tag, "html_url": f"https://github.com/shadps4-emu/shadPS4/releases/tag/{tag}",
+                "published_at": "2026-11-20T10:00:00Z", "assets": []}
+    return fetch
+
+
+def test_a_newer_shadps4_release():
+    newer = emulator.newer_release(_releases("v.0.20.0"))
+    assert (newer.version, newer.published) == ("0.20.0", "2026-11-20") and newer.url.endswith("/v.0.20.0")
+    assert emulator.newer_release(_releases(emulator.TAG)) is None                 # the one the app brings
+    assert emulator.newer_release(_releases("v.0.18.0")) is None
+
+    def offline(url: str):
+        raise urllib.error.URLError("no network")
+    assert emulator.newer_release(offline) is None                                 # nothing to say then

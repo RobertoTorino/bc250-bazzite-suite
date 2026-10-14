@@ -137,8 +137,11 @@ def test_states_follow_detection_and_records(window, home):
     assert not card.uninstall_button.isEnabled()
     (home / ".local" / "bin" / "bc250-governor-manager").write_text("#!/bin/sh\n")
     window.refresh()
-    assert card.status == "Installed" and card.install_button.toolTip().startswith("Reinstall ")
+    assert card.status == "Reinstall needed" and card.install_button.toolTip().startswith("Reinstall ")
     assert card.uninstall_button.isEnabled()
+    window.records.set("governor", next(e.tag for e in window.entries if e.key == "governor"))
+    window.refresh()
+    assert card.status == "Installed" and card.install_button.toolTip().startswith("Reinstall ")
     window.records.set("governor", "governor-v0.0.9")
     window.refresh()
     assert card.status == "Update" and card.install_button.toolTip().startswith("Update ")
@@ -241,6 +244,37 @@ def test_red_dot_and_count_for_updates(window, home):
     window.records.set("governor", next(e.tag for e in window.entries if e.key == "governor"))
     window.refresh()
     assert window.cards["governor"].dot.isHidden() and window.updates_label.isHidden()
+
+
+def test_circular_arrow_and_count_for_reinstalls(window, home):
+    # Installed but not recorded: by hand, or under an earlier name of the app (shadps4 became shadps4-manager).
+    for name in ("bc250-governor-manager", "bc250-bazzite-helixsr-gui"):
+        (home / ".local" / "bin" / name).write_text("#!/bin/sh\n")
+    window.records.set("helixsr", "helixsr-v0.0.1")                          # an update, for the count
+    window.refresh()
+    card = window.cards["governor"]
+    assert card.status == "Reinstall needed" and not card.badge.isHidden() and card.dot.isHidden()
+    assert "Reinstall needed" in card.icon.toolTip() and "version is unknown" in card.badge.toolTip()
+    assert card.install_button.toolTip().startswith("Reinstall ")
+    assert window.cards["helixsr"].badge.isHidden() and not window.cards["helixsr"].dot.isHidden()
+    assert window.updates_label.text().endswith("1 update, 1 reinstall")
+    window.records.remove("helixsr")
+    (home / ".local" / "bin" / "bc250-bazzite-helixsr-gui").unlink()
+    window.refresh()
+    assert window.updates_label.text().endswith("\u25cf 1 reinstall")
+    window.records.set("governor", next(e.tag for e in window.entries if e.key == "governor"))
+    window.refresh()
+    assert card.badge.isHidden() and card.status == "Installed" and window.updates_label.isHidden()
+
+
+def test_not_installed_and_withdrawn_need_no_reinstall(qapp, home, settings_dir, tmp_path, launched):
+    entries = [replace(e, withdrawn="test") if e.key == "governor" else e for e in load(MANIFEST)]
+    w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
+    (home / ".local" / "bin" / "bc250-governor-manager").write_text("#!/bin/sh\n")
+    w.refresh()
+    assert w.cards["governor"].badge.isHidden()                              # the portal removes it instead
+    assert w.cards["system-overlay"].badge.isHidden()                        # not installed
+    w.close()
 
 
 def test_local_build_banner(qapp, home, settings_dir, tmp_path, launched, window):
@@ -435,7 +469,7 @@ def test_an_installed_checkout_app_still_opens(qapp, home, settings_dir, tmp_pat
     (home / ".local" / "bin" / "bc250-release").write_text("#!/bin/sh\n")   # installed from a checkout before
     w.refresh()
     card = w.cards["suite-releases"]
-    assert card.status == "Installed" and card.icon.isEnabled() and card.uninstall_button.isEnabled()
+    assert card.status == "Reinstall needed" and card.icon.isEnabled() and card.uninstall_button.isEnabled()
     assert w.cards["demo-tool"].install_button.isEnabled()                  # released development apps as usual
     w.close()
 

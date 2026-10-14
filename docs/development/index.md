@@ -72,6 +72,20 @@ Each app is released on its own tag (`bazzite-test-v0.1.0`, `governor-v0.4.0`, â
 `portal/apps.toml`; a change there needs a portal version bump at least as large as the largest app bump.
 The release steps are in [Portal](../portal.md#appstoml-and-releases).
 
+### Upstream releases an app pins
+
+BC-250 Decky Loader Manager installs one Decky Loader release, pinned in
+`apps/decky-manager/bc250_decky_manager/loader.py` (`VERSION`, `TAG`, `SHA256`), and writes Decky's service unit
+itself (`unit_text()`). `tools/check_upstream.py` compares both with Decky's repository: a newer stable release, the
+SHA-256 GitHub publishes for the pinned binary, and Decky's `plugin_loader-release.service` at the pinned tag and on
+`main` (Decky's own updater installs `main`'s). It exits with 0 when they match, 1 when Decky moved and 2 when it
+could not check. The Upstream workflow (`.github/workflows/upstream.yml`) runs it every Monday and can be started by
+hand; a failed run means a new version of the app is due, with the new pin tried on the board first.
+
+```bash
+python3 tools/check_upstream.py
+```
+
 ## bc250_core
 
 Code shared by the suite's apps. Nothing in it imports an app: each app passes its constants in as an `AppInfo`.

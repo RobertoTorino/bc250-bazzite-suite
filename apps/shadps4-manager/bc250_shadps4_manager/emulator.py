@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The shadPS4 release this version of the app installs, pinned: the Linux build of a tagged release on GitHub (an
 AppImage in a zip), checked against its SHA-256 before anything is unpacked. A newer shadPS4 comes with a new version
-of the app, so the launch line and the advice in the app are tried with the release they are for.
+of the app, so the launch line and the advice in the app are tried with the release they are for. The app looks
+up shadPS4's newest stable release (not its daily development builds) and says when there is a newer one than it
+brings; it never installs one it was not tried with.
 
 It goes to ~/.local/share/bc250-shadps4-manager/emulator/<version>/, with "current" pointing to it. The run wrapper
 (~/.local/bin/bc250-shadps4-run) starts "current", so the Steam shortcuts keep working when the version changes."""
@@ -18,6 +20,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from bc250_core.platform import data_home
+from bc250_core.updates import Fetch, ReleaseInfo, latest_release, version_tuple
 
 from . import APP_ID, __version__
 
@@ -27,8 +30,9 @@ ASSET = "shadps4-linux-sdl-0.19.0.zip"
 SHA256 = "a6e3b83fd6c9ea7b29c37e77e1aa687802d4ecd98c2ea794ca9e1d97b24a0cf9"
 SIZE_MB = 31                            # the zip, for the question before downloading
 MEMBER = "Shadps4-sdl.AppImage"         # the only file in the zip
-URL = f"https://github.com/shadps4-emu/shadPS4/releases/download/{TAG}/{ASSET}"
-RELEASE_PAGE = f"https://github.com/shadps4-emu/shadPS4/releases/tag/{TAG}"
+REPO = "shadps4-emu/shadPS4"
+URL = f"https://github.com/{REPO}/releases/download/{TAG}/{ASSET}"
+RELEASE_PAGE = f"https://github.com/{REPO}/releases/tag/{TAG}"
 CHUNK = 1 << 20
 TIMEOUT = 30
 
@@ -124,3 +128,12 @@ def install(home: Path, fetch: Download = download, progress: Progress | None = 
 def remove(home: Path) -> None:
     """The installed shadPS4 goes; shadPS4's own folder (saves, system modules, settings) stays."""
     shutil.rmtree(home, ignore_errors=True)
+
+
+def newer_release(fetch: Fetch | None = None) -> ReleaseInfo | None:
+    """shadPS4's newest stable release when it is newer than the one this app brings; None when it is not, or when
+    GitHub cannot be asked (nothing to say then)."""
+    latest = latest_release(REPO, fetch=fetch, user_agent=f"{APP_ID}/{__version__}")
+    if latest.error or version_tuple(latest.version) <= version_tuple(VERSION):
+        return None
+    return latest

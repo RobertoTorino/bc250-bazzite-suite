@@ -69,3 +69,75 @@ def settings_dir(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
     monkeypatch.setenv("XDG_CURRENT_DESKTOP", "KDE")
     return tmp_path / "settings"
+
+
+def read_message(data: bytes) -> dict[int, str]:
+    """The text fields of a protobuf message, by number (what the fake server reads)."""
+    fields, at = {}, 0
+    while at < len(data):
+        key, at = data[at], at + 1
+        size, at = data[at], at + 1
+        fields[key >> 3], at = data[at:at + size].decode(), at + size
+    return fields
+
+
+class FakeShadNet:
+    """A shadNet server on one end of a socket pair: sends ServerInfo (*version*), then answers each request with
+    *error* after a notification, and keeps what it got. connect() is what shadnet.request() takes."""
+
+    def __init__(self, error: int = 0, version: int = 1, first: int = 3):
+        self.error, self.version, self.first = error, version, first
+        self.requests: list[tuple[int, dict[int, str]]] = []
+        self.addresses: list[tuple[str, int]] = []
+
+    def connect(self, address, timeout):
+        import socket
+        import threading
+        self.addresses.append(address)
+        mine, theirs = socket.socketpair()
+        threading.Thread(target=self._serve, args=(mine,), daemon=True).start()
+        return theirs
+
+    def _serve(self, sock) -> None:
+        import struct
+        header = struct.Struct("<BHIQ")
+        with sock:
+            sock.sendall(header.pack(self.first, 0, 19, 0) + struct.pack("<I", self.version))
+            data = b""
+            while len(data) < header.size:
+                chunk = sock.recv(64)
+                if not chunk:
+                    return
+                data += chunk
+            kind, command, total, number = header.unpack(data[:header.size])
+            while len(data) < total:
+                data += sock.recv(total - len(data))
+            size = struct.unpack_from("<I", data, header.size)[0]
+            self.requests.append((command, read_message(data[header.size + 4:header.size + 4 + size])))
+            sock.sendall(header.pack(2, 7, header.size + 1, 0) + b"\0")             # a notification first
+            sock.sendall(header.pack(1, command, header.size + 1, number) + bytes([self.error]))
+            sock.recv(64)                                                         # until the client closes
+
+
+def write_shad_files(home: Path) -> Path:
+    """shadPS4's folder as 0.19.0 leaves it after its first start: config.json (kept when there is one, with
+    shadNet's settings added) and users.json with its four users."""
+    import json
+    home.mkdir(parents=True, exist_ok=True)
+    try:
+        config = json.loads((home / "config.json").read_text())
+    except FileNotFoundError:
+        config = {"Audio": {"audio_backend": 0}, "General": {"install_dirs": [], "show_splash": True}}
+    config["General"].update(shad_net_enabled=False, shadnet_server="srv.shadps4.net:31313")
+    users = {"Users": {"commit_hash": "c7e065d1", "user": [
+        {"np_age": 30, "player_index": n, "shadnet_email": "", "shadnet_enabled": False, "shadnet_npid": "",
+         "shadnet_password": "", "shadnet_token": "", "user_color": n, "user_id": 999 + n,
+         "user_name": "shadPS4" if n == 1 else f"shadPS4-{n}"} for n in range(1, 5)]}}
+    (home / "config.json").write_text(json.dumps(config, indent=2))
+    (home / "users.json").write_text(json.dumps(users, indent=2))
+    return home
+
+
+@pytest.fixture
+def shad_files(tmp_path):
+    return write_shad_files(tmp_path / "shadPS4")

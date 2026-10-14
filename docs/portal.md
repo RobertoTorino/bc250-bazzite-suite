@@ -11,6 +11,9 @@ tile, left to right in the order of `apps.toml` and as many to a row as the wind
   icon is grey while the app is not installed. Hover over it to see what the app does, its state and the release
   this portal pins.
 - **A red dot** in the icon: an update is available.
+- **A red circular arrow** in the icon: reinstall the app. It is installed, but not by this portal (by hand, or
+  under an earlier name of the app), so the portal does not know its version. Its red button reinstalls the version
+  this portal pins.
 - **changes the board**, in orange under the icon, for apps that change how the board runs.
 - **App not available**, in red under the icon: the release of this app was withdrawn because of a problem
   (privacy, security or another reason; hover over it to read which). It cannot be installed or opened. When it is
@@ -51,7 +54,7 @@ open.
   against the release's `SHA256SUMS` until one is pinned. Then it unpacks the tarball without ever writing
   outside its folder.
 - **Updates:** a red dot marks every app whose installed version differs from the one this portal pins, and the
-  header counts them; its red Install button installs the pinned version. Newer app versions come with a newer portal
+  header counts them (and the apps that need a reinstall); its red Install button installs the pinned version. Newer app versions come with a newer portal
   release: at start the portal looks for one on GitHub and, when there is one, shows a red button that opens its
   release page. The button names what that release brings, for example **Portal 0.9.1: updates ACE Queues and
   Memory Manager**, and its tooltip lists each app with its old and new version. After the portal update, the

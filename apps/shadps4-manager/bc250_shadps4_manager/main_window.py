@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The main window: shadPS4 itself, the system modules and the game folders as three steps with their state and
-buttons, then the games found, each with a box for Game Mode. Downloading shadPS4 and changing Steam's files run off
-the GUI thread; nothing here needs root. The look is the app's own blue (style.py)."""
+"""The main window: shadPS4 itself, the system modules, the game folders and shadNet as four steps with their state
+and buttons, then the games found, each with a box for Game Mode. Downloading shadPS4, asking GitHub for a newer one
+and changing Steam's files run off the GUI thread; nothing here needs root. The look is the app's own blue
+(style.py)."""
 
 from __future__ import annotations
 
@@ -19,11 +20,12 @@ from bc250_core import SUITE_MANUAL_URL, steam, window_title
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import bin_home, xdg_open
 from bc250_core.settings import SettingsStore
-from bc250_core.updates import UpdateChecker
+from bc250_core.updates import ReleaseInfo, UpdateChecker
 from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, hint_label
 
-from . import APP_NAME, INFO, LOGO_PATH, ROOT, __version__, emulator, shortcuts, style, userdata
+from . import APP_NAME, INFO, LOGO_PATH, ROOT, __version__, emulator, shadnet, shortcuts, style, userdata
 from .games import Game, scan
+from .shadnet_dialog import ShadNetDialog
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/shadps4-manager/"
 FOLDER_TIMEOUT = 60
@@ -37,10 +39,12 @@ class ShadSettings(SettingsStore):
 class MainWindow(QMainWindow):
     def __init__(self, home: Path | None = None, shad_home: Path | None = None, steam_dir: Path | None = None,
                  run: Path | None = None, fetch: emulator.Download = emulator.download,
-                 steam_closed=steam.with_steam_closed, steam_running=steam.steam_running):
+                 steam_closed=steam.with_steam_closed, steam_running=steam.steam_running,
+                 newer_release=emulator.newer_release, shadnet_connect: shadnet.Connect = shadnet._connect):
         """*home*: where the app installs shadPS4; *shad_home*: shadPS4's own folder; *steam_dir*: Steam's folder
         (None: looked up); *run*: the run wrapper the shortcuts start; *fetch*: the download; *steam_closed* and
-        *steam_running*: closing Steam for a change and asking whether it runs (tests never touch the real one)."""
+        *steam_running*: closing Steam for a change and asking whether it runs; *newer_release*: asks GitHub for a
+        newer shadPS4; *shadnet_connect*: opens a connection to a shadNet server (tests never touch the real ones)."""
         super().__init__()
         self.resize(980, 760)
         self.home = home or emulator.emulator_home()
@@ -50,13 +54,19 @@ class MainWindow(QMainWindow):
         self.fetch = fetch
         self.steam_closed = steam_closed
         self.steam_running = steam_running
+        self.shadnet_connect = shadnet_connect
+        self.newer: ReleaseInfo | None = None           # shadPS4's newest release, when newer than the pinned one
+        self.release_check = UpdateChecker(self)        # apart from the worker: it runs while the window opens
+        self.release_check.finished.connect(self._release_found)
         self.settings = ShadSettings(INFO, self)
         self.worker = UpdateChecker(self)            # one job at a time off the GUI thread: a download or Steam
         self.worker.finished.connect(self._job_done)
         self.games: list[Game] = []
         self.in_steam: dict[str, str] = {}
+        self.no_logo: set[str] = set()                # games in Steam whose shortcut has no logo yet
         self.version = ""
         self.config: dict = {}
+        self.users: list[userdata.User] = []
 
         header = AppHeader(LOGO_PATH, APP_NAME, __version__)
         self.pill = StatusText()
@@ -93,9 +103,14 @@ class MainWindow(QMainWindow):
         self.folder_button = QPushButton("Add folder…")
         self.folder_button.setToolTip("Add a folder with games to shadPS4's game folders")
         self.folder_button.clicked.connect(self.on_add_folder)
+        self.shadnet_state = self._state_label()
+        self.shadnet_button = QPushButton("Account…")
+        self.shadnet_button.setToolTip("Your shadNet account: create one, try it, and have shadPS4 sign in with it")
+        self.shadnet_button.clicked.connect(self.on_shadnet)
         rows = [("shadPS4", self.emulator_state, [self.install_button, self.remove_button]),
                 ("System modules", self.modules_state, [self.modules_button]),
-                ("Game folders", self.folders_state, [self.folder_button])]
+                ("Game folders", self.folders_state, [self.folder_button]),
+                ("shadNet", self.shadnet_state, [self.shadnet_button])]
         centre = Qt.AlignmentFlag.AlignVCenter
         for row, (name, state, buttons) in enumerate(rows):
             label = QLabel(name)
@@ -178,6 +193,7 @@ class MainWindow(QMainWindow):
         if geometry is not None:
             self.restoreGeometry(geometry)
         self.refresh()
+        self.release_check.start(newer_release)
 
     @staticmethod
     def _state_label() -> QLabel:
@@ -193,11 +209,14 @@ class MainWindow(QMainWindow):
         self.config = userdata.read_config(self.shad_home)
         self.modules = userdata.check_modules(userdata.modules_folder(self.shad_home, self.config))
         self.folders = userdata.game_folders(self.config)
+        self.users = userdata.read_users(self.shad_home)
         self.games = scan(self.folders)
         try:
             self.in_steam = shortcuts.in_steam(self.steam_dir) if self.steam_dir else {}
+            self.no_logo = {str(g.eboot) for g in self.games if str(g.eboot) in self.in_steam and
+                            shortcuts.logo_missing(self.steam_dir, g, self.in_steam[str(g.eboot)], self.run_path)}
         except OSError:
-            self.in_steam = {}
+            self.in_steam, self.no_logo = {}, set()
         self._show_state()
         self._fill_table()
 
@@ -215,6 +234,11 @@ class MainWindow(QMainWindow):
             self.emulator_state.setText(f"shadPS4 {pinned} is installed. "
                                         + style.link(self, emulator.RELEASE_PAGE, "Release notes"))
             self.emulator_box.set_value(pinned)
+        if self.newer is not None:
+            self.emulator_state.setText(
+                self.emulator_state.text() + f"<br>shadPS4 {escape(self.newer.version)} is out "
+                f"({escape(self.newer.published)}). A later version of this app brings it, once it has been tried "
+                "on the board. " + style.link(self, self.newer.url, "What is new"))
         self.emulator_state.setOpenExternalLinks(True)
 
         m = self.modules
@@ -238,6 +262,7 @@ class MainWindow(QMainWindow):
         else:
             self.folders_state.setText("None yet: add the folder with your games (each game in a folder of its own, "
                                        "with eboot.bin).")
+        self._show_shadnet()
         self.games_box.set_value(str(len(self.games)))
         found = {str(g.eboot) for g in self.games}
         self.steam_box.set_value(str(len(found & set(self.in_steam))))
@@ -250,6 +275,24 @@ class MainWindow(QMainWindow):
             self.pill.set_status("Modules missing", "warn", "Some games need system modules from your own PS4.")
         else:
             self.pill.set_status("Ready", "ok", "shadPS4 is installed and games were found.")
+
+    def _show_shadnet(self) -> None:
+        signing_in = [u for u in self.users if u.shadnet and u.npid] if userdata.shadnet_on(self.config) else []
+        server = escape(userdata.shadnet_server(self.config))
+        if not self.users:
+            text = "shadPS4 has not run yet: start it once (shadPS4 settings), then set up your account."
+        elif signing_in:
+            names = ", ".join(f"<b>{escape(u.npid)}</b> ({escape(u.name)})" for u in signing_in)
+            text = f"On: {names} signs in to {server} when a game starts."
+        else:
+            text = ("Off. shadPS4's online service, for online trophies, friends and online play in the games it "
+                    "supports: set up an account to use it.")
+        self.shadnet_state.setText(text)
+
+    def _release_found(self, release: ReleaseInfo | None) -> None:
+        self.newer = release
+        if release is not None:
+            self._show_state()
 
     def _fill_table(self) -> None:
         self.table.blockSignals(True)
@@ -289,10 +332,11 @@ class MainWindow(QMainWindow):
         self.install_button.setEnabled(idle and self.version != emulator.VERSION)
         self.remove_button.setEnabled(idle and installed)
         self.folder_button.setEnabled(idle and installed)
+        self.shadnet_button.setEnabled(idle)
         self.play_button.setEnabled(idle and installed and self.chosen() is not None)
         self.shad_button.setEnabled(idle and installed)
         add, remove = self.steam_plan()
-        changed = bool(remove) or any(str(g.eboot) not in self.in_steam for g in add)
+        changed = bool(remove) or any(str(g.eboot) not in self.in_steam or str(g.eboot) in self.no_logo for g in add)
         self.steam_button.setEnabled(idle and changed and self.steam_dir is not None and not steam.game_mode())
         if self.steam_dir is None:
             self.steam_button.setToolTip("Steam was never started on this system: start it once first")
@@ -372,6 +416,13 @@ class MainWindow(QMainWindow):
         run = self.run_path if self.run_path.is_file() else ROOT / shortcuts.RUN_NAME
         return [str(run), *args]
 
+    def on_shadnet(self) -> None:
+        self.refresh()
+        dialog = ShadNetDialog(self.shad_home, self.config, self.users, self, self.shadnet_connect)
+        if dialog.exec():
+            self.output.appendPlainText("shadNet settings saved in shadPS4's own files.")
+            self.refresh()
+
     def on_play(self) -> None:
         game = self.chosen()
         if game is None or not self.version:
@@ -422,6 +473,7 @@ class MainWindow(QMainWindow):
             event.ignore()
             return
         self.worker.stop()
+        self.release_check.stop()
         self.settings.set_window_state("geometry", self.saveGeometry())
         self.settings.sync()
         super().closeEvent(event)

@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: Upstream
+
+# Weekly: is BC-250 Decky Loader Manager still in step with Decky Loader (tools/check_upstream.py)? A failed run means
+# Decky moved: a newer release, a replaced asset or a changed service unit; the run's summary says which. It only
+# reads from GitHub; nothing is changed or published.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"         # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  decky-loader:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decky Loader against the pin in apps/decky-manager
+        run: python3 tools/check_upstream.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

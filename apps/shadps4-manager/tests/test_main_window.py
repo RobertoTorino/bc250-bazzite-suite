@@ -19,7 +19,8 @@ from PyQt6.QtWidgets import QMessageBox
 from conftest import make_game
 
 from bc250_core import steam
-from bc250_shadps4_manager import emulator, shortcuts, style, userdata
+from bc250_shadps4_manager import LOGO_PATH, emulator, shortcuts, style, userdata
+from bc250_shadps4_manager.games import Game
 from bc250_shadps4_manager.main_window import MainWindow
 
 
@@ -56,6 +57,7 @@ def _wait(window, qapp) -> None:
 
 def _window(folders, **kwargs) -> MainWindow:
     closed = kwargs.pop("closed", [])
+    kwargs.setdefault("newer_release", lambda: None)                         # never GitHub in a test
     return MainWindow(**folders, steam_closed=lambda change: (closed.append(1), change())[0] and False,
                       steam_running=lambda: False, **kwargs)
 
@@ -132,6 +134,21 @@ def test_game_mode_added_and_taken_out(qapp, folders, monkeypatch):
     window.close()
 
 
+def test_a_shortcut_without_its_logo_is_brought_up_to_date(qapp, folders, monkeypatch):
+    """A shortcut made before the app set a logo: Update Game Mode is on for it until the logo is there."""
+    _install(folders["home"])
+    game = Game(make_game(folders["shad_home"].parent / "games" / "three", "Three", "CUSA00003", pictures=True),
+                "Three", "CUSA00003", "01.00")
+    steam.write_shortcuts(folders["steam_dir"], shortcuts.changes([game], [], folders["run"], LOGO_PATH, {}, art=False))
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    window = _window(folders)
+    assert window.no_logo == {str(game.eboot)} and window.steam_button.isEnabled()
+    window.on_update_steam()
+    _wait(window, qapp)
+    assert window.no_logo == set() and not window.steam_button.isEnabled()
+    window.close()
+
+
 def test_a_shortcut_of_a_game_no_longer_found_is_taken_out(qapp, folders):
     _install(folders["home"])
     gone = shortcuts.Game(Path("/old/games/gone/eboot.bin"), "Gone")
@@ -192,3 +209,70 @@ def test_the_blue_look(qapp, folders):
     assert len({(b.width(), b.height()) for b in steps}) == 1                       # one size, padding included
     assert window.install_button.width() >= window.install_button.sizeHint().width()
     window.close()
+
+
+def test_a_newer_shadps4_is_mentioned(qapp, folders):
+    from bc250_core.updates import ReleaseInfo
+    _install(folders["home"])
+    release = ReleaseInfo("0.20.0", "v.0.20.0", "https://github.com/shadps4-emu/shadPS4/releases/tag/v.0.20.0",
+                          "2026-11-20")
+    window = _window(folders, newer_release=lambda: release)
+    deadline = time.monotonic() + 10
+    while window.newer is None and time.monotonic() < deadline:
+        qapp.processEvents()
+        time.sleep(0.01)
+    text = window.emulator_state.text()
+    assert "shadPS4 0.20.0 is out (2026-11-20)" in text and "releases/tag/v.0.20.0" in text
+    assert window.install_button.isEnabled() is False                              # it never installs that one
+    window.close()
+
+
+def test_shadnet_set_up_from_the_window(qapp, folders, monkeypatch):
+    from conftest import FakeShadNet, write_shad_files
+    from bc250_shadps4_manager import shadnet_dialog
+    shad_files = write_shad_files(folders["shad_home"])
+    fake = FakeShadNet()
+    window = _window(folders, shadnet_connect=fake.connect)
+    assert window.shadnet_state.text().startswith("Off.") and window.shadnet_button.isEnabled()
+    dialogs = []
+
+    def fill_in(dialog):
+        dialogs.append(dialog)
+        dialog.running = lambda: False
+        dialog.use.setChecked(True)
+        dialog.npid.setText("Player_1")
+        dialog.password.setText("secret")
+        dialog.email.setText("me@example.com")
+        dialog.on_create()
+        deadline = time.monotonic() + 10
+        while dialog.worker.running and time.monotonic() < deadline:
+            qapp.processEvents()
+            time.sleep(0.01)
+        qapp.processEvents()
+        assert dialog.result_label.text().startswith("The account Player_1 was created on srv.shadps4.net:31313")
+        dialog.on_save()
+        return dialog.result()
+    monkeypatch.setattr(shadnet_dialog.ShadNetDialog, "exec", fill_in)
+    window.on_shadnet()
+    assert fake.requests[0][1] == {1: "Player_1", 2: "secret", 4: "me@example.com"}
+    assert window.shadnet_state.text() == ("On: <b>Player_1</b> (shadPS4) signs in to srv.shadps4.net:31313 when "
+                                           "a game starts.")
+    assert userdata.shadnet_on(userdata.read_config(shad_files))
+    window.close()
+
+
+def test_shadnet_not_saved_while_shadps4_runs(qapp, shad_files):
+    from bc250_shadps4_manager.shadnet_dialog import ShadNetDialog
+    dialog = ShadNetDialog(shad_files, userdata.read_config(shad_files), userdata.read_users(shad_files),
+                           running=lambda: True)
+    assert not dialog.create_button.isEnabled() and dialog.save_button.isEnabled()   # off, no account: can save
+    dialog.use.setChecked(True)
+    assert not dialog.save_button.isEnabled()                                       # on needs an account
+    dialog.npid.setText("Player_1")
+    dialog.password.setText("secret")
+    dialog.on_save()
+    assert "close it first" in dialog.result_label.text() and not userdata.read_users(shad_files)[0].npid
+    dialog.npid.setText("x")
+    dialog.on_try()
+    assert dialog.result_label.text().startswith("A shadNet name has 3 to 16")
+    dialog.close()

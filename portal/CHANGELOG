@@ -1,3 +1,7 @@
+Changelog: 14-10-2026 12:27:25
+
+An installed app the portal has no record of (installed by hand, or under an earlier name of the app, as shadPS4 Manager was when shadps4 became shadps4-manager) shows "Reinstall needed": a red circular arrow in its icon, a red Reinstall button, and a count in the header beside the updates. Before, it showed as installed with an unknown version, and nothing said to reinstall it.
+
 Changelog: 14-10-2026 11:27:36
 
 Release 1.1.1. Pins dependency-checker-v0.1.15.

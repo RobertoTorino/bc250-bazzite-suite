@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""shadPS4's own folder (userdata.py): config.json as shadPS4 0.19.0 writes it, and the system modules."""
+"""shadPS4's own folder (userdata.py): config.json as shadPS4 0.19.0 writes it, the system modules, and the users
+with their shadNet accounts, read and written as shadPS4 writes them."""
 
 from __future__ import annotations
 
 import json
+
+import pytest
 
 from bc250_shadps4_manager import userdata
 
@@ -50,3 +53,53 @@ def test_modules(tmp_path):
         (folder / name).touch()
     assert userdata.check_modules(folder).complete
     assert not set(userdata.NEEDED) & set(userdata.OPTIONAL) and len(userdata.NEEDED) + len(userdata.OPTIONAL) == 34
+
+
+def test_the_users_and_shadnet(shad_files):
+    users = userdata.read_users(shad_files)
+    assert [(u.user_id, u.name, u.shadnet) for u in users] == [
+        (1000, "shadPS4", False), (1001, "shadPS4-2", False), (1002, "shadPS4-3", False), (1003, "shadPS4-4", False)]
+    config = userdata.read_config(shad_files)
+    assert not userdata.shadnet_on(config) and userdata.shadnet_server(config) == "srv.shadps4.net:31313"
+    assert userdata.shadnet_server({}) == "srv.shadps4.net:31313" and userdata.read_users(shad_files / "none") == []
+
+
+def test_saving_shadnet_changes_only_its_settings(shad_files):
+    config_before = json.loads((shad_files / "config.json").read_text())
+    users_before = json.loads((shad_files / "users.json").read_text())
+    userdata.save_shadnet(shad_files, 1001, "Player_1", "secret", "me@example.com", True, "192.168.1.20:31313")
+    config = json.loads((shad_files / "config.json").read_text())
+    users = json.loads((shad_files / "users.json").read_text())
+    config_before["General"].update(shad_net_enabled=True, shadnet_server="192.168.1.20:31313")
+    users_before["Users"]["user"][1].update(shadnet_npid="Player_1", shadnet_password="secret",
+                                            shadnet_email="me@example.com", shadnet_enabled=True)
+    assert config == config_before and users == users_before
+    for name in ("config.json", "users.json"):                                    # written as shadPS4 writes them
+        text = (shad_files / name).read_text()
+        assert text == json.dumps(json.loads(text), indent=2) and not text.endswith("\n")
+    assert sorted(p.name for p in shad_files.iterdir()) == ["config.json", "users.json"]   # no temporary file left
+    assert [u.npid for u in userdata.read_users(shad_files)] == ["", "Player_1", "", ""]
+    # Off for that user, and no other user has it on: shadPS4's own switch goes off too.
+    userdata.save_shadnet(shad_files, 1001, "Player_1", "secret", "me@example.com", False, "192.168.1.20:31313")
+    assert not userdata.shadnet_on(userdata.read_config(shad_files))
+
+
+def test_saving_shadnet_before_shadps4_ran_or_for_no_user(tmp_path, shad_files):
+    with pytest.raises(userdata.UserDataError, match="has not run yet"):
+        userdata.save_shadnet(tmp_path / "none", 1000, "Player_1", "x", "", True, "srv:1")
+    with pytest.raises(userdata.UserDataError, match="no user 5"):
+        userdata.save_shadnet(shad_files, 5, "Player_1", "x", "", True, "srv:1")
+    (shad_files / "users.json").write_text("{not json")
+    with pytest.raises(userdata.UserDataError, match="could not be read"):
+        userdata.save_shadnet(shad_files, 1000, "Player_1", "x", "", True, "srv:1")
+
+
+def test_whether_shadps4_runs(tmp_path):
+    for pid, name in (("1", "systemd"), ("20", "bash"), ("self", "python3")):
+        (tmp_path / pid).mkdir()
+        (tmp_path / pid / "comm").write_text(name + "\n")
+    assert not userdata.shadps4_running(tmp_path)
+    for name in ("shadps4", "Shadps4-sdl.App"):                                   # the program, or its AppImage
+        (tmp_path / "30").mkdir(exist_ok=True)
+        (tmp_path / "30" / "comm").write_text(name + "\n")
+        assert userdata.shadps4_running(tmp_path)

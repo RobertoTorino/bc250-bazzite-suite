@@ -145,6 +145,11 @@ The owner does every step of a release; Claude does none of them, and doesn't of
 (`apps/suite-releases/`: `main_window.py` on `plan.py`, and `check-release.sh` for the board checks). Claude may
 change it and its tests, but never uses it on the repository.
 
+Decky Loader is pinned in decky-manager (`loader.py`); `tools/check_upstream.py`, weekly in
+`.github/workflows/upstream.yml`, says when Decky moved past the pin (a new release, a replaced asset, a changed
+service unit). Moving the pin is code Claude may prepare (with its CHANGELOG entry); the board test and the
+decky-manager release are the owner's, and the handover says so.
+
 Claude may change the release tools and their tests, and runs `tools/installer-tests/release.sh` as a test (it
 works in a temp folder and publishes nothing). When finished work will need a release or a version bump, the
 handover says which app and why; the owner decides the number.
