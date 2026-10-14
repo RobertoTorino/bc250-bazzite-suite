@@ -26,7 +26,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path, PurePath
 
-from PyQt6.QtCore import QEvent, QSize, QTimer, Qt, QUrl, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, QEvent, QProcess, QSize, QTimer, Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPalette, QPixmap
 from PyQt6.QtWidgets import (
     QCheckBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea,
@@ -34,14 +34,14 @@ from PyQt6.QtWidgets import (
 )
 
 from bc250_core import __version__ as CORE_VERSION
-from bc250_core.platform import expand, launch_in_terminal
+from bc250_core.platform import bin_home, expand, launch_in_terminal
 from bc250_core.settings import open_settings, restore_geometry, save_geometry
 from bc250_core.theme import ACCENT, BLUE, GREY, ORANGE, RED, header_font
 from bc250_core.updates import ReleaseInfo, UpdateChecker, version_tuple
 from bc250_core.widgets import ClickableLogo, hint_label
 
 from . import desktop_icons, glyphs
-from . import APP_ICONS, APP_NAME, INFO, LOGO_PATH, __version__, find_checkout, is_suite, remember_checkout
+from . import APP_ICONS, APP_ID, APP_NAME, INFO, LOGO_PATH, __version__, find_checkout, is_suite, remember_checkout
 from .manifest import AppEntry
 from .portal_update import PortalUpdate
 from .sources import Records, SourceError, Sources, is_installed
@@ -153,8 +153,8 @@ def still_icon(pixmap: QPixmap) -> QIcon:
 
 class AppTile(QFrame):
     """One app, compact: its short name, its icon (click: open; hover: what it does; grey: not installed; red dot:
-    an update; red circular arrow: a reinstall is needed), "changes the board" under it when so, and beside it the symbol buttons: Install and Uninstall, or
-    only Reinstall for bazzite-test."""
+    an update; red circular arrow: a reinstall is needed), "changes the board" under it when so, and beside it the
+    symbol buttons: Install and Uninstall, or only Install (which reinstalls it) for bazzite-test."""
 
     install_clicked = pyqtSignal(object)
     uninstall_clicked = pyqtSignal(object)
@@ -310,9 +310,11 @@ class AppTile(QFrame):
 
         action, ink = ("Update", RED) if update else ("Reinstall", RED) if reinstall else \
             ("Reinstall", self._ink()) if installed else ("Install", self._ink())
-        draw = glyphs.reinstall if (entry.required and installed and not update) or reinstall else glyphs.install
+        # The arrow into a tray for every app, Bazzite Test too (owner, 14-10-2026); the circular arrow only when the
+        # version is unknown.
+        draw = glyphs.reinstall if reinstall else glyphs.install
         self.install_button.setIcon(draw(ink))
-        self.install_button.setToolTip(f"{action} {entry.name}" + (f" ({entry.tag})" if entry.tag else "")
+        self.install_button.setToolTip(f"{action} {entry.name}" + (f" v{entry.version}" if entry.tag else "")
                                        if not entry.withdrawn else f"App not available: {entry.withdrawn}")
         self.install_button.setEnabled(not busy and not entry.withdrawn)
         self.uninstall_button.setEnabled(installed and not busy)
@@ -322,10 +324,13 @@ class AppTile(QFrame):
 class MainWindow(QMainWindow):
     def __init__(self, entries: list[AppEntry], sources: Sources, records: Records,
                  portal_check: Callable[[], ReleaseInfo] | None = None, local_build: Path | None = None,
-                 desktop: Path | None = None, menu: Path | None = None, parent: QWidget | None = None):
+                 desktop: Path | None = None, menu: Path | None = None, parent: QWidget | None = None,
+                 installed: Path | None = None, launch: Callable[[list[str]], bool] | None = None):
         """*portal_check* returns the newest portal release (run once, off the GUI thread); None: no check.
         *local_build* is the suite checkout this portal runs from or was installed from: a banner says so.
-        *desktop* and *menu* are the Desktop folder and the app menu entries' folder (default: the user's)."""
+        *desktop* and *menu* are the Desktop folder and the app menu entries' folder (default: the user's).
+        *installed* is where the installed portal is (installed_copy()): a newer one there offers a restart; None: no
+        check. *launch* starts a program detached (default QProcess.startDetached; tests pass a fake)."""
         super().__init__(parent)
         self.entries = entries
         self.desktop = desktop or desktop_icons.desktop_dir()
@@ -338,6 +343,8 @@ class MainWindow(QMainWindow):
         self._job: tuple[AppEntry, str] | None = None
         self._withdrawal_tried: set[str] = set()        # withdrawn apps the portal tried to remove this time
         self.settings = open_settings(INFO, self)
+        self.installed = installed
+        self.launch = launch or (lambda argv: QProcess.startDetached(argv[0], argv[1:])[0])
         self.setWindowTitle(INFO.display_name)
         self.resize(900, 720)
 
@@ -368,6 +375,11 @@ class MainWindow(QMainWindow):
         self.portal_button.hide()
         header.addWidget(self.portal_button)
         self.portal_release: ReleaseInfo | None = None
+        self.restart_button = QPushButton()
+        self.restart_button.setStyleSheet(f"color:{RED}; font-weight:700;")
+        self.restart_button.clicked.connect(self.restart_portal)
+        self.restart_button.hide()
+        header.addWidget(self.restart_button)
         self.icons_box = QCheckBox("App icons on the Desktop")
         self.icons_box.setToolTip("On: every installed app gets an icon on the Desktop. Off: only the portal's icon "
                                   "is there, and you start the apps from here. The apps stay in the app menu either "
@@ -554,6 +566,7 @@ class MainWindow(QMainWindow):
             "an earlier name of the app), so their version is unknown; each has a red circular arrow in its icon, and "
             "its red button reinstalls it.")
         self.updates_label.setVisible(updates + reinstalls > 0)
+        self.check_installed()
 
     def _portal_checked(self, result: object) -> None:
         """A newer portal release brings newer pinned app versions; name them and offer its release page."""
@@ -576,7 +589,45 @@ class MainWindow(QMainWindow):
             tip = (f"Released {release.published}. A new portal version pins newer app versions; "
                    "click to open its release page.")
         self.portal_button.setToolTip(tip)
-        self.portal_button.show()
+        self.portal_button.setVisible(self.restart_button.isHidden())
+
+    def check_installed(self) -> None:
+        """A newer portal installed while this one runs (its install.sh, in a terminal): this window still runs the
+        old one, with the old pins, and starting the portal again only brings this window to the front. So offer to
+        restart into the new one; not while an install or uninstall runs."""
+        try:
+            version = (self.installed / "VERSION").read_text(encoding="utf-8").strip() if self.installed else ""
+        except OSError:
+            version = ""
+        if not version or version == __version__:
+            self.restart_button.hide()
+            return
+        self.restart_button.setText(f"\u25cf Restart: portal {version} is installed")
+        busy = self.busy()
+        self.restart_button.setEnabled(not busy)
+        self.restart_button.setToolTip(
+            f"Portal {version} was installed while this window runs portal {__version__}. Restart to use it: its "
+            "app versions, and the red dot on the apps it updates."
+            + ("\n\nAfter the install or uninstall that is running now." if busy else ""))
+        self.restart_button.show()
+        self.portal_button.hide()                       # the newer portal is here already
+
+    def restart_portal(self) -> None:
+        """Start the portal again, after this one is gone (it allows one window), and close this one."""
+        if self.busy():
+            return
+        launcher = bin_home() / APP_ID
+        if not self.launch(["sh", "-c", 'sleep 1; exec "$0"', str(launcher)]):
+            QMessageBox.warning(self, APP_NAME, f"The portal could not be started again ({launcher}). Close this "
+                                "window and start it from the app menu.")
+            return
+        self.close()
+        QCoreApplication.quit()
+
+    def changeEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        if event.type() == QEvent.Type.ActivationChange and self.isActiveWindow():
+            self.check_installed()                      # back from the terminal that installed a new portal
+        super().changeEvent(event)
 
     def _open_portal_release(self) -> None:
         if self.portal_release is not None:

@@ -14,7 +14,8 @@ from bc250_core import __version__ as CORE_VERSION, instance
 from bc250_core.app import create_app, exec_app
 from bc250_core.updates import repo_slug
 
-from . import APP_NAME, INFO, MANIFEST, __version__, find_checkout, remembered_checkout, state_dir, suite_checkout
+from . import (APP_NAME, INFO, MANIFEST, __version__, find_checkout, installed_copy, remembered_checkout, state_dir,
+               suite_checkout)
 from . import portal_update
 from .main_window import MainWindow
 from .manifest import ManifestError, load, load_checkout
@@ -66,7 +67,7 @@ def main() -> int:
         return portal_update.check(repo_slug(INFO.repo_url), INFO.tag_prefix, entries, INFO.user_agent)
 
     window = MainWindow(shown, sources, Records(state_dir() / "installed.json"), portal_check=portal_check,
-                        local_build=local_build)
+                        local_build=local_build, installed=installed_copy())
     window.show()
     server = instance.serve(INFO.app_id, window)  # noqa: F841 (kept alive while the app runs)
     return exec_app(app)

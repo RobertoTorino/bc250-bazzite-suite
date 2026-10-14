@@ -147,11 +147,23 @@ def test_states_follow_detection_and_records(window, home):
     assert card.status == "Update" and card.install_button.toolTip().startswith("Update ")
 
 
+def _same_icon(button, icon) -> bool:
+    size = mw.QSize(mw.SYMBOL_PX, mw.SYMBOL_PX)
+    return button.icon().pixmap(size).toImage() == icon.pixmap(size).toImage()
+
+
 def test_bazzite_test_has_only_reinstall(window, home):
+    """With the arrow into a tray, as every app (owner, 14-10-2026), and the version it reinstalls."""
     card = window.cards["bazzite-test"]
     (home / ".local" / "bin" / "bc250-bazzite-test").write_text("#!/bin/sh\n")
+    window.records.set("bazzite-test", card.entry.tag)
     window.refresh()
-    assert card.install_button.toolTip().startswith("Reinstall ") and card.uninstall_button.isHidden()
+    assert card.install_button.toolTip() == f"Reinstall BC-250 Bazzite Test v{card.entry.version}"
+    assert card.uninstall_button.isHidden()
+    assert _same_icon(card.install_button, mw.glyphs.install(card._ink()))
+    window.records.set("bazzite-test", "")                                      # not installed by the portal
+    window.refresh()
+    assert _same_icon(card.install_button, mw.glyphs.reinstall(mw.RED))
 
 
 def test_board_change_needs_confirmation(window, launched, monkeypatch):
@@ -592,3 +604,49 @@ def test_a_withdrawn_app_that_could_not_be_removed_stays_removable(qapp, home, s
         assert len(launched) == 1                           # tried once per start, not in a loop
     finally:
         w.close()
+
+
+def _installed(tmp_path, version: str) -> Path:
+    link = tmp_path / "opt" / "bc250-bazzite-suite"
+    link.mkdir(parents=True, exist_ok=True)
+    (link / "VERSION").write_text(version + "\n")
+    return link
+
+
+def test_restart_into_a_portal_installed_meanwhile(qapp, home, settings_dir, tmp_path, launched, monkeypatch):
+    started = []
+    link = _installed(tmp_path, mw.__version__)
+    w = mw.MainWindow(load(MANIFEST), FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"),
+                      installed=link, launch=lambda argv: (started.append(argv), True)[1])
+    assert w.restart_button.isHidden()                                      # the one installed is this one
+    w._portal_checked(ReleaseInfo("99.0.0", "portal-v99.0.0", "https://example.invalid", "2026-10-14"))
+    assert not w.portal_button.isHidden()
+    _installed(tmp_path, "99.0.0")                                           # its install.sh ran in a terminal
+    w.check_installed()
+    assert w.restart_button.text() == "\u25cf Restart: portal 99.0.0 is installed"
+    assert w.restart_button.isEnabled() and w.portal_button.isHidden()
+    w.pending = object()                                                     # an install runs: wait for it
+    w.check_installed()
+    assert not w.restart_button.isEnabled() and "running now" in w.restart_button.toolTip()
+    w.restart_portal()
+    assert started == []
+    w.pending = None
+    w.restart_portal()
+    assert started == [["sh", "-c", 'sleep 1; exec "$0"', str(home / ".local" / "bin" / "bc250-bazzite-suite")]]
+    assert not w.isVisible()
+
+
+def test_restart_that_cannot_start(qapp, home, settings_dir, tmp_path, launched, monkeypatch):
+    warned = []
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: warned.append(a[2]))
+    w = mw.MainWindow(load(MANIFEST), FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"),
+                      installed=_installed(tmp_path, "99.0.0"), launch=lambda argv: False)
+    w.show()
+    w.restart_portal()
+    assert "could not be started again" in warned[0] and w.isVisible()
+    w.close()
+
+
+def test_no_restart_from_a_checkout(window):
+    from bc250_portal import installed_copy
+    assert installed_copy() is None and window.installed is None and window.restart_button.isHidden()

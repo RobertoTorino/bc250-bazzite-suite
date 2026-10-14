@@ -9,7 +9,10 @@ The protocol, over plain TCP (no encryption: the password goes over the network 
 ServerInfo (packet type 3, a u32 protocol version, 1). A request is a 15-byte header (packet type u8 0, command u16,
 total size u32 with the header, packet number u64; little-endian), then a u32 size and a protobuf message. The reply
 (packet type 1, same command and number) starts with an error code u8 (0: none). The messages used here have only
-text fields, so they are encoded here; no protobuf library is needed."""
+text fields, so they are encoded here; no protobuf library is needed.
+
+Whether shadPS4 is signed in right now only shadPS4 knows; while it runs, its log says so (client.cpp: "Logged in
+npid='...'", "Login rejected error code N", and a line when the connection drops)."""
 
 from __future__ import annotations
 
@@ -17,7 +20,9 @@ import re
 import socket
 import struct
 from collections.abc import Callable
+from contextlib import contextmanager
 from dataclasses import dataclass
+from pathlib import Path
 
 DEFAULT_SERVER = "srv.shadps4.net:31313"        # shadPS4 0.19.0's own default (emulator_settings.h)
 PROTOCOL = 1
@@ -127,32 +132,49 @@ def _connect(address: tuple[str, int], timeout: float) -> socket.socket:
     return socket.create_connection(address, timeout=timeout)
 
 
-def request(server: Server, command: int, message: bytes, connect: Connect = _connect) -> int:
-    """Sends one request and returns the error code of its reply (0: none). Notifications the server sends in
-    between are passed over. ShadNetError when the server cannot be reached or does not speak shadNet 1."""
+def _greeting(sock: socket.socket, server: Server) -> None:
+    """The server's ServerInfo, as shadPS4 checks it before anything else."""
+    kind, _command, _number, info = _read_packet(sock)
+    if kind != SERVER_INFO:
+        raise ShadNetError(f"{server} is not a shadNet server.")
+    if len(info) >= 4 and struct.unpack_from("<I", info)[0] != PROTOCOL:
+        raise ShadNetError(f"{server} speaks another shadNet version than shadPS4 0.19.0 "
+                           f"({struct.unpack_from('<I', info)[0]}, not {PROTOCOL}).")
+
+
+@contextmanager
+def _connection(server: Server, connect: Connect):
+    """A connection that has the server's greeting; network errors as ShadNetError with the reason."""
     try:
         with connect((server.host, server.port), TIMEOUT) as sock:
             sock.settimeout(TIMEOUT)
-            kind, _command, _number, info = _read_packet(sock)
-            if kind != SERVER_INFO:
-                raise ShadNetError(f"{server} is not a shadNet server.")
-            if len(info) >= 4 and struct.unpack_from("<I", info)[0] != PROTOCOL:
-                raise ShadNetError(f"{server} speaks another shadNet version than shadPS4 0.19.0 "
-                                   f"({struct.unpack_from('<I', info)[0]}, not {PROTOCOL}).")
-            sock.sendall(packet(command, 1, message))
-            while True:
-                kind, answer, number, payload = _read_packet(sock)
-                if kind == REPLY and answer == command and number == 1:
-                    if not payload:
-                        raise ShadNetError("the server's answer was empty.")
-                    return payload[0]
-    except ShadNetError:
-        raise
+            _greeting(sock, server)
+            yield sock
     except socket.timeout as error:
         raise ShadNetError(f"{server} did not answer in {TIMEOUT} s.") from error
     except OSError as error:
         reason = getattr(error, "strerror", None) or str(error)
         raise ShadNetError(f"{server} could not be reached: {reason}.") from error
+
+
+def server_answers(server: Server, connect: Connect = _connect) -> None:
+    """Whether the server answers as shadNet 1, without signing in (shadPS4's own probe, server_probe.cpp).
+    ShadNetError with the reason when it does not."""
+    with _connection(server, connect):
+        pass
+
+
+def request(server: Server, command: int, message: bytes, connect: Connect = _connect) -> int:
+    """Sends one request and returns the error code of its reply (0: none). Notifications the server sends in
+    between are passed over. ShadNetError when the server cannot be reached or does not speak shadNet 1."""
+    with _connection(server, connect) as sock:
+        sock.sendall(packet(command, 1, message))
+        while True:
+            kind, answer, number, payload = _read_packet(sock)
+            if kind == REPLY and answer == command and number == 1:
+                if not payload:
+                    raise ShadNetError("the server's answer was empty.")
+                return payload[0]
 
 
 def explain(error: int) -> str:
@@ -175,3 +197,32 @@ def try_sign_in(server: Server, npid: str, password: str, connect: Connect = _co
     error = request(server, LOGIN, _text_fields({1: npid, 2: password}), connect)
     if error:
         raise ShadNetError(f"The sign-in failed: {explain(error)}.")
+
+
+LOGGED_IN = re.compile(r"Logged in npid='([^']*)'")
+REJECTED = re.compile(r"Login rejected error code (\d+)")
+DROPPED = ("Reader header recv failed", "connect() timed out or failed")
+LOG_TAIL = 4 << 20                      # the last 4 MB of a log: a session's sign-in is near its start
+
+
+def session(log_folder: Path) -> tuple[str, str]:
+    """What shadPS4's newest log says about its shadNet session: ("online", name), ("offline", why) or ("", "")
+    when it has not signed in or tried yet."""
+    try:
+        newest = max((p for p in log_folder.glob("*.log") if p.is_file()), key=lambda p: p.stat().st_mtime)
+        with newest.open("rb") as log:
+            log.seek(max(0, newest.stat().st_size - LOG_TAIL))
+            text = log.read().decode("utf-8", "replace")
+    except (OSError, ValueError):
+        return "", ""
+    state = ("", "")
+    for line in text.splitlines():
+        if "ShadNet" not in line:
+            continue
+        if match := LOGGED_IN.search(line):
+            state = ("online", match.group(1))
+        elif match := REJECTED.search(line):
+            state = ("offline", f"shadPS4's sign-in was refused: {explain(int(match.group(1)))}")
+        elif any(text in line for text in DROPPED):
+            state = ("offline", "shadPS4 lost the connection to the server")
+    return state

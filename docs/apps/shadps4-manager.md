@@ -77,6 +77,16 @@ once and out again, to check the name and password. **Save** keeps it all in sha
 shadNet when a game starts** ticked to use it, or unticked to stop. Close shadPS4 before you save: it writes its own
 settings back when it ends.
 
+The header shows the state of shadNet beside the app's own:
+
+- **shadNet Online**: while a game runs, shadPS4 is signed in. Without a game, the server answers, so shadPS4 can
+  sign in when one starts. The app asks the server without signing in.
+- **shadNet Offline**: the server does not answer, or shadPS4's sign-in was refused or dropped. Hold the pointer
+  over it to see why.
+- **shadNet Off**: no account is set up, or **Sign in to shadNet when a game starts** is off.
+
+While shadPS4 runs, the app reads shadPS4's log every few seconds to see whether it signed in.
+
 shadPS4 keeps the password as it is in its `users.json`, and shadNet sends it over the network unencrypted. Use a
 password you use nowhere else.
 

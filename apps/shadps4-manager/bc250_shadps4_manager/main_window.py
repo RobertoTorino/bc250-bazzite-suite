@@ -10,7 +10,7 @@ import subprocess
 from html import escape
 from pathlib import Path
 
-from PyQt6.QtCore import QProcess, Qt
+from PyQt6.QtCore import QProcess, Qt, QTimer
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import (QAbstractItemView, QFileDialog, QGridLayout, QHBoxLayout, QHeaderView, QLabel,
                              QMainWindow, QMessageBox, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout,
@@ -29,6 +29,7 @@ from .shadnet_dialog import ShadNetDialog
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/shadps4-manager/"
 FOLDER_TIMEOUT = 60
+SHADNET_WATCH_MS = 5000
 STEAM_TIP = "Add the ticked games to Steam and take out the others; Steam closes for it and starts again"
 
 
@@ -40,11 +41,13 @@ class MainWindow(QMainWindow):
     def __init__(self, home: Path | None = None, shad_home: Path | None = None, steam_dir: Path | None = None,
                  run: Path | None = None, fetch: emulator.Download = emulator.download,
                  steam_closed=steam.with_steam_closed, steam_running=steam.steam_running,
-                 newer_release=emulator.newer_release, shadnet_connect: shadnet.Connect = shadnet._connect):
+                 newer_release=emulator.newer_release, shadnet_connect: shadnet.Connect = shadnet._connect,
+                 shad_running=userdata.shadps4_running):
         """*home*: where the app installs shadPS4; *shad_home*: shadPS4's own folder; *steam_dir*: Steam's folder
         (None: looked up); *run*: the run wrapper the shortcuts start; *fetch*: the download; *steam_closed* and
         *steam_running*: closing Steam for a change and asking whether it runs; *newer_release*: asks GitHub for a
-        newer shadPS4; *shadnet_connect*: opens a connection to a shadNet server (tests never touch the real ones)."""
+        newer shadPS4; *shadnet_connect*: opens a connection to a shadNet server; *shad_running*: whether shadPS4
+        runs (tests never touch the real ones)."""
         super().__init__()
         self.resize(980, 760)
         self.home = home or emulator.emulator_home()
@@ -55,6 +58,13 @@ class MainWindow(QMainWindow):
         self.steam_closed = steam_closed
         self.steam_running = steam_running
         self.shadnet_connect = shadnet_connect
+        self.shad_running = shad_running
+        self.shadnet_check = UpdateChecker(self)        # whether the shadNet server answers, off the GUI thread
+        self.shadnet_check.finished.connect(self._server_checked)
+        self.shadnet_watch = QTimer(self)               # while shadPS4 runs: its log says whether it signed in
+        self.shadnet_watch.setInterval(SHADNET_WATCH_MS)
+        self.shadnet_watch.timeout.connect(self._watch_shadnet)
+        self._shad_was_running = False
         self.newer: ReleaseInfo | None = None           # shadPS4's newest release, when newer than the pinned one
         self.release_check = UpdateChecker(self)        # apart from the worker: it runs while the window opens
         self.release_check.finished.connect(self._release_found)
@@ -71,6 +81,8 @@ class MainWindow(QMainWindow):
         header = AppHeader(LOGO_PATH, APP_NAME, __version__)
         self.pill = StatusText()
         header.add_state(self.pill)
+        self.shadnet_pill = StatusText()
+        header.add_state(self.shadnet_pill)
         self.refresh_button = QPushButton("Refresh")
         self.refresh_button.setToolTip("Read the state again and look for games")
         self.refresh_button.clicked.connect(self.refresh)
@@ -288,6 +300,59 @@ class MainWindow(QMainWindow):
             text = ("Off. shadPS4's online service, for online trophies, friends and online play in the games it "
                     "supports: set up an account to use it.")
         self.shadnet_state.setText(text)
+        self._show_shadnet_pill()
+
+    def _signing_in(self) -> list[userdata.User]:
+        """The users shadPS4 signs in with when a game starts."""
+        return [u for u in self.users if u.shadnet and u.npid] if userdata.shadnet_on(self.config) else []
+
+    def _show_shadnet_pill(self) -> None:
+        """shadNet Online, Offline or Off. While shadPS4 runs, from its log: whether it signed in. Otherwise
+        whether the server answers (without signing in, as shadPS4's own probe), so that it can sign in."""
+        names = ", ".join(u.npid for u in self._signing_in())
+        if not names:
+            self.shadnet_watch.stop()
+            self.shadnet_pill.set_status("shadNet Off", "neutral", "shadNet is off: set it up with Account… in step 4.")
+            return
+        self.shadnet_watch.start()
+        server = userdata.shadnet_server(self.config)
+        self._shad_was_running = self.shad_running()
+        if self._shad_was_running:
+            state, detail = shadnet.session(self.shad_home / "log")
+            if state == "online":
+                self.shadnet_pill.set_status("shadNet Online", "ok", f"shadPS4 is signed in to {server} as {detail}.")
+            elif state == "offline":
+                self.shadnet_pill.set_status("shadNet Offline", "bad", f"{detail}.")
+            else:
+                self.shadnet_pill.set_status("shadNet …", "neutral",
+                                             f"shadPS4 runs; it signs in as {names} when a game starts.")
+            return
+        try:
+            target = shadnet.parse_server(server)
+        except shadnet.ShadNetError as error:
+            self.shadnet_pill.set_status("shadNet Offline", "bad", str(error))
+            return
+        connect = self.shadnet_connect
+
+        def job() -> tuple[bool, str]:
+            try:
+                shadnet.server_answers(target, connect)
+            except shadnet.ShadNetError as error:
+                return False, f"{error} shadPS4 cannot sign in now."
+            return True, f"{target} answers: shadPS4 signs in as {names} when a game starts."
+        if self.shadnet_check.start(job) and self.shadnet_pill.kind not in ("ok", "bad"):
+            self.shadnet_pill.set_status("shadNet …", "neutral", f"Asking {target}…")
+
+    def _server_checked(self, result: tuple[bool, str]) -> None:
+        if self._shad_was_running or not self._signing_in():
+            return                                      # shadPS4's own session says more, or shadNet is off now
+        ok, detail = result
+        self.shadnet_pill.set_status("shadNet Online" if ok else "shadNet Offline", "ok" if ok else "bad", detail)
+
+    def _watch_shadnet(self) -> None:
+        """While shadPS4 runs, and once when it has ended (then the server again)."""
+        if self.shad_running() or self._shad_was_running:
+            self._show_shadnet_pill()
 
     def _release_found(self, release: ReleaseInfo | None) -> None:
         self.newer = release
@@ -474,6 +539,8 @@ class MainWindow(QMainWindow):
             return
         self.worker.stop()
         self.release_check.stop()
+        self.shadnet_watch.stop()
+        self.shadnet_check.stop()
         self.settings.set_window_state("geometry", self.saveGeometry())
         self.settings.sync()
         super().closeEvent(event)

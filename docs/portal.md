@@ -20,8 +20,8 @@ tile, left to right in the order of `apps.toml` and as many to a row as the wind
   installed, the portal says so at start and removes it with the app's own uninstaller in a terminal. If that
   fails, the Uninstall button stays, to try again.
 - **The buttons beside the icon:** Install (an arrow into a tray) and Uninstall (a bin). For an installed app,
-  Install reinstalls it, or updates it when the arrow is red. Bazzite Test has only Reinstall (a circular
-  arrow): it is removed together with the portal.
+  Install reinstalls it, or updates it when the arrow is red; hover over it to see the version it installs. Bazzite
+  Test has only Install, which reinstalls it: it is removed together with the portal.
 
 **BC250 Bazzite tools** holds the apps for the board, Bazzite Test first. Like the sections below it, it folds
 away when you click its name; it is open until you close it, and the portal remembers whether it was open.
@@ -60,6 +60,11 @@ open.
   Memory Manager**, and its tooltip lists each app with its old and new version. After the portal update, the
   installed apps among them show the red dot. When the new pins cannot be read (offline, for example), the button
   says **Portal x.y.z available**.
+- **Restart: portal x.y.z is installed:** a portal window that is open while you install a newer portal keeps
+  running the old one, with its old app versions, and starting the portal again only brings that window to the
+  front. When you come back to the window, it sees the newer portal and shows this red button: click it to restart
+  into the new portal, which then shows the red dot on the apps it updates. While an app installs or uninstalls,
+  the button waits for it to end.
 - **App icons on the Desktop**, at the top: on, every installed app has an icon on the Desktop; off, only the
   portal's icon is there and you start the apps from the portal. The apps stay in the app menu either way, so KDE's
   search and Steam's **Add a Non-Steam Game** still find them. The first time the portal starts with app icons on

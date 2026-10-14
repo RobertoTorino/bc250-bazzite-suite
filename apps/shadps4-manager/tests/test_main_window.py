@@ -58,6 +58,7 @@ def _wait(window, qapp) -> None:
 def _window(folders, **kwargs) -> MainWindow:
     closed = kwargs.pop("closed", [])
     kwargs.setdefault("newer_release", lambda: None)                         # never GitHub in a test
+    kwargs.setdefault("shad_running", lambda: False)
     return MainWindow(**folders, steam_closed=lambda change: (closed.append(1), change())[0] and False,
                       steam_running=lambda: False, **kwargs)
 
@@ -276,3 +277,58 @@ def test_shadnet_not_saved_while_shadps4_runs(qapp, shad_files):
     dialog.on_try()
     assert dialog.result_label.text().startswith("A shadNet name has 3 to 16")
     dialog.close()
+
+
+def _shadnet_on(folders) -> Path:
+    from conftest import write_shad_files
+    home = write_shad_files(folders["shad_home"])
+    userdata.save_shadnet(home, 1000, "Player_1", "secret", "", True, "srv.example:31313")
+    return home
+
+
+def _pill(window, qapp, text: str) -> bool:
+    deadline = time.monotonic() + 10
+    while window.shadnet_pill.text() != text and time.monotonic() < deadline:
+        qapp.processEvents()
+        time.sleep(0.01)
+    return window.shadnet_pill.text() == text
+
+
+def test_shadnet_pill_off_online_offline(qapp, folders):
+    from conftest import FakeShadNet
+    window = _window(folders)
+    assert window.shadnet_pill.text() == "shadNet Off" and window.shadnet_pill.kind == "neutral"
+    window.close()
+    _shadnet_on(folders)
+    fake = FakeShadNet()
+    window = _window(folders, shadnet_connect=fake.connect)
+    assert _pill(window, qapp, "shadNet Online") and window.shadnet_pill.kind == "ok"
+    assert "signs in as Player_1" in window.shadnet_pill.toolTip() and fake.requests == []   # no sign-in
+    window.close()
+
+    def refused(address, timeout):
+        raise ConnectionRefusedError(111, "Connection refused")
+    window = _window(folders, shadnet_connect=refused)
+    assert _pill(window, qapp, "shadNet Offline") and window.shadnet_pill.kind == "bad"
+    assert "could not be reached: Connection refused" in window.shadnet_pill.toolTip()
+    window.close()
+
+
+def test_shadnet_pill_from_shadps4_while_it_runs(qapp, folders):
+    home = _shadnet_on(folders)
+    (home / "log").mkdir()
+    log = home / "log" / "CUSA11624.log"
+    log.write_text("[ShadNet] <Info> (shadPS4:ShadNet) client.cpp:703 HandleLoginReply: Logged in npid='Player_1'\n")
+    running = [True]
+
+    def nowhere(address, timeout):
+        raise AssertionError("no server check while shadPS4 runs")
+    window = _window(folders, shad_running=lambda: running[0], shadnet_connect=nowhere)
+    assert window.shadnet_pill.text() == "shadNet Online" and "signed in to srv.example:31313 as Player_1" in \
+        window.shadnet_pill.toolTip()
+    assert window.shadnet_watch.isActive()
+    log.write_text("[ShadNet] <Error> (shadPS4:ShadNet) client.cpp:740 HandleLoginReply: Login rejected error code 8\n")
+    window._watch_shadnet()
+    assert window.shadnet_pill.text() == "shadNet Offline"
+    assert window.shadnet_pill.toolTip() == "shadPS4's sign-in was refused: the password is wrong."
+    window.close()

@@ -1,3 +1,7 @@
+Changelog: 14-10-2026 14:48:41
+
+A portal window that stays open while a newer portal is installed (its install.sh in a terminal) kept running the old portal with its old pins, so the apps the new one updates showed no red dot until the portal was closed and started again (owner's board, 14-10-2026, portal 1.1.2 with shadps4-manager-v0.1.1). The window now looks at the installed portal (/opt/bc250-bazzite-suite/VERSION, installed_copy(); not from a checkout) on every refresh and whenever it becomes the active window again, and when that is another version shows a red button "Restart: portal x.y.z is installed" in place of the newer-release button; it starts the portal again a second after this one has gone (it allows one window) and closes this one, and waits while an install or uninstall runs. Bazzite Test's button beside its icon is the arrow into a tray, as every app's (owner, 14-10-2026), not the circular arrow, which now marks only an app that needs a reinstall (its version unknown). The button's tooltip names the version it installs ("Reinstall BC-250 Bazzite Test v0.1.8") instead of the tag. The manual says both. Tests: Bazzite Test's arrow and tooltip, the restart (same version, newer, while busy, the command, a start that fails), none from a checkout.
+
 Changelog: 14-10-2026 14:31:08
 
 Release 1.1.2. Pins shadps4-manager-v0.1.1.

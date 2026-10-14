@@ -65,3 +65,35 @@ def test_server_address_and_name():
             shadnet.parse_server(wrong)
     assert shadnet.check_npid("Player_1") == "" and shadnet.check_npid("a-b") == ""
     assert shadnet.check_npid("ab") and shadnet.check_npid("seventeen_letters") and shadnet.check_npid("a b c")
+
+
+def test_the_server_answers_without_a_sign_in():
+    fake = FakeShadNet()
+    shadnet.server_answers(SERVER, connect=fake.connect)
+    assert fake.addresses == [("srv.example", 31313)] and fake.requests == []      # nothing sent
+    with pytest.raises(ShadNetError, match="another shadNet version"):
+        shadnet.server_answers(SERVER, connect=FakeShadNet(version=2).connect)
+
+
+# Lines of shadPS4 0.19.0's log (client.cpp), as its logger writes them.
+LOGGED_IN = ("[ShadNet] <Info> (shadPS4:ShadNet) client.cpp:703 HandleLoginReply: Logged in npid='Player_1' userId=7 "
+             "friends=0")
+REJECTED = "[ShadNet] <Error> (shadPS4:ShadNet) client.cpp:740 HandleLoginReply: Login rejected error code 8"
+DROPPED = "[ShadNet] <Warning> (ShadNet:Reader) client.cpp:226 ReaderThread: Reader header recv failed, disconnecting"
+OTHER = "[Lib.Pad] <Info> (Game:Main) pad.cpp:346 scePadOpen: called user_id = 1000"
+
+
+def test_shadps4s_session_from_its_newest_log(tmp_path):
+    import os
+    assert shadnet.session(tmp_path / "none") == ("", "")
+    old, new = tmp_path / "shadps4.log", tmp_path / "CUSA11624.log"
+    old.write_text(LOGGED_IN + "\n")
+    new.write_text(OTHER + "\n")
+    os.utime(old, (1, 1))
+    assert shadnet.session(tmp_path) == ("", "")                                  # the newest has no sign-in yet
+    new.write_text("\n".join([OTHER, LOGGED_IN, OTHER]))
+    assert shadnet.session(tmp_path) == ("online", "Player_1")
+    new.write_text("\n".join([LOGGED_IN, DROPPED]))
+    assert shadnet.session(tmp_path) == ("offline", "shadPS4 lost the connection to the server")
+    new.write_text(REJECTED)
+    assert shadnet.session(tmp_path) == ("offline", "shadPS4's sign-in was refused: the password is wrong")

@@ -1,3 +1,11 @@
+Changelog: 14-10-2026 15:12:03
+
+Release 0.1.2.
+
+Changelog: 14-10-2026 14:55:41
+
+The header shows shadNet's state beside the app's own (owner, 14-10-2026): shadNet Online, Offline or Off. While shadPS4 runs it comes from shadPS4's newest log, read every 5 s (shadnet.session: "Logged in npid=...", "Login rejected error code N", a dropped connection); otherwise from whether the server answers, without signing in (shadnet.server_answers: the server's greeting, as shadPS4's own probe), off the GUI thread, at start and on every refresh; Off when no user signs in. The tooltip says why. shadnet.py's connection and its errors are one helper now (_connection), shared by the requests and the check. The manual says what the three states mean. Tests: the check without a sign-in, the session from the newest log (signed in, refused, dropped, nothing yet), and the pill in the window (Off, Online, Offline, and from shadPS4's log while it runs).
+
 Changelog: 14-10-2026 14:23:32
 
 Release 0.1.1.

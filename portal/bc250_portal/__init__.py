@@ -20,6 +20,13 @@ INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH
                settings_app="bc250-bazzite-suite-portal", languages={"en": "English"})
 
 
+def installed_copy() -> Path | None:
+    """The link install.sh points at the installed portal (/opt/bc250-bazzite-suite), when this portal runs from an
+    installed copy (/opt/bc250-bazzite-suite-v<version>); None from a checkout. A portal installed while this one
+    runs shows up there."""
+    return ROOT.parent / APP_ID if ROOT.name.startswith(f"{APP_ID}-v") else None
+
+
 def state_dir() -> Path:
     """Per-user portal state: which tag of each app it installed, and the extracted releases it installed from
     (kept, so the matching uninstaller is at hand)."""
