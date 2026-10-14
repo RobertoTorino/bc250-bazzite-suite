@@ -1,3 +1,7 @@
+Changelog: 14-10-2026 11:12:20
+
+The catalogue lists BC-250 Decky Loader Manager (decky-manager): its launcher, PyQt6, and the tools it runs: pkexec and systemctl (required) and journalctl (optional).
+
 Changelog: 14-10-2026 10:56:03
 
 Release 0.1.14.

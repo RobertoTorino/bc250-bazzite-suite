@@ -25,8 +25,9 @@ away when you click its name; it is open until you close it, and the portal reme
 
 **Gaming**, below the apps, holds the apps for playing: [BC-250 HelixSR Manager](apps/helixsr.md),
 [BC-250 ACE Queues](apps/ace-queues.md), [BC-250 Mesh Shaders](apps/mesh-shaders.md),
-[BC250 Console Link](apps/console-link.md) and [BC-250 shadPS4 Manager](apps/shadps4-manager.md). It is open until
-you close it, and the portal remembers whether it was open.
+[BC250 Console Link](apps/console-link.md), [BC-250 shadPS4 Manager](apps/shadps4-manager.md) and
+[BC-250 Decky Loader Manager](apps/decky-manager.md). It is open until you close it, and the portal remembers whether
+it was open.
 
 **Development only**, below that, opens a separate section with tools for working on the suite:
 [Simple Demo Tool](other-tools/simple-demo-tool.md), [Dependency Checker](apps/dependency-checker.md),

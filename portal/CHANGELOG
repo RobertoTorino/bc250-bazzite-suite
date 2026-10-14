@@ -1,3 +1,11 @@
+Changelog: 14-10-2026 11:15:39
+
+Release 1.1.0. Pins ace-queues-v0.1.9, dependency-checker-v0.1.14, decky-manager-v0.1.0.
+
+Changelog: 14-10-2026 11:12:20
+
+BC-250 Decky Loader Manager is listed under "Gaming" (key decky-manager, not marked as changing the board): the pin is decky-manager-v0.1.0, its first release, with no sha256 yet; its tile icon is images/apps/decky-manager.png, a placeholder.
+
 Changelog: 14-10-2026 10:45:26
 
 BC-250 shadPS4 Manager is listed under "Gaming" instead of "Development only", and its key is shadps4-manager (its folder's new name): the pin is shadps4-manager-v0.1.0, the next release, with no sha256 yet; its tile icon is images/apps/shadps4-manager.png. A board that installed it under the old key shows it as installed, with no version known, until it is installed again from the portal.

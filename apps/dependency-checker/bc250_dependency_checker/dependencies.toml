@@ -84,6 +84,10 @@ launchers = ["~/.local/bin/bc250-console-link"]
 name = "BC-250 shadPS4 Manager"
 launchers = ["~/.local/bin/bc250-shadps4-manager"]
 
+[app.decky-manager]
+name = "BC-250 Decky Loader Manager"
+launchers = ["~/.local/bin/bc250-decky-manager"]
+
 [app.demo-tool]
 name = "Simple Demo Tool"
 launchers = ["~/.local/bin/simple-demo-tool"]
@@ -136,6 +140,12 @@ usage = "Password prompt for installing and removing the patched driver."
 owner = "mesh-shaders"
 need = "required"
 usage = "Password prompt for installing and removing the DirectMesh driver."
+
+[[tool.source]]
+owner = "decky-manager"
+need = "required"
+usage = "Password prompt for installing, removing and restarting Decky Loader's system service, and for the /home/deck link."
+anchor = "using-it"
 
 [[tool]]
 name = "umr"
@@ -549,6 +559,12 @@ need = "required"
 usage = "Install, remove and inspect the persistent core-unlock service."
 
 [[tool.source]]
+owner = "decky-manager"
+need = "required"
+usage = "Install, start, restart and inspect Decky Loader's service, plugin_loader."
+anchor = "using-it"
+
+[[tool.source]]
 owner = "ace-queues"
 need = "required"
 usage = "Manage the driver guard service."
@@ -572,6 +588,12 @@ usage = "Read and follow system and service logs."
 owner = "cores-bisect"
 need = "required"
 usage = "Check machine-check and kernel errors during testing."
+
+[[tool.source]]
+owner = "decky-manager"
+need = "optional"
+usage = "Log shows Decky Loader's lines from the system journal."
+anchor = "using-it"
 
 [[tool.source]]
 owner = "cu-bisect"
@@ -836,6 +858,10 @@ specifier = ">=6.11,<7"
 
 [[dependency.source]]
 owner = "shadps4-manager"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
+owner = "decky-manager"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]

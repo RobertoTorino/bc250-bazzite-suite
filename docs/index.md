@@ -50,6 +50,7 @@ installed app.
 | ![](assets/apps/mesh-shaders.png){ .app-icon } [BC-250 Mesh Shaders](apps/mesh-shaders.md) | Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use. **Changes the board.** |
 | ![](assets/apps/console-link.png){ .app-icon } [BC250 Console Link](apps/console-link.md) | Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session. |
 | ![](assets/apps/shadps4-manager.png){ .app-icon } [BC-250 shadPS4 Manager](apps/shadps4-manager.md) | PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found and added to Game Mode. |
+| ![](assets/apps/decky-manager.png){ .app-icon } [BC-250 Decky Loader Manager](apps/decky-manager.md) | Plugins in Game Mode with Decky Loader: a tested Decky release as a system service, its state and its plugins. |
 
 **Development only**: tools for working on the suite, in their own section of the [portal](portal.md). You do not
 need them to use the board.

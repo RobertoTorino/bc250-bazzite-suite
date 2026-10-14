@@ -74,6 +74,7 @@ nav:
       - Dependency Checker: apps/dependency-checker.md
       - BC250 Console Link: apps/console-link.md
       - BC-250 shadPS4 Manager: apps/shadps4-manager.md
+      - BC-250 Decky Loader Manager: apps/decky-manager.md
   - Development:
       - development/index.md
       - Architecture and consistency: development/architecture.md

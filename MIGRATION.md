@@ -304,6 +304,26 @@ Bazzite's).
   nothing to do with the BC-250.
 - **Console registration and Game Mode shortcuts (already built).** Console Link registers consoles, streams and
   adds Game Mode shortcuts; gaps go into Console Link.
+- **Decky Loader (built 14-10-2026 as decky-manager, BC-250 Decky Loader Manager).** Owner's request: "port"
+  Decky Loader to the portal's Gaming section. Decky's interface lives inside Steam's Game Mode, so the app is a
+  manager like shadPS4 Manager. Owner's decisions (14-10-2026): a pinned release with its SHA-256 (v3.2.10,
+  PluginLoader, `c2cf316a…8258`, from 04-10-2026), with a check that names a newer release; besides install, update
+  and remove: the service state with Restart and its journal, the plugins list (read-only, from
+  `~/homebrew/plugins`, disabled ones from `settings/loader.json`), and the /home/deck link as Bazzite's
+  `ujust setup-decky` makes it; `changes_board = false`. Facts from Decky's installer and its source at v3.2.10:
+  the layout (`~/homebrew/services/PluginLoader`, `.loader.version` holding the tag, the release unit
+  `/etc/systemd/system/plugin_loader.service` running as root with UNPRIVILEGED_PATH and PRIVILEGED_PATH,
+  `chcon -t bin_t` under SELinux, Steam's `.cef-enable-remote-debugging`), and its updater, which runs as root and
+  rewrites the binary, the version file and the unit. The app keeps that layout, so `ujust setup-decky` and Decky's
+  updater keep working; one change: `services/` is root-owned (Decky's installer leaves it to the user, so a process
+  running as the user could swap what root starts). The root steps are `loader.py` through pkexec (as HDMI-CEC's
+  boot part); `install.sh --uninstall` leaves Decky (it never uses sudo) and names `ujust setup-decky uninstall`.
+  The icon is a placeholder. Open on the board: Install from Desktop Mode (the password dialog, SELinux: does the
+  service start from the root-owned folder in the home), Decky in the Quick Access menu after Steam restarts, a
+  plugin from Decky's store (then the list), Decky's own update with `services/` root-owned, a `/home/deck` plugin
+  with Link, Remove with and without the plugins, and `ujust setup-decky status` before and after. Release (owner):
+  `decky-manager-v0.1.0` and a portal bump; until then `apps.toml` pins it without sha256 and check_manifest asks
+  for the portal bump.
 
 ## Details for later steps
 
