@@ -30,8 +30,8 @@
 [apps.bazzite-test]
 name = "BC-250 Bazzite Test"
 summary = "Read-only diagnostics, stress test and benchmarks. Always installed."
-tag = "bazzite-test-v0.1.8"
-sha256 = "3b64f43fe7d7d346fd8b6c7ff3460c7b3d64cb3b0eee5710b4288513dc807a17"
+tag = "bazzite-test-v0.1.9"
+sha256 = "63a05fe61b65d3f9b057c460960c66b5bee44e95ba95829813ca12a64bbf4451"
 required = true
 changes_board = false
 install = ["bash install.sh"]
@@ -216,8 +216,8 @@ launch = [["Open", "~/.local/bin/simple-demo-tool"]]
 [apps.dependency-checker]
 name = "Dependency Checker"
 summary = "The suite's Python packages and external tools, which apps use them, and whether newer ones exist."
-tag = "dependency-checker-v0.1.15"
-sha256 = "2382b9adda6b5686d675c7bb392f7c8017f008fe5a61a7cc867bbd0385467450"
+tag = "dependency-checker-v0.1.16"
+sha256 = "fad8ead2214b89053c50aa8fef4301543a6f970205fa70d83d5d64258c4b2222"
 required = false
 changes_board = false
 development = true
@@ -243,8 +243,8 @@ launch = [["Open", "~/.local/bin/bc250-console-link"]]
 [apps.shadps4-manager]
 name = "BC-250 shadPS4 Manager"
 summary = "PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found and added to Game Mode."
-tag = "shadps4-manager-v0.1.1"
-sha256 = "4a081db2b919eed29ae7c7e643e8bce868c0ec06d6886366a9870b76807c5f75"
+tag = "shadps4-manager-v0.1.2"
+sha256 = "f20b3f9e7d4c0796375f98ea46459f43bf9c4773d7da839f3ce6215a8e656089"
 required = false
 changes_board = false
 section = "gaming"
