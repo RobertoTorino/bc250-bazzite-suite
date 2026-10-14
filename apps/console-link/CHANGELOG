@@ -1,6 +1,14 @@
+Changelog: 14-10-2026 09:30:47
+
+Release 1.0.5.
+
 Changelog: 14-10-2026 00:37:33
 
 Release 1.0.4.
+
+Changelog: 14-10-2026 00:37:07
+
+The Steam code that is not about consoles moved to core (bc250_core.steam, owner's decision 14-10-2026, so BC-250 shadPS4 Manager uses the same): the shortcuts.vdf format, the appid, finding Steam, closing it for a change. steam_shortcuts.py keeps the console's shortcut and its artwork, steam_settings.py the PS button setting; both still name the moved functions, so nothing else changed. Unchanged behaviour: all 371 tests pass as before, and the old and the new code write byte-identical shortcuts.vdf files for the same console, added and removed.
 
 Changelog: 14-10-2026 00:16:26
 

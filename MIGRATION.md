@@ -267,6 +267,22 @@ Bazzite's).
   no game; config changes as single keys in the emulator's own file, the rest kept (with a backup and undo, like
   the governor's profiles). Not taken from Nexus: window and monitor handling (KWin and gamescope do it), play
   time (Steam counts it), the controller tester (Console Link's is further), the Windows audio and process tools.
+  **Built (14-10-2026) as shadps4, BC-250 shadPS4 Manager** (owner's decisions 14-10-2026: the pinned GitHub
+  AppImage, not Flathub; the name; Steam's shortcut code moved into core as `bc250_core.steam`, relicensed by the
+  owner from Console Link's AGPL-3.0-or-later to GPL-3.0-or-later; `development = true` first, as Console Link was).
+  shadPS4 0.19.0 pinned (`shadps4-linux-sdl-0.19.0.zip`, SHA-256 `a6e3b83f…a0cf9`, from 02-10-2026); facts from its
+  source at that tag: settings in `~/.local/share/shadPS4/config.json` (JSON since the TOML era; `General.install_dirs`,
+  `General.sys_modules_dir`), `-f true -g <path>` still valid, `-b` opens its own Big Picture window (settings and
+  game list; the Qt launcher is a separate project with dated pre-releases only), `--add-game-folder`, updates in
+  `<game>-UPDATE` or `-patch` beside the game, 34 system modules it loads when present (24 without a replacement of
+  its own), a folder named `user` in the current folder taken as its portable folder (the run wrapper starts it
+  beside the AppImage). Not in iteration 1: the BC-250 presets in `config.json` (values to find on the board first,
+  then written as single keys with a backup and undo); a check for newer shadPS4 releases (its tags are `v.0.19.0`).
+  The owner's icons are in (14-10-2026). Open on the board: Install, a game from the desktop (Play) and
+  from Game Mode (the shortcut, full screen, Exit game), the artwork in Steam, whether Steam's environment for a
+  non-Steam game (its library path, its overlay) disturbs the AppImage, as it did Console Link's Qt; then the presets.
+  Release (owner): portal-v1.0.5 pins `shadps4-v0.1.0`, which has no tag yet, so CI's "Portal manifest" check
+  fails until it is released (or the pin waits for it).
 - **Save backup from a PS4 (small, fits SFTP Tools).** A scheduled pull of save files from the user's own console
   over FTP into a folder on the board. Better as an FTP source and a timer in SFTP Tools than as a new app. Not
   taken: receiving, checking and sorting game dumps (PKG files), which works with decrypted game images, legally

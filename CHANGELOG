@@ -1,3 +1,7 @@
+Changelog: 14-10-2026 00:50:42
+
+New app shadps4 (BC-250 shadPS4 Manager), under Development only in the portal: PS4 games with the shadPS4 emulator (see its CHANGELOG). CI runs its tests and its installer test (tools/installer-tests/shadps4.sh) and shellchecks install.sh and bc250-shadps4-run at warning level; the manual has its chapter (docs/apps/shadps4.md), the README, the manual's index and the portal chapter list it; CLAUDE.md lists it with its checks. Core has a steam module, moved from BC250 Console Link. MIGRATION.md: what the app takes from the owner's Windows launcher Nexus, and its state.
+
 Changelog: 14-10-2026 00:21:55
 
 MIGRATION.md: candidates for new apps, investigated from the owner's list: a PS4 emulator manager first, a save backup in SFTP Tools, a streaming resolution switch later; a controller Bluetooth helper and an exploit host not taken.

@@ -9,7 +9,7 @@ steam_env.settle()                      # before Qt loads: started by Steam, the
 
 APP_NAME = "BC250 Console Link"
 APP_ID = "bc250-console-link"
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 
 from pathlib import Path
 

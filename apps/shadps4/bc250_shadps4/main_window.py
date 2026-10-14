@@ -26,8 +26,8 @@ from . import APP_NAME, INFO, LOGO_PATH, ROOT, __version__, emulator, shortcuts,
 from .games import Game, scan
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/shadps4/"
-GREEN, AMBER, GREY = "#2e7d32", "#b26a00", "#757575"
 FOLDER_TIMEOUT = 60
+STEAM_TIP = "Add the ticked games to Steam and take out the others; Steam closes for it and starts again"
 
 
 class ShadSettings(SettingsStore):
@@ -36,9 +36,11 @@ class ShadSettings(SettingsStore):
 
 class MainWindow(QMainWindow):
     def __init__(self, home: Path | None = None, shad_home: Path | None = None, steam_dir: Path | None = None,
-                 run: Path | None = None, fetch: emulator.Download = emulator.download):
+                 run: Path | None = None, fetch: emulator.Download = emulator.download,
+                 steam_closed=steam.with_steam_closed, steam_running=steam.steam_running):
         """*home*: where the app installs shadPS4; *shad_home*: shadPS4's own folder; *steam_dir*: Steam's folder
-        (None: looked up); *run*: the run wrapper the shortcuts start; *fetch*: the download, for tests."""
+        (None: looked up); *run*: the run wrapper the shortcuts start; *fetch*: the download; *steam_closed* and
+        *steam_running*: closing Steam for a change and asking whether it runs (tests never touch the real one)."""
         super().__init__()
         self.resize(980, 760)
         self.home = home or emulator.emulator_home()
@@ -46,6 +48,8 @@ class MainWindow(QMainWindow):
         self.steam_dir = steam_dir if steam_dir is not None else steam.find_steam()
         self.run_path = run or bin_home() / shortcuts.RUN_NAME
         self.fetch = fetch
+        self.steam_closed = steam_closed
+        self.steam_running = steam_running
         self.settings = ShadSettings(INFO, self)
         self.worker = UpdateChecker(self)            # one job at a time off the GUI thread: a download or Steam
         self.worker.finished.connect(self._job_done)
@@ -132,8 +136,7 @@ class MainWindow(QMainWindow):
         self.shad_button = QPushButton("shadPS4 settings")
         self.shad_button.setToolTip("Open shadPS4's own window (Big Picture): its settings and game list")
         self.shad_button.clicked.connect(self.on_open_shadps4)
-        self.steam_button = accent_button("Update Game Mode", "Add the ticked games to Steam and take out the "
-                                                              "others; Steam closes for it and starts again")
+        self.steam_button = accent_button("Update Game Mode", STEAM_TIP)
         self.steam_button.clicked.connect(self.on_update_steam)
         buttons = QHBoxLayout()
         buttons.addWidget(self.play_button)
@@ -288,6 +291,8 @@ class MainWindow(QMainWindow):
             self.steam_button.setToolTip("Steam was never started on this system: start it once first")
         elif steam.game_mode():
             self.steam_button.setToolTip("In Game Mode Steam is the session itself: change it in Desktop Mode")
+        else:
+            self.steam_button.setToolTip(STEAM_TIP)
 
     # --- Actions ----------------------------------------------------------------------------------------------
 
@@ -387,16 +392,16 @@ class MainWindow(QMainWindow):
             self.running.setText("Install shadPS4 first: the games in Game Mode start it.")
             return
         text = f"{len(add)} game(s) in Game Mode" + (f", {len(remove)} taken out." if remove else ".")
-        if steam.steam_running():
+        if self.steam_running():
             text += "\n\nSteam closes for it and starts again in the background."
         if not self._ask("Game Mode", text):
             return
         changes = shortcuts.changes(add, remove, self.run_path, LOGO_PATH, self.in_steam)
-        folder = self.steam_dir
+        folder, closed = self.steam_dir, self.steam_closed
 
         def job() -> tuple[bool, str]:
             try:
-                restarted = steam.with_steam_closed(lambda: steam.write_shortcuts(folder, changes))
+                restarted = closed(lambda: steam.write_shortcuts(folder, changes))
             except (steam.SteamError, steam.ShortcutError, OSError) as error:
                 return False, f"Steam was not changed: {error}"
             again = " Steam was closed for it and starts again in the background." if restarted else ""

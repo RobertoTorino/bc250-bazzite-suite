@@ -1,6 +1,14 @@
+Changelog: 14-10-2026 01:56:03
+
+The shadPS4 Manager's tile has the owner's icon (portal/images/apps/shadps4.png, its 128 px icon).
+
 Changelog: 14-10-2026 00:45:29
 
 Release 1.0.5. Pins bazzite-test-v0.1.8, system-overlay-v0.1.7, bios-reader-v0.1.7, ace-queues-v0.1.8, mesh-shaders-v0.1.2, memory-manager-v0.1.8, hdmi-cec-v0.1.8, sftp-tools-v0.1.2, shadps4-v0.1.0, dependency-checker-v0.1.12, console-link-v1.0.4.
+
+Changelog: 14-10-2026 00:45:24
+
+apps.toml lists BC-250 shadPS4 Manager (shadps4) under Development only: PS4 games with the shadPS4 emulator. Its icon is portal/images/apps/shadps4.png (a placeholder).
 
 Changelog: 13-10-2026 23:39:45
 

@@ -1,0 +1,91 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""The Steam shortcuts for the games (shortcuts.py) on Steam folders made in a temp folder: the launch line, which
+shortcuts are the app's, unique names, adding and removing beside other shortcuts, and the artwork."""
+
+from __future__ import annotations
+
+import shlex
+from pathlib import Path
+
+from conftest import make_game
+
+from bc250_core import steam
+from bc250_shadps4 import LOGO_PATH, shortcuts
+from bc250_shadps4.games import Game, read_game
+
+RUN = Path("/home/u/.local/bin/bc250-shadps4-run")
+OTHER = {"appid": -1234, "AppName": "RetroArch", "Exe": '"/usr/bin/retroarch"', "LaunchOptions": "-g x"}
+
+
+def _steam(tmp_path: Path) -> Path:
+    config = tmp_path / "Steam" / "userdata" / "1000" / "config"
+    config.mkdir(parents=True)
+    (config / "shortcuts.vdf").write_bytes(steam.write_vdf({"shortcuts": {"0": OTHER}}))
+    return tmp_path / "Steam"
+
+
+def test_the_launch_line_and_whose_shortcut_it_is():
+    game = Game(Path("/games/My Game/eboot.bin"), "My Game")
+    options = shortcuts.launch_options(game)
+    assert options == '-f true -g "/games/My Game/eboot.bin"'
+    assert shlex.split(options) == ["-f", "true", "-g", "/games/My Game/eboot.bin"]
+    odd = Game(Path('/games/A "B" $C/eboot.bin'), "Odd")
+    assert shlex.split(shortcuts.launch_options(odd))[-1] == str(odd.eboot)       # single quotes then
+    item = shortcuts.entry(game, "My Game", RUN, LOGO_PATH)
+    assert item["Exe"] == f'"{RUN}"' and item["StartDir"] == f'"{RUN.parent}/"' and item["icon"] == str(LOGO_PATH)
+    assert item["tags"] == {"0": "PS4", "1": "BC-250 shadPS4 Manager"}
+    assert shortcuts.ours(item) and shortcuts.for_game(game)(item)
+    assert not shortcuts.for_game(Game(Path("/games/Other/eboot.bin"), "Other"))(item)
+    assert not shortcuts.ours(OTHER) and not shortcuts.ours({**item, "LaunchOptions": "-b"})
+    assert not shortcuts.ours({**item, "LaunchOptions": '-g "unclosed'})
+
+
+def test_names_are_unique():
+    a = Game(Path("/1/eboot.bin"), "Game", "CUSA00001")
+    b = Game(Path("/2/eboot.bin"), "Game", "CUSA00002")
+    c = Game(Path("/3/eboot.bin"), "Other", "CUSA00003")
+    assert shortcuts.names([a, b, c]) == {a.eboot: "Game (CUSA00001)", b.eboot: "Game (CUSA00002)", c.eboot: "Other"}
+
+
+def test_add_then_take_out(tmp_path, qapp):
+    folder = _steam(tmp_path)
+    first = read_game(make_game(tmp_path / "games" / "one", "One", "CUSA00001", pictures=True))
+    second = read_game(make_game(tmp_path / "games" / "two", "Two", "CUSA00002"))
+    numbers = steam.write_shortcuts(folder, shortcuts.changes([first, second], [], RUN, LOGO_PATH, {}))
+    assert shortcuts.in_steam(folder) == {str(first.eboot): "One", str(second.eboot): "Two"}
+    config = steam.user_folders(folder)[0]
+    assert sorted(p.name for p in (config / "grid").iterdir()) == sorted(
+        f"{n}{suffix}.png" for n in numbers for suffix in ("p", "", "_hero"))
+    item = steam.shortcuts(folder)[1]
+    assert item["icon"] == str(first.picture("icon0.png"))                      # the game's own icon
+    existing = shortcuts.in_steam(folder)
+    steam.write_shortcuts(folder, shortcuts.changes([], [first, second], RUN, LOGO_PATH, existing))
+    assert shortcuts.in_steam(folder) == {} and steam.shortcuts(folder) == [OTHER]
+    assert not list((config / "grid").iterdir())                                 # their artwork went too
+
+
+def test_a_shortcut_taken_out_under_the_name_it_has(tmp_path):
+    folder = _steam(tmp_path)
+    a = Game(Path("/1/eboot.bin"), "Game", "CUSA00001")
+    b = Game(Path("/2/eboot.bin"), "Game", "CUSA00002")
+    steam.write_shortcuts(folder, shortcuts.changes([a, b], [], RUN, LOGO_PATH, {}, art=False))
+    grid = steam.user_folders(folder)[0] / "grid"
+    grid.mkdir()
+    named = steam.appid(f'"{RUN}"', "Game (CUSA00001)")
+    (grid / f"{named}p.png").write_bytes(b"P")
+    steam.write_shortcuts(folder, shortcuts.changes([], [a], RUN, LOGO_PATH, shortcuts.in_steam(folder)))
+    assert shortcuts.in_steam(folder) == {"/2/eboot.bin": "Game (CUSA00002)"} and not list(grid.iterdir())
+
+
+def test_artwork_sizes_with_and_without_the_games_pictures(tmp_path, qapp):
+    from PyQt6.QtGui import QImage
+    with_pictures = read_game(make_game(tmp_path / "a", "A", pictures=True))
+    without = read_game(make_game(tmp_path / "b", "B"))
+    for game in (with_pictures, without):
+        art = shortcuts.draw_art(game, LOGO_PATH)
+        assert set(art) == {"p", "", "_hero"}
+        for suffix, data in art.items():
+            image = QImage.fromData(data, "PNG")
+            assert (image.width(), image.height()) == steam.ART[suffix], suffix
+    hero = QImage.fromData(shortcuts.draw_art(with_pictures, LOGO_PATH)["_hero"], "PNG")
+    assert hero.pixelColor(10, 10).name() == "#00ff00"                           # pic1.png fills the banner

@@ -28,7 +28,8 @@ away when you click its name; it is open until you close it, and the portal reme
 until you close it, and the portal remembers whether it was open.
 
 **Development only**, below that, opens a separate section with tools for working on the suite:
-[Simple Demo Tool](other-tools/simple-demo-tool.md), [Dependency Checker](apps/dependency-checker.md)
+[Simple Demo Tool](other-tools/simple-demo-tool.md), [BC-250 shadPS4 Manager](apps/shadps4.md),
+[Dependency Checker](apps/dependency-checker.md)
 the release front end [BC250 Suite Releases](#the-release-front-end) and BC-250 Installer Tests
 (`tools/installer-tests/gui`), a window that runs the installer tests one at a time. You do not need them to use
 the board. The last two run from a checkout of the repository and have no release. A portal installed from a

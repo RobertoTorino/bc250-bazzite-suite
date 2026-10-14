@@ -56,6 +56,7 @@ need them to use the board.
 | App | What it does |
 |---|---|
 | ![](assets/apps/demo-tool.png){ .app-icon } [Simple Demo Tool](other-tools/simple-demo-tool.md) | Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite. |
+| ![](assets/apps/shadps4.png){ .app-icon } [BC-250 shadPS4 Manager](apps/shadps4.md) | PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found and added to Game Mode. |
 | ![](assets/apps/portal-dependency-checker.png){ .app-icon } [Dependency Checker](apps/dependency-checker.md) | The suite's Python packages and external tools, which apps use them, and whether newer ones exist. |
 | ![](assets/apps/suite-releases.png){ .app-icon } [BC250 Suite Releases](portal.md#the-release-front-end) | The release front end: versions, pins and the board checks of a release. Runs from a checkout of this repository. |
 | ![](assets/apps/installer-tests.png){ .app-icon } BC-250 Installer Tests | Run the suite's installer tests one at a time, with their output live in the window. Runs from a checkout of this repository. |

@@ -1,0 +1,11 @@
+Changelog: 14-10-2026 09:30:47
+
+Release 0.1.0.
+
+Changelog: 14-10-2026 01:56:03
+
+The owner's icons replace the placeholder: images/bc250-shadps4-manager.png (512 px, the window header, menu entry and Desktop icon) and images/bc250-shadps4-manager-128.png (128 px, also the portal's and the manual's icon).
+
+Changelog: 14-10-2026 00:46:54
+
+New app shadps4 (BC-250 shadPS4 Manager): PS4 games on the BC-250 with the shadPS4 emulator. Install downloads shadPS4 0.19.0, the release the app pins (the Linux AppImage in shadps4-linux-sdl-0.19.0.zip), checks the zip against its SHA-256 before unpacking and installs it in ~/.local/share/bc250-shadps4-manager/emulator, with "current" pointing to it; Remove takes it out, shadPS4's own folder (saves, settings, system modules) stays. The window shows how many of the system modules shadPS4 0.19.0 cannot do without are in its module folder (the app ships none: they come from the user's own PS4), adds game folders through shadPS4's own --add-game-folder, and lists the games found in them (up to five folders deep; title, ID and version from sce_sys/param.sfo, the folder's name without "[PS4]" when it has none; updates, mods and add-ons left out). The scan follows the owner's Windows launcher Nexus. Play starts a game on the desktop, shadPS4 settings opens shadPS4's own window (-b). Update Game Mode adds the ticked games to Steam as non-Steam games and takes out the others and games no longer found, with Steam closed for it and started again (core's bc250_core.steam); the artwork is drawn from the game's own icon0.png and pic1.png. The shortcuts run bc250-shadps4-run -f true -g "<eboot.bin>": the run wrapper starts the installed shadPS4 from beside the AppImage (so a "user" folder in the current folder is never taken as shadPS4's portable folder), and lets the AppImage unpack itself when libfuse.so.2 is missing. The installer uses the suite's shared venv and installs the wrapper in ~/.local/bin. The icon is a placeholder.

@@ -1,3 +1,7 @@
+Changelog: 14-10-2026 00:36:43
+
+New module steam: Steam's own files for apps that add non-Steam games for Game Mode. Finding Steam and its users, whether it runs (a zombie steam process does not count), closing it for a change and starting it again (with_steam_closed), the binary shortcuts.vdf (read_vdf, write_vdf), a non-Steam game's appid, the shortcut's fields in Steam's order (shortcut_entry), adding, updating (the play time kept) and removing shortcuts beside the others, and write_shortcuts(), which writes several shortcuts and their artwork for every Steam user, each file once. Moved from BC250 Console Link (its own code, there AGPL-3.0-or-later, relicensed by the owner to GPL-3.0-or-later for core, 14-10-2026), which now uses it; tests/test_steam.py covers it.
+
 Changelog: 12-10-2026 08:07:21
 
 AppHeader in widgets: the first line of every app window, the icon at 96 px spanning the title row (name with the version, states, actions) and a second row (status boxes or main controls), as Bazzite Test and the Governor Manager draw it. test_widgets checks the layout.
