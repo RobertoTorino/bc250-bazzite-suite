@@ -30,8 +30,8 @@
 [apps.bazzite-test]
 name = "BC-250 Bazzite Test"
 summary = "Read-only diagnostics, stress test and benchmarks. Always installed."
-tag = "bazzite-test-v0.1.11"
-sha256 = "f4a9ca037e1d418853ea46d6422f28dcbc74b91f3d8eebc2cf567979fa66cf62"
+tag = "bazzite-test-v0.1.13"
+sha256 = "2ea6aaee9919c92da94aef9c12763573a2e403f9513d1fac26bcdf9e27ac5d79"
 required = true
 changes_board = false
 install = ["bash install.sh"]
