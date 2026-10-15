@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Marks every shell script in the git index as executable (mode 100755).
+# Marks every shell script in the git index as executable (mode 100755), and the git hooks in tools/hooks.
 #
 # Git for Windows runs with core.fileMode=false, so a script added from Windows is recorded as 100644 and a Linux
 # checkout (or a release tarball) gets a script that `./install.sh` cannot run. This sets the bit in the index
@@ -9,7 +9,7 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
-missing=$(git ls-files -s -- '*.sh' | awk '$1 != "100755" { print $4 }')
+missing=$(git ls-files -s -- '*.sh' 'tools/hooks/*' | awk '$1 != "100755" { print $4 }')
 if [[ -z "$missing" ]]; then
     echo "All tracked .sh files are already executable."
     exit 0

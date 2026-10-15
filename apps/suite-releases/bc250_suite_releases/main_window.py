@@ -2,12 +2,13 @@
 """The window: enter the new versions, and it edits the files of a release (plan.py).
 
 Step 1, Apps: tick the apps to release, enter their versions and notes, Apply. It writes VERSION, the copies
-check_versions.py checks and a "Release x.y.z." CHANGELOG entry, runs check_versions.py and shows the git commands.
+check_versions.py checks and a "Release x.y.z." CHANGELOG entry, runs check_versions.py and check_manifest.py (an
+apps.toml changed since the last push needs a portal bump in the same push) and shows the git commands.
 Step 2, Pin and portal: once GitHub has built the app releases, Pin fills in their tag and sha256 in apps.toml;
 Bump portal writes the portal version (at least what check_manifest.py asks) and its CHANGELOG entry, runs
 check_manifest.py and shows the git commands. Test updates and Test release run check-release.sh in a
 terminal: the portal from the checkout before the push, the published portal release after it. Committing, tagging
-and pushing stay with you.
+and pushing stay with you; the push command runs tools/ci-local.sh first (Linux) and pushes only when CI's jobs pass.
 The header shows whether GitHub built the last push (CI, Release, Manual) and notifies when a build it saw
 running passes or fails.
 Run from checkout: click an app's icon to start it from this checkout, to try it before its release; the Manual icon
@@ -42,6 +43,8 @@ from . import plan as rp
 from .command_line import CommandLine
 
 COLUMNS = ("Release", "App", "VERSION", "Last tag", "Needs release", "New version", "Notes")
+SEMVER_TIP = ("Breaking. (an entry that starts with it) -> major: something removed or no longer working as "
+              "before. Added. -> minor: a new feature. Fixed. -> patch: a bug or security fix.")
 LOG_DIR = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "bc250-release" / "run"
 # A selected cell and the input field being typed in: a purple outline with rounded corners on a transparent
 # background, not the desktop's solid highlight. The line edit inside an editable combo box keeps the combo's frame.
@@ -138,12 +141,9 @@ class AppsPage(QWidget):
                 self.table.setItem(i, col, item)
             combo = QComboBox()
             combo.setEditable(True)
-            if unit.kind == "core":
-                choices = [unit.version] if unit.current else []
-            else:
-                choices = [] if unit.released else [unit.version]
-            choices += list(rp.next_versions(unit.version).values())
+            choices, why = rp.version_choices(self.release_window.root, unit)
             combo.addItems(choices)
+            combo.setToolTip(f"{choices[0]}: {why}.\n\n{SEMVER_TIP}")
             notes = QLineEdit()
             notes.setPlaceholderText("What this release brings (optional)")
             self.table.setCellWidget(i, 5, combo)
@@ -195,10 +195,16 @@ class AppsPage(QWidget):
                 if rp.follow_unreleased_pin(root, unit):
                     pins_moved.append(unit.tag)
         if pins_moved:
-            minimum, why = rp.portal_minimum(root, self.release_window.base(), self.release_window.portal_version())
-            log.append(f"apps.toml: the never-released pins move along ({', '.join(pins_moved)}), so this push also "
-                       f"needs portal {minimum or '?'} ({why}): do step 2's Bump portal before you commit.")
-        log += ["", run_check(root, "tools/check_versions.py")]
+            log.append(f"apps.toml: the never-released pins move along ({', '.join(pins_moved)}).")
+        # apps.toml may also have changed before this release (an app added, removed or moved): CI checks it against
+        # the last push, with the portal bump it needs.
+        base, portal_version = self.release_window.base(), self.release_window.portal_version()
+        minimum, why = rp.portal_minimum(root, base, portal_version)
+        if minimum and minimum != portal_version:
+            log.append(f"apps.toml changed since {base} ({why}), so this push also needs portal {minimum}: do step "
+                       "2's Bump portal before you commit, or CI fails.")
+        log += ["", run_check(root, "tools/check_versions.py"),
+                run_check(root, "tools/check_manifest.py", "--base", base)]
         if tags:
             log += ["Then:", rp.app_commands(tags)]
             self.release_window.commands.offer(rp.app_commands(tags))
@@ -317,12 +323,17 @@ class PortalPage(QWidget):
                                  f"{minimum}.")
         else:
             self.minimum.setText(f"apps.toml is unchanged since {self.release_window.base()}.")
-        choices = [minimum] if minimum and minimum != portal.version else []
-        if not portal.released:
-            choices.append(portal.version)
-        choices += [v for v in rp.next_versions(portal.version).values() if v not in choices]
+        # The higher of what CI asks against the last push and what semantic versioning gives since the last tag.
+        suggested, semver = rp.portal_suggestion(self.release_window.root, portal)
+        if minimum and rp.version_tuple(minimum) > rp.version_tuple(suggested):
+            suggested, semver = minimum, f"CI's minimum: {why}"
+        choices = [suggested, *([] if portal.released else [portal.version]),
+                   *rp.next_versions(portal.version).values()]
+        choices = [v for i, v in enumerate(choices) if v not in choices[:i]
+                   and not rp.check_new_version(portal.version, v, portal.released)]
         self.portal_version.clear()
         self.portal_version.addItems(choices)
+        self.portal_version.setToolTip(f"{suggested}: {semver}.\n\n{SEMVER_TIP}")
         if sys.platform.startswith("linux"):
             self.release_button.setToolTip(
                 f"After GitHub built portal-v{portal.version}: download it, check it against its SHA256SUMS, install "

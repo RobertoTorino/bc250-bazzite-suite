@@ -176,8 +176,11 @@ def test_commands():
     text = rp.app_commands(["alpha-v0.2.0", "beta-v0.1.0"])
     assert "tools/tag-release.sh alpha-v0.2.0 beta-v0.1.0" in text and "git push\n" in text
     assert text.index("git commit") < text.index("git push\n") < text.index("tag-release.sh")
+    assert "\ntools/ci-local.sh && git push\n" in rp.app_commands(["alpha-v0.2.0"], linux=True)  # CI's jobs first
     text = rp.portal_commands("portal-v0.2.0")
     assert "\ntools/tag-release.sh portal-v0.2.0\n" in text
+    assert "\ntools/ci-local.sh && git push\n" in rp.portal_commands("portal-v0.2.0", linux=True)
+    assert "\ngit push\n" in rp.portal_commands("portal-v0.2.0", linux=False)
     assert text.endswith(f"{rp.CHECK_SCRIPT} release portal-v0.2.0   # installs and starts the published portal release")
     order = [text.index(s) for s in ("git commit", "check-release.sh local", "git push\n", "tag-release.sh",
                                      "check-release.sh release")]
@@ -755,3 +758,68 @@ def test_window_withdraws_and_tests(window, repo, monkeypatch):
     assert launched == [f"{repo / rp.CHECK_SCRIPT} local"] and "App not available" in page.output.toPlainText()
     page.back_button.click()
     assert rp.withdrawn_reason(repo, "beta") == "" and page.state.text() == "Not withdrawn."
+
+
+# --- Semantic versioning from the CHANGELOG entries -------------------------------------------------------------
+
+def entry(path: Path, body: str, stamp: str = "15-10-2026 23:00:00") -> None:
+    path.write_bytes(f"Changelog: {stamp}\n\n{body}\n\n".encode() + path.read_bytes())
+
+
+def test_the_kind_of_change_sets_the_level():
+    assert rp.suggested_level([]) == ("patch", "no CHANGELOG entries")
+    assert rp.suggested_level(["Fixed. A crash.", "Added. A button."]) == ("minor", "1 Added, 1 Fixed")
+    assert rp.suggested_level(["Breaking. The --old option went.", "Added. x"])[0] == "major"
+    level, why = rp.suggested_level(["A change from before the rule.", "Fixed. y"])
+    assert level == "patch" and "1 without Breaking./Added./Fixed. (counted as a fix)" in why
+    assert rp.change_word("Added.") == "Added." and rp.change_word("Addedx. no") == ""
+
+
+def test_an_added_entry_since_the_tag_asks_for_a_minor_release(repo):
+    alpha = repo / "apps/alpha/CHANGELOG"
+    entry(alpha, "Fixed. The window opens on the right screen.")
+    assert rp.version_choices(repo, unit(repo, "alpha"))[0][:3] == ["0.1.1", "0.2.0", "1.0.0"]
+    entry(alpha, "Added. A Check before push button.")
+    entry(alpha, "Release 0.1.1.")                              # the tool's own entries count for nothing
+    choices, why = rp.version_choices(repo, unit(repo, "alpha"))
+    assert choices[0] == "0.2.0" and why == "minor: 1 Added, 1 Fixed since alpha-v0.1.0"
+    entry(alpha, "Breaking. Its settings from 0.1 are not read any more.")
+    assert rp.version_choices(repo, unit(repo, "alpha"))[0][0] == "1.0.0"
+
+
+def test_counted_from_the_last_tag_not_a_bump_already_made(repo):
+    """VERSION bumped to 0.1.1 (not tagged) and then a feature: 0.2.0 from alpha-v0.1.0 comes first. A VERSION bumped
+    further already comes first itself."""
+    alpha = unit(repo, "alpha")
+    rp.set_version(repo, alpha, "0.1.1")
+    entry(repo / "apps/alpha/CHANGELOG", "Added. x")
+    assert rp.version_choices(repo, unit(repo, "alpha"))[0][:2] == ["0.2.0", "0.1.1"]
+    rp.set_version(repo, unit(repo, "alpha"), "0.3.0")
+    assert rp.version_choices(repo, unit(repo, "alpha"))[0][0] == "0.3.0"
+
+
+def test_a_core_change_counts_for_the_apps_that_carry_it(repo):
+    entry(repo / "core/CHANGELOG", "Added. A widget.")
+    write(repo / "core/bc250_core/widgets.py", "x = 1\n")
+    assert rp.version_choices(repo, unit(repo, "alpha"))[0][0] == "0.2.0"     # alpha bundles core
+    core = unit(repo, "core")
+    assert rp.version_choices(repo, core)[0][0] == "0.2.0"
+
+
+def test_a_first_release_is_offered_as_it_is(repo):
+    choices, why = rp.version_choices(repo, unit(repo, "beta"))
+    assert choices[0] == "0.1.0" and why == "the first release"
+
+
+def test_the_portal_counts_apps_toml_since_its_last_tag(repo):
+    """An app added to apps.toml and pushed before the portal release: check_manifest no longer sees it against the
+    last push, the suggestion still does."""
+    sh(repo, "tag", "portal-v0.1.0")
+    write(repo / "portal/apps.toml", (repo / "portal/apps.toml").read_text() + card("gamma"))
+    sh(repo, "commit", "-qam", "gamma")
+    sh(repo, "branch", "-f", "pushed")
+    assert rp.portal_minimum(repo, "pushed", "0.1.0") == ("", "")
+    assert rp.portal_suggestion(repo, unit(repo, "portal")) == (
+        "0.2.0", "minor: apps.toml changed since portal-v0.1.0 (gamma was added)")
+    entry(repo / "portal/CHANGELOG", "Breaking. Reads only apps.toml format 2.")
+    assert rp.portal_suggestion(repo, unit(repo, "portal"))[0] == "1.0.0"

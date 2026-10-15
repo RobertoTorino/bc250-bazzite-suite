@@ -55,6 +55,11 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
   for its own. Format: a `Changelog: DD-MM-YYYY HH:MM:SS` line, a blank line, then plain sentences; newest first.
   The time is Europe/Amsterdam (CET/CEST) on both systems, whatever the machine's own zone:
   `TZ=Europe/Amsterdam date '+%d-%m-%Y %H:%M:%S'`.
+- **Semantic versioning** (owner, 15-10-2026): in an app's, core's or the portal's CHANGELOG, every entry starts
+  with its kind: `Breaking.` (removed, or no longer working as before: major), `Added.` (a new feature: minor) or
+  `Fixed.` (a bug or security fix: patch). 0.x apps too: a feature takes 0.1.4 to 0.2.0. Suite Releases offers the
+  highest kind since the last tag first; `tools/tests/test_changelog_kinds.py` checks it. The number stays the
+  owner's (see Releases).
 - **VERSION is the single source** of each app's version (all started at 0.1.0). Copies in code (`__version__`,
   shell `VERSION=`, pyproject) must match: `tools/check_versions.py`.
 - **Every former repo folder** (each app, `core/`, `portal/`) keeps LICENSE, .gitignore, VERSION and CHANGELOG.
@@ -117,12 +122,14 @@ newer Python cannot show; run it before saying work is ready:
 
 ```bash
 tools/ci-local.sh                                   # every CI job as GitHub runs it (podman); --list shows them
+tools/pre-push.sh                                   # CI's quick checks against origin/main (git's pre-push hook)
 ./test.sh                                           # every test suite, offscreen
 python3 tools/check_versions.py                     # versions = VERSION
 python3 tools/check_manifest.py --base origin/main  # portal/apps.toml rules, against the last push
 find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 -n1 bash -n
 find apps portal tools -name '*.sh' -print0 | xargs -0 shellcheck -x -S error test.sh install.sh
-shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh
+shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \
+  tools/hooks/pre-push
 shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/bc250-cores-unlock.sh \
   apps/cores-bisect/install.sh apps/cores-bisect/packaging/bazzite/*.sh
 shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh

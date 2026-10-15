@@ -47,6 +47,17 @@ It reads the jobs from `ci.yml` itself, so a new app in the matrix or a new inst
 first run builds the image from `tools/ci-local/Containerfile` (Python 3.12 and the packages GitHub's runner has)
 and Console Link's FFmpeg; both are kept, with the venvs and the logs, in `~/.cache/bc250-ci-local`. It works on a
 copy of the checkout with every change staged, as the commit will have it. Only the Windows job does not run here.
+The push commands BC250 Suite Releases shows run it first (`tools/ci-local.sh && git push`): no push when a job fails.
+
+`tools/pre-push.sh` runs CI's quick checks in a few seconds: the versions, `portal/apps.toml` with the portal bump
+it needs against what the remote has, the scripts' exec bits and the line endings. Make it git's pre-push hook once
+per checkout, and every `git push` runs it first:
+
+```bash
+git config core.hooksPath tools/hooks   # once per checkout
+BC250_PRE_PUSH=full git push            # also every CI job (tools/ci-local.sh)
+git push --no-verify                    # without the checks
+```
 
 To preview the manual locally, run `mkdocs serve` from the repository root with the development venv active,
 then open <http://127.0.0.1:8000/bc250-bazzite-suite/>. Stop the server with Ctrl+C.

@@ -1,3 +1,20 @@
+Changelog: 15-10-2026 23:22:38
+
+Added. Semantic versioning (owner's decision, 15-10-2026): the version step 1 offers first follows the CHANGELOG
+entries since the app's last tag, counted from that tag: Breaking. asks for a major release, Added. for a minor one,
+Fixed. (or an entry without a kind, from before the rule) for a patch; core's entries count for the apps that carry
+a core change. A VERSION bumped further already, or a first release, still comes first. Step 2 offers the higher of
+CI's minimum and the portal's own: its CHANGELOG entries and apps.toml since the last portal tag, so an app added and
+pushed before the portal release still asks for a minor portal release. The version box says why in its tooltip
+(plan.py: version_choices, portal_suggestion).
+
+Changelog: 15-10-2026 23:13:51
+
+Added. Step 1's Apply also runs check_manifest.py against the last push, and says when apps.toml changed since then (an app
+added, removed or moved to another section, not only a pin that moves along) so that the push needs a portal bump
+too: before, only check_versions.py ran there, and a release push failed CI on the portal bump. The push commands of
+both steps run tools/ci-local.sh first on Linux (tools/ci-local.sh && git push): no push when a CI job fails.
+
 Changelog: 15-10-2026 21:11:49
 
 A command line under the steps (command_line.py), in a splitter with them, so the commands a step shows run without a

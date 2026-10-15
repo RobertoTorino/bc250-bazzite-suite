@@ -1,3 +1,19 @@
+Changelog: 15-10-2026 23:22:38
+
+Semantic versioning (owner's decision, 15-10-2026): every new entry in an app's, core's or the portal's CHANGELOG
+starts with Breaking., Added. or Fixed. (major, minor, patch), and BC250 Suite Releases offers the version that asks
+for (see its CHANGELOG). tools/tests/test_changelog_kinds.py checks the entries from now on; CLAUDE.md and the
+wiki's Architecture page have the rule and the table.
+
+Changelog: 15-10-2026 23:13:51
+
+tools/pre-push.sh runs CI's quick checks before a push, in a few seconds: check_versions.py, check_manifest.py
+against what the remote has (the check the release push of 15-10-2026 failed on: apps.toml changed without the portal
+bump), the exec bits and the line endings of the pushed commit. tools/hooks/pre-push makes it git's pre-push hook
+(git config core.hooksPath tools/hooks); BC250_PRE_PUSH=full also runs tools/ci-local.sh, git push --no-verify skips
+it. Tests in tools/tests/test_pre_push.py. fix-modes.sh and CI's exec-bit check cover tools/hooks/ too, CI
+shellchecks the hook, and the development page of the wiki and CLAUDE.md name it.
+
 Changelog: 15-10-2026 22:22:25
 
 CLAUDE.md has the rule Advice, not reboots (owner, 15-10-2026): no app reboots, powers off or logs out the board; it

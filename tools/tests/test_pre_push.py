@@ -1,0 +1,126 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""tools/pre-push.sh, git's pre-push hook through tools/hooks/pre-push: CI's quick checks before a push, against what
+the remote has. check_versions.py and check_manifest.py are stubs here that record how they were called."""
+
+from __future__ import annotations
+
+import os
+import shutil
+import subprocess
+from pathlib import Path
+
+import pytest
+
+TOOLS = Path(__file__).resolve().parent.parent
+ZERO = "0" * 40
+ENV = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t")
+ENV.pop("BC250_PRE_PUSH", None)
+
+pytestmark = pytest.mark.skipif(shutil.which("bash") is None or shutil.which("git") is None, reason="needs bash, git")
+
+STUB = """import os, sys
+from pathlib import Path
+with open(Path(__file__).parent.parent / "calls.txt", "a") as f:
+    f.write(Path(__file__).name + " " + " ".join(sys.argv[1:]) + "\\n")
+sys.exit(int(os.environ.get("FAIL_" + Path(__file__).stem.upper(), "0")))
+"""
+
+
+def git(root: Path, *args: str) -> str:
+    return subprocess.run(["git", *args], cwd=root, check=True, capture_output=True, text=True, env=ENV).stdout.strip()
+
+
+@pytest.fixture
+def repo(tmp_path) -> Path:
+    root = tmp_path / "suite"
+    (root / "tools" / "hooks").mkdir(parents=True)
+    for name in ("pre-push.sh", "hooks/pre-push"):
+        shutil.copy(TOOLS / name, root / "tools" / name)
+        (root / "tools" / name).chmod(0o755)
+    for name in ("check_versions.py", "check_manifest.py"):
+        (root / "tools" / name).write_text(STUB)
+    (root / ".gitignore").write_text("calls.txt\n")
+    git(root, "init", "-q", "-b", "main")
+    git(root, "add", "-A")
+    git(root, "update-index", "--chmod=+x", "tools/pre-push.sh", "tools/hooks/pre-push")
+    git(root, "commit", "-qm", "first")
+    return root
+
+
+def hook(root: Path, lines: list[str], **env: str) -> subprocess.CompletedProcess:
+    """The hook as git runs it: the remote's name and url as arguments, the refs on stdin."""
+    return subprocess.run(["bash", "tools/hooks/pre-push", "origin", "url"], cwd=root, input="\n".join(lines) + "\n",
+                          capture_output=True, text=True, env=dict(ENV, **env))
+
+
+def calls(root: Path) -> list[str]:
+    path = root / "calls.txt"
+    return path.read_text().splitlines() if path.exists() else []
+
+
+def test_checks_against_what_the_remote_has(repo):
+    base = git(repo, "rev-parse", "HEAD")
+    (repo / "x.txt").write_text("x\n")
+    git(repo, "add", "x.txt")
+    git(repo, "commit", "-qm", "second")
+    head = git(repo, "rev-parse", "HEAD")
+    result = hook(repo, [f"refs/heads/main {head} refs/heads/main {base}"])
+    assert result.returncode == 0, result.stderr
+    assert calls(repo) == ["check_versions.py ", f"check_manifest.py --base {base}"]
+
+
+def test_a_portal_bump_missing_stops_the_push(repo):
+    """The release push CI failed on: apps.toml changed without the portal bump."""
+    head = git(repo, "rev-parse", "HEAD")
+    result = hook(repo, [f"refs/heads/main {head} refs/heads/main {head}"], FAIL_CHECK_MANIFEST="1")
+    assert result.returncode == 1
+    assert "Bump portal" in result.stderr and "not pushed" in result.stderr and "--no-verify" in result.stderr
+
+
+def test_a_version_mismatch_stops_the_push(repo):
+    head = git(repo, "rev-parse", "HEAD")
+    result = hook(repo, [f"refs/heads/main {head} refs/heads/main {head}"], FAIL_CHECK_VERSIONS="1")
+    assert result.returncode == 1 and "check_versions.py" in result.stderr
+
+
+def test_a_new_branch_has_no_base_and_tags_are_left_alone(repo):
+    head = git(repo, "rev-parse", "HEAD")
+    assert hook(repo, [f"refs/heads/topic {head} refs/heads/topic {ZERO}"]).returncode == 0
+    assert calls(repo) == ["check_versions.py "]                 # CI has no base for a new branch either
+    (repo / "calls.txt").unlink()
+    assert hook(repo, [f"refs/tags/alpha-v0.1.0 {head} refs/tags/alpha-v0.1.0 {ZERO}"]).returncode == 0
+    assert calls(repo) == []                                      # tag-release.sh checks the tags
+
+
+def test_a_script_without_its_exec_bit_stops_the_push(repo):
+    (repo / "run.sh").write_text("#!/bin/sh\n")
+    git(repo, "add", "run.sh")
+    git(repo, "update-index", "--chmod=-x", "run.sh")
+    git(repo, "commit", "-qm", "script")
+    head = git(repo, "rev-parse", "HEAD")
+    result = hook(repo, [f"refs/heads/main {head} refs/heads/main {ZERO}"])
+    assert result.returncode == 1 and "run.sh" in result.stderr and "fix-modes.sh" in result.stderr
+
+
+def test_crlf_stops_the_push(repo):
+    (repo / "dos.txt").write_bytes(b"a\r\nb\r\n")
+    subprocess.run(["git", "-c", "core.autocrlf=false", "add", "dos.txt"], cwd=repo, check=True, env=ENV)
+    git(repo, "commit", "-qm", "crlf")
+    head = git(repo, "rev-parse", "HEAD")
+    result = hook(repo, [f"refs/heads/main {head} refs/heads/main {ZERO}"])
+    assert result.returncode == 1 and "dos.txt" in result.stderr
+
+
+def test_off_skips_every_check(repo):
+    head = git(repo, "rev-parse", "HEAD")
+    assert hook(repo, [f"refs/heads/main {head} refs/heads/main {head}"], BC250_PRE_PUSH="off",
+                FAIL_CHECK_MANIFEST="1").returncode == 0
+    assert calls(repo) == []
+
+
+def test_by_hand_against_a_base(repo):
+    base = git(repo, "rev-parse", "HEAD")
+    result = subprocess.run(["bash", "tools/pre-push.sh", base], cwd=repo, capture_output=True, text=True, env=ENV,
+                            stdin=subprocess.DEVNULL)
+    assert result.returncode == 0, result.stderr
+    assert calls(repo)[-1] == f"check_manifest.py --base {base}"

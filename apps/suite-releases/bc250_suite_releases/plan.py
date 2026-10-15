@@ -7,6 +7,8 @@ no bc250_core, so it also runs with the system python3.
 A release has two steps, because an app's checksum only exists once GitHub has built its release:
 
 1. Apps: the new VERSION, every copy that tools/check_versions.py checks, and a "Release x.y.z." CHANGELOG entry.
+   The version offered first follows semantic versioning from the CHANGELOG entries since the last tag: one that
+   starts with Breaking. asks for a major release, Added. for a minor one, Fixed. for a patch.
    Commit, push, tag <app>-v<x.y.z>, push the tag: release.yml builds the tarball and SHA256SUMS.
 2. Portal: pin each released app in portal/apps.toml (tag and sha256, as tools/pin_app.py), bump portal/VERSION at
    least as much as tools/check_manifest.py asks, and a CHANGELOG entry listing the pins. Commit, test on a board
@@ -41,6 +43,7 @@ SUITE = Path(__file__).resolve().parents[3]           # apps/suite-releases/bc25
 TOOLS = SUITE / "tools"
 CHECK_SCRIPT = "apps/suite-releases/check-release.sh"  # relative to the checkout
 TAG_SCRIPT = "tools/tag-release.sh"     # tags only a pushed HEAD that holds the version: never one before the bump
+CI_LOCAL = "tools/ci-local.sh"          # CI's jobs here, in a container (Linux): the push only when they pass
 CHECKOUT_ONLY = ".checkout-only"        # an app folder with this marker runs from the checkout and is never released
 _VERSION = re.compile(r"^\d+\.\d+\.\d+$")
 
@@ -290,6 +293,112 @@ def add_changelog_entry(root: Path, unit: Unit, text: str, now: datetime.datetim
 
 def release_text(version: str, notes: str) -> str:
     return f"Release {version}." + (f" {notes.strip()}" if notes.strip() else "")
+
+
+# --- The kind of change: semantic versioning (owner, 15-10-2026) -----------------------------------------------
+
+# A CHANGELOG entry starts with the kind of change it is; a release takes the highest kind since its last tag.
+CHANGE_WORDS = {"Breaking.": "major", "Added.": "minor", "Fixed.": "patch"}
+LEVELS = ("patch", "minor", "major")
+# Entries the release tools write themselves: they are no change of their own.
+TOOL_ENTRIES = ("Release ", "Version ", "Withdrawn: ", "Withdrawal of ")
+_ENTRY = re.compile(r"^Changelog: .*$", re.M)
+
+
+def changelog_entries(text: str) -> list[str]:
+    """Each entry of a CHANGELOG, header line included, newest first."""
+    starts = [m.start() for m in _ENTRY.finditer(text)]
+    return [text[a:b].strip() for a, b in zip(starts, starts[1:] + [len(text)])]
+
+
+def entry_body(entry: str) -> str:
+    return entry.split("\n", 1)[1].strip() if "\n" in entry else ""
+
+
+def change_word(body: str) -> str:
+    """The entry's kind (Breaking., Added., Fixed.), "" when it has none."""
+    return next((word for word in CHANGE_WORDS if body.startswith(word + " ") or body == word), "")
+
+
+def new_entries(root: Path, unit: Unit) -> list[str]:
+    """The change entries (bodies) since the unit's last tag: its own, and core's when the release carries a core
+    change. Core itself, never tagged: its entries since its last "Version x.y.z." entry."""
+    def since(path: str, ref: str | None) -> list[str]:
+        file = root / path / "CHANGELOG"
+        current = changelog_entries(file.read_text(encoding="utf-8")) if file.is_file() else []
+        if ref is None:
+            cut = next((i for i, e in enumerate(current) if entry_body(e).startswith("Version ")), len(current))
+            current = current[:cut]
+        else:
+            old = set(changelog_entries(git(root, "show", f"{ref}:{path}/CHANGELOG") or ""))
+            current = [e for e in current if e not in old]
+        return [b for b in map(entry_body, current) if b and not b.startswith(TOOL_ENTRIES)]
+
+    if unit.kind == "core":
+        return since(unit.path, None)
+    entries = since(unit.path, unit.last_tag) if unit.last_tag else []
+    if unit.last_tag and any(f.startswith("core/") for f in unit.changed or []):
+        entries += since("core", unit.last_tag)
+    return entries
+
+
+def suggested_level(entries: list[str]) -> tuple[str, str]:
+    """The release level the entries ask for (patch, minor, major), and why. An entry without a kind counts as a
+    fix, and says so."""
+    counts = {word: 0 for word in CHANGE_WORDS}
+    unmarked = 0
+    for body in entries:
+        word = change_word(body)
+        if word:
+            counts[word] += 1
+        else:
+            unmarked += 1
+    level = max((CHANGE_WORDS[w] for w, n in counts.items() if n), key=LEVELS.index, default="patch")
+    parts = [f"{n} {w.rstrip('.')}" for w, n in counts.items() if n] + \
+            ([f"{unmarked} without Breaking./Added./Fixed. (counted as a fix)"] if unmarked else [])
+    return level, ", ".join(parts) or "no CHANGELOG entries"
+
+
+def _tagged_version(unit: Unit) -> str:
+    """The version of the unit's last tag, where the next version counts from; its VERSION without a tag."""
+    return unit.last_tag[len(unit.key) + 2:] if unit.last_tag else unit.version
+
+
+def version_choices(root: Path, unit: Unit) -> tuple[list[str], str]:
+    """The versions step 1 offers for the unit, the one semantic versioning gives first, and why. Breaking. ->
+    major, Added. -> minor, otherwise patch, counted from the last tag. A VERSION bumped further already, never
+    tagged, comes first; a first release is offered as it is."""
+    nexts = list(next_versions(unit.version).values())
+    if unit.kind == "core" and unit.current:
+        return [unit.version] + nexts, f"{unit.version} already holds core's changes"
+    if unit.kind != "core" and unit.last_tag is None:
+        return [unit.version] + nexts, "the first release"
+    level, why = suggested_level(new_entries(root, unit))
+    suggested = next_versions(_tagged_version(unit))[level]
+    reason = f"{level}: {why}" + (f" since {unit.last_tag}" if unit.last_tag else "")
+    released = unit.released or unit.kind == "core"
+    choices = [suggested, unit.version, *nexts]
+    if version_tuple(unit.version) > version_tuple(suggested):
+        choices.insert(0, unit.version)
+    choices = [v for i, v in enumerate(choices) if v not in choices[:i] and not check_new_version(unit.version, v,
+                                                                                                    released)]
+    return choices, reason
+
+
+def portal_suggestion(root: Path, portal: Unit) -> tuple[str, str]:
+    """The portal's next version by semantic versioning since its last tag, and why: its own CHANGELOG entries, and
+    what changed in apps.toml since that tag (an app added or removed: minor; the largest app bump it pins).
+    check_manifest.py compares apps.toml only with the last push, so a change pushed before the portal release
+    would otherwise be missed."""
+    level, why = suggested_level(new_entries(root, portal))
+    reason = f"{level}: {why}" + (f" since {portal.last_tag}" if portal.last_tag else "")
+    old = git(root, "show", f"{portal.last_tag}:portal/apps.toml") if portal.last_tag else None
+    if old is not None:
+        need, what = check_manifest.required_bump(old, (root / "portal" / "apps.toml").read_text(encoding="utf-8"))
+        if need > LEVELS.index(level) + 1:
+            level = LEVELS[need - 1]
+            reason = f"{level}: apps.toml changed since {portal.last_tag} ({what})"
+    return next_versions(_tagged_version(portal))[level], reason
 
 
 def portal_text(version: str, pins: list[str], notes: str, withdrawn: list[tuple[str, str]] = ()) -> str:
@@ -666,14 +775,21 @@ def just_finished(before: dict[str, BuildRun], runs: list[BuildRun]) -> list[Bui
 
 # --- The commands for the owner --------------------------------------------------------------------------------
 
-def app_commands(tags: list[str]) -> str:
-    lines = ["git add -A && tools/fix-modes.sh", f'git commit -m "Release {", ".join(tags)}"', "git push"]
+def push_command(linux: bool | None = None) -> str:
+    """git push, after CI's jobs passed here (tools/ci-local.sh runs on Linux only)."""
+    if linux is None:
+        linux = sys.platform.startswith("linux")
+    return f"{CI_LOCAL} && git push" if linux else "git push"
+
+
+def app_commands(tags: list[str], linux: bool | None = None) -> str:
+    lines = ["git add -A && tools/fix-modes.sh", f'git commit -m "Release {", ".join(tags)}"', push_command(linux)]
     lines += [f"{TAG_SCRIPT} {' '.join(tags)}     # refuses until the bump is committed and pushed"]
     lines += ["# when GitHub has built the releases: step 2 (pin and portal)"]
     return "\n".join(lines)
 
 
-def portal_commands(tag: str) -> str:
+def portal_commands(tag: str, linux: bool | None = None) -> str:
     """Commit, test on a board, and only then push and tag: the tag is what reaches the users' portals."""
     return "\n".join([
         "# 1. Commit (no push yet):",
@@ -687,7 +803,7 @@ def portal_commands(tag: str) -> str:
         "",
         "# 3. All good: push, then tag the portal. The tag goes on the commit of step 1, so commit before you tag:",
         "#    the script refuses while HEAD does not hold the bump.",
-        "git push",
+        push_command(linux),
         f"{TAG_SCRIPT} {tag}",
         "",
         "# 4. Once GitHub's release workflow has built it: Test release, or",

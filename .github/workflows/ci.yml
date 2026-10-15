@@ -143,7 +143,8 @@ jobs:
         run: find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 shellcheck -x -S error
       - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace-queues, memory-manager, hdmi-cec, sftp-tools, console-link, mesh-shaders, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, decky-manager, netcatgui, datstation and the suite's own scripts)
         run: |
-          shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh
+          shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \
+            tools/hooks/pre-push
           shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/bc250-cores-unlock.sh \
             apps/cores-bisect/install.sh apps/cores-bisect/packaging/bazzite/*.sh
           shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
@@ -172,7 +173,7 @@ jobs:
       # Commits made from Windows record new files as 100644 (core.fileMode=false); tools/fix-modes.sh repairs it.
       - name: Scripts are executable
         run: |
-          missing=$(git ls-files -s -- '*.sh' | awk '$1 != "100755" { print $4 }')
+          missing=$(git ls-files -s -- '*.sh' 'tools/hooks/*' | awk '$1 != "100755" { print $4 }')
           if [ -n "$missing" ]; then
             echo "::error::not executable in git (run tools/fix-modes.sh):"; echo "$missing"; exit 1
           fi

@@ -202,15 +202,20 @@ apps/suite-releases/install.sh --uninstall             # remove them; the checko
 - **1. Apps:** the **Needs release** column marks in orange every app that ships something new since its last
   tag: a changed file in its folder (tests and `requirements-dev.txt` do not count), in the core it bundles, or in
   its manual chapter, committed or not. Hover it for the files; **Tick what needs a release** ticks those apps.
-  Step 2 says the same for the portal. Tick the apps to release and enter their version. A version that was never tagged (the first
-  release) can be released as it is. **Apply** writes `VERSION`, every copy `tools/check_versions.py` checks and a
+  Step 2 says the same for the portal. Tick the apps to release and enter their version. The version offered first
+  follows [semantic versioning](development/architecture.md#versions-changelogs-and-releases) from the CHANGELOG
+  entries since the last tag (`Breaking.` major, `Added.` minor, `Fixed.` patch); its tooltip says why. A version
+  that was never tagged (the first release) can be released as it is. **Apply** writes `VERSION`, every copy `tools/check_versions.py` checks and a
   `Release x.y.z.` CHANGELOG entry with your notes, which become the release notes on GitHub. The release notes
   of an app that bundles the core also name the core version. When `apps.toml`
-  pins a tag of that app that was never released, the pin moves to the new version, and the window says that
-  this push then also needs a portal bump. Then commit, push, and push the app tags (steps 1 and 2 above).
+  pins a tag of that app that was never released, the pin moves to the new version. When `apps.toml` changed since
+  the last push, for that or another reason (an app added or removed), the window says that this push also needs a
+  portal bump, and runs `tools/check_manifest.py`. Then commit, push, and push the app tags (steps 1 and 2 above):
+  on Linux the push command runs `tools/ci-local.sh` first and pushes only when CI's jobs pass.
 - **2. Pin and portal:** once GitHub has built the app releases, **Pin** reads each release's `SHA256SUMS` and
   pins its tag and checksum in `apps.toml` (step 3). The window shows the lowest portal version CI accepts against
-  the last push (`origin/main`); **Bump portal** writes it with a CHANGELOG entry that lists the pinned app
+  the last push (`origin/main`), and offers the higher of that and what semantic versioning gives since the last
+  portal tag (its CHANGELOG entries, and the apps added, removed or moved in `apps.toml`); **Bump portal** writes it with a CHANGELOG entry that lists the pinned app
   releases, and runs `tools/check_manifest.py` (step 4). Then commit, test on a BC-250 (below), and only then push
   and tag the portal (step 5). The window lists these commands in that order.
 - **Test updates** and **Test release** run the two board tests below in a terminal, with

@@ -253,6 +253,18 @@ not run one.
 - Every change gets a `CHANGELOG` entry in the folder it changes (the app, core, the portal, or the root for
   suite-wide changes): a `Changelog: DD-MM-YYYY HH:MM:SS` line in Europe/Amsterdam time, a blank line, then plain
   sentences, newest first.
+- Versions follow semantic versioning. In an app's, core's or the portal's `CHANGELOG`, each entry starts with the
+  kind of change it is, and a release takes the highest kind since its last tag:
+
+  | The entry starts with | What changed                                                     | Release | Example         |
+  |-----------------------|------------------------------------------------------------------|---------|-----------------|
+  | `Breaking.`           | something removed, or no longer working as before (settings, options, files) | major | 1.2.3 → 2.0.0 |
+  | `Added.`              | a new feature, everything that worked still works                | minor   | 1.2.3 → 1.3.0   |
+  | `Fixed.`              | a bug or security fix                                            | patch   | 1.2.3 → 1.2.4   |
+
+  An app at 0.x follows the same table: a new feature takes 0.1.4 to 0.2.0, a breaking change to 1.0.0. The portal
+  moves at least as far as the largest app release it pins, and a minor step when an app is added or removed.
+  BC250 Suite Releases offers that version first; `tools/tests/test_changelog_kinds.py` checks the entries.
 - Each app is released on its own tag, `<name>-v<x.y.z>`. The portal pins one release of each app in
   `portal/apps.toml`. The steps are in [Portal](../portal.md#appstoml-and-releases).
 
