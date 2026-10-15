@@ -1,3 +1,19 @@
+Changelog: 15-10-2026 03:27:57
+
+Release 0.1.7.
+
+Changelog: 15-10-2026 03:13:12
+
+The nine screenshots the wiki's chapter shows (images/01-overview.png to 09-help.png) are WebP: 1.9 MB of PNG, now 0.8 MB. The app does not use them; its icons stay PNG.
+
+Changelog: 15-10-2026 02:42:56
+
+The Governor Manager no longer crashes when it quits on SIGTERM (at logout, or with the tray icon when the session ends): RoundedToolTip.install removes its event filter when the app quits (aboutToQuit). The filter saw the events of widgets destroyed after the event loop had ended, while Python was tearing down, and the process ended with a segmentation fault every time; core's tooltip has the same fix. Tests: tests/test_widgets.py.
+
+Changelog: 15-10-2026 02:31:31
+
+No translations (owner's decision): the app is English only, Qt's own dialog buttons included. Gone: translations/ (.ts and .qm), tools/i18n (build.py and the JSON catalogues), tests/test_translations.py, --lang, the translator set-up in __main__ and TRANSLATIONS_DIR; every tr()/translate()/QT_TRANSLATE_NOOP is its English text, unchanged. A saved language setting is ignored.
+
 Changelog: 15-10-2026 02:10:51
 
 Release 0.1.6.

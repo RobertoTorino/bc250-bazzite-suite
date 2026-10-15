@@ -118,6 +118,23 @@
   transform: translateY(-1px);
 }
 
+/* Photos side by side on a wide screen (the BC-250's top and back), one below the other on a narrow one. */
+.md-typeset .board-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.md-typeset .board-photos figure {
+  margin: 0;
+}
+
+.md-typeset video.board-video {
+  width: 100%;
+  border-radius: var(--suite-radius-medium);
+}
+
 /* The small app icon in front of a name, as on the portal's cards. */
 .md-typeset img.app-icon {
   width: 1.6em;
@@ -150,6 +167,28 @@
 .md-header__button.md-logo {
   margin: 0.1rem 0.2rem;
   padding: 0.1rem;
+}
+
+/* The suite's name beside the icon; on a narrow screen smaller, and cut off before it pushes the links away. */
+.md-header__name {
+  margin-left: 0.4rem;
+  overflow: hidden;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.md-header__name:hover,
+.md-header__name:focus {
+  color: #ffffff;
+}
+
+@media screen and (max-width: 44.9375em) {
+  .md-header__name {
+    font-size: 0.8rem;
+  }
 }
 
 /* GitHub and Wiki on the right of the header, as plain words; the search field before them. */

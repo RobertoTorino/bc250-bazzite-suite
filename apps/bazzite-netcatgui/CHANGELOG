@@ -1,3 +1,15 @@
+Changelog: 15-10-2026 03:27:56
+
+Release 0.1.1.
+
+Changelog: 15-10-2026 02:47:27
+
+Tests: test_save_log reads the saved log as bytes and decodes them; Path.read_text(newline=) exists only from Python 3.13, and CI runs 3.12. The suite passes under Python 3.12.
+
+Changelog: 15-10-2026 02:31:31
+
+No translations (owner's decision): core's create_app() no longer takes lang, and AppInfo no longer has languages; the app was English only already and stays so.
+
 Changelog: 15-10-2026 02:10:51
 
 Release 0.1.0.

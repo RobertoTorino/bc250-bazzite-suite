@@ -266,7 +266,8 @@ class MainWindow(QWidget):
             "Start bc250-cores-bisect.sh with:\n\n"
             "  load time: {t}s\n  rounds: {r}\n  load tool: {lt}\n  rasdaemon: {ras}\n"
             "  same-boot: {sb}\n  unattended: {au}\n\n"
-            "This window will close and the run continues in a terminal.").format(t=opts.time_secs, r=opts.rounds, lt=opts.load_tool, ras=opts.rasdaemon,
+            "This window will close and the run continues in a terminal."
+        ).format(t=opts.time_secs, r=opts.rounds, lt=opts.load_tool, ras=opts.rasdaemon,
                  sb=opts.same_boot, au=opts.unattended)
         if QMessageBox.question(self, APP_NAME, summary) != QMessageBox.StandardButton.Yes:
             return

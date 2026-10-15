@@ -1,3 +1,11 @@
+Changelog: 15-10-2026 03:27:56
+
+Release 0.1.11.
+
+Changelog: 15-10-2026 02:31:31
+
+No translations (owner's decision): the app is English only, Qt's own dialog buttons included. Settings > General has no Language box any more (it only offered English, the rest marked coming soon); the general/language setting is gone.
+
 Changelog: 15-10-2026 02:10:51
 
 Release 0.1.10.

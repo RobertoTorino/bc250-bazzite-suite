@@ -1,3 +1,15 @@
+Changelog: 15-10-2026 03:27:57
+
+Release 0.2.7.
+
+Changelog: 15-10-2026 02:42:56
+
+HelixSR no longer crashes when it quits on SIGTERM (at logout, or with the tray icon when the session ends): RoundedToolTip.install removes its event filter when the app quits (aboutToQuit). The filter saw the events of widgets destroyed after the event loop had ended, while Python was tearing down, and the process ended with a segmentation fault every time; core's tooltip has the same fix. Tests: tests/test_widgets.py.
+
+Changelog: 15-10-2026 02:31:31
+
+No translations (owner's decision): the app is English only, Qt's own dialog buttons included. Gone: translations/ (.ts and .qm), tools/update_translations.sh and compile_translations.py, tests/test_translations.py, --lang, the language picker on the Help page (the page is the help text alone, HelpView), the translator set-up in __main__, TRANSLATIONS_DIR and LANGUAGES; every tr()/translate() is its English text, unchanged. The ui/language setting is ignored.
+
 Changelog: 15-10-2026 02:10:51
 
 Release 0.2.6.

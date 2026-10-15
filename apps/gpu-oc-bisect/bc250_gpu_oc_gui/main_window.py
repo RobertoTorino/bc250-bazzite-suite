@@ -291,7 +291,8 @@ class MainWindow(QWidget):
             "  load time: {t}s\n  rounds: {r}\n  sweep: {s}\n"
             "  max frequency: {mf} MHz (step {fs})\n  min voltage: {mv} mV (step {vs})\n"
             "  OC voltage: {ov}\n  per boot: {pb}\n\n"
-            "This window will close and the sweep continues in a terminal.").format(t=opts.time_secs, r=opts.rounds, s=sweep,
+            "This window will close and the sweep continues in a terminal."
+        ).format(t=opts.time_secs, r=opts.rounds, s=sweep,
                   mf=opts.max_freq, fs=opts.freq_step, mv=opts.min_volt, vs=opts.volt_step,
                   ov=(f"{opts.oc_volt} mV" if opts.oc_volt else "config default"),
                   pb=opts.per_boot)

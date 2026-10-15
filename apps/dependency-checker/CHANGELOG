@@ -1,3 +1,11 @@
+Changelog: 15-10-2026 03:27:57
+
+Release 0.1.18.
+
+Changelog: 15-10-2026 02:31:31
+
+No translations (owner's decision): core's create_app() no longer takes lang, and AppInfo no longer has languages; the app was English only already and stays so.
+
 Changelog: 15-10-2026 02:18:10
 
 Tests: launcher_python reads the launchers that run in the caller's folder (exec "<venv>/bin/python" -c ..., Bazzite pkgxtractor and Bazzite UMD File Renamer) as before.

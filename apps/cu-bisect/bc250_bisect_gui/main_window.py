@@ -260,7 +260,8 @@ class MainWindow(QWidget):
             "Start bc250-cu-bisect.sh with:\n\n"
             "  load time: {t}s\n  rounds: {r}\n  baseline: {b}\n"
             "  control-only: {co}\n  same-boot: {sb}\n  unattended: {au}\n  no-watch: {nw}\n\n"
-            "This window will close and the run continues in a terminal.").format(t=opts.time_secs, r=opts.rounds, b=opts.baseline or "auto-detect",
+            "This window will close and the run continues in a terminal."
+        ).format(t=opts.time_secs, r=opts.rounds, b=opts.baseline or "auto-detect",
                   co=opts.control_only, sb=opts.same_boot, au=opts.unattended, nw=opts.no_watch)
         if QMessageBox.question(self, APP_NAME, summary) != QMessageBox.StandardButton.Yes:
             return

@@ -1,3 +1,35 @@
+Changelog: 15-10-2026 03:23:26
+
+The wiki shows the app pictures as WebP: tools/mkdocs/hooks.py makes a WebP copy of every PNG or JPG from an app's images/ or portal/images/apps/ that a page names (59 pictures, 2.1 MB instead of 12.5 MB; the apps' 512 px icons drop from about 500 KB to about 60 KB each) and points the built pages at the copies. The pictures in the repository stay PNG, as the apps, installers and portal load them, and the chapters keep naming the PNG, which Bazzite Test also shows from its own images/. Without Pillow the wiki shows the PNGs as before. Pillow (>=12,<13) is in requirements-dev.txt and in the wiki builds of ci.yml and docs.yml; the build takes about 2.5 seconds. Tests: tools/tests/test_mkdocs_hooks.py.
+
+Changelog: 15-10-2026 03:18:04
+
+The wiki's "What is BC-250" page has the exact price Craft Computing paid for the rack in March 2024: brand new, twelve boards, 699.99 dollars with shipping (from the listing shown in the video), about a twentieth of the 13,499 euros it was listed at in 2022.
+
+Changelog: 15-10-2026 03:13:12
+
+The screenshots in the wiki's Governor and CU Bisect chapters are WebP (2.05 MB of PNG, now 0.9 MB). They were the only pictures in the app folders that no app, installer or test uses: the apps' icons (images/<app-id>.png and -128.png) and the portal's tiles (portal/images/apps/) are loaded as PNG by the apps, installers and portal, so they stay PNG.
+
+Changelog: 15-10-2026 03:10:37
+
+The wiki's "What is BC-250" page tells how the board's second life started: Craft Computing's test of a complete 4U12G rack in March 2024 (bought for around 500 dollars, found unusable for gaming with the firmware and drivers of the time; linked), and how modified firmware, Linux drivers and tools such as this suite changed that.
+
+Changelog: 15-10-2026 03:08:07
+
+The wiki's "What is BC-250" page has the board's background: where it comes from (AMD's mining board in ASRock Rack's 4U12G BC-250, twelve boards per rack, listed at 13,499 euros in early 2022, the PS5-derived Ariel chip), how it became a standalone board after Ethereum stopped mining in September 2022, and what is on it (processor, graphics, memory, ports, power, cooling, the missing video engine firmware). The wiki's own pictures are WebP: the home page's board, controller and portal pictures (3.6 MB of PNG, now 295 KB) and the icon in the header and the Home footer (113 KB, now 19 KB); the favicon stays images/wiki-icon.png.
+
+Changelog: 15-10-2026 03:01:59
+
+The wiki's "What is BC-250" page shows the board (owner's pictures and clip): a section The board with photos of the top and the back side by side (each a link to its large version) and the two sides as labelled illustrations, and a section In motion with an 8-second animation with sound. The pictures are WebP in docs/images/bc250/ (640 KB together, from 7.6 MB of PNG; the photos keep their transparent background), the clip is docs/videos/bc250-clip.mp4 (H.264 720p with AAC sound, 1.9 MB from 18 MB, its first frame as the poster). docs/stylesheets/suite.css: .board-photos (two columns on a wide screen, one on a narrow one) and .board-video.
+
+Changelog: 15-10-2026 02:51:16
+
+The wiki's header shows the suite's name, BC250 Bazzite Suite, beside its icon again (owner's request); like the icon it links to Home. On a narrow screen it comes after the menu button, smaller, and is cut off with an ellipsis before it pushes GitHub and Wiki away (tools/mkdocs/overrides/partials/header.html, .md-header__name in docs/stylesheets/suite.css).
+
+Changelog: 15-10-2026 02:31:31
+
+No translations any more (owner's decision): every app is English only, Qt's own dialog buttons included. Gone: the .ts/.qm files of the Governor Manager, HelixSR, CU Unlock and both Cores GUIs, the language pickers (HelixSR's Help page, Bazzite Test's settings), --lang in every GUI that had it, the Governor's tools/i18n and HelixSR's translation tools, the translation tests, core's translator loading and every tr()/translate()/QT_TRANSLATE_NOOP call (1,231, unwrapped by a script that proved, per file, that the code is the old code with each call replaced by its English text). The wiki's chapters (cu-bisect, cores-bisect, helixsr, bazzite-test) and development pages no longer describe languages. A language saved in an app's settings is ignored.
+
 Changelog: 15-10-2026 02:18:10
 
 The launchers of Bazzite pkgxtractor and Bazzite UMD File Renamer, the two apps that take paths on the command line, stay in the folder they are started from, so a relative path means what it says (see their CHANGELOGs). The wiki's architecture page describes that launcher form beside the usual one; the other apps take no paths and keep theirs.

@@ -1,3 +1,11 @@
+Changelog: 15-10-2026 03:27:56
+
+Release 0.1.1.
+
+Changelog: 15-10-2026 02:31:31
+
+No translations (owner's decision): core's create_app() no longer takes lang, and AppInfo no longer has languages; the app was English only already and stays so.
+
 Changelog: 15-10-2026 02:18:10
 
 A relative path on the command line works: bazzite-umd-file-renamer games, typed in ~/PSP, means ~/PSP/games. The launcher changed into the app folder, so such a path pointed into the app instead. It now stays in the folder it is started from; python takes the package and its bundled bc250_core from the app folder all the same (install.sh's RUN_MODULE, which puts the app folder first on sys.path where python -m put the current folder). The path is made absolute before it is loaded, saved as the last folder or handed to an open window, which runs in another folder. The installer test runs the launcher from another folder with a look-alike package in it.

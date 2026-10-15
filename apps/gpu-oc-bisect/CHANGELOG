@@ -1,3 +1,11 @@
+Changelog: 15-10-2026 03:27:57
+
+Release 0.1.5.
+
+Changelog: 15-10-2026 02:31:31
+
+No translations (owner's decision): the app is English only, Qt's own dialog buttons included. Gone: --lang and the translator set-up, TRANSLATIONS_DIR; every tr() is its English text, unchanged.
+
 Changelog: 15-10-2026 02:10:51
 
 Release 0.1.4.

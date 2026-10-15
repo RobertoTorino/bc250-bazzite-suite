@@ -476,7 +476,7 @@ conditions later, boot, run `sudo ./bc250-cu-unlock.sh --uninstall`, and reboot 
 > one reading the hardware directly, at the moment you ask.
 
 ### BC Bisect GUI (initial setup launcher)
-![bc-cu-bisect-gui.png](../assets/cu-bisect/bc-cu-bisect-gui.png)
+![bc-cu-bisect-gui.webp](../assets/cu-bisect/bc-cu-bisect-gui.webp)
 
 `bc250_bisect_gui` is an optional PyQt6 launcher for `bc250-cu-bisect.sh` itself - a menu-driven
 "initial setup" screen for noob-friendly first runs. It doesn't run the bisect in-process: pick the
@@ -522,7 +522,7 @@ xfce4-terminal, foot, alacritty, kitty, x-terminal-emulator or xterm - `$TERMINA
 the GUI shows an error if none is found.
 
 ### BC Unlock GUI
-![bc-cu-unlock.png](../assets/cu-bisect/bc-cu-unlock.png)
+![bc-cu-unlock.webp](../assets/cu-bisect/bc-cu-unlock.webp)
 
 `bc250_unlock_gui` is an optional PyQt6 front-end for `bc250-cu-unlock.sh`. It doesn't take your word for
 it: it reads `bc250-cu-bisect.sh`'s own recorded results and only enables **Install** once they actually

@@ -8,8 +8,8 @@ hide:
 
 <section class="home-hero" markdown>
 <div class="home-hero__pictures" markdown>
-![A BC-250 board](images/home/bc250-board.png){ .home-hero__board }
-![A DualShock 4 controller](images/home/ds4-controller.png){ .home-hero__controller }
+![A BC-250 board](images/home/bc250-board.webp){ .home-hero__board }
+![A DualShock 4 controller](images/home/ds4-controller.webp){ .home-hero__controller }
 </div>
 <div class="home-hero__text" markdown>
 # Tools for every part of the board. { .home-hero__lead }
@@ -79,7 +79,7 @@ marked, and the portal asks before it installs or opens them.
 
 [About the portal](portal.md){ .md-button }
 </div>
-![The portal with its app tiles](images/home/portal.png){ .home-split__picture }
+![The portal with its app tiles](images/home/portal.webp){ .home-split__picture }
 </div>
 </section>
 

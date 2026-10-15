@@ -1,3 +1,11 @@
+Changelog: 15-10-2026 03:27:56
+
+Version 0.1.4.
+
+Changelog: 15-10-2026 02:31:31
+
+No translations: create_app() and run_app() take no lang any more and load no translator (Qt's own, core's or the app's); AppInfo loses translations_dir, catalog and languages, and DEFAULT_LANGUAGES is gone; help keeps HelpView and loses HelpPage, which only added a language picker; updates and widgets use their English text directly. text.fmt() and fill() stay, for placeholders. Tests follow.
+
 Changelog: 15-10-2026 02:10:51
 
 Version 0.1.3.

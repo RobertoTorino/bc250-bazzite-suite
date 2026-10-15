@@ -140,7 +140,7 @@ def test_save_log(window, dialogs, tmp_path, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *a, **k: (str(target), ""))
     window.save_log()
     assert dialogs.titles()[-1] == "Log saved successfully"
-    text = target.read_text(encoding="utf-8", newline="")
+    text = target.read_bytes().decode("utf-8")              # as written, line endings untranslated
     assert text.startswith("--\n[") and "log session for Connect\n---\nGET / HTTP/1.0\n\n\n-----\n" in text
     assert window._settings.value("paths/lastLogDir") == str(tmp_path)
 

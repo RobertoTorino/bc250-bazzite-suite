@@ -1,3 +1,11 @@
+Changelog: 15-10-2026 03:27:56
+
+Release 0.1.11.
+
+Changelog: 15-10-2026 02:31:31
+
+No translations (owner's decision): core's create_app() no longer takes lang, and AppInfo no longer has languages; the app was English only already and stays so.
+
 Changelog: 15-10-2026 02:10:51
 
 Release 0.1.10.

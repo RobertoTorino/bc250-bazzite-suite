@@ -4,16 +4,29 @@
 * assets/apps/<key>.png    the small app icons the portal shows on its cards (portal/images/apps/)
 * assets/<app>/<file>      an app's own images (apps/<app>/images/): its icon and its screenshots
 
-The wiki's own icon (header, footer and favicon) is a real file in docs/: images/wiki-icon.png."""
+The apps, their installers and the portal load these as PNG, so they stay PNG in the repository. The wiki gets a
+WebP copy of each PNG and JPG instead, made while it is built (a tenth of the size for the apps' icons), and its
+pages point at those copies; the chapters themselves keep naming the PNG, which Bazzite Test also shows from its
+own images/ folder. Without Pillow the wiki simply shows the PNGs.
+
+The wiki's own icon is a real file in docs/: images/wiki-icon.webp in the header and footer, images/wiki-icon.png as
+the favicon (a PNG favicon works everywhere)."""
 
 from __future__ import annotations
 
+import io
+import re
+from functools import lru_cache
 from pathlib import Path
 
 from mkdocs.structure.files import File
 
 SUITE = Path(__file__).resolve().parents[2]
 PICTURES = {".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"}
+CONVERTED = {".png", ".jpg", ".jpeg"}
+WEBP_QUALITY = 85
+_ASSET = re.compile(r"assets/[a-z0-9-]+/[A-Za-z0-9_.-]+\.(?:png|jpe?g)\b")
+_webp: set[str] = set()                 # the asset paths that have a WebP copy in this build
 
 
 def pictures() -> dict[str, Path]:
@@ -25,7 +38,41 @@ def pictures() -> dict[str, Path]:
     return {uri: p for uri, p in found.items() if p.suffix.lower() in PICTURES}
 
 
+def webp_uri(uri: str) -> str:
+    return uri.rsplit(".", 1)[0] + ".webp"
+
+
+@lru_cache(maxsize=None)
+def to_webp(path: Path, mtime: float) -> bytes | None:
+    """The picture as WebP (transparency kept), or None without Pillow. mtime keys the cache for mkdocs serve."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return None
+    with Image.open(path) as image:
+        out = io.BytesIO()
+        image.save(out, "WEBP", quality=WEBP_QUALITY, alpha_quality=100)
+        return out.getvalue()
+
+
+def shown(docs_dir: str) -> set[str]:
+    """The asset paths the pages name: only those get a WebP copy (the Steam artwork and the like do not)."""
+    return {m.group(0) for md in Path(docs_dir).rglob("*.md") for m in _ASSET.finditer(md.read_text(encoding="utf-8"))}
+
+
 def on_files(files, config):
+    _webp.clear()
+    wanted = shown(config["docs_dir"])
     for uri, path in pictures().items():
         files.append(File.generated(config, uri, abs_src_path=str(path)))
+        if uri in wanted and path.suffix.lower() in CONVERTED and not path.with_suffix(".webp").exists():
+            data = to_webp(path, path.stat().st_mtime)
+            if data is not None:
+                files.append(File.generated(config, webp_uri(uri), content=data))
+                _webp.add(uri)
     return files
+
+
+def on_page_markdown(markdown, page, config, files):
+    """Point the page at the WebP copies; the chapter's own text keeps the PNG names."""
+    return _ASSET.sub(lambda m: webp_uri(m.group(0)) if m.group(0) in _webp else m.group(0), markdown)

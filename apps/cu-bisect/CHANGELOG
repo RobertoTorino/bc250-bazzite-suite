@@ -1,3 +1,15 @@
+Changelog: 15-10-2026 03:27:57
+
+Release 0.1.5.
+
+Changelog: 15-10-2026 03:13:12
+
+The two screenshots the wiki's chapter shows (images/bc-cu-bisect-gui.png and bc-cu-unlock.png) are WebP. The apps do not use them; their icons stay PNG.
+
+Changelog: 15-10-2026 02:31:31
+
+No translations (owner's decision): the app is English only, Qt's own dialog buttons included. Gone: bc250_unlock_gui/translations (.ts and .qm), --lang and the translator set-up of both GUIs, TRANSLATIONS_DIR; every tr() is its English text, unchanged.
+
 Changelog: 15-10-2026 02:10:51
 
 Release 0.1.4.

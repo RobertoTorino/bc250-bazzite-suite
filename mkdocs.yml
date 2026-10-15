@@ -13,7 +13,7 @@ hooks:
 theme:
   name: material
   custom_dir: tools/mkdocs/overrides
-  logo: images/wiki-icon.png
+  logo: images/wiki-icon.webp
   favicon: images/wiki-icon.png
   font:
     text: Inter

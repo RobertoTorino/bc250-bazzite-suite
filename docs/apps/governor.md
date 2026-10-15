@@ -130,7 +130,7 @@ timing, frequency thresholds, safe points, backups and the service page work the
 <details markdown="1">
 <summary>🔽 1 - Overview page </summary>
 
-[![Overview](../assets/governor/01-overview.png)](../assets/governor/01-overview.png)
+[![Overview](../assets/governor/01-overview.webp)](../assets/governor/01-overview.webp)
 
 </details>
 
@@ -141,7 +141,7 @@ timing, frequency thresholds, safe points, backups and the service page work the
 <details markdown="1">
 <summary>🔽 2 - CPU usage </summary>
 
-[![CPU usage](../assets/governor/02-cpu-usage.png)](../assets/governor/02-cpu-usage.png)
+[![CPU usage](../assets/governor/02-cpu-usage.webp)](../assets/governor/02-cpu-usage.webp)
 
 </details>
 
@@ -152,7 +152,7 @@ timing, frequency thresholds, safe points, backups and the service page work the
 <details markdown="1">
 <summary>🔽 3 - Tuning </summary>
 
-[![Tuning](../assets/governor/03-tuning.png)](../assets/governor/03-tuning.png)
+[![Tuning](../assets/governor/03-tuning.webp)](../assets/governor/03-tuning.webp)
 
 </details>
 
@@ -167,7 +167,7 @@ timing, frequency thresholds, safe points, backups and the service page work the
 <details markdown="1">
 <summary>🔽 4 - Safe points </summary>
 
-[![Safe points](../assets/governor/04-safe-points.png)](../assets/governor/04-safe-points.png)
+[![Safe points](../assets/governor/04-safe-points.webp)](../assets/governor/04-safe-points.webp)
 
 </details>
 
@@ -185,7 +185,7 @@ timing, frequency thresholds, safe points, backups and the service page work the
 <details markdown="1">
 <summary>🔽 5 - Performance </summary>
 
-[![Performance](../assets/governor/05-performance.png)](../assets/governor/05-performance.png)
+[![Performance](../assets/governor/05-performance.webp)](../assets/governor/05-performance.webp)
 
 </details>
 
@@ -198,7 +198,7 @@ timing, frequency thresholds, safe points, backups and the service page work the
 <details markdown="1">
 <summary>🔽 6 - Backups </summary>
 
-[![Backups](../assets/governor/06-backups.png)](../assets/governor/06-backups.png)
+[![Backups](../assets/governor/06-backups.webp)](../assets/governor/06-backups.webp)
 
 </details>
 
@@ -207,7 +207,7 @@ timing, frequency thresholds, safe points, backups and the service page work the
 <details markdown="1">
 <summary>🔽 7 - Service </summary>
 
-[![Service](../assets/governor/07-service.png)](../assets/governor/07-service.png)
+[![Service](../assets/governor/07-service.webp)](../assets/governor/07-service.webp)
 
 </details>
 
@@ -218,7 +218,7 @@ timing, frequency thresholds, safe points, backups and the service page work the
 <details markdown="1">
 <summary>🔽 8 - Settings </summary>
 
-[![Settings](../assets/governor/08-settings.png)](../assets/governor/08-settings.png)
+[![Settings](../assets/governor/08-settings.webp)](../assets/governor/08-settings.webp)
 
 </details>
 
@@ -231,7 +231,7 @@ timing, frequency thresholds, safe points, backups and the service page work the
 <details markdown="1">
 <summary>🔽 9 - Help </summary>
 
-[![Help](../assets/governor/09-help.png)](../assets/governor/09-help.png)
+[![Help](../assets/governor/09-help.webp)](../assets/governor/09-help.webp)
 
 </details>
 
