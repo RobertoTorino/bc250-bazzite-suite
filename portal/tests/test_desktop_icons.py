@@ -1,5 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+import re
+from pathlib import Path
+
 from bc250_portal import desktop_icons
+
+APPS = Path(__file__).resolve().parents[2] / "apps"
 
 
 def menu_with(tmp_path, *names):
@@ -32,3 +37,23 @@ def test_an_icon_without_a_menu_entry_is_not_the_suites(tmp_path, desktop):
 def test_no_menu_or_desktop_folder(tmp_path):
     assert desktop_icons.launchers(tmp_path / "none") == []
     assert desktop_icons.add(tmp_path / "no-desktop", menu_with(tmp_path, "bc250-hdmi-cec.desktop")) == []
+
+
+def test_the_apps_not_named_bc250_are_the_suites_too(tmp_path, desktop):
+    menu = menu_with(tmp_path, "simple-demo-tool.desktop", "bazzite-netcatgui.desktop", "bazzite-datstation.desktop",
+                     "bazzite-other.desktop")
+    assert desktop_icons.add(desktop, menu) == ["bazzite-datstation.desktop", "bazzite-netcatgui.desktop",
+                                                "simple-demo-tool.desktop"]
+    assert desktop_icons.remove(desktop, menu) == ["bazzite-datstation.desktop", "bazzite-netcatgui.desktop",
+                                                   "simple-demo-tool.desktop"]
+    assert list(desktop.iterdir()) == []
+
+
+def test_every_installers_menu_entry_is_known():
+    """A new app whose menu entry is not bc250-*.desktop needs adding to OTHERS, or its Desktop icon stays."""
+    for installer in sorted(APPS.glob("*/install.sh")):
+        app_id = re.search(r'^APP_ID="([^"]+)"', installer.read_text(encoding="utf-8"), re.M)
+        if app_id is None:
+            continue
+        name = f"{app_id[1]}.desktop"
+        assert Path(name).match(desktop_icons.PATTERN) or name in desktop_icons.OTHERS, installer

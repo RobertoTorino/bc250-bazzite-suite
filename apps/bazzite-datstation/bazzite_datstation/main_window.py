@@ -9,7 +9,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from PyQt6.QtCore import QThread, Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtGui import QFontMetrics, QKeyEvent
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMenu, QMessageBox, QStackedWidget, QToolButton, QVBoxLayout, QWidget
 
 from bc250_core import steam
@@ -66,7 +66,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} {__version__}")
         self.resize(1120, 760)
-        self.setMinimumSize(900, 620)
+        self.setMinimumSize(1040, 620)                  # four tiles on a row, each name on one line
         self.opener = opener
         self.steam_dir = steam_dir
         self.launcher = launcher
@@ -86,8 +86,11 @@ class MainWindow(QMainWindow):
         self.header = AppHeader(LOGO_PATH, APP_NAME, __version__)
         self.steam_state = StatusText("Steam")
         self.header.add_state(self.steam_state)
+        self._align_state_with_title()
         self.settings_button = QToolButton()
         self.settings_button.setText("Menu")
+        self.settings_button.setProperty("quiet", True)         # the look of the pages' Back button
+        self.settings_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.settings_button.setToolTip("Add to Steam, the scores, about the app")
         self.settings_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.settings_menu = QMenu(self.settings_button)
@@ -129,6 +132,20 @@ class MainWindow(QMainWindow):
         QApplication.instance().aboutToQuit.connect(self._save_settings)
         self.refresh_steam_state()
         QTimer.singleShot(0, self.front.focus_tile)
+
+    def _align_state_with_title(self) -> None:
+        """The Steam state stands on the title's baseline: both sit at the bottom of the title row, the state raised
+        by the difference between the two fonts' descents."""
+        row = self.header.title_row
+        self.header.title.ensurePolished()                  # the fonts come from style sheets
+        self.steam_state.label.ensurePolished()
+        row.setAlignment(self.header.title, Qt.AlignmentFlag.AlignBottom)
+        row.setAlignment(self.steam_state, Qt.AlignmentFlag.AlignBottom)
+        title_descent = QFontMetrics(self.header.title.font()).descent()
+        state_descent = QFontMetrics(self.steam_state.label.font()).descent()
+        margins = self.steam_state.layout().contentsMargins()
+        margins.setBottom(max(0, title_descent - state_descent))
+        self.steam_state.layout().setContentsMargins(margins)
 
     # -- navigation ---------------------------------------------------------------------------------------------
 

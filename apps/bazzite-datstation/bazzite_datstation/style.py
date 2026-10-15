@@ -53,8 +53,10 @@ QPushButton:disabled, QToolButton:disabled {{
 }}
 QPushButton[primary="true"] {{ background: white; color: {PS_BLUE}; }}
 QPushButton[primary="true"]:hover {{ background: #DCEBFF; }}
-QPushButton[quiet="true"] {{ background: transparent; border: 1px solid rgba(255, 255, 255, 0.45); }}
-QPushButton[quiet="true"]:hover {{ background: rgba(255, 255, 255, 0.08); }}
+QPushButton[quiet="true"], QToolButton[quiet="true"] {{
+    background: transparent; border: 1px solid rgba(255, 255, 255, 0.45);
+}}
+QPushButton[quiet="true"]:hover, QToolButton[quiet="true"]:hover {{ background: rgba(255, 255, 255, 0.08); }}
 QPushButton[link="true"] {{
     background: transparent; border: none; color: {LINK}; text-align: left; padding: 2px 0; font-weight: 700;
 }}
@@ -65,6 +67,10 @@ QPushButton[tile="true"] {{
 QPushButton[tile="true"]:hover {{ background: #0F3878; border-color: {LINK}; }}
 QPushButton[tile="true"]:focus {{ border: 2px solid white; }}
 QPushButton[tile="true"]:pressed {{ background: {PS_BLUE}; }}
+QPushButton[soon="true"]:disabled {{
+    background: rgba(255, 255, 255, 0.03); border: 1px dashed rgba(255, 255, 255, 0.15); color: {DISABLED};
+    font-size: 15px; font-weight: 700; text-align: center;
+}}
 QPushButton[option="true"] {{ font-size: 15px; padding: 12px 16px; text-align: left; }}
 QPushButton[option="true"][result="right"] {{ background: {GREEN}; border-color: {GREEN}; }}
 QPushButton[option="true"][result="wrong"] {{ background: {RED}; border-color: {RED}; }}

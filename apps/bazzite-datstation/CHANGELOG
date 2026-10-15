@@ -1,3 +1,20 @@
+Changelog: 16-10-2026 01:19:38
+
+Release 0.1.1.
+
+Changelog: 16-10-2026 00:54:44
+
+Fixed. images/bazzite-datstation-128.png is the 128 px copy of the new icon (images/bazzite-datstation.png), scaled
+from the 512 px file; the portal's tile shows it.
+
+Changelog: 16-10-2026 00:18:19
+
+Fixed. The front page is a grid of four by four: four tiles on a row that share the window's width, so no gap is
+left on the right, and the slots without a feature yet hold a greyed-out Coming Soon tile, which takes no focus. A
+tile has its symbol beside its name, so the four rows fit the window; the grid scrolls in a lower window, and the
+window's least width is 1040 px. The Menu button has the look of the pages' Back button (transparent, a white
+border). The Steam state stands on the baseline of the app's title.
+
 Changelog: 15-10-2026 23:29:43
 
 Release 0.1.0.

@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import QMessageBox
 from bc250_core import steam
 
 from bazzite_datstation import history_page, news
-from bazzite_datstation.front_page import KEYS
+from bazzite_datstation.front_page import COLUMNS, KEYS, ROWS
 from bazzite_datstation.main_window import GUIDES_URL, MainWindow
 from bazzite_datstation.news import NewsItem
 from bazzite_datstation.quiz import ALL, QUICK, State
@@ -69,13 +69,37 @@ def test_arrow_keys_move_between_tiles(window):
     QTest.keyClick(window.front, Qt.Key.Key_Right)
     assert window.focusWidget() is window.front.tile("history")
     QTest.keyClick(window.front, Qt.Key.Key_Down)
-    assert window.focusWidget() is window.front.tile("guides")
+    assert window.focusWidget() is window.front.tile("news")
     QTest.keyClick(window.front, Qt.Key.Key_Left)
-    assert window.focusWidget() is window.front.tile("regions")
+    assert window.focusWidget() is window.front.tile("guides")
     QTest.keyClick(window.front, Qt.Key.Key_Up)
     assert window.focusWidget() is window.front.tile("quiz")
     QTest.keyClick(window.front, Qt.Key.Key_Up)                    # the edge: the focus stays
     assert window.focusWidget() is window.front.tile("quiz")
+    window.front.focus_tile("news")
+    QTest.keyClick(window.front, Qt.Key.Key_Down)                  # a Coming Soon slot below: the focus stays
+    assert window.focusWidget() is window.front.tile("news")
+
+
+def test_four_by_four_with_coming_soon_in_the_empty_slots(window):
+    front = window.front
+    assert len(front.tiles) + len(front.coming_soon) == COLUMNS * ROWS == 16
+    assert all(not slot.isEnabled() and slot.text() == "Coming Soon" and slot.focusPolicy() == Qt.FocusPolicy.NoFocus
+               for slot in front.coming_soon)
+    row = [front.tiles[n] for n in range(COLUMNS)]
+    widths = [tile.width() for tile in row]
+    assert len({tile.y() for tile in row}) == 1 and max(widths) - min(widths) <= 1          # the columns share the width
+    right = row[-1].mapTo(front, row[-1].rect().topRight()).x()
+    assert right > front.width() - 40                                   # the row fills the width: no gap on the right
+
+
+def test_the_menu_looks_like_back_and_the_state_stands_on_the_titles_baseline(window):
+    assert window.settings_button.property("quiet") is True
+    assert window.pages["quiz"].back_button.property("quiet") is True
+    title, state = window.header.title, window.steam_state.label
+    title_baseline = title.mapTo(window, title.rect().bottomLeft()).y() - title.fontMetrics().descent()
+    state_baseline = state.mapTo(window, state.rect().bottomLeft()).y() - state.fontMetrics().descent()
+    assert abs(title_baseline - state_baseline) <= 1
 
 
 def test_the_steam_state_and_adding_to_steam(window, qapp, monkeypatch):

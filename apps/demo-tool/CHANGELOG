@@ -1,3 +1,12 @@
+Changelog: 16-10-2026 01:19:38
+
+Release 0.1.10.
+
+Changelog: 16-10-2026 00:54:44
+
+Fixed. images/simple-demo-tool-128.png is the 128 px copy of the new icon (images/simple-demo-tool.png), scaled from
+the 512 px file; the window's header and the portal's tile show it.
+
 Changelog: 15-10-2026 23:29:43
 
 Release 0.1.9.

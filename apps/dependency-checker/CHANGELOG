@@ -1,3 +1,12 @@
+Changelog: 16-10-2026 01:19:38
+
+Release 0.1.22.
+
+Changelog: 16-10-2026 00:54:44
+
+Fixed. images/bc250-dependency-checker-128.png is the 128 px copy of the new icon
+(images/bc250-dependency-checker.png), scaled from the 512 px file; the portal's tile shows it.
+
 Changelog: 15-10-2026 23:29:43
 
 Release 0.1.21.

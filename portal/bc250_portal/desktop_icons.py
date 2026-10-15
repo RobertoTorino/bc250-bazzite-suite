@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The apps' icons on the Desktop, which the user switches on or off in the portal ("App icons on the Desktop").
 
-Every app's installer writes an app menu entry, ~/.local/share/applications/bc250-*.desktop, and by default the same
-file on the Desktop. The portal starts every app, so the Desktop icons are optional: switched off, the portal removes
+Every app's installer writes an app menu entry, ~/.local/share/applications/bc250-*.desktop (or one of OTHERS), and
+by default the same file on the Desktop. The portal starts every app, so the Desktop icons are optional: switched off, the portal removes
 the Desktop copies of the suite's menu entries; switched on, it copies every installed app's menu entry there. Only
 files named like a suite menu entry are touched, and never the portal's own icon. The menu entries always stay: the
 app menu, KDE's search and Steam's "Add a Non-Steam Game" list find the apps through them."""
@@ -17,6 +17,7 @@ from bc250_core.platform import data_home
 
 PORTAL = "bc250-bazzite-suite.desktop"
 PATTERN = "bc250-*.desktop"
+OTHERS = ("simple-demo-tool.desktop", "bazzite-netcatgui.desktop", "bazzite-datstation.desktop")  # apps not bc250-*
 
 
 def desktop_dir() -> Path:
@@ -39,7 +40,8 @@ def launchers(menu: Path) -> list[Path]:
     """The installed apps' menu entries, the portal's own left out."""
     if not menu.is_dir():
         return []
-    return sorted(p for p in menu.glob(PATTERN) if p.name != PORTAL and p.is_file())
+    found = set(menu.glob(PATTERN)) | {menu / name for name in OTHERS}
+    return sorted(p for p in found if p.name != PORTAL and p.is_file())
 
 
 def on_desktop(desktop: Path, menu: Path) -> list[Path]:

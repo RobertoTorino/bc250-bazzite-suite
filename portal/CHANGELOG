@@ -1,3 +1,17 @@
+Changelog: 16-10-2026 00:54:44
+
+Fixed. The suite has a new icon, images/bc250-bazzite-suite.png, with its 128 px copy
+images/bc250-bazzite-suite-128.png. The tile icons (images/apps/) are copies of the apps' 128 px icons again:
+portal.png, bazzite-datstation, demo-tool, helixsr, pcsx2-manager, sftp-tools, portal-dependency-checker and
+decky-manager show the new icons; hdmi-cec, installer-tests and rpcs3-manager, which had gone, are back.
+
+Changelog: 16-10-2026 00:18:19
+
+Fixed. The Desktop icons of Simple Demo Tool, Bazzite NetcatGUI and Bazzite DatStation: their menu entries are not
+named bc250-*.desktop, so the portal did not count them as the suite's, and with "App icons on the Desktop" off it
+left the icons their installers put there. desktop_icons.OTHERS lists them; a test checks that every app's menu
+entry is matched.
+
 Changelog: 15-10-2026 23:38:34
 
 Release 1.2.0.

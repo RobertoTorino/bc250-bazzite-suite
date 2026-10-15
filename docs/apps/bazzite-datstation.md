@@ -49,8 +49,9 @@ the app asks you to switch. **Remove from Steam** takes it out again, artwork in
 ## Using it
 
 The first line shows the logo, the name and version, whether the app is in Steam, and the **Menu** (Add to Steam,
-Remove from Steam, Scores & Trophies, the project page, About). Under it the front page: one tile per feature.
-A tile opens its page; **Back** or Escape returns to the tiles.
+Remove from Steam, Scores & Trophies, the project page, About). Under it the front page: four rows of four tiles,
+one per feature; the others say Coming Soon and are greyed out. A tile opens its page; **Back** or Escape returns
+to the tiles.
 
 With a controller in Game Mode, Steam Input's default desktop layout does the work: the D-pad or the left stick
 moves between the tiles and the buttons, A (cross) presses one, B (circle) is Escape and goes back. The keys 1

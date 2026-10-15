@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The front page: one tile per feature, in a grid. A tile is a button with the feature's symbol (the shapes of
-the controller's buttons for the first four), its name and one line on what it opens. The arrow keys move between
+"""The front page: one tile per feature, in a grid of four by four; the slots no feature fills yet hold a greyed-out
+Coming Soon tile, which takes no focus and opens nothing. A tile is a button with the feature's symbol (the shapes of
+the controller's buttons for the first four) beside its name, and a few lines on what it opens. The arrow keys move between
 the tiles, so a controller through Steam Input (a D-pad as arrow keys, A as Enter) works as well as a mouse.
 
 The symbols are characters every common font has (the geometric shapes, the multiplication sign, the star): the
@@ -11,14 +12,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QKeyEvent
-from PyQt6.QtWidgets import QGridLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtCore import QSize, Qt, pyqtSignal
+from PyQt6.QtGui import QKeyEvent, QShowEvent
+from PyQt6.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
 
 from .style import label
 
-COLUMNS = 3
-TILE_WIDTH, TILE_HEIGHT = 260, 150
+COLUMNS, ROWS = 4, 4
+TILE_MIN_WIDTH, TILE_HEIGHT = 200, 118          # the tiles share the width of the row
 TRIANGLE, CIRCLE, CROSS, SQUARE = "#48B67E", "#E24C4C", "#5AA0FF", "#E07AB8"
 
 
@@ -55,24 +56,48 @@ class Tile(QPushButton):
         super().__init__(parent)
         self.feature = feature
         self.setProperty("tile", True)
-        self.setFixedSize(TILE_WIDTH, TILE_HEIGHT)
+        self.setFixedHeight(TILE_HEIGHT)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setToolTip(f"Open {feature.name}")
         self.setAccessibleName(feature.name)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 12, 16, 12)
-        layout.setSpacing(4)
+        layout.setSpacing(6)
+        top = QHBoxLayout()
+        top.setSpacing(10)
         symbol = QLabel(feature.symbol)
-        symbol.setStyleSheet(f"color:{feature.colour}; font-size:28px; font-weight:900;")
+        symbol.setStyleSheet(f"color:{feature.colour}; font-size:24px; font-weight:900;")
         name = QLabel(feature.name)
-        name.setStyleSheet("color:white; font-size:16px; font-weight:800;")
+        name.setStyleSheet("color:white; font-size:15px; font-weight:800;")
         text = label(feature.text, muted=True, wrap=True)
         text.setStyleSheet("font-size:12px;")
         for widget in (symbol, name, text):
             widget.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-            layout.addWidget(widget)
+        top.addWidget(symbol)
+        top.addWidget(name, 1)
+        layout.addLayout(top)
+        layout.addWidget(text)
         layout.addStretch(1)
+
+    def minimumSizeHint(self) -> QSize:  # noqa: N802  (Qt's name)
+        """A button's own hint knows only its text; the tile's comes from its layout: the name on one line."""
+        return self.layout().minimumSize().expandedTo(QSize(TILE_MIN_WIDTH, TILE_HEIGHT))
+
+
+class ComingSoon(QPushButton):
+    """An empty slot of the grid: a tile's frame with "Coming Soon", disabled, so it is greyed out."""
+
+    def __init__(self, parent: QWidget | None = None):
+        super().__init__("Coming Soon", parent)
+        self.setProperty("tile", True)
+        self.setProperty("soon", True)
+        self.setMinimumWidth(TILE_MIN_WIDTH)
+        self.setFixedHeight(TILE_HEIGHT)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setEnabled(False)
 
 
 class FrontPage(QWidget):
@@ -84,18 +109,38 @@ class FrontPage(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(12)
         layout.addWidget(label("What do you want to open?", title=True))
-        grid = QGridLayout()
+        # The grid scrolls when the window is lower than its four rows (or narrower than its tiles need).
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        holder = QWidget()
+        self.grid = grid = QGridLayout(holder)
+        grid.setContentsMargins(0, 0, 0, 0)
         grid.setHorizontalSpacing(16)
-        grid.setVerticalSpacing(16)
+        grid.setVerticalSpacing(14)
         self.tiles: list[Tile] = []
-        for n, feature in enumerate(FEATURES):
-            tile = Tile(feature)
-            tile.clicked.connect(lambda _checked=False, key=feature.key: self.opened.emit(key))
+        self.coming_soon: list[ComingSoon] = []
+        for n in range(COLUMNS * ROWS):
+            if n < len(FEATURES):
+                tile = Tile(FEATURES[n])
+                tile.clicked.connect(lambda _checked=False, key=FEATURES[n].key: self.opened.emit(key))
+                self.tiles.append(tile)
+            else:
+                tile = ComingSoon()
+                self.coming_soon.append(tile)
             grid.addWidget(tile, n // COLUMNS, n % COLUMNS)
-            self.tiles.append(tile)
-        grid.setColumnStretch(COLUMNS, 1)
-        layout.addLayout(grid)
-        layout.addStretch(1)
+        for column in range(COLUMNS):
+            grid.setColumnStretch(column, 1)
+        grid.setRowStretch(ROWS, 1)
+        scroll.setWidget(holder)
+        layout.addWidget(scroll, 1)
+
+    def showEvent(self, event: QShowEvent) -> None:  # noqa: N802  (Qt's name)
+        """Every column as wide as the widest tile needs (known once the fonts are polished), so they stay equal."""
+        width = max(tile.minimumSizeHint().width() for tile in self.tiles)
+        for column in range(COLUMNS):
+            self.grid.setColumnMinimumWidth(column, width)
+        super().showEvent(event)
 
     def tile(self, key: str) -> Tile:
         return next(tile for tile in self.tiles if tile.feature.key == key)
@@ -104,7 +149,8 @@ class FrontPage(QWidget):
         (self.tile(key) if key else self.tiles[0]).setFocus(Qt.FocusReason.OtherFocusReason)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802  (Qt's name)
-        """Arrows move the focus through the grid; Enter and Space open the focused tile (a button's own)."""
+        """Arrows move the focus through the grid's features (not onto a Coming Soon slot); Enter and Space open the
+        focused tile (a button's own)."""
         focused = self.focusWidget()
         if isinstance(focused, Tile):
             index = self.tiles.index(focused)

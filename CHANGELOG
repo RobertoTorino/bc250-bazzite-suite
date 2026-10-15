@@ -1,3 +1,8 @@
+Changelog: 16-10-2026 00:18:19
+
+The wiki's logo and favicon (docs/images/wiki-icon.png and .webp) are the suite's current icon, made from
+portal/images/bc250-bazzite-suite.png; they still showed the icon it replaced.
+
 Changelog: 15-10-2026 23:22:38
 
 Semantic versioning (owner's decision, 15-10-2026): every new entry in an app's, core's or the portal's CHANGELOG
