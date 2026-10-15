@@ -1,3 +1,7 @@
+Changelog: 15-10-2026 07:22:42
+
+CI runs again for every push to a branch: ci.yml's push filter is branches: ["**"] instead of tags-ignore. GitHub reads a push filter with only tags-ignore as "no branch", so the previous change ran CI for no push at all (5166f51 and 2de5db6 had none, and tag-release.sh rightly tagged neither). A tag still starts no CI. Tests: tools/tests/test_ci_local.py reads the trigger as GitHub does (a branch filter, no tag filter) and checks every job's time limit.
+
 Changelog: 15-10-2026 06:59:56
 
 The wiki's GitHub settings page has a section on the GitHub CLI (gh) with the commands a release needs: the runs of a push or of one commit (--commit needs the full SHA), whether CI passed (tools/ci_state.py), the log of a failed or hung job, cancelling and running a run again, running every stopped release on a commit again at once, and reading a release's files.

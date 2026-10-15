@@ -43,3 +43,13 @@ def test_requirement_files_follow_includes(tmp_path):
     found = ci_local.requirement_files("python -m pip install -q -r requirements-dev.txt", tmp_path / "app")
     assert [p.resolve() for p in found] == [(tmp_path / "app" / "requirements-dev.txt").resolve(),
                                             (tmp_path / "requirements.txt").resolve()]
+
+
+def test_ci_runs_for_every_branch_push_and_no_tag():
+    """A push to a branch runs CI, a tag does not (tag-release.sh tags only a commit CI passed). GitHub reads a push
+    filter with only tags or tags-ignore as "no branch at all", which ran CI for no push."""
+    import yaml
+    spec = yaml.safe_load(CI.read_text(encoding="utf-8"))
+    push = spec.get("on", spec.get(True))["push"]                     # PyYAML reads the key on as True
+    assert push.get("branches") == ["**"] and not {"branches-ignore", "tags", "tags-ignore"} & set(push)
+    assert all("timeout-minutes" in job for job in spec["jobs"].values())
