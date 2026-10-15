@@ -391,7 +391,7 @@ impl Takion {
         }
         let addr = resolve(host, port)?;
         let timeout = Duration::from_secs_f64(timeout.max(0.001));
-        py.allow_threads(|| connection::Connection::connect(addr, version, crypt, timeout, tries))
+        py.detach(|| connection::Connection::connect(addr, version, crypt, timeout, tries))
             .map(Self)
             .map_err(|e| match e {
                 ConnectError::Timeout(_) => PyTimeoutError::new_err(e.to_string()),
@@ -527,8 +527,8 @@ impl Takion {
     #[pyo3(signature = (timeout=0.0))]
     fn next_event<'py>(&self, py: Python<'py>, timeout: f64) -> PyResult<Option<Bound<'py, PyTuple>>> {
         let timeout = Duration::from_secs_f64(timeout.max(0.0));
-        let Some(event) = py.allow_threads(|| self.0.next_event(timeout)) else { return Ok(None) };
-        let items: Vec<PyObject> = match event {
+        let Some(event) = py.detach(|| self.0.next_event(timeout)) else { return Ok(None) };
+        let items: Vec<Py<PyAny>> = match event {
             Event::Data { data_type, channel, data } => vec![
                 "data".into_py_any(py)?, data_type.into_py_any(py)?, channel.into_py_any(py)?, bytes(py, &data).into_py_any(py)?,
             ],
@@ -574,7 +574,7 @@ impl Takion {
     }
 
     fn close(&self, py: Python<'_>) {
-        py.allow_threads(|| self.0.close());
+        py.detach(|| self.0.close());
     }
 }
 
@@ -618,7 +618,7 @@ impl Decoder {
     /// the controller reader run meanwhile.
     fn decode<'py>(&mut self, py: Python<'py>, sample: &[u8]) -> PyResult<Vec<Bound<'py, PyDict>>> {
         let decoder = &mut self.0;
-        let frames = py.allow_threads(|| decoder.decode(sample)).map_err(decode_error)?;
+        let frames = py.detach(|| decoder.decode(sample)).map_err(decode_error)?;
         frames.into_iter().map(|frame| {
             let dict = PyDict::new(py);
             dict.set_item("width", frame.width)?;
@@ -632,7 +632,7 @@ impl Decoder {
     /// data (the planes one after another).
     fn image<'py>(&mut self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
         let decoder = &mut self.0;
-        let image = py.allow_threads(|| decoder.image()).map_err(decode_error)?;
+        let image = py.detach(|| decoder.image()).map_err(decode_error)?;
         let dict = PyDict::new(py);
         dict.set_item("format", image.format)?;
         dict.set_item("width", image.width)?;
@@ -661,7 +661,7 @@ impl AudioDecoder {
     #[pyo3(signature = (frame=None))]
     fn decode<'py>(&mut self, py: Python<'py>, frame: Option<&[u8]>) -> PyResult<Bound<'py, PyBytes>> {
         let decoder = &mut self.0;
-        let pcm = py.allow_threads(|| decoder.decode(frame)).map_err(decode_error)?;
+        let pcm = py.detach(|| decoder.decode(frame)).map_err(decode_error)?;
         let raw: Vec<u8> = pcm.iter().flat_map(|sample| sample.to_le_bytes()).collect();
         Ok(bytes(py, &raw))
     }
