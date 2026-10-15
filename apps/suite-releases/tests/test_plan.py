@@ -353,6 +353,39 @@ def test_core_and_manual_changes_count_for_the_apps_that_ship_them(repo):
     assert needs(repo)["alpha"][1] == "yes: 1 file + core"
 
 
+def test_core_bumped_with_its_change_needs_no_new_version(repo):
+    """Core went to a new version with its change (released with some apps), and another app's release still
+    carries it: that version already holds the change, so core offers itself as it is, not a higher one."""
+    sh(repo, "tag", "alpha-v0.1.1")
+    write(repo / "core/bc250_core/widgets.py", "class StatusText: pass\n")
+    assert rp.core_is_current(repo) is False                                      # changed, not bumped
+    core = unit(repo, "core")
+    rp.set_version(repo, core, "0.1.1")
+    assert rp.core_is_current(repo) is True                                       # the bump, not committed yet
+    sh(repo, "add", "-A")
+    sh(repo, "commit", "-q", "-m", "core 0.1.1")
+    core = unit(repo, "core")
+    assert core.current and core.in_apps == ["alpha"]                             # alpha-v0.1.1 has the old core
+    assert core.release_reason == "0.1.1 has it: goes into 1 app release"
+    write(repo / "core/bc250_core/widgets.py", "class StatusText: pass\n# more\n")
+    assert not unit(repo, "core").current                                         # a change after the bump
+
+
+def test_window_offers_a_current_core_as_it_is(window, repo):
+    sh(repo, "tag", "alpha-v0.1.1")
+    write(repo / "core/bc250_core/widgets.py", "class StatusText: pass\n")
+    rp.set_version(repo, unit(repo, "core"), "0.1.1")
+    window.reload()
+    core, tick, combo, _ = window.apps_page.rows[0]
+    assert core.key == "core" and combo.itemText(0) == "0.1.1" and not tick.isEnabled()
+    write(repo / "core/VERSION", "0.1.0\n")                                      # changed, not bumped
+    sh(repo, "checkout", "-q", "--", "core")
+    write(repo / "core/bc250_core/widgets.py", "class StatusText: pass\n")
+    window.reload()
+    core, tick, combo, _ = window.apps_page.rows[0]
+    assert combo.itemText(0) == "0.1.1" and tick.isEnabled()                      # the next version, to tick
+
+
 def test_window_ticks_what_needs_a_release(window, repo):
     window.apps_page.tick_needed()
     ticked = [u.key for u, tick, _, _ in window.apps_page.rows if tick.isChecked()]

@@ -1,3 +1,7 @@
+Changelog: 15-10-2026 07:07:27
+
+Core's row offers its current version when that version already holds every core change (plan.core_is_current: nothing under core/bc250_core changed since the commit that last changed core/VERSION, or a bump not committed yet), with its tick off and "0.1.5 has it: goes into 1 app release". It offered the next version (0.1.6) before, as if core needed one, when only the portal still carried an older core. A core change after its last bump offers the next version as before. Tests: core current after a bump, committed or not, and not after a later change; the row in the window.
+
 Changelog: 15-10-2026 06:31:03
 
 A selected cell in the tables and the input field being typed in show a purple outline with rounded corners (the accent colour) on a transparent background, instead of the desktop's solid blue highlight (SELECTION_STYLESHEET on the window). The line edit inside an editable version box keeps the box's own frame. Tests: a selected cell rendered, outline and no fill.
