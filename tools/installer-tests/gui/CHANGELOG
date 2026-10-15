@@ -1,3 +1,7 @@
+Changelog: 15-10-2026 02:01:27
+
+instance.py follows core's: a second launch can hand its arguments to the running instance (already_running(app_id, args), serve(..., on_args)). The window passes none, so it behaves as before: a second launch shows the open window.
+
 Changelog: 12-10-2026 08:23:31
 
 install.sh takes the options of every app's installer: --no-desktop-shortcut, --uninstall, --uninstall --purge (the app keeps no settings) and --help, given in any order.

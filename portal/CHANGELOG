@@ -1,3 +1,27 @@
+Changelog: 15-10-2026 01:26:23
+
+apps.toml lists Bazzite UMD File Renamer (bazzite-umd-file-renamer, pinned to its first release bazzite-umd-file-renamer-v0.1.0, not tagged yet) with development = true: the portal shows it under "Development only", with the icon portal/images/apps/bazzite-umd-file-renamer.png (a copy of the app's images/bazzite-umd-file-renamer-128.png). Tests: the development section holds it.
+
+Changelog: 15-10-2026 01:18:28
+
+apps.toml lists Bazzite NetcatGUI (bazzite-netcatgui, pinned to its first release bazzite-netcatgui-v0.1.0, not tagged yet) with development = true: the portal shows it under "Development only", with the icon portal/images/apps/bazzite-netcatgui.png (a copy of the app's images/bazzite-netcatgui-128.png). Tests: the development section holds it.
+
+Changelog: 15-10-2026 00:23:49
+
+The tiles of ACE Queues, Console Link, Decky Loader Manager, Dependency Checker and Memory Manager show the apps' new icons: images/apps/ace-queues.png, console-link.png, decky-manager.png, portal-dependency-checker.png and memory-manager.png are copies of each app's images/<name>-128.png. The wiki's app list and the README use the same files.
+
+Changelog: 14-10-2026 18:22:56
+
+apps.toml names the apps that are not tied to the board without the BC-250 or BC250 prefix: HelixSR Manager, System Overlay, HDMI CEC Manager, Bazzite SFTP Tools, Console Link, shadPS4 Manager, RPCS3 Manager and Decky Loader Manager. The apps that are tied to the board keep BC-250. Keys, folders and tags are unchanged; the tests use the new names.
+
+Changelog: 14-10-2026 17:35:13
+
+apps.toml lists BC-250 RPCS3 Manager (rpcs3-manager, pinned to its first release rpcs3-manager-v0.1.0, not tagged yet) with development = true: the portal shows it under "Development only", with the icon portal/images/apps/rpcs3-manager.png (a placeholder). Tests: the development section holds it.
+
+Changelog: 14-10-2026 16:15:38
+
+apps.toml lists Bazzite pkgxtractor (bazzite-pkgxtractor, pinned to its first release bazzite-pkgxtractor-v0.1.0, not tagged yet) with development = true: the portal shows it under "Development only", with the icon portal/images/apps/bazzite-pkgxtractor.png. Tests: the development section holds it.
+
 Changelog: 14-10-2026 16:07:23
 
 Release 1.1.3. Pins bazzite-test-v0.1.9, dependency-checker-v0.1.16, shadps4-manager-v0.1.2.

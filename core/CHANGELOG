@@ -1,3 +1,11 @@
+Changelog: 15-10-2026 02:10:51
+
+Version 0.1.3.
+
+Changelog: 15-10-2026 02:01:27
+
+instance: a second launch can hand its arguments to the running instance. already_running(app_id, args) sends them after the show request as an args line (a JSON list), and serve(app_id, window, on_args) gives them to on_args in the running instance, after showing the window. Without arguments the request is the plain show request it always was; an instance without on_args, or one on an older core, only shows its window; a malformed args line is dropped. For the apps that open what they are given on the command line (Bazzite pkgxtractor, Bazzite NetcatGUI, Bazzite UMD File Renamer). RoundedToolTip.install removes its event filter when the app quits (aboutToQuit): the filter saw the events of widgets and sockets destroyed after the event loop had ended, while Python was tearing down, which crashed Bazzite NetcatGUI at exit. Tests: test_instance (the plain request unchanged, the arguments handed over, no handler or a bad line only shows), test_widgets (the filter removed on quit).
+
 Changelog: 14-10-2026 00:36:43
 
 New module steam: Steam's own files for apps that add non-Steam games for Game Mode. Finding Steam and its users, whether it runs (a zombie steam process does not count), closing it for a change and starting it again (with_steam_closed), the binary shortcuts.vdf (read_vdf, write_vdf), a non-Steam game's appid, the shortcut's fields in Steam's order (shortcut_entry), adding, updating (the play time kept) and removing shortcuts beside the others, and write_shortcuts(), which writes several shortcuts and their artwork for every Steam user, each file once. Moved from BC250 Console Link (its own code, there AGPL-3.0-or-later, relicensed by the owner to GPL-3.0-or-later for core, 14-10-2026), which now uses it; tests/test_steam.py covers it.

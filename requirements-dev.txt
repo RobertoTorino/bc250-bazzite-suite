@@ -10,5 +10,6 @@
 -r apps/system-overlay/requirements-dev.txt
 -r apps/suite-releases/requirements-dev.txt
 -r apps/console-link/requirements-dev.txt
+-r apps/bazzite-pkgxtractor/requirements-dev.txt
 mkdocs-material
 mkdocs>=1.6,<2                  # MkDocs 2.0 drops the plugin and theme system Material needs

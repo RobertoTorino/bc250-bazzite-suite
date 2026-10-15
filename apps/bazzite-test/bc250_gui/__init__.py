@@ -3,7 +3,7 @@
 
 APP_NAME = "BC-250 Bazzite Test"
 APP_ID = "bc250-bazzite-test"
-__version__ = "0.1.9"
+__version__ = "0.1.10"
 
 from pathlib import Path
 

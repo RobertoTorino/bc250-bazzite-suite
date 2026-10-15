@@ -27,10 +27,6 @@
   --md-accent-bg-color--light: #ffffffb3;
 }
 
-[data-md-color-scheme="default"] {
-  --md-typeset-a-color: var(--suite-primary);
-}
-
 [data-md-color-scheme="slate"] {
   --md-typeset-a-color: var(--suite-soft);
   --md-default-bg-color: #17141f;
@@ -156,23 +152,31 @@
   padding: 0.1rem;
 }
 
-/* The repository in the header: as wide as its name, not Material's fixed 11.7rem that cut it off. */
-@media screen and (min-width: 60em) {
-  .md-header__source {
-    width: auto;
-    max-width: none;
-  }
-
-  .md-source__repository {
-    max-width: none;
-  }
+/* GitHub and Wiki on the right of the header, as plain words; the search field before them. */
+.md-header__spacer {
+  flex-grow: 1;
 }
 
-/* With the table of contents on the right, the repository ends where that column starts: moved left by its width. */
-@media screen and (min-width: 76.25em) {
-  .md-header__source {
-    margin-right: 12.1rem;
-  }
+.md-header__links {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin: 0 0.4rem;
+}
+
+.md-header__link {
+  padding: 0.4rem 0.8rem;
+  border-radius: 2em;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  transition: background-color 150ms ease;
+}
+
+.md-header__link:hover,
+.md-header__link:focus {
+  color: #ffffff;
+  background-color: rgb(255 255 255 / 0.12);
 }
 
 /* The home page (docs/index.md on tools/mkdocs/overrides/home.html): full-width sections, as on a product page. */
@@ -183,6 +187,11 @@
 
 .md-header:has(~ .md-container .home) {
   border-bottom: 0;
+}
+
+/* Material hides the icon on a narrow screen behind the menu button; Home has no menu, so it keeps the icon. */
+.md-header:has(~ .md-container .home) .md-header__button.md-logo {
+  display: inline-block;
 }
 
 .md-typeset .home-hero .headerlink,
@@ -244,7 +253,7 @@
   padding: 1.6rem 0 3rem;
 }
 
-[data-md-color-scheme="slate"] .md-typeset .home-hero__text {
+.md-typeset .home-hero__text {
   color: #ffffff;
 }
 

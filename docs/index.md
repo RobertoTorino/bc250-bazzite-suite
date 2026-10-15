@@ -50,15 +50,16 @@ unstable unlock, and [Memory Manager](apps/memory-manager.md) sets the VRAM spli
 beside the system Mesa.
 </div>
 <div class="home-card" markdown>
-#### :material-sony-playstation: PlayStation
+#### :material-gamepad-variant: PlayStation
 
-[shadPS4 Manager](apps/shadps4-manager.md) plays PS4 games with the shadPS4 emulator, and
+[shadPS4 Manager](apps/shadps4-manager.md) plays PS4 games with the shadPS4 emulator,
+[RPCS3 Manager](apps/rpcs3-manager.md) PS3 games with the RPCS3 emulator, and
 [Console Link](apps/console-link.md) finds, wakes and registers PS4 and PS5 consoles for Remote Play.
 </div>
 <div class="home-card" markdown>
 #### :material-television: Living room
 
-[HDMI CEC](apps/hdmi-cec.md) turns the TV on and off with the board, [SFTP Tools](apps/sftp-tools.md) moves files
+[HDMI CEC Manager](apps/hdmi-cec.md) turns the TV on and off with the board, [SFTP Tools](apps/sftp-tools.md) moves files
 between computers, and [Decky Loader Manager](apps/decky-manager.md) adds plugins to Game Mode.
 </div>
 </div>
@@ -141,7 +142,8 @@ use **Security → Report a vulnerability** instead, as the [security policy](SE
 
 ## License
 
-GPL-3.0-or-later, except BC-250 Persistent ACPI, which is MIT, and BC250 Console Link, which is AGPL-3.0 (its
-protocol code comes from chiaki-ng). Each app has its own `LICENSE`.
+GPL-3.0-or-later, except BC-250 Persistent ACPI, which is MIT, Console Link, which is AGPL-3.0 (its
+protocol code comes from chiaki-ng), and Bazzite NetcatGUI, which is GPL-2.0 (a port of NetcatGUI). Each app has
+its own `LICENSE`.
 </div>
 </section>

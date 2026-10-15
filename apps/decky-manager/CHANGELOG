@@ -1,3 +1,11 @@
+Changelog: 15-10-2026 02:10:51
+
+Release 0.1.1.
+
+Changelog: 14-10-2026 18:22:56
+
+The app no longer has the BC-250 prefix in its name, as it is not tied to the board: Decky Loader Manager (window, menu entry, README, manual). Its app ID, launcher, package and settings are unchanged.
+
 Changelog: 14-10-2026 11:22:29
 
 Release 0.1.0.

@@ -23,7 +23,7 @@ apps also look. Each app says whether it needs the tool (required) or uses it wh
 links open the app's manual, which says how to install it. Tools that do their work only as root are marked
 **Needs root.**; the apps run them through sudo or pkexec, which ask for your password. Where a tool has two
 forms, one is enough: Bazzite Test's internet speed test runs Ookla's `speedtest` or `speedtest-cli`. A library
-that an app brings itself is listed too: BC250 Console Link carries FFmpeg inside its native core, so the checker
+that an app brings itself is listed too: Console Link carries FFmpeg inside its native core, so the checker
 asks the installed core which FFmpeg version it holds and shows it on the card. When the core does not load (the
 system's libva missing, for example), the card says so.
 

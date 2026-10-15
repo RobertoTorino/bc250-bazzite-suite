@@ -2,7 +2,7 @@
 
 # Console Link: the stream's threads
 
-How BC250 Console Link keeps picture, sound and controller in step during a stream, why Python's global
+How Console Link keeps picture, sound and controller in step during a stream, why Python's global
 interpreter lock (the GIL) matters for it, and how to measure it. For the app itself, see its
 [manual](../apps/console-link.md).
 

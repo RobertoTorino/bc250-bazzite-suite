@@ -1,0 +1,19 @@
+Changelog: 15-10-2026 02:10:51
+
+Release 0.1.0.
+
+Changelog: 15-10-2026 02:01:27
+
+The app is on bc250_core (owner's decision, for consistency with the suite's apps): INFO (AppInfo) in __init__, core's create_app and exec_app in __main__ (the same names, icon and SIGTERM handling; core's rounded tooltips and the Inter title font are new), core's single instance, the first line built with AppHeader, and the settings opened with open_settings (the same ~/.config/bazzite-umd-file-renamer/bazzite-umd-file-renamer.ini). The metallic blue theme stays (owner's decision), applied after core's start-up. A second launch with a folder or an .iso loads it in the open window (load_path). install.sh bundles bc250_core from the suite checkout like the other core apps; a release has it bundled. --version names the core. No .cso support (owner's decision).
+
+Changelog: 15-10-2026 01:26:23
+
+The app is part of the BC250 Bazzite Suite, as apps/bazzite-umd-file-renamer, listed in the portal under "Development only". Its manual is the suite manual's chapter docs/apps/bazzite-umd-file-renamer.md (bundled in a release as MANUAL.md), with the Install section for the portal and the suite's releases; the README links to it. The files of the standalone repository went to the suite: CLAUDE.md (the porting notes and where the work stands are in the suite's MIGRATION.md), test.sh, tools/check_versions.py and tools/fix-modes.sh (the suite's own do the same), and .gitattributes (the suite's root one is the same file). The version starts at 0.1.0, like every app of the suite: VERSION and __version__ go from 1.0.0 to 0.1.0, before the first release. The installer and the code are unchanged.
+
+Changelog: 14-10-2026 15:22:00
+
+The Title field in Game details is editable (owner's decision; the C++ tool keeps it read-only, which made Apply title change a no-op): edit it and press Apply title change to use the title in the list and the new name. Cycling the picture through ICON0, PIC0 and PIC1 is now a click on the picture, since the click on the Title field would have blocked editing. The license is GPL-3.0-or-later like the owner's other Bazzite apps (confirmed by the owner). A test for the editable title; 34 tests.
+
+Changelog: 14-10-2026 14:52:00
+
+First Python + Qt port of UMD File Renamer for Bazzite, from the C++/Qt rebuild in github.com/RobertoTorino/umd-file-renamer (qt/, commit 0df857e). The ISO 9660 reader, the PARAM.SFO parser, the eight naming templates with the filename cleaning, the window (source row with the naming template, the table with current and new names and the Launch button, the details panel with ICON0/PIC0/PIC1 cycling, the translation, Rename All) and the metallic blue theme are ports of the C++ sources. Built like the owner's other Bazzite apps: a flat package run with python -m, PyQt6, install.sh with --uninstall/--purge/--no-desktop-shortcut installing into ~/.local/share/bazzite-umd-file-renamer with its own venv, a launcher in ~/.local/bin, a menu entry and a Desktop icon; the window's first line is the logo at 96 px beside the title with the version. Differences from the C++ tool, all deliberate: PPSSPP is found in the settings, else as the Flatpak org.ppsspp.PPSSPP, else on the PATH; the UMDGEN and WQSG_UMD settings (Windows tools the C++ app only stored) are left out; a file that already has its new name counts as renamed instead of as a failure; the selected game stays selected after a translation or a rename; the last folder is remembered; the window takes a folder or an .iso on the command line. 33 tests against synthetic ISO images (tests/iso_builder.py).

@@ -13,26 +13,15 @@ hooks:
 theme:
   name: material
   custom_dir: tools/mkdocs/overrides
-  logo: assets/logo.png
-  favicon: assets/logo.png
+  logo: images/wiki-icon.png
+  favicon: images/wiki-icon.png
   font:
     text: Inter
     code: JetBrains Mono
-  palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: custom
-      accent: custom
-      toggle:
-        icon: material/weather-night
-        name: Dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: custom
-      accent: custom
-      toggle:
-        icon: material/weather-sunny
-        name: Light mode
+  palette:                     # dark only, without a switch
+    scheme: slate
+    primary: custom
+    accent: custom
   features:
     - navigation.sections
     - navigation.top
@@ -65,25 +54,30 @@ nav:
       - apps/index.md
       - BC-250 Bazzite Test: apps/bazzite-test.md
       - BC-250 GPU Governor Manager: apps/governor.md
-      - BC-250 HelixSR Manager: apps/helixsr.md
+      - HelixSR Manager: apps/helixsr.md
       - BC-250 CU Bisect: apps/cu-bisect.md
       - BC-250 Cores Bisect: apps/cores-bisect.md
       - BC-250 GPU OC Bisect: apps/gpu-oc-bisect.md
       - BC-250 Persistent ACPI: apps/persistent-acpi.md
-      - BC-250 System Overlay: apps/system-overlay.md
+      - System Overlay: apps/system-overlay.md
       - BC-250 BIOS Reader: apps/bios-reader.md
       - BC-250 Memory Manager: apps/memory-manager.md
       - BC-250 ACE Queues: apps/ace-queues.md
       - BC-250 Mesh Shaders: apps/mesh-shaders.md
-      - BC250 HDMI CEC: apps/hdmi-cec.md
-      - BC250 Bazzite SFTP Tools: apps/sftp-tools.md
+      - HDMI CEC Manager: apps/hdmi-cec.md
+      - Bazzite SFTP Tools: apps/sftp-tools.md
       - Dependency Checker: apps/dependency-checker.md
-      - BC250 Console Link: apps/console-link.md
-      - BC-250 shadPS4 Manager: apps/shadps4-manager.md
-      - BC-250 Decky Loader Manager: apps/decky-manager.md
+      - Bazzite pkgxtractor: apps/bazzite-pkgxtractor.md
+      - Bazzite NetcatGUI: apps/bazzite-netcatgui.md
+      - Bazzite UMD File Renamer: apps/bazzite-umd-file-renamer.md
+      - Console Link: apps/console-link.md
+      - shadPS4 Manager: apps/shadps4-manager.md
+      - RPCS3 Manager: apps/rpcs3-manager.md
+      - Decky Loader Manager: apps/decky-manager.md
   - Development:
       - development/index.md
       - Architecture and consistency: development/architecture.md
+      - GitHub settings: development/github-settings.md
       - Bazzite Test script: development/bazzite-test.md
       - Bazzite Test internals: development/bazzite-test-internals.md
       - Bazzite Test test plan: development/bazzite-test-plan.md

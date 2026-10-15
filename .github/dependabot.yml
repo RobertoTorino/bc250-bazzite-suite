@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Dependabot: a weekly pull request when the actions the workflows use (actions/checkout, setup-python, cache,
+# upload-pages-artifact, deploy-pages) have a new major or minor release, all in one pull request.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      timezone: Europe/Amsterdam
+    groups:
+      actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: ci

@@ -33,7 +33,7 @@ def test_the_launch_line_and_whose_shortcut_it_is():
     assert shlex.split(shortcuts.launch_options(odd))[-1] == str(odd.eboot)       # single quotes then
     item = shortcuts.entry(game, "My Game", RUN, LOGO_PATH)
     assert item["Exe"] == f'"{RUN}"' and item["StartDir"] == f'"{RUN.parent}/"' and item["icon"] == str(LOGO_PATH)
-    assert item["tags"] == {"0": "PS4", "1": "BC-250 shadPS4 Manager"}
+    assert item["tags"] == {"0": "PS4", "1": "shadPS4 Manager"}
     assert shortcuts.ours(item) and shortcuts.for_game(game)(item)
     assert not shortcuts.for_game(Game(Path("/games/Other/eboot.bin"), "Other"))(item)
     assert not shortcuts.ours(OTHER) and not shortcuts.ours({**item, "LaunchOptions": "-b"})
@@ -102,3 +102,17 @@ def test_a_shortcut_made_without_a_logo(tmp_path, qapp):
     assert not shortcuts.logo_missing(folder, bare, "Two", RUN)                  # no icon0.png: no logo to miss
     steam.write_shortcuts(folder, shortcuts.changes([game], [], RUN, LOGO_PATH, shortcuts.in_steam(folder)))
     assert not shortcuts.logo_missing(folder, game, "One", RUN)
+
+
+def test_a_shortcut_with_the_tags_of_the_old_name(tmp_path):
+    folder = _steam(tmp_path)
+    game = Game(Path("/games/One/eboot.bin"), "One")
+    steam.write_shortcuts(folder, shortcuts.changes([game], [], RUN, LOGO_PATH, {}, art=False))
+    assert shortcuts.old_tags(folder) == set()                                  # the other shortcut is not ours
+    config = steam.user_folders(folder)[0]
+    values = steam.read_vdf((config / "shortcuts.vdf").read_bytes())
+    values["shortcuts"]["1"]["tags"] = {"0": "PS4", "1": "BC-250 shadPS4 Manager"}
+    (config / "shortcuts.vdf").write_bytes(steam.write_vdf(values))
+    assert shortcuts.old_tags(folder) == {str(game.eboot)}
+    steam.write_shortcuts(folder, shortcuts.changes([game], [], RUN, LOGO_PATH, {}, art=False))
+    assert shortcuts.old_tags(folder) == set() and len(steam.shortcuts(folder)) == 2

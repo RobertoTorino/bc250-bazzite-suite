@@ -1,3 +1,7 @@
+Changelog: 14-10-2026 18:22:56
+
+A test comment names Console Link without the BC250 prefix.
+
 Changelog: 13-10-2026 11:45:43
 
 Withdrawing a release (owner's decisions, 13-10-2026): tab 3. Withdraw. Withdraw marks an app's pinned release withdrawn in portal/apps.toml with the reason and adds a CHANGELOG entry to the app; Take back removes the mark; Test withdrawal runs check-release.sh local, so a board with the app installed shows the portal removing it; the commands for the rest (the GitHub release marked as a pre-release named Withdrawn: <tag>, then the portal release). Bump portal lists the withdrawals since the last push in the portal's CHANGELOG entry. plan.py: set_withdrawn, withdrawable (never the required app), withdraw, changed_withdrawals, withdraw_commands. Tests: the edit and its undo, the CHANGELOG entries, the minor bump, the commands, the tab.

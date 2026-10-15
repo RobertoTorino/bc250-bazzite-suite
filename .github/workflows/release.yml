@@ -8,7 +8,7 @@ name: Release
 # has the same content (see docs/portal.md, "Checking a release"). A portal release bundles the bazzite-test release that portal/apps.toml pins (downloaded
 # from its own release and checked against the pin) and requires every pinned tag to exist.
 #
-# BC250 Console Link ships the wheel of its native core in the tarball (native/wheel, build_release.py checks it is
+# Console Link ships the wheel of its native core in the tarball (native/wheel, build_release.py checks it is
 # there): built here from the tag, with FFmpeg from its pinned sources (native/ffmpeg/build.sh), so installing
 # needs only pip.
 #

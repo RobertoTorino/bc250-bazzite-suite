@@ -26,16 +26,18 @@ tile, left to right in the order of `apps.toml` and as many to a row as the wind
 **BC250 Bazzite tools** holds the apps for the board, Bazzite Test first. Like the sections below it, it folds
 away when you click its name; it is open until you close it, and the portal remembers whether it was open.
 
-**Gaming**, below the apps, holds the apps for playing: [BC-250 HelixSR Manager](apps/helixsr.md),
+**Gaming**, below the apps, holds the apps for playing: [HelixSR Manager](apps/helixsr.md),
 [BC-250 ACE Queues](apps/ace-queues.md), [BC-250 Mesh Shaders](apps/mesh-shaders.md),
-[BC250 Console Link](apps/console-link.md), [BC-250 shadPS4 Manager](apps/shadps4-manager.md) and
-[BC-250 Decky Loader Manager](apps/decky-manager.md). It is open until you close it, and the portal remembers whether
+[Console Link](apps/console-link.md), [shadPS4 Manager](apps/shadps4-manager.md) and
+[Decky Loader Manager](apps/decky-manager.md). It is open until you close it, and the portal remembers whether
 it was open.
 
 **Development only**, below that, opens a separate section with tools for working on the suite:
 [Simple Demo Tool](other-tools/simple-demo-tool.md), [Dependency Checker](apps/dependency-checker.md),
-the release front end [BC250 Suite Releases](#the-release-front-end) and BC-250 Installer Tests
-(`tools/installer-tests/gui`), a window that runs the installer tests one at a time. You do not need them to use
+[Bazzite pkgxtractor](apps/bazzite-pkgxtractor.md), [Bazzite NetcatGUI](apps/bazzite-netcatgui.md),
+[Bazzite UMD File Renamer](apps/bazzite-umd-file-renamer.md), the release front end
+[BC250 Suite Releases](#the-release-front-end) and BC-250 Installer Tests (`tools/installer-tests/gui`), a window
+that runs the installer tests one at a time. You do not need them to use
 the board. The last two run from a checkout of the repository and have no release. A portal installed from a
 release installs them too, from the checkout it finds on this machine: the one an installed tool of the checkout
 runs from, or the first in your home folder, up to three folders deep (`~/IdeaProjects/bc250-bazzite-suite`, for

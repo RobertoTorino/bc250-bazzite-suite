@@ -179,6 +179,164 @@ Nice to have, low priority (owner, 13-10-2026):
   a DualShock 4 by USB; none over Bluetooth); opt-in, shown while listening, all local; Vosk and its model in the
   Dependency Checker. When there is time (the microphone to the console is dropped; this reads it on the board only).
 
+## Bazzite pkgxtractor (joined 14-10-2026)
+
+Until 14-10-2026 its own repository (github.com/RobertoTorino/bc250-bazzite-pkgxtractor); now
+`apps/bazzite-pkgxtractor`, in the portal under "Development only", pinned to `bazzite-pkgxtractor-v0.1.0` (not
+tagged yet). The app's CLAUDE.md, test.sh, tools/ and .gitattributes went (the suite's own do the same); its
+MARKDOWN.md is the manual chapter `docs/apps/bazzite-pkgxtractor.md`. Code and installer unchanged.
+
+A port of the owner's C++/Qt tool pkgxtractor (github.com/RobertoTorino/pkgxtractor, Windows only, a trimmed fork
+of shadPS4). The core modules keep the C++ structure on purpose, so a diff against `pkg.cpp` stays readable; the
+C++ tool is the reference (behaviour, output layout, messages), and a change there is ported here with the C++
+commit named in the CHANGELOG.
+
+| Here | Port of (in the pkgxtractor repo) |
+| --- | --- |
+| `pkg.py` | `src/core/file_format/pkg.cpp`, `pkg.h`, `pfs.h` (same structure, same error messages) |
+| `crypto.py` | `src/core/crypto/crypto.cpp` (RSA in plain Python with the CRT parameters; AES-CBC/XTS via `cryptography`) |
+| `keys.py` | `src/core/crypto/keys.h`, generated: parse the byte arrays into integers, keep the names |
+| `pkg_type.py` | `src/core/file_format/pkg_type.cpp`, generated from the `{0x…, "name"}` table |
+| `psf.py` | `src/core/file_format/psf.cpp` (read side only) |
+| `main_window.py` | `tools/pkgxtractor/gui.cpp` (the full GUI, not `tools/pkgxtractor_qt/`) |
+| `cli.py` | `tools/pkgxtractor/main.cpp`, but extracting into `<output>/<TITLE_ID>/` like the GUI |
+| `compare.py` | `scripts/compare_extractions.py` (built in; the C++ GUI ran it as an external script) |
+| `compare_delta.py` | `scripts/compare_report_delta.py` (second entry of the window's Compare menu) |
+
+Deliberate differences from the C++ tool: the window is resizable, the CLI uses the TITLE_ID subfolder, Compare
+Extractions is built in. Two facts found while porting, both in code comments: the `param.sfo` format field is
+effectively little-endian (the C++ declares `u16_be` but reads it with `.Raw()`), and the PFS seed at
+`pfs_image_offset + 0x370` is in the unencrypted first sector. `tests/pkg_builder.py` builds a small package
+encrypted like a real fake-signed one (how multi-block extraction is tested, as no game package can be in the
+repo); keep its layout realistic: directory blocks before file data, the seed in the plain first sector, the PFSC at
+a 0x10000 boundary. The console's and its maker's names appear nowhere in the app, the manual, the installer or the
+tests (owner's decision).
+
+Done: the port is complete (every feature of the C++ GUI and CLI plus both comparison scripts); 29 tests pass on
+Windows and on Linux (suite venv); the installer test passes; verified against 22 real DLC packages on the owner's
+Windows machine (the decrypted `license.dat` carries the RIF magic and the content id, which proves the key chain);
+about 340 MB/s on the synthetic 96 MB package. On Linux (14-10-2026, the terminal extractor from the checkout): a
+real 151 MB application package with a multi-file PFS (CUSA01015, 1583 entries in 35 folders, 169 MB out) extracts
+in under a second with exit code 0 and no error report; every file has a valid header for its type (the executables'
+magic, ICU data, TrueType/WOFF2 fonts, PEM certificates, PNG) and none has the near-random content a wrong key would
+give. Not compared with the C++ tool's output yet.
+
+Open, in this order:
+
+1. Run it on the board: install from the portal (or `bash apps/bazzite-pkgxtractor/install.sh`), the menu entry,
+   the Desktop icon, Wayland and Game Mode, uninstall with `--purge`.
+2. Compare a real package's folder with the C++ tool's output (Compare Extractions with hashes): the owner's
+   test.pkg (CUSA01015) extracts cleanly here, but the C++ CLI is not built on the owner's Windows machine.
+3. The first release, and the portal release that pins it (apps.toml changed: at least a portal minor bump).
+
+On core since 15-10-2026 (owner's decision, for consistency): `INFO` (AppInfo), core's start-up (`create_app`,
+`exec_app`), single instance, `AppHeader` and `open_settings` (the same .ini as before), with `bc250_core` bundled
+like every core app's. A second launch with a package hands it to the open window (`instance.serve(on_args=...)`,
+new in core for this).
+
+To decide with the owner, none blocking: whether the window gets the suite's status boxes on the second line;
+whether to share settings with the C++ build (`~/.config/pkgxtractor/pkgxtractor-qt.conf`; now its own .ini).
+
+## Bazzite NetcatGUI (joined 15-10-2026)
+
+Until 15-10-2026 its own repository (github.com/RobertoTorino/bazzite-netcatgui); now `apps/bazzite-netcatgui`, in
+the portal under "Development only", pinned to `bazzite-netcatgui-v0.1.0` (not tagged yet; VERSION went from 1.0.0
+to 0.1.0, owner's decision). The app's CLAUDE.md, test.sh, tools/ (with make_logo.py, which draws the logo with
+Pillow) and .gitattributes went; its MARKDOWN.md is the manual chapter `docs/apps/bazzite-netcatgui.md`. Code and
+installer unchanged. GPL-2.0-only (owner's decision, 15-10-2026): a derivative of the C++ tool; it does not use
+`bc250_core`, so nothing GPL-3.0 is bundled with it.
+
+A port of the C++/Qt tool NetcatGUI 1.0 by Shinnok (github.com/shinnok/netcatgui, GPL-2.0). `session.py` keeps the
+C++ structure (one base widget, two subclasses) on purpose, so a diff against the C++ stays readable; the C++ tool
+is the reference (behaviour and messages), and a difference is a port bug or a deliberate, documented decision.
+
+| Here | Port of (in the netcatgui repo) |
+| --- | --- |
+| `main_window.py` | `src/netcatgui.cpp`, `netcatgui.ui` (menus, shortcuts, tabs, status bar, Save Log, About) |
+| `session.py`: `SessionWidget`, `MessageInput` | `src/widgets/ncsessionwidget.cpp`, `.ui`, `customplaintextedit.cpp` |
+| `session.py`: `ConnectSessionWidget` | `src/widgets/ncsessionconnectwidget.cpp` |
+| `session.py`: `ListenSessionWidget` | `src/widgets/ncsessionlistenwidget.cpp` |
+| `__main__.py` | `src/main.cpp`, plus the `nc`-like arguments |
+
+Deliberate differences from the C++ tool, all in the manual: UDP per tab (the Listen tab answers the last sender);
+the rest of the C++ TODO (TLS on Connect tabs with the certificate question, no TLS on Listen tabs; pipes between
+tabs; file pipes; Reconnect Automatically; message history; Rename Tab, Tab Color, the tab bar's menu; Hex View and
+Hex Input; the protocol highlighter and templates; session recordings with replay as `.ncrec.json`). "Run
+connections in separate threads" is not done on purpose: the Qt sockets are asynchronous in the event loop. The
+window opens with one empty Connect tab; received chunks are appended without a line break per chunk; a peer that
+closes sets the status bar instead of a modal box; "End Messages with Newline" with a Line Ending submenu (LF
+default, CRLF) replaces "End Messages with CRLF" (which sent LF); a user Disconnect flushes before aborting;
+received text is decoded incrementally; one client at a time on a TCP Listen tab; the name lookup inside the
+socket; Save Log writes UTF-8. Added: Clear Log, Echo Sent Messages, remembered hosts, ports and menu state.
+
+Done: the port is complete; the tests pass under PyQt6 6.11 on Windows (Python 3.13); the TLS test makes a
+self-signed certificate with the `openssl` binary and skips without it; a refused loopback connection takes about
+4 s on Windows, so the reconnect and refused tests have long deadlines. The tests open real sockets on 127.0.0.1.
+
+Open, in this order:
+
+1. Run it on the board: install from the portal (or `bash apps/bazzite-netcatgui/install.sh`), the menu entry,
+   the Desktop icon, Wayland and Game Mode, uninstall with `--purge`, and a Listen tab reached from another
+   machine (firewall).
+2. The first release, and the portal release that pins it (apps.toml changed: at least a portal minor bump).
+
+On core since 15-10-2026, like Bazzite pkgxtractor: a second launch with a host or a port opens its tab in the
+open window. The grey subtitle line under the title went (`AppHeader` has the title row and one row of controls).
+Moving it showed a crash at exit (core's tooltip event filter seeing the Connect tab's events after the event loop
+ended); core now removes that filter on `aboutToQuit`.
+
+## Bazzite UMD File Renamer (joined 15-10-2026)
+
+Until 15-10-2026 its own repository (github.com/RobertoTorino/bazzite-umd-file-renamer); now
+`apps/bazzite-umd-file-renamer`, in the portal under "Development only", pinned to `bazzite-umd-file-renamer-v0.1.0`
+(not tagged yet; VERSION went from 1.0.0 to 0.1.0, as for pkgxtractor and NetcatGUI). The app's CLAUDE.md, test.sh,
+tools/ and .gitattributes went; its MARKDOWN.md is the manual chapter `docs/apps/bazzite-umd-file-renamer.md`.
+Code and installer unchanged. GPL-3.0-or-later (owner's decision, 14-10-2026; the umd-file-renamer repo has no
+LICENSE file).
+
+A port of the owner's C++/Qt rebuild in umd-file-renamer (github.com/RobertoTorino/umd-file-renamer, the `qt/`
+folder, Windows only), itself a rebuild of diegohp's Java/Swing app in the same repo. The core modules keep the C++
+structure on purpose, so a diff against `isoreader.cpp` and `psfparser.cpp` stays readable; the C++ tool is the
+reference (behaviour, names, messages), and a change there is ported here with the C++ commit named in the
+CHANGELOG.
+
+| Here | Port of (in the umd-file-renamer repo, `qt/src/`) |
+| --- | --- |
+| `iso.py` | `isoreader.cpp`, `isoreader.h` (same structure; guards a truncated directory) |
+| `psf.py` | `psfparser.cpp`, `psfparser.h` (the four string keys; `data_type` is byte 3) |
+| `umd.py` | `umd.h` |
+| `renamer.py` | `renamerlogic.cpp`, `renamerlogic.h` (the eight templates, the character cleaning) |
+| `main_window.py` | `mainwindow.cpp`, `mainwindow.h` |
+| `theme.py` | `applyMetallicBlueTheme` in `main.cpp` |
+| `__main__.py` | `main()` in `main.cpp`, plus the suite's argument parsing and signal handling |
+
+Deliberate differences from the C++ tool, all in the CHANGELOG: PPSSPP is found in the settings, else as the
+Flatpak `org.ppsspp.PPSSPP`, else on the PATH (`find_ppsspp`); the UMDGEN and WQSG_UMD settings are left out (the
+C++ app only stored those Windows tools' paths); `rename_file` treats a file that already has its new name as
+renamed (Rename All twice showed errors in the C++ tool); the selected game stays selected after Apply translation
+and Rename All; the last folder is saved; the window takes a folder or an `.iso` on the command line; the Title field
+is editable (owner's decision; read-only in the C++ tool, which made Apply title change a no-op) and a click on the
+picture cycles ICON0/PIC0/PIC1. `tests/iso_builder.py` builds real ISO 9660 images and PSP `PARAM.SFO` files (no
+game image can be in the repo); keep its layout real: PVD at sector 16, directory records never crossing a sector
+boundary, files at sector boundaries.
+
+Done: the port is complete; 34 tests pass under PyQt6 on Windows and on Linux (suite venv); the installer test
+passes.
+
+Open, in this order:
+
+1. Run it on the board: install from the portal (or `bash apps/bazzite-umd-file-renamer/install.sh`), the menu
+   entry, the Desktop icon, Wayland and Game Mode, the Flatpak PPSSPP launch, uninstall with `--purge`.
+2. Real images: a folder of PSP `.iso` files, a Japanese title with the translation, Rename All, and the same folder
+   in the C++ tool on Windows to compare the names.
+3. The first release, and the portal release that pins it (apps.toml changed: at least a portal minor bump).
+
+On core since 15-10-2026, like Bazzite pkgxtractor: a second launch with a folder or an `.iso` loads it in the open
+window.
+
+Decided by the owner (15-10-2026): the app keeps the C++ tool's metallic blue theme (`theme.py`, applied after core's
+start-up), not the suite's look; no `.cso` support (the Java original had it; the C++ tool and this port do not).
+
 ## Done
 
 | Step | What | State |
@@ -338,6 +496,30 @@ Bazzite's).
   (Mondays, and by hand), fails when Decky moved: a newer stable release, a replaced PluginLoader, or a changed
   release unit at the pinned tag or on main. A move is a new decky-manager version with the new pin, tried on the
   board first. Decky updating itself on a board stays allowed (owner): the app shows it and leaves it.
+- **PS3 emulator manager (built 14-10-2026 as rpcs3-manager, RPCS3 Manager).** Owner's request: the
+  shadPS4 Manager's implementation for RPCS3. Built the same way, same window, wrapper and installer; choices made
+  in building it, the owner's to confirm or change: `development = true` first (as shadps4 was), the indigo
+  #4F34C9 from RPCS3's logo, a placeholder icon, no RPCN (RPCS3's online service: its own window sets the account
+  up, unlike shadPS4's shadNet). RPCS3 has no stable releases: a build per change in `RPCS3/rpcs3-binaries-linux`
+  (`build-<commit>`, the AppImage alone, SHA-256 as GitHub's asset digest and in the release body) and now and then
+  a landmark tag in `RPCS3/rpcs3` (v0.0.43, 30-09-2026). Pinned: the landmark's own build, 0.0.43-20133
+  (`rpcs3-v0.0.43-20133-53d44aa4_linux64.AppImage`, SHA-256 `d26adeba…d241a`, 94 049 343 bytes, checked against the
+  downloaded file); the newer-release notice follows the landmarks, not the daily builds. Facts from RPCS3's source
+  at v0.0.43: everything in `$XDG_CONFIG_HOME/rpcs3` on Linux (no `config/` subfolder there), its drives in
+  `vfs.yml` (`$(EmulatorDir)`), disc games it knows in `games.yml` (added when one first starts), installed games in
+  `dev_hdd0/game`, the firmware version in `dev_flash/vsh/etc/version.txt`; `--no-gui`, `--fullscreen` (only with
+  `--no-gui`), `--installfw` (needs the GUI); its own Steam shortcuts use `--no-gui "%RPCS3_GAMEID%:<ID>"`, ours the
+  EBOOT.BIN path (a disc game then still starts its update from `dev_hdd0`); a disc game needs a valid
+  `PS3_DISC.SFB`; the AppImage is a uruntime (DwarFS) one: no libfuse.so.2, it mounts with fusermount; a `portable`
+  folder beside the AppImage would be its portable folder (none there). RPCS3's window checks for updates by default
+  and writes a newer build over `$APPIMAGE` when the user agrees; the app notices by size and offers Install
+  (turning RPCS3's check off would mean writing its GuiConfigs, not done). Not tried: whether RPCS3's SDL pad handler
+  and Steam's environment behave as shadPS4's did (the wrapper takes the same two steps: a real controller instead
+  of Steam's virtual one, XWayland via `QT_QPA_PLATFORM=xcb`), ISO games (RPCS3 0.0.43 boots them; the app leaves
+  them out: their PARAM.SFO is inside the ISO). Open on the board: Install, Install firmware with a real
+  PS3UPDAT.PUP, a disc game and an installed game from Play and from Game Mode (full screen, Exit game), the
+  controller and the overlay, the artwork in Steam. Release (owner): `rpcs3-manager-v0.1.0` and a portal bump;
+  until then `apps.toml` pins it without sha256.
 
 ## Details for later steps
 
@@ -394,3 +576,13 @@ the app needs its own IFR parser for the binary forms.
 Fresh history; the portal first, with its own tag; per-app tags; root-owned `/opt` for code that runs as root and
 one shared venv for PyQt6; `bc250_core` bundled per app release; one shared `BisectLauncher` but three bisect
 apps; MkDocs for the manual; the repository is `RobertoTorino/bc250-bazzite-suite`.
+
+Names (owner's decision, 14-10-2026, with an eye to other devices such as the ROG Ally X): the apps tied to the
+board keep "BC-250" in their names (bazzite-test, governor, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
+bios-reader, memory-manager, ace-queues, mesh-shaders); the others drop the prefix (HelixSR Manager, System Overlay,
+HDMI CEC Manager (owner's name), Bazzite SFTP Tools, Console Link, shadPS4 Manager, RPCS3 Manager, Decky Loader
+Manager; Dependency Checker, Bazzite pkgxtractor and Simple Demo Tool never had it). Only the display names changed:
+app IDs, launchers, packages, settings folders, and the files hdmi-cec writes keep `bc250`, so nothing installed
+moves. The Steam shortcut tags take the new names (owner, 14-10-2026): shadps4-manager brings an old shortcut up to
+date with Update Game Mode, console-link with Update in Game Mode. An app's identifiers move (with an old-ID
+fallback, as console-link's `OLD_APP_ID`) only when it is ported, together with its hardware code paths.

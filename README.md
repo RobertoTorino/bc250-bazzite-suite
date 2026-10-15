@@ -34,26 +34,30 @@ uses. You do not need them.
 - <img src="portal/images/apps/cores-bisect.png" width="20" height="20" alt=""/> **[BC-250 Cores Bisect](apps/cores-bisect)**: Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock.
 - <img src="portal/images/apps/gpu-oc-bisect.png" width="20" height="20" alt=""/> **[BC-250 GPU OC Bisect](apps/gpu-oc-bisect)**: Find your board's safe GPU overclock and undervolt, one step at a time.
 - <img src="portal/images/apps/persistent-acpi.png" width="20" height="20" alt=""/> **[BC-250 Persistent ACPI](apps/persistent-acpi)**: CPU C-states and frequency scaling through a persistent ACPI override (GRUB early initrd).
-- <img src="portal/images/apps/system-overlay.png" width="20" height="20" alt=""/> **[BC-250 System Overlay](apps/system-overlay)**: CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top.
+- <img src="portal/images/apps/system-overlay.png" width="20" height="20" alt=""/> **[System Overlay](apps/system-overlay)**: CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top.
 - <img src="portal/images/apps/bios-reader.png" width="20" height="20" alt=""/> **[BC-250 BIOS Reader](apps/bios-reader)**: The BIOS settings as the setup screen shows them, hidden menus included. Stock or modded BIOS. Read-only.
 - <img src="portal/images/apps/memory-manager.png" width="20" height="20" alt=""/> **[BC-250 Memory Manager](apps/memory-manager)**: The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it.
-- <img src="portal/images/apps/hdmi-cec.png" width="20" height="20" alt=""/> **[BC250 HDMI CEC](apps/hdmi-cec)**: Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC.
-- <img src="portal/images/apps/sftp-tools.png" width="20" height="20" alt=""/> **[BC250 Bazzite SFTP Tools](apps/sftp-tools)**: Move files between computers over SFTP, and manage the SSH server of a Bazzite host.
+- <img src="portal/images/apps/hdmi-cec.png" width="20" height="20" alt=""/> **[HDMI CEC Manager](apps/hdmi-cec)**: Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC.
+- <img src="portal/images/apps/sftp-tools.png" width="20" height="20" alt=""/> **[Bazzite SFTP Tools](apps/sftp-tools)**: Move files between computers over SFTP, and manage the SSH server of a Bazzite host.
 
 **Gaming**: apps for playing, in their own section of the portal.
 
-- <img src="portal/images/apps/helixsr.png" width="20" height="20" alt=""/> **[BC-250 HelixSR Manager](apps/helixsr)**: Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games.
+- <img src="portal/images/apps/helixsr.png" width="20" height="20" alt=""/> **[HelixSR Manager](apps/helixsr)**: Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games.
 - <img src="portal/images/apps/ace-queues.png" width="20" height="20" alt=""/> **[BC-250 ACE Queues](apps/ace-queues)**: Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use.
 - <img src="portal/images/apps/mesh-shaders.png" width="20" height="20" alt=""/> **[BC-250 Mesh Shaders](apps/mesh-shaders)**: Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use.
-- <img src="portal/images/apps/console-link.png" width="20" height="20" alt=""/> **[BC250 Console Link](apps/console-link)**: Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session.
-- <img src="portal/images/apps/shadps4-manager.png" width="20" height="20" alt=""/> **[BC-250 shadPS4 Manager](apps/shadps4-manager)**: PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found and added to Game Mode.
-- <img src="portal/images/apps/decky-manager.png" width="20" height="20" alt=""/> **[BC-250 Decky Loader Manager](apps/decky-manager)**: Plugins in Game Mode with Decky Loader: a tested Decky release as a system service, its state and its plugins.
+- <img src="portal/images/apps/console-link.png" width="20" height="20" alt=""/> **[Console Link](apps/console-link)**: Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session.
+- <img src="portal/images/apps/shadps4-manager.png" width="20" height="20" alt=""/> **[shadPS4 Manager](apps/shadps4-manager)**: PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found and added to Game Mode.
+- <img src="portal/images/apps/decky-manager.png" width="20" height="20" alt=""/> **[Decky Loader Manager](apps/decky-manager)**: Plugins in Game Mode with Decky Loader: a tested Decky release as a system service, its state and its plugins.
 
 **Development only**: tools for working on the suite, in their own section of the portal. You do not need them to
 use the board.
 
 - <img src="portal/images/apps/demo-tool.png" width="20" height="20" alt=""/> **[Simple Demo Tool](apps/demo-tool)**: Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite.
 - <img src="portal/images/apps/portal-dependency-checker.png" width="20" height="20" alt=""/> **[Dependency Checker](apps/dependency-checker)**: The suite's Python packages and external tools, which apps use them, and whether newer ones exist.
+- <img src="portal/images/apps/bazzite-pkgxtractor.png" width="20" height="20" alt=""/> **[Bazzite pkgxtractor](apps/bazzite-pkgxtractor)**: Extract package (.pkg) files into the folder layout shadPS4 uses, with the icon and param.sfo shown first.
+- <img src="portal/images/apps/bazzite-netcatgui.png" width="20" height="20" alt=""/> **[Bazzite NetcatGUI](apps/bazzite-netcatgui)**: A graphical netcat: connect to a host or listen on a port, TCP, UDP or TLS, one session per tab.
+- <img src="portal/images/apps/bazzite-umd-file-renamer.png" width="20" height="20" alt=""/> **[Bazzite UMD File Renamer](apps/bazzite-umd-file-renamer)**: Rename PSP ISO images after their PARAM.SFO: disc ID, title and version, with the game's icon shown.
+- <img src="portal/images/apps/rpcs3-manager.png" width="20" height="20" alt=""/> **[RPCS3 Manager](apps/rpcs3-manager)**: PS3 games with the RPCS3 emulator: a tested RPCS3 build, the firmware, your games found and added to Game Mode.
 - <img src="portal/images/apps/suite-releases.png" width="20" height="20" alt=""/> **[BC250 Suite Releases](apps/suite-releases)**: The release front end: versions, pins and the board checks of a release. Runs from a checkout of this repository.
 - <img src="portal/images/apps/installer-tests.png" width="20" height="20" alt=""/> **[BC-250 Installer Tests](tools/installer-tests/gui)**: Run the suite's installer tests one at a time, with their output live in the window. Runs from a checkout of this repository.
 
@@ -61,5 +65,6 @@ How to install and use them: **[the manual](https://robertotorino.github.io/bc25
 
 ## License
 
-GPL-3.0-or-later ([LICENSE](LICENSE)), except BC-250 Persistent ACPI, which is MIT, and BC250 Console Link, which is
-AGPL-3.0 (its protocol code comes from chiaki-ng). Each app keeps its own `LICENSE`.
+GPL-3.0-or-later ([LICENSE](LICENSE)), except BC-250 Persistent ACPI, which is MIT, Console Link, which is
+AGPL-3.0 (its protocol code comes from chiaki-ng), and Bazzite NetcatGUI, which is GPL-2.0 (a port of NetcatGUI).
+Each app keeps its own `LICENSE`.

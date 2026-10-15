@@ -1,3 +1,15 @@
+Changelog: 15-10-2026 02:10:51
+
+Release 0.1.8.
+
+Changelog: 15-10-2026 00:23:49
+
+images/bc250-system-overlay-128.png: the 128 px version of the icon, scaled from the 512 px file, so the app's images folder has both sizes like the other apps. Nothing uses it yet; it is the source for the portal's tile icon.
+
+Changelog: 14-10-2026 18:22:56
+
+The app no longer has the BC-250 prefix in its name, as it is not tied to the board: System Overlay (window, menu entry, README, manual). Its app ID, launcher, package and settings are unchanged.
+
 Changelog: 14-10-2026 00:37:33
 
 Release 0.1.7.

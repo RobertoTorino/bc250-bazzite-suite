@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Installs BC-250 HelixSR Manager for the current user: a private venv with PyQt6, the app
+# Installs HelixSR Manager for the current user: a private venv with PyQt6, the app
 # in ~/.local/share, a launcher in ~/.local/bin and a desktop entry with icon, so it shows up in
 # the application menu like any other app. Nothing is layered with rpm-ostree, no root needed.
 # The imported HelixSR release lives in ~/.local/share/bc250-bazzite-helixsr-gui/payload and is
@@ -116,7 +116,7 @@ cp "$SRC_DIR/images/$APP_ID.png" "$ICON_DIR/$APP_ID.png"
 command -v update-desktop-database >/dev/null && update-desktop-database -q "$APPS_DIR" || true
 command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$DATA_HOME/icons/hicolor" 2>/dev/null || true
 
-say "Installed. Find \"BC-250 HelixSR Manager\" in the application menu$($DESKTOP_SHORTCUT && echo ' or on the Desktop'), or run: $BIN_DIR/$APP_ID"
+say "Installed. Find \"HelixSR Manager\" in the application menu$($DESKTOP_SHORTCUT && echo ' or on the Desktop'), or run: $BIN_DIR/$APP_ID"
 case ":$PATH:" in
     *":$BIN_DIR:"*) ;;
     *) echo "    (note: $BIN_DIR is not on your PATH in this shell)" ;;

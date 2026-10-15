@@ -193,7 +193,7 @@ def test_personal_details_are_masked_until_shown(window, monkeypatch):
     window.address_edit.editingFinished.emit()
     assert window.address_edit.text() == "•••.•••.•••.21" and window.address_edit.isReadOnly()
 
-    window.reveal_button.click()                                            # Show personal details
+    window.reveal_box.click()                                            # Show personal details
     log = window.log.toPlainText()
     assert "192.168.1.21" in log
     assert window.found_table.item(0, 2).text() == "192.168.1.21"
@@ -203,7 +203,7 @@ def test_personal_details_are_masked_until_shown(window, monkeypatch):
     copied = window.log.createMimeDataFromSelection().text()
     assert "192.168.1.21" not in copied and "•••.•••.•••.21" in copied and "Asking" in copied
 
-    window.reveal_button.click()                                            # hidden again
+    window.reveal_box.click()                                            # hidden again
     assert window.account_edit.text() == "••••••••Bwg=" and "192.168.1.21" not in window.log.toPlainText()
 
 
@@ -403,7 +403,7 @@ def test_steam_ps_button_setting(qapp, config_dir, tmp_path, monkeypatch):
 
 def test_steam_setting_hidden_without_steam_and_off_in_game_mode(qapp, config_dir, tmp_path, monkeypatch):
     w = MainWindow(config_dir=config_dir, ops=FakeOps(), run=_now)
-    assert w.steam_box.isHidden()
+    assert w.steam_box.isHidden() and not w.steam_note.isHidden()          # Settings says why
     w.close()
     from test_steam_settings import _steam
     steam = _steam(tmp_path, "1")
@@ -510,7 +510,7 @@ def test_console_box_shows_model_software_and_what_runs(qapp, config_dir):
     ops = FakeOps(found=(running,))
     w = MainWindow(config_dir=config_dir, ops=ops, run=_now)
     try:
-        assert w.console_box.caption.text() == "Console" and w.console_box.value.text() == "—"
+        assert w.console_box.caption.text() == "Console type" and w.console_box.value.text() == "—"
         w.registered_table.selectRow(0)
         assert w.console_box.value.text() == "PS4"                     # not searched yet: no software version
         assert "Search to see them" in w.console_box.toolTip()
@@ -522,5 +522,40 @@ def test_console_box_shows_model_software_and_what_runs(qapp, config_dir):
         w.registered_table.selectRow(0)
         w.test_button.click()                                           # the session names the exact model
         assert w.console_box.value.text() == "PS5 · 14.00"              # (the fake session says PS5)
+    finally:
+        w.close()
+
+
+def test_settings_box_opens_the_app_settings(window, monkeypatch):
+    shown = []
+    monkeypatch.setattr(window.settings_dialog, "exec", lambda: shown.append(True))
+    window.settings_button.click()
+    assert shown == [True]
+    dialog_boxes = window.settings_dialog.findChildren(type(window.reveal_box))
+    assert window.reveal_box in dialog_boxes and window.steam_box in dialog_boxes
+
+
+def test_address_field_searches_on_enter(window, config_dir):
+    window.address_edit.setText("192.168.1.21")
+    window.address_edit.returnPressed.emit()
+    assert window.ops_fake.calls[-1] == ("find", "192.168.1.21")
+
+
+def test_registered_cards_fit_their_place(qapp, config_dir):
+    store = ConsoleStore(config_dir / "bc250-console-link")
+    store.put(_registered(PS5))
+    store.put(_registered(PS4, nickname="PS4-728"))
+    w = MainWindow(config_dir=config_dir, ops=FakeOps(), run=_now)
+    try:
+        table, delegate = w.registered_table, w.registered_table.delegate
+        for width in (900, 600, 380):                                   # wide: every caption; narrow: values
+            table.resize(width, table.height())
+            table.fit_columns()
+            widths = [table.columnWidth(c) for c in range(table.columnCount())]
+            assert sum(widths) == table.viewport().width() or widths[2] == 40
+        table.resize(2000, table.height())
+        table.fit_columns()
+        assert table.columnWidth(1) >= delegate.text_width(table.font(), 1, "PS5")      # room for "Model: PS5"
+        assert table.item(0, 1).text() in ("PS5", "PS4")                               # the items keep the values
     finally:
         w.close()

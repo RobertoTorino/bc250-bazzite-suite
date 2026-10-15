@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """PyQt6 front-end that installs HelixSR (the FSR/DLSS hybrid upscaler) into games on an AMD BC-250 running Bazzite."""
 
-APP_NAME = "BC-250 HelixSR Manager"
+APP_NAME = "HelixSR Manager"
 APP_ID = "bc250-bazzite-helixsr-gui"
-__version__ = "0.2.5"
+__version__ = "0.2.6"
 
 import os
 from pathlib import Path

@@ -342,7 +342,8 @@ def test_tiles_flow_in_file_order(window, qapp):
 
 def test_development_apps_apart_and_closed(window, qapp):
     dev = {key for key, card in window.cards.items() if card.entry.development}
-    assert dev == {"demo-tool", "dependency-checker"}
+    assert dev == {"demo-tool", "dependency-checker", "bazzite-pkgxtractor", "bazzite-netcatgui",
+                   "bazzite-umd-file-renamer", "rpcs3-manager"}
     assert all(window.dev_grid.indexOf(window.cards[key]) >= 0 for key in dev)
     assert all(window.grid.indexOf(window.cards[key]) < 0 for key in dev)
     assert not window.dev_toggle.isHidden() and window.dev_box.isHidden()   # closed until asked for

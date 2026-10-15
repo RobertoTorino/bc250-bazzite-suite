@@ -1,3 +1,11 @@
+Changelog: 15-10-2026 02:10:51
+
+Release 0.1.9.
+
+Changelog: 14-10-2026 18:22:56
+
+The app no longer has the BC250 prefix in its name, as it is not tied to the board, and is called HDMI CEC Manager (window, menu entry, README, manual). Its app ID, launcher, package, settings and the files it writes (the boot part, the service units, the cecd fragment) are unchanged, so an installed boot part is not reported as outdated.
+
 Changelog: 14-10-2026 00:37:33
 
 Release 0.1.8.

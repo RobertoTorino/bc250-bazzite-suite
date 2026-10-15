@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 name: Upstream
 
-# Weekly: is BC-250 Decky Loader Manager still in step with Decky Loader (tools/check_upstream.py)? A failed run means
+# Weekly: is Decky Loader Manager still in step with Decky Loader (tools/check_upstream.py)? A failed run means
 # Decky moved: a newer release, a replaced asset or a changed service unit; the run's summary says which. It only
 # reads from GitHub; nothing is changed or published.
 

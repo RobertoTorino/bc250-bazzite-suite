@@ -2,9 +2,9 @@
 """SFTP tools for the BC-250: browse and transfer files over SFTP, and manage the OpenSSH server (sshd) of a
 Bazzite host from another computer."""
 
-APP_NAME = "BC250 Bazzite SFTP Tools"
+APP_NAME = "Bazzite SFTP Tools"
 APP_ID = "bc250-bazzite-sftp-tools"
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 from pathlib import Path
 

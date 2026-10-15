@@ -29,7 +29,7 @@ name = "BC-250 GPU Governor Manager"
 launchers = ["~/.local/bin/bc250-governor-manager"]
 
 [app.helixsr]
-name = "BC-250 HelixSR Manager"
+name = "HelixSR Manager"
 launchers = ["~/.local/bin/bc250-bazzite-helixsr-gui"]
 
 [app.cu-bisect]
@@ -49,7 +49,7 @@ name = "BC-250 Persistent ACPI"
 launchers = ["~/.local/bin/bc250-persistent-acpi-gui"]
 
 [app.system-overlay]
-name = "BC-250 System Overlay"
+name = "System Overlay"
 launchers = ["~/.local/bin/bc250-system-overlay"]
 
 [app.bios-reader]
@@ -69,23 +69,27 @@ name = "BC-250 Memory Manager"
 launchers = ["~/.local/bin/bc250-memory-manager"]
 
 [app.hdmi-cec]
-name = "BC250 HDMI CEC"
+name = "HDMI CEC Manager"
 launchers = ["~/.local/bin/bc250-hdmi-cec"]
 
 [app.sftp-tools]
-name = "BC250 Bazzite SFTP Tools"
+name = "Bazzite SFTP Tools"
 launchers = ["~/.local/bin/bc250-bazzite-sftp-tools"]
 
 [app.console-link]
-name = "BC250 Console Link"
+name = "Console Link"
 launchers = ["~/.local/bin/bc250-console-link"]
 
 [app.shadps4-manager]
-name = "BC-250 shadPS4 Manager"
+name = "shadPS4 Manager"
 launchers = ["~/.local/bin/bc250-shadps4-manager"]
 
+[app.rpcs3-manager]
+name = "RPCS3 Manager"
+launchers = ["~/.local/bin/bc250-rpcs3-manager"]
+
 [app.decky-manager]
-name = "BC-250 Decky Loader Manager"
+name = "Decky Loader Manager"
 launchers = ["~/.local/bin/bc250-decky-manager"]
 
 [app.demo-tool]
@@ -95,6 +99,18 @@ launchers = ["~/.local/bin/simple-demo-tool"]
 [app.dependency-checker]
 name = "Dependency Checker"
 launchers = ["~/.local/bin/bc250-portal-dependency-checker"]
+
+[app.bazzite-pkgxtractor]
+name = "Bazzite pkgxtractor"
+launchers = ["~/.local/bin/bazzite-pkgxtractor"]
+
+[app.bazzite-netcatgui]
+name = "Bazzite NetcatGUI"
+launchers = ["~/.local/bin/bazzite-netcatgui"]
+
+[app.bazzite-umd-file-renamer]
+name = "Bazzite UMD File Renamer"
+launchers = ["~/.local/bin/bazzite-umd-file-renamer"]
 
 [[tool]]
 name = "flashrom"
@@ -734,7 +750,7 @@ anchor = "what-you-need"
 
 [[tool]]
 name = "FFmpeg"
-description = "The audio and video codec library. BC250 Console Link carries its own inside the app's native core (decoders only, LGPL, built from pinned sources), so nothing is installed on the system for it; checked by asking the installed core which version it holds."
+description = "The audio and video codec library. Console Link carries its own inside the app's native core (decoders only, LGPL, built from pinned sources), so nothing is installed on the system for it; checked by asking the installed core which version it holds."
 executables = []
 locations = ["~/.local/share/bc250-console-link/venv/bin/python"]
 probe = "console-link-ffmpeg"
@@ -775,6 +791,12 @@ need = "optional"
 usage = "Update Game Mode (a Steam shortcut per game) closes Steam with steam -shutdown and starts it again with bazzite-steam."
 anchor = "game-mode"
 
+[[tool.source]]
+owner = "rpcs3-manager"
+need = "optional"
+usage = "Update Game Mode (a Steam shortcut per game) closes Steam with steam -shutdown and starts it again with bazzite-steam."
+anchor = "game-mode"
+
 [[tool]]
 name = "FUSE 2"
 description = "The FUSE 2 library (libfuse.so.2), with which an AppImage mounts itself. Checked by its library file."
@@ -786,6 +808,17 @@ probe = "path"
 owner = "shadps4-manager"
 need = "optional"
 usage = "shadPS4 is an AppImage; without the library it unpacks itself to a temporary folder on every start, which is slower."
+anchor = "what-you-need"
+
+[[tool]]
+name = "fusermount"
+description = "FUSE's mount helper (fusermount3, or fusermount for FUSE 2), with which an AppImage that brings its own FUSE library mounts itself."
+executables = ["fusermount3", "fusermount"]
+
+[[tool.source]]
+owner = "rpcs3-manager"
+need = "optional"
+usage = "RPCS3 is an AppImage with its own FUSE library; without fusermount it unpacks itself to a temporary folder on every start, which is slower."
 anchor = "what-you-need"
 
 [[tool]]
@@ -861,6 +894,10 @@ owner = "shadps4-manager"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
+owner = "rpcs3-manager"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
 owner = "decky-manager"
 specifier = ">=6.11,<7"
 
@@ -886,6 +923,18 @@ specifier = ">=6.11,<7"
 
 [[dependency.source]]
 owner = "dependency-checker"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
+owner = "bazzite-pkgxtractor"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
+owner = "bazzite-netcatgui"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
+owner = "bazzite-umd-file-renamer"
 specifier = ">=6.11,<7"
 
 [[dependency]]
@@ -918,7 +967,7 @@ specifier = ">=0.2.3,<1"
 
 [[dependency]]
 name = "paramiko"
-description = "An SSH and SFTP library for Python. BC250 Bazzite SFTP Tools connects to the host, transfers files and runs the sshd commands of the Server Manager with it."
+description = "An SSH and SFTP library for Python. Bazzite SFTP Tools connects to the host, transfers files and runs the sshd commands of the Server Manager with it."
 
 [[dependency.source]]
 owner = "sftp-tools"
@@ -926,8 +975,12 @@ specifier = ">=3.4,<5"
 
 [[dependency]]
 name = "cryptography"
-description = "Cryptographic recipes and primitives for Python, on OpenSSL. BC250 Console Link encrypts registration and the control connection of a Remote Play session with its AES and HMAC."
+description = "Cryptographic recipes and primitives for Python, on OpenSSL. Console Link encrypts registration and the control connection of a Remote Play session with its AES and HMAC; Bazzite pkgxtractor decrypts packages with its AES-CBC and AES-XTS."
 
 [[dependency.source]]
 owner = "console-link"
+specifier = ">=42,<51"
+
+[[dependency.source]]
+owner = "bazzite-pkgxtractor"
 specifier = ">=42,<51"

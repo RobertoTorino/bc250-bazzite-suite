@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Upstream check: is BC-250 Decky Loader Manager still in step with Decky Loader?
+"""Upstream check: is Decky Loader Manager still in step with Decky Loader?
 
     python3 tools/check_upstream.py
 
@@ -92,7 +92,7 @@ def check(loader: ModuleType, get: Fetch = fetch) -> Report:
     report.latest = str(latest.get("tag_name", ""))
     if _version(report.latest) > _version(tag):
         report.drift.append(f"{report.latest} is out ({str(latest.get('published_at', ''))[:10]}): a new version of "
-                            f"BC-250 Decky Loader Manager pins it, after it is tried on the board. "
+                            f"Decky Loader Manager pins it, after it is tried on the board. "
                             f"{latest.get('html_url', '')}")
     else:
         report.fine.append(f"no stable release newer than {tag}")

@@ -2,9 +2,9 @@
 """PS4 games on the BC-250 with shadPS4: installs a pinned shadPS4 release, checks the system modules, finds the
 games in the chosen folders and adds them to Steam for Game Mode."""
 
-APP_NAME = "BC-250 shadPS4 Manager"
+APP_NAME = "shadPS4 Manager"
 APP_ID = "bc250-shadps4-manager"
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 from pathlib import Path
 

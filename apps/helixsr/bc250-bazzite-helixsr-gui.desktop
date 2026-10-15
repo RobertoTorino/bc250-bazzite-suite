@@ -1,7 +1,7 @@
 [Desktop Entry]
 # SPDX-License-Identifier: GPL-3.0-or-later
 Type=Application
-Name=BC-250 HelixSR Manager
+Name=HelixSR Manager
 GenericName=HelixSR Upscaler Installer
 Comment=Import a HelixSR release and deploy it into FSR games on a Bazzite BC-250
 Exec=bc250-bazzite-helixsr-gui

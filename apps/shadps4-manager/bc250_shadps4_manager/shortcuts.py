@@ -20,7 +20,7 @@ from .games import Game
 
 RUN = "~/.local/bin/bc250-shadps4-run"
 RUN_NAME = "bc250-shadps4-run"
-TAGS = ("PS4", "BC-250 shadPS4 Manager")
+TAGS = ("PS4", "shadPS4 Manager")
 
 
 def launch_options(game: Game) -> str:
@@ -69,6 +69,13 @@ def entry(game: Game, name: str, run: Path, logo: Path) -> dict:
 def in_steam(folder: Path) -> dict[str, str]:
     """The eboot.bin paths that have a shortcut of this app, for any Steam user, with the shortcut's name."""
     return {_eboot(item): str(item.get("AppName", "")) for item in steam.shortcuts(folder) if ours(item)}
+
+
+def old_tags(folder: Path) -> set[str]:
+    """The eboot.bin paths whose shortcut has other tags than TAGS, as one made while the app was called BC-250
+    shadPS4 Manager has: bringing it up to date gives it the tags of now."""
+    return {_eboot(item) for item in steam.shortcuts(folder)
+            if ours(item) and list(dict(item.get("tags") or {}).values()) != list(TAGS)}
 
 
 def logo_missing(folder: Path, game: Game, name: str, run: Path) -> bool:

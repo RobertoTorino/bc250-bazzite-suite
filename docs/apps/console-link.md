@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 
-# BC250 Console Link
+# Console Link
 
-![BC250 Console Link](../assets/console-link/bc250-console-link.png){ .app-logo }
+![Console Link](../assets/console-link/bc250-console-link.png){ .app-logo }
 
 Console Link connects the **AMD BC-250** to a PS4 or PS5 on your network. The app finds the consoles, wakes them
 from rest mode, registers the board with them, and starts a session and its stream. The consoles' own name for
@@ -34,19 +34,23 @@ board.
 
 ## Using it
 
-The top row shows how many consoles answered the last search, how many the board is registered with, how the
-**last session** went, and **Console**: the selected registered console's model and system software (**PS4 Pro ·
-14.00**; the exact model once a session has run). Hold the mouse over it for more: its state and what runs on it
+The boxes at the top show how many consoles answered the last search, how many the board is registered with, how
+the **last session** went, and **Console type**: the selected registered console's model and system software
+(**PS4 Pro · 14.00**; the exact model once a session has run). Hold the mouse over it for more: its state and what runs on it
 (the game's name and title ID) as the last search found them, its Remote Play version and the last stream's
 network test. A PS5 does not report its system software this way, so for a PS5 the box shows the model only.
+**Settings**, the last box, has the app's own settings: **Show personal details** (see [Privacy](#privacy)) and
+**Steam comes to the front on the PS button** (see [When it does not work](#when-it-does-not-work)).
 
 **Consoles on the network:**
 
-- **Search:** asks every PS4 and PS5 on the network to answer. Each one is listed with its name, model, address,
-  state (**On** or **Rest mode**) and system software (a PS4's, 14.00 for example; a PS5 reports a code instead),
-  and whether the board is registered with it.
-- **Search at address:** asks one address. Use it when the search finds nothing, for example on a network that
-  does not pass broadcasts (some mesh systems, a guest network, a VPN). The app remembers the address.
+- **Search** (the magnifying glass in **Consoles on the network**, or the words themselves): asks every PS4 and
+  PS5 on the network to answer. Each one is listed with its name, model, address, state (**On** or **Rest mode**)
+  and system software (a PS4's, 14.00 for example; a PS5 reports a code instead), and whether the board is
+  registered with it.
+- **Search at address** (the address in the field on the right, then its magnifying glass or Enter): asks one
+  address. Use it when the search finds nothing, for example on a network that does not pass broadcasts (some mesh
+  systems, a guest network, a VPN). The app remembers the address.
 
 **Find my account ID…** (next to the account ID):
 
@@ -70,10 +74,12 @@ again.
 
 1. On a PS5, open Settings > System > Remote Play > **Link Device**; on a PS4, Settings > Remote Play Connection
    Settings > **Add Device**. It shows an 8-digit PIN for a few minutes.
-2. In the app, select the console in the list, enter your account ID and the PIN, and press **Register with
-   selected console**.
+2. In the app, select the console under **Consoles on the network**, enter your account ID and the PIN, and press
+   **Register the board with a console**.
 
-The console hands the board its keys, and the console appears under **Registered consoles**. A wrong PIN or a
+The console hands the board its keys, and the console appears under **Registered consoles**, as a card with its
+name, model, address, Remote Play version and whether a login passcode is set. Click a card to select the console;
+the buttons below act on it. A wrong PIN or a
 wrong account ID is reported in the log at the bottom.
 
 **Registered consoles:**
@@ -101,7 +107,7 @@ wrong account ID is reported in the log at the bottom.
   or the app in the volume control. The controllers on the board play: the buttons (the PS button too), the sticks, L2
   and R2 and the touchpad, its click included. Controllers connected during the stream are picked up within a
   second; the log names each one. Several controllers act as one. When Steam comes to the front on the PS
-  button, switch that off with **Steam comes to the front on the PS button** under the registered consoles (see
+  button, switch that off with **Steam comes to the front on the PS button** in **Settings** (see
   [When it does not work](#when-it-does-not-work)). The motion sensors play too, on a controller
   that has them (a DualShock 4 or DualSense): games that steer or aim by tilting the controller see the tilt. The
   other way, the controllers rumble when the game makes them, and the light bar takes the colour the console gives
@@ -173,7 +179,7 @@ the registered console.
 Your PSN account ID, your PSN online ID and the consoles' addresses are personal details: they identify you and your
 home network. The window masks them. The account ID shows only its last four characters, an address only its last
 part (`•••.•••.•••.20`), the online ID nothing at all. That holds for the fields, the tables and the log.
-**Show personal details** at the bottom shows them in full until you switch it off again, for example to type or
+**Show personal details** in **Settings** shows them in full until you switch it off again, for example to type or
 correct the account ID; the app starts with them masked every time. Whatever you copy from the log is masked, even
 while the window shows the details in full, so a log you send with a question keeps them to yourself. The consoles'
 names (PS4-728, Living room PS5) are not masked: check them before you share a log if you gave a console your own
@@ -221,7 +227,7 @@ board.
 - **The PS button opens Steam's menu in Game Mode:** there Steam keeps the PS button for itself, whatever its
   settings say; the console does not get it.
 - **The PS button brings up Steam:** Steam reads the controllers too and comes to the front on the PS button.
-  Switch off **Steam comes to the front on the PS button** under the registered consoles. It is Steam's own setting
+  Switch off **Steam comes to the front on the PS button** in **Settings**. It is Steam's own setting
   (Settings > Controller > Show Advanced Settings > **Guide Button Focus Steam**): the app closes Steam for the
   change, after asking, and starts it again in the background. In Game Mode Steam always keeps the PS button for
   its menu.
@@ -258,7 +264,7 @@ native core, everything but **Test stream** works; without the decoder, Test str
 
 ## Disclaimer
 
-BC250 Console Link is an independent project, not affiliated with or endorsed by the makers of PlayStation.
+Console Link is an independent project, not affiliated with or endorsed by the makers of PlayStation.
 PlayStation, PS4, PS5 and PSN are trademarks of their owner.
 
 ## License

@@ -277,8 +277,8 @@ def unlink_deck(user: User, paths: Paths) -> str:
 # --- Command line (as root, through pkexec) -------------------------------------------------------------------------
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="loader.py", description="Decky Loader's root part (BC-250 Decky "
-                                                                    "Loader Manager runs it through pkexec)")
+    parser = argparse.ArgumentParser(prog="loader.py", description="Decky Loader's root part (Decky Loader "
+                                                                    "Manager runs it through pkexec)")
     actions = parser.add_subparsers(dest="action", required=True)
     actions.add_parser("install").add_argument("file", type=Path, help="the downloaded PluginLoader")
     remove_parser = actions.add_parser("remove")

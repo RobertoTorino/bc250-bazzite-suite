@@ -33,9 +33,10 @@ jobs:
       matrix:
         dir: [core, portal, tools, apps/bazzite-test, apps/governor, apps/helixsr, apps/persistent-acpi,
               apps/cu-bisect, apps/cores-bisect, apps/gpu-oc-bisect,
-              apps/demo-tool, apps/dependency-checker, apps/suite-releases,
+              apps/demo-tool, apps/dependency-checker, apps/bazzite-pkgxtractor, apps/bazzite-netcatgui,
+              apps/bazzite-umd-file-renamer, apps/suite-releases,
               apps/system-overlay, apps/bios-reader, apps/ace-queues, apps/memory-manager, apps/hdmi-cec, apps/sftp-tools,
-              apps/console-link, apps/mesh-shaders, apps/shadps4-manager, apps/decky-manager,
+              apps/console-link, apps/mesh-shaders, apps/shadps4-manager, apps/rpcs3-manager, apps/decky-manager,
               tools/installer-tests/gui]   # every folder with tests/
     defaults:
       run:
@@ -64,7 +65,7 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: python -X faulthandler -m pytest -v tests        # -v: a crash log names the test
 
-  # BC250 Console Link's native core (Rust, apps/console-link/native): its own tests, clippy, and the Python module
+  # Console Link's native core (Rust, apps/console-link/native): its own tests, clippy, and the Python module
   # built into a wheel and tested from Python, all with the video decoder (FFmpeg from native/ffmpeg/build.sh, kept
   # in the cache until the script changes); clippy also without it, as a clone without FFmpeg builds it. Rust is
   # preinstalled on ubuntu-latest. The pytest job above skips tests/test_native.py, which needs the built module.
@@ -129,7 +130,7 @@ jobs:
       # that their own release workflows already held to it.
       - name: shellcheck (errors, all scripts)
         run: find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 shellcheck -x -S error
-      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace-queues, memory-manager, hdmi-cec, sftp-tools, console-link, mesh-shaders, shadps4-manager, decky-manager and the suite's own scripts)
+      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace-queues, memory-manager, hdmi-cec, sftp-tools, console-link, mesh-shaders, shadps4-manager, rpcs3-manager, decky-manager, pkgxtractor, netcatgui, umd-file-renamer and the suite's own scripts)
         run: |
           shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh
           shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/bc250-cores-unlock.sh \
@@ -143,9 +144,13 @@ jobs:
           shellcheck -S warning apps/mesh-shaders/bc250-mesh-shaders.sh apps/mesh-shaders/bc250-mesh-shaders-run \
             apps/mesh-shaders/install.sh apps/mesh-shaders/mesa/build-in-container.sh
           shellcheck -S warning apps/shadps4-manager/install.sh apps/shadps4-manager/bc250-shadps4-run
+          shellcheck -S warning apps/rpcs3-manager/install.sh apps/rpcs3-manager/bc250-rpcs3-run
           shellcheck -S warning apps/decky-manager/install.sh
           shellcheck -S warning apps/demo-tool/install.sh
           shellcheck -S warning apps/dependency-checker/install.sh
+          shellcheck -S warning apps/bazzite-pkgxtractor/install.sh
+          shellcheck -S warning apps/bazzite-netcatgui/install.sh
+          shellcheck -S warning apps/bazzite-umd-file-renamer/install.sh
           shellcheck -S warning apps/suite-releases/*.sh
 
       - name: Line endings
@@ -212,6 +217,8 @@ jobs:
         run: bash tools/installer-tests/mesh-shaders.sh
       - name: shadps4-manager installer
         run: bash tools/installer-tests/shadps4-manager.sh
+      - name: rpcs3-manager installer
+        run: bash tools/installer-tests/rpcs3-manager.sh
       - name: decky-manager installer
         run: bash tools/installer-tests/decky-manager.sh
       - name: memory-manager installer
@@ -226,6 +233,12 @@ jobs:
         run: bash tools/installer-tests/demo-tool.sh
       - name: Dependency checker installer
         run: bash tools/installer-tests/dependency-checker.sh
+      - name: pkgxtractor installer
+        run: bash tools/installer-tests/bazzite-pkgxtractor.sh
+      - name: NetcatGUI installer
+        run: bash tools/installer-tests/bazzite-netcatgui.sh
+      - name: UMD File Renamer installer
+        run: bash tools/installer-tests/bazzite-umd-file-renamer.sh
       - name: Suite Releases installer
         run: bash tools/installer-tests/suite-releases.sh
       - name: Installer Tests installer

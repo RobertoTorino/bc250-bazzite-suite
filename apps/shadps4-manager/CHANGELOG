@@ -1,3 +1,15 @@
+Changelog: 15-10-2026 02:10:51
+
+Release 0.1.3.
+
+Changelog: 14-10-2026 18:22:56
+
+The app no longer has the BC-250 prefix in its name, as it is not tied to the board: shadPS4 Manager (window, menu entry, messages, README, manual). The tags on its Steam shortcuts are PS4 and shadPS4 Manager; a shortcut made before with the old name's tag turns Update Game Mode on, and the update gives it the new tags. Its app ID, launcher, package and settings are unchanged.
+
+Changelog: 14-10-2026 18:08:29
+
+The README and the manual have a disclaimer, as BC250 Console Link's: an independent project, not affiliated with or endorsed by the makers of PlayStation; PlayStation and PS4 are trademarks of their owner (owner, 14-10-2026).
+
 Changelog: 14-10-2026 15:12:03
 
 Release 0.1.2.

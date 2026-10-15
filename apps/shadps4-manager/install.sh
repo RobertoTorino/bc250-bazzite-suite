@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Installs BC-250 shadPS4 Manager as a desktop app, from a clone or the extracted release tarball:
+# Installs shadPS4 Manager as a desktop app, from a clone or the extracted release tarball:
 #
 #   ./install.sh                         # install or update
 #   ./install.sh --no-desktop-shortcut   # app menu entry only, no icon on the Desktop
@@ -20,7 +20,7 @@
 set -euo pipefail
 
 APP_ID="bc250-shadps4-manager"
-APP_NAME="BC-250 shadPS4 Manager"
+APP_NAME="shadPS4 Manager"
 RUN_NAME="bc250-shadps4-run"
 DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"

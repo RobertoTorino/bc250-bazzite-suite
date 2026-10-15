@@ -21,7 +21,7 @@ from bc250_core.steam import ART, ShortcutError, appid, as_int32, read_vdf, user
 from .consoles import RegisteredConsole
 
 LAUNCHER = "~/.local/bin/bc250-console-link"
-TAG = "BC250 Console Link"
+TAG = "Console Link"
 ART_FILES = {"p": "portrait.png", "": "wide.png", "_hero": "hero.png", "_logo": "logo.png"}
 
 

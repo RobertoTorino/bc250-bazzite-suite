@@ -167,7 +167,7 @@ class MainWindow(QMainWindow):
         version.setStyleSheet("color:palette(placeholder-text);")
         lay.addWidget(version, 0, Qt.AlignmentFlag.AlignRight)
         self.setCentralWidget(central)
-        # The row buttons the size of the widest, in two columns on the right, as in BC-250 shadPS4 Manager.
+        # The row buttons the size of the widest, in two columns on the right, as in shadPS4 Manager.
         buttons = [b for _, _, row_buttons in rows for b in row_buttons]
         for button in buttons:
             button.ensurePolished()

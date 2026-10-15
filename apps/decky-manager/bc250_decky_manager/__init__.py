@@ -2,9 +2,9 @@
 """Decky Loader on the BC-250: installs a pinned Decky Loader release with its system service, shows whether it runs
 and which plugins it has, and links /home/deck for plugins that need it. Decky's own menu is in Game Mode."""
 
-APP_NAME = "BC-250 Decky Loader Manager"
+APP_NAME = "Decky Loader Manager"
 APP_ID = "bc250-decky-manager"
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from pathlib import Path
 

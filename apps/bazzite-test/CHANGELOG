@@ -1,3 +1,15 @@
+Changelog: 15-10-2026 02:10:51
+
+Release 0.1.10.
+
+Changelog: 15-10-2026 00:23:49
+
+images/bc250-bazzite-test-128.png: the 128 px version of the icon, scaled from the 512 px file, so the app's images folder has both sizes like the other apps. Nothing uses it yet; it is the source for the portal's tile icon.
+
+Changelog: 14-10-2026 18:22:56
+
+The HDMI-CEC test names the app HDMI CEC Manager, its new name.
+
 Changelog: 14-10-2026 15:12:03
 
 Release 0.1.9.

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Starts the shadPS4 that BC-250 shadPS4 Manager installed, with the arguments given:
+# Starts the shadPS4 that shadPS4 Manager installed, with the arguments given:
 #
 #   bc250-shadps4-run -f true -g /path/to/game/eboot.bin   a game, full screen (the Game Mode shortcuts)
 #   bc250-shadps4-run -g /path/to/game/eboot.bin           a game, as shadPS4's settings say
@@ -16,7 +16,7 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     exit 0
 fi
 [ -x "$APPIMAGE" ] || {
-    echo "shadPS4 is not installed: open BC-250 shadPS4 Manager and press Install." >&2
+    echo "shadPS4 is not installed: open shadPS4 Manager and press Install." >&2
     exit 1
 }
 # shadPS4 takes a folder named "user" in the current folder as its own folder (portable mode), so start it where

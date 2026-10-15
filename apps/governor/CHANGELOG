@@ -1,3 +1,11 @@
+Changelog: 15-10-2026 02:10:51
+
+Release 0.1.6.
+
+Changelog: 15-10-2026 00:23:49
+
+images/bc250-governor-manager-128.png: the 128 px version of the icon, scaled from the 512 px file, so the app's images folder has both sizes like the other apps. Nothing uses it yet; it is the source for the portal's tile icon.
+
 Changelog: 12-10-2026 09:19:23
 
 Release 0.1.5.

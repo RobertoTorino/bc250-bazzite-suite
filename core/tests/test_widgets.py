@@ -121,6 +121,30 @@ def test_item_view_tooltip_text(qapp):
     assert text == "cell tip" and area == rect
 
 
+def test_tooltip_filter_is_removed_when_the_app_quits(qapp, monkeypatch):
+    from PyQt6.QtCore import QObject, pyqtSignal
+
+    class App(QObject):                     # stands in for the QApplication, so the real one keeps running
+        aboutToQuit = pyqtSignal()
+
+        def __init__(self):
+            super().__init__()
+            self.filters: list[QObject] = []
+
+        def installEventFilter(self, obj):  # noqa: N802
+            self.filters.append(obj)
+
+        def removeEventFilter(self, obj):   # noqa: N802
+            self.filters.remove(obj)
+
+    monkeypatch.setattr(RoundedToolTip, "_instance", None)
+    app = App()
+    tip = RoundedToolTip.install(app)
+    assert app.filters == [tip] and RoundedToolTip._instance is tip
+    app.aboutToQuit.emit()
+    assert app.filters == []
+
+
 def test_manual_tooltip_uses_installed_instance(qapp, monkeypatch):
     tip = RoundedToolTip(qapp)
     monkeypatch.setattr(RoundedToolTip, "_instance", tip)

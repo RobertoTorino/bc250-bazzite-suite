@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Single instance: forwarding to a listener, nobody-there detection, and a second launch raising the window."""
+"""Single instance: forwarding to a listener, nobody-there detection, a second launch raising the window, and a
+second launch handing over its arguments."""
 
 from __future__ import annotations
 
@@ -63,6 +64,55 @@ def test_second_launch_raises_the_window(qapp, monkeypatch):
     server.close()
     window.close()
     dispose(window)                                            # the server is the window's child
+
+
+def test_launch_without_arguments_sends_the_plain_show_request(qapp, monkeypatch):
+    sent = []
+    monkeypatch.setattr(instance, "forward", lambda message, name: sent.append(message) or True)
+    monkeypatch.delenv("XDG_ACTIVATION_TOKEN", raising=False)
+    assert instance.already_running("bc250-test-plain") and instance.already_running("bc250-test-plain", [])
+    assert sent == ["show", "show"]                            # what every launch sent before arguments existed
+
+
+def test_second_launch_hands_over_its_arguments(qapp, monkeypatch):
+    app_id = f"bc250-test-args-{os.getpid()}"
+    window = QWidget()
+    raised, given = [], []
+    monkeypatch.setattr(instance, "raise_window", raised.append)
+    server = instance.serve(app_id, window, on_args=given.append)
+    monkeypatch.delenv("XDG_ACTIVATION_TOKEN", raising=False)
+    assert instance.already_running(app_id, ["/home/me/Downloads/My Game (EU).pkg", "-l", "4444", "ü\nx"])
+    assert pump_until(lambda: given)
+    assert raised == [window]                                  # shown first, then given the arguments
+    assert given == [["/home/me/Downloads/My Game (EU).pkg", "-l", "4444", "ü\nx"]]
+    server.close()
+    window.close()
+    dispose(window)
+
+
+def test_arguments_without_a_handler_or_malformed_only_show(qapp, monkeypatch):
+    app_id = f"bc250-test-noargs-{os.getpid()}"
+    window = QWidget()
+    raised = []
+    monkeypatch.setattr(instance, "raise_window", raised.append)
+    server = instance.serve(app_id, window)                    # an app that takes no arguments
+    assert instance.already_running(app_id, ["file.iso"])
+    assert pump_until(lambda: raised == [window])
+    server.close()
+    window.close()
+    dispose(window)
+
+    window = QWidget()
+    given = []
+    server = instance.serve(app_id, window, on_args=given.append)
+    name = instance.server_name(app_id)
+    assert instance.forward("args not json", name) and instance.forward('args {"a": 1}', name)
+    assert instance.forward('args ["ok"]', name)
+    assert pump_until(lambda: given)
+    assert given == [["ok"]]                                   # the two bad lines were dropped
+    server.close()
+    window.close()
+    dispose(window)
 
 
 def test_first_launch_takes_the_lock(qapp):

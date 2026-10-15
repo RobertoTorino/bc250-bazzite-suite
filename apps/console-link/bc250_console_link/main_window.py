@@ -3,7 +3,7 @@
 them, and the registered consoles with Wake, Test session, Test stream, Stream and Rest mode. Every network step
 runs off the GUI thread (jobs.py through core's UpdateChecker) and reports back in the log at the bottom; Stream
 shows the picture in its own window (stream_view.py) until that window closes. The personal details (account ID,
-online ID, addresses) are masked until Show personal details is on, and the log is always copied masked
+online ID, addresses) are masked until Show personal details is on (Settings), and the log is always copied masked
 (privacy.py)."""
 
 from __future__ import annotations
@@ -14,18 +14,19 @@ from pathlib import Path
 from types import ModuleType
 from typing import Callable
 
-from PyQt6.QtCore import QEvent, QMimeData, Qt, QUrl
-from PyQt6.QtGui import QCloseEvent, QDesktopServices, QGuiApplication
-from PyQt6.QtWidgets import (QAbstractItemView, QCheckBox, QDialog, QDialogButtonBox, QGroupBox, QHBoxLayout,
-                             QHeaderView,
-                             QInputDialog, QLabel, QLineEdit, QMainWindow, QMessageBox, QPushButton, QTableWidget,
-                             QTableWidgetItem, QVBoxLayout, QWidget)
+from PyQt6.QtCore import QEvent, QMimeData, QModelIndex, QPointF, QRect, QRectF, QSize, Qt, QUrl
+from PyQt6.QtGui import (QCloseEvent, QColor, QDesktopServices, QFont, QFontMetrics, QGuiApplication, QIcon,
+                         QMouseEvent, QPainter, QPainterPath, QPalette, QPen, QPixmap)
+from PyQt6.QtWidgets import (QAbstractItemView, QCheckBox, QDialog, QDialogButtonBox, QFrame, QGridLayout,
+                             QHBoxLayout, QHeaderView, QInputDialog, QLabel, QLineEdit, QMainWindow, QMessageBox,
+                             QPushButton, QSizePolicy, QStyle, QStyledItemDelegate, QStyleOptionViewItem, QTableWidget,
+                             QTableWidgetItem, QToolButton, QVBoxLayout, QWidget)
 
 from bc250_core import SUITE_MANUAL_URL
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import config_home
 from bc250_core.settings import SettingsStore
-from bc250_core.theme import ORANGE, PURPLE
+from bc250_core.theme import ACCENT
 from bc250_core.updates import UpdateChecker
 from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, accent_button, hint_label
 
@@ -43,7 +44,10 @@ from .target import rp_version, software_version
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/console-link/"
 DARK_BLUE = "#0d47a1"
-BLACK = "#000000"
+FIELD = "#ffffff"                                       # the search fields: light in either colour scheme
+FIELD_TEXT = "#202124"
+FIELD_BUTTON = "#e3e3e8"
+REGISTERED_CAPTIONS = ("", "Model", "Address", "Remote Play", "Login passcode")
 STATES = {"ready": "On", "standby": "Rest mode", "unknown": "Unknown"}
 Runner = Callable[[Callable[[], Outcome], Callable[[Outcome], None]], bool]
 
@@ -188,10 +192,273 @@ def _table(headers: list[str]) -> QTableWidget:
     return table
 
 
+def _title(text: str) -> QLabel:
+    """A section's title, over its controls."""
+    label = QLabel(text)
+    label.setStyleSheet("font-size:17px; font-weight:600;")
+    return label
+
+
+def _mix(colour: QColor, other: QColor, share: float) -> QColor:
+    return QColor(*(round(a + (b - a) * share) for a, b in zip(colour.getRgb()[:3], other.getRgb()[:3])))
+
+
+def _canvas(size: int) -> tuple[QPixmap, QPainter]:
+    """A transparent pixmap drawn at twice its size, so it stays sharp on a high-DPI screen."""
+    pixmap = QPixmap(size * 2, size * 2)
+    pixmap.setDevicePixelRatio(2)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    return pixmap, painter
+
+
+def search_icon(size: int = 20) -> QIcon:
+    """A magnifying glass, drawn: the same on every desktop, whatever its icon theme."""
+    pixmap, painter = _canvas(size)
+    pen = QPen(QColor(FIELD_TEXT), size * 0.11, cap=Qt.PenCapStyle.RoundCap)
+    painter.setPen(pen)
+    painter.drawEllipse(QPointF(size * 0.42, size * 0.42), size * 0.27, size * 0.27)
+    painter.drawLine(QPointF(size * 0.62, size * 0.62), QPointF(size * 0.86, size * 0.86))
+    painter.end()
+    return QIcon(pixmap)
+
+
+def gear_icon(size: int = 40) -> QIcon:
+    """A white gear on a dark rounded tile, drawn like search_icon()."""
+    pixmap, painter = _canvas(size)
+    tile = QColor("#3a3a40")
+    painter.setPen(Qt.PenStyle.NoPen)
+    painter.setBrush(tile)
+    painter.drawRoundedRect(QRectF(0, 0, size, size), size * 0.15, size * 0.15)
+    painter.translate(size / 2, size / 2)
+    painter.setBrush(QColor("#ffffff"))
+    painter.drawEllipse(QPointF(0, 0), size * 0.25, size * 0.25)
+    tooth = QRectF(-size * 0.065, -size * 0.36, size * 0.13, size * 0.16)
+    for step in range(8):
+        painter.drawRoundedRect(tooth, size * 0.02, size * 0.02)
+        painter.rotate(45)
+    painter.setBrush(tile)
+    painter.drawEllipse(QPointF(0, 0), size * 0.1, size * 0.1)
+    painter.end()
+    return QIcon(pixmap)
+
+
+class SearchPill(QFrame):
+    """A rounded field with a search button at its end, as in a browser: on the left a title or a line edit; clicking
+    a title searches too."""
+
+    def __init__(self, field: QWidget, tooltip: str):
+        super().__init__()
+        self.setObjectName("searchPill")
+        self.field = field
+        self.button = QToolButton()
+        self.button.setIcon(search_icon())
+        self.button.setIconSize(QSize(20, 20))
+        self.button.setFixedSize(46, 30)
+        self.button.setToolTip(tooltip)
+        self.button.setAccessibleName(tooltip)
+        self.button.setCursor(Qt.CursorShape.PointingHandCursor)
+        palette = field.palette()
+        palette.setColor(QPalette.ColorRole.PlaceholderText, QColor("#6b6b73"))
+        field.setPalette(palette)
+        self.setStyleSheet(
+            f"QFrame#searchPill {{ background:{FIELD}; border:1px solid rgba(0,0,0,0.14); border-radius:19px; }}"
+            f"QFrame#searchPill QLabel, QFrame#searchPill QLineEdit {{ background:transparent; border:none; "
+            f"color:{FIELD_TEXT}; font-size:15px; }}"
+            f"QFrame#searchPill QToolButton {{ background:{FIELD_BUTTON}; border:none; border-radius:15px; }}"
+            "QFrame#searchPill QToolButton:hover { background:#d2d2da; }"
+            "QFrame#searchPill QToolButton:disabled { background:#f0f0f2; }")
+        self.setFixedHeight(38)
+        if isinstance(field, QLabel):
+            self.setCursor(Qt.CursorShape.PointingHandCursor)
+            self.setToolTip(tooltip)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(16, 4, 4, 4)
+        layout.setSpacing(8)
+        layout.addWidget(field, 1)
+        layout.addWidget(self.button)
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if (isinstance(self.field, QLabel) and event.button() == Qt.MouseButton.LeftButton
+                and self.button.isEnabled()):
+            self.button.click()
+        super().mouseReleaseEvent(event)
+
+
+def settings_button() -> QPushButton:
+    """The Settings box at the end of the header's boxes: their colour and height, a gear and the word."""
+    button = QPushButton("Settings")
+    button.setIcon(gear_icon())
+    button.setIconSize(QSize(40, 40))
+    button.setMinimumWidth(120)
+    button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+    button.setCursor(Qt.CursorShape.PointingHandCursor)
+    button.setToolTip("Personal details and Steam's PS button")
+    button.setStyleSheet(f"QPushButton {{ background:{DARK_BLUE}; color:white; border:none; border-radius:8px; "
+                         "padding:8px 14px 8px 8px; font-size:14px; font-weight:700; text-align:left; }"
+                         "QPushButton:hover { background:#1565c0; } QPushButton:pressed { background:#0b3d91; }")
+    return button
+
+
+class CardDelegate(QStyledItemDelegate):
+    """A table's rows as cards: each row a rounded card with a line between its cells, each value after its caption
+    (Model: PS4), the first one in bold; the selected card outlined in the accent colour. The items keep the plain
+    values."""
+
+    PAD, RADIUS, GAP = 10, 8, 3
+
+    def __init__(self, captions: tuple[str, ...], parent: QWidget | None = None, elide_start: int = -1):
+        super().__init__(parent)
+        self.captions = captions
+        self.elide_start = elide_start                  # this column is shortened at its start: …•••.20
+
+    def _parts(self, option: QStyleOptionViewItem, index: QModelIndex) -> tuple[str, str, QFont]:
+        caption = self.captions[index.column()] if index.column() < len(self.captions) else ""
+        font = QFont(option.font)
+        font.setBold(index.column() == 0)
+        return (f"{caption}: " if caption else ""), str(index.data() or ""), font
+
+    def text_width(self, font: QFont, column: int, value: str, with_caption: bool = True) -> int:
+        """The room a cell needs, with or without its caption."""
+        caption = self.captions[column] if column < len(self.captions) and with_caption else ""
+        bold = QFont(font)
+        bold.setBold(column == 0)
+        return (QFontMetrics(font).horizontalAdvance(f"{caption}: " if caption else "")
+                + QFontMetrics(bold).horizontalAdvance(value) + 2 * self.PAD + 2)
+
+    def row_height(self, font: QFont) -> int:
+        return QFontMetrics(font).height() + 2 * (self.PAD + self.GAP)
+
+    def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
+        caption, value, font = self._parts(option, index)
+        width = QFontMetrics(option.font).horizontalAdvance(caption) + QFontMetrics(font).horizontalAdvance(value)
+        return QSize(width + 2 * self.PAD + 2, self.row_height(option.font))
+
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+        caption, value, font = self._parts(option, index)
+        first, last = index.column() == 0, index.column() == index.model().columnCount() - 1
+        palette = option.palette
+        selected = bool(option.state & QStyle.StateFlag.State_Selected)
+        cell = QRectF(option.rect)
+        card = cell.adjusted(0, self.GAP, 0, -self.GAP)
+        reach = 2 * self.RADIUS                         # the rounded corners only at the card's two ends
+        shape = QPainterPath()
+        shape.addRoundedRect(card.adjusted(0.5 if first else -reach, 0.5, -0.5 if last else reach, -0.5),
+                             self.RADIUS, self.RADIUS)
+        fill = palette.color(QPalette.ColorRole.Button)
+        painter.save()
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setClipRect(cell)
+        painter.fillPath(shape, _mix(fill, QColor(ACCENT), 0.22) if selected else fill)
+        if selected:
+            painter.setPen(QPen(QColor(ACCENT), 2))
+            painter.drawPath(shape)
+        if not first:
+            painter.setPen(QPen(palette.color(QPalette.ColorRole.Mid), 1))
+            painter.drawLine(QPointF(cell.left() + 0.5, card.top() + 9), QPointF(cell.left() + 0.5, card.bottom() - 9))
+        text = QRect(card.toRect().adjusted(self.PAD, 0, -self.PAD, 0))
+        flags = Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft
+        caption_px = QFontMetrics(option.font).horizontalAdvance(caption)
+        if caption_px + QFontMetrics(font).horizontalAdvance(value) > text.width():
+            caption = ""                                # too little room: the value alone
+        if caption:
+            painter.setFont(option.font)
+            painter.setPen(palette.color(QPalette.ColorRole.PlaceholderText))
+            painter.drawText(text, flags, caption)
+            text.setLeft(text.left() + caption_px)
+        painter.setFont(font)
+        painter.setPen(palette.color(QPalette.ColorRole.ButtonText))
+        mode = Qt.TextElideMode.ElideLeft if index.column() == self.elide_start else Qt.TextElideMode.ElideRight
+        painter.drawText(text, flags, QFontMetrics(font).elidedText(value, mode, text.width()))
+        painter.restore()
+
+
+class CardTable(QTableWidget):
+    """A table drawn as cards (CardDelegate): no header, no grid, no frame, as wide as its place. When the cards do
+    not fit, the columns in shrink_order lose their caption one by one, then the column give_way is shortened at its
+    start. Room to spare goes to the last column, so every card reaches the right edge."""
+
+    def __init__(self, headers: list[str], give_way: int, shrink_order: tuple[int, ...]):
+        super().__init__(0, len(headers))
+        self.give_way, self.shrink_order = give_way, shrink_order
+        self.delegate = CardDelegate(tuple("" if i == 0 else h for i, h in enumerate(headers)), self, give_way)
+        self.setItemDelegate(self.delegate)
+        self.setHorizontalHeaderLabels(headers)
+        self.horizontalHeader().setVisible(False)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
+        self.horizontalHeader().setMinimumSectionSize(40)
+        self.verticalHeader().setVisible(False)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setShowGrid(False)
+        self.setFrameShape(QFrame.Shape.NoFrame)
+        palette = self.palette()
+        palette.setColor(QPalette.ColorRole.Base, palette.color(QPalette.ColorRole.Window))
+        palette.setColor(QPalette.ColorRole.Highlight, QColor(0, 0, 0, 0))     # the cards show the selection
+        self.setPalette(palette)
+        height = self.delegate.row_height(self.font())
+        self.verticalHeader().setDefaultSectionSize(height)
+        self.setMinimumHeight(3 * height)
+
+    def fit_columns(self) -> None:
+        font, columns = self.font(), range(self.columnCount())
+        values = [[self.item(row, col).text() if self.item(row, col) else "" for row in range(self.rowCount())]
+                  for col in columns]
+        full = [max((self.delegate.text_width(font, c, v) for v in values[c]), default=40) for c in columns]
+        bare = [max((self.delegate.text_width(font, c, v, False) for v in values[c]), default=40) for c in columns]
+        widths, room = list(full), self.viewport().width()
+        for col in self.shrink_order:
+            if sum(widths) <= room:
+                break
+            widths[col] = bare[col]
+        spare = room - sum(widths)
+        if spare >= 0:
+            widths[-1] += spare                         # the cards reach the right edge
+        else:
+            widths[self.give_way] = max(40, widths[self.give_way] + spare)
+        for col, width in zip(columns, widths):
+            self.setColumnWidth(col, width)
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self.fit_columns()
+
+
+class AppSettingsDialog(QDialog):
+    """The app's own settings, from the Settings box: the personal details in full, and Steam's PS button. The check
+    boxes are the main window's and act as soon as they change."""
+
+    def __init__(self, reveal_box: QCheckBox, steam_box: QCheckBox, steam_note: QLabel, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.setWindowTitle(f"{APP_NAME}: settings")
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        buttons.rejected.connect(self.reject)
+        lay = QVBoxLayout(self)
+        lay.addWidget(_title("Personal details"))
+        lay.addWidget(reveal_box)
+        lay.addWidget(hint_label(
+            "Shows the account ID, the PSN online ID and the consoles' addresses in full until you switch it off; "
+            "the app starts with them masked every time. The log is always copied with them masked."))
+        lay.addSpacing(12)
+        lay.addWidget(_title("Steam"))
+        lay.addWidget(steam_box)
+        lay.addWidget(steam_note)
+        lay.addWidget(hint_label(
+            "Steam's own setting Guide Button Focus Steam (Settings > Controller > Show Advanced Settings). Switch it "
+            "off so the PS button only goes to the console. Steam closes for the change, after asking, and starts "
+            "again in the background."))
+        lay.addStretch(1)
+        lay.addWidget(buttons)
+        self.resize(560, self.sizeHint().height())
+
+
 class MainWindow(QMainWindow):
     def __init__(self, config_dir: Path | None = None, ops: ModuleType = jobs, run: Runner | None = None):
         super().__init__()
-        self.resize(900, 860)
+        self.resize(1000, 900)
         self.store = ConsoleStore((config_dir or config_home()) / APP_ID)
         self.history = HistoryStore(self.store.path.parent)
         self.ops = ops
@@ -216,66 +483,80 @@ class MainWindow(QMainWindow):
         self.badge = StatusText()
         header.add_state(self.badge)
         self.found_box = MetricBox("On the network", DARK_BLUE)
-        self.registered_box = MetricBox("Registered", ORANGE)
-        self.session_box = MetricBox("Last session", BLACK)
-        self.console_box = MetricBox("Console", PURPLE)
+        self.registered_box = MetricBox("Registered", DARK_BLUE)
+        self.session_box = MetricBox("Last session", DARK_BLUE)
+        self.console_box = MetricBox("Console type", DARK_BLUE)
         for box in (self.found_box, self.registered_box, self.session_box, self.console_box):
-            header.add_second(box)
+            header.add_second(box, 1)
+        self.settings_button = settings_button()
+        self.settings_button.clicked.connect(self.show_settings)
+        header.add_second(self.settings_button, 1)
 
-        network = QGroupBox("Consoles on the network")
-        self.found_table = _table(["Name", "Model", "Address", "State", "System", "Registered"])
-        self.found_table.itemSelectionChanged.connect(self._update_buttons)
-        self.search_button = accent_button("Search", "Ask every PS4 and PS5 on the network to answer")
+        self.search_pill = SearchPill(QLabel("Consoles on the network"),
+                                      "Search: ask every PS4 and PS5 on the network to answer")
+        self.search_button = self.search_pill.button
         self.search_button.clicked.connect(self.search)
         self.address_edit = PrivateLineEdit(self.settings.get("address"), privacy.mask_address)
         self.address_edit.setPlaceholderText("Console address, e.g. 192.168.1.20")
-        self.address_edit.setMinimumWidth(240)
         self.address_edit.setToolTip("For networks that do not pass broadcasts: ask one address")
-        self.address_button = QPushButton("Search at address")
+        self.address_pill = SearchPill(self.address_edit, "Search at address: ask the console at this address")
+        self.address_pill.setMinimumWidth(420)
+        self.address_button = self.address_pill.button
         self.address_button.clicked.connect(self.search_address)
+        self.address_edit.returnPressed.connect(self.address_button.click)
         search_row = QHBoxLayout()
-        search_row.addWidget(self.search_button)
+        search_row.addWidget(self.search_pill)
         search_row.addStretch(1)
-        search_row.addWidget(self.address_edit)
-        search_row.addWidget(self.address_button)
-        lay_network = QVBoxLayout(network)
-        lay_network.addLayout(search_row)
-        lay_network.addWidget(self.found_table)
-        lay_network.addWidget(hint_label(
-            "The console answers when Remote Play is on (Settings > System > Remote Play). In rest mode it only "
-            "answers when its rest-mode settings keep it connected to the internet and allow turning it on from "
-            "the network."))
+        search_row.addWidget(self.address_pill)
+        self.found_table = _table(["Name", "Model", "Address", "State", "System", "Registered"])
+        self.found_table.itemSelectionChanged.connect(self._update_buttons)
 
-        register = QGroupBox("Register the board with a console")
         self.account_edit = PrivateLineEdit(self.settings.get("account_id"), privacy.mask_id)
-        self.account_edit.setPlaceholderText("PSN account ID: a number, or the 12-character code ending with =")
+        self.account_edit.setPlaceholderText("A number, or a code ending with =")
+        self.account_edit.setToolTip("Your PSN account ID: a number, or the 12-character code ending with =")
         self.pin_edit = QLineEdit()
-        self.pin_edit.setPlaceholderText("8-digit PIN from the console")
+        self.pin_edit.setPlaceholderText("8-digit PIN")
+        self.pin_edit.setToolTip("The 8-digit PIN the console shows")
         self.pin_edit.setMaxLength(9)
         self.account_button = QPushButton("Find my account ID…")
         self.account_button.setToolTip("Sign in to PSN in your browser to read your account ID")
         self.account_button.clicked.connect(self.find_account_id)
-        self.register_button = QPushButton("Register with selected console")
+        self.register_button = QPushButton("Register the board with a console")
+        self.register_button.setToolTip("Register with the console selected under Consoles on the network")
         self.register_button.clicked.connect(self.register)
-        form = QHBoxLayout()
-        form.addWidget(QLabel("Account ID:"))
-        form.addWidget(self.account_edit, 2)
-        form.addWidget(self.account_button)
-        form.addWidget(QLabel("PIN:"))
-        form.addWidget(self.pin_edit, 1)
-        form.addWidget(self.register_button)
-        lay_register = QVBoxLayout(register)
-        lay_register.addLayout(form)
-        lay_register.addWidget(hint_label(
+        form_widget = QWidget()                           # its rows keep their height when the cards are taller
+        form_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        form = QGridLayout(form_widget)
+        form.setContentsMargins(0, 0, 0, 0)
+        form.addWidget(QLabel("Account ID:"), 0, 0)
+        form.addWidget(self.account_edit, 0, 1)
+        form.addWidget(self.account_button, 0, 2)
+        form.addWidget(QLabel("PIN:"), 1, 0)
+        form.addWidget(self.pin_edit, 1, 1)
+        form.addWidget(self.register_button, 1, 2)
+        form.setColumnStretch(1, 1)
+        register = QVBoxLayout()
+        register.addWidget(_title("Register the board with a console"))
+        register.addWidget(form_widget)
+        register.addWidget(hint_label(
             "On a PS5, open Settings > System > Remote Play > Link Device; on a PS4, Settings > Remote Play "
             "Connection Settings > Add Device: it shows an 8-digit PIN for a few minutes. The account ID is your "
             "PSN account's number, not your online name: Find my account ID reads it through the PlayStation sign-in. "
-            f"<a href='{MANUAL_URL}'>More in the manual</a>"))
+            f"<a href='{MANUAL_URL}'>More in the wiki</a>"))
+        register.addStretch(1)
 
-        mine = QGroupBox("Registered consoles")
-        self.registered_table = _table(["Name", "Model", "Address", "Remote Play", "Login passcode"])
+        self.registered_table = CardTable(["Name", "Model", "Address", "Remote Play", "Login passcode"], 2,
+                                          shrink_order=(2, 3, 1, 4))
         self.registered_table.itemSelectionChanged.connect(self._update_buttons)
         self.registered_table.itemSelectionChanged.connect(self._show_console_box)
+        mine = QVBoxLayout()
+        mine.addWidget(_title("Registered consoles"))
+        mine.addWidget(self.registered_table, 1)
+        consoles = QHBoxLayout()
+        consoles.setSpacing(24)
+        consoles.addLayout(register, 0)
+        consoles.addLayout(mine, 1)
+
         self.wake_button = QPushButton("Wake")
         self.wake_button.setToolTip("Turn the console on from rest mode")
         self.wake_button.clicked.connect(self.wake)
@@ -309,17 +590,9 @@ class MainWindow(QMainWindow):
         self.remove_button.clicked.connect(self.remove)
         buttons = QHBoxLayout()
         for button in (self.wake_button, self.test_button, self.stream_button, self.watch_button, self.options_button,
-                       self.rest_button, self.game_mode_button):
+                       self.rest_button, self.game_mode_button, self.passcode_button, self.remove_button):
             buttons.addWidget(button)
         buttons.addStretch(1)
-        buttons.addWidget(self.passcode_button)
-        buttons.addWidget(self.remove_button)
-        self.steam = steam_settings.find_steam()
-        self.steam_box = QCheckBox("Steam comes to the front on the PS button")
-        self.steam_box.setToolTip("Steam's Guide Button Focus Steam (Settings > Controller > Show Advanced Settings). "
-                                  "Switch it off so the PS button only goes to the console. Steam restarts for it.")
-        self.steam_box.toggled.connect(self.set_steam_guide)
-        self._show_steam()
         self.controller_button = QPushButton("Controller test…")
         self.controller_button.setToolTip("Every button, stick, trigger and the touchpad live, the motors and the "
                                           "light bar, and whether a Sony controller is genuine or fake")
@@ -330,41 +603,44 @@ class MainWindow(QMainWindow):
         controller_row = QHBoxLayout()
         controller_row.addWidget(self.controller_button)
         controller_row.addWidget(self.history_button)
-        controller_row.addWidget(self.steam_box)
         controller_row.addStretch(1)
-        lay_mine = QVBoxLayout(mine)
-        lay_mine.addWidget(self.registered_table)
-        lay_mine.addLayout(buttons)
-        lay_mine.addLayout(controller_row)
-        lay_mine.addWidget(hint_label(
-            "The keys from registration are stored in ~/.config/bc250-console-link/consoles.json, readable only by "
-            "you. Remove forgets them here; a PS5 also lists the board under Link Device, where it can be removed. "
-            "A PS4 only keeps a history, under Remote Play Connection Settings > Connection History."))
+
+        self.steam = steam_settings.find_steam()
+        self.steam_box = QCheckBox("Steam comes to the front on the PS button")
+        self.steam_box.toggled.connect(self.set_steam_guide)
+        self.steam_note = hint_label("Steam is not installed, so this setting does not apply.")
+        self._show_steam()
+        self.reveal_box = QCheckBox("Show personal details")
+        self.reveal_box.toggled.connect(self.set_revealed)
+        self.settings_dialog = AppSettingsDialog(self.reveal_box, self.steam_box, self.steam_note, self)
 
         self.log = MaskedLog(self.masker)
         self.log.setMinimumHeight(120)
-        self.reveal_button = QPushButton("Show personal details")
-        self.reveal_button.setCheckable(True)
-        self.reveal_button.setToolTip("Show the account ID, the PSN online ID and the consoles' addresses in full. "
-                                      "The log is always copied with them masked.")
-        self.reveal_button.toggled.connect(self.set_revealed)
 
         central = QWidget()
         lay = QVBoxLayout(central)
         lay.addLayout(header)
-        lay.addWidget(network)
-        lay.addWidget(register)
-        lay.addWidget(mine)
+        lay.addSpacing(6)
+        lay.addLayout(search_row)
+        lay.addWidget(self.found_table)
+        lay.addWidget(hint_label(
+            "The console answers when Remote Play is on (Settings > System > Remote Play). In rest mode it only "
+            "answers when its rest-mode settings keep it connected to the internet and allow turning it on from "
+            "the network."))
+        lay.addSpacing(6)
+        lay.addLayout(consoles)
+        lay.addLayout(buttons)
+        lay.addLayout(controller_row)
+        lay.addWidget(hint_label(
+            "The keys from registration are stored in ~/.config/bc250-console-link/consoles.json, readable only by "
+            "you. Remove forgets them here; a PS5 also lists the board under Link Device, where it can be removed. "
+            "A PS4 only keeps a history, under Remote Play Connection Settings > Connection History."))
         lay.addWidget(self.log, 1)
         version = QLabel(f"{APP_NAME} {__version__} · core {CORE_VERSION}\n"
                          "Talks to consoles and PSN only when you press a button.")
         version.setAlignment(Qt.AlignmentFlag.AlignRight)
         version.setStyleSheet("color:palette(placeholder-text);")
-        bottom = QHBoxLayout()
-        bottom.addWidget(self.reveal_button, 0, Qt.AlignmentFlag.AlignTop)
-        bottom.addStretch(1)
-        bottom.addWidget(version)
-        lay.addLayout(bottom)
+        lay.addWidget(version)
         self.setCentralWidget(central)
 
         geometry = self.settings.window_state("geometry")
@@ -405,6 +681,7 @@ class MainWindow(QMainWindow):
         configs = steam_settings.user_configs(self.steam) if self.steam else []
         on = steam_settings.guide_focus(configs)
         self.steam_box.setVisible(on is not None)
+        self.steam_note.setVisible(on is None)
         self.steam_box.blockSignals(True)
         self.steam_box.setChecked(bool(on))
         self.steam_box.blockSignals(False)
@@ -421,6 +698,9 @@ class MainWindow(QMainWindow):
         steam = self.steam
         self.start("Changing Steam's PS button setting…", lambda: self.ops.steam_guide_focus(on, steam),
                    lambda outcome: self._show_steam())
+
+    def show_settings(self) -> None:
+        self.settings_dialog.exec()
 
     # --- Personal details -------------------------------------------------------------------------------------
 
@@ -518,6 +798,7 @@ class MainWindow(QMainWindow):
                       rp_version(console.target) or "unknown", "set" if console.login_pin else "none")
             for col, value in enumerate(values):
                 self.registered_table.setItem(row, col, _item(value))
+        self.registered_table.fit_columns()
         self.registered_box.set_value(str(len(self.registered)))
 
     def _address(self, address: str) -> str:
@@ -644,7 +925,7 @@ class MainWindow(QMainWindow):
         window = StreamWindow(f"{name} · {APP_NAME}", stop.set, self, console.options)
         if not self.steam_box.isHidden() and self.steam_box.isEnabled() and self.steam_box.isChecked():
             self.say("Steam comes to the front when you press PS: switch off \"Steam comes to the front on the PS "
-                     "button\" below so the PS button only goes to the console.")
+                     "button\" in Settings so the PS button only goes to the console.")
         self.stream_window, self._stream_stop = window, stop
         window.destroyed.connect(self._stream_window_gone)
         window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)

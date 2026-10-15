@@ -2,9 +2,9 @@
 """A small always-on-top window with the BC-250's live system values: CPU, GPU, refresh rate, fan and
 temperatures."""
 
-APP_NAME = "BC-250 System Overlay"
+APP_NAME = "System Overlay"
 APP_ID = "bc250-system-overlay"
-__version__ = "0.1.7"
+__version__ = "0.1.8"
 
 from pathlib import Path
 

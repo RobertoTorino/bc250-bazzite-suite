@@ -1,3 +1,43 @@
+Changelog: 15-10-2026 02:01:27
+
+Bazzite pkgxtractor, Bazzite NetcatGUI and Bazzite UMD File Renamer are on bc250_core (owner's decision, for consistency): AppInfo, core's start-up, single instance, AppHeader and core's settings, with core bundled by their installers from the checkout and by stage_app in a release, like every core app. A second launch with a file, a folder or a host and port hands it to the open window, through the new arguments of core's instance (already_running(app_id, args), serve(..., on_args)). The copies of core's instance.py follow it (helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi, demo-tool, tools/installer-tests/gui); those apps pass no arguments, so they behave as before. The three installer tests check the bundled core now; the wiki's architecture page and the three app chapters describe the hand-over.
+
+Changelog: 15-10-2026 01:26:23
+
+New app Bazzite UMD File Renamer (apps/bazzite-umd-file-renamer), until now a repository of its own: it renames PSP ISO images after their PARAM.SFO, with its own venv for PyQt6 like Bazzite NetcatGUI, and no bc250_core. CI runs its tests (the pytest matrix), its installer test (tools/installer-tests/bazzite-umd-file-renamer.sh: install from the checkout and from a staged release, the refusals, uninstall and --purge) and shellcheck at warning level on its install.sh. The manual has its chapter (docs/apps/bazzite-umd-file-renamer.md, from the app's former MARKDOWN.md) in the nav, the apps overview, the portal chapter and the README. CLAUDE.md lists it.
+
+Changelog: 15-10-2026 01:18:28
+
+New app Bazzite NetcatGUI (apps/bazzite-netcatgui), until now a repository of its own: a graphical netcat, Connect and Listen tabs over TCP, UDP or TLS, with its own venv for PyQt6 like Bazzite pkgxtractor, and no bc250_core. It is GPL-2.0-only, the license of the C++ tool it is a port of; the README, the wiki's home page and CLAUDE.md say so in their license overview. CI runs its tests (the pytest matrix), its installer test (tools/installer-tests/bazzite-netcatgui.sh: install from the checkout and from a staged release, the refusals, uninstall and --purge) and shellcheck at warning level on its install.sh. The manual has its chapter (docs/apps/bazzite-netcatgui.md, from the app's former MARKDOWN.md) in the nav, the apps overview, the portal chapter and the README. CLAUDE.md lists it.
+
+Changelog: 15-10-2026 00:25:52
+
+The wiki has its own icon, docs/images/wiki-icon.png, for the header, the Home page's footer and the favicon (mkdocs.yml logo and favicon, tools/mkdocs/overrides/home.html). It starts as a copy of the suite's icon; tools/mkdocs/hooks.py no longer serves portal/images/bc250-bazzite-suite.png as assets/logo.png.
+
+Changelog: 14-10-2026 23:32:47
+
+New .github/dependabot.yml: once a week Dependabot opens one pull request when the GitHub Actions the workflows use have a new release. It changes nothing by itself; the owner merges or closes the pull request. The wiki's Development section has a new page, GitHub settings (docs/development/github-settings.md): the repository's settings on GitHub (features, About box, rulesets for the release tags and main, Actions, security) and why, as a starting point for new projects.
+
+Changelog: 14-10-2026 23:09:49
+
+The manual's header follows the decky.xyz layout on every page: the suite's icon on the left and the links GitHub (the repository) and Wiki (the manual itself, from its Install page; the manual is called the wiki from now on, and the footer's Manual column is now Wiki) on the right, with no site name, no repository box and no colour switch. The manual is dark only. Home has no search field; the other pages keep theirs before the two links. The header is tools/mkdocs/overrides/partials/header.html.
+
+Changelog: 14-10-2026 18:22:56
+
+The apps that are not tied to the board lose the BC-250 or BC250 prefix in their names, so they can run on other devices without a misleading name: HelixSR Manager, System Overlay, HDMI CEC Manager, Bazzite SFTP Tools, Console Link, shadPS4 Manager, RPCS3 Manager and Decky Loader Manager. The README, the manual (pages and navigation), the workflows' comments, tools/check_upstream.py and the tests follow. The Steam shortcuts of Console Link, shadPS4 Manager and RPCS3 Manager get the new names as their tags. App IDs, launchers, packages and settings folders keep their names, so nothing installed moves.
+
+Changelog: 14-10-2026 18:08:29
+
+The manual's home page no longer shows the PlayStation logo: the PlayStation card has a neutral gamepad icon (:material-gamepad-variant:); the name stays, used only to say what the apps work with (owner, 14-10-2026). BC-250 shadPS4 Manager and BC-250 RPCS3 Manager have Console Link's disclaimer in their README and manual chapter.
+
+Changelog: 14-10-2026 17:35:13
+
+New app rpcs3-manager (BC-250 RPCS3 Manager), under Development only in the portal: PS3 games with the RPCS3 emulator, built like BC-250 shadPS4 Manager (see its CHANGELOG). CI runs its tests and its installer test (tools/installer-tests/rpcs3-manager.sh) and shellchecks install.sh and bc250-rpcs3-run at warning level; the manual has its chapter (docs/apps/rpcs3-manager.md), the apps overview, the READMEs and the home page list it, the Dependency Checker's catalogue has it, and CLAUDE.md names it with its shellcheck line.
+
+Changelog: 14-10-2026 16:15:38
+
+New app Bazzite pkgxtractor (apps/bazzite-pkgxtractor), until now a repository of its own: it extracts package (.pkg) files into the folder layout shadPS4 uses, with its own venv for PyQt6 and cryptography like SFTP Tools, and no bc250_core. CI runs its tests (the pytest matrix), its installer test (tools/installer-tests/bazzite-pkgxtractor.sh: install from the checkout and from a staged release, both launchers, the refusals, uninstall and --purge) and shellcheck at warning level on its install.sh; requirements-dev.txt includes its requirements. The manual has its chapter (docs/apps/bazzite-pkgxtractor.md, from the app's former MARKDOWN.md) in the nav, the apps overview, the portal chapter and the README. CLAUDE.md lists it.
+
 Changelog: 14-10-2026 14:31:09
 
 A new look for the manual. The home page (docs/index.md, on the template tools/mkdocs/overrides/home.html) is a product page in Bazzite purple: a hero with a BC-250 board and a DualShock 4, a grid of what the apps do, the portal, Get started with the download, an FAQ, the license and a footer of links. The pictures are placeholders until the photos and the portal screenshot are in (docs/images/home/). The install steps move to a new Install page (docs/install.md) and the app tables to an apps overview (docs/apps/index.md); a new app gets a row there (the architecture chapter's step 8). Every page gets a flat deep purple header with a line in the suite's gradient, pill buttons and a pill search field. mkdocs.yml adds the template folder and Material's icon shortcodes (pymdownx.emoji).

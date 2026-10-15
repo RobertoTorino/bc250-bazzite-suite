@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# BC-250 shadPS4 Manager
+# shadPS4 Manager
 
-![BC-250 shadPS4 Manager](../assets/shadps4-manager/bc250-shadps4-manager.png){ .app-logo }
+![shadPS4 Manager](../assets/shadps4-manager/bc250-shadps4-manager.png){ .app-logo }
 
 Plays **PS4 games** on the **AMD BC-250** with [shadPS4](https://github.com/shadps4-emu/shadPS4), an open-source
 PS4 emulator. The app installs the shadPS4 release it was tried with, finds the games in your game folders and adds
@@ -183,6 +183,11 @@ first by unticking them and pressing **Update Game Mode**.
 ./install.sh --uninstall             # remove the app and the shadPS4 it installed; keeps its settings
 ./install.sh --uninstall --purge     # also remove its settings
 ```
+
+## Disclaimer
+
+shadPS4 Manager is an independent project, not affiliated with or endorsed by the makers of PlayStation.
+PlayStation and PS4 are trademarks of their owner.
 
 ## License
 

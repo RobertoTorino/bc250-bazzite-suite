@@ -150,6 +150,25 @@ def test_a_shortcut_without_its_logo_is_brought_up_to_date(qapp, folders, monkey
     window.close()
 
 
+def test_a_shortcut_with_the_tags_of_the_old_name_is_brought_up_to_date(qapp, folders, monkeypatch):
+    """A shortcut made while the app was called BC-250 shadPS4 Manager: Update Game Mode is on for it until it has
+    the tags of now."""
+    _install(folders["home"])
+    game = Game(make_game(folders["shad_home"].parent / "games" / "four", "Four", "CUSA00004"), "Four", "CUSA00004",
+                "01.00")
+    old = shortcuts.entry(game, "Four", folders["run"], LOGO_PATH)
+    old["tags"] = {"0": "PS4", "1": "BC-250 shadPS4 Manager"}
+    steam.write_shortcuts(folders["steam_dir"], [steam.Change(old, shortcuts.for_game(game))])
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    window = _window(folders)
+    assert window.old_tags == {str(game.eboot)} and window.steam_button.isEnabled()
+    window.on_update_steam()
+    _wait(window, qapp)
+    assert window.old_tags == set() and not window.steam_button.isEnabled()
+    assert list(steam.shortcuts(folders["steam_dir"])[0]["tags"].values()) == list(shortcuts.TAGS)
+    window.close()
+
+
 def test_a_shortcut_of_a_game_no_longer_found_is_taken_out(qapp, folders):
     _install(folders["home"])
     gone = shortcuts.Game(Path("/old/games/gone/eboot.bin"), "Gone")
@@ -179,7 +198,7 @@ def test_no_steam_game_mode_or_no_wrapper(qapp, folders, monkeypatch):
     window = _window(folders)
     window.table.item(0, 0).setCheckState(Qt.CheckState.Checked)
     window.on_update_steam()
-    assert "install BC-250 shadPS4 Manager through the portal first" in window.running.text()
+    assert "install shadPS4 Manager through the portal first" in window.running.text()
     assert not window.worker.running
     window.close()
 

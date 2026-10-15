@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Installs BC250 Bazzite SFTP Tools as a desktop app, from a clone or the extracted release tarball:
+# Installs Bazzite SFTP Tools as a desktop app, from a clone or the extracted release tarball:
 #
 #   ./install.sh                         # install or update
 #   ./install.sh --no-desktop-shortcut   # app menu entry only, no icon on the Desktop
@@ -19,7 +19,7 @@
 set -euo pipefail
 
 APP_ID="bc250-bazzite-sftp-tools"
-APP_NAME="BC250 Bazzite SFTP Tools"
+APP_NAME="Bazzite SFTP Tools"
 DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 APP_HOME="$DATA_DIR/$APP_ID"

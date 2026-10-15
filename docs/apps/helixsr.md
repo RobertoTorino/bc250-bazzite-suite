@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# BC-250 HelixSR Manager
+# HelixSR Manager
 
-![BC-250 HelixSR Manager](../assets/helixsr/bc250-bazzite-helixsr-gui.png){ .app-logo }
+![HelixSR Manager](../assets/helixsr/bc250-bazzite-helixsr-gui.png){ .app-logo }
 
 PyQt6 front-end that deploys **[HelixSR](https://github.com/lonewolf0622/HelixSR)** – the FSR 3.1 drop-in
 upscaler with DLSS-style neural networks – into games on an **AMD BC-250** board running **Bazzite**
@@ -98,7 +98,7 @@ cd helixsr-v*/
 It installs the app for your user only: a private venv with PyQt6 and the app under
 `~/.local/share/bc250-bazzite-helixsr-gui`, the launcher `~/.local/bin/bc250-bazzite-helixsr-gui`, a
 desktop entry, the icon and a Desktop icon (`./install.sh --no-desktop-shortcut` leaves the Desktop icon out).
-**BC-250 HelixSR Manager** then appears in the application menu (and in Steam's
+**HelixSR Manager** then appears in the application menu (and in Steam's
 Game Mode via *Add a Non-Steam Game* if you want it there). Run `./install.sh` again from a newer release to
 update, `./install.sh --uninstall` to remove it; the imported payload and the deployed games are left alone.
 `./install.sh --uninstall --purge` also removes the payload and the settings. The list of deployed games stays, so

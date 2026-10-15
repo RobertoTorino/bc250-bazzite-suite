@@ -107,12 +107,12 @@ def test_recorder_writes_a_header_and_a_line_per_second(tmp_path):
     def broken():
         raise RuntimeError("the window is gone")
 
-    recorder = stream_stats.Recorder(out, ["BC250 Console Link 1.0.0", "Console: PS4"], stream, broken, None,
+    recorder = stream_stats.Recorder(out, ["Console Link 1.0.0", "Console: PS4"], stream, broken, None,
                                      interval=0.01, proc=proc).start()
     assert calls.wait(2)
     recorder.stop()
     lines = out.getvalue().splitlines()
-    assert lines[:2] == ["# BC250 Console Link 1.0.0", "# Console: PS4"]
+    assert lines[:2] == ["# Console Link 1.0.0", "# Console: PS4"]
     body = lines[2:]
     assert len(body) == recorder.lines >= 2
     assert all(" s | in 60 frames" in line and "decode 0 avg 0.0 max 4.0 ms" in line and "| cpu " in line

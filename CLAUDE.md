@@ -14,10 +14,11 @@ its manifest. **bazzite-test** is always installed and always listed first; ever
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
 - `apps/<name>/`: bazzite-test, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
-  system-overlay, bios-reader, ace-queues, mesh-shaders, memory-manager, hdmi-cec, sftp-tools, console-link, shadps4-manager, decky-manager, demo-tool, dependency-checker, suite-releases. Each has its
+  system-overlay, bios-reader, ace-queues, mesh-shaders, memory-manager, hdmi-cec, sftp-tools, console-link, shadps4-manager, rpcs3-manager, decky-manager, demo-tool, dependency-checker, bazzite-pkgxtractor, bazzite-netcatgui, bazzite-umd-file-renamer, suite-releases. Each has its
   own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; console-link is AGPL-3.0, its protocol code ported from
-  chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; the rest GPL-3.0-or-later), .gitignore. Simple
-  Demo Tool and the Dependency Checker are `development = true` in `portal/apps.toml`: the portal
+  chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; bazzite-netcatgui is GPL-2.0-only, a port of NetcatGUI; the rest
+  GPL-3.0-or-later), .gitignore. Simple
+  Demo Tool, the Dependency Checker, Bazzite pkgxtractor, Bazzite NetcatGUI, Bazzite UMD File Renamer and the RPCS3 Manager are `development = true` in `portal/apps.toml`: the portal
   lists them under "Development only". HelixSR, ACE Queues, Mesh Shaders, Console Link, the shadPS4 Manager and the Decky Loader Manager are
   `section = "gaming"`: listed under "Gaming". Suite Releases (the release front end) has `.standalone` and `.checkout-only`: it runs
   from the checkout, is never released, and is listed as `[checkout.suite-releases]`, also under "Development only":
@@ -118,7 +119,9 @@ shellcheck -S warning apps/ace-queues/bc250-ace-queues.sh apps/ace-queues/bc250-
 shellcheck -S warning apps/mesh-shaders/bc250-mesh-shaders.sh apps/mesh-shaders/bc250-mesh-shaders-run \
   apps/mesh-shaders/install.sh apps/mesh-shaders/mesa/build-in-container.sh
 shellcheck -S warning apps/shadps4-manager/install.sh apps/shadps4-manager/bc250-shadps4-run
-shellcheck -S warning apps/decky-manager/install.sh
+shellcheck -S warning apps/rpcs3-manager/install.sh apps/rpcs3-manager/bc250-rpcs3-run
+shellcheck -S warning apps/decky-manager/install.sh apps/bazzite-pkgxtractor/install.sh apps/bazzite-netcatgui/install.sh \
+  apps/bazzite-umd-file-renamer/install.sh
 for t in tools/installer-tests/*.sh; do [ "${t##*/}" = shims.sh ] || bash "$t"; done   # every installer test
 mkdocs build --strict                               # from the venv
 ```
@@ -158,3 +161,6 @@ handover says which app and why; the owner decides the number.
 
 Code reads like the code around it: the same comment density, naming and idiom. Docs are plain, short sentences,
 written for the person using the tool.
+
+The manual (`docs/`, built with MkDocs) is called **the wiki** in user-facing text: the header link and the Home
+page's footer say Wiki. There is no GitHub wiki; the repository's own wiki stays unused.

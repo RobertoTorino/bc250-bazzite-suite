@@ -1,3 +1,15 @@
+Changelog: 15-10-2026 02:10:51
+
+Release 1.0.6.
+
+Changelog: 15-10-2026 00:46:47
+
+New window design, from the owner's mock (15-10-2026). The header's boxes are all dark blue and the same width; Console is now Console type, and a new last box, Settings, opens the app's own settings: Show personal details and Steam comes to the front on the PS button moved there from the window (owner's choice), with their explanations. Under the header, Consoles on the network and the console address are rounded search fields with a magnifying glass (the title searches the network, the address field searches at that address, Enter too), above the list without a frame. Below it, side by side: Register the board with a console (the account ID and PIN with their buttons; the register button is now called Register the board with a console) and Registered consoles, shown as cards (name, Model, Address, Remote Play, Login passcode) with the selected one outlined in the accent colour; when a card has too little room, the captions give way one by one and then the address is shortened at its start. The console buttons are one row below both, Controller test… and History… the next. The hint's link says "More in the wiki". The window opens at 1000 × 900 (was 900 × 860); a saved size is kept. Nothing else changed: the same buttons, jobs and messages. The wiki chapter follows. Tests: the Settings box, Enter in the address field, the cards fitting their place, the Steam note without Steam.
+
+Changelog: 14-10-2026 18:22:56
+
+The app no longer has the BC250 prefix in its name, as it is not tied to the board: Console Link (window, menu entry, log header, messages, README, manual). The tag on its Steam shortcuts is Console Link too; a shortcut made before gets it with Update in Game Mode. Its app ID, launcher, package and settings are unchanged.
+
 Changelog: 14-10-2026 09:30:47
 
 Release 1.0.5.

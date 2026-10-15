@@ -52,7 +52,7 @@ apps/<name>/
 - An app with a shell script as its engine keeps that script in the app folder too
   (`apps/cores-bisect/bc250-cores-bisect.sh`).
 - **No placeholder folders** for future work. Plans and status go in MIGRATION.md, not in the app or the manual.
-- **A native core** (only BC250 Console Link so far) is a Rust crate in `native/`, with PyO3 for Python. Its protocol
+- **A native core** (only Console Link so far) is a Rust crate in `native/`, with PyO3 for Python. Its protocol
   code builds and tests without Python (`cargo test`); maturin builds the Python module from `native/pyproject.toml`
   as a wheel for Python 3.10 and newer. Its version equals the app's VERSION (`tools/check_versions.py` reads
   `Cargo.toml` and `pyproject.toml`). Cargo's build output, `native/target/`, is never installed or staged. CI's
@@ -98,6 +98,11 @@ def main() -> int:
     server = instance.serve(INFO.app_id, window)  # noqa: F841 (kept alive while the app runs)
     return exec_app(app)
 ```
+
+An app that opens what it is given on the command line (a file from its menu entry's `%f`, a host and port) hands
+those arguments to the open window instead of losing them: `instance.already_running(INFO.app_id, args)` sends them
+along, and `instance.serve(INFO.app_id, window, on_args=...)` gives them to the running window, which opens them as
+it would at start-up (Bazzite pkgxtractor loads the package, Bazzite NetcatGUI opens the tab).
 
 `--version` prints the app's version and the core it runs on.
 

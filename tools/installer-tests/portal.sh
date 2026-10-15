@@ -86,7 +86,7 @@ check "cancel: nothing removed" "installed bc250-system-overlay && installed bc2
 check "cancel: says so" "grep -q 'Cancelled: nothing was uninstalled.' $T/log5"
 printf 'x\ns\ny\n' | BC250_INTERACTIVE=1 bash "$SUITE/install.sh" --uninstall >> "$T/log5" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
-check "asked about both (twice: the cancel run too), again after an unknown answer" "[ \$(grep -o 'Uninstall BC-250 System Overlay?' $T/log5 | wc -l) -eq 3 ] && [ \$(grep -o 'Uninstall BC-250 BIOS Reader?' $T/log5 | wc -l) -eq 2 ]"
+check "asked about both (twice: the cancel run too), again after an unknown answer" "[ \$(grep -o 'Uninstall System Overlay?' $T/log5 | wc -l) -eq 3 ] && [ \$(grep -o 'Uninstall BC-250 BIOS Reader?' $T/log5 | wc -l) -eq 2 ]"
 check "skipped app stays" "installed bc250-system-overlay && [ -d $D/bc250-bazzite-suite/portal/releases/local-system-overlay ]"
 check "chosen app gone" "! installed bc250-bios-reader && [ ! -e $D/bc250-bazzite-suite/portal/releases/local-bios-reader ]"
 check "record drops the chosen app" "! grep -q bios-reader $D/bc250-bazzite-suite/portal/installed.json && grep -q system-overlay $D/bc250-bazzite-suite/portal/installed.json"

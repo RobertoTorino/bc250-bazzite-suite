@@ -104,7 +104,7 @@ def test_about_popup_describes_the_purpose(qapp):
     _dependencies, tools = _catalog()
     apps = load_apps(CATALOG)
     text = about_text(tools["cec-ctl"], apps)
-    assert "HDMI-CEC" in text and "BC250 HDMI CEC" in text and "(required)" in text
+    assert "HDMI-CEC" in text and "HDMI CEC Manager" in text and "(required)" in text
     assert "Needs root." in about_text(tools["umr"], apps)
     window = _window(CheckResult([], [], frozenset()))
     try:
@@ -191,7 +191,7 @@ def test_needs_update_when_an_app_wants_newer_or_a_release_fixes_a_vulnerability
     try:
         crypto, paramiko = window.cards["cryptography"], window.cards["paramiko"]
         assert crypto.status.text() == "Needs update"
-        assert "BC250 Console Link needs >=42,<51, installed is 41.0.0." in crypto.status.toolTip()
+        assert "Console Link needs >=42,<51, installed is 41.0.0." in crypto.status.toolTip()
         assert paramiko.status.text() == "Needs update"
         assert "3.4.1 fixes known vulnerabilities in 3.4.0." in paramiko.status.toolTip()
         assert window.cards["obsws-python"].status.text() == "Vulnerable"     # no release fixes it yet

@@ -3,7 +3,7 @@
 # Development
 
 How the repository is laid out, how to work on it from Linux and Windows, and how versions and releases fit
-together. How every app is built, and how to add one: [Architecture and consistency](architecture.md). The portal's release steps are in [Portal](../portal.md#appstoml-and-releases).
+together. How every app is built, and how to add one: [Architecture and consistency](architecture.md). The repository's settings on GitHub: [GitHub settings](github-settings.md). The portal's release steps are in [Portal](../portal.md#appstoml-and-releases).
 
 ## Layout
 
@@ -74,7 +74,7 @@ The release steps are in [Portal](../portal.md#appstoml-and-releases).
 
 ### Upstream releases an app pins
 
-BC-250 Decky Loader Manager installs one Decky Loader release, pinned in
+Decky Loader Manager installs one Decky Loader release, pinned in
 `apps/decky-manager/bc250_decky_manager/loader.py` (`VERSION`, `TAG`, `SHA256`), and writes Decky's service unit
 itself (`unit_text()`). `tools/check_upstream.py` compares both with Decky's repository: a newer stable release, the
 SHA-256 GitHub publishes for the pinned binary, and Decky's `plugin_loader-release.service` at the pinned tag and on

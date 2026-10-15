@@ -3566,7 +3566,7 @@ echo
 fi  # TEST 50
 if want 51; then
 log_result "[TEST 51] HDMI-CEC Test"
-log_result "Whether the board can control the TV over HDMI: on and off, its input and its remote (BC250 HDMI CEC)"
+log_result "Whether the board can control the TV over HDMI: on and off, its input and its remote (HDMI CEC Manager)"
 CEC_DEVS=$(ls /dev/cec* 2>/dev/null)
 if [ -z "$CEC_DEVS" ]; then
     log_result "INFO: No CEC adapter (/dev/cec*). On the BC-250 amdgpu adds one for a DisplayPort output only when the"
@@ -3588,7 +3588,7 @@ else
             log_result "NOTE: The adapter sees no display: the TV is off or its EDID was not read. CEC needs both."
         elif [ -z "$CEC_LA" ]; then
             log_result "NOTE: Nothing has configured the adapter yet (no logical address), so the TV was not asked."
-            log_result "HINT: BC250 HDMI CEC configures it with its first message, Valve's CEC daemon when it starts."
+            log_result "HINT: HDMI CEC Manager configures it with its first message, Valve's CEC daemon when it starts."
         # cec-ctl exits 0 either way; a "Tx, ..." status line without "Tx, OK" means the transmit failed.
         elif CEC_POLL=$(cec-ctl -d "$CEC_DEV" -s --poll --to 0 2>&1) && grep -q 'Sequence:' <<<"$CEC_POLL" &&
              ! grep -qE '^[[:space:]]*Tx, ([^O]|O[^K])' <<<"$CEC_POLL"; then
@@ -3609,7 +3609,7 @@ else
             CEC_MODE_NOW="disabled"
         fi
         log_result "INFO: Bazzite CEC mode: $CEC_MODE_NOW. The automatic part (TV on and off with the board, the"
-        log_result "INFO: remote as a keyboard) is Valve's CEC daemon: ujust cec-mode native, or BC250 HDMI CEC."
+        log_result "INFO: remote as a keyboard) is Valve's CEC daemon: ujust cec-mode native, or HDMI CEC Manager."
     fi
 fi
 echo

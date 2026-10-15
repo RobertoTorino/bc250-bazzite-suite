@@ -1,3 +1,27 @@
+Changelog: 15-10-2026 02:10:51
+
+Release 0.1.17.
+
+Changelog: 15-10-2026 01:26:23
+
+The catalogue has Bazzite UMD File Renamer: its launcher and its PyQt6. PPSSPP, which the app can start a game with, is not a catalogue tool: the app finds it as a Flatpak first, which a lookup on the PATH does not see.
+
+Changelog: 15-10-2026 01:18:28
+
+The catalogue has Bazzite NetcatGUI: its launcher and its PyQt6.
+
+Changelog: 14-10-2026 18:22:56
+
+The catalogue names the apps that are not tied to the board without the BC-250 or BC250 prefix: HelixSR Manager, System Overlay, HDMI CEC Manager, Bazzite SFTP Tools, Console Link, shadPS4 Manager, RPCS3 Manager and Decky Loader Manager.
+
+Changelog: 14-10-2026 17:35:13
+
+The catalogue has BC-250 RPCS3 Manager: its launcher, its PyQt6, Steam (Update Game Mode) and a new tool, fusermount (fusermount3 or fusermount), with which RPCS3's AppImage mounts itself.
+
+Changelog: 14-10-2026 16:15:38
+
+The catalogue has Bazzite pkgxtractor: its launcher (the window's; the terminal extractor runs in the same venv), and its PyQt6 and cryptography; the cryptography description says what it uses it for.
+
 Changelog: 14-10-2026 15:12:03
 
 Release 0.1.16.

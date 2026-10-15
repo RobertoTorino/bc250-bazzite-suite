@@ -74,6 +74,7 @@ class MainWindow(QMainWindow):
         self.games: list[Game] = []
         self.in_steam: dict[str, str] = {}
         self.no_logo: set[str] = set()                # games in Steam whose shortcut has no logo yet
+        self.old_tags: set[str] = set()               # games in Steam whose shortcut has the tags of an older name
         self.version = ""
         self.config: dict = {}
         self.users: list[userdata.User] = []
@@ -227,8 +228,9 @@ class MainWindow(QMainWindow):
             self.in_steam = shortcuts.in_steam(self.steam_dir) if self.steam_dir else {}
             self.no_logo = {str(g.eboot) for g in self.games if str(g.eboot) in self.in_steam and
                             shortcuts.logo_missing(self.steam_dir, g, self.in_steam[str(g.eboot)], self.run_path)}
+            self.old_tags = shortcuts.old_tags(self.steam_dir) if self.steam_dir else set()
         except OSError:
-            self.in_steam, self.no_logo = {}, set()
+            self.in_steam, self.no_logo, self.old_tags = {}, set(), set()
         self._show_state()
         self._fill_table()
 
@@ -401,7 +403,8 @@ class MainWindow(QMainWindow):
         self.play_button.setEnabled(idle and installed and self.chosen() is not None)
         self.shad_button.setEnabled(idle and installed)
         add, remove = self.steam_plan()
-        changed = bool(remove) or any(str(g.eboot) not in self.in_steam or str(g.eboot) in self.no_logo for g in add)
+        stale = self.no_logo | self.old_tags
+        changed = bool(remove) or any(str(g.eboot) not in self.in_steam or str(g.eboot) in stale for g in add)
         self.steam_button.setEnabled(idle and changed and self.steam_dir is not None and not steam.game_mode())
         if self.steam_dir is None:
             self.steam_button.setToolTip("Steam was never started on this system: start it once first")

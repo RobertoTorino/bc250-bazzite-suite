@@ -31,7 +31,7 @@ def test_compare_names_the_changed_apps():
     new = bumped(current, governor="governor-v9.0.0", helixsr="helixsr-v9.1.0")
     changes = pu.compare(current, new)
     assert [(c.name, c.new) for c in changes] == [("BC-250 GPU Governor Manager", "9.0.0"),
-                                                  ("BC-250 HelixSR Manager", "9.1.0")]
+                                                  ("HelixSR Manager", "9.1.0")]
     assert all(c.old for c in changes)
     assert pu.compare(current, current) == []
 
@@ -40,10 +40,10 @@ def test_compare_names_a_withdrawn_app():
     current = load(MANIFEST)
     new = [replace(e, withdrawn="Privacy: shows the account ID.") if e.key == "console-link" else e for e in current]
     changes = pu.compare(current, new)
-    assert [(c.name, c.withdrawn) for c in changes] == [("BC250 Console Link", "Privacy: shows the account ID.")]
+    assert [(c.name, c.withdrawn) for c in changes] == [("Console Link", "Privacy: shows the account ID.")]
     update = pu.PortalUpdate(RELEASE, changes)
     assert update.summary() == "withdraws Console Link"
-    assert update.details() == ("BC250 Console Link: not available any more (Privacy: shows the account ID.); "
+    assert update.details() == ("Console Link: not available any more (Privacy: shows the account ID.); "
                                 "removed from the board")
     assert pu.compare(new, new) == []                       # withdrawn already: nothing new
 
@@ -58,7 +58,7 @@ def test_summary_and_details():
     assert many.summary() == "updates 4 apps, adds New One"
     assert "BC-250 New One: new, 0.1.0" in many.details()
     assert pu.PortalUpdate(RELEASE, []).summary() == pu.PortalUpdate(RELEASE).summary() == ""
-    tiled = pu.PortalUpdate(RELEASE, [pu.AppChange("BC250 HDMI CEC", "", "0.1.0", "HDMI-CEC")])
+    tiled = pu.PortalUpdate(RELEASE, [pu.AppChange("HDMI CEC Manager", "", "0.1.0", "HDMI-CEC")])
     assert tiled.summary() == "adds HDMI-CEC"
 
 
