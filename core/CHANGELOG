@@ -1,3 +1,11 @@
+Changelog: 15-10-2026 05:51:59
+
+Version 0.1.5.
+
+Changelog: 15-10-2026 05:41:13
+
+AppHeader: the title has no padding any more. Its "padding:0 2px" moved the title text about 9 px to the right of the second row; now both start at the same place. Tests: the title's text lines up with the second row's (rendered).
+
 Changelog: 15-10-2026 03:27:56
 
 Version 0.1.4.

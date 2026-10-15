@@ -5,7 +5,7 @@ code is a port of shadPS4's (GPL-2.0-or-later)."""
 
 APP_NAME = "Bazzite pkgxtractor"
 APP_ID = "bazzite-pkgxtractor"
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 from pathlib import Path  # noqa: E402  (constants first, as the suite's apps do)
 

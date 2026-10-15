@@ -693,9 +693,9 @@ def test_window_build_indicator_notifies_when_a_run_ends(repo, tmp_path):
 def test_title_names_the_checkouts_commit_and_date(window, repo, tmp_path):
     from PyQt6.QtWidgets import QLabel
     from bc250_suite_releases import __version__
-    head = subprocess.run(["git", "log", "-1", "--format=%h %cd", "--date=format:%d-%m-%Y"], cwd=repo,
-                          capture_output=True, text=True).stdout.split()
-    stamp = f"{head[0]} · {head[1]}"
+    head = subprocess.run(["git", "log", "-1", "--format=%h %ct"], cwd=repo, capture_output=True, text=True).stdout.split()
+    when = rp.amsterdam_now(datetime.datetime.fromtimestamp(int(head[1]), datetime.timezone.utc))
+    stamp = f"{head[0]} · {when:%d-%m-%Y %H:%M}"
     assert rp.checkout_stamp(repo) == stamp
     assert any(f"v{__version__} · {stamp}" in label.text() for label in window.findChildren(QLabel))
     elsewhere = tmp_path / "not-a-checkout"

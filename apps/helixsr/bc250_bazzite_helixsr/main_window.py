@@ -55,7 +55,7 @@ class MainWindow(QMainWindow):
         header_right = QVBoxLayout()
         header_right.setSpacing(6)
         title = QLabel(f"{APP_NAME}  <span style='color:#9aa0a6; font-size:14px;'>v{__version__}</span>")
-        title.setStyleSheet(header_font() + "font-size:24px; font-weight:800; padding:0 2px;")
+        title.setStyleSheet(header_font() + "font-size:24px; font-weight:800;")
         header_right.addWidget(title)
         boxes = QHBoxLayout()
         boxes.setSpacing(8)

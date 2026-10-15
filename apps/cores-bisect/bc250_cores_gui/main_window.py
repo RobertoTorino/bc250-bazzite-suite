@@ -100,7 +100,7 @@ class MainWindow(QWidget):
         header_right.setSpacing(6)
         header_row = QHBoxLayout()
         title = QLabel(f"{APP_NAME}  <span style='color:#9aa0a6; font-size:14px;'>v{__version__}</span>")
-        title.setStyleSheet("font-size:24px; font-weight:800; padding:0 2px;")
+        title.setStyleSheet("font-size:24px; font-weight:800;")
         header_row.addWidget(title)
         header_row.addStretch(1)
         about_btn = QPushButton("About")

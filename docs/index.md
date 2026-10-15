@@ -87,8 +87,8 @@ marked, and the portal asks before it installs or opens them.
 <div class="home-section__inner" markdown>
 ## Get started
 
-Ready to set up your BC-250? Download the portal from its latest release on the board, check it and run its
-installer. It installs BC-250 Bazzite Test with it; every other app installs from the portal.
+Ready to set up your BC-250 board? Download the latest portal release on the board, check it with SHA256 and run its
+installer. It installs BC-250 Bazzite Test with it, every other app installs from the portal.
 
 [:material-download: Download](https://github.com/RobertoTorino/bc250-bazzite-suite/releases/latest){ .md-button .md-button--primary }
 [Install steps](install.md){ .md-button }

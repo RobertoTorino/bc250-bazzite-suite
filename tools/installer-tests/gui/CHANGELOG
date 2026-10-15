@@ -1,3 +1,7 @@
+Changelog: 15-10-2026 05:41:13
+
+The window's title has no padding any more, like core's AppHeader: it started about 9 px to the right of the line below it, now both line up on the left.
+
 Changelog: 15-10-2026 05:27:59
 
 New icon: images/bc250-installer-test-gui.png (512 px) and its 128 px copy.

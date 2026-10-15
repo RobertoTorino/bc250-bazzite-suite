@@ -162,7 +162,7 @@ class AppHeader(QHBoxLayout):
         right.setSpacing(6)
         version_text = f"  <span style='color:#9aa0a6; font-size:14px;'>v{version}</span>" if version else ""
         self.title = QLabel(f"{name}{version_text}")
-        self.title.setStyleSheet(header_font() + "font-size:24px; font-weight:800; padding:0 2px;")
+        self.title.setStyleSheet(header_font() + "font-size:24px; font-weight:800;")
         self.title_row = QHBoxLayout()
         self.title_row.addWidget(self.title)
         self.title_row.addStretch(1)

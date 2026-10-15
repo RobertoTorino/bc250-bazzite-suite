@@ -1,3 +1,11 @@
+Changelog: 15-10-2026 05:52:00
+
+Release 0.2.8.
+
+Changelog: 15-10-2026 05:41:13
+
+The window's title has no padding any more, like core's AppHeader: it started about 9 px to the right of the line below it, now both line up on the left.
+
 Changelog: 15-10-2026 03:27:57
 
 Release 0.2.7.

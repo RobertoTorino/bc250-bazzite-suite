@@ -178,3 +178,27 @@ def test_app_header_layout(qapp, tmp_path):
     assert header.second_row.itemAt(0).widget() is box and header.second_row.itemAt(1).layout() is second
     assert "v" not in AppHeader(tmp_path / "x.png", "Name").title.text().replace("Name", "")
     assert isinstance(header.title, QLabel)
+
+
+def test_app_header_title_lines_up_with_the_second_row(qapp, tmp_path):
+    """The title's text starts where the second row's does: no padding pushes it to the right."""
+    from PyQt6.QtGui import QColor
+    header = AppHeader(tmp_path / "missing.png", "BC250 Suite Releases", "0.1.0")
+    second = QLabel("working tree clean")
+    header.add_second(second)
+    window = QWidget()
+    window.setStyleSheet("background:black; color:white;")
+    window.setLayout(header)
+    window.resize(800, 130)
+    window.show()
+    qapp.processEvents()
+    image = window.grab().toImage()
+
+    def first_ink(label: QLabel) -> int:
+        box = label.geometry()
+        return next(x for x in range(box.left(), box.right())
+                    if any(QColor(image.pixel(x, y)).lightness() > 128 for y in range(box.top(), box.bottom())))
+
+    assert header.title.x() == second.x()
+    assert abs(first_ink(header.title) - first_ink(second)) <= 3     # the glyphs' own side bearing only
+    window.close()
