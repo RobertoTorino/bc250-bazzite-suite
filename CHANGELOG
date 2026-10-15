@@ -1,3 +1,7 @@
+Changelog: 15-10-2026 03:40:32
+
+Tests: tools/tests/test_mkdocs_hooks.py skips without MkDocs again, as in CI's tools job. It asked for "mkdocs", which the hook's own folder tools/mkdocs/ also answers when pytest runs from tools/; it now asks for mkdocs.structure.files.
+
 Changelog: 15-10-2026 03:23:26
 
 The wiki shows the app pictures as WebP: tools/mkdocs/hooks.py makes a WebP copy of every PNG or JPG from an app's images/ or portal/images/apps/ that a page names (59 pictures, 2.1 MB instead of 12.5 MB; the apps' 512 px icons drop from about 500 KB to about 60 KB each) and points the built pages at the copies. The pictures in the repository stay PNG, as the apps, installers and portal load them, and the chapters keep naming the PNG, which Bazzite Test also shows from its own images/. Without Pillow the wiki shows the PNGs as before. Pillow (>=12,<13) is in requirements-dev.txt and in the wiki builds of ci.yml and docs.yml; the build takes about 2.5 seconds. Tests: tools/tests/test_mkdocs_hooks.py.

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("mkdocs")
+pytest.importorskip("mkdocs.structure.files")   # the real MkDocs: tools/mkdocs/ (this hook's folder) is importable as "mkdocs" too
 SUITE = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("wiki_hooks", SUITE / "tools" / "mkdocs" / "hooks.py")
 hooks = importlib.util.module_from_spec(spec)
