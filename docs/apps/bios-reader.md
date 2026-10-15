@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# BC-250 BIOS Reader
-
 ![BC-250 BIOS Reader](../assets/bios-reader/bc250-bios-reader.png){ .app-logo }
+
+# BC-250 BIOS Reader
 
 Reads the BIOS settings of the **AMD BC-250** on **Bazzite** and shows them in a layout like the BIOS setup
 screen, hidden menus included. It only reads: nothing on the board or in the BIOS changes.

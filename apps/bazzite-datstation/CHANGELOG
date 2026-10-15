@@ -1,0 +1,45 @@
+Changelog: 15-10-2026 22:51:18
+
+Release 0.1.0.
+
+Changelog: 15-10-2026 21:33:57
+
+images/bazzite-datstation-128.png is the 128 px copy of the new icon (images/bazzite-datstation.png), scaled from the
+512 px file; the README, the wiki's apps overview and the portal's tile show it.
+
+Changelog: 15-10-2026 19:18:30
+
+style.py's docstring no longer points at the UMD File Renamer (absorbed into PPSSPP Manager) for the app-wide style
+sheet; the code is unchanged.
+
+Changelog: 15-10-2026 16:02:21
+
+Moved into the BC250 Bazzite Suite (apps/bazzite-datstation): the bundled bc250_core, CLAUDE.md, test.sh and
+.gitattributes went, and mkdocs.md is the suite's wiki chapter. The tests take bc250_core from the suite's core/. The
+project page and the update check point to the suite's repository, where the app's releases are (bazzite-
+datstation-v<x.y.z>). The README is short, as the suite's apps have it, and links to the wiki. The tests no longer
+reach a Steam on the machine: HOME is a temp folder, so the refusal without Steam holds where Steam is installed, and
+core's with_steam_closed sees no Steam running and starts no Steam command (its defaults were bound at import, so
+patching steam.steam_running did not reach them: on a machine with Steam running, the main window tests closed and
+restarted it, and the refusal test wrote a shortcut into the real shortcuts.vdf).
+
+Changelog: 15-10-2026 10:16:28
+
+CI: the shell job installs Qt's runtime libraries before it runs install.sh, which imports PyQt6 from the venv it
+made (libEGL.so.1 was missing on the runner). CLAUDE.md with the state of the work and the rules, and mkdocs.md,
+the wiki chapter for the suite (install, using it, files, privacy, troubleshooting, development with the security
+around the build).
+
+Changelog: 15-10-2026 05:08:44
+
+Bazzite DatStation 0.1.0, the first version: the Quiz, the PlayStation History, the System Version History, the
+Region Codes Explained, the PlayStation User Guides and PS News of the DatStation Android app, as a Python + Qt
+app for Bazzite, built the way the BC250 Bazzite Suite builds its apps (bc250_core bundled, the same install.sh
+and launcher). A front page of tiles opens each feature; Escape or Back returns to it. The quiz keeps the Android
+rules (42 seconds, plus 5 for a right answer, minus 5 for a wrong one or a skip, longer rounds after a perfect one)
+without the Roberto and Moonshie characters; its questions ship as plain JSON. The 56 true/false questions whose
+answer carried its explanation after a colon ("False: ...") could never be answered right in the Android app; the
+explanation is now a field of its own and is shown with a wrong answer. The APPS category looked its questions up
+under "Apps" in the Android app, which the data does not have; here it finds the 100 "App" questions. Scores and
+Perfect trophies go to ~/.local/share/bazzite-datstation/scores.json; the quick quiz saves nothing. The settings
+menu adds the app to Steam as a non-Steam game with artwork, and removes it again.

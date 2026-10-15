@@ -331,7 +331,8 @@ class MainWindow(QMainWindow):
         self.play_button.setEnabled(idle and installed_ and self.chosen() is not None)
         self.rpcs3_button.setEnabled(idle and installed_)
         add, remove = self.steam_plan()
-        changed = bool(remove) or any(str(g.eboot) not in self.in_steam for g in add)
+        named = shortcuts.names(add)        # a name in Steam that differs (one from before the prefix) is renamed
+        changed = bool(remove) or any(self.in_steam.get(str(g.eboot)) != named[g.eboot] for g in add)
         self.steam_button.setEnabled(idle and changed and self.steam_dir is not None and not steam.game_mode())
         if self.steam_dir is None:
             self.steam_button.setToolTip("Steam was never started on this system: start it once first")

@@ -44,7 +44,7 @@ def test_names_are_unique():
     a = Game(Path("/1/eboot.bin"), "Game", "CUSA00001")
     b = Game(Path("/2/eboot.bin"), "Game", "CUSA00002")
     c = Game(Path("/3/eboot.bin"), "Other", "CUSA00003")
-    assert shortcuts.names([a, b, c]) == {a.eboot: "Game (CUSA00001)", b.eboot: "Game (CUSA00002)", c.eboot: "Other"}
+    assert shortcuts.names([a, b, c]) == {a.eboot: "[PS4] Game (CUSA00001)", b.eboot: "[PS4] Game (CUSA00002)", c.eboot: "[PS4] Other"}
 
 
 def test_add_then_take_out(tmp_path, qapp):
@@ -52,7 +52,7 @@ def test_add_then_take_out(tmp_path, qapp):
     first = read_game(make_game(tmp_path / "games" / "one", "One", "CUSA00001", pictures=True))
     second = read_game(make_game(tmp_path / "games" / "two", "Two", "CUSA00002"))
     numbers = steam.write_shortcuts(folder, shortcuts.changes([first, second], [], RUN, LOGO_PATH, {}))
-    assert shortcuts.in_steam(folder) == {str(first.eboot): "One", str(second.eboot): "Two"}
+    assert shortcuts.in_steam(folder) == {str(first.eboot): "[PS4] One", str(second.eboot): "[PS4] Two"}
     config = steam.user_folders(folder)[0]
     assert sorted(p.name for p in (config / "grid").iterdir()) == sorted(
         [f"{n}{suffix}.png" for n in numbers for suffix in ("p", "", "_hero")] + [f"{numbers[0]}_logo.png"])
@@ -71,10 +71,10 @@ def test_a_shortcut_taken_out_under_the_name_it_has(tmp_path):
     steam.write_shortcuts(folder, shortcuts.changes([a, b], [], RUN, LOGO_PATH, {}, art=False))
     grid = steam.user_folders(folder)[0] / "grid"
     grid.mkdir()
-    named = steam.appid(f'"{RUN}"', "Game (CUSA00001)")
+    named = steam.appid(f'"{RUN}"', "[PS4] Game (CUSA00001)")
     (grid / f"{named}p.png").write_bytes(b"P")
     steam.write_shortcuts(folder, shortcuts.changes([], [a], RUN, LOGO_PATH, shortcuts.in_steam(folder)))
-    assert shortcuts.in_steam(folder) == {"/2/eboot.bin": "Game (CUSA00002)"} and not list(grid.iterdir())
+    assert shortcuts.in_steam(folder) == {"/2/eboot.bin": "[PS4] Game (CUSA00002)"} and not list(grid.iterdir())
 
 
 def test_artwork_sizes_with_and_without_the_games_pictures(tmp_path, qapp):
@@ -98,10 +98,10 @@ def test_a_shortcut_made_without_a_logo(tmp_path, qapp):
     game = read_game(make_game(tmp_path / "games" / "one", "One", "CUSA00001", pictures=True))
     bare = read_game(make_game(tmp_path / "games" / "two", "Two", "CUSA00002"))
     steam.write_shortcuts(folder, shortcuts.changes([game, bare], [], RUN, LOGO_PATH, {}, art=False))
-    assert shortcuts.logo_missing(folder, game, "One", RUN)
-    assert not shortcuts.logo_missing(folder, bare, "Two", RUN)                  # no icon0.png: no logo to miss
+    assert shortcuts.logo_missing(folder, game, "[PS4] One", RUN)
+    assert not shortcuts.logo_missing(folder, bare, "[PS4] Two", RUN)                  # no icon0.png: no logo to miss
     steam.write_shortcuts(folder, shortcuts.changes([game], [], RUN, LOGO_PATH, shortcuts.in_steam(folder)))
-    assert not shortcuts.logo_missing(folder, game, "One", RUN)
+    assert not shortcuts.logo_missing(folder, game, "[PS4] One", RUN)
 
 
 def test_a_shortcut_with_the_tags_of_the_old_name(tmp_path):

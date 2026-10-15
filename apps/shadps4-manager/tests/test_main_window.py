@@ -55,9 +55,14 @@ def _wait(window, qapp) -> None:
     qapp.processEvents()
 
 
+def _no_nightly() -> emulator.Nightly:
+    raise emulator.EmulatorError("no GitHub in a test")
+
+
 def _window(folders, **kwargs) -> MainWindow:
     closed = kwargs.pop("closed", [])
     kwargs.setdefault("newer_release", lambda: None)                         # never GitHub in a test
+    kwargs.setdefault("latest_nightly", _no_nightly)
     kwargs.setdefault("shad_running", lambda: False)
     return MainWindow(**folders, steam_closed=lambda change: (closed.append(1), change())[0] and False,
                       steam_running=lambda: False, **kwargs)
@@ -123,7 +128,7 @@ def test_game_mode_added_and_taken_out(qapp, folders, monkeypatch):
     window.on_update_steam()
     _wait(window, qapp)
     assert closed == [1] and window.running.text().startswith("1 game(s) in Steam")
-    assert list(shortcuts.in_steam(folders["steam_dir"]).values()) == ["One"]
+    assert list(shortcuts.in_steam(folders["steam_dir"]).values()) == ["[PS4] One"]
     assert window.steam_box.value.text() == "1" and window.table.item(0, 0).checkState() == Qt.CheckState.Checked
     # The game's folder is gone: its shortcut is taken out with the next change.
     window.table.item(0, 0).setCheckState(Qt.CheckState.Unchecked)
@@ -169,6 +174,30 @@ def test_a_shortcut_with_the_tags_of_the_old_name_is_brought_up_to_date(qapp, fo
     window.close()
 
 
+def test_a_shortcut_named_before_the_system_prefix_is_renamed(qapp, folders, monkeypatch):
+    """A shortcut named by the title alone, as before "[PS4] ": Update Game Mode is on for it and renames it, with
+    its play time; the artwork under its old number goes."""
+    _install(folders["home"])
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    window = _window(folders)
+    game = window.games[0]
+    old = steam.Change(shortcuts.entry(game, game.title, folders["run"], Path("/i.png")), shortcuts.for_game(game),
+                       {"p": b"P"})
+    steam.write_shortcuts(folders["steam_dir"], [old])
+    config = steam.user_folders(folders["steam_dir"])[0]
+    values = steam.read_vdf((config / "shortcuts.vdf").read_bytes())
+    values["shortcuts"]["0"]["LastPlayTime"] = 1750000000
+    (config / "shortcuts.vdf").write_bytes(steam.write_vdf(values))
+    window.refresh()
+    assert window.table.item(0, 0).checkState() == Qt.CheckState.Checked and window.steam_button.isEnabled()
+    window.on_update_steam()
+    _wait(window, qapp)
+    [item] = steam.shortcuts(folders["steam_dir"])
+    assert item["AppName"] == f"[PS4] {game.title}" and item["LastPlayTime"] == 1750000000
+    assert not list((config / "grid").glob(f"{old.number}*")) and not window.steam_button.isEnabled()
+    window.close()
+
+
 def test_a_shortcut_of_a_game_no_longer_found_is_taken_out(qapp, folders):
     _install(folders["home"])
     gone = shortcuts.Game(Path("/old/games/gone/eboot.bin"), "Gone")
@@ -176,7 +205,7 @@ def test_a_shortcut_of_a_game_no_longer_found_is_taken_out(qapp, folders):
                                                                   art=False))
     window = _window(folders)
     add, remove = window.steam_plan()
-    assert add == [] and [(str(g.eboot), g.title) for g in remove] == [("/old/games/gone/eboot.bin", "Gone")]
+    assert add == [] and [(str(g.eboot), g.title) for g in remove] == [("/old/games/gone/eboot.bin", "[PS4] Gone")]
     assert window.steam_button.isEnabled()
     window.close()
 
@@ -228,6 +257,68 @@ def test_the_blue_look(qapp, folders):
     steps = (window.install_button, window.remove_button, window.modules_button, window.folder_button)
     assert len({(b.width(), b.height()) for b in steps}) == 1                       # one size, padding included
     assert window.install_button.width() >= window.install_button.sizeHint().width()
+    window.close()
+
+
+def test_the_nightly_channel(qapp, folders, monkeypatch):
+    payload = io.BytesIO()
+    with zipfile.ZipFile(payload, "w") as packed:
+        packed.writestr(emulator.MEMBER, b"#!/bin/sh\necho nightly\n")
+    payload = payload.getvalue()
+    nightly = emulator.Nightly("2026-10-15-b2d7ec7", "Pre-release-shadPS4-2026-10-15-b2d7ec7d31f9",
+                               "https://github.com/x/nightly.zip", "shadps4-linux-sdl-2026-10-15-b2d7ec7.zip",
+                               hashlib.sha256(payload).hexdigest(), len(payload), "2026-10-15",
+                               "https://github.com/shadps4-emu/shadPS4/releases/tag/Pre-release-shadPS4")
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    window = _window(folders, latest_nightly=lambda: nightly,
+                     fetch=lambda url, dest, progress=None: dest.write_bytes(payload))
+    assert not window.nightly_check.isChecked()                                 # the tested stable is the default
+    window.nightly_check.setChecked(True)
+    assert window.settings.get("nightly") is True
+    assert "newest nightly build" in window.emulator_state.text()
+    assert "not the release this app was tried with" in window.emulator_state.text()
+    assert window.install_button.isEnabled()
+    window.on_install()
+    _wait(window, qapp)
+    assert window.running.text() == "shadPS4 nightly 2026-10-15-b2d7ec7 is installed."
+    assert window.version == "2026-10-15-b2d7ec7"
+    deadline = time.monotonic() + 10
+    while window.latest is None and time.monotonic() < deadline:                # the open check, off the thread
+        qapp.processEvents()
+        time.sleep(0.01)
+    window._show_state()
+    assert "shadPS4 nightly 2026-10-15-b2d7ec7 is installed" in window.emulator_state.text()
+    assert not window.install_button.isEnabled()                                # already the newest nightly
+    window.close()
+    window = _window(folders, latest_nightly=lambda: nightly)                   # the channel is remembered
+    assert window.nightly_check.isChecked()
+    window.close()
+
+
+def test_the_nightly_channel_says_when_a_newer_build_is_out(qapp, folders):
+    _install(folders["home"])                                                   # the stable release
+    nightly = emulator.Nightly("2026-10-16-fffffff", "Pre-release-shadPS4-2026-10-16-fffffff",
+                               "https://github.com/x/nightly.zip", "shadps4-linux-sdl-2026-10-16-fffffff.zip",
+                               "ab" * 32, 33253746, "2026-10-16",
+                               "https://github.com/shadps4-emu/shadPS4/releases/tag/Pre-release-shadPS4")
+    window = _window(folders, latest_nightly=lambda: nightly)
+    window.nightly_check.setChecked(True)
+    deadline = time.monotonic() + 10
+    while window.latest is None and time.monotonic() < deadline:
+        qapp.processEvents()
+        time.sleep(0.01)
+    window._show_state()
+    text = window.emulator_state.text()
+    assert f"shadPS4 {emulator.VERSION} (the stable release) is installed" in text
+    assert "The newest nightly build is 2026-10-16-fffffff (2026-10-16)" in text
+    assert window.install_button.isEnabled()
+    # The newer-stable notice belongs to the stable channel only.
+    from bc250_core.updates import ReleaseInfo
+    window.newer = ReleaseInfo("0.20.0", "v.0.20.0", "https://github.com/x/v.0.20.0", "2026-11-20")
+    window._show_state()
+    assert "is out" not in window.emulator_state.text()
+    window.nightly_check.setChecked(False)
+    assert "shadPS4 0.20.0 is out" in window.emulator_state.text()
     window.close()
 
 

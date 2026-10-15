@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# Bazzite SFTP Tools
-
 ![Bazzite SFTP Tools](../assets/sftp-tools/bc250-bazzite-sftp-tools.png){ .app-logo }
+
+# Bazzite SFTP Tools
 
 SFTP Tools moves files between your computer and another one over SSH, and manages the SSH server (`sshd`) of a
 **BC-250** running **Bazzite**. It has two tabs:

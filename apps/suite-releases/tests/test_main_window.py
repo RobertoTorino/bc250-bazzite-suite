@@ -72,3 +72,22 @@ def test_a_second_launch_opens_no_window(monkeypatch):
     monkeypatch.setattr(main_window, "ReleaseWindow", lambda *a, **k: pytest.fail("a second window was opened"))
     monkeypatch.setattr("sys.argv", ["bc250_suite_releases"])
     assert entry.main() == 0 and asked == [entry.INFO.app_id]
+
+
+def test_the_command_line_sits_under_the_steps(window, monkeypatch):
+    """Under the tabs, in a splitter; a finished command reads the checkout again (a commit, a push)."""
+    w, _app = window
+    assert w.splitter.widget(0) is w.tabs and w.splitter.widget(1) is w.commands
+    assert w.commands.root == w.root
+    refreshed = []
+    monkeypatch.setattr(w, "refresh", lambda: refreshed.append(1))
+    w.commands.finished_callback = w.refresh
+    w.commands._done(0, w.commands.process.exitStatus())
+    assert refreshed == [1]
+
+
+def test_a_step_offers_its_commands(window):
+    from bc250_suite_releases import plan as rp
+    w, _app = window
+    w.commands.offer(rp.app_commands(["alpha-v0.1.1"]))
+    assert w.commands.offered[-1] == f"{rp.TAG_SCRIPT} alpha-v0.1.1" and w.commands.commands_button.isEnabled()

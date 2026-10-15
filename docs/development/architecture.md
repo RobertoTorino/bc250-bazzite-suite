@@ -101,7 +101,7 @@ def main() -> int:
 An app that opens what it is given on the command line (a file from its menu entry's `%f`, a host and port) hands
 those arguments to the open window instead of losing them: `instance.already_running(INFO.app_id, args)` sends them
 along, and `instance.serve(INFO.app_id, window, on_args=...)` gives them to the running window, which opens them as
-it would at start-up (Bazzite pkgxtractor loads the package, Bazzite NetcatGUI opens the tab).
+it would at start-up (the shadPS4 Manager opens the package in Extract PKG, Bazzite NetcatGUI opens the tab).
 
 `--version` prints the app's version and the core it runs on.
 
@@ -218,10 +218,10 @@ It installs:
   `--upgrade`, so installing again brings every package to the newest version the requirements allow, a security
   fix within that range included.
 - **A launcher** `~/.local/bin/<app-id>` that changes into the app folder and runs
-  `exec "<venv>/bin/python" -m <package>`. An app that takes file or folder paths on its command line (Bazzite
-  pkgxtractor, Bazzite UMD File Renamer) stays in the folder it is started from, so a relative path means what it
+  `exec "<venv>/bin/python" -m <package>`. An app that takes file or folder paths on its command line (the
+  shadPS4 Manager) stays in the folder it is started from, so a relative path means what it
   says: `exec "<venv>/bin/python" -c '$RUN_MODULE' "<app folder>" <package> "$@"`, which puts the app folder first
-  on `sys.path` instead (see their `install.sh`), and its `__main__.py` makes the path absolute before it uses or
+  on `sys.path` instead (see its `install.sh`), and its `__main__.py` makes the path absolute before it uses or
   hands it on. Keep the `exec "<venv>/bin/python"` start of that line: the Dependency Checker reads it to find the
   app's Python environment.
 - **A menu entry and a Desktop icon,** both pointing at the launcher by its full path.

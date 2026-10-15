@@ -3,7 +3,22 @@
 # Dependency Checker
 
 Dependency Checker lists the Python packages and external tools of the BC250 Bazzite Suite's apps, and which
-apps and features use them.
+apps and features use them. On top, it shows whether a Bazzite update waits for you, and it reminds you of one every
+week.
+
+**Bazzite**, the first card, shows the Bazzite image the board runs (its version and build date), whether a newer
+one is installed and waits for a reboot, and when Bazzite's updater last ran. That updater, `uupd`, runs every night
+by itself and updates the image, Flatpaks, Homebrew and distroboxes; a new image takes effect at the next boot, so
+an update can wait unnoticed for days. The card turns to **Reboot to update** then: restart the board to use it.
+It also warns when the updater failed on its last run or has not run for over a week. The checker only reads this
+(from `rpm-ostree status` and `systemctl`, without root or the network); installing updates stays Bazzite's.
+
+**The weekly reminder:** every Monday at about 10:00 (or at the next login, when the board was off then) a desktop
+notification says so when an update waits for a reboot, or when the updater failed or stopped running. When all is
+well it says nothing. It is a systemd user timer, `bc250-bazzite-update-reminder.timer`, that the installer adds and
+`--uninstall` removes; to switch it off yourself, run `systemctl --user disable --now
+bc250-bazzite-update-reminder.timer`. `bc250-portal-dependency-checker --bazzite-reminder` does the same check once,
+from a terminal.
 
 **Python packages** are checked where each app runs: the checker finds every installed app by its launcher and
 reads the package versions in that app's Python environment (the suite's shared one, or the app's own). A card
@@ -15,8 +30,8 @@ collects the GitHub, PyPA and NVD advisories. A green **✓ CVE** means no known
 each one by its CVE ID, linked to [Snyk's vulnerability database](https://security.snyk.io/), with the release that
 fixes it. **CVE ?** means the check could not run (no network) or no installed app has the package. The external
 tools are not looked up: they come with Bazzite and its updates, or from their makers, and OSV.dev has no
-reliable record of those builds. Keeping Bazzite's own packages up to date is Bazzite's job; the checker lists a
-system tool only because one of the suite's apps uses it.
+reliable record of those builds. Keeping Bazzite's own packages up to date is Bazzite's job, done by the updates
+the Bazzite card shows; the checker lists a system tool only because one of the suite's apps uses it.
 
 **External tools** are checked for availability only, on your PATH and in `~/.local/bin` and Homebrew, where the
 apps also look. Each app says whether it needs the tool (required) or uses it when it is there (optional); the
@@ -65,8 +80,9 @@ from the suite's [Releases](https://github.com/RobertoTorino/bc250-bazzite-suite
 ./install.sh
 ```
 
-It adds an app-menu entry and a Desktop icon. To omit the Desktop icon, use `./install.sh --no-desktop-shortcut`.
-To remove the app, run `./install.sh --uninstall`; add `--purge` to remove its settings too. The app shares the
+It adds an app-menu entry, a Desktop icon and the weekly Bazzite update reminder (in `~/.config/systemd/user`). To
+omit the Desktop icon, use `./install.sh --no-desktop-shortcut`. To remove the app and the reminder, run
+`./install.sh --uninstall`; add `--purge` to remove its settings too. The app shares the
 suite's PyQt6 environment and removes that environment only when no other suite app uses it.
 
 ## Run from a checkout

@@ -90,6 +90,21 @@ def test_card_without_icon_file_shows_its_initial(qapp, home, settings_dir, tmp_
     w.close()
 
 
+def test_the_logo_opens_the_wiki(window, monkeypatch):
+    from bc250_core import SUITE_MANUAL_URL
+    opened = []
+    monkeypatch.setattr(mw.QDesktopServices, "openUrl", lambda url: opened.append(url.toString()))
+    window.logo.clicked.emit()
+    assert opened == [SUITE_MANUAL_URL]
+    assert "wiki" in window.logo.toolTip()
+
+
+def test_the_tiles_icon_hover_and_press(window):
+    style = window.cards["governor"].icon.styleSheet()
+    assert "hover:enabled { background:#D9FAF7F0; }" in style               # off-white, visible on the dark theme
+    assert "pressed:enabled" in style and "padding-top:2px" in style        # the icon sinks while pressed
+
+
 def test_short_names_drop_the_suite_prefix(window):
     assert mw.short_name("BC-250 Bazzite Test") == "Bazzite Test"
     assert mw.short_name("BC250 Suite Releases") == "Suite Releases"
@@ -342,8 +357,7 @@ def test_tiles_flow_in_file_order(window, qapp):
 
 def test_development_apps_apart_and_closed(window, qapp):
     dev = {key for key, card in window.cards.items() if card.entry.development}
-    assert dev == {"demo-tool", "dependency-checker", "bazzite-pkgxtractor", "bazzite-netcatgui",
-                   "bazzite-umd-file-renamer", "rpcs3-manager"}
+    assert dev == {"demo-tool", "dependency-checker", "bazzite-netcatgui"}
     assert all(window.dev_grid.indexOf(window.cards[key]) >= 0 for key in dev)
     assert all(window.grid.indexOf(window.cards[key]) < 0 for key in dev)
     assert not window.dev_toggle.isHidden() and window.dev_box.isHidden()   # closed until asked for
@@ -363,7 +377,7 @@ def test_board_tools_in_a_section_open_until_closed(window, qapp):
 def test_gaming_apps_apart_and_open(window, qapp):
     gaming = {key for key, card in window.cards.items() if card.entry.section == "gaming"}
     assert gaming == {"helixsr", "ace-queues", "mesh-shaders", "console-link", "shadps4-manager",
-                      "decky-manager"}
+                      "decky-manager", "rpcs3-manager", "bazzite-datstation", "ppsspp-manager", "pcsx2-manager"}
     assert all(window.gaming_grid.indexOf(window.cards[key]) >= 0 for key in gaming)
     assert all(window.grid.indexOf(window.cards[key]) < 0 and window.dev_grid.indexOf(window.cards[key]) < 0
                for key in gaming)

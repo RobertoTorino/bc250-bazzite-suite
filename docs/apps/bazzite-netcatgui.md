@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-2.0-only -->
 
-# Bazzite NetcatGUI
-
 ![Bazzite NetcatGUI](../assets/bazzite-netcatgui/bazzite-netcatgui.png){ .app-logo }
+
+# Bazzite NetcatGUI
 
 NetcatGUI is the network "swiss army knife" netcat (`nc`) with a window instead of a terminal, on a **BC-250**
 running **Bazzite** or any other Linux desktop. Every tab is one session: a **Connect** tab talks to a host and

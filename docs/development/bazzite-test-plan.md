@@ -25,7 +25,7 @@ chmod +x memtest_vulkan && mv memtest_vulkan ~/.local/bin/
 #### Example stress tests
 ```bash
 sudo ./test-bazzite.sh --only=41 --stress=120
-sudo ./test-bazzite.sh --only=18,19,22,35,41 --stress=30 --no-prompt
+sudo ./test-bazzite.sh --only=18,19,22,35,41 --stress=30
 ```
 
 ### Stress test with max CU's

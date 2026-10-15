@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The dependency checker window."""
+"""The dependency checker window: Bazzite's update state (bazzite.py) on top, then the Python packages and the
+external tools."""
 
 from __future__ import annotations
 
@@ -21,6 +22,7 @@ from bc250_core.updates import UpdateChecker
 from bc250_core.widgets import AppHeader, MetricBox, StatusPill, hint_label
 
 from . import APP_NAME, INFO, LOGO_PATH, __version__
+from .bazzite import BazziteState, describe, read_state
 from .dependencies import (
     App, CheckResult, Dependency, DependencyStatus, ExternalTool, ToolSource, ToolStatus, check_all, release,
     tool_need,
@@ -325,6 +327,39 @@ class ExternalToolCard(_Card):
         self._show_advice(tool_advice(self.tool, installed, self.apps, result.note) if missing else "")
 
 
+class BazziteCard(QFrame):
+    """Bazzite's update state: the running image, an update waiting for a reboot, the updater's last run."""
+
+    PILLS = {"ok": ("Up to date", "ok"), "warn": ("Look at this", "warn"), "neutral": ("Not known", "neutral")}
+
+    def __init__(self, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.setObjectName("dependencyCard")
+        self.setStyleSheet(CARD_STYLE)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(14, 10, 14, 10)
+        title_row = QHBoxLayout()
+        title = QLabel("Bazzite")
+        title.setStyleSheet(header_font() + "font-size:16px; font-weight:700;")
+        title_row.addWidget(title)
+        title_row.addStretch(1)
+        self.status = StatusPill("Not checked")
+        title_row.addWidget(self.status)
+        layout.addLayout(title_row)
+        self.text = QLabel("Reading Bazzite's update state…")
+        self.text.setWordWrap(True)
+        self.text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout.addWidget(self.text)
+
+    def show_state(self, state: BazziteState) -> None:
+        kind, text = describe(state)
+        word, colour = self.PILLS[kind]
+        if state.update_waiting:
+            word = "Reboot to update"
+        self.status.set_status(word, colour, "Read from rpm-ostree and systemd; updating is Bazzite's own")
+        self.text.setText(text)
+
+
 def _set_box_colour(box: MetricBox, colour: str) -> None:
     box.setStyleSheet(f"QFrame {{ background:{colour}; border-radius:8px; }} QLabel {{ color:white; }}")
 
@@ -363,11 +398,16 @@ class DependencyWindow(QMainWindow):
         apps: dict[str, App],
         parent: QWidget | None = None,
         check: Callable[[], CheckResult] | None = None,
+        bazzite: Callable[[], BazziteState] | None = None,
     ):
+        """*check* and *bazzite* read the packages and tools, and Bazzite's state (tests pass their own)."""
         super().__init__(parent)
         self.resize(880, 720)
         self.worker = UpdateChecker(self)
         self.worker.finished.connect(self._checked)
+        self.bazzite_worker = UpdateChecker(self)
+        self.bazzite_worker.finished.connect(self._bazzite_read)
+        self._bazzite = bazzite or read_state
         self.apps = apps
         self._check = check or (lambda: check_all(dependencies, tools, apps, INFO.user_agent))
         self.cards: dict[str, DependencyCard] = {}
@@ -392,7 +432,8 @@ class DependencyWindow(QMainWindow):
             "view-refresh", self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload)), 32))
         self.check_button.setIconSize(QSize(32, 32))
         self.check_button.setAccessibleName("Check again")
-        self.check_button.setToolTip("Check again: look for the apps, their packages and tools again, and ask PyPI")
+        self.check_button.setToolTip("Check again: Bazzite's update state, the apps, their packages and tools, and "
+                                     "ask PyPI")
         self.check_button.setMinimumWidth(120)
         self.check_button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         self.check_button.setStyleSheet(
@@ -408,6 +449,7 @@ class DependencyWindow(QMainWindow):
             "Each app's Python packages are checked in the environment that app runs in, compared with PyPI and "
             "looked up in OSV.dev for known vulnerabilities (CVE). "
             "External tools are checked for availability only; each app's manual says how to install them. "
+            "Bazzite's own updates are shown on top; Bazzite installs them itself. "
             "Click the information button beside a name for what it is. This checker does not install or update anything."
         ))
 
@@ -415,6 +457,11 @@ class DependencyWindow(QMainWindow):
         cards_layout = QVBoxLayout(content)
         cards_layout.setContentsMargins(0, 0, 0, 0)
         cards_layout.setSpacing(10)
+        system_heading = QLabel("System")
+        system_heading.setStyleSheet(header_font() + "font-size:18px; font-weight:700;")
+        cards_layout.addWidget(system_heading)
+        self.bazzite_card = BazziteCard()
+        cards_layout.addWidget(self.bazzite_card)
         packages_heading = QLabel("Python packages")
         packages_heading.setStyleSheet(header_font() + "font-size:18px; font-weight:700;")
         cards_layout.addWidget(packages_heading)
@@ -443,11 +490,17 @@ class DependencyWindow(QMainWindow):
         self.check_updates()
 
     def check_updates(self) -> None:
+        if not self.bazzite_worker.running:
+            self.bazzite_worker.start(self._bazzite)
         if self.worker.running:
             return
         self.check_button.setEnabled(False)
         self.result_label.setText("Checking the apps, PyPI and external tools…")
         self.worker.start(self._check)
+
+    def _bazzite_read(self, result: object) -> None:
+        self.bazzite_card.show_state(result if isinstance(result, BazziteState) else
+                                     BazziteState(error="Bazzite's update state could not be read."))
 
     def _checked(self, result: object) -> None:
         self.check_button.setEnabled(True)

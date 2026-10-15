@@ -265,20 +265,33 @@ class Change:
         return self.entry["appid"] & 0xFFFFFFFF
 
 
+def _number(item: dict) -> int:
+    """The number a shortcut's artwork is filed under: from its program and name, as appid() gives it."""
+    return appid(str(item.get("Exe", "")), str(item.get("AppName", "")))
+
+
 def write_shortcuts(steam: Path, changes: Sequence[Change]) -> list[int]:
     """For every Steam user: the shortcuts in shortcuts.vdf and their artwork in grid/, each file written once.
-    Steam must be closed. Returns the shortcuts' appids."""
+    A shortcut renamed gets a new number, so the artwork under its old one goes. Steam must be closed. Returns the
+    shortcuts' appids."""
     folders = user_folders(steam)
     if not folders:
         raise ShortcutError("Steam has no users on this system yet.")
+    numbers = {change.number for change in changes if not change.remove}
     for config in folders:
         path = config / "shortcuts.vdf"
         values = read_vdf(path.read_bytes()) if path.is_file() else {}
+        renamed = set()
         for change in changes:
+            if not change.remove:
+                renamed |= {_number(item) for item in values.get("shortcuts", {}).values() if change.ours(item)}
             values = remove_shortcut(values, change.ours) if change.remove else put_shortcut(values, change.entry,
                                                                                             change.ours)
         write_atomic(path, write_vdf(values))
         grid = config / "grid"
+        for number in renamed - numbers:
+            for suffix in ART:
+                (grid / f"{number}{suffix}.png").unlink(missing_ok=True)
         for change in changes:
             for suffix in ART:
                 image = grid / f"{change.number}{suffix}.png"

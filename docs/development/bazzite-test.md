@@ -38,7 +38,6 @@ sudo ./test-bazzite.sh --help                 # show options
 | `--disk-write=GiB`   | Also write GiB (1–256) to a temporary file in `/var/tmp` for write speed and SLC cache size. Implies `--disk-bench`. |
 | `--speedtest`        | Opt-in internet speed test (test 44) with Ookla `speedtest` or `speedtest-cli`. Uses ~1 GB of data on a fast line. |
 | `--only=LIST`        | Run only the listed tests, e.g. `--only=04,05,17`. Test 41 also needs `--stress`, test 42 `--bench`, test 43 `--disk-bench`, test 44 `--speedtest`. |
-| `--no-prompt`        | Skip the reboot question at the end (used by the GUI).                     |
 | `--no-desktop`       | Do not copy the report to the desktop user's `Desktop`.                    |
 | `--gui`              | Word the how-to-run hints for the GUI instead of these options (used by the GUI). |
 | `-h`, `--help`       | Show usage and exit.                                                       |

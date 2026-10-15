@@ -2,7 +2,8 @@
 """The main window: shadPS4 itself, the system modules, the game folders and shadNet as four steps with their state
 and buttons, then the games found, each with a box for Game Mode. Downloading shadPS4, asking GitHub for a newer one
 and changing Steam's files run off the GUI thread; nothing here needs root. The look is the app's own blue
-(style.py)."""
+(style.py). Extract PKG… (or a package dropped on the window, or given to the app) opens the package extractor
+(extract_dialog.py) on the game folders."""
 
 from __future__ import annotations
 
@@ -11,10 +12,10 @@ from html import escape
 from pathlib import Path
 
 from PyQt6.QtCore import QProcess, Qt, QTimer
-from PyQt6.QtGui import QCloseEvent
-from PyQt6.QtWidgets import (QAbstractItemView, QFileDialog, QGridLayout, QHBoxLayout, QHeaderView, QLabel,
-                             QMainWindow, QMessageBox, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout,
-                             QWidget)
+from PyQt6.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent
+from PyQt6.QtWidgets import (QAbstractItemView, QCheckBox, QFileDialog, QGridLayout, QHBoxLayout, QHeaderView,
+                             QLabel, QMainWindow, QMessageBox, QPushButton, QTableWidget, QTableWidgetItem,
+                             QVBoxLayout, QWidget)
 
 from bc250_core import SUITE_MANUAL_URL, steam, window_title
 from bc250_core import __version__ as CORE_VERSION
@@ -34,19 +35,20 @@ STEAM_TIP = "Add the ticked games to Steam and take out the others; Steam closes
 
 
 class ShadSettings(SettingsStore):
-    DEFAULTS: dict = {}
+    DEFAULTS: dict = {"nightly": False}     # the channel: the pinned stable, or shadPS4's nightly builds
 
 
 class MainWindow(QMainWindow):
     def __init__(self, home: Path | None = None, shad_home: Path | None = None, steam_dir: Path | None = None,
                  run: Path | None = None, fetch: emulator.Download = emulator.download,
                  steam_closed=steam.with_steam_closed, steam_running=steam.steam_running,
-                 newer_release=emulator.newer_release, shadnet_connect: shadnet.Connect = shadnet._connect,
+                 newer_release=emulator.newer_release, latest_nightly=emulator.latest_nightly,
+                 shadnet_connect: shadnet.Connect = shadnet._connect,
                  shad_running=userdata.shadps4_running):
         """*home*: where the app installs shadPS4; *shad_home*: shadPS4's own folder; *steam_dir*: Steam's folder
         (None: looked up); *run*: the run wrapper the shortcuts start; *fetch*: the download; *steam_closed* and
-        *steam_running*: closing Steam for a change and asking whether it runs; *newer_release*: asks GitHub for a
-        newer shadPS4; *shadnet_connect*: opens a connection to a shadNet server; *shad_running*: whether shadPS4
+        *steam_running*: closing Steam for a change and asking whether it runs; *newer_release* and
+        *latest_nightly*: ask GitHub for a newer stable and for the newest nightly build; *shadnet_connect*: opens a connection to a shadNet server; *shad_running*: whether shadPS4
         runs (tests never touch the real ones)."""
         super().__init__()
         self.resize(980, 760)
@@ -65,7 +67,11 @@ class MainWindow(QMainWindow):
         self.shadnet_watch.setInterval(SHADNET_WATCH_MS)
         self.shadnet_watch.timeout.connect(self._watch_shadnet)
         self._shad_was_running = False
-        self.newer: ReleaseInfo | None = None           # shadPS4's newest release, when newer than the pinned one
+        self._newer_release = newer_release
+        self._latest_nightly = latest_nightly
+        self.newer: ReleaseInfo | None = None           # shadPS4's newest stable, when newer than the pinned one
+        self.latest: emulator.Nightly | None = None     # the newest nightly build, on the nightly channel
+        self._checking = ""                             # which channel the running check asks for
         self.release_check = UpdateChecker(self)        # apart from the worker: it runs while the window opens
         self.release_check.finished.connect(self._release_found)
         self.settings = ShadSettings(INFO, self)
@@ -104,6 +110,20 @@ class MainWindow(QMainWindow):
         grid.setHorizontalSpacing(14)
         grid.setVerticalSpacing(10)
         self.emulator_state, self.modules_state, self.folders_state = (self._state_label() for _ in range(3))
+        centre = Qt.AlignmentFlag.AlignVCenter
+        self.nightly_check = QCheckBox("Nightly builds")
+        self.nightly_check.setToolTip("Install shadPS4's newest nightly build instead of the tested stable release. "
+                                      "It is checked against the checksum GitHub publishes for that build, but it "
+                                      "is not the release this app was tried with.")
+        self.nightly_check.setChecked(bool(self.settings.get("nightly")))
+        self.nightly_check.toggled.connect(self.on_channel_changed)
+        self.emulator_state.setAlignment(Qt.AlignmentFlag.AlignLeft | centre)
+        emulator_cell = QWidget()
+        cell = QVBoxLayout(emulator_cell)
+        cell.setContentsMargins(0, 0, 0, 0)
+        cell.setSpacing(2)
+        cell.addWidget(self.emulator_state)
+        cell.addWidget(self.nightly_check)
         self.install_button = style.primary_button("Install", f"Download shadPS4 {emulator.VERSION} from GitHub "
                                                               f"(about {emulator.SIZE_MB} MB) and check it")
         self.install_button.clicked.connect(self.on_install)
@@ -116,20 +136,25 @@ class MainWindow(QMainWindow):
         self.folder_button = QPushButton("Add folder…")
         self.folder_button.setToolTip("Add a folder with games to shadPS4's game folders")
         self.folder_button.clicked.connect(self.on_add_folder)
+        self.extract_button = QPushButton("Extract PKG…")
+        self.extract_button.setToolTip("Unpack a package file (.pkg: a game, a patch or add-on content) into a game "
+                                       "folder, in the layout shadPS4 loads")
+        self.extract_button.clicked.connect(lambda: self.open_extract())
+        self.extract_dialog = None                      # the Extract PKG window while it is open
         self.shadnet_state = self._state_label()
         self.shadnet_button = QPushButton("Account…")
         self.shadnet_button.setToolTip("Your shadNet account: create one, try it, and have shadPS4 sign in with it")
         self.shadnet_button.clicked.connect(self.on_shadnet)
-        rows = [("shadPS4", self.emulator_state, [self.install_button, self.remove_button]),
+        rows = [("shadPS4", emulator_cell, [self.install_button, self.remove_button]),
                 ("System modules", self.modules_state, [self.modules_button]),
-                ("Game folders", self.folders_state, [self.folder_button]),
+                ("Game folders", self.folders_state, [self.extract_button, self.folder_button]),
                 ("shadNet", self.shadnet_state, [self.shadnet_button])]
-        centre = Qt.AlignmentFlag.AlignVCenter
         for row, (name, state, buttons) in enumerate(rows):
             label = QLabel(name)
             label.setStyleSheet("font-weight:700;")
             for text in (label, state):
-                text.setAlignment(Qt.AlignmentFlag.AlignLeft | centre)
+                if isinstance(text, QLabel):            # the shadPS4 cell holds its state and the channel box
+                    text.setAlignment(Qt.AlignmentFlag.AlignLeft | centre)
             grid.addWidget(style.step_badge(row + 1), row, 0, centre)
             grid.addWidget(label, row, 1)
             grid.addWidget(state, row, 2)
@@ -202,11 +227,12 @@ class MainWindow(QMainWindow):
         for button in steps:
             button.setFixedSize(width, height)
 
+        self.setAcceptDrops(True)                       # a .pkg dropped on the window opens Extract PKG
         geometry = self.settings.window_state("geometry")
         if geometry is not None:
             self.restoreGeometry(geometry)
         self.refresh()
-        self.release_check.start(newer_release)
+        self._start_release_check()
 
     @staticmethod
     def _state_label() -> QLabel:
@@ -236,7 +262,9 @@ class MainWindow(QMainWindow):
 
     def _show_state(self) -> None:
         pinned = emulator.VERSION
-        if not self.version:
+        if self.nightly_check.isChecked():
+            self._show_nightly_state()
+        elif not self.version:
             self.emulator_state.setText(f"Not installed. Install downloads shadPS4 {pinned}, the release this "
                                         "version of the app was tried with, and checks it before unpacking.")
             self.emulator_box.set_value("—")
@@ -248,7 +276,7 @@ class MainWindow(QMainWindow):
             self.emulator_state.setText(f"shadPS4 {pinned} is installed. "
                                         + style.link(self, emulator.RELEASE_PAGE, "Release notes"))
             self.emulator_box.set_value(pinned)
-        if self.newer is not None:
+        if self.newer is not None and not self.nightly_check.isChecked():
             self.emulator_state.setText(
                 self.emulator_state.text() + f"<br>shadPS4 {escape(self.newer.version)} is out "
                 f"({escape(self.newer.published)}). A later version of this app brings it, once it has been tried "
@@ -356,10 +384,68 @@ class MainWindow(QMainWindow):
         if self.shad_running() or self._shad_was_running:
             self._show_shadnet_pill()
 
-    def _release_found(self, release: ReleaseInfo | None) -> None:
-        self.newer = release
-        if release is not None:
+    def _show_nightly_state(self) -> None:
+        """The first step on the nightly channel: what is installed, the newest build GitHub lists, and that a
+        nightly is not the release the app was tried with."""
+        tried = "A nightly build is not the release this app was tried with."
+        if not self.version:
+            self.emulator_state.setText("Not installed. Install downloads shadPS4's newest nightly build and checks "
+                                        f"it against the checksum GitHub publishes for that build. {tried}")
+            self.emulator_box.set_value("—")
+            return
+        if self.version == emulator.VERSION:
+            text = f"shadPS4 {emulator.VERSION} (the stable release) is installed. {tried}"
+        else:
+            text = f"shadPS4 nightly {escape(self.version)} is installed. {tried}"
+        if self.latest is not None and self.latest.version != self.version:
+            text += (f"<br>The newest nightly build is {escape(self.latest.version)} "
+                     f"({escape(self.latest.published)}): <b>Install</b> brings it. "
+                     + style.link(self, self.latest.page, "What is in it"))
+        elif self.latest is not None:
+            text += " " + style.link(self, self.latest.page, "What is in it")
+        self.emulator_state.setText(text)
+        self.emulator_box.set_value(self.version)
+
+    def _channel(self) -> str:
+        return "nightly" if self.nightly_check.isChecked() else "stable"
+
+    def _release_found(self, result) -> None:
+        """A finished check: the newer stable (ReleaseInfo), the newest nightly (Nightly), or None. A result of the
+        other channel (the user switched while it ran) is kept; _show_state shows only the channel's own."""
+        if isinstance(result, emulator.Nightly):
+            self.latest = result
+        else:
+            self.newer = result
+        if result is not None:
             self._show_state()
+            self._update_buttons()
+        if self._checking != self._channel():           # switched while it ran: ask for the new channel's now
+            self._start_release_check()
+
+    def _start_release_check(self) -> None:
+        """Asks GitHub off the GUI thread: on the stable channel for a newer stable, on the nightly channel for the
+        newest nightly build (None when it cannot be asked: nothing to say then). While a check runs, a switch of
+        the channel waits for it; _release_found then starts the right one."""
+        if self.release_check.running:
+            return
+        self._checking = self._channel()
+        if self._checking == "nightly":
+            latest = self._latest_nightly
+
+            def job() -> emulator.Nightly | None:
+                try:
+                    return latest()
+                except emulator.EmulatorError:
+                    return None
+            self.release_check.start(job)
+        else:
+            self.release_check.start(self._newer_release)
+
+    def on_channel_changed(self, checked: bool) -> None:
+        self.settings.set("nightly", checked)
+        self._show_state()
+        self._update_buttons()
+        self._start_release_check()
 
     def _fill_table(self) -> None:
         self.table.blockSignals(True)
@@ -396,15 +482,28 @@ class MainWindow(QMainWindow):
         idle = not self.worker.running
         installed = bool(self.version)
         self.refresh_button.setEnabled(idle)
-        self.install_button.setEnabled(idle and self.version != emulator.VERSION)
+        if self.nightly_check.isChecked():
+            # The newest nightly when it is known; without it Install asks GitHub itself.
+            can_install = self.latest is None or self.version != self.latest.version
+            self.install_button.setToolTip("Download shadPS4's newest nightly build from GitHub and check it "
+                                           "against the checksum GitHub publishes for it")
+        else:
+            can_install = self.version != emulator.VERSION
+            self.install_button.setToolTip(f"Download shadPS4 {emulator.VERSION} from GitHub "
+                                           f"(about {emulator.SIZE_MB} MB) and check it")
+        self.install_button.setEnabled(idle and can_install)
+        self.nightly_check.setEnabled(idle)
         self.remove_button.setEnabled(idle and installed)
         self.folder_button.setEnabled(idle and installed)
+        self.extract_button.setEnabled(idle)
         self.shadnet_button.setEnabled(idle)
         self.play_button.setEnabled(idle and installed and self.chosen() is not None)
         self.shad_button.setEnabled(idle and installed)
         add, remove = self.steam_plan()
         stale = self.no_logo | self.old_tags
-        changed = bool(remove) or any(str(g.eboot) not in self.in_steam or str(g.eboot) in stale for g in add)
+        named = shortcuts.names(add)        # a name in Steam that differs (one from before the prefix) is renamed
+        changed = bool(remove) or any(self.in_steam.get(str(g.eboot)) != named[g.eboot] or str(g.eboot) in stale
+                                      for g in add)
         self.steam_button.setEnabled(idle and changed and self.steam_dir is not None and not steam.game_mode())
         if self.steam_dir is None:
             self.steam_button.setToolTip("Steam was never started on this system: start it once first")
@@ -435,11 +534,27 @@ class MainWindow(QMainWindow):
             self.running.setStyleSheet("font-weight:600;")
 
     def on_install(self) -> None:
+        home, fetch = self.home, self.fetch
+        if self.nightly_check.isChecked():
+            size = round(self.latest.size / (1 << 20)) if self.latest else emulator.SIZE_MB
+            if not self._ask("Install", f"Download shadPS4's newest nightly build from GitHub (about {size} MB)?"
+                                        "\n\nIt is checked against the checksum GitHub publishes for that build "
+                                        f"before it is unpacked into {home}. A nightly build is not the release "
+                                        "this app was tried with."):
+                return
+            latest = self._latest_nightly
+
+            def nightly_job() -> tuple[bool, str]:
+                try:
+                    return True, emulator.install_build(home, latest(), fetch)
+                except (emulator.EmulatorError, OSError) as error:
+                    return False, f"shadPS4 was not installed: {error}"
+            self._start("Downloading shadPS4's newest nightly build…", nightly_job)
+            return
         if not self._ask("Install", f"Download shadPS4 {emulator.VERSION} from GitHub (about {emulator.SIZE_MB} MB)?"
                                     "\n\nIt is checked against the SHA-256 this app was tried with before it is "
                                     f"unpacked into {self.home}."):
             return
-        home, fetch = self.home, self.fetch
 
         def job() -> tuple[bool, str]:
             try:
@@ -478,6 +593,39 @@ class MainWindow(QMainWindow):
         except (OSError, subprocess.SubprocessError) as error:
             ok, message = False, f"shadPS4 did not add {folder}: {error}"
         self._job_done((ok, message))
+
+    def open_extract(self, pkg: str | None = None) -> None:
+        """The Extract PKG window, with *pkg* loaded; when it is open already, *pkg* goes into it."""
+        if self.extract_dialog is not None:
+            if pkg:
+                self.extract_dialog.open_pkg(pkg)
+            self.extract_dialog.raise_()
+            self.extract_dialog.activateWindow()
+            return
+        try:
+            from .extract_dialog import ExtractDialog
+        except ImportError as error:                    # cryptography missing: an install from before it
+            self._job_done((False, f"Extract PKG needs the cryptography package ({error}): install {APP_NAME} "
+                                   "again through the portal."))
+            return
+        self.extract_dialog = ExtractDialog(self.settings, self.folders, self, pkg)
+        try:
+            self.extract_dialog.exec()
+            extracted = self.extract_dialog.extracted
+        finally:
+            self.extract_dialog = None
+        if extracted:
+            self.refresh()
+
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:  # noqa: N802 (Qt override)
+        if any(url.toLocalFile().lower().endswith(".pkg") for url in event.mimeData().urls()):
+            event.acceptProposedAction()
+
+    def dropEvent(self, event: QDropEvent) -> None:  # noqa: N802 (Qt override)
+        pkgs = [url.toLocalFile() for url in event.mimeData().urls() if url.toLocalFile().lower().endswith(".pkg")]
+        if pkgs:
+            event.acceptProposedAction()
+            QTimer.singleShot(0, lambda: self.open_extract(pkgs[0]))   # after the drop has ended
 
     def shadps4_command(self, *args: str) -> list[str]:
         """The installed shadPS4 through the run wrapper (from the app folder when it is not installed yet)."""

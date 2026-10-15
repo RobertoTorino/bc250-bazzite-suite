@@ -9,6 +9,7 @@ import sys
 from bc250_core import __version__ as CORE_VERSION, instance
 from bc250_core.app import create_app, exec_app
 from bc250_core.platform import data_home
+from bc250_core.settings import open_settings
 
 from . import APP_ID, APP_NAME, INFO, __version__
 
@@ -26,7 +27,7 @@ def main() -> int:
     if not (data_home() / "applications" / f"{APP_ID}.desktop").is_file():
         app.setDesktopFileName("")
     from .main_window import ReleaseWindow
-    window = ReleaseWindow()
+    window = ReleaseWindow(settings=open_settings(INFO))
     window.show()
     server = instance.serve(INFO.app_id, window)  # noqa: F841 (kept alive while the app runs)
     return exec_app(app)

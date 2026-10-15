@@ -135,6 +135,11 @@ install. See the [security policy](SECURITY.md#verifying-a-download).
 Yes. The code of every app is on [GitHub](https://github.com/RobertoTorino/bc250-bazzite-suite), under the licenses
 below.
 
+### What does the suite know about me?
+
+Nothing it sends anywhere: no accounts, statistics or crash reports. What goes over the network, and when, is on the
+[Privacy](privacy.md) page.
+
 ### Where do I get help?
 
 Open an issue on [GitHub](https://github.com/RobertoTorino/bc250-bazzite-suite/issues). For a security problem,

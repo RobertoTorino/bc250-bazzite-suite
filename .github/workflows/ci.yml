@@ -41,10 +41,11 @@ jobs:
       matrix:
         dir: [core, portal, tools, apps/bazzite-test, apps/governor, apps/helixsr, apps/persistent-acpi,
               apps/cu-bisect, apps/cores-bisect, apps/gpu-oc-bisect,
-              apps/demo-tool, apps/dependency-checker, apps/bazzite-pkgxtractor, apps/bazzite-netcatgui,
-              apps/bazzite-umd-file-renamer, apps/suite-releases,
+              apps/demo-tool, apps/dependency-checker, apps/bazzite-netcatgui,
+              apps/suite-releases,
               apps/system-overlay, apps/bios-reader, apps/ace-queues, apps/memory-manager, apps/hdmi-cec, apps/sftp-tools,
               apps/console-link, apps/mesh-shaders, apps/shadps4-manager, apps/rpcs3-manager, apps/decky-manager,
+              apps/bazzite-datstation, apps/ppsspp-manager, apps/pcsx2-manager,
               tools/installer-tests/gui]   # every folder with tests/
     defaults:
       run:
@@ -140,7 +141,7 @@ jobs:
       # that their own release workflows already held to it.
       - name: shellcheck (errors, all scripts)
         run: find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 shellcheck -x -S error
-      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace-queues, memory-manager, hdmi-cec, sftp-tools, console-link, mesh-shaders, shadps4-manager, rpcs3-manager, decky-manager, pkgxtractor, netcatgui, umd-file-renamer and the suite's own scripts)
+      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace-queues, memory-manager, hdmi-cec, sftp-tools, console-link, mesh-shaders, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, decky-manager, netcatgui, datstation and the suite's own scripts)
         run: |
           shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh
           shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/bc250-cores-unlock.sh \
@@ -155,12 +156,13 @@ jobs:
             apps/mesh-shaders/install.sh apps/mesh-shaders/mesa/build-in-container.sh
           shellcheck -S warning apps/shadps4-manager/install.sh apps/shadps4-manager/bc250-shadps4-run
           shellcheck -S warning apps/rpcs3-manager/install.sh apps/rpcs3-manager/bc250-rpcs3-run
+          shellcheck -S warning apps/ppsspp-manager/install.sh apps/ppsspp-manager/bc250-ppsspp-run
+          shellcheck -S warning apps/pcsx2-manager/install.sh apps/pcsx2-manager/bc250-pcsx2-run
           shellcheck -S warning apps/decky-manager/install.sh
           shellcheck -S warning apps/demo-tool/install.sh
           shellcheck -S warning apps/dependency-checker/install.sh
-          shellcheck -S warning apps/bazzite-pkgxtractor/install.sh
           shellcheck -S warning apps/bazzite-netcatgui/install.sh
-          shellcheck -S warning apps/bazzite-umd-file-renamer/install.sh
+          shellcheck -S warning apps/bazzite-datstation/install.sh
           shellcheck -S warning apps/suite-releases/*.sh
 
       - name: Line endings
@@ -230,6 +232,10 @@ jobs:
         run: bash tools/installer-tests/shadps4-manager.sh
       - name: rpcs3-manager installer
         run: bash tools/installer-tests/rpcs3-manager.sh
+      - name: ppsspp-manager installer
+        run: bash tools/installer-tests/ppsspp-manager.sh
+      - name: pcsx2-manager installer
+        run: bash tools/installer-tests/pcsx2-manager.sh
       - name: decky-manager installer
         run: bash tools/installer-tests/decky-manager.sh
       - name: memory-manager installer
@@ -244,12 +250,10 @@ jobs:
         run: bash tools/installer-tests/demo-tool.sh
       - name: Dependency checker installer
         run: bash tools/installer-tests/dependency-checker.sh
-      - name: pkgxtractor installer
-        run: bash tools/installer-tests/bazzite-pkgxtractor.sh
       - name: NetcatGUI installer
         run: bash tools/installer-tests/bazzite-netcatgui.sh
-      - name: UMD File Renamer installer
-        run: bash tools/installer-tests/bazzite-umd-file-renamer.sh
+      - name: DatStation installer
+        run: bash tools/installer-tests/bazzite-datstation.sh
       - name: Suite Releases installer
         run: bash tools/installer-tests/suite-releases.sh
       - name: Installer Tests installer

@@ -171,7 +171,7 @@ def test_launcher_python_reads_the_exec_line(tmp_path):
     helixsr = tmp_path / "helixsr"
     helixsr.write_text('cd "/x" && exec "/home/u/.local/share/h/venv/bin/python" -m h "$@"\n')
     assert launcher_python(helixsr) == Path("/home/u/.local/share/h/venv/bin/python")
-    caller_folder = tmp_path / "pkgxtractor"                  # runs in the caller's folder (pkgxtractor, UMD)
+    caller_folder = tmp_path / "shadps4"                      # runs in the caller's folder (the shadPS4 Manager)
     caller_folder.write_text("exec \"/home/u/.local/share/p/venv/bin/python\" -c 'import runpy, sys; "
                              "sys.path[0] = sys.argv.pop(1); runpy.run_module(sys.argv.pop(1), run_name=\"__main__\", "
                              "alter_sys=True)' \"/home/u/.local/share/p/app\" p \"$@\"\n")

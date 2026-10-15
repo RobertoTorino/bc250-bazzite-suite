@@ -102,7 +102,7 @@ class TestRunner(QObject):
         self._auth_error = self._saw_test = self._cancelled = False
         self._pending_hint = None
 
-        args = [self.script, "--no-prompt", "--gui"]
+        args = [self.script, "--gui"]
         if not req.copy_desktop:
             args.append("--no-desktop")
         if req.test_ids:

@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# BC-250 Cores Bisect
-
 ![BC-250 Cores Bisect](../assets/cores-bisect/bc250-cores-bisect.png){ .app-logo }
+
+# BC-250 Cores Bisect
 
 Tells **bad CPU cores** apart from an **unstable core unlock** on the AMD BC-250 (Cyan Skillfish),
 *before* you trust or persist the 8C/16T unlock.
@@ -276,7 +276,7 @@ scope here: this project stays software-only and reversible.
 
 ## GUI
 
-<img src="../assets/cores-bisect/bc250-cores-unlock.png" alt="BC-250 Cores Unlock" width="96">
+![BC-250 Cores Unlock](../assets/cores-bisect/bc250-cores-unlock.png){ width="96" }
 
 Two separate PyQt6 front-ends ship with the project: a **setup GUI** that
 starts a bisect run, and an **unlock GUI** for the persistence step afterwards. Both are optional —

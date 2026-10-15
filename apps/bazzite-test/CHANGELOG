@@ -1,3 +1,15 @@
+Changelog: 15-10-2026 22:51:18
+
+Release 0.1.14.
+
+Changelog: 15-10-2026 22:22:25
+
+The leftover of the removed reboot question is gone: test-bazzite.sh's --no-prompt option ("skip the reboot question
+at the end") did nothing any more but end the script with [ "$NO_PROMPT" = true ] && exit 0, which made a run without
+it exit with code 1. The script now ends after the reports, with exit code 0, and still accepts --no-prompt silently,
+so older commands keep working; it is out of the help, the GUI no longer passes it, and the wiki's development pages
+no longer list it. The app gives advice only: it never reboots the board.
+
 Changelog: 15-10-2026 12:58:41
 
 Release 0.1.13.

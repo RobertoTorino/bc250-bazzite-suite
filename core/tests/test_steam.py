@@ -78,13 +78,26 @@ def test_update_keeps_the_play_time_and_remove_takes_the_artwork(tmp_path):
     values["shortcuts"]["1"]["LastPlayTime"] = 1750000000
     (config / "shortcuts.vdf").write_bytes(steam.write_vdf(values))
     renamed = _game("Game, renamed", "-g /a")
-    steam.write_shortcuts(folder, [renamed])
+    steam.write_shortcuts(folder, [steam.Change(renamed.entry, renamed.ours, {"p": b"R"})])
     values = steam.read_vdf((config / "shortcuts.vdf").read_bytes())
     assert len(values["shortcuts"]) == 2 and values["shortcuts"]["1"]["AppName"] == "Game, renamed"
     assert values["shortcuts"]["1"]["LastPlayTime"] == 1750000000
-    steam.write_shortcuts(folder, [steam.Change(game.entry, game.ours, remove=True)])
+    assert [p.name for p in (config / "grid").iterdir()] == [f"{renamed.number}p.png"]   # the old number's went
+    steam.write_shortcuts(folder, [steam.Change(renamed.entry, renamed.ours, remove=True)])
     assert steam.read_vdf((config / "shortcuts.vdf").read_bytes()) == {"shortcuts": {"0": OTHER}}
-    assert not list((config / "grid").glob(f"{game.number}*"))
+    assert not list((config / "grid").iterdir())
+
+
+def test_a_rename_keeps_artwork_whose_number_is_taken_again(tmp_path):
+    """Two shortcuts that swap names: each number is in use after the change, so no artwork goes."""
+    folder = _steam(tmp_path)
+    a, b = _game("A", "-g /a"), _game("B", "-g /b")
+    steam.write_shortcuts(folder, [steam.Change(a.entry, a.ours, {"p": b"A"}),
+                                   steam.Change(b.entry, b.ours, {"p": b"B"})])
+    swapped = [_game("B", "-g /a"), _game("A", "-g /b")]
+    steam.write_shortcuts(folder, swapped)
+    grid = steam.user_folders(folder)[0] / "grid"
+    assert sorted(p.name for p in grid.iterdir()) == sorted([f"{a.number}p.png", f"{b.number}p.png"])
 
 
 def test_no_users_and_a_damaged_file(tmp_path):

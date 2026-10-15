@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# BC-250 ACE Queues
-
 ![BC-250 ACE Queues](../assets/ace-queues/bc250-ace-queues.png){ .app-logo }
+
+# BC-250 ACE Queues
 
 Lets games on the **AMD BC-250** use its dedicated compute queues (**async compute**). Games split a frame into
 graphics work and compute work (lighting, particles, post-processing, upscaling). With a compute queue of its own,

@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# BC-250 Mesh Shaders
-
 ![BC-250 Mesh Shaders](../assets/mesh-shaders/bc250-mesh-shaders.png){ .app-logo }
+
+# BC-250 Mesh Shaders
 
 Gives games on the **AMD BC-250** **mesh shaders**. Newer DirectX 12 games (DirectX 12 Ultimate) draw their scenes
 with mesh shaders. Some need them to start; others fall back to an older path without them.

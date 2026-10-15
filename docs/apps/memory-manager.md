@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# BC-250 Memory Manager
-
 ![BC-250 Memory Manager](../assets/memory-manager/bc250-memory-manager.png){ .app-logo }
+
+# BC-250 Memory Manager
 
 Sets the **VRAM split** of the **AMD BC-250** on **Bazzite**, and shows the memory figures that go with it: the
 GTT, the TTM limit, the system RAM and the swap layout.

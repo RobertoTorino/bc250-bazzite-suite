@@ -1,3 +1,12 @@
+Changelog: 15-10-2026 22:51:19
+
+Release 0.1.11.
+
+Changelog: 15-10-2026 21:33:57
+
+images/bc250-system-overlay-128.png is the 128 px copy of the new icon (images/bc250-system-overlay.png), scaled from
+the 512 px file; the README, the wiki's apps overview and the portal's tile show it.
+
 Changelog: 15-10-2026 05:52:00
 
 Release 0.1.10.

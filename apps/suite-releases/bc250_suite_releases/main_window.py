@@ -11,7 +11,9 @@ and pushing stay with you.
 The header shows whether GitHub built the last push (CI, Release, Manual) and notifies when a build it saw
 running passes or fails.
 Run from checkout: click an app's icon to start it from this checkout, to try it before its release; the Manual icon
-serves the manual from the checkout (mkdocs serve) and opens it in the browser."""
+serves the manual from the checkout (mkdocs serve) and opens it in the browser.
+Under the steps, a command line runs commands in the checkout (command_line.py); Commands offers the ones the last
+step showed."""
 
 from __future__ import annotations
 
@@ -27,8 +29,8 @@ from pathlib import Path
 from PyQt6.QtCore import QProcess, QSize, Qt, QTimer, QUrl
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView,
-                             QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPushButton, QTableWidget,
-                             QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
+                             QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPushButton, QSplitter,
+                             QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
 
 from bc250_core.platform import launch_in_terminal
 from bc250_core.theme import ACCENT, BLUE, GREEN, GREY, ORANGE, RED
@@ -37,6 +39,7 @@ from bc250_core.widgets import AppHeader, Terminal, accent_button, hint_label
 
 from . import APP_NAME, LOGO_PATH, SUITE, __version__
 from . import plan as rp
+from .command_line import CommandLine
 
 COLUMNS = ("Release", "App", "VERSION", "Last tag", "Needs release", "New version", "Notes")
 LOG_DIR = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "bc250-release" / "run"
@@ -198,6 +201,7 @@ class AppsPage(QWidget):
         log += ["", run_check(root, "tools/check_versions.py")]
         if tags:
             log += ["Then:", rp.app_commands(tags)]
+            self.release_window.commands.offer(rp.app_commands(tags))
         self.output.set_text("\n".join(log))
         self.release_window.reload()
 
@@ -377,6 +381,7 @@ class PortalPage(QWidget):
                 run_check(root, "tools/check_versions.py"),
                 run_check(root, "tools/check_manifest.py", "--base", self.release_window.base()),
                 "Then:", rp.portal_commands(f"portal-v{new}")]
+        self.release_window.commands.offer(rp.portal_commands(f"portal-v{new}"))
         self.output.set_text("\n".join(log))
         self.release_window.reload()
 
@@ -467,6 +472,7 @@ class WithdrawPage(QWidget):
         self.output.set_text("\n".join([f"{unit.pinned_tag}: withdrawn in " +
                                         ", ".join(str(p.relative_to(root)) for p in changed), "",
                                         rp.withdraw_commands(unit.pinned_tag, reason)]))
+        self.release_window.commands.offer(rp.withdraw_commands(unit.pinned_tag, reason))
         self.reason_edit.clear()
         self.release_window.reload()
 
@@ -747,9 +753,9 @@ class BuildIndicator(QPushButton):
 
 class ReleaseWindow(QMainWindow):
     def __init__(self, root: Path = SUITE, sha256_source=rp.fetch_sha256, launch=launch_in_terminal,
-                 start=start_app, runs_source=rp.fetch_runs, notify=desktop_notify):
+                 start=start_app, runs_source=rp.fetch_runs, notify=desktop_notify, settings=None):
         """*runs_source* reads the GitHub Actions runs (None: no build indicator); *notify* shows a desktop
-        notification."""
+        notification; *settings* keeps the command line's history (None: this session only)."""
         super().__init__()
         self.root = root
         self.sha256_source = sha256_source
@@ -783,6 +789,13 @@ class ReleaseWindow(QMainWindow):
         # Opening step 2 reads the tags again, so tags pushed from a terminal meanwhile show up; step 1 keeps what
         # was typed in it.
         self.tabs.currentChanged.connect(lambda i: i == 1 and self.portal_page.fill(rp.load_units(self.root)))
+        self.commands = CommandLine(root, settings, finished=self.refresh)    # a commit or push: read it again
+        self.splitter = QSplitter(Qt.Orientation.Vertical)
+        self.splitter.addWidget(self.tabs)
+        self.splitter.addWidget(self.commands)
+        self.splitter.setCollapsible(0, False)
+        self.splitter.setStretchFactor(0, 3)
+        self.splitter.setStretchFactor(1, 1)
         central = QWidget()
         lay = QVBoxLayout(central)
         lay.addLayout(header)
@@ -791,8 +804,9 @@ class ReleaseWindow(QMainWindow):
         self.bad_tags.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.bad_tags.setStyleSheet("color:#c62828; font-weight:600;")
         lay.addWidget(self.bad_tags)
-        lay.addWidget(self.tabs, 1)
-        lay.addWidget(hint_label("Only files change here. Commit, push and tag yourself, with the commands shown."))
+        lay.addWidget(self.splitter, 1)
+        lay.addWidget(hint_label("Only files change here. Commit, push and tag yourself, with the commands shown: "
+                                 "type them in the command line above (Commands offers them) or in a terminal."))
         version = QLabel(f"{APP_NAME} {__version__} · edits {self.root}")
         version.setStyleSheet("color:palette(placeholder-text);")
         lay.addWidget(version, 0, Qt.AlignmentFlag.AlignRight)
@@ -839,4 +853,5 @@ class ReleaseWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         self.build.stop()
+        self.commands.shutdown()
         super().closeEvent(event)

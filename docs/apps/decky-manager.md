@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# Decky Loader Manager
-
 ![Decky Loader Manager](../assets/decky-manager/bc250-decky-manager.png){ .app-logo }
+
+# Decky Loader Manager
 
 Brings **plugins to Game Mode** on the **AMD BC-250** with [Decky Loader](https://github.com/SteamDeckHomebrew/decky-loader),
 the plugin loader made for the Steam Deck. The app installs the Decky release it was tried with, runs it as a system

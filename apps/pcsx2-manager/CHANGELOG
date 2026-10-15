@@ -1,0 +1,42 @@
+Changelog: 15-10-2026 22:51:19
+
+Release 0.1.0.
+
+Changelog: 15-10-2026 22:35:35
+
+Game Mode shortcuts are named with the system first, "[PS2] Title" (owner, 15-10-2026), so Steam's menus, such as the
+recent games in the tray icon's menu, tell a game apart from the same title on Steam or on another system. A shortcut
+in Steam with another name than the app gives it now, as one from before, turns Update Game Mode on; the update
+renames it, keeps its play time, and removes the artwork under its old Steam number (core's write_shortcuts).
+
+Changelog: 15-10-2026 21:03:51
+
+images/bc250-pcsx2-manager-128.png: the 128 px version of the icon, scaled from the 512 px file, so the app's images
+folder has both sizes like the other apps. It is the source for the portal's tile icon.
+
+Changelog: 15-10-2026 18:26:02
+
+A nightly channel (owner's decision 15-10-2026: PCSX2's nightly builds are mostly stable). The first step has a
+Nightly builds box: ticked, Install downloads PCSX2's newest nightly (its GitHub pre-releases, almost one a day) and
+checks it against the SHA-256 GitHub computed for that build (the asset's digest in the API), which proves the
+download is whole, not that the build was tried on the board; the window says so, says when a newer nightly is out,
+and the newer-stable notice stays on the stable channel. Unticked (the default), Install puts the tested stable
+release back. The installed build's size is written beside it (.size), so the app notices PCSX2 updating itself on
+either channel. The channel is remembered in the settings.
+
+Changelog: 15-10-2026 17:35:00
+
+New app, PCSX2 Manager (0.1.0, decided 15-10-2026 by the owner): PS2 games on the BC-250 with PCSX2, built as the
+RPCS3 Manager is. Install downloads the PCSX2 2.8.2 Linux AppImage (the stable release, not a nightly) from its
+GitHub release and checks it against the SHA-256 the app was tried with; Remove takes it out and keeps PCSX2's own
+folder (~/.config/PCSX2: the BIOS, memory cards, saves, settings). The BIOS step counts the dumps in PCSX2's bios
+folder and opens it, so the dump from your own console can be copied in; choosing the one to use stays in PCSX2's
+own window. The app finds the games in the chosen folders (an ISO read for its SYSTEM.CNF: the serial, as PCSX2
+shows it, and the disc's version; CHD, CSO, ZSO and GZ listed under their file names) and puts the ticked ones in
+Steam for Game Mode; a PS2 disc carries no pictures, so the artwork is drawn, the game's title and "PCSX2 Manager"
+on a dark background, until the owner decides the real artwork. The Game Mode shortcuts run
+~/.local/bin/bc250-pcsx2-run (-nogui -fullscreen --), which reads a real controller itself while one is connected
+and opens the windows through XWayland when Steam starts a game on a Wayland desktop, so Steam's overlay works. The
+app says when PCSX2 published a newer stable release, and says so when PCSX2 updated itself in its own window
+(Install puts the pinned release back); it never installs one it was not tried with. The window icon is a
+placeholder until the owner's images are ready.

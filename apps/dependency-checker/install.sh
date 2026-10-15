@@ -11,6 +11,9 @@
 #  * ~/.local/share/bc250-portal-dependency-checker/app: the app, with the bc250_core it was tested with.
 #  * ~/.local/share/bc250-bazzite-suite/venv, the suite's shared venv with PyQt6.
 #  * ~/.local/bin/bc250-portal-dependency-checker, plus an app menu entry and a Desktop icon.
+#  * ~/.config/systemd/user/bc250-bazzite-update-reminder.service and .timer: every Monday the checker reads
+#    Bazzite's update state and shows a desktop notification when an update waits for a reboot (or Bazzite's
+#    updater failed or stopped running). It only reads; updating stays Bazzite's.
 set -euo pipefail
 
 APP_ID="bc250-portal-dependency-checker"
@@ -25,6 +28,8 @@ LAUNCHER="$HOME/.local/bin/$APP_ID"
 MENU_ENTRY="$DATA_DIR/applications/$APP_ID.desktop"
 DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
 DESKTOP_ICON="$DESKTOP_DIR/$APP_ID.desktop"
+REMINDER="bc250-bazzite-update-reminder"
+UNIT_DIR="$CONFIG_DIR/systemd/user"
 
 SRC=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 if [ -d "$SRC/bc250_core" ]; then CORE_SRC="$SRC/bc250_core"; else CORE_SRC="$SRC/../../core/bc250_core"; fi
@@ -49,6 +54,12 @@ $PURGE && ! $UNINSTALL && die "--purge only goes with --uninstall."
 [ "$(id -u)" -ne 0 ] || die "Run this as your own user, not with sudo: the app, venv and launcher belong in your home folder."
 
 if $UNINSTALL; then
+    if [ -e "$UNIT_DIR/$REMINDER.timer" ]; then
+        info "Removing the weekly Bazzite update reminder"
+        systemctl --user disable --now "$REMINDER.timer" >/dev/null 2>&1 || true
+        rm -f "$UNIT_DIR/$REMINDER.timer" "$UNIT_DIR/$REMINDER.service" "$UNIT_DIR/timers.target.wants/$REMINDER.timer"
+        systemctl --user daemon-reload >/dev/null 2>&1 || true
+    fi
     info "Removing the launcher, menu entry and app"
     rm -f "$LAUNCHER" "$MENU_ENTRY" "$DESKTOP_ICON"
     command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q "$DATA_DIR/applications" || true
@@ -142,6 +153,38 @@ if $DESKTOP_SHORTCUT && [ -d "$DESKTOP_DIR" ]; then
     command -v gio >/dev/null 2>&1 && gio set "$DESKTOP_ICON" metadata::trusted true 2>/dev/null || true
 elif ! $DESKTOP_SHORTCUT; then
     rm -f "$DESKTOP_ICON"
+fi
+
+info "Adding the weekly Bazzite update reminder ($REMINDER.timer, Mondays)"
+mkdir -p "$UNIT_DIR"
+cat >"$UNIT_DIR/$REMINDER.service" <<EOF
+# Written by the $APP_NAME's install.sh: a desktop notification when a Bazzite update waits for a reboot.
+[Unit]
+Description=$APP_NAME: is a Bazzite update waiting?
+
+[Service]
+Type=oneshot
+ExecStart=$LAUNCHER --bazzite-reminder
+EOF
+cat >"$UNIT_DIR/$REMINDER.timer" <<EOF
+# Written by the $APP_NAME's install.sh; --uninstall removes it.
+[Unit]
+Description=$APP_NAME: weekly look at Bazzite's update state
+
+[Timer]
+OnCalendar=Mon *-*-* 10:00
+Persistent=true
+RandomizedDelaySec=15min
+
+[Install]
+WantedBy=timers.target
+EOF
+systemctl --user daemon-reload >/dev/null 2>&1 || true
+if ! systemctl --user enable --now "$REMINDER.timer" >/dev/null 2>&1; then
+    # No user session to ask (an install over ssh, say): enable it as systemctl would, for the next login.
+    mkdir -p "$UNIT_DIR/timers.target.wants"
+    ln -sfn "../$REMINDER.timer" "$UNIT_DIR/timers.target.wants/$REMINDER.timer"
+    info "Note: the reminder starts with your next login."
 fi
 
 info "Done. Start \"$APP_NAME\" from the app menu$($DESKTOP_SHORTCUT && echo ' or the Desktop'), or run: $APP_ID"

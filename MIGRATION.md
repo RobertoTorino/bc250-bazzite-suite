@@ -221,21 +221,40 @@ in under a second with exit code 0 and no error report; every file has a valid h
 magic, ICU data, TrueType/WOFF2 fonts, PEM certificates, PNG) and none has the near-random content a wrong key would
 give. Not compared with the C++ tool's output yet.
 
-Open, in this order:
+Open:
 
-1. Run it on the board: install from the portal (or `bash apps/bazzite-pkgxtractor/install.sh`), the menu entry,
-   the Desktop icon, Wayland and Game Mode, uninstall with `--purge`.
-2. Compare a real package's folder with the C++ tool's output (Compare Extractions with hashes): the owner's
+1. Compare a real package's folder with the C++ tool's output (Compare Extractions with hashes): the owner's
    test.pkg (CUSA01015) extracts cleanly here, but the C++ CLI is not built on the owner's Windows machine.
-3. The first release, and the portal release that pins it (apps.toml changed: at least a portal minor bump).
 
 On core since 15-10-2026 (owner's decision, for consistency): `INFO` (AppInfo), core's start-up (`create_app`,
 `exec_app`), single instance, `AppHeader` and `open_settings` (the same .ini as before), with `bc250_core` bundled
 like every core app's. A second launch with a package hands it to the open window (`instance.serve(on_args=...)`,
 new in core for this).
 
-To decide with the owner, none blocking: whether the window gets the suite's status boxes on the second line;
-whether to share settings with the C++ build (`~/.config/pkgxtractor/pkgxtractor-qt.conf`; now its own .ini).
+To decide with the owner, none blocking: whether to share settings with the C++ build
+(`~/.config/pkgxtractor/pkgxtractor-qt.conf`; now the shadPS4 Manager's .ini).
+
+Absorbed into the shadPS4 Manager and dropped as a standalone app (owner, 15-10-2026; choices confirmed by the owner:
+everything carried over, as an Extract PKG dialog; the manager gets its own venv with PyQt6 and cryptography, so the
+shared venv stays PyQt6-only; the terminal extractor kept as `bc250-shadps4-pkg-cli`). The modules of the table
+above live on unchanged in `bc250_shadps4_manager/pkgxtractor/` (only `cli.py`'s program name and the module paths
+in the two comparison tools' usage lines changed), with their tests and `pkg_builder.py` ported; `main_window.py` is
+`bc250_shadps4_manager/extract_dialog.py`, a dialog with the same widgets, workers and messages. What changed with
+the move: no header line (the dialog has the PKG row first), the output starts in the last used folder or else the
+first game folder, with a line saying whether it is a game folder, and the games are looked for again after an
+extraction; the window cannot close while an extraction runs (its thread would be destroyed), where the standalone
+quit mid-extraction and left a partial folder; the crash marker lives while the dialog is open; log, marker and
+progress are `~/.local/share/bc250-shadps4-manager/pkgxtractor.*`; the last used folders are in the manager's .ini
+(`pkg/last_pkg_folder`, `pkg/last_output_folder`), adopted once from the standalone's, which stays. The manager's
+window takes a dropped `.pkg`, and its launcher a package (`%f` in the menu entry, handed to an open window), in the
+caller's folder like the standalone's launchers. Its installer removes an installed standalone (launchers, menu
+entry, Desktop icon, app, venv and log; not the settings) and leaves the shared venv (removed when no other app uses
+it). Dropped with the app: its folder, portal entry and icon (released as v0.1.3), manual chapter (now the Extract
+PKG section of the shadPS4 Manager's), CI jobs and catalogue entries. The C++ tool stays the reference.
+
+Open on the board: Extract PKG on a real package into a game folder (it shows up in the list, starts with Play and
+from Game Mode); a `.pkg` opened with the app from the file manager, with the app closed and open; the terminal
+extractor; installing over the standalone and over an install on the shared venv.
 
 ## Bazzite NetcatGUI (joined 15-10-2026)
 
@@ -336,6 +355,53 @@ window.
 
 Decided by the owner (15-10-2026): the app keeps the C++ tool's metallic blue theme (`theme.py`, applied after core's
 start-up), not the suite's look; no `.cso` support (the Java original had it; the C++ tool and this port do not).
+
+Absorbed into PPSSPP Manager and dropped as a standalone app (owner, 15-10-2026; choices confirmed by the owner:
+a Rename files dialog, built on the manager's own reader in games.py rather than the C++-structured iso.py/psf.py,
+so a CSO renames too, and the manager's installer removes an installed standalone). The rename logic (the eight
+templates, the cleaning, the translation, the careful rename) lives on in `bc250_ppsspp_manager/renamer.py` with
+the standalone's tests ported; the dialog is `rename_dialog.py` (pictures cycling, per-game translation, Google
+Translate, Rename all); the saved naming template is adopted from the standalone's settings file once, which stays.
+Dropped with the app: its folder, portal entry (released as v0.1.3; portal bump pending anyway), manual chapter,
+CI jobs and catalogue entries; the C++ tool in github.com/RobertoTorino/umd-file-renamer stays the reference for
+the rename behaviour, but changes there are no longer tracked file by file (the readers differ now). Not carried
+over: Open Folder/Open ISO, the PPSSPP path setting and launch, the firmware field, the metallic theme. Open on
+the board: Rename files on real images (and once in Game Mode: a renamed game needs Update Game Mode after).
+
+## Bazzite DatStation (joined 15-10-2026)
+
+Until 15-10-2026 its own repository (github.com/RobertoTorino/bazzite-datstation); now `apps/bazzite-datstation`, in
+the portal under "Gaming" (owner, 15-10-2026), short name DatStation, pinned to `bazzite-datstation-v0.1.0` (not
+tagged yet). The PlayStation knowledge part of the owner's DatStation Android app (github.com/RobertoTorino/DatStation,
+Kotlin + Compose) as Python + Qt, built on bc250_core from the start. Its bundled `bc250_core/` (identical to core's),
+CLAUDE.md, test.sh and .gitattributes went; its mkdocs.md is the manual chapter `docs/apps/bazzite-datstation.md`.
+The project page and `AppInfo.repo_url` now point to the suite, where its releases are. GPL-3.0-or-later.
+
+Decided by the owner before the move (15-10-2026): the questions ship as plain JSON (the Android app encrypts them
+with a key that is in its repository); the Roberto and Moonshie characters are dropped, the music, scores and trophies
+stay; the app writes its own Steam shortcut (core's `steam`); a front page of tiles, not tabs. Two findings in the
+Android data, handled in the app: 56 true/false questions carried their explanation in the answer ("False: ..."),
+unanswerable on Android, now an `explanation` field; the APPS category looked up "Apps" where the data says "App".
+
+Found on the move: the tests reached a Steam on the machine. They patched `steam.steam_running` and
+`steam.with_steam_closed`, but `with_steam_closed`'s defaults and `steam_shortcut.add`'s `closed=` were bound at
+import, so on the owner's Bazzite (Steam running) the main window tests closed and restarted Steam, and
+`test_refusals` (expecting no Steam) wrote a "Bazzite DatStation" shortcut with a `/tmp/pytest-of-admin/...` launcher
+and its four grid images (`3749308435*.png`) into the real userdata. The conftest now isolates HOME and replaces those
+defaults. Other apps inject the Steam functions (shadPS4 Manager's `steam_closed=`); a cleaner fix in the app is the
+owner's call.
+
+Open, in this order:
+
+1. The stray shortcut in the owner's Steam (above): Remove from Steam in the installed app, or by hand with Steam
+   closed.
+2. On the board: install from the portal (or `bash apps/bazzite-datstation/install.sh`), open the app, try every tile;
+   Add to Steam from Desktop Mode; start it from Game Mode with a controller (D-pad, A, B as Escape, keys 1 to 4 if
+   mapped); the music plays and Music off is kept; how the tile symbols (△ ○ × □ ◇ ◆ ★) and the Inter font render.
+3. The first release, and the portal release that pins it (apps.toml changed: at least a portal minor bump).
+
+Ideas not asked for and not built: a Help page inside the app (core's `HelpView`), a controller glyph on the tiles, a
+per-category best score on the results page.
 
 ## Done
 
@@ -520,6 +586,74 @@ Bazzite's).
   PS3UPDAT.PUP, a disc game and an installed game from Play and from Game Mode (full screen, Exit game), the
   controller and the overlay, the artwork in Steam. Release (owner): `rpcs3-manager-v0.1.0` and a portal bump;
   until then `apps.toml` pins it without sha256.
+- **PSP and PS2 emulator managers (built 15-10-2026 as ppsspp-manager, PPSSPP Manager, and pcsx2-manager, PCSX2
+  Manager).** Decided 15-10-2026 by the owner after an analysis of `hrydgard/ppsspp` and `PCSX2/pcsx2`: both fit
+  the RPCS3/shadPS4 pattern, PPSSPP first, then PCSX2; the names; for PCSX2 the AppImage, not its Flatpak (the
+  suite's pattern, chosen by Claude as the owner allowed); PCSX2's Steam artwork is drawn text ("PCSX2 Manager" and
+  the game's title on a dark background) until the owner decides the real artwork; both icons are placeholders
+  until the owner's images are ready. Built as the RPCS3 Manager is: same window, wrapper, installer, tests and
+  installer test; PPSSPP in its own blue #1273C8, PCSX2 in a teal #0E7490. Pinned: PPSSPP 1.20.4
+  (`PPSSPP-v1.20.4-anylinux-x86_64.AppImage`, SHA-256 `661c098e…eba21`, 50 689 748 bytes, the SDL build) and PCSX2
+  2.8.2 (`pcsx2-v2.8.2-linux-appimage-x64-Qt.AppImage`, SHA-256 `0c46bb6a…abea`, 60 119 544 bytes, the stable
+  release: the nightlies are GitHub pre-releases, so core's newer-release check follows the stables by itself).
+  Facts from their sources at those tags: PPSSPP's memory stick is `$XDG_CONFIG_HOME/ppsspp` (NativeApp.cpp), games
+  in `PSP/GAME` (a folder with `EBOOT.PBP`; category PG is an update), `--fullscreen`, `--pause-menu-exit`,
+  no firmware needed, no self-update on Linux, tags with two or three numbers (v1.20, v1.20.4: the app reads them
+  itself, core's version_tuple wants three); PCSX2 keeps everything in `$XDG_CONFIG_HOME/PCSX2` (`bios/`,
+  `inis/PCSX2.ini`), `-nogui` implies `-batch` (QtHost.cpp), `-fullscreen`, `--` before the file, and its updater
+  can replace the AppImage (noticed by size, as rpcs3-manager does). The apps read the games themselves: ppsspp's
+  games.py holds an ISO 9660 reader (the PSP's PARAM.SFO, ICON0.PNG and PIC1.PNG out of ISO and CSO v1 images, the
+  artwork drawn from those bytes; a CHD listed under its file name) and a PBP reader; pcsx2's games.py the same ISO
+  9660 walk for SYSTEM.CNF (the serial as PCSX2 shows it, SLUS_123.45 → SLUS-12345; CHD, CSO, ZSO, GZ under their
+  file names, titles are the files' names: a PS2 disc carries no title or pictures; PCSX2's GameIndex.yaml could
+  bring titles later, the owner's call). The two ISO readers overlap (~60 lines): a candidate for core when the
+  owner wants it, as read_sfo (rpcs3, shadps4, ppsspp each carry a copy) already is. Not tried on the board:
+  everything (Install, Play, Game Mode, the controller, the overlay, PCSX2's BIOS flow with a real dump, PPSSPP's
+  SDL2 pad under Steam). Release (owner): `ppsspp-manager-v0.1.0`, `pcsx2-manager-v0.1.0` and a portal minor bump
+  (two new cards); until then `apps.toml` pins both without sha256. Nightly channel (owner, 15-10-2026: PCSX2's
+  nightlies are mostly stable): pcsx2-manager's first step has a Nightly builds box; Install then brings the newest
+  pre-release AppImage, checked against the SHA-256 GitHub computed for that asset (the API's digest: the download
+  is whole, not a build tried on the board, and the window says so); the installed build's size sits beside it
+  (.size) so PCSX2 updating itself is noticed on either channel. The same is possible for shadps4-manager (checked
+  15-10-2026: one rolling pre-release, `Pre-release-shadPS4-<date>-<commit>`, its linux-sdl zip with a digest and
+  the same single member `Shadps4-sdl.AppImage`; a downloaded nightly zip matched its digest), and the owner decided
+  15-10-2026 to build it there too: shadps4-manager has the same box (the stable flow unchanged, shown by its
+  tests and installer test; open: a version bump, a board test and the release, owner). Also found 15-10-2026:
+  shadPS4 released 0.20.0 on 14-10-2026, so the shadps4-manager pin (0.19.0) has a newer stable; moving it is a
+  release task (owner).
+- **Windows: a cut-down portal on Nagi (on hold, owner 15-10-2026).** Nagi (`github.com/D-Ogi/amdgpu-wddm`, also
+  amdgpu-wddm) is a WDDM driver for Windows 11 written for the BC-250: AMD's amdgpu code in the kernel driver, RADV,
+  DXVK and vkd3d-proton behind the Windows runtimes; D3D12 (12_1, DXR), D3D11, D3D9 through D3D9On12 and Vulkan run.
+  Read 15-10-2026 at `0.7.216.101-tester.30` (nothing built or run): experimental, test-signed (Windows test mode),
+  a GPU hang stops Windows, one developer, about 30 tester releases in three weeks, interfaces changing between
+  them. Its own Control App already does clocks (1000-2000 MHz), the 24/40 CU switch and CU pair map, the voltage
+  curve, fan, display modes and game profiles, through its registry keys
+  (`HKLM\SYSTEM\CurrentControlSet\Services\bc250kmd\Parameters`) and private escapes. So on Windows governor,
+  cu-bisect, cores-bisect and gpu-oc-bisect are not needed; ace-queues, mesh-shaders, persistent-acpi, hdmi-cec,
+  memory-manager, decky-manager and system-overlay are Linux or Steam/Bazzite only. Candidates for a Windows
+  edition: HelixSR, the shadPS4 and RPCS3 Managers, Console Link, SFTP Tools, NetcatGUI, the UMD File
+  Renamer; bazzite-test and the Dependency Checker would need a rewrite (readings from Nagi through WMI or the
+  registry). The portal's work: every app installs through bash `install.sh` and `apps.toml` holds bash commands and
+  `~/.local/bin` paths, so a second installer per app, Start-menu shortcuts instead of `.desktop` files,
+  `%LOCALAPPDATA%` paths, a per-OS field in `apps.toml`, per-OS release assets, Windows installer tests (no
+  fakeroot) and Windows CI runners. Licence: PolyForm Noncommercial 1.0.0, not compatible with our GPL code: no code
+  or binaries of Nagi in the suite, at most a link to or a download of its own GitHub release; whether our apps may
+  load its `bc250control.dll` is unclear (the registry and WMI avoid it). Waiting for: OldLamer's test and YouTube
+  video, and Nagi becoming stable. Then (owner): a proof of concept of a cut-down Windows portal on the second board.
+- **USB Wi-Fi: the AIC8800 driver for the UGREEN AX900 (on hold, owner 15-10-2026).** The owner's stick shows up
+  as `a69c:8d80 aicsemi AIC Wlan` (USB 2.0, already in Wi-Fi mode, not the `a69c:5721`/`5723` storage mode, so
+  usb_modeswitch does nothing), but no driver binds: the AIC8800D80 has no driver in the kernel (7.2.9-ogc3.1 on
+  15-10-2026: no `aic8800_fdrv`, `aic_load_fw` or `aicwf_usb` module, no AIC firmware), so there is no `wlan0`.
+  Copying firmware and `modprobe aic8800_fdrv` (a suggestion found elsewhere) cannot work without the module. What
+  it would take: the out-of-tree AIC8800 driver built against Bazzite's kernel (headers for the `ogc` kernel, built
+  in a toolbox), loaded with its firmware, rebuilt after every kernel update by a service (DKMS/akmods-like), and
+  signed with an enrolled MOK when Secure Boot is on (a reboot with the owner at the console). Estimate
+  (15-10-2026): 2 to 4 hours when the driver builds on the kernel, a day or more when it needs patching for 7.2
+  (the big unknown); about 300k-800k tokens in a fresh session; each kernel update can break it again. A board
+  change (a kernel module), so `changes_board` if it became an app. The alternative: a stick whose chipset's driver
+  is in the kernel (MediaTek MT7921AU, MT7612U, Realtek RTL8821CU/8822BU), which works at once and after updates.
+  First step when picked up, in a new session: the groundwork (Secure Boot state, headers for the running kernel,
+  which driver fork supports it), which says whether it is the short or the long job.
 
 ## Details for later steps
 

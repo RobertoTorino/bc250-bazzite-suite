@@ -69,6 +69,54 @@ Direct pushes keep working. Rules that require pull requests or passing checks w
 - **Dependabot version updates:** set in `.github/dependabot.yml`. Once a week one pull request updates the
   actions the workflows use; nothing changes until it is merged.
 
+## Dependabot's pull requests
+
+Dependabot opens two kinds of pull request:
+
+- **Version updates**, from `.github/dependabot.yml`: once a week, one pull request for all the actions the
+  workflows use (*ci: bump the actions group with 5 updates*).
+- **Security updates**, from the setting above: when a security advisory names a dependency anywhere in the
+  repository, whether or not `dependabot.yml` lists it, such as a Rust crate in Console Link's `native/` folder
+  (*Bump pyo3 from 0.25.1 to 0.29.0 in /apps/console-link/native*).
+
+A pull request starts from `main` as it was that day. `main` moves on while it waits, but its checks still show the
+result on that old commit. Go through these steps before merging one:
+
+1. **Is it still needed?** Look at the file it changes on `main` (`Cargo.toml` and `Cargo.lock`, a workflow). If
+   `main` already has that version or a newer one, close it: comment `@dependabot close`, or use **Close pull
+   request** at the bottom of its Conversation tab. **Archive** in GitHub's notifications only hides the
+   notification; the pull request stays open.
+2. **Bring it up to date:** comment `@dependabot rebase`. *No conflicts* only means git can combine the files, not
+   that the result was tested. GitHub calls a pull request *unstable* while a check fails.
+3. **Wait for CI on the rebased commit.** A failure from the old base that `main` has since fixed goes away. A
+   failure that stays comes from the update: leave the pull request open and fix the code first, or close it.
+4. **Merge** once every check is green, then `git pull`, because the merge commit exists only on GitHub until then.
+5. **Write the CHANGELOG entry**, which Dependabot doesn't do: the root `CHANGELOG` for a workflow, the app's own
+   for its dependency. An app's dependency reaches users only with that app's next release.
+
+A command to Dependabot is the whole comment, nothing else: `@dependabot rebase`, not `@dependabot rebase on PR #2.`
+
+If Dependabot answers *the branch … is protected* or *Something went wrong on our end*, the branch ruleset covers
+more than `main`. A rebase force-pushes Dependabot's branch, and **Block force pushes** stops it; **Restrict
+deletions** keeps the branch after the merge too. Set the ruleset's target to **Include default branch** only, as
+in [Rulesets](#rulesets), then comment `@dependabot rebase` again.
+
+`release.yml` runs only for a tag, so CI does not test a change to it. The next release is the first run on the new
+action versions; watch it.
+
+From a terminal, signed in with `gh` (see [The GitHub CLI](#the-github-cli)):
+
+```bash
+gh pr list --author app/dependabot             # Dependabot's open pull requests
+gh pr checks <number>                          # its checks
+gh pr comment <number> --body "@dependabot rebase"
+gh pr merge <number>
+gh pr close <number> --comment "main already has this version"
+```
+
+Other comments Dependabot answers: `@dependabot recreate` (starts the pull request over, dropping edits),
+`@dependabot ignore this major version` and `@dependabot ignore this dependency` (no more pull requests for it).
+
 ## GitHub's API limit
 
 GitHub's API answers a limited number of requests an hour: **60 without signing in**, counted per network address

@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 
-# Console Link
-
 ![Console Link](../assets/console-link/bc250-console-link.png){ .app-logo }
+
+# Console Link
 
 Console Link connects the **AMD BC-250** to a PS4 or PS5 on your network. The app finds the consoles, wakes them
 from rest mode, registers the board with them, and starts a session and its stream. The consoles' own name for

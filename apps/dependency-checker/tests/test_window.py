@@ -6,6 +6,7 @@ from PyQt6.QtCore import QEventLoop, QTimer
 from PyQt6.QtWidgets import QLabel
 
 from bc250_dependency_checker import CATALOG
+from bc250_dependency_checker.bazzite import BazziteState, Deployment
 from bc250_dependency_checker.dependencies import (
     CheckResult, DependencyStatus, EnvironmentVersion, ToolStatus, Vulnerability, load_apps, load_catalog,
     load_tools,
@@ -27,8 +28,10 @@ def _wait_for(predicate, ms=3000):
     return predicate()
 
 
-def _window(result: CheckResult) -> DependencyWindow:
-    window = DependencyWindow(load_catalog(CATALOG), load_tools(CATALOG), load_apps(CATALOG), check=lambda: result)
+def _window(result: CheckResult, bazzite=None) -> DependencyWindow:
+    """The window on *result*; Bazzite's state from *bazzite*, else none (the board's own is never read here)."""
+    window = DependencyWindow(load_catalog(CATALOG), load_tools(CATALOG), load_apps(CATALOG), check=lambda: result,
+                              bazzite=bazzite or (lambda: BazziteState(error="Not read in a test.")))
     assert _wait_for(lambda: window.check_button.isEnabled())
     return window
 
@@ -202,3 +205,22 @@ def test_needs_update_when_an_app_wants_newer_or_a_release_fixes_a_vulnerability
         assert "wrong version:</b> PyQt6." in text                              # cryptography is under Needs update
     finally:
         window.close()
+
+
+def test_the_bazzite_card_on_top(qapp):
+    """An update waiting for a reboot: the card says so first, in the system section above the packages."""
+    running = Deployment("44.20261012.1", 1791962757, booted=True, staged=False)
+    waiting = Deployment("44.20261019.0", 1792567557, booted=False, staged=True)
+    window = _window(CheckResult(packages=[], tools=[], installed=frozenset()),
+                     bazzite=lambda: BazziteState(running, waiting, "ghcr.io/ublue-os/bazzite:stable"))
+    assert _wait_for(lambda: "waits for a reboot" in window.bazzite_card.text.text())
+    assert window.bazzite_card.status.text() == "Reboot to update"
+    assert "Bazzite 44.20261019.0" in window.bazzite_card.text.text()
+    window.close()
+
+
+def test_the_bazzite_card_without_bazzite(qapp):
+    window = _window(CheckResult(packages=[], tools=[], installed=frozenset()))
+    assert _wait_for(lambda: window.bazzite_card.status.text() == "Not known")
+    assert window.bazzite_card.text.text() == "Not read in a test."
+    window.close()

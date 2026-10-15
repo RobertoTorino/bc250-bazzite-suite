@@ -88,6 +88,14 @@ launchers = ["~/.local/bin/bc250-shadps4-manager"]
 name = "RPCS3 Manager"
 launchers = ["~/.local/bin/bc250-rpcs3-manager"]
 
+[app.ppsspp-manager]
+name = "PPSSPP Manager"
+launchers = ["~/.local/bin/bc250-ppsspp-manager"]
+
+[app.pcsx2-manager]
+name = "PCSX2 Manager"
+launchers = ["~/.local/bin/bc250-pcsx2-manager"]
+
 [app.decky-manager]
 name = "Decky Loader Manager"
 launchers = ["~/.local/bin/bc250-decky-manager"]
@@ -100,17 +108,13 @@ launchers = ["~/.local/bin/simple-demo-tool"]
 name = "Dependency Checker"
 launchers = ["~/.local/bin/bc250-portal-dependency-checker"]
 
-[app.bazzite-pkgxtractor]
-name = "Bazzite pkgxtractor"
-launchers = ["~/.local/bin/bazzite-pkgxtractor"]
-
 [app.bazzite-netcatgui]
 name = "Bazzite NetcatGUI"
 launchers = ["~/.local/bin/bazzite-netcatgui"]
 
-[app.bazzite-umd-file-renamer]
-name = "Bazzite UMD File Renamer"
-launchers = ["~/.local/bin/bazzite-umd-file-renamer"]
+[app.bazzite-datstation]
+name = "Bazzite DatStation"
+launchers = ["~/.local/bin/bazzite-datstation"]
 
 [[tool]]
 name = "flashrom"
@@ -797,6 +801,24 @@ need = "optional"
 usage = "Update Game Mode (a Steam shortcut per game) closes Steam with steam -shutdown and starts it again with bazzite-steam."
 anchor = "game-mode"
 
+[[tool.source]]
+owner = "ppsspp-manager"
+need = "optional"
+usage = "Update Game Mode (a Steam shortcut per game) closes Steam with steam -shutdown and starts it again with bazzite-steam."
+anchor = "game-mode"
+
+[[tool.source]]
+owner = "pcsx2-manager"
+need = "optional"
+usage = "Update Game Mode (a Steam shortcut per game) closes Steam with steam -shutdown and starts it again with bazzite-steam."
+anchor = "game-mode"
+
+[[tool.source]]
+owner = "bazzite-datstation"
+need = "optional"
+usage = "Add to Steam and Remove from Steam (the app's own shortcut) close Steam with steam -shutdown and start it again with bazzite-steam."
+anchor = "install"
+
 [[tool]]
 name = "FUSE 2"
 description = "The FUSE 2 library (libfuse.so.2), with which an AppImage mounts itself. Checked by its library file."
@@ -819,6 +841,18 @@ executables = ["fusermount3", "fusermount"]
 owner = "rpcs3-manager"
 need = "optional"
 usage = "RPCS3 is an AppImage with its own FUSE library; without fusermount it unpacks itself to a temporary folder on every start, which is slower."
+anchor = "what-you-need"
+
+[[tool.source]]
+owner = "ppsspp-manager"
+need = "optional"
+usage = "PPSSPP is an AppImage with its own FUSE library; without fusermount it unpacks itself to a temporary folder on every start, which is slower."
+anchor = "what-you-need"
+
+[[tool.source]]
+owner = "pcsx2-manager"
+need = "optional"
+usage = "PCSX2 is an AppImage with its own FUSE library; without fusermount it unpacks itself to a temporary folder on every start, which is slower."
 anchor = "what-you-need"
 
 [[tool]]
@@ -898,6 +932,14 @@ owner = "rpcs3-manager"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
+owner = "ppsspp-manager"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
+owner = "pcsx2-manager"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
 owner = "decky-manager"
 specifier = ">=6.11,<7"
 
@@ -926,15 +968,11 @@ owner = "dependency-checker"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "bazzite-pkgxtractor"
-specifier = ">=6.11,<7"
-
-[[dependency.source]]
 owner = "bazzite-netcatgui"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "bazzite-umd-file-renamer"
+owner = "bazzite-datstation"
 specifier = ">=6.11,<7"
 
 [[dependency]]
@@ -975,12 +1013,12 @@ specifier = ">=3.4,<5"
 
 [[dependency]]
 name = "cryptography"
-description = "Cryptographic recipes and primitives for Python, on OpenSSL. Console Link encrypts registration and the control connection of a Remote Play session with its AES and HMAC; Bazzite pkgxtractor decrypts packages with its AES-CBC and AES-XTS."
+description = "Cryptographic recipes and primitives for Python, on OpenSSL. Console Link encrypts registration and the control connection of a Remote Play session with its AES and HMAC; the shadPS4 Manager's Extract PKG decrypts packages with its AES-CBC and AES-XTS."
 
 [[dependency.source]]
 owner = "console-link"
 specifier = ">=42,<51"
 
 [[dependency.source]]
-owner = "bazzite-pkgxtractor"
+owner = "shadps4-manager"
 specifier = ">=42,<51"

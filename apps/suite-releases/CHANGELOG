@@ -1,3 +1,20 @@
+Changelog: 15-10-2026 21:11:49
+
+A command line under the steps (command_line.py), in a splitter with them, so the commands a step shows run without a
+separate terminal (owner's request). A command runs with bash -lc in the checkout, in the folder the last cd left, and
+its output streams in as it runs (colour codes removed). Commands lists the commands the last Apply, Bump portal or
+Withdraw showed, without their comments, to put one on the line. Up and Down go through the history, kept in the
+settings (200 commands). Stop or Ctrl+C sends Ctrl+C to the command's own process group (setsid), so a job it started
+in the background ends too, and kills it if it has not ended 3 seconds later; clear and Clear empty the output. Input
+is closed and git is told not to prompt, to use no editor and no pager, so no command waits for an answer that cannot
+come. After each command the window reads the checkout again, as Refresh does. Tests: output, cd, exit codes, closed
+input, Stop with a background job, history, the commands offered, the pane in the window.
+
+Changelog: 15-10-2026 21:03:51
+
+images/bc250-release-128.png is the 128 px copy of the new icon (images/bc250-release.png), scaled from the 512 px
+file; the wiki's portal chapter and the portal's tile show it.
+
 Changelog: 15-10-2026 07:07:27
 
 Core's row offers its current version when that version already holds every core change (plan.core_is_current: nothing under core/bc250_core changed since the commit that last changed core/VERSION, or a bump not committed yet), with its tick off and "0.1.5 has it: goes into 1 app release". It offered the next version (0.1.6) before, as if core needed one, when only the portal still carried an older core. A core change after its last bump offers the next version as before. Tests: core current after a bump, committed or not, and not after a later change; the row in the window.

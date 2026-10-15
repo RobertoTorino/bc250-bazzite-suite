@@ -28,14 +28,16 @@ away when you click its name; it is open until you close it, and the portal reme
 
 **Gaming**, below the apps, holds the apps for playing: [HelixSR Manager](apps/helixsr.md),
 [BC-250 ACE Queues](apps/ace-queues.md), [BC-250 Mesh Shaders](apps/mesh-shaders.md),
-[Console Link](apps/console-link.md), [shadPS4 Manager](apps/shadps4-manager.md) and
-[Decky Loader Manager](apps/decky-manager.md). It is open until you close it, and the portal remembers whether
+[Console Link](apps/console-link.md), [shadPS4 Manager](apps/shadps4-manager.md),
+[Decky Loader Manager](apps/decky-manager.md), [RPCS3 Manager](apps/rpcs3-manager.md),
+[Bazzite DatStation](apps/bazzite-datstation.md), [PPSSPP Manager](apps/ppsspp-manager.md) and
+[PCSX2 Manager](apps/pcsx2-manager.md). It is open until you close it, and the portal remembers whether
 it was open.
 
 **Development only**, below that, opens a separate section with tools for working on the suite:
 [Simple Demo Tool](other-tools/simple-demo-tool.md), [Dependency Checker](apps/dependency-checker.md),
-[Bazzite pkgxtractor](apps/bazzite-pkgxtractor.md), [Bazzite NetcatGUI](apps/bazzite-netcatgui.md),
-[Bazzite UMD File Renamer](apps/bazzite-umd-file-renamer.md), the release front end
+[Bazzite NetcatGUI](apps/bazzite-netcatgui.md), the
+release front end
 [BC250 Suite Releases](#the-release-front-end) and BC-250 Installer Tests (`tools/installer-tests/gui`), a window
 that runs the installer tests one at a time. You do not need them to use
 the board. The last two run from a checkout of the repository and have no release. A portal installed from a
@@ -171,9 +173,9 @@ Releasing an app and pinning it in the portal:
    [Testing a portal release before its tag](#testing-a-portal-release-before-its-tag)), commit steps 3 and 4,
    push, and tag with `tools/tag-release.sh portal-v<x.y.z>`. That release bundles the pinned bazzite-test release.
 
-### The release front end
-
 ![BC250 Suite Releases](assets/suite-releases/bc250-release-128.png){ .app-logo }
+
+### The release front end
 
 **BC250 Suite Releases** (`apps/suite-releases/`) is a window that makes these file edits for you. It never commits,
 tags or pushes: after each step it shows the git commands to run. It edits the checkout it lives in, so it is not
@@ -223,6 +225,17 @@ apps/suite-releases/install.sh --uninstall             # remove them; the checko
   checkout with `mkdocs serve` (the development venv has MkDocs) and opens it in the browser at
   `http://127.0.0.1:8765/bc250-bazzite-suite/`. It rebuilds on every save; its log is `mkdocs.log` there. When it
   is already running, a click only opens the page again.
+- **The command line** under the steps runs a command in the checkout, so you need no separate terminal for the
+  commands the steps show. Type it and press Enter; its output appears above the line as it runs. **Commands**
+  lists the commands the last step showed (Apply, Bump portal or Withdraw), one per line: pick one to put it on
+  the line, then check it and press Enter. Up and Down bring back earlier commands, also from earlier sessions.
+  **Stop** or Ctrl+C interrupts a command, along with anything it started in the background; `clear` or **Clear**
+  empties the output. Drag the line above it to give it more room.
+  Each command runs with `bash -lc` in the folder the last `cd` left; variables you set do not carry over to the
+  next command. A command cannot read input, so nothing can ask you something: git does not prompt for a password,
+  opens no editor (commit with `-m`) and pages nothing. For a command that must ask, use a terminal. After each
+  command the window reads the checkout again, as **Refresh** does. On Windows it needs Git Bash's `bash` on the
+  PATH.
 
 **GitHub** in the header shows whether GitHub built your last push: every workflow run (CI, Release, Manual) on
 its commit, tags included. It reads **building** while one runs, then **passed** or **failed**; hover for each

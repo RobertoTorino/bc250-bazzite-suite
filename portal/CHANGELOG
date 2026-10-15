@@ -1,3 +1,57 @@
+Changelog: 15-10-2026 22:04:04
+
+The Dependency Checker's summary in apps.toml mentions that it shows whether a Bazzite update waits for a reboot.
+
+Changelog: 15-10-2026 21:33:57
+
+The tile icons bazzite-datstation and system-overlay in images/apps are copies of those apps' new 128 px icons.
+
+Changelog: 15-10-2026 21:28:55
+
+apps.toml no longer lists Bazzite pkgxtractor: the app is absorbed into the shadPS4 Manager (Extract PKG), whose
+installer removes an installed standalone. Its icon (images/apps/bazzite-pkgxtractor.png) went; the development
+section holds three apps. The shadPS4 Manager's summary mentions the .pkg files.
+
+Changelog: 15-10-2026 21:03:51
+
+Seven tile icons in images/apps are copies of the apps' new 128 px icons: bazzite-netcatgui, demo-tool, installer-
+tests, pcsx2-manager, portal-dependency-checker, ppsspp-manager and suite-releases.
+
+Changelog: 15-10-2026 19:33:01
+
+Three window fixes from the owner's look at the portal (15-10-2026). A click on the suite's logo opens the wiki's home
+page in the browser (the logo showed a hand cursor but did nothing). A tile's icon shows an off-white behind it on
+hover (palette(midlight) was near-black on the dark theme, hardly visible) and sinks while pressed (a solid off-white,
+the icon nudged down-right). Thirteen tile icons in images/apps were stale copies and are the apps' current 128 px
+icons again (bazzite-test, bios-reader, cores-bisect, cores-unlock, cu-bisect, cu-unlock, decky-manager, governor,
+gpu-oc-bisect, helixsr, installer-tests, persistent-acpi, system-overlay); tools/tests/test_portal_icons.py now fails
+on a copy that lags, so the cards and the wiki's apps overview keep showing each app's own icon.
+
+Changelog: 15-10-2026 19:18:30
+
+apps.toml no longer lists Bazzite UMD File Renamer: the app is absorbed into PPSSPP Manager (Rename files), whose
+installer removes an installed standalone. Its icon (images/apps/bazzite-umd-file-renamer.png) went; the development-
+section test no longer expects it.
+
+Changelog: 15-10-2026 17:54:45
+
+apps.toml lists PPSSPP Manager (ppsspp-manager, pinned to its first release ppsspp-manager-v0.1.0, not tagged yet) and
+PCSX2 Manager (pcsx2-manager, pinned to pcsx2-manager-v0.1.0, not tagged yet), both with section = "gaming", with the
+icons portal/images/apps/ppsspp-manager.png and pcsx2-manager.png (copies of the apps' 128 px images). Tests: the
+Gaming section holds both.
+
+Changelog: 15-10-2026 16:02:21
+
+apps.toml lists Bazzite DatStation (bazzite-datstation, short name DatStation, pinned to its first release bazzite-
+datstation-v0.1.0, not tagged yet) with section = "gaming", with the icon portal/images/apps/bazzite-datstation.png (a
+copy of the app's images/bazzite-datstation-128.png). The RPCS3 Manager moves from Development only to Gaming (section
+= "gaming" instead of development = true). Tests: the Gaming section holds both, the development section no longer
+holds the RPCS3 Manager.
+
+Changelog: 15-10-2026 13:56:22
+
+The tiles of ACE Queues and the RPCS3 Manager have the apps' new icons (images/apps/ace-queues.png, rpcs3-manager.png).
+
 Changelog: 15-10-2026 13:18:39
 
 Release 1.1.8.
@@ -8,51 +62,78 @@ Release 1.1.8. Pins bazzite-test-v0.1.13.
 
 Changelog: 15-10-2026 07:15:41
 
-Release 1.1.7. Pins governor-v0.1.8, helixsr-v0.2.8, cu-bisect-v0.1.6, cores-bisect-v0.1.7, gpu-oc-bisect-v0.1.6, system-overlay-v0.1.10, bios-reader-v0.1.10, ace-queues-v0.1.12, mesh-shaders-v0.1.5, memory-manager-v0.1.12, hdmi-cec-v0.1.11, sftp-tools-v0.1.5, demo-tool-v0.1.8, dependency-checker-v0.1.20, bazzite-pkgxtractor-v0.1.3, bazzite-netcatgui-v0.1.3, bazzite-umd-file-renamer-v0.1.3, rpcs3-manager-v0.1.2, console-link-v1.0.9, shadps4-manager-v0.1.5, decky-manager-v0.1.3.
+Release 1.1.7. Pins governor-v0.1.8, helixsr-v0.2.8, cu-bisect-v0.1.6, cores-bisect-v0.1.7, gpu-oc-bisect-v0.1.6,
+system-overlay-v0.1.10, bios-reader-v0.1.10, ace-queues-v0.1.12, mesh-shaders-v0.1.5, memory-manager-v0.1.12, hdmi-
+cec-v0.1.11, sftp-tools-v0.1.5, demo-tool-v0.1.8, dependency-checker-v0.1.20, bazzite-pkgxtractor-v0.1.3, bazzite-
+netcatgui-v0.1.3, bazzite-umd-file-renamer-v0.1.3, rpcs3-manager-v0.1.2, console-link-v1.0.9, shadps4-manager-v0.1.5,
+decky-manager-v0.1.3.
 
 Changelog: 15-10-2026 05:27:59
 
-New tiles for the Dependency Checker, the Memory Manager, BC250 Suite Releases and BC-250 Installer Tests (images/apps/), from the apps' new icons.
+New tiles for the Dependency Checker, the Memory Manager, BC250 Suite Releases and BC-250 Installer Tests
+(images/apps/), from the apps' new icons.
 
 Changelog: 15-10-2026 05:05:09
 
-Release 1.1.6. Pins bazzite-pkgxtractor-v0.1.2, bazzite-netcatgui-v0.1.2, bazzite-umd-file-renamer-v0.1.2, console-link-v1.0.8.
+Release 1.1.6. Pins bazzite-pkgxtractor-v0.1.2, bazzite-netcatgui-v0.1.2, bazzite-umd-file-renamer-v0.1.2, console-
+link-v1.0.8.
 
 Changelog: 15-10-2026 03:46:55
 
-Release 1.1.5. Pins bazzite-test-v0.1.11, governor-v0.1.7, helixsr-v0.2.7, cu-bisect-v0.1.5, cores-bisect-v0.1.6, gpu-oc-bisect-v0.1.5, persistent-acpi-v0.1.4, system-overlay-v0.1.9, bios-reader-v0.1.9, ace-queues-v0.1.11, mesh-shaders-v0.1.4, memory-manager-v0.1.10, hdmi-cec-v0.1.10, sftp-tools-v0.1.4, dependency-checker-v0.1.18, bazzite-pkgxtractor-v0.1.1, bazzite-netcatgui-v0.1.1, bazzite-umd-file-renamer-v0.1.1, rpcs3-manager-v0.1.1, console-link-v1.0.7, shadps4-manager-v0.1.4, decky-manager-v0.1.2.
+Release 1.1.5. Pins bazzite-test-v0.1.11, governor-v0.1.7, helixsr-v0.2.7, cu-bisect-v0.1.5, cores-bisect-v0.1.6, gpu-
+oc-bisect-v0.1.5, persistent-acpi-v0.1.4, system-overlay-v0.1.9, bios-reader-v0.1.9, ace-queues-v0.1.11, mesh-
+shaders-v0.1.4, memory-manager-v0.1.10, hdmi-cec-v0.1.10, sftp-tools-v0.1.4, dependency-checker-v0.1.18, bazzite-
+pkgxtractor-v0.1.1, bazzite-netcatgui-v0.1.1, bazzite-umd-file-renamer-v0.1.1, rpcs3-manager-v0.1.1, console-
+link-v1.0.7, shadps4-manager-v0.1.4, decky-manager-v0.1.2.
 
 Changelog: 15-10-2026 02:31:31
 
-No translations (owner's decision): core's create_app() no longer takes lang, and AppInfo no longer has languages; the app was English only already and stays so.
+No translations (owner's decision): core's create_app() no longer takes lang, and AppInfo no longer has languages; the
+app was English only already and stays so.
 
 Changelog: 15-10-2026 02:29:06
 
-Release 1.1.4. Pins bazzite-test-v0.1.10, governor-v0.1.6, helixsr-v0.2.6, cu-bisect-v0.1.4, cores-bisect-v0.1.5, gpu-oc-bisect-v0.1.4, persistent-acpi-v0.1.3, system-overlay-v0.1.8, bios-reader-v0.1.8, ace-queues-v0.1.10, mesh-shaders-v0.1.3, memory-manager-v0.1.9, hdmi-cec-v0.1.9, sftp-tools-v0.1.3, demo-tool-v0.1.7, dependency-checker-v0.1.17, console-link-v1.0.6, shadps4-manager-v0.1.3, decky-manager-v0.1.1.
+Release 1.1.4. Pins bazzite-test-v0.1.10, governor-v0.1.6, helixsr-v0.2.6, cu-bisect-v0.1.4, cores-bisect-v0.1.5, gpu-
+oc-bisect-v0.1.4, persistent-acpi-v0.1.3, system-overlay-v0.1.8, bios-reader-v0.1.8, ace-queues-v0.1.10, mesh-
+shaders-v0.1.3, memory-manager-v0.1.9, hdmi-cec-v0.1.9, sftp-tools-v0.1.3, demo-tool-v0.1.7, dependency-
+checker-v0.1.17, console-link-v1.0.6, shadps4-manager-v0.1.3, decky-manager-v0.1.1.
 
 Changelog: 15-10-2026 01:26:23
 
-apps.toml lists Bazzite UMD File Renamer (bazzite-umd-file-renamer, pinned to its first release bazzite-umd-file-renamer-v0.1.0, not tagged yet) with development = true: the portal shows it under "Development only", with the icon portal/images/apps/bazzite-umd-file-renamer.png (a copy of the app's images/bazzite-umd-file-renamer-128.png). Tests: the development section holds it.
+apps.toml lists Bazzite UMD File Renamer (bazzite-umd-file-renamer, pinned to its first release bazzite-umd-file-
+renamer-v0.1.0, not tagged yet) with development = true: the portal shows it under "Development only", with the icon
+portal/images/apps/bazzite-umd-file-renamer.png (a copy of the app's images/bazzite-umd-file-renamer-128.png). Tests:
+the development section holds it.
 
 Changelog: 15-10-2026 01:18:28
 
-apps.toml lists Bazzite NetcatGUI (bazzite-netcatgui, pinned to its first release bazzite-netcatgui-v0.1.0, not tagged yet) with development = true: the portal shows it under "Development only", with the icon portal/images/apps/bazzite-netcatgui.png (a copy of the app's images/bazzite-netcatgui-128.png). Tests: the development section holds it.
+apps.toml lists Bazzite NetcatGUI (bazzite-netcatgui, pinned to its first release bazzite-netcatgui-v0.1.0, not tagged
+yet) with development = true: the portal shows it under "Development only", with the icon portal/images/apps/bazzite-
+netcatgui.png (a copy of the app's images/bazzite-netcatgui-128.png). Tests: the development section holds it.
 
 Changelog: 15-10-2026 00:23:49
 
-The tiles of ACE Queues, Console Link, Decky Loader Manager, Dependency Checker and Memory Manager show the apps' new icons: images/apps/ace-queues.png, console-link.png, decky-manager.png, portal-dependency-checker.png and memory-manager.png are copies of each app's images/<name>-128.png. The wiki's app list and the README use the same files.
+The tiles of ACE Queues, Console Link, Decky Loader Manager, Dependency Checker and Memory Manager show the apps' new
+icons: images/apps/ace-queues.png, console-link.png, decky-manager.png, portal-dependency-checker.png and memory-
+manager.png are copies of each app's images/<name>-128.png. The wiki's app list and the README use the same files.
 
 Changelog: 14-10-2026 18:22:56
 
-apps.toml names the apps that are not tied to the board without the BC-250 or BC250 prefix: HelixSR Manager, System Overlay, HDMI CEC Manager, Bazzite SFTP Tools, Console Link, shadPS4 Manager, RPCS3 Manager and Decky Loader Manager. The apps that are tied to the board keep BC-250. Keys, folders and tags are unchanged; the tests use the new names.
+apps.toml names the apps that are not tied to the board without the BC-250 or BC250 prefix: HelixSR Manager, System
+Overlay, HDMI CEC Manager, Bazzite SFTP Tools, Console Link, shadPS4 Manager, RPCS3 Manager and Decky Loader Manager.
+The apps that are tied to the board keep BC-250. Keys, folders and tags are unchanged; the tests use the new names.
 
 Changelog: 14-10-2026 17:35:13
 
-apps.toml lists BC-250 RPCS3 Manager (rpcs3-manager, pinned to its first release rpcs3-manager-v0.1.0, not tagged yet) with development = true: the portal shows it under "Development only", with the icon portal/images/apps/rpcs3-manager.png (a placeholder). Tests: the development section holds it.
+apps.toml lists BC-250 RPCS3 Manager (rpcs3-manager, pinned to its first release rpcs3-manager-v0.1.0, not tagged yet)
+with development = true: the portal shows it under "Development only", with the icon
+portal/images/apps/rpcs3-manager.png (a placeholder). Tests: the development section holds it.
 
 Changelog: 14-10-2026 16:15:38
 
-apps.toml lists Bazzite pkgxtractor (bazzite-pkgxtractor, pinned to its first release bazzite-pkgxtractor-v0.1.0, not tagged yet) with development = true: the portal shows it under "Development only", with the icon portal/images/apps/bazzite-pkgxtractor.png. Tests: the development section holds it.
+apps.toml lists Bazzite pkgxtractor (bazzite-pkgxtractor, pinned to its first release bazzite-pkgxtractor-v0.1.0, not
+tagged yet) with development = true: the portal shows it under "Development only", with the icon
+portal/images/apps/bazzite-pkgxtractor.png. Tests: the development section holds it.
 
 Changelog: 14-10-2026 16:07:23
 
@@ -60,7 +141,17 @@ Release 1.1.3. Pins bazzite-test-v0.1.9, dependency-checker-v0.1.16, shadps4-man
 
 Changelog: 14-10-2026 14:48:41
 
-A portal window that stays open while a newer portal is installed (its install.sh in a terminal) kept running the old portal with its old pins, so the apps the new one updates showed no red dot until the portal was closed and started again (owner's board, 14-10-2026, portal 1.1.2 with shadps4-manager-v0.1.1). The window now looks at the installed portal (/opt/bc250-bazzite-suite/VERSION, installed_copy(); not from a checkout) on every refresh and whenever it becomes the active window again, and when that is another version shows a red button "Restart: portal x.y.z is installed" in place of the newer-release button; it starts the portal again a second after this one has gone (it allows one window) and closes this one, and waits while an install or uninstall runs. Bazzite Test's button beside its icon is the arrow into a tray, as every app's (owner, 14-10-2026), not the circular arrow, which now marks only an app that needs a reinstall (its version unknown). The button's tooltip names the version it installs ("Reinstall BC-250 Bazzite Test v0.1.8") instead of the tag. The manual says both. Tests: Bazzite Test's arrow and tooltip, the restart (same version, newer, while busy, the command, a start that fails), none from a checkout.
+A portal window that stays open while a newer portal is installed (its install.sh in a terminal) kept running the old
+portal with its old pins, so the apps the new one updates showed no red dot until the portal was closed and started
+again (owner's board, 14-10-2026, portal 1.1.2 with shadps4-manager-v0.1.1). The window now looks at the installed
+portal (/opt/bc250-bazzite-suite/VERSION, installed_copy(); not from a checkout) on every refresh and whenever it
+becomes the active window again, and when that is another version shows a red button "Restart: portal x.y.z is
+installed" in place of the newer-release button; it starts the portal again a second after this one has gone (it
+allows one window) and closes this one, and waits while an install or uninstall runs. Bazzite Test's button beside its
+icon is the arrow into a tray, as every app's (owner, 14-10-2026), not the circular arrow, which now marks only an app
+that needs a reinstall (its version unknown). The button's tooltip names the version it installs ("Reinstall BC-250
+Bazzite Test v0.1.8") instead of the tag. The manual says both. Tests: Bazzite Test's arrow and tooltip, the restart
+(same version, newer, while busy, the command, a start that fails), none from a checkout.
 
 Changelog: 14-10-2026 14:31:08
 
@@ -68,7 +159,10 @@ Release 1.1.2. Pins shadps4-manager-v0.1.1.
 
 Changelog: 14-10-2026 12:27:25
 
-An installed app the portal has no record of (installed by hand, or under an earlier name of the app, as shadPS4 Manager was when shadps4 became shadps4-manager) shows "Reinstall needed": a red circular arrow in its icon, a red Reinstall button, and a count in the header beside the updates. Before, it showed as installed with an unknown version, and nothing said to reinstall it.
+An installed app the portal has no record of (installed by hand, or under an earlier name of the app, as shadPS4
+Manager was when shadps4 became shadps4-manager) shows "Reinstall needed": a red circular arrow in its icon, a red
+Reinstall button, and a count in the header beside the updates. Before, it showed as installed with an unknown
+version, and nothing said to reinstall it.
 
 Changelog: 14-10-2026 11:27:36
 
@@ -80,11 +174,16 @@ Release 1.1.0. Pins ace-queues-v0.1.9, dependency-checker-v0.1.14, decky-manager
 
 Changelog: 14-10-2026 11:12:20
 
-BC-250 Decky Loader Manager is listed under "Gaming" (key decky-manager, not marked as changing the board): the pin is decky-manager-v0.1.0, its first release, with no sha256 yet; its tile icon is images/apps/decky-manager.png, a placeholder.
+BC-250 Decky Loader Manager is listed under "Gaming" (key decky-manager, not marked as changing the board): the pin is
+decky-manager-v0.1.0, its first release, with no sha256 yet; its tile icon is images/apps/decky-manager.png, a
+placeholder.
 
 Changelog: 14-10-2026 10:45:26
 
-BC-250 shadPS4 Manager is listed under "Gaming" instead of "Development only", and its key is shadps4-manager (its folder's new name): the pin is shadps4-manager-v0.1.0, the next release, with no sha256 yet; its tile icon is images/apps/shadps4-manager.png. A board that installed it under the old key shows it as installed, with no version known, until it is installed again from the portal.
+BC-250 shadPS4 Manager is listed under "Gaming" instead of "Development only", and its key is shadps4-manager (its
+folder's new name): the pin is shadps4-manager-v0.1.0, the next release, with no sha256 yet; its tile icon is
+images/apps/shadps4-manager.png. A board that installed it under the old key shows it as installed, with no version
+known, until it is installed again from the portal.
 
 Changelog: 14-10-2026 10:20:44
 
@@ -104,11 +203,14 @@ The shadPS4 Manager's tile has the owner's icon (portal/images/apps/shadps4.png,
 
 Changelog: 14-10-2026 00:45:29
 
-Release 1.0.5. Pins bazzite-test-v0.1.8, system-overlay-v0.1.7, bios-reader-v0.1.7, ace-queues-v0.1.8, mesh-shaders-v0.1.2, memory-manager-v0.1.8, hdmi-cec-v0.1.8, sftp-tools-v0.1.2, shadps4-v0.1.0, dependency-checker-v0.1.12, console-link-v1.0.4.
+Release 1.0.5. Pins bazzite-test-v0.1.8, system-overlay-v0.1.7, bios-reader-v0.1.7, ace-queues-v0.1.8, mesh-
+shaders-v0.1.2, memory-manager-v0.1.8, hdmi-cec-v0.1.8, sftp-tools-v0.1.2, shadps4-v0.1.0, dependency-checker-v0.1.12,
+console-link-v1.0.4.
 
 Changelog: 14-10-2026 00:45:24
 
-apps.toml lists BC-250 shadPS4 Manager (shadps4) under Development only: PS4 games with the shadPS4 emulator. Its icon is portal/images/apps/shadps4.png (a placeholder).
+apps.toml lists BC-250 shadPS4 Manager (shadps4) under Development only: PS4 games with the shadPS4 emulator. Its icon
+is portal/images/apps/shadps4.png (a placeholder).
 
 Changelog: 13-10-2026 23:39:45
 
@@ -128,27 +230,40 @@ BC-250 Mesh Shaders has its own icon: images/apps/mesh-shaders.png is the app's 
 
 Changelog: 13-10-2026 22:17:49
 
-BC-250 HelixSR Manager and BC-250 Mesh Shaders are listed under Gaming (section = "gaming", owner's decision, 13-10-2026), with Console Link. The manual (portal.md, the index, both chapters) and the README say so; the window test expects the three.
+BC-250 HelixSR Manager and BC-250 Mesh Shaders are listed under Gaming (section = "gaming", owner's decision,
+13-10-2026), with Console Link. The manual (portal.md, the index, both chapters) and the README say so; the window
+test expects the three.
 
 Changelog: 13-10-2026 22:02:36
 
-BC-250 Mesh Shaders is now a card in the portal (mesh-shaders-v0.1.0, changes the board), with its icon images/apps/mesh-shaders.png (a placeholder).
+BC-250 Mesh Shaders is now a card in the portal (mesh-shaders-v0.1.0, changes the board), with its icon
+images/apps/mesh-shaders.png (a placeholder).
 
 Changelog: 13-10-2026 19:04:30
 
-BC250 Bazzite tools (owner, 13-10-2026): the board's apps, Bazzite Test first, in a section of their own that folds away like Gaming and Development only, open until closed and remembered. The manual says so. Test: the section, open, closed and remembered.
+BC250 Bazzite tools (owner, 13-10-2026): the board's apps, Bazzite Test first, in a section of their own that folds
+away like Gaming and Development only, open until closed and remembered. The manual says so. Test: the section, open,
+closed and remembered.
 
 Changelog: 13-10-2026 16:05:12
 
-Release 1.0.1. Pins bazzite-test-v0.1.7, cu-bisect-v0.1.3, cores-bisect-v0.1.4, gpu-oc-bisect-v0.1.3, persistent-acpi-v0.1.2, system-overlay-v0.1.6, bios-reader-v0.1.6, ace-queues-v0.1.7, memory-manager-v0.1.7, hdmi-cec-v0.1.7, sftp-tools-v0.1.1, demo-tool-v0.1.6, dependency-checker-v0.1.10, console-link-v1.0.1.
+Release 1.0.1. Pins bazzite-test-v0.1.7, cu-bisect-v0.1.3, cores-bisect-v0.1.4, gpu-oc-bisect-v0.1.3, persistent-
+acpi-v0.1.2, system-overlay-v0.1.6, bios-reader-v0.1.6, ace-queues-v0.1.7, memory-manager-v0.1.7, hdmi-cec-v0.1.7,
+sftp-tools-v0.1.1, demo-tool-v0.1.6, dependency-checker-v0.1.10, console-link-v1.0.1.
 
 Changelog: 13-10-2026 15:51:48
 
-The installer installs the Python packages with pip --upgrade (owner's decision, 13-10-2026): installing the portal again brings the shared venv's packages to the newest version their requirements allow, a security fix within that range included.
+The installer installs the Python packages with pip --upgrade (owner's decision, 13-10-2026): installing the portal
+again brings the shared venv's packages to the newest version their requirements allow, a security fix within that
+range included.
 
 Changelog: 13-10-2026 15:06:45
 
-A Gaming section (owner, 13-10-2026): apps.toml's new field section = "gaming" lists an app there, below the apps and above Development only, in a solid frame; open until closed, and remembered like Development only. Not for the required app nor development apps. BC250 Console Link moves there from Development only. apps.toml's comment also names the withdrawn field. Tests: the field and its checks, the section, open and remembered, hidden without gaming apps.
+A Gaming section (owner, 13-10-2026): apps.toml's new field section = "gaming" lists an app there, below the apps and
+above Development only, in a solid frame; open until closed, and remembered like Development only. Not for the
+required app nor development apps. BC250 Console Link moves there from Development only. apps.toml's comment also
+names the withdrawn field. Tests: the field and its checks, the section, open and remembered, hidden without gaming
+apps.
 
 Changelog: 13-10-2026 14:36:57
 
@@ -156,11 +271,18 @@ Release 1.0.0. Pins dependency-checker-v0.1.9, console-link-v1.0.0.
 
 Changelog: 13-10-2026 11:45:43
 
-Withdrawn releases (owner's decisions, 13-10-2026): apps.toml takes withdrawn = "<reason>" in an app's entry (not for the required app nor checkout-only apps; manifest.py). A withdrawn app's tile shows App not available in red, with the reason; it cannot be installed or opened and shows no update. At start the portal removes a withdrawn app that is installed, after saying why, with the app's own uninstaller in a terminal, one app after another; one that could not be removed keeps its Uninstall button and is tried again at the next start. The portal update button names the apps a newer portal withdraws ("withdraws ..."), with the reason in its tooltip. Older portals ignore the field. Tests: the field and its rules, the tile, the removal at start, a removal that fails, the update comparison.
+Withdrawn releases (owner's decisions, 13-10-2026): apps.toml takes withdrawn = "<reason>" in an app's entry (not for
+the required app nor checkout-only apps; manifest.py). A withdrawn app's tile shows App not available in red, with the
+reason; it cannot be installed or opened and shows no update. At start the portal removes a withdrawn app that is
+installed, after saying why, with the app's own uninstaller in a terminal, one app after another; one that could not
+be removed keeps its Uninstall button and is tried again at the next start. The portal update button names the apps a
+newer portal withdraws ("withdraws ..."), with the reason in its tooltip. Older portals ignore the field. Tests: the
+field and its rules, the tile, the removal at start, a removal that fails, the update comparison.
 
 Changelog: 13-10-2026 02:45:50
 
-Console Link's card shows the app's new icon (images/apps/console-link.png, from apps/console-link/images/bc250-console-link-128.png).
+Console Link's card shows the app's new icon (images/apps/console-link.png, from apps/console-
+link/images/bc250-console-link-128.png).
 
 Changelog: 13-10-2026 02:38:35
 
@@ -176,7 +298,9 @@ Release 0.9.19. Pins dependency-checker-v0.1.8.
 
 Changelog: 13-10-2026 01:25:57
 
-The Remote Play entry is renamed: [apps.console-link], BC250 Console Link, tile Console Link, icon images/apps/console-link.png, launcher ~/.local/bin/bc250-console-link. Its pin is console-link-v0.1.2 with an empty checksum: that release is still to be tagged under the new name.
+The Remote Play entry is renamed: [apps.console-link], BC250 Console Link, tile Console Link, icon
+images/apps/console-link.png, launcher ~/.local/bin/bc250-console-link. Its pin is console-link-v0.1.2 with an empty
+checksum: that release is still to be tagged under the new name.
 
 Changelog: 13-10-2026 00:37:56
 
@@ -196,19 +320,25 @@ Release 0.9.16. Pins dependency-checker-v0.1.7. new app bc250-sftp-tools and bc2
 
 Changelog: 12-10-2026 21:51:19
 
-BC250 Remote Play is a tile under Development only (remote-play-v0.1.0, not yet released, so no sha256 yet; changes_board false), with its icon images/apps/remote-play.png.
+BC250 Remote Play is a tile under Development only (remote-play-v0.1.0, not yet released, so no sha256 yet;
+changes_board false), with its icon images/apps/remote-play.png.
 
 Changelog: 12-10-2026 21:32:31
 
-BC250 Bazzite SFTP Tools is a tile in the portal (sftp-tools-v0.1.0, not yet released, so no sha256 yet; changes_board false), with its icon images/apps/sftp-tools.png.
+BC250 Bazzite SFTP Tools is a tile in the portal (sftp-tools-v0.1.0, not yet released, so no sha256 yet; changes_board
+false), with its icon images/apps/sftp-tools.png.
 
 Changelog: 12-10-2026 09:25:49
 
-Release 0.9.15. Pins bazzite-test-v0.1.6, governor-v0.1.5, helixsr-v0.2.4, cu-bisect-v0.1.2, cores-bisect-v0.1.3, gpu-oc-bisect-v0.1.2, system-overlay-v0.1.5, bios-reader-v0.1.5, ace-queues-v0.1.6, memory-manager-v0.1.6, hdmi-cec-v0.1.6, demo-tool-v0.1.5, dependency-checker-v0.1.6. app updates
+Release 0.9.15. Pins bazzite-test-v0.1.6, governor-v0.1.5, helixsr-v0.2.4, cu-bisect-v0.1.2, cores-bisect-v0.1.3, gpu-
+oc-bisect-v0.1.2, system-overlay-v0.1.5, bios-reader-v0.1.5, ace-queues-v0.1.6, memory-manager-v0.1.6, hdmi-
+cec-v0.1.6, demo-tool-v0.1.5, dependency-checker-v0.1.6. app updates
 
 Changelog: 12-10-2026 09:25:25
 
-Release 0.9.15. Pins bazzite-test-v0.1.6, governor-v0.1.5, helixsr-v0.2.4, cu-bisect-v0.1.2, cores-bisect-v0.1.3, gpu-oc-bisect-v0.1.2, system-overlay-v0.1.5, bios-reader-v0.1.5, ace-queues-v0.1.6, memory-manager-v0.1.6, hdmi-cec-v0.1.6, demo-tool-v0.1.5, dependency-checker-v0.1.6. app updates
+Release 0.9.15. Pins bazzite-test-v0.1.6, governor-v0.1.5, helixsr-v0.2.4, cu-bisect-v0.1.2, cores-bisect-v0.1.3, gpu-
+oc-bisect-v0.1.2, system-overlay-v0.1.5, bios-reader-v0.1.5, ace-queues-v0.1.6, memory-manager-v0.1.6, hdmi-
+cec-v0.1.6, demo-tool-v0.1.5, dependency-checker-v0.1.6. app updates
 
 Changelog: 12-10-2026 09:13:43
 
@@ -220,15 +350,25 @@ Release 0.9.13. Pins hdmi-cec-v0.1.5. app update: hdmi-cec
 
 Changelog: 12-10-2026 06:40:31
 
-The portal no longer asks for the suite checkout when a checkout-only app is installed: it finds it (find_checkout), from the launcher of an installed checkout tool in ~/.local/bin (Suite Releases records its checkout there), else the first checkout in the home folder up to three folders deep, hidden folders skipped. It looks at startup, so the tiles know where they come from. Only when there is none does it ask, first whether to choose a folder at all. Asking for a folder straight away, at the first install, was not liked on the owner's board (12-10-2026).
+The portal no longer asks for the suite checkout when a checkout-only app is installed: it finds it (find_checkout),
+from the launcher of an installed checkout tool in ~/.local/bin (Suite Releases records its checkout there), else the
+first checkout in the home folder up to three folders deep, hidden folders skipped. It looks at startup, so the tiles
+know where they come from. Only when there is none does it ask, first whether to choose a folder at all. Asking for a
+folder straight away, at the first install, was not liked on the owner's board (12-10-2026).
 
 Changelog: 12-10-2026 06:18:24
 
-Release 0.9.12. Pins hdmi-cec-v0.1.4, demo-tool-v0.1.4, dependency-checker-v0.1.5. updated demo-tool dependency-checker and hdmi-cec
+Release 0.9.12. Pins hdmi-cec-v0.1.4, demo-tool-v0.1.4, dependency-checker-v0.1.5. updated demo-tool dependency-
+checker and hdmi-cec
 
 Changelog: 12-10-2026 06:12:01
 
-A portal installed from a release installs the checkout-only apps (Suite Releases, BC-250 Installer Tests) too, instead of showing them greyed with "Needs a checkout". The first time one is installed or removed, it asks for the suite checkout folder, checks that it is one (apps/, core/, tools/stage_app.py), and remembers it in its state folder (suite-checkout); a folder that stops being a checkout is forgotten. Sources.apps_checkout is that folder: only the checkout-only apps use it, so the released apps still install from their pinned releases and the portal is not a local build. Such an install is recorded as "local", as from a portal of the checkout.
+A portal installed from a release installs the checkout-only apps (Suite Releases, BC-250 Installer Tests) too,
+instead of showing them greyed with "Needs a checkout". The first time one is installed or removed, it asks for the
+suite checkout folder, checks that it is one (apps/, core/, tools/stage_app.py), and remembers it in its state folder
+(suite-checkout); a folder that stops being a checkout is forgotten. Sources.apps_checkout is that folder: only the
+checkout-only apps use it, so the released apps still install from their pinned releases and the portal is not a local
+build. Such an install is recorded as "local", as from a portal of the checkout.
 
 Changelog: 12-10-2026 06:06:00
 
@@ -244,27 +384,41 @@ Release 0.9.10. Pins hdmi-cec-v0.1.2. optional desktop icons, hdmi-cec app updat
 
 Changelog: 11-10-2026 22:51:53
 
-App icons on the Desktop: a switch at the top of the portal (desktop_icons.py). The portal's own icon is enough to reach every app, so the apps' icons on the Desktop are the user's choice: on, the portal copies every installed app's menu entry to the Desktop (executable, trusted for GNOME, as the installers do); off, it removes the Desktop copies of the suite's menu entries, at start, after each install (the installers still write one) and when switched off. Only files named like a suite menu entry (bc250-*.desktop in ~/.local/share/applications) are touched, never the portal's own icon. The first start asks whether to keep the app icons when there are some; without any, the switch starts off without asking. The app menu entries always stay. The app installers are unchanged.
+App icons on the Desktop: a switch at the top of the portal (desktop_icons.py). The portal's own icon is enough to
+reach every app, so the apps' icons on the Desktop are the user's choice: on, the portal copies every installed app's
+menu entry to the Desktop (executable, trusted for GNOME, as the installers do); off, it removes the Desktop copies of
+the suite's menu entries, at start, after each install (the installers still write one) and when switched off. Only
+files named like a suite menu entry (bc250-*.desktop in ~/.local/share/applications) are touched, never the portal's
+own icon. The first start asks whether to keep the app icons when there are some; without any, the switch starts off
+without asking. The app menu entries always stay. The app installers are unchanged.
 
 Changelog: 11-10-2026 22:33:43
 
-Release 0.9.9. Pins bazzite-test-v0.1.5, governor-v0.1.4, helixsr-v0.2.3, system-overlay-v0.1.4, bios-reader-v0.1.4, ace-queues-v0.1.5, memory-manager-v0.1.5, hdmi-cec-v0.1.1, dependency-checker-v0.1.4. hdmi-cec tested on my tv and updated
+Release 0.9.9. Pins bazzite-test-v0.1.5, governor-v0.1.4, helixsr-v0.2.3, system-overlay-v0.1.4, bios-reader-v0.1.4,
+ace-queues-v0.1.5, memory-manager-v0.1.5, hdmi-cec-v0.1.1, dependency-checker-v0.1.4. hdmi-cec tested on my tv and
+updated
 
 Changelog: 11-10-2026 20:50:19
 
-Release 0.9.8. Pins bazzite-test-v0.1.4, governor-v0.1.3, dependency-checker-v0.1.3. 3 app updates and a new app bc250-hdmi-cec
+Release 0.9.8. Pins bazzite-test-v0.1.4, governor-v0.1.3, dependency-checker-v0.1.3. 3 app updates and a new app
+bc250-hdmi-cec
 
 Changelog: 11-10-2026 20:49:52
 
-Release 0.9.8. Pins bazzite-test-v0.1.4, governor-v0.1.3, dependency-checker-v0.1.3. 3 app updates and a new app bc250-hdmi-cec
+Release 0.9.8. Pins bazzite-test-v0.1.4, governor-v0.1.3, dependency-checker-v0.1.3. 3 app updates and a new app
+bc250-hdmi-cec
 
 Changelog: 11-10-2026 20:21:41
 
-apps.toml: an optional short field, the name on the tile when it is not the name without its suite prefix; the tile and the update summary use it. New card: BC250 HDMI CEC, short HDMI-CEC (hdmi-cec-v0.1.0, changes_board false), with its icon in images/apps/hdmi-cec.png.
+apps.toml: an optional short field, the name on the tile when it is not the name without its suite prefix; the tile
+and the update summary use it. New card: BC250 HDMI CEC, short HDMI-CEC (hdmi-cec-v0.1.0, changes_board false), with
+its icon in images/apps/hdmi-cec.png.
 
 Changelog: 11-10-2026 19:34:02
 
-Release 0.9.7. Pins bazzite-test-v0.1.3, governor-v0.1.2, helixsr-v0.2.2, cu-bisect-v0.1.1, cores-bisect-v0.1.2, gpu-oc-bisect-v0.1.1, persistent-acpi-v0.1.1, system-overlay-v0.1.3, bios-reader-v0.1.3, ace-queues-v0.1.4, memory-manager-v0.1.4, dependency-checker-v0.1.2.
+Release 0.9.7. Pins bazzite-test-v0.1.3, governor-v0.1.2, helixsr-v0.2.2, cu-bisect-v0.1.1, cores-bisect-v0.1.2, gpu-
+oc-bisect-v0.1.1, persistent-acpi-v0.1.1, system-overlay-v0.1.3, bios-reader-v0.1.3, ace-queues-v0.1.4, memory-
+manager-v0.1.4, dependency-checker-v0.1.2.
 
 Changelog: 11-10-2026 19:04:04
 
@@ -302,7 +456,8 @@ Release 0.9.5.
 
 Changelog: 11-10-2026 17:26:20
 
-Release 0.9.5. Pins governor-v0.1.1, helixsr-v0.2.1, cores-bisect-v0.1.1, demo-tool-v0.1.3, dependency-checker-v0.1.1. new compact design
+Release 0.9.5. Pins governor-v0.1.1, helixsr-v0.2.1, cores-bisect-v0.1.1, demo-tool-v0.1.3, dependency-checker-v0.1.1.
+new compact design
 
 Changelog: 11-10-2026 17:21:02
 
@@ -330,11 +485,14 @@ Release 0.9.4.
 
 Changelog: 11-10-2026 12:25:21
 
-A portal that runs from a suite checkout, or was installed from one (./install.sh, check-release.sh local), shows an orange banner at the top with the checkout it comes from, so a local build is never mistaken for a published release. A portal installed from a release has no banner. docs/portal.md mentions it.
+A portal that runs from a suite checkout, or was installed from one (./install.sh, check-release.sh local), shows an
+orange banner at the top with the checkout it comes from, so a local build is never mistaken for a published release.
+A portal installed from a release has no banner. docs/portal.md mentions it.
 
 Changelog: 11-10-2026 12:00:43
 
-Release 0.9.3. Pins bazzite-test-v0.1.2, system-overlay-v0.1.2, bios-reader-v0.1.2, ace-queues-v0.1.3, memory-manager-v0.1.3. updates for: ace-queues, bazzite-test, bios-reader, memory-manager, system-overlay
+Release 0.9.3. Pins bazzite-test-v0.1.2, system-overlay-v0.1.2, bios-reader-v0.1.2, ace-queues-v0.1.3, memory-
+manager-v0.1.3. updates for: ace-queues, bazzite-test, bios-reader, memory-manager, system-overlay
 
 Changelog: 11-10-2026 09:27:05
 
@@ -356,11 +514,16 @@ The title's tooltip and --version also show the bundled core version.
 
 Changelog: 11-10-2026 07:41:28
 
-Release 0.9.2. Pins bazzite-test-v0.1.1, system-overlay-v0.1.1, bios-reader-v0.1.1, ace-queues-v0.1.2, memory-manager-v0.1.2. updates for: ace-queues, bazzite-test, bios-reader, memory-manager, systemoverlay
+Release 0.9.2. Pins bazzite-test-v0.1.1, system-overlay-v0.1.1, bios-reader-v0.1.1, ace-queues-v0.1.2, memory-
+manager-v0.1.2. updates for: ace-queues, bazzite-test, bios-reader, memory-manager, systemoverlay
 
 Changelog: 11-10-2026 00:54:13
 
-The button for a newer portal release names the app releases it brings: it reads that release's apps.toml from GitHub at its tag (portal_update.py) and compares the pins with this portal's, so it says for example "Portal 0.9.1: updates ACE Queues and Memory Manager" (more than two: "updates 4 apps"; new apps: "adds …"). The tooltip lists each app with its old and new version and explains that the installed ones show Update after the portal update. When the new apps.toml cannot be read, the button says "Portal x.y.z available" as before.
+The button for a newer portal release names the app releases it brings: it reads that release's apps.toml from GitHub
+at its tag (portal_update.py) and compares the pins with this portal's, so it says for example "Portal 0.9.1: updates
+ACE Queues and Memory Manager" (more than two: "updates 4 apps"; new apps: "adds …"). The tooltip lists each app with
+its old and new version and explains that the installed ones show Update after the portal update. When the new
+apps.toml cannot be read, the button says "Portal x.y.z available" as before.
 
 Changelog: 11-10-2026 00:46:35
 
@@ -369,7 +532,8 @@ internal programmer support), and link to app instructions. Python package versi
 
 Changelog: 11-10-2026 00:33:23
 
-Added Portal dependency checker, showing the suite's declared runtime Python dependencies and checking PyPI for newer versions.
+Added Portal dependency checker, showing the suite's declared runtime Python dependencies and checking PyPI for newer
+versions.
 
 Changelog: 11-10-2026 00:25:37
 
@@ -381,15 +545,20 @@ Release 0.9.0. Initial release
 
 Changelog: 10-10-2026 20:35:40
 
-The app cards are tiles in two columns: icon and name, summary, tag and badges, then the state pill and the buttons along the bottom. They read left to right in the order of apps.toml (Bazzite Test first), tiles in one row share a height, and the window goes back to one column below about 860 pixels (two tiles of 420). Nothing else changes: the same cards, buttons, states and update dot.
+The app cards are tiles in two columns: icon and name, summary, tag and badges, then the state pill and the buttons
+along the bottom. They read left to right in the order of apps.toml (Bazzite Test first), tiles in one row share a
+height, and the window goes back to one column below about 860 pixels (two tiles of 420). Nothing else changes: the
+same cards, buttons, states and update dot.
 
 Changelog: 10-10-2026 20:09:02
 
-BC-250 Memory Manager is now a card in the portal (memory-manager-v0.1.0, changes the board), with its icon images/apps/memory-manager.png (a placeholder).
+BC-250 Memory Manager is now a card in the portal (memory-manager-v0.1.0, changes the board), with its icon
+images/apps/memory-manager.png (a placeholder).
 
 Changelog: 10-10-2026 18:12:32
 
-BC-250 ACE Queues is now a card in the portal (ace-queues-v0.1.0, changes the board), with its icon images/apps/ace-queues.png (a placeholder).
+BC-250 ACE Queues is now a card in the portal (ace-queues-v0.1.0, changes the board), with its icon images/apps/ace-
+queues.png (a placeholder).
 
 Changelog: 09-10-2026 22:59:08
 
@@ -425,7 +594,8 @@ shows a red "Portal x.y.z available" button that opens its release page. Tests i
 
 Changelog: 09-10-2026 17:51:51
 
-Only one instance runs per user: starting the app again brings the running window to the front instead of opening a second one.
+Only one instance runs per user: starting the app again brings the running window to the front instead of opening a
+second one.
 
 Changelog: 09-10-2026 16:28:35
 

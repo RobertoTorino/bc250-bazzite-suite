@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# RPCS3 Manager
-
 ![RPCS3 Manager](../assets/rpcs3-manager/bc250-rpcs3-manager.png){ .app-logo }
+
+# RPCS3 Manager
 
 Plays **PS3 games** on the **AMD BC-250** with [RPCS3](https://rpcs3.net), an open-source PS3 emulator. The app
 installs the RPCS3 build it was tried with, finds your games and adds them to Steam, so they start from **Game
@@ -66,6 +66,11 @@ Tick the games you want in Game Mode and press **Update Game Mode**. The app add
 with the game's own icon and background as their pictures and its icon (`ICON0.PNG`) as the logo on the banner,
 and takes out the games you unticked and games it no longer finds. Steam keeps these files in memory, so it closes
 for the change and starts again in the background.
+
+In Steam each game's name starts with its system, for example **[PS3] Lumines**, so it stands apart from the same
+title on Steam or on another system in Steam's menus. A game added under its title alone is renamed the next time you
+press **Update Game Mode**, which is on for it until then. Steam sees the renamed game as a new one: its play time
+stays, but a controller layout or collection you set for it in Steam has to be set again.
 
 In Game Mode the games are in the library under **Non-Steam**. They start the game alone in RPCS3, full screen.
 Steam's menu and **Exit game** work as for any game.
@@ -146,7 +151,7 @@ RPCS3 can keep its drives elsewhere (its **Configuration > Virtual File System**
 
 ## Install and remove
 
-Install the app from the [portal](../portal.md), where it is under Development only. Removing it takes out the app
+Install the app from the [portal](../portal.md), where it is under Gaming. Removing it takes out the app
 and the RPCS3 it installed; RPCS3's own folder (the firmware, your saves) and your games stay. The games in Game
 Mode then no longer start: take them out first by unticking them and pressing **Update Game Mode**.
 

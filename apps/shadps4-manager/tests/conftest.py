@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Shared fixtures: an offscreen QApplication, settings and XDG folders in a temp folder, and PS4 game folders made
-here: a param.sfo written in the PS4's layout, with the fields a game has."""
+"""Shared fixtures: an offscreen QApplication, settings and XDG folders in a temp folder, PS4 game folders made
+here (a param.sfo written in the PS4's layout, with the fields a game has), and for Extract PKG a synthetic PKG that is
+encrypted the way real packages are (pkg_builder.py), since no game package can ship with the tests."""
 
 from __future__ import annotations
 
@@ -58,6 +59,13 @@ def qapp():
     from PyQt6.QtWidgets import QApplication
     app = QApplication.instance() or QApplication([])
     yield app
+
+
+@pytest.fixture(scope="session")
+def built_pkg(tmp_path_factory):
+    """A small game package: sce_sys entries plus a PFS with raw, compressed, multi-block and empty files."""
+    from pkg_builder import build_pkg, default_tree
+    return build_pkg(tmp_path_factory.mktemp("pkg") / "synthetic.pkg", default_tree())
 
 
 @pytest.fixture(autouse=True)

@@ -215,7 +215,7 @@ launch = [["Open", "~/.local/bin/simple-demo-tool"]]
 
 [apps.dependency-checker]
 name = "Dependency Checker"
-summary = "The suite's Python packages and external tools, which apps use them, and whether newer ones exist."
+summary = "The suite's Python packages and external tools, which apps use them, and whether newer ones exist; and whether a Bazzite update waits for a reboot."
 tag = "dependency-checker-v0.1.20"
 sha256 = "e646091508b6a5e339a5571a60849a01b15c977341c3dc155fd11e66bc71d670"
 required = false
@@ -225,20 +225,6 @@ install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-portal-dependency-checker"]
 launch = [["Open", "~/.local/bin/bc250-portal-dependency-checker"]]
-
-[apps.bazzite-pkgxtractor]
-name = "Bazzite pkgxtractor"
-short = "pkgxtractor"
-summary = "Extract package (.pkg) files into the folder layout shadPS4 uses, with the icon and param.sfo shown first."
-tag = "bazzite-pkgxtractor-v0.1.3"
-sha256 = "f9a18f975a2dd951fe6501f4b3361698b1b610f8ca512e1615f199e39bf046f1"
-required = false
-changes_board = false
-development = true
-install = ["bash install.sh"]
-uninstall = ["bash install.sh --uninstall"]
-detect = ["~/.local/bin/bazzite-pkgxtractor"]
-launch = [["Open", "~/.local/bin/bazzite-pkgxtractor"]]
 
 [apps.bazzite-netcatgui]
 name = "Bazzite NetcatGUI"
@@ -254,20 +240,6 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bazzite-netcatgui"]
 launch = [["Open", "~/.local/bin/bazzite-netcatgui"]]
 
-[apps.bazzite-umd-file-renamer]
-name = "Bazzite UMD File Renamer"
-short = "UMD File Renamer"
-summary = "Rename PSP ISO images after their PARAM.SFO: disc ID, title and version, with the game's icon shown."
-tag = "bazzite-umd-file-renamer-v0.1.3"
-sha256 = "3f237fc5c8a592ad62fea07d40536760c4a0e9c11ca4a8fdcabdc1fa862a960a"
-required = false
-changes_board = false
-development = true
-install = ["bash install.sh"]
-uninstall = ["bash install.sh --uninstall"]
-detect = ["~/.local/bin/bazzite-umd-file-renamer"]
-launch = [["Open", "~/.local/bin/bazzite-umd-file-renamer"]]
-
 [apps.rpcs3-manager]
 name = "RPCS3 Manager"
 summary = "PS3 games with the RPCS3 emulator: a tested RPCS3 build, the firmware, your games found and added to Game Mode."
@@ -275,7 +247,7 @@ tag = "rpcs3-manager-v0.1.2"
 sha256 = "2590c849bc0e38e1542ca08c7ae209bbecb42c76ad598dc78859705e1f4b9e11"
 required = false
 changes_board = false
-development = true
+section = "gaming"
 install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-rpcs3-manager"]
@@ -297,7 +269,7 @@ launch = [["Open", "~/.local/bin/bc250-console-link"]]
 
 [apps.shadps4-manager]
 name = "shadPS4 Manager"
-summary = "PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found and added to Game Mode."
+summary = "PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found (or unpacked from .pkg files) and added to Game Mode."
 tag = "shadps4-manager-v0.1.5"
 sha256 = "20513685c0a860a4c2a9efe8e73e6cb2f2758ad70f65db6df33e0c1919866a7b"
 required = false
@@ -320,6 +292,46 @@ install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-decky-manager"]
 launch = [["Open", "~/.local/bin/bc250-decky-manager"]]
+
+[apps.bazzite-datstation]
+name = "Bazzite DatStation"
+short = "DatStation"
+summary = "PlayStation quiz, console history, system versions, region codes, user guides and news, with your scores."
+tag = "bazzite-datstation-v0.1.0"
+sha256 = ""
+required = false
+changes_board = false
+section = "gaming"
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bazzite-datstation"]
+launch = [["Open", "~/.local/bin/bazzite-datstation"]]
+
+[apps.ppsspp-manager]
+name = "PPSSPP Manager"
+summary = "PSP games with the PPSSPP emulator: a tested PPSSPP release, your games found and added to Game Mode."
+tag = "ppsspp-manager-v0.1.0"
+sha256 = ""
+required = false
+changes_board = false
+section = "gaming"
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-ppsspp-manager"]
+launch = [["Open", "~/.local/bin/bc250-ppsspp-manager"]]
+
+[apps.pcsx2-manager]
+name = "PCSX2 Manager"
+summary = "PS2 games with the PCSX2 emulator: a tested PCSX2 release, your PS2 BIOS, your games found and added to Game Mode."
+tag = "pcsx2-manager-v0.1.0"
+sha256 = ""
+required = false
+changes_board = false
+section = "gaming"
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-pcsx2-manager"]
+launch = [["Open", "~/.local/bin/bc250-pcsx2-manager"]]
 
 [checkout.suite-releases]
 name = "BC250 Suite Releases"

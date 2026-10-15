@@ -46,18 +46,19 @@ uses. You do not need them.
 - <img src="portal/images/apps/ace-queues.png" width="20" height="20" alt=""/> **[BC-250 ACE Queues](apps/ace-queues)**: Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use.
 - <img src="portal/images/apps/mesh-shaders.png" width="20" height="20" alt=""/> **[BC-250 Mesh Shaders](apps/mesh-shaders)**: Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use.
 - <img src="portal/images/apps/console-link.png" width="20" height="20" alt=""/> **[Console Link](apps/console-link)**: Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session.
-- <img src="portal/images/apps/shadps4-manager.png" width="20" height="20" alt=""/> **[shadPS4 Manager](apps/shadps4-manager)**: PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found and added to Game Mode.
+- <img src="portal/images/apps/shadps4-manager.png" width="20" height="20" alt=""/> **[shadPS4 Manager](apps/shadps4-manager)**: PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found (or unpacked from .pkg files) and added to Game Mode.
 - <img src="portal/images/apps/decky-manager.png" width="20" height="20" alt=""/> **[Decky Loader Manager](apps/decky-manager)**: Plugins in Game Mode with Decky Loader: a tested Decky release as a system service, its state and its plugins.
+- <img src="portal/images/apps/rpcs3-manager.png" width="20" height="20" alt=""/> **[RPCS3 Manager](apps/rpcs3-manager)**: PS3 games with the RPCS3 emulator: a tested RPCS3 build, the firmware, your games found and added to Game Mode.
+- <img src="portal/images/apps/bazzite-datstation.png" width="20" height="20" alt=""/> **[Bazzite DatStation](apps/bazzite-datstation)**: PlayStation quiz, console history, system versions, region codes, user guides and news, with your scores.
+- <img src="portal/images/apps/ppsspp-manager.png" width="20" height="20" alt=""/> **[PPSSPP Manager](apps/ppsspp-manager)**: PSP games with the PPSSPP emulator: a tested PPSSPP release, your games found and added to Game Mode.
+- <img src="portal/images/apps/pcsx2-manager.png" width="20" height="20" alt=""/> **[PCSX2 Manager](apps/pcsx2-manager)**: PS2 games with the PCSX2 emulator: a tested PCSX2 release, your PS2 BIOS, your games found and added to Game Mode.
 
 **Development only**: tools for working on the suite, in their own section of the portal. You do not need them to
 use the board.
 
 - <img src="portal/images/apps/demo-tool.png" width="20" height="20" alt=""/> **[Simple Demo Tool](apps/demo-tool)**: Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite.
-- <img src="portal/images/apps/portal-dependency-checker.png" width="20" height="20" alt=""/> **[Dependency Checker](apps/dependency-checker)**: The suite's Python packages and external tools, which apps use them, and whether newer ones exist.
-- <img src="portal/images/apps/bazzite-pkgxtractor.png" width="20" height="20" alt=""/> **[Bazzite pkgxtractor](apps/bazzite-pkgxtractor)**: Extract package (.pkg) files into the folder layout shadPS4 uses, with the icon and param.sfo shown first.
+- <img src="portal/images/apps/portal-dependency-checker.png" width="20" height="20" alt=""/> **[Dependency Checker](apps/dependency-checker)**: The suite's Python packages and external tools, which apps use them, and whether newer ones exist; and whether a Bazzite update waits for a reboot.
 - <img src="portal/images/apps/bazzite-netcatgui.png" width="20" height="20" alt=""/> **[Bazzite NetcatGUI](apps/bazzite-netcatgui)**: A graphical netcat: connect to a host or listen on a port, TCP, UDP or TLS, one session per tab.
-- <img src="portal/images/apps/bazzite-umd-file-renamer.png" width="20" height="20" alt=""/> **[Bazzite UMD File Renamer](apps/bazzite-umd-file-renamer)**: Rename PSP ISO images after their PARAM.SFO: disc ID, title and version, with the game's icon shown.
-- <img src="portal/images/apps/rpcs3-manager.png" width="20" height="20" alt=""/> **[RPCS3 Manager](apps/rpcs3-manager)**: PS3 games with the RPCS3 emulator: a tested RPCS3 build, the firmware, your games found and added to Game Mode.
 - <img src="portal/images/apps/suite-releases.png" width="20" height="20" alt=""/> **[BC250 Suite Releases](apps/suite-releases)**: The release front end: versions, pins and the board checks of a release. Runs from a checkout of this repository.
 - <img src="portal/images/apps/installer-tests.png" width="20" height="20" alt=""/> **[BC-250 Installer Tests](tools/installer-tests/gui)**: Run the suite's installer tests one at a time, with their output live in the window. Runs from a checkout of this repository.
 

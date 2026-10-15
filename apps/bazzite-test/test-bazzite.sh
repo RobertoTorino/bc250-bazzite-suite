@@ -27,7 +27,6 @@ DISK_MODE=false
 DISK_WRITE_GIB=0
 SPEEDTEST_MODE=false
 ONLY=""
-NO_PROMPT=false
 NO_DESKTOP=false
 GUI_MODE=false
 
@@ -59,7 +58,6 @@ Usage: sudo ./test-bazzite.sh [options]
   --only=LIST          Run only the listed tests, e.g. --only=04,05,17.
                        Test 41 additionally needs --stress, test 42 --bench,
                        test 43 --disk-bench, test 44 --speedtest.
-  --no-prompt          Skip the reboot question at the end (used by the GUI).
   --no-desktop         Do not copy the report to the user's Desktop.
   --gui                Word the how-to-run hints for the GUI instead of command-line options (used by the GUI).
   -h, --help           Show this help and exit.
@@ -78,7 +76,7 @@ while [ $# -gt 0 ]; do
         --speedtest)         SPEEDTEST_MODE=true ;;
         --disk-write=*)      DISK_MODE=true; DISK_WRITE_GIB="${1#*=}" ;;
         --only=*)            ONLY="${1#*=}" ;;
-        --no-prompt)         NO_PROMPT=true ;;
+        --no-prompt)         ;;   # skipped the reboot question at the end, which is gone; still accepted
         --no-desktop)        NO_DESKTOP=true ;;
         --gui)               GUI_MODE=true ;;
         -h|--help)           usage; exit 0 ;;
@@ -3682,5 +3680,3 @@ copy_to_desktop() {
 }
 [ "$NO_DESKTOP" = true ] || copy_to_desktop
 echo
-
-[ "$NO_PROMPT" = true ] && exit 0

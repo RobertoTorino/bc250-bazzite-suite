@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# HelixSR Manager
-
 ![HelixSR Manager](../assets/helixsr/bc250-bazzite-helixsr-gui.png){ .app-logo }
+
+# HelixSR Manager
 
 PyQt6 front-end that deploys **[HelixSR](https://github.com/lonewolf0622/HelixSR)** – the FSR 3.1 drop-in
 upscaler with DLSS-style neural networks – into games on an **AMD BC-250** board running **Bazzite**

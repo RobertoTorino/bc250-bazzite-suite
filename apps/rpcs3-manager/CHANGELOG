@@ -1,3 +1,22 @@
+Changelog: 15-10-2026 22:51:19
+
+Release 0.1.3.
+
+Changelog: 15-10-2026 22:35:35
+
+Game Mode shortcuts are named with the system first, "[PS3] Title" (owner, 15-10-2026), so Steam's menus, such as the
+recent games in the tray icon's menu, tell a game apart from the same title on Steam or on another system. A shortcut
+in Steam with another name than the app gives it now, as one from before, turns Update Game Mode on; the update
+renames it, keeps its play time, and removes the artwork under its old Steam number (core's write_shortcuts).
+
+Changelog: 15-10-2026 16:02:21
+
+The manual chapter says the app is under Gaming in the portal, no longer under Development only.
+
+Changelog: 15-10-2026 13:56:22
+
+A new icon in place of the PS3 placeholder: the purple circuit design (images/bc250-rpcs3-manager.png and the 128 px copy).
+
 Changelog: 15-10-2026 05:52:00
 
 Release 0.1.2.

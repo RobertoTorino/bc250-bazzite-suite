@@ -3,7 +3,7 @@
 # Development
 
 How the repository is laid out, how to work on it from Linux and Windows, and how versions and releases fit
-together. How every app is built, and how to add one: [Architecture and consistency](architecture.md). The repository's settings on GitHub: [GitHub settings](github-settings.md). The portal's release steps are in [Portal](../portal.md#appstoml-and-releases).
+together. How every app is built, and how to add one: [Architecture and consistency](architecture.md). The repository's settings on GitHub, and how to handle Dependabot's pull requests: [GitHub settings](github-settings.md). The portal's release steps are in [Portal](../portal.md#appstoml-and-releases).
 
 ## Layout
 

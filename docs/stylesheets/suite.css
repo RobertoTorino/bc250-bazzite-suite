@@ -32,14 +32,9 @@
   --md-default-bg-color: #17141f;
 }
 
-/* The header in the deepest purple, with a line in the suite's gradient below it. */
+/* The header in the deepest purple. */
 .md-header, .md-tabs {
   background: var(--suite-deep);
-}
-
-.md-header {
-  border-bottom: 3px solid;
-  border-image: linear-gradient(90deg, var(--suite-primary), var(--suite-secondary)) 1;
 }
 
 /* Buttons as pills. */
@@ -144,12 +139,23 @@
   border-radius: 0.3em;
 }
 
-/* An app's own icon at the top of its chapter. */
+/* An app's own icon at the top of its chapter: it comes before the heading in the page, floats right of it and
+   adds no height of its own, so the app's name and its icon share the first line. */
 .md-typeset img.app-logo {
   width: 128px;
   float: right;
   margin: 0 0 1em 1em;
   border-radius: var(--suite-radius-large);
+}
+
+.md-typeset p:has(> img.app-logo) {
+  margin: 0;
+}
+
+.md-typeset p:has(> img.app-logo) + h1,
+.md-typeset p:has(> img.app-logo) + h2,
+.md-typeset p:has(> img.app-logo) + h3 {
+  margin-top: 0;
 }
 
 .md-typeset table:not([class]) th {
@@ -222,10 +228,6 @@
 .md-main__inner:has(> .home) {
   max-width: none;
   margin: 0;
-}
-
-.md-header:has(~ .md-container .home) {
-  border-bottom: 0;
 }
 
 /* Material hides the icon on a narrow screen behind the menu button; Home has no menu, so it keeps the icon. */

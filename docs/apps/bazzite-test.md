@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# BC-250 Bazzite Test
-
 ![BC-250 Bazzite Test](../assets/bazzite-test/bc250-bazzite-test.png){ .app-logo }
+
+# BC-250 Bazzite Test
 
 Read-only diagnostics, stress test and benchmarks for an **AMD BC-250** board (Cyan Skillfish APU,
 `gfx1013`, PCI `1002:13fe`) running **Bazzite** (Fedora Atomic / rpm-ostree).

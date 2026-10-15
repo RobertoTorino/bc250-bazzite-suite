@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# System Overlay
-
 ![System Overlay](../assets/system-overlay/bc250-system-overlay.png){ .app-logo }
+
+# System Overlay
 
 A small window that stays on top of your desktop and shows the **AMD BC-250**'s live system values on
 **Bazzite**. It only reads sensors: nothing on the board changes and it needs no root.

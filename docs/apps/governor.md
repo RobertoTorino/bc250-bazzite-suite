@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# BC-250 GPU Governor Manager
-
 ![BC-250 GPU Governor Manager](../assets/governor/bc250-governor-manager.png){ .app-logo }
+
+# BC-250 GPU Governor Manager
 
 PyQt6 front-end for **cyan-skillfish-governor-smu**, the GPU governor of an **AMD BC-250** board (Cyan
 Skillfish APU, `gfx1013`) running **Bazzite** (Fedora Atomic / rpm-ostree).

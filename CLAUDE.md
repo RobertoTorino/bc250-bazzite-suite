@@ -14,13 +14,13 @@ its manifest. **bazzite-test** is always installed and always listed first; ever
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
 - `apps/<name>/`: bazzite-test, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
-  system-overlay, bios-reader, ace-queues, mesh-shaders, memory-manager, hdmi-cec, sftp-tools, console-link, shadps4-manager, rpcs3-manager, decky-manager, demo-tool, dependency-checker, bazzite-pkgxtractor, bazzite-netcatgui, bazzite-umd-file-renamer, suite-releases. Each has its
+  system-overlay, bios-reader, ace-queues, mesh-shaders, memory-manager, hdmi-cec, sftp-tools, console-link, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, decky-manager, demo-tool, dependency-checker, bazzite-netcatgui, bazzite-datstation, suite-releases. Each has its
   own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; console-link is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; bazzite-netcatgui is GPL-2.0-only, a port of NetcatGUI; the rest
   GPL-3.0-or-later), .gitignore. Simple
-  Demo Tool, the Dependency Checker, Bazzite pkgxtractor, Bazzite NetcatGUI, Bazzite UMD File Renamer and the RPCS3 Manager are `development = true` in `portal/apps.toml`: the portal
-  lists them under "Development only". HelixSR, ACE Queues, Mesh Shaders, Console Link, the shadPS4 Manager and the Decky Loader Manager are
-  `section = "gaming"`: listed under "Gaming". Suite Releases (the release front end) has `.standalone` and `.checkout-only`: it runs
+  Demo Tool, the Dependency Checker and Bazzite NetcatGUI are `development = true` in `portal/apps.toml`: the portal
+  lists them under "Development only". HelixSR, ACE Queues, Mesh Shaders, Console Link, the shadPS4 Manager, the Decky Loader Manager, the RPCS3 Manager,
+  Bazzite DatStation, the PPSSPP Manager and the PCSX2 Manager are `section = "gaming"`: listed under "Gaming". Suite Releases (the release front end) has `.standalone` and `.checkout-only`: it runs
   from the checkout, is never released, and is listed as `[checkout.suite-releases]`, also under "Development only":
   a portal from a release finds the checkout on the machine (it asks only when there is none) and remembers it, the
   released apps still come from their releases. Install every app through the portal, so what is installed stays in step. BC-250 Installer Tests (`tools/installer-tests/gui`) is
@@ -39,11 +39,17 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
 - **Warn before board changes.** Apps that change how the board runs (CU/core unlocks, GPU governor, GPU
   overclocking, ACPI override, the patched RADV of ace-queues, the DirectMesh RADV of mesh-shaders, the VRAM split of memory-manager) are marked `changes_board` and the portal asks first. Frame it as standard caution:
   the apps are software-only and reversible, not "risky".
+- **Advice, not reboots.** No app reboots, powers off or logs out the board; when one is needed, the app says so
+  (and which command does it). The exception, by design (owner, 15-10-2026): CU Bisect and Cores Bisect, whose
+  rounds each need a fresh boot (they ask, or reboot by themselves with `--auto`), and Cores Unlock's boot service,
+  which reboots warm once after a cold boot so the cores come up. A new reboot anywhere else is the owner's decision.
 - **The current releases are the baseline.** They were tested extensively on two boards. Moving code must not
   change behaviour; a finding in existing code is "a code path to check", not a known failure. Prove "unchanged"
   (diffs, pixel comparisons, the installer tests) rather than assume it.
 - **READMEs and docs/ hold no status, plans, step numbers or decision notes.** Those go in MIGRATION.md, which
-  neither links to. No placeholder folders that only describe future work. CHANGELOG entries are history and may
+  neither links to. The backlog is what MIGRATION.md says is "on hold" (write it so, with the owner's date):
+  `.github/workflows/backlog.yml` lists those items every Monday in the "Backlog review" issue (`tools/backlog.py`).
+  No placeholder folders that only describe future work. CHANGELOG entries are history and may
   mention steps.
 - **CHANGELOG for every change:** the root CHANGELOG for suite-wide changes, the app's (or core's, or portal's)
   for its own. Format: a `Changelog: DD-MM-YYYY HH:MM:SS` line, a blank line, then plain sentences; newest first.
@@ -71,7 +77,13 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
 - **Scope is the suite, not Bazzite.** We answer for the portal and its apps, not for Bazzite itself. A system-wide
   Bazzite package is in scope only where one of our apps uses it (the Dependency Checker lists it then); its
   updates and security fixes are Bazzite's. Our own code, and the Python packages in our apps' environments, are
-  ours.
+  ours. One exception (owner, 15-10-2026): the Dependency Checker shows Bazzite's update state (the running image,
+  an update waiting for a reboot, uupd's last run) and reminds weekly when one waits; it only reads it, and
+  updating stays Bazzite's.
+- **Open by default.** Everything about the suite may be public: code, plans, the backlog, issues, test data and
+  recordings from the boards. Only personal data stays out (names, addresses, host and user names, serial numbers,
+  MAC and IP addresses, keys, account details), as the apps mask it in their logs. When in doubt whether something
+  is personal, ask.
 - **chiaki-ng is named only where licensing needs it:** Console Link's LICENSE, the License sections of its README
   and manual chapter, the suite's license overview (README, docs/index.md) and this file. Everywhere else (code,
   comments, tests, vectors, log messages, the manual, CHANGELOGs, MIGRATION.md) it is "the reference" (the reference
@@ -123,8 +135,8 @@ shellcheck -S warning apps/mesh-shaders/bc250-mesh-shaders.sh apps/mesh-shaders/
   apps/mesh-shaders/install.sh apps/mesh-shaders/mesa/build-in-container.sh
 shellcheck -S warning apps/shadps4-manager/install.sh apps/shadps4-manager/bc250-shadps4-run
 shellcheck -S warning apps/rpcs3-manager/install.sh apps/rpcs3-manager/bc250-rpcs3-run
-shellcheck -S warning apps/decky-manager/install.sh apps/bazzite-pkgxtractor/install.sh apps/bazzite-netcatgui/install.sh \
-  apps/bazzite-umd-file-renamer/install.sh
+shellcheck -S warning apps/decky-manager/install.sh apps/bazzite-netcatgui/install.sh \
+  apps/bazzite-datstation/install.sh
 for t in tools/installer-tests/*.sh; do [ "${t##*/}" = shims.sh ] || bash "$t"; done   # every installer test
 mkdocs build --strict                               # from the venv
 ```

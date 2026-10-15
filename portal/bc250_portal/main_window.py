@@ -33,7 +33,7 @@ from PyQt6.QtWidgets import (
     QToolButton, QVBoxLayout, QWidget,
 )
 
-from bc250_core import __version__ as CORE_VERSION
+from bc250_core import SUITE_MANUAL_URL, __version__ as CORE_VERSION
 from bc250_core.platform import bin_home, expand, launch_in_terminal
 from bc250_core.settings import open_settings, restore_geometry, save_geometry
 from bc250_core.theme import ACCENT, BLUE, GREY, ORANGE, RED, header_font
@@ -190,8 +190,12 @@ class AppTile(QFrame):
         self.icon.setIconSize(QSize(ICON_PX, ICON_PX))
         self.icon.setFixedSize(ICON_PX + 8, ICON_PX + 8)
         self.icon.setAutoRaise(True)
+        # Off-white behind the icon on hover (palette(midlight) was near-black on the dark theme), and a press
+        # that shows: a solid off-white and the icon nudged down-right, as a real button sinks.
         self.icon.setStyleSheet("QToolButton { border:none; border-radius:18px; }"
-                                "QToolButton:hover:enabled { background:palette(midlight); }"
+                                "QToolButton:hover:enabled { background:#D9FAF7F0; }"
+                                "QToolButton:pressed:enabled { background:#FFF2EFE6; padding-top:2px;"
+                                " padding-left:2px; }"
                                 "QToolButton::menu-indicator { image:none; width:0; }")
         self.open_button = self.icon                    # clicking the icon opens the app
         if len(entry.launch) > 1:
@@ -360,7 +364,10 @@ class MainWindow(QMainWindow):
         root.addWidget(self.local_banner)
         header = QHBoxLayout()
         if LOGO_PATH.is_file():
-            header.addWidget(ClickableLogo(LOGO_PATH, 56))
+            self.logo = ClickableLogo(LOGO_PATH, 56)
+            self.logo.setToolTip("Open the wiki in the browser")
+            self.logo.clicked.connect(self.open_wiki)
+            header.addWidget(self.logo)
         title = QLabel(f"{APP_NAME}  <span style='color:#9aa0a6; font-size:14px;'>v{__version__}</span>")
         title.setStyleSheet(header_font() + "font-size:24px; font-weight:800;")
         title.setToolTip(f"{APP_NAME} {__version__} · core {CORE_VERSION}")
@@ -632,6 +639,11 @@ class MainWindow(QMainWindow):
     def _open_portal_release(self) -> None:
         if self.portal_release is not None:
             QDesktopServices.openUrl(QUrl(self.portal_release.url))
+
+    @staticmethod
+    def open_wiki() -> None:
+        """The wiki's home page, from a click on the suite's logo."""
+        QDesktopServices.openUrl(QUrl(SUITE_MANUAL_URL))
 
     # ----------------------------------------------------------------------------------------- actions
     def _confirm_board_change(self, entry: AppEntry, action: str) -> bool:

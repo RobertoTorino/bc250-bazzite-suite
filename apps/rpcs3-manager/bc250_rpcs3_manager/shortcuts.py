@@ -22,6 +22,7 @@ from .games import Game
 RUN = "~/.local/bin/bc250-rpcs3-run"
 RUN_NAME = "bc250-rpcs3-run"
 TAGS = ("PS3", "RPCS3 Manager")
+PREFIX = f"[{TAGS[0]}] "    # before each name, so the same title on another system or on Steam itself is told apart
 
 
 def launch_options(game: Game) -> str:
@@ -57,11 +58,12 @@ def for_game(game: Game):
 
 
 def names(games: Iterable[Game]) -> dict[Path, str]:
-    """The name in Steam per game: its title, with its ID when two games have the same title (Steam numbers a
-    shortcut by its program and name, so two names must differ)."""
+    """The name in Steam per game: the system and its title ("[PS3] Title"), with its ID when two games have
+    the same title (Steam numbers a shortcut by its program and name, so two names must differ)."""
     games = list(games)
     titles = [g.title for g in games]
-    return {g.eboot: g.title if titles.count(g.title) == 1 or not g.title_id else f"{g.title} ({g.title_id})"
+    return {g.eboot: PREFIX + (g.title if titles.count(g.title) == 1 or not g.title_id
+                              else f"{g.title} ({g.title_id})")
             for g in games}
 
 

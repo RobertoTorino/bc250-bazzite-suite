@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: Backlog
+
+# Weekly: the items on hold in MIGRATION.md (tools/backlog.py), as the open "Backlog review" issue, so the owner goes
+# through them. A new issue, or a comment on the open one, notifies everyone who watches the repository. Close the
+# issue after the review; next week opens a new one. With nothing on hold it does nothing. Only that issue changes.
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"         # Mondays 07:00 UTC, an hour after Upstream
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: The items on hold
+        run: python3 tools/backlog.py > "$RUNNER_TEMP/backlog.md"
+
+      - name: Open or update the Backlog review issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TITLE: Backlog review
+        run: |
+          body="$RUNNER_TEMP/backlog.md"
+          if [ ! -s "$body" ]; then echo "Nothing on hold."; exit 0; fi
+          number=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number,title \
+            --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
+          if [ -n "$number" ]; then
+            gh issue edit "$number" --body-file "$body"
+            gh issue comment "$number" --body "Weekly backlog review: time to go through the items on hold (list above, updated)."
+          else
+            gh issue create --title "$TITLE" --body-file "$body"
+          fi
