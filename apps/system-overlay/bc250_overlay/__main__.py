@@ -26,8 +26,7 @@ def main() -> int:
     if not args.native_wayland and os.environ.get("WAYLAND_DISPLAY") and os.environ.get("DISPLAY"):
         os.environ.setdefault("QT_QPA_PLATFORM", "xcb")
 
-    # English only so far, Qt's own menu texts included.
-    app = create_app(INFO, qt_args, lang="en")
+    app = create_app(INFO, qt_args)
     app.setQuitOnLastWindowClosed(True)
     # One instance: a second launch brings the running window to the front and exits.
     if instance.already_running(INFO.app_id):

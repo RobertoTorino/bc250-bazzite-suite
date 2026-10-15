@@ -21,7 +21,6 @@ from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime
 from pathlib import Path
 
-from PyQt6.QtCore import QCoreApplication
 
 HELIXSR_DLL = "amd_fidelityfx_dx12.dll"
 UPSCALER_DLL = "amd_fidelityfx_upscaler_dx12.dll"
@@ -227,12 +226,12 @@ def import_payload(source: Path, payload_dir: Path) -> ImportResult:
     """Copy the HelixSR files from an extracted release folder (or the release zip) into the payload folder.
     Only the known files are taken, nothing else; existing payload files are replaced."""
     if not source.exists():
-        raise HelixError(QCoreApplication.translate("backend", "{0} does not exist.").format(source))
+        raise HelixError("{0} does not exist.".format(source))
     payload_dir.mkdir(parents=True, exist_ok=True)
     copied: list[str] = []
     if source.is_file():
         if not zipfile.is_zipfile(source):
-            raise HelixError(QCoreApplication.translate("backend", "{0} is not a zip archive or a folder.")
+            raise HelixError("{0} is not a zip archive or a folder."
                              .format(source.name))
         wanted = {name.lower(): name for name in PAYLOAD_FILES}
         with zipfile.ZipFile(source) as archive:
@@ -248,9 +247,8 @@ def import_payload(source: Path, payload_dir: Path) -> ImportResult:
             shutil.copy2(path, payload_dir / name)
             copied.append(name)
     if HELIXSR_DLL not in copied:
-        raise HelixError(QCoreApplication.translate(
-            "backend", "No {0} found in {1}. Pick the folder the HelixSR release was extracted to (or the release "
-                       "zip itself).").format(HELIXSR_DLL, source))
+        raise HelixError(("No {0} found in {1}. Pick the folder the HelixSR release was extracted to (or the release "
+                          "zip itself).").format(HELIXSR_DLL, source))
     copied += _import_optiscaler(source, payload_dir)
     if network_embedded(payload_dir / HELIXSR_DLL):
         # One-file DLL: network files left from an earlier release belong to another build, and Deploy would copy them.
@@ -314,12 +312,12 @@ class GameDll:
     @property
     def state(self) -> str:
         if self.has_backup and self.matches_payload:
-            return QCoreApplication.translate("backend", "HelixSR deployed")
+            return "HelixSR deployed"
         if self.has_backup:
-            return QCoreApplication.translate("backend", "HelixSR deployed (other build)")
+            return "HelixSR deployed (other build)"
         if self.matches_payload:
-            return QCoreApplication.translate("backend", "HelixSR (no original kept)")
-        return QCoreApplication.translate("backend", "Game's own DLL")
+            return "HelixSR (no original kept)"
+        return "Game's own DLL"
 
 
 def inspect_dll(path: Path, payload_dir: Path) -> GameDll:
@@ -353,9 +351,8 @@ def find_game_dlls(game_dir: Path, payload_dir: Path, max_depth: int = MAX_SCAN_
 def _require_ready(payload_dir: Path) -> PayloadStatus:
     status = payload_status(payload_dir)
     if not status.ready:
-        raise HelixError(QCoreApplication.translate(
-            "backend", "The payload is incomplete, missing: {0}. Import the extracted HelixSR release after running "
-                       "its helixsr-setup.sh.").format(", ".join(status.missing())))
+        raise HelixError(("The payload is incomplete, missing: {0}. Import the extracted HelixSR release after running "
+                          "its helixsr-setup.sh.").format(", ".join(status.missing())))
     return status
 
 
@@ -383,10 +380,10 @@ def deploy(target: Path, payload_dir: Path, ini_text: str | None = None) -> list
     Returns the files written."""
     _require_ready(payload_dir)
     if target.name.lower() not in {n.lower() for n in GAME_DLLS}:
-        raise HelixError(QCoreApplication.translate("backend", "{0} is not an FSR 3.1 upscaler DLL ({1}).")
+        raise HelixError("{0} is not an FSR 3.1 upscaler DLL ({1})."
                          .format(target.name, " / ".join(GAME_DLLS)))
     if not target.is_file():
-        raise HelixError(QCoreApplication.translate("backend", "{0} does not exist.").format(target))
+        raise HelixError("{0} does not exist.".format(target))
     backup = original_path(target)
     if not backup.exists():
         target.rename(backup)
@@ -400,8 +397,7 @@ def remove(target: Path, payload_dir: Path) -> list[Path]:
     backup = original_path(target)
     payload_dll = payload_dir / HELIXSR_DLL
     if not backup.exists() and not (payload_dll.is_file() and target.is_file() and same_file(target, payload_dll)):
-        raise HelixError(QCoreApplication.translate(
-            "backend", "{0} is not HelixSR (no {1} next to it and it differs from the payload). Nothing was changed.")
+        raise HelixError("{0} is not HelixSR (no {1} next to it and it differs from the payload). Nothing was changed."
             .format(target.name, backup.name))
     removed = []
     for name in (*NETWORK_FILES, INI, LOG):
@@ -427,10 +423,9 @@ def deploy_folder(folder: Path, payload_dir: Path, ini_text: str | None = None,
     _require_ready(payload_dir)
     if second_upscaler is not None:
         if not second_upscaler.is_file():
-            raise HelixError(QCoreApplication.translate("backend", "{0} does not exist.").format(second_upscaler))
+            raise HelixError("{0} does not exist.".format(second_upscaler))
         if same_file(second_upscaler, payload_dir / HELIXSR_DLL):
-            raise HelixError(QCoreApplication.translate(
-                "backend", "{0} is HelixSR itself; pick another FidelityFX upscaler DLL, e.g. AMD's with FSR 4.")
+            raise HelixError("{0} is HelixSR itself; pick another FidelityFX upscaler DLL, e.g. AMD's with FSR 4."
                 .format(second_upscaler))
         settings = parse_ini(ini_text if ini_text is not None else ini_template(payload_dir))
         settings.upscaler_dll = SECOND_UPSCALER_DLL
@@ -461,12 +456,11 @@ def remove_folder(folder: Path, payload_dir: Path) -> list[Path]:
     for name in GAME_DLLS:
         dll = folder / name
         if dll.is_file() and original_path(dll).exists():
-            raise HelixError(QCoreApplication.translate(
-                "backend", "{0} holds a game's own {1} (there is a {2}): this is a replaced DLL, not a stand-alone "
-                           "folder. Use Remove on the DLL instead.").format(folder, name, original_path(dll).name))
+            raise HelixError(("{0} holds a game's own {1} (there is a {2}): this is a replaced DLL, not a stand-alone "
+                              "folder. Use Remove on the DLL instead.").format(folder, name, original_path(dll).name))
         if dll.is_file() and payload_dll.is_file() and not same_file(dll, payload_dll) and \
                 not (folder / WEIGHTS).exists() and not network_embedded(dll):
-            raise HelixError(QCoreApplication.translate("backend", "{0} is not HelixSR; nothing was changed.")
+            raise HelixError("{0} is not HelixSR; nothing was changed."
                              .format(dll))
     removed = uninstall_optiscaler(folder)
     for name in (*GAME_DLLS, SECOND_UPSCALER_DLL, *NETWORK_FILES, INI, LOG):
@@ -549,12 +543,12 @@ def set_ini_value(text: str, key: str, value: str, section: str) -> str:
     [section]."""
     pattern = re.compile(r"(?m)^(%s)[ \t]*=[^\r\n]*" % re.escape(key))
     if len(pattern.findall(text)) > 1:
-        raise HelixError(QCoreApplication.translate("backend", "{0} has more than one {1} line.").format(OPTISCALER_INI, key))
+        raise HelixError("{0} has more than one {1} line.".format(OPTISCALER_INI, key))
     if pattern.search(text):
         return pattern.sub(lambda m: f"{m.group(1)}={value}", text, count=1)
     header = re.search(r"(?m)^\[%s\][ \t]*(\r?\n)" % re.escape(section), text)
     if not header:
-        raise HelixError(QCoreApplication.translate("backend", "{0} has no [{1}] section.").format(OPTISCALER_INI, section))
+        raise HelixError("{0} has no [{1}] section.".format(OPTISCALER_INI, section))
     return text[:header.end()] + f"{key}={value}" + header.group(1) + text[header.end():]
 
 
@@ -578,19 +572,16 @@ def install_optiscaler(exe_dir: Path, folder: Path, payload_dir: Path) -> list[P
     the same name goes to <folder>/backup, an existing OptiScaler.ini is kept there as a copy and edited; again on
     the same folder it updates OptiScaler and keeps the record. Returns the files written."""
     if not optiscaler_available(payload_dir):
-        raise HelixError(QCoreApplication.translate(
-            "backend", "The payload has no OptiScaler. HelixSR 1.7 and newer ship it: get or import such a release."))
+        raise HelixError("The payload has no OptiScaler. HelixSR 1.7 and newer ship it: get or import such a release.")
     if not exe_dir.is_dir():
-        raise HelixError(QCoreApplication.translate("backend", "{0} does not exist.").format(exe_dir))
+        raise HelixError("{0} does not exist.".format(exe_dir))
     if exe_dir.resolve() == folder.resolve():
-        raise HelixError(QCoreApplication.translate(
-            "backend", "The HelixSR folder must not be the game's .exe folder: pick a folder of its own, such as "
-                       "{0}.").format(exe_dir / "HelixSR"))
+        raise HelixError(("The HelixSR folder must not be the game's .exe folder: pick a folder of its own, such as "
+                          "{0}.").format(exe_dir / "HelixSR"))
     source = payload_dir / OPTISCALER_DIR
     record = optiscaler_record(folder) or {}
     if record and Path(record.get("exe_dir", "")) != exe_dir:
-        raise HelixError(QCoreApplication.translate(
-            "backend", "This HelixSR folder already serves OptiScaler in {0}. Remove it there first.")
+        raise HelixError("This HelixSR folder already serves OptiScaler in {0}. Remove it there first."
             .format(record.get("exe_dir")))
     if not record:
         name = next((n for n in OPTISCALER_NAMES if (exe_dir / n).is_file() and is_optiscaler(exe_dir / n)), "dxgi.dll")
@@ -863,34 +854,34 @@ def _other_build(dep: Deployment, payload_dir: Path) -> tuple[str, str]:
     fallback on the Setup page), older otherwise."""
     deployed, payload = version_key(dep.helixsr_version), version_key(payload_version(payload_dir))
     if deployed and payload and deployed > payload:
-        return "warn", QCoreApplication.translate("backend", "Newer build")
-    return "warn", QCoreApplication.translate("backend", "Older build")
+        return "warn", "Newer build"
+    return "warn", "Older build"
 
 
 def deployment_state(dep: Deployment, payload_dir: Path) -> tuple[str, str]:
     """(kind, text) for a status pill: ok = HelixSR in place, warn = partly, bad = gone / original restored."""
     folder = dep.folder
     if not folder.is_dir():
-        return "bad", QCoreApplication.translate("backend", "Folder gone")
+        return "bad", "Folder gone"
     if dep.mode == MODE_FOLDER:
         dll = folder / HELIXSR_DLL
         if not dll.is_file():
-            return "bad", QCoreApplication.translate("backend", "Removed")
+            return "bad", "Removed"
         if not all((folder / n).is_file() for n in NETWORK_FILES) and not network_embedded(dll):
-            return "warn", QCoreApplication.translate("backend", "Network files missing")
+            return "warn", "Network files missing"
         payload_dll = payload_dir / HELIXSR_DLL
         if payload_dll.is_file() and not same_file(dll, payload_dll):
             return _other_build(dep, payload_dir)
-        return "ok", QCoreApplication.translate("backend", "In place")
+        return "ok", "In place"
     info = inspect_dll(dep.location, payload_dir) if dep.location.is_file() else None
     if info is None:
-        return (("bad", QCoreApplication.translate("backend", "DLL missing")) if not original_path(dep.location).exists()
-                else ("warn", QCoreApplication.translate("backend", "Only the backup is left")))
+        return (("bad", "DLL missing") if not original_path(dep.location).exists()
+                else ("warn", "Only the backup is left"))
     if not info.deployed:
-        return "bad", QCoreApplication.translate("backend", "Original restored")
+        return "bad", "Original restored"
     if not info.network_files:
-        return "warn", QCoreApplication.translate("backend", "Network files missing")
-    return ("ok", QCoreApplication.translate("backend", "In place")) if info.matches_payload else _other_build(dep, payload_dir)
+        return "warn", "Network files missing"
+    return ("ok", "In place") if info.matches_payload else _other_build(dep, payload_dir)
 
 
 class DeploymentStore:

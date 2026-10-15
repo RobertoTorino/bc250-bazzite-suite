@@ -7,7 +7,6 @@ import argparse
 import sys
 from pathlib import Path
 
-from PyQt6.QtCore import QLibraryInfo, QLocale, QTranslator
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
@@ -33,10 +32,6 @@ def main() -> int:
     app.setStyle("Fusion")
     if LOGO_PATH.is_file():
         app.setWindowIcon(QIcon(str(LOGO_PATH)))
-    # Qt's own dialog buttons (Yes/No/OK/Cancel) in the system language; the app's text is English.
-    qt_tr = QTranslator(app)
-    if qt_tr.load(QLocale.system(), "qtbase", "_", QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)):
-        app.installTranslator(qt_tr)
 
     script = Path(args.script).resolve()
     if not script.is_file():

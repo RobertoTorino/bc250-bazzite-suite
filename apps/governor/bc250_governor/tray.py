@@ -29,18 +29,18 @@ class Tray(QSystemTrayIcon):
         super().__init__(icon, window)
         self.window = window
         menu = QMenu()
-        self.toggle_action = QAction(self.tr("Hide window"), menu)
+        self.toggle_action = QAction("Hide window", menu)
         self.toggle_action.triggered.connect(self.toggle_window)
         menu.addAction(self.toggle_action)
         menu.addSeparator()
-        self.perf_action = QAction(self.tr("Performance mode"), menu)
+        self.perf_action = QAction("Performance mode", menu)
         self.perf_action.setCheckable(True)
         self.perf_action.setEnabled(False)
         menu.addAction(self.perf_action)
-        self.profiles_menu = menu.addMenu(self.tr("Apply profile"))
+        self.profiles_menu = menu.addMenu("Apply profile")
         self.profiles_menu.setEnabled(False)
         menu.addSeparator()
-        self.quit_action = QAction(self.tr("Quit"), menu)
+        self.quit_action = QAction("Quit", menu)
         menu.addAction(self.quit_action)
         self.setContextMenu(menu)
         self.activated.connect(self._activated)
@@ -60,7 +60,7 @@ class Tray(QSystemTrayIcon):
         self.sync_toggle()
 
     def sync_toggle(self) -> None:
-        self.toggle_action.setText(self.tr("Hide window") if self.window.isVisible() else self.tr("Show window"))
+        self.toggle_action.setText("Hide window" if self.window.isVisible() else "Show window")
 
     def set_profiles(self, names: list[str]) -> None:
         self.profiles_menu.clear()

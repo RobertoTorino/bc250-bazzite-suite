@@ -9,7 +9,6 @@ APP_ID = "bc250-cores-unlock"
 ROOT = Path(__file__).resolve().parent.parent
 LOGO_PATH = ROOT / "images" / "bc250-cores-unlock.png"
 WINDOW_ICON_PATH = LOGO_PATH
-TRANSLATIONS_DIR = Path(__file__).resolve().parent / "translations"
 REPO_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/cores-bisect"
 
 

@@ -19,7 +19,7 @@ REPO_URL = SUITE_REPO_URL
 
 # Settings stay where they always were: ~/.config/bc250-bazzite-test/bc250-bazzite-test.ini
 INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="bazzite-test-v",
-               settings_ini=True, languages={"en": "English"})
+               settings_ini=True)
 
 __all__ = ["APP_ID", "APP_NAME", "DISPLAY_NAME", "INFO", "LOGO_PATH", "REPO_URL", "ROOT", "WINDOW_ICON_PATH",
            "__version__", "plain_tooltip", "window_title"]

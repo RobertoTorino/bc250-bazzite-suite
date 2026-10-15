@@ -49,4 +49,4 @@ def info(tmp_path):
     """A test AppInfo with a unique id, so no test sees another's settings."""
     from bc250_core.appinfo import AppInfo
     return AppInfo(app_id=f"bc250-test-app-{uuid.uuid4().hex[:8]}", name="BC-250 Test App", version="1.2.3",
-                   tag_prefix="test-app-v", translations_dir=tmp_path / "translations", catalog="bc250_test_app")
+                   tag_prefix="test-app-v")

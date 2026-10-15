@@ -15,20 +15,18 @@ _NAMED = re.compile(r"\{([A-Za-z_][A-Za-z0-9_]*)\}")
 
 
 def fmt(text: str, *values: object) -> str:
-    """Fill the %1, %2, … placeholders of a translated string.
+    """Fill the %1, %2, … placeholders of a string, as Qt's QString.arg() does (PyQt6 has no QString).
 
-    Qt's own QString.arg() is not available here: PyQt6 returns tr() as a plain str. Placeholders are
-    numbered rather than positional ({} or %s), so a translation is free to reorder them, which some
-    languages need. Substitution is a single pass, so a value that itself contains "%2" is left alone."""
+    Substitution is a single pass, so a value that itself contains "%2" is left alone."""
     return _NUMBERED.sub(
         lambda m: str(values[int(m.group(1)) - 1]) if 0 < int(m.group(1)) <= len(values) else m.group(0), text)
 
 
 def fill(text: str, values: Mapping[str, object]) -> str:
-    """Fill the {name} placeholders of a translated string (paths, URLs, script names) after tr().
+    """Fill the {name} placeholders of a string (paths, URLs, script names).
 
-    Translators never see the values, and unlike str.format() only known names are replaced, so CSS braces in
-    help HTML and a translation that drops a placeholder are both harmless. Single pass, like fmt()."""
+    Unlike str.format() only known names are replaced, so CSS braces in help HTML are harmless. Single pass, like
+    fmt()."""
     return _NAMED.sub(lambda m: str(values[m.group(1)]) if m.group(1) in values else m.group(0), text)
 
 

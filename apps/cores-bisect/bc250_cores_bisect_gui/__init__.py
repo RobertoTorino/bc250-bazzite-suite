@@ -11,7 +11,6 @@ APP_ID = "bc250-cores-bisect-gui"
 ROOT = Path(__file__).resolve().parent.parent
 LOGO_PATH = ROOT / "images" / "bc250-cores-bisect.png"
 WINDOW_ICON_PATH = LOGO_PATH
-TRANSLATIONS_DIR = Path(__file__).resolve().parent / "translations"
 REPO_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/cores-bisect"
 
 # Bazzite purple, the accent used across the project's GUIs. Applied app-wide (see __main__.py)

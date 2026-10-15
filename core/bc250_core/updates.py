@@ -16,7 +16,7 @@ import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from PyQt6.QtCore import QCoreApplication, QObject, QThread, pyqtSignal
+from PyQt6.QtCore import QObject, QThread, pyqtSignal
 
 from .text import fmt
 
@@ -25,10 +25,6 @@ TIMEOUT = 15
 _VERSION_RE = re.compile(r"(\d+)\.(\d+)\.(\d+)")
 
 Fetch = Callable[[str], object]         # url -> decoded JSON
-
-
-def _tr(text: str) -> str:
-    return QCoreApplication.translate("updates", text)
 
 
 def version_tuple(version: str) -> tuple[int, ...]:
@@ -93,21 +89,21 @@ def latest_release(repo: str, tag_prefix: str = "", *, fetch: Fetch | None = Non
                 if version:
                     candidates.append((version, item))
             if not candidates:
-                return ReleaseInfo(url=page_url, error=fmt(_tr("no release tagged %1 yet"), f"{tag_prefix}*"))
+                return ReleaseInfo(url=page_url, error=fmt("no release tagged %1 yet", f"{tag_prefix}*"))
             version, item = max(candidates, key=lambda c: c[0])
             return _release(item, ".".join(map(str, version)), page_url)
         data = fetch(f"{base}/releases/latest")
         if not isinstance(data, dict):
             raise ValueError("not a release")
     except urllib.error.HTTPError as exc:
-        return ReleaseInfo(url=page_url, error=fmt(_tr("GitHub answered %1"), exc.code))
+        return ReleaseInfo(url=page_url, error=fmt("GitHub answered %1", exc.code))
     except (urllib.error.URLError, OSError, ValueError) as exc:
         reason = str(getattr(exc, "reason", exc)).split(":")[0].strip() or exc.__class__.__name__
-        return ReleaseInfo(url=page_url, error=fmt(_tr("no connection (%1)"), reason[:60]))
+        return ReleaseInfo(url=page_url, error=fmt("no connection (%1)", reason[:60]))
     tag = str(data.get("tag_name", ""))
     match = _VERSION_RE.search(tag)
     if not match:
-        return ReleaseInfo(tag=tag, url=page_url, error=fmt(_tr("unexpected tag %1"), repr(tag)))
+        return ReleaseInfo(tag=tag, url=page_url, error=fmt("unexpected tag %1", repr(tag)))
     return _release(data, match.group(0), page_url)
 
 
@@ -135,17 +131,17 @@ class UpdateStatus:
 
     @property
     def summary(self) -> str:
-        installed = self.installed or _tr("not installed")
+        installed = self.installed or "not installed"
         latest = self.latest
         if latest.error:
-            return fmt(_tr("%1 (latest: unknown, %2)"), installed, latest.error)
+            return fmt("%1 (latest: unknown, %2)", installed, latest.error)
         if not latest.version:
-            return fmt(_tr("%1 (latest: unknown)"), installed)
+            return fmt("%1 (latest: unknown)", installed)
         if self.update_available:
-            return fmt(_tr("%1 → %2 available (%3)"), installed, latest.version, latest.published)
+            return fmt("%1 → %2 available (%3)", installed, latest.version, latest.published)
         if self.installed:
-            return fmt(_tr("%1 (up to date, released %2)"), installed, latest.published)
-        return fmt(_tr("%1; latest release %2 (%3)"), installed, latest.version, latest.published)
+            return fmt("%1 (up to date, released %2)", installed, latest.published)
+        return fmt("%1; latest release %2 (%3)", installed, latest.version, latest.published)
 
 
 class UpdateChecker(QObject):

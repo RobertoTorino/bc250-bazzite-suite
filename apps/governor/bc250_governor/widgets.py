@@ -44,7 +44,7 @@ class StatusPill(QLabel):
         super().__init__(text or "", parent)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setMinimumWidth(110)
-        self.set_status(text if text is not None else self.tr("Unknown"), "neutral")
+        self.set_status(text if text is not None else "Unknown", "neutral")
 
     def set_status(self, text: str, kind: str, tooltip: str = "") -> None:
         self.setText(text)

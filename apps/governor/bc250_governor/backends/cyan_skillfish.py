@@ -11,7 +11,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from PyQt6.QtCore import QCoreApplication
 
 from .. import fmt
 from .base import (
@@ -153,17 +152,13 @@ class CyanSkillfishBackend:
         service_present = result.returncode == 0 and result.stdout.strip() == "loaded"
         config_present = self.config_path.is_file()
         if not service_present:
-            message = fmt(QCoreApplication.translate(
-                "CyanSkillfishBackend",
-                "%1 was not found. The Cyan Skillfish SMU governor does not appear to be installed."),
+            message = fmt("%1 was not found. The Cyan Skillfish SMU governor does not appear to be installed.",
                 self.service_name)
         elif not config_present:
-            message = fmt(QCoreApplication.translate(
-                "CyanSkillfishBackend", "%1 is installed, but %2 does not exist."),
+            message = fmt("%1 is installed, but %2 does not exist.",
                 self.service_name, str(self.config_path))
         else:
-            message = QCoreApplication.translate(
-                "CyanSkillfishBackend", "Cyan Skillfish SMU governor is installed and configured.")
+            message = "Cyan Skillfish SMU governor is installed and configured."
         return GovernorInstallStatus(installed=service_present, service_present=service_present,
                                      config_present=config_present, service_name=self.service_name,
                                      config_path=str(self.config_path), message=message)
@@ -348,10 +343,9 @@ class CyanSkillfishBackend:
             temp_path.unlink(missing_ok=True)
         if result.returncode != 0:
             if result.returncode == 126:
-                raise RuntimeError(QCoreApplication.translate("CyanSkillfishBackend",
-                                                              "Authentication was cancelled."))
+                raise RuntimeError("Authentication was cancelled.")
             raise RuntimeError((result.stderr or result.stdout).strip() or fmt(
-                QCoreApplication.translate("CyanSkillfishBackend", "pkexec failed (%1)"),
+                "pkexec failed (%1)",
                 str(result.returncode)))
         return backup_path
 
@@ -464,12 +458,11 @@ class CyanSkillfishBackend:
 
     def service_action(self, action: str) -> tuple[bool, str]:
         if action not in SERVICE_ACTIONS:
-            raise ValueError(fmt(QCoreApplication.translate("CyanSkillfishBackend",
-                                                             "Unsupported service action: %1"),
+            raise ValueError(fmt("Unsupported service action: %1",
                                  repr(action)))
         result = _run(["pkexec", "systemctl", action, self.service_name], timeout=120)
         if result.returncode == 126:
-            return False, QCoreApplication.translate("CyanSkillfishBackend", "Authentication was cancelled.")
+            return False, "Authentication was cancelled."
         return result.returncode == 0, (result.stderr or result.stdout).strip()
 
     # ------------------------------------------------------------------ sensors
@@ -573,5 +566,5 @@ class CyanSkillfishBackend:
     def performance_state(self) -> PerformanceState:
         if not self.supports(FEATURE_DBUS):
             return PerformanceState(error=fmt(
-                QCoreApplication.translate("CyanSkillfishBackend", "%1 has no D-Bus interface."), self.name))
+                "%1 has no D-Bus interface.", self.name))
         return self.bus.state()

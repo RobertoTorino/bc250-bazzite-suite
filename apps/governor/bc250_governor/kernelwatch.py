@@ -93,8 +93,8 @@ class KernelWatch(QObject):
         self._stderr += text
         # journalctl keeps following with no access to the kernel ring; it only says so once on stderr.
         if not self.reason and any(h in text.lower() for h in BLIND_HINTS):
-            self._fail(self.tr("the kernel log is not readable by this user (add it to the systemd-journal "
-                               "group)"))
+            self._fail(("the kernel log is not readable by this user (add it to the systemd-journal "
+                        "group)"))
 
     def _finished(self, code: int, status: QProcess.ExitStatus) -> None:
         if self._partial:
@@ -105,11 +105,11 @@ class KernelWatch(QObject):
             return
         if code != 0 and not self.reason:
             why = self._stderr.strip().splitlines()
-            self._fail(why[-1] if why else fmt(self.tr("journalctl -k exited with code %1"), str(code)))
+            self._fail(why[-1] if why else fmt("journalctl -k exited with code %1", str(code)))
 
     def _error(self, error: QProcess.ProcessError) -> None:
         if error == QProcess.ProcessError.FailedToStart:
-            self._fail(self.tr("journalctl is not available"))
+            self._fail("journalctl is not available")
 
     def _fail(self, why: str) -> None:
         self.reason = why

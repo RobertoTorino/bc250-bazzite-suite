@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 
 from bc250_core import __version__ as CORE_VERSION, instance
@@ -22,9 +23,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args, qt_args = build_parser().parse_known_args()
+    if args.path:
+        # Absolute, as the folder it was given in: the open window of a second launch runs elsewhere, and the
+        # last folder is saved.
+        args.path = os.path.abspath(args.path)
 
-    # English only, Qt's own dialog buttons included.
-    app = create_app(INFO, qt_args, lang="en")
+    app = create_app(INFO, qt_args)
     # A second launch (the menu entry with another folder or .iso) hands it to the open window.
     if instance.already_running(INFO.app_id, [args.path] if args.path else []):
         return 0

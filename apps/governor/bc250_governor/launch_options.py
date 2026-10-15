@@ -6,7 +6,7 @@ governor back on its start-up range. So every mode below is reverted when the ga
 
 from __future__ import annotations
 
-from PyQt6.QtCore import QCoreApplication, Qt, QT_TRANSLATE_NOOP, QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QApplication, QButtonGroup, QComboBox, QDoubleSpinBox, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
     QRadioButton, QSpinBox, QVBoxLayout, QWidget,
@@ -19,34 +19,33 @@ WRAPPER = "cyan-skillfish-performance-mode"
 FREQ_STEP = 25
 FREQ_LIMIT = 3000
 
-# Captions and tips are marked for extraction here and translated at the point of use; the keys and the
-# "{cmd}"-style templates are not user-visible text and stay as-is.
+# The keys and the "{cmd}"-style templates are not user-visible text.
 MODES = (
-    ("on", QT_TRANSLATE_NOOP("launch_options", "Performance mode"),
-     QT_TRANSLATE_NOOP("launch_options", "Whole safe-points range, faster reaction to load. Same as the On "
-                       "button.")),
-    ("fixed", QT_TRANSLATE_NOOP("launch_options", "Fixed clock"),
-     QT_TRANSLATE_NOOP("launch_options", "--fixed-frequency: pin the GPU clock for this game (must lie in the "
-                       "allowed range).")),
-    ("range", QT_TRANSLATE_NOOP("launch_options", "Clock range"),
-     QT_TRANSLATE_NOOP("launch_options", "--range: a temporary min/max, 0 = no limit.")),
-    ("load", QT_TRANSLATE_NOOP("launch_options", "Load target"),
-     QT_TRANSLATE_NOOP("launch_options", "--load-target: lower/upper GPU load that drives up- and "
-                       "downclocking.")),
-    ("temp", QT_TRANSLATE_NOOP("launch_options", "Temperature"),
-     QT_TRANSLATE_NOOP("launch_options", "--temperature: throttle / recovery thresholds in °C.")),
+    ("on", "Performance mode",
+     ("Whole safe-points range, faster reaction to load. Same as the On "
+      "button.")),
+    ("fixed", "Fixed clock",
+     ("--fixed-frequency: pin the GPU clock for this game (must lie in the "
+      "allowed range).")),
+    ("range", "Clock range",
+     "--range: a temporary min/max, 0 = no limit."),
+    ("load", "Load target",
+     ("--load-target: lower/upper GPU load that drives up- and "
+      "downclocking.")),
+    ("temp", "Temperature",
+     "--temperature: throttle / recovery thresholds in °C."),
 )
 
 TARGETS = (
-    ("steam", QT_TRANSLATE_NOOP("launch_options", "Steam launch options"), "{cmd} %command%",
-     QT_TRANSLATE_NOOP("launch_options", "Steam → game → Properties → General → Launch options. Paste the "
-                       "whole line.")),
-    ("heroic", QT_TRANSLATE_NOOP("launch_options", "Heroic / Lutris wrapper"), "{cmd}",
-     QT_TRANSLATE_NOOP("launch_options", "Heroic: game settings → Advanced → Wrapper command. Lutris: Runner "
-                       "options → Command prefix. Only the wrapper part is needed; the launcher appends the "
-                       "game itself.")),
-    ("shell", QT_TRANSLATE_NOOP("launch_options", "Terminal / script"), "{cmd} <program>",
-     QT_TRANSLATE_NOOP("launch_options", "Replace <program> with the command to run.")),
+    ("steam", "Steam launch options", "{cmd} %command%",
+     ("Steam → game → Properties → General → Launch options. Paste the "
+      "whole line.")),
+    ("heroic", "Heroic / Lutris wrapper", "{cmd}",
+     ("Heroic: game settings → Advanced → Wrapper command. Lutris: Runner "
+      "options → Command prefix. Only the wrapper part is needed; the launcher appends the "
+      "game itself.")),
+    ("shell", "Terminal / script", "{cmd} <program>",
+     "Replace <program> with the command to run."),
 )
 
 
@@ -56,12 +55,12 @@ class LaunchOptionsBox(QGroupBox):
     generated = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None):
-        super().__init__(self.tr("Per game"), parent)
+        super().__init__("Per game", parent)
         layout = QVBoxLayout(self)
         layout.addWidget(hint_label(
-            self.tr("The governor ships a wrapper that applies one of these settings for a single program and "
-                   "turns performance mode off again when it exits, which also restores the normal range. Pick "
-                   "what the game should get, copy the line into its launcher.")))
+            ("The governor ships a wrapper that applies one of these settings for a single program and "
+             "turns performance mode off again when it exits, which also restores the normal range. Pick "
+             "what the game should get, copy the line into its launcher.")))
 
         grid = QGridLayout()
         grid.setHorizontalSpacing(12)
@@ -70,8 +69,8 @@ class LaunchOptionsBox(QGroupBox):
         self.radios: dict[str, QRadioButton] = {}
         self.inputs: dict[str, QWidget] = {}
         for row, (key, caption, tip) in enumerate(MODES):
-            radio = QRadioButton(QCoreApplication.translate("launch_options", caption))
-            radio.setToolTip(QCoreApplication.translate("launch_options", tip))
+            radio = QRadioButton(caption)
+            radio.setToolTip(tip)
             self.group.addButton(radio)
             self.radios[key] = radio
             grid.addWidget(radio, row, 0)
@@ -85,11 +84,11 @@ class LaunchOptionsBox(QGroupBox):
         self.group.buttonToggled.connect(lambda *_: self._refresh())
 
         target_row = QHBoxLayout()
-        target_row.addWidget(QLabel(self.tr("For:")))
+        target_row.addWidget(QLabel("For:"))
         self.target = QComboBox()
         for key, caption, _template, tip in TARGETS:
-            self.target.addItem(QCoreApplication.translate("launch_options", caption), key)
-            self.target.setItemData(self.target.count() - 1, QCoreApplication.translate("launch_options", tip),
+            self.target.addItem(caption, key)
+            self.target.setItemData(self.target.count() - 1, tip,
                                     Qt.ItemDataRole.ToolTipRole)
         self.target.currentIndexChanged.connect(self._refresh)
         target_row.addWidget(self.target)
@@ -100,7 +99,7 @@ class LaunchOptionsBox(QGroupBox):
         self.output = QLineEdit()
         self.output.setReadOnly(True)
         self.output.setStyleSheet("font-family:monospace;")
-        self.copy_button = accent_button(self.tr("Copy"), self.tr("Copy the line to the clipboard."))
+        self.copy_button = accent_button("Copy", "Copy the line to the clipboard.")
         self._copy_style = self.copy_button.styleSheet()
         self.copy_button.clicked.connect(self._copy)
         output_row.addWidget(self.output, 1)
@@ -118,25 +117,25 @@ class LaunchOptionsBox(QGroupBox):
         row = QHBoxLayout(box)
         row.setContentsMargins(0, 0, 0, 0)
         if key == "fixed":
-            self.fixed = self._freq_spin(1500, self.tr("Clock to pin, MHz."))
+            self.fixed = self._freq_spin(1500, "Clock to pin, MHz.")
             row.addWidget(self.fixed)
         elif key == "range":
-            self.range_min = self._freq_spin(0, self.tr("Lower limit, 0 = no limit."))
-            self.range_max = self._freq_spin(0, self.tr("Upper limit, 0 = no limit."))
+            self.range_min = self._freq_spin(0, "Lower limit, 0 = no limit.")
+            self.range_max = self._freq_spin(0, "Upper limit, 0 = no limit.")
             for spin in (self.range_min, self.range_max):
-                spin.setSpecialValueText(self.tr("No limit"))
+                spin.setSpecialValueText("No limit")
             row.addWidget(self.range_min)
-            row.addWidget(QLabel(self.tr("to")))
+            row.addWidget(QLabel("to"))
             row.addWidget(self.range_max)
         elif key == "load":
-            self.load_min = self._pct_spin(0.70, self.tr("Below this load the governor clocks down."))
-            self.load_max = self._pct_spin(0.90, self.tr("Above this load the governor clocks up."))
+            self.load_min = self._pct_spin(0.70, "Below this load the governor clocks down.")
+            self.load_max = self._pct_spin(0.90, "Above this load the governor clocks up.")
             row.addWidget(self.load_min)
-            row.addWidget(QLabel(self.tr("to")))
+            row.addWidget(QLabel("to"))
             row.addWidget(self.load_max)
         elif key == "temp":
-            self.temp_throttle = self._temp_spin(90, self.tr("Throttle above this temperature."))
-            self.temp_recover = self._temp_spin(80, self.tr("Resume normal clocks below this temperature."))
+            self.temp_throttle = self._temp_spin(90, "Throttle above this temperature.")
+            self.temp_recover = self._temp_spin(80, "Resume normal clocks below this temperature.")
             row.addWidget(self.temp_throttle)
             row.addWidget(QLabel("/"))
             row.addWidget(self.temp_recover)
@@ -159,7 +158,7 @@ class LaunchOptionsBox(QGroupBox):
         spin.setDecimals(2)
         spin.setSingleStep(0.05)
         spin.setValue(value)
-        spin.setToolTip(tip + self.tr(" Fraction of 1, as in config.toml."))
+        spin.setToolTip(tip + " Fraction of 1, as in config.toml.")
         spin.valueChanged.connect(self._refresh)
         return spin
 
@@ -198,11 +197,11 @@ class LaunchOptionsBox(QGroupBox):
         if mode == "range":
             low, high = self.range_min.value(), self.range_max.value()
             if low and high and low > high:
-                return self.tr("The lower limit is above the upper limit.")
+                return "The lower limit is above the upper limit."
         elif mode == "load" and self.load_min.value() >= self.load_max.value():
-            return self.tr("The lower load target must be below the upper one.")
+            return "The lower load target must be below the upper one."
         elif mode == "temp" and self.temp_recover.value() >= self.temp_throttle.value():
-            return self.tr("Recovery must be below the throttling temperature.")
+            return "Recovery must be below the throttling temperature."
         return ""
 
     def prefill(self, state: PerformanceState) -> None:
@@ -230,17 +229,17 @@ class LaunchOptionsBox(QGroupBox):
         self.output.setText(self.line())
         self.copy_button.setEnabled(not problem)
         tip = next(t for key, _c, _t, t in TARGETS if key == self.target.currentData())
-        self.note.setText(problem or QCoreApplication.translate("launch_options", tip))
+        self.note.setText(problem or tip)
         self.note.setStyleSheet(f"color:{RED};" if problem else "color:palette(placeholder-text);")
 
     def _copy(self) -> None:
         text = self.line()
         QApplication.clipboard().setText(text)
         self.generated.emit(text)
-        self.copy_button.setText(self.tr("Copied"))
+        self.copy_button.setText("Copied")
         self.copy_button.setStyleSheet(self._copy_style.replace(f"solid {ACCENT}", f"solid {GREEN}"))
         QTimer.singleShot(1500, self._reset_copy)
 
     def _reset_copy(self) -> None:
-        self.copy_button.setText(self.tr("Copy"))
+        self.copy_button.setText("Copy")
         self.copy_button.setStyleSheet(self._copy_style)

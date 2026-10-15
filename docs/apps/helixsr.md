@@ -114,21 +114,7 @@ python3 -m venv python && python/bin/pip install -r requirements.txt && python/b
 
 `--payload DIR`, `--deployments FILE` and `--work DIR` point the app at another payload folder, deployment
 list and download folder, for development on a machine without Steam. `--no-update-check` skips the release
-lookup at start. `--lang CODE` forces an interface language for this run (see below). `--version` prints the
-version.
-
-## Languages
-
-The interface follows the system locale. Available: English (source), Deutsch (`de`), Español (`es`), Français
-(`fr`), Italiano (`it`), Polski (`pl`), Русский (`ru`), 中文（简体） (`zh`) and 日本語 (`ja`). The *Help* page has a
-language picker (saved per user, applied at the next start; *System default* goes back to the locale), and
-`--lang de` overrides both for one run. English is the fallback for everything that has no translation.
-
-Translation sources are `bc250_bazzite_helixsr/translations/bc250_bazzite_helixsr_<code>.ts` (Qt Linguist XML)
-next to the compiled `.qm` the app loads. After changing strings in the code, `tools/update_translations.sh`
-refreshes every `.ts` (new strings appear as *unfinished*) and recompiles; `tools/update_translations.sh nl`
-also starts a new language. `tools/compile_translations.py` is a small stand-in for Qt's `lrelease`, which the
-PyQt6 wheels do not ship. The tests check that every shipped translation is complete and keeps its placeholders.
+lookup at start. `--version` prints the version.
 
 ## Pages
 
@@ -142,7 +128,7 @@ PyQt6 wheels do not ship. The tests check that every shipped translation is comp
   whether to write the current `helixsr.ini`, deploy or remove. In folder mode the OptiScaler snippet is
   shown with a *Copy* button.
 - **helixsr.ini** – the settings form, validation, preview, *Save as default* and *Apply to deployment*.
-- **Help** – the workflow, where the files live, links to HelixSR and OptiScaler, and the language picker.
+- **Help** – the workflow, where the files live, and links to HelixSR and OptiScaler.
 
 The header shows the payload version, network-file status, deployments (ok / total) and the number of Steam
 games found; it refreshes every 5 seconds.
@@ -160,11 +146,9 @@ bc250_bazzite_helixsr/
   setup_page.py     Setup page
   main_window.py    header, navigation, polling, confirmations, wiring of page signals to the backend
   pages.py          Overview, Deploy and helixsr.ini pages
-  help.py           Help page (text and language picker)
+  help.py           Help page
   widgets.py        status pills, metric boxes, rounded tooltip (shared with bc250-governor-manager)
   fonts/            Inter (SIL OFL), used for the header on Linux
-  translations/     bc250_bazzite_helixsr_<code>.ts sources and compiled .qm files
-tools/              update_translations.sh (pylupdate6 + compile), compile_translations.py (.ts -> .qm)
 install.sh          per-user installer (venv, launcher, desktop entry, icon); --uninstall removes it, keeps the payload
 bc250-bazzite-helixsr-gui.desktop  desktop entry template, Exec is filled in by install.sh
 tests/              pytest suite (offscreen Qt, temporary payload and game folders, no real HelixSR needed)

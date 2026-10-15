@@ -34,8 +34,7 @@ def main() -> int:
 
     from .consoles import migrate_old_config
     migrate_old_config(config_home(), INFO.app_id)      # before Qt opens the settings file
-    # English only so far, Qt's own menu texts included.
-    app = create_app(INFO, qt_args, lang="en")
+    app = create_app(INFO, qt_args)
     if args.stream:
         from . import direct
         return direct.run(args.stream, app, players=players, simulated_loss=max(0.0, min(args.simulate_loss, 100.0)))

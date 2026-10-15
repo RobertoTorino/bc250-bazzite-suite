@@ -54,8 +54,7 @@ def main() -> int:
     if args.listen is not None and args.host:
         parser.error("--listen cannot be combined with a host")
 
-    # English only, Qt's own dialog buttons included.
-    app = create_app(INFO, qt_args, lang="en")
+    app = create_app(INFO, qt_args)
     # A second launch with a host or a port opens its tab in the open window.
     if instance.already_running(INFO.app_id, own_arguments(args)):
         return 0

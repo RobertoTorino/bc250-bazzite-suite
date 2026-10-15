@@ -15,4 +15,4 @@ dependencies = ["PyQt6>=6.11,<7"]
 packages = ["bc250_core"]
 
 [tool.setuptools.package-data]
-bc250_core = ["fonts/*", "translations/*.qm"]
+bc250_core = ["fonts/*"]

@@ -27,9 +27,8 @@ def main() -> int:
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__} (core {CORE_VERSION})")
     args, qt_args = parser.parse_known_args()
 
-    # Names, Fusion style, rounded tooltips and the window icon. English only so far, Qt's own dialog buttons
-    # included (lang="en"), as before the move to bc250_core.
-    app = create_app(INFO, qt_args, lang="en")
+    # Names, Fusion style, rounded tooltips and the window icon, as before the move to bc250_core.
+    app = create_app(INFO, qt_args)
 
     script = Path(args.script).resolve()
     if not script.is_file():

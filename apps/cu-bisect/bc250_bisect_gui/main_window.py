@@ -58,18 +58,17 @@ class MainWindow(QWidget):
         title.setStyleSheet("font-size:24px; font-weight:800; padding:0 2px;")
         title_row.addWidget(title)
         title_row.addStretch(1)
-        help_btn = QPushButton(self.tr("Help"))
+        help_btn = QPushButton("Help")
         help_btn.setFlat(True)
         help_btn.clicked.connect(lambda: HelpDialog(self.script, self).exec())
         title_row.addWidget(help_btn)
-        about_btn = QPushButton(self.tr("About"))
+        about_btn = QPushButton("About")
         about_btn.setFlat(True)
         about_btn.clicked.connect(lambda: AboutDialog(self).exec())
         title_row.addWidget(about_btn)
         header_right.addLayout(title_row)
-        sub = QLabel(self.tr(
-            "Choose how you want to run bc250-cu-bisect.sh, then click Start. This window closes "
-            "and the real run continues in a terminal, exactly like running the script by hand."))
+        sub = QLabel(("Choose how you want to run bc250-cu-bisect.sh, then click Start. This window closes "
+                      "and the real run continues in a terminal, exactly like running the script by hand."))
         sub.setWordWrap(True)
         header_right.addWidget(sub)
         header.addLayout(header_right, 1)
@@ -81,31 +80,30 @@ class MainWindow(QWidget):
         grid = QGridLayout(frame)
         row = 0
 
-        grid.addWidget(QLabel(self.tr("Load per attempt (seconds):")), row, 0)
+        grid.addWidget(QLabel("Load per attempt (seconds):"), row, 0)
         self.time_spin = QSpinBox()
         self.time_spin.setRange(60, 36000)
         self.time_spin.setSingleStep(30)
         self.time_spin.setValue(180)
-        self.time_spin.setToolTip(self.tr("GPU load per attempt (-t). Minimum 60s, default 180s."))
+        self.time_spin.setToolTip("GPU load per attempt (-t). Minimum 60s, default 180s.")
         grid.addWidget(self.time_spin, row, 1)
         row += 1
 
-        grid.addWidget(QLabel(self.tr("Rounds per item:")), row, 0)
+        grid.addWidget(QLabel("Rounds per item:"), row, 0)
         self.rounds_spin = QSpinBox()
         self.rounds_spin.setRange(2, 9)
         self.rounds_spin.setValue(3)
-        self.rounds_spin.setToolTip(self.tr(
-            "Attempts per item (-r), interleaved so heat/time-of-day don't favour one item. "
-            "Minimum 2 (control-only runs may use 1)."))
+        self.rounds_spin.setToolTip(("Attempts per item (-r), interleaved so heat/time-of-day don't favour one item. "
+                                     "Minimum 2 (control-only runs may use 1)."))
         grid.addWidget(self.rounds_spin, row, 1)
         row += 1
 
-        grid.addWidget(QLabel(self.tr("Baseline:")), row, 0)
+        grid.addWidget(QLabel("Baseline:"), row, 0)
         self.baseline_combo = QComboBox()
         self.baseline_combo.addItems(list(BASELINE_PRESETS.keys()))
-        self.baseline_combo.setToolTip(self.tr(
+        self.baseline_combo.setToolTip(
             "The masks every attempt starts from (--baseline). Auto-detect uses this boot's own "
-            "clean masks - the safest default."))
+            "clean masks - the safest default.")
         self.baseline_combo.currentTextChanged.connect(self._on_baseline_changed)
         grid.addWidget(self.baseline_combo, row, 1)
         self.baseline_custom = QLineEdit()
@@ -114,39 +112,38 @@ class MainWindow(QWidget):
         grid.addWidget(self.baseline_custom, row, 2)
         row += 1
 
-        self.control_only_check = QCheckBox(self.tr("Control only (re-validate, skip per-WGP bisect)"))
-        self.control_only_check.setToolTip(self.tr(
+        self.control_only_check = QCheckBox("Control only (re-validate, skip per-WGP bisect)")
+        self.control_only_check.setToolTip(
             "--control-only: only run the control item. For re-validating a combined mask you "
-            "already bisected, without re-testing already-known-bad WGPs. Allows a single round."))
+            "already bisected, without re-testing already-known-bad WGPs. Allows a single round.")
         self.control_only_check.toggled.connect(self._on_control_only_toggled)
         grid.addWidget(self.control_only_check, row, 0, 1, 3)
         row += 1
 
-        self.same_boot_check = QCheckBox(self.tr("Same boot (don't reboot between attempts)"))
-        self.same_boot_check.setToolTip(self.tr(
-            "--same-boot: faster, but every attempt then inherits the previous one's state."))
+        self.same_boot_check = QCheckBox("Same boot (don't reboot between attempts)")
+        self.same_boot_check.setToolTip(
+            "--same-boot: faster, but every attempt then inherits the previous one's state.")
         grid.addWidget(self.same_boot_check, row, 0, 1, 3)
         row += 1
 
-        self.auto_check = QCheckBox(self.tr("Unattended (no prompts, auto-reboot, resumes after login)"))
-        self.auto_check.setToolTip(self.tr(
+        self.auto_check = QCheckBox("Unattended (no prompts, auto-reboot, resumes after login)")
+        self.auto_check.setToolTip(
             "--auto: don't ask anything, reboot on its own, and keep going after every login until "
-            "every item is done. Needs passwordless sudo for umr/journalctl - see the manual."))
+            "every item is done. Needs passwordless sudo for umr/journalctl - see the manual.")
         self.auto_check.toggled.connect(self._on_auto_toggled)
         grid.addWidget(self.auto_check, row, 0, 1, 3)
         row += 1
 
-        self.autostart_check = QCheckBox(self.tr(
-            "Also install the auto-resume login service (recommended with Unattended)"))
-        self.autostart_check.setToolTip(self.tr(
+        self.autostart_check = QCheckBox("Also install the auto-resume login service (recommended with Unattended)")
+        self.autostart_check.setToolTip(
             "Writes and enables ~/.config/systemd/user/bc250-cu-bisect-auto.service, so the run "
-            "relaunches itself after every reboot/login, same as the manual's --auto checklist."))
+            "relaunches itself after every reboot/login, same as the manual's --auto checklist.")
         self.autostart_check.setEnabled(False)
         grid.addWidget(self.autostart_check, row, 0, 1, 3)
         row += 1
 
-        self.no_watch_check = QCheckBox(self.tr("Disable live register watch (--no-watch)"))
-        self.no_watch_check.setToolTip(self.tr("Don't read the registers back during the load."))
+        self.no_watch_check = QCheckBox("Disable live register watch (--no-watch)")
+        self.no_watch_check.setToolTip("Don't read the registers back during the load.")
         grid.addWidget(self.no_watch_check, row, 0, 1, 3)
         row += 1
 
@@ -155,10 +152,9 @@ class MainWindow(QWidget):
 
     def _build_buttons(self) -> QHBoxLayout:
         buttons = QHBoxLayout()
-        self.reset_btn = QPushButton(self.tr("Reset"))
-        self.reset_btn.setToolTip(self.tr(
-            "--reset: permanently deletes all saved results and logs in "
-            "~/.local/share/bc250-cu-bisect, so the next run starts from scratch."))
+        self.reset_btn = QPushButton("Reset")
+        self.reset_btn.setToolTip(("--reset: permanently deletes all saved results and logs in "
+                                   "~/.local/share/bc250-cu-bisect, so the next run starts from scratch."))
         self.reset_btn.setStyleSheet(
             "QPushButton { background:#c62828; color:white; font-weight:600; "
             "padding:6px 14px; border-radius:4px; }"
@@ -166,12 +162,12 @@ class MainWindow(QWidget):
         )
         self.reset_btn.clicked.connect(self._on_reset)
         buttons.addWidget(self.reset_btn)
-        self.status_btn = QPushButton(self.tr("Show status (--status)"))
-        self.status_btn.setToolTip(self.tr("Show the results so far and write the report, then exit."))
+        self.status_btn = QPushButton("Show status (--status)")
+        self.status_btn.setToolTip("Show the results so far and write the report, then exit.")
         self.status_btn.clicked.connect(self._on_status)
         buttons.addWidget(self.status_btn)
         buttons.addStretch(1)
-        self.start_btn = QPushButton(self.tr("Start CU Bisect"))
+        self.start_btn = QPushButton("Start CU Bisect")
         self.start_btn.setDefault(True)
         self.start_btn.setStyleSheet("font-weight:700; padding:6px 18px;")
         self.start_btn.clicked.connect(self._on_start)
@@ -240,11 +236,10 @@ class MainWindow(QWidget):
         confirm = QMessageBox(self)
         confirm.setIcon(QMessageBox.Icon.Warning)
         confirm.setWindowTitle(APP_NAME)
-        confirm.setText(self.tr("Delete all bc250-cu-bisect results?"))
-        confirm.setInformativeText(self.tr(
-            "This permanently deletes every saved result and log in "
-            "~/.local/share/bc250-cu-bisect (--reset). This cannot be undone and there is no "
-            "backup. The script will still ask you to confirm once more in the terminal."))
+        confirm.setText("Delete all bc250-cu-bisect results?")
+        confirm.setInformativeText(("This permanently deletes every saved result and log in "
+                                    "~/.local/share/bc250-cu-bisect (--reset). This cannot be undone and there is no "
+                                    "backup. The script will still ask you to confirm once more in the terminal."))
         confirm.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
         confirm.setDefaultButton(QMessageBox.StandardButton.Cancel)
         if confirm.exec() != QMessageBox.StandardButton.Yes:
@@ -261,12 +256,11 @@ class MainWindow(QWidget):
             QMessageBox.warning(self, APP_NAME, "\n".join(errors))
             return
 
-        summary = self.tr(
+        summary = (
             "Start bc250-cu-bisect.sh with:\n\n"
             "  load time: {t}s\n  rounds: {r}\n  baseline: {b}\n"
             "  control-only: {co}\n  same-boot: {sb}\n  unattended: {au}\n  no-watch: {nw}\n\n"
-            "This window will close and the run continues in a terminal."
-        ).format(t=opts.time_secs, r=opts.rounds, b=opts.baseline or self.tr("auto-detect"),
+            "This window will close and the run continues in a terminal.").format(t=opts.time_secs, r=opts.rounds, b=opts.baseline or "auto-detect",
                   co=opts.control_only, sb=opts.same_boot, au=opts.unattended, nw=opts.no_watch)
         if QMessageBox.question(self, APP_NAME, summary) != QMessageBox.StandardButton.Yes:
             return
@@ -276,7 +270,7 @@ class MainWindow(QWidget):
             try:
                 service.install(self.script, opts.time_secs, opts.rounds)
             except Exception as exc:  # noqa: BLE001 - surfaced to the user, not fatal to starting
-                QMessageBox.warning(self, APP_NAME, self.tr(
+                QMessageBox.warning(self, APP_NAME, (
                     "Could not install the auto-resume login service:\n{0}\n\n"
                     "The run will still start now; see the manual's --auto checklist to set it up "
                     "by hand.").format(exc))

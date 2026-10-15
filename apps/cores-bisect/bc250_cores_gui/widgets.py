@@ -17,13 +17,12 @@ from . import APP_NAME, LOGO_PATH, REPO_URL, __version__, window_title
 class SudoDialog(QDialog):
     def __init__(self, message: str = "", parent: QWidget | None = None):
         super().__init__(parent)
-        self.setWindowTitle(window_title(self.tr("administrator password")))
+        self.setWindowTitle(window_title("administrator password"))
         self.setModal(True)
         layout = QVBoxLayout(self)
-        text = QLabel(self.tr(
-            "Writing the SMU mailbox and installing the systemd service need root, so this runs "
-            "bc250-cores-unlock.sh through sudo.\nYour password is passed to sudo only and is never stored."
-        ))
+        text = QLabel(("Writing the SMU mailbox and installing the systemd service need root, so this runs "
+                       "bc250-cores-unlock.sh through sudo.\n"
+                       "Your password is passed to sudo only and is never stored."))
         text.setWordWrap(True)
         layout.addWidget(text)
         if message:
@@ -33,7 +32,7 @@ class SudoDialog(QDialog):
             layout.addWidget(err)
         self.edit = QLineEdit()
         self.edit.setEchoMode(QLineEdit.EchoMode.Password)
-        self.edit.setPlaceholderText(self.tr("sudo password"))
+        self.edit.setPlaceholderText("sudo password")
         layout.addWidget(self.edit)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self._ok_btn = buttons.button(QDialogButtonBox.StandardButton.Ok)
@@ -57,7 +56,7 @@ class SudoDialog(QDialog):
 class AboutDialog(QDialog):
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
-        self.setWindowTitle(window_title(self.tr("about")))
+        self.setWindowTitle(window_title("about"))
         self.setModal(True)
         layout = QVBoxLayout(self)
 
@@ -71,15 +70,13 @@ class AboutDialog(QDialog):
         name_label = QLabel(f"<b>{APP_NAME}</b>")
         name_label.setStyleSheet("font-size:16px;")
         names.addWidget(name_label)
-        names.addWidget(QLabel(self.tr("Version {0}").format(__version__)))
+        names.addWidget(QLabel("Version {0}".format(__version__)))
         top.addLayout(names)
         top.addStretch(1)
         layout.addLayout(top)
 
-        desc = QLabel(self.tr(
-            "A PyQt6 front-end for bc250-cores-unlock.sh: keeps the BC-250 8C/16T core unlock you "
-            "already validated with bc250-cores-bisect.sh across reboots."
-        ))
+        desc = QLabel(("A PyQt6 front-end for bc250-cores-unlock.sh: keeps the BC-250 8C/16T core unlock you "
+                       "already validated with bc250-cores-bisect.sh across reboots."))
         desc.setWordWrap(True)
         layout.addWidget(desc)
 
@@ -88,7 +85,7 @@ class AboutDialog(QDialog):
         link.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
         layout.addWidget(link)
 
-        layout.addWidget(QLabel(self.tr("License: GNU GPLv3.")))
+        layout.addWidget(QLabel("License: GNU GPLv3."))
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
         buttons.accepted.connect(self.accept)

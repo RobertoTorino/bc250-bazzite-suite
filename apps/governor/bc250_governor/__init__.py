@@ -11,18 +11,15 @@ ROOT = Path(__file__).resolve().parent.parent
 LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
 WINDOW_ICON_PATH = LOGO_PATH
 FONT_DIR = Path(__file__).resolve().parent / "fonts"
-TRANSLATIONS_DIR = Path(__file__).resolve().parent / "translations"
 DISPLAY_NAME = f"{APP_NAME} {__version__}"
 REPO_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/governor"
 GOVERNOR_URL = "https://github.com/filippor/cyan-skillfish-governor/tree/smu"
 
 
 def fmt(text: str, *values: object) -> str:
-    """Fill the %1, %2, … placeholders of a translated string.
+    """Fill the %1, %2, … placeholders of a string, as Qt's QString.arg() does (PyQt6 has no QString).
 
-    Qt's own QString.arg() is not available here: PyQt6 returns tr() as a plain str. Placeholders are
-    numbered rather than positional ({} or %s), so a translation is free to reorder them, which some
-    languages need. Substitution is a single pass, so a value that itself contains "%2" is left alone."""
+    Substitution is a single pass, so a value that itself contains "%2" is left alone."""
     import re
     return re.sub(r"%(\d+)",
                   lambda m: str(values[int(m.group(1)) - 1]) if 0 < int(m.group(1)) <= len(values) else m.group(0),

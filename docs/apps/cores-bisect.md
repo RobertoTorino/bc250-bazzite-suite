@@ -368,31 +368,6 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python -m bc250_cores_gui         # --script PATH to use another bc250-cores-unlock.sh
 ```
 
-### Languages
-
-Both GUIs are translated into **German, Spanish, French, Italian, Polish, Russian, Simplified
-Chinese and Japanese**, English being the source language. The language is picked up from your
-desktop locale; `--lang` overrides it:
-
-```bash
-bc250-cores-bisect-gui --lang de
-bc250-cores-unlock-gui --lang ja
-```
-
-The compiled catalogs (`.qm`) are committed next to their source (`.ts`) files in each package's
-`translations/` directory and are installed with the rest of the package, so nothing extra is
-needed at runtime. Only rebuilding them needs Qt's tooling:
-
-```bash
-pip install PySide6-Essentials
-pyside6-lupdate bc250_cores_bisect_gui/*.py -ts bc250_cores_bisect_gui/translations/bc250_cores_bisect_gui_de.ts -locations none
-pyside6-lrelease bc250_cores_bisect_gui/translations/bc250_cores_bisect_gui_de.ts \
-  -qm bc250_cores_bisect_gui/translations/bc250_cores_bisect_gui_de.qm
-```
-
-Qt's own `qtbase_<lang>.qm` is loaded too, so standard dialog buttons (OK/Cancel/Yes/No) follow the
-same language. Terminal output of the two shell scripts stays English.
-
 ## Known side effect
 
 After the unlock, `pp_dpm_sclk` and `hwmon` `freq1_input` report nonsense GPU clocks (tens of MHz).

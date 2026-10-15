@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PyQt6.QtCore import QCoreApplication, QElapsedTimer, Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import QElapsedTimer, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox, QComboBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QProgressBar, QPushButton,
     QVBoxLayout, QWidget,
@@ -18,7 +18,7 @@ from .widgets import StatusPill, Terminal, accent_button, hint_label, page_heade
 
 
 def _size(n: int) -> str:
-    return QCoreApplication.translate("setup_page", "{0:.1f} MB").format(n / 1e6) if n else "?"
+    return "{0:.1f} MB".format(n / 1e6) if n else "?"
 
 
 class SetupPage(QWidget):
@@ -39,92 +39,92 @@ class SetupPage(QWidget):
         self._running = False
         self._checking = False
         layout = QVBoxLayout(self)
-        header, _ = page_header(self.tr("Setup"))
+        header, _ = page_header("Setup")
         layout.addLayout(header)
-        layout.addWidget(hint_label(self.tr(
+        layout.addWidget(hint_label(
             "One click does what the HelixSR README asks you to do by hand: download the release, fetch NVIDIA's "
             "DLSS DLL, Microsoft's shader compiler and (on Bazzite) a portable Python in parallel, run "
             "<code>helixsr-setup.sh</code> and import the result as the payload. The DLSS DLL is used once and "
-            "deleted; the network files it produces are NVIDIA's property and stay on this PC.")))
+            "deleted; the network files it produces are NVIDIA's property and stay on this PC."))
 
-        updates = QGroupBox(self.tr("Releases"))
+        updates = QGroupBox("Releases")
         form = QFormLayout(updates)
         form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
-        self.helix_pill = StatusPill(self.tr("Not checked"))
+        self.helix_pill = StatusPill("Not checked")
         self.helix_text = QLabel()
         self.helix_text.setWordWrap(True)
         self.helix_text.setOpenExternalLinks(True)
         row = QHBoxLayout()
         row.addWidget(self.helix_pill)
         row.addWidget(self.helix_text, 1)
-        form.addRow(self.tr("HelixSR"), row)
+        form.addRow("HelixSR", row)
         buttons = QHBoxLayout()
-        self.check = QPushButton(self.tr("Check now"))
-        self.check.setToolTip(self.tr("Ask GitHub for the latest HelixSR release"))
+        self.check = QPushButton("Check now")
+        self.check.setToolTip("Ask GitHub for the latest HelixSR release")
         self.check.clicked.connect(self.check_requested)
         buttons.addWidget(self.check)
-        self.auto_check = QCheckBox(self.tr("Check at start"))
-        self.auto_check.setToolTip(self.tr("Look up the latest HelixSR release every time the app starts (one small request)"))
+        self.auto_check = QCheckBox("Check at start")
+        self.auto_check.setToolTip("Look up the latest HelixSR release every time the app starts (one small request)")
         self.auto_check.toggled.connect(self.auto_check_changed)
         buttons.addWidget(self.auto_check)
         buttons.addStretch(1)
         form.addRow("", buttons)
         layout.addWidget(updates)
 
-        box = QGroupBox(self.tr("Get HelixSR and build the network files"))
+        box = QGroupBox("Get HelixSR and build the network files")
         vbox = QVBoxLayout(box)
         choice = QHBoxLayout()
-        choice.addWidget(QLabel(self.tr("Version:")))
+        choice.addWidget(QLabel("Version:"))
         self.version = QComboBox()
-        self.version.addItem(self.tr("Latest release"), False)
-        self.version.addItem(self.tr("{0} (fallback)").format(FALLBACK_VERSION), True)
-        self.version.setToolTip(self.tr("HelixSR's developer recommends {0} when the latest release does not work for you. "
-                                "Switching builds the network files again; deploy again per game afterwards.")
+        self.version.addItem("Latest release", False)
+        self.version.addItem("{0} (fallback)".format(FALLBACK_VERSION), True)
+        self.version.setToolTip(("HelixSR's developer recommends {0} when the latest release does not work for you. "
+                                 "Switching builds the network files again; deploy again per game afterwards.")
                                 .format(FALLBACK_VERSION))
         self.version.currentIndexChanged.connect(lambda _: self.fallback_changed.emit(self.fallback()))
         choice.addWidget(self.version)
         choice.addStretch(1)
         vbox.addLayout(choice)
         dlss = QHBoxLayout()
-        self.use_local = QCheckBox(self.tr("Use a {0} already on this PC:").format(DLSS_DLL))
-        self.use_local.setToolTip(self.tr("Skips the 59 MB download from NVIDIA's GitHub. Only DLSS 310.7.0 (the exact "
-                                  "build HelixSR pins) is accepted; Find looks through the Steam libraries for one."))
+        self.use_local = QCheckBox("Use a {0} already on this PC:".format(DLSS_DLL))
+        self.use_local.setToolTip(("Skips the 59 MB download from NVIDIA's GitHub. Only DLSS 310.7.0 (the exact "
+                                   "build HelixSR pins) is accepted; Find looks through the Steam libraries for one."))
         self.use_local.toggled.connect(self._update_buttons)
         dlss.addWidget(self.use_local)
         self.dlss_path = QLineEdit()
-        self.dlss_path.setPlaceholderText(self.tr("…/steamapps/common/<game>/nvngx_dlss.dll"))
+        self.dlss_path.setPlaceholderText("…/steamapps/common/<game>/nvngx_dlss.dll")
         self.dlss_path.textChanged.connect(self._update_buttons)
         dlss.addWidget(self.dlss_path, 1)
-        self.browse_dlss = QPushButton(self.tr("Browse…"))
+        self.browse_dlss = QPushButton("Browse…")
         self.browse_dlss.clicked.connect(self.browse_dlss_requested)
         dlss.addWidget(self.browse_dlss)
-        self.find_dlss = QPushButton(self.tr("Find in Steam"))
-        self.find_dlss.setToolTip(self.tr("Scan the Steam libraries for a DLSS 310.7.0 DLL (checks each file's checksum)"))
+        self.find_dlss = QPushButton("Find in Steam")
+        self.find_dlss.setToolTip("Scan the Steam libraries for a DLSS 310.7.0 DLL (checks each file's checksum)")
         self.find_dlss.clicked.connect(self.find_dlss_requested)
         dlss.addWidget(self.find_dlss)
         vbox.addLayout(dlss)
 
         actions = QHBoxLayout()
-        self.start = accent_button(self.tr("Download and build"), self.tr("Download the latest release and everything the setup "
-                                   "needs, run helixsr-setup.sh and import the result"))
+        self.start = accent_button("Download and build", ("Download the latest release and everything the setup "
+                                                          "needs, run helixsr-setup.sh and import the result"))
         self.start.clicked.connect(self._start_clicked)
         actions.addWidget(self.start)
-        self.cancel = QPushButton(self.tr("Cancel"))
+        self.cancel = QPushButton("Cancel")
         self.cancel.setEnabled(False)
         self.cancel.clicked.connect(self.cancel_requested)
         actions.addWidget(self.cancel)
-        self.import_built = QPushButton(self.tr("Import built release"))
-        self.import_built.setToolTip(self.tr("Import the network files built in the work folder into the payload"))
+        self.import_built = QPushButton("Import built release")
+        self.import_built.setToolTip("Import the network files built in the work folder into the payload")
         self.import_built.setEnabled(False)
         self.import_built.clicked.connect(lambda: self.built and self.import_requested.emit(self.built))
         actions.addWidget(self.import_built)
-        self.open_work = QPushButton(self.tr("Open work folder"))
+        self.open_work = QPushButton("Open work folder")
         self.open_work.clicked.connect(self.open_work_requested)
         actions.addWidget(self.open_work)
         actions.addStretch(1)
         vbox.addLayout(actions)
 
-        self.stage = QLabel(self.tr("Idle"))
+        self.stage = QLabel("Idle")
         self.stage.setStyleSheet("font-weight:600;")
         vbox.addWidget(self.stage)
         self.progress = QProgressBar()
@@ -135,7 +135,7 @@ class SetupPage(QWidget):
         vbox.addWidget(self.progress)
         self.terminal = Terminal()
         self.terminal.setMinimumHeight(220)
-        self.terminal.setToolTip(self.tr("Output of the downloads and of helixsr-setup.sh"))
+        self.terminal.setToolTip("Output of the downloads and of helixsr-setup.sh")
         vbox.addWidget(self.terminal, 1)
         layout.addWidget(box, 1)
         self._lines: list[str] = []
@@ -155,7 +155,7 @@ class SetupPage(QWidget):
             self.helix_pill.set_status(self._pill_text(helix), helix.kind)
             text = helix.summary
             if helix.latest.asset_url:
-                text += self.tr(' — <a href="{url}">{name}</a> ({size})').format(
+                text += ' — <a href="{url}">{name}</a> ({size})'.format(
                     url=helix.latest.url, name=helix.latest.asset_name, size=_size(helix.latest.asset_size))
             self.helix_text.setText(text)
         self._update_buttons()
@@ -163,17 +163,17 @@ class SetupPage(QWidget):
     @staticmethod
     def _pill_text(status: UpdateStatus) -> str:
         if status.latest.error or not status.latest.version:
-            return QCoreApplication.translate("SetupPage", "Unknown")
+            return "Unknown"
         if not status.installed:
             return f"v{status.latest.version}"
-        return (QCoreApplication.translate("SetupPage", "Update") if status.update_available
-                else QCoreApplication.translate("SetupPage", "Up to date"))
+        return ("Update" if status.update_available
+                else "Up to date")
 
     def set_checking(self, on: bool) -> None:
         self._checking = on
         self._update_buttons()
         if on:
-            self.helix_pill.set_status(self.tr("Checking…"), "neutral")
+            self.helix_pill.set_status("Checking…", "neutral")
 
     def set_auto_check(self, on: bool) -> None:
         self.auto_check.blockSignals(True)
@@ -199,9 +199,9 @@ class SetupPage(QWidget):
             self.dlss_path.setText(str(paths[0]))
             self.use_local.setChecked(True)
             self.dlss_path.setToolTip(plain_tooltip("\n".join(str(p) for p in paths)))
-            self.append(self.tr("Found {0} matching {1}: {2}").format(len(paths), DLSS_DLL, ", ".join(str(p) for p in paths)))
+            self.append("Found {0} matching {1}: {2}".format(len(paths), DLSS_DLL, ", ".join(str(p) for p in paths)))
         else:
-            self.append(self.tr("No DLSS 310.7.0 {0} found in the Steam libraries; it will be downloaded.").format(DLSS_DLL))
+            self.append("No DLSS 310.7.0 {0} found in the Steam libraries; it will be downloaded.".format(DLSS_DLL))
 
     def set_running(self, on: bool) -> None:
         self._running = on
@@ -221,7 +221,7 @@ class SetupPage(QWidget):
             self._clock.stop()
             if self._elapsed.isValid():         # keep how long the job took on the stage line
                 seconds = self._elapsed.elapsed() // 1000
-                self.stage.setText(self.tr("{0} \u2014 took {1}:{2:02d}").format(self._stage_text, seconds // 60, seconds % 60))
+                self.stage.setText("{0} \u2014 took {1}:{2:02d}".format(self._stage_text, seconds // 60, seconds % 60))
         self._update_buttons()
 
     def set_stage(self, text: str) -> None:
@@ -232,7 +232,7 @@ class SetupPage(QWidget):
     def _show_stage(self) -> None:
         if self._clock.isActive() and self._elapsed.isValid():
             seconds = self._elapsed.elapsed() // 1000
-            self.stage.setText(self.tr("{0} \u2014 {1}:{2:02d} elapsed").format(self._stage_text, seconds // 60, seconds % 60))
+            self.stage.setText("{0} \u2014 {1}:{2:02d} elapsed".format(self._stage_text, seconds // 60, seconds % 60))
         else:
             self.stage.setText(self._stage_text)
 
@@ -247,10 +247,10 @@ class SetupPage(QWidget):
         else:
             self.progress.setRange(0, 1000)
             self.progress.setValue(int(1000 * done_all / total_all))
-            self.progress.setFormat(self.tr("{done} / {total}  (%p%)").format(done=_size(done_all), total=_size(total_all)))
+            self.progress.setFormat("{done} / {total}  (%p%)".format(done=_size(done_all), total=_size(total_all)))
         active = [f"{n} {_size(d)}" + (f"/{_size(t)}" if t else "") for n, (d, t) in self._progress.items() if d < t or not t]
         if active:
-            self._stage_text = self.tr("Downloading: {0}").format(", ".join(active))
+            self._stage_text = "Downloading: {0}".format(", ".join(active))
             self._show_stage()
 
     def append(self, line: str) -> None:

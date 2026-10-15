@@ -12,7 +12,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterator
 
-from PyQt6.QtCore import QCoreApplication
 
 from . import fmt
 
@@ -94,11 +93,10 @@ def read_csv(path: Path) -> list[Sample]:
     with path.open(newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
         if not reader.fieldnames or "time" not in reader.fieldnames:
-            raise ValueError(QCoreApplication.translate("history", "not a telemetry export: no 'time' column"))
+            raise ValueError("not a telemetry export: no 'time' column")
         unknown = [c for c in ("load_percent", "clock_mhz", "temp_c") if c not in reader.fieldnames]
         if unknown:
-            raise ValueError(fmt(QCoreApplication.translate("history",
-                                                              "not a telemetry export: missing column(s) %1"),
+            raise ValueError(fmt("not a telemetry export: missing column(s) %1",
                                   ", ".join(unknown)))
         samples: list[Sample] = []
         for row in reader:
@@ -138,16 +136,16 @@ class Summary:
     def text(self) -> str:
         parts = []
         if self.load_avg is not None:
-            parts.append(fmt(QCoreApplication.translate("Summary", "load %1 %"), f"{self.load_avg:.0f}"))
+            parts.append(fmt("load %1 %", f"{self.load_avg:.0f}"))
         if self.clock_avg is not None:
-            parts.append(fmt(QCoreApplication.translate("Summary", "clock %1 MHz (max %2)"),
+            parts.append(fmt("clock %1 MHz (max %2)",
                               f"{self.clock_avg:.0f}", str(self.clock_max)))
         if self.temp_avg is not None:
-            parts.append(fmt(QCoreApplication.translate("Summary", "%1 °C (max %2)"),
+            parts.append(fmt("%1 °C (max %2)",
                               f"{self.temp_avg:.0f}", f"{self.temp_max:.0f}"))
         if self.power_avg is not None:
-            parts.append(fmt(QCoreApplication.translate("Summary", "%1 W"), f"{self.power_avg:.0f}"))
-        return ", ".join(parts) if parts else QCoreApplication.translate("Summary", "no readings")
+            parts.append(fmt("%1 W", f"{self.power_avg:.0f}"))
+        return ", ".join(parts) if parts else "no readings"
 
 
 def summarise(samples: list[Sample]) -> Summary:

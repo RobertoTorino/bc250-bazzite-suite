@@ -25,24 +25,24 @@ class JournalView(QWidget):
         self._partial = ""
         self._pattern: re.Pattern[str] | None = None
         self._pattern_error = ""
-        self._following = False     # whether the label already says "Following …" (its text is translated)
+        self._following = False     # whether the label already says "Following …"
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         bar = QHBoxLayout()
-        bar.addWidget(QLabel(self.tr("Filter:")))
+        bar.addWidget(QLabel("Filter:"))
         self.filter = QLineEdit()
-        self.filter.setPlaceholderText(self.tr("text or regular expression, case-insensitive"))
+        self.filter.setPlaceholderText("text or regular expression, case-insensitive")
         self.filter.setClearButtonEnabled(True)
         self.filter.textChanged.connect(self._filter_changed)
         bar.addWidget(self.filter, 1)
-        self.follow = QCheckBox(self.tr("Follow"))
+        self.follow = QCheckBox("Follow")
         self.follow.setChecked(True)
-        self.follow.setToolTip(self.tr("Keep scrolling to the newest line. Untick to read without being moved."))
+        self.follow.setToolTip("Keep scrolling to the newest line. Untick to read without being moved.")
         self.follow.toggled.connect(self._render)
         bar.addWidget(self.follow)
-        self.clear = QPushButton(self.tr("Clear"))
-        self.clear.setToolTip(self.tr("Forget the lines shown so far; new entries keep coming in."))
+        self.clear = QPushButton("Clear")
+        self.clear.setToolTip("Forget the lines shown so far; new entries keep coming in.")
         self.clear.clicked.connect(self._clear)
         bar.addWidget(self.clear)
         layout.addLayout(bar)
@@ -73,7 +73,7 @@ class JournalView(QWidget):
         self.lines.clear()
         self._partial = ""
         self._following = False
-        self.state.setText(fmt(self.tr("journalctl -u %1 -f — connecting…"), self.unit))
+        self.state.setText(fmt("journalctl -u %1 -f — connecting…", self.unit))
         # -q hides the "journal begins at" notice; -o short-iso matches the old snapshot format.
         self.process.start("journalctl", ["-u", self.unit, "-n", str(INITIAL_LINES), "-f", "-q", "--no-pager",
                                           "-o", "short-iso"])
@@ -94,7 +94,7 @@ class JournalView(QWidget):
             self.lines.extend(complete)
             self._render_timer.start()
         if not self._following:
-            self.state.setText(fmt(self.tr("Following journalctl -u %1; up to %2 lines are kept."),
+            self.state.setText(fmt("Following journalctl -u %1; up to %2 lines are kept.",
                                     self.unit, str(MAX_LINES)))
             self._following = True
 
@@ -106,12 +106,12 @@ class JournalView(QWidget):
             self._partial = ""
         self._render()
         if status == QProcess.ExitStatus.CrashExit or code != 0:
-            why = tail or fmt(self.tr("exit code %1"), str(code))
-            self.state.setText(fmt(self.tr("journalctl stopped (%1). Your user may need to be in the "
-                                           "systemd-journal or wheel group to read system units. Retrying in "
-                                           "%2 s…"), why, str(RESTART_DELAY_MS // 1000)))
+            why = tail or fmt("exit code %1", str(code))
+            self.state.setText(fmt(("journalctl stopped (%1). Your user may need to be in the "
+                                    "systemd-journal or wheel group to read system units. Retrying in "
+                                    "%2 s…"), why, str(RESTART_DELAY_MS // 1000)))
         else:
-            self.state.setText(fmt(self.tr("journalctl ended; restarting in %1 s…"),
+            self.state.setText(fmt("journalctl ended; restarting in %1 s…",
                                     str(RESTART_DELAY_MS // 1000)))
         if self.isVisible():
             self._restart_timer.start(RESTART_DELAY_MS)
@@ -119,8 +119,8 @@ class JournalView(QWidget):
     def _error(self, error: QProcess.ProcessError) -> None:
         if error == QProcess.ProcessError.FailedToStart:
             self._following = False
-            self.state.setText(self.tr("journalctl is not available on this system; the journal cannot be "
-                                       "shown."))
+            self.state.setText(("journalctl is not available on this system; the journal cannot be "
+                                "shown."))
 
     # ------------------------------------------------------------------ view
     def _filter_changed(self, text: str) -> None:
@@ -133,7 +133,7 @@ class JournalView(QWidget):
             except re.error:
                 # Not a valid regex: fall back to a plain substring match.
                 self._pattern = re.compile(re.escape(text), re.IGNORECASE)
-                self._pattern_error = self.tr(" (taken literally, not a valid regular expression)")
+                self._pattern_error = " (taken literally, not a valid regular expression)"
         self._render()
 
     def _clear(self) -> None:
@@ -151,10 +151,10 @@ class JournalView(QWidget):
             bar.setValue(min(keep, bar.maximum()))
         if self._pattern is not None:
             self._following = False
-            self.state.setText(fmt(self.tr("%1 of %2 lines match%3."),
+            self.state.setText(fmt("%1 of %2 lines match%3.",
                                     str(len(shown)), str(len(self.lines)), self._pattern_error))
         elif self.lines and self.process.state() == QProcess.ProcessState.Running:
-            self.state.setText(fmt(self.tr("Following journalctl -u %1; up to %2 lines are kept."),
+            self.state.setText(fmt("Following journalctl -u %1; up to %2 lines are kept.",
                                     self.unit, str(MAX_LINES)))
             self._following = True
 

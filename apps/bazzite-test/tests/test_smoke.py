@@ -38,7 +38,7 @@ def test_main_window_builds(sandbox, qapp):
     from bc250_gui import INFO
     from bc250_gui.main_window import MainWindow
     from bc250_gui.runner import TestRunner
-    create_app(INFO, lang="en")
+    create_app(INFO)
     window = MainWindow(TestRunner(str(ENGINE), use_sudo=False))
     window.show()
     qapp.processEvents()                        # runs the deferred history load
@@ -123,7 +123,7 @@ def test_print_results_opens_saved_png_and_shows_preview(sandbox, qapp, tmp_path
     from bc250_gui.main_window import MainWindow
     from bc250_gui.runner import TestRunner
 
-    create_app(INFO, lang="en")
+    create_app(INFO)
     window = MainWindow(TestRunner(str(ENGINE), use_sudo=False))
     image_path = tmp_path / "shared results.png"
     monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *args: (str(image_path), "PNG image (*.png)"))

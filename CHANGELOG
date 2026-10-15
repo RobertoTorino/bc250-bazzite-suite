@@ -1,3 +1,7 @@
+Changelog: 15-10-2026 02:18:10
+
+The launchers of Bazzite pkgxtractor and Bazzite UMD File Renamer, the two apps that take paths on the command line, stay in the folder they are started from, so a relative path means what it says (see their CHANGELOGs). The wiki's architecture page describes that launcher form beside the usual one; the other apps take no paths and keep theirs.
+
 Changelog: 15-10-2026 02:01:27
 
 Bazzite pkgxtractor, Bazzite NetcatGUI and Bazzite UMD File Renamer are on bc250_core (owner's decision, for consistency): AppInfo, core's start-up, single instance, AppHeader and core's settings, with core bundled by their installers from the checkout and by stage_app in a release, like every core app. A second launch with a file, a folder or a host and port hands it to the open window, through the new arguments of core's instance (already_running(app_id, args), serve(..., on_args)). The copies of core's instance.py follow it (helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi, demo-tool, tools/installer-tests/gui); those apps pass no arguments, so they behave as before. The three installer tests check the bundled core now; the wiki's architecture page and the three app chapters describe the hand-over.

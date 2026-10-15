@@ -3,14 +3,13 @@
 
 from __future__ import annotations
 
-from PyQt6.QtCore import QCoreApplication
 from PyQt6.QtWidgets import QTextBrowser, QWidget
 
 from . import APP_NAME, GOVERNOR_URL, REPO_URL, __version__, fmt
 
 
 def help_html(config: str) -> str:
-    text = QCoreApplication.translate("help", """
+    text = ("""
 <h1>%1 <small>v%2</small></h1>
 <p>A small front-end for <b>cyan-skillfish-governor-smu</b>, the GPU governor of the <b>AMD BC-250</b>
 (Cyan Skillfish APU, gfx1013) on <b>Bazzite</b>. The governor must already be installed; this app

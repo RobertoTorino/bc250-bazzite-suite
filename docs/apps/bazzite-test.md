@@ -190,7 +190,7 @@ It only reads a few files from `/proc` and `/sys` (about 1 ms per sample, a full
 slows down by itself if sampling gets expensive, so it is safe to keep running while you play.
 
 **Settings** opens a panel over the window (close it with ✕, Esc or a click outside): *Privacy* (what is stored
-and sent, history and log masking, administrator rights), *General* (language, notifications, copying the reports
+and sent, history and log masking, administrator rights), *General* (notifications, copying the reports
 to the Desktop), *System overview* (BIOS version, CUs, cores, threads, speed test, NVMe size, free space and package
 count at a glance), *Logs & history* (clean up logs), *About* (version, build date, repository) and *Print
 results*.

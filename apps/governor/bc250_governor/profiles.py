@@ -84,37 +84,37 @@ class ProfilesBox(QGroupBox):
     copy_command_requested = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None):
-        super().__init__(self.tr("Profiles"), parent)
+        super().__init__("Profiles", parent)
         row = QHBoxLayout(self)
         self.combo = QComboBox()
-        self.combo.setToolTip(self.tr("Named snapshots of this page and the GPU Usage page, stored for your "
-                                      "user only. Safe points are not part of a profile."))
+        self.combo.setToolTip(("Named snapshots of this page and the GPU Usage page, stored for your "
+                               "user only. Safe points are not part of a profile."))
         self.combo.currentIndexChanged.connect(self._sync)
         row.addWidget(self.combo, 1)
-        self.load_button = QPushButton(self.tr("Load into forms"))
-        self.load_button.setToolTip(self.tr("Fills the Tuning and GPU Usage forms; nothing is written until "
-                                            "you apply."))
+        self.load_button = QPushButton("Load into forms")
+        self.load_button.setToolTip(("Fills the Tuning and GPU Usage forms; nothing is written until "
+                                     "you apply."))
         self.load_button.clicked.connect(lambda: self.load_requested.emit(self.combo.currentText()))
         row.addWidget(self.load_button)
-        self.apply_button = accent_button(self.tr("Apply now"),
-                                          self.tr("Writes the profile to config.toml (backup first, one "
-                                                 "password prompt) and restarts the governor. Pending edits "
-                                                 "on the config pages are discarded."))
+        self.apply_button = accent_button("Apply now",
+                                          ("Writes the profile to config.toml (backup first, one "
+                                           "password prompt) and restarts the governor. Pending edits "
+                                           "on the config pages are discarded."))
         self.apply_button.clicked.connect(lambda: self.apply_requested.emit(self.combo.currentText()))
         row.addWidget(self.apply_button)
-        self.save_button = QPushButton(self.tr("Save current as…"))
-        self.save_button.setToolTip(self.tr("Stores the values in the forms right now (applied or not) under "
-                                            "a name."))
+        self.save_button = QPushButton("Save current as…")
+        self.save_button.setToolTip(("Stores the values in the forms right now (applied or not) under "
+                                     "a name."))
         self.save_button.clicked.connect(self.save_requested)
         row.addWidget(self.save_button)
-        self.delete_button = QPushButton(self.tr("Delete"))
+        self.delete_button = QPushButton("Delete")
         self.delete_button.clicked.connect(lambda: self.delete_requested.emit(self.combo.currentText()))
         row.addWidget(self.delete_button)
-        self.copy_button = QPushButton(self.tr("Copy hotkey command"))
-        self.copy_button.setToolTip(self.tr("Puts a command line on the clipboard that applies this profile "
-                                            "in the running app. Bind it to a key in System Settings → "
-                                            "Shortcuts (KDE) or Keyboard → Custom Shortcuts (GNOME) to switch "
-                                            "profiles without opening the window."))
+        self.copy_button = QPushButton("Copy hotkey command")
+        self.copy_button.setToolTip(("Puts a command line on the clipboard that applies this profile "
+                                     "in the running app. Bind it to a key in System Settings → "
+                                     "Shortcuts (KDE) or Keyboard → Custom Shortcuts (GNOME) to switch "
+                                     "profiles without opening the window."))
         self.copy_button.clicked.connect(lambda: self.copy_command_requested.emit(self.combo.currentText()))
         row.addWidget(self.copy_button)
         self.hint = hint_label("")
@@ -135,4 +135,4 @@ class ProfilesBox(QGroupBox):
         has = bool(self.combo.count())
         for button in (self.load_button, self.apply_button, self.delete_button, self.copy_button):
             button.setEnabled(has)
-        self.hint.setText("" if has else self.tr("No profiles yet: set the forms up and use Save current as…"))
+        self.hint.setText("" if has else "No profiles yet: set the forms up and use Save current as…")

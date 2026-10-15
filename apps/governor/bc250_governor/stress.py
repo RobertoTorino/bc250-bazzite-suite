@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import shutil
 
-from PyQt6.QtCore import QObject, QProcess, QT_TRANSLATE_NOOP, pyqtSignal
+from PyQt6.QtCore import QObject, QProcess, pyqtSignal
 
 from . import fmt
 
@@ -18,9 +18,8 @@ LOAD_TOOLS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("vkcube", ()),
     ("glxgears", ()),
 )
-# Sentinel value: also used as a dict/combo-box key elsewhere, so the text itself must not change; it is only
-# marked here for extraction and translated at the point of display.
-NO_TOOL = QT_TRANSLATE_NOOP("stress", "None (load the GPU yourself)")
+# Sentinel value: also used as a dict/combo-box key elsewhere, so the text itself must not change.
+NO_TOOL = "None (load the GPU yourself)"
 KILL_GRACE_MS = 1500
 
 
@@ -50,10 +49,10 @@ class StressRunner(QObject):
 
     def start(self, name: str) -> tuple[bool, str]:
         if self.running:
-            return False, self.tr("A load tool is already running.")
+            return False, "A load tool is already running."
         program = shutil.which(name)
         if not program:
-            return False, fmt(self.tr("%1 was not found on PATH."), name)
+            return False, fmt("%1 was not found on PATH.", name)
         self.tool = name
         self._stopping = False
         process = QProcess(self)
@@ -63,7 +62,7 @@ class StressRunner(QObject):
         process.start(program, tool_arguments(name))
         if not process.waitForStarted(3000):
             self._process = None
-            return False, fmt(self.tr("%1 did not start: %2"), name, process.errorString())
+            return False, fmt("%1 did not start: %2", name, process.errorString())
         self._process = process
         return True, ""
 

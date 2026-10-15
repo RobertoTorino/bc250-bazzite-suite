@@ -1,3 +1,7 @@
+Changelog: 15-10-2026 02:18:10
+
+Tests: launcher_python reads the launchers that run in the caller's folder (exec "<venv>/bin/python" -c ..., Bazzite pkgxtractor and Bazzite UMD File Renamer) as before.
+
 Changelog: 15-10-2026 02:10:51
 
 Release 0.1.17.

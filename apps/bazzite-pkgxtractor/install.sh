@@ -111,22 +111,27 @@ info "Installing PyQt6 and cryptography into the venv (downloads ~100 MB the fir
 "$VENV/bin/python" -c 'import PyQt6.QtWidgets, cryptography' || die "PyQt6 or cryptography does not load from the venv."
 
 # --- 3. Launchers, menu entry, Desktop icon -------------------------------------------------------
+# The launchers run python in the folder they are started from, so a relative path on the command line means what
+# it says. python -m would put that folder first on sys.path; this puts the app folder there instead, so $PACKAGE
+# and the bc250_core bundled with it always come from the app, as they did when the launchers changed into it.
+RUN_MODULE='import runpy, sys; sys.path[0] = sys.argv.pop(1); runpy.run_module(sys.argv.pop(1), run_name="__main__", alter_sys=True)'
 info "Creating the launchers $LAUNCHER and $CLI_LAUNCHER"
 mkdir -p "$(dirname "$LAUNCHER")"
 cat >"$LAUNCHER" <<EOF
 #!/usr/bin/env bash
-# $APP_NAME launcher, written by install.sh. Starts from the app folder, so python -m never picks up a
-# $PACKAGE folder from the current directory, and imports the bc250_core bundled there.
-cd "$APP_DIR" || { echo "$APP_NAME is not installed in $APP_DIR; run install.sh again." >&2; exit 1; }
-exec "$VENV/bin/python" -m $PACKAGE "\$@"
+# $APP_NAME launcher, written by install.sh: python runs $PACKAGE from the app folder, with the
+# bc250_core bundled there, in the folder this is started from.
+#   $APP_ID [file.pkg]
+[ -d "$APP_DIR" ] || { echo "$APP_NAME is not installed in $APP_DIR; run install.sh again." >&2; exit 1; }
+exec "$VENV/bin/python" -c '$RUN_MODULE' "$APP_DIR" $PACKAGE "\$@"
 EOF
 chmod 755 "$LAUNCHER"
 cat >"$CLI_LAUNCHER" <<EOF
 #!/usr/bin/env bash
 # $APP_NAME terminal extractor, written by install.sh:
 #   $APP_ID-cli <file.pkg> [output folder] [--salvage] [--preview-only] [--no-subfolder]
-cd "$APP_DIR" || { echo "$APP_NAME is not installed in $APP_DIR; run install.sh again." >&2; exit 1; }
-exec "$VENV/bin/python" -m $PACKAGE.cli "\$@"
+[ -d "$APP_DIR" ] || { echo "$APP_NAME is not installed in $APP_DIR; run install.sh again." >&2; exit 1; }
+exec "$VENV/bin/python" -c '$RUN_MODULE' "$APP_DIR" $PACKAGE.cli "\$@"
 EOF
 chmod 755 "$CLI_LAUNCHER"
 

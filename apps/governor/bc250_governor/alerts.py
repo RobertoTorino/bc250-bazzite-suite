@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from PyQt6.QtCore import QCoreApplication
 
 from . import fmt
 from .pages import Snapshot
@@ -39,32 +38,29 @@ class AlertMonitor:
         if temp is not None:
             if self.settings.temp_enabled:
                 out += self._temperature("temp", temp, float(self.settings.temp_c), now,
-                                         QCoreApplication.translate("AlertMonitor", "GPU temperature"),
-                                         fmt(QCoreApplication.translate("AlertMonitor",
-                                                                        "The GPU is at %1 °C (alert set at "
-                                                                        "%2 °C)."),
+                                         "GPU temperature",
+                                         fmt(("The GPU is at %1 °C (alert set at "
+                                              "%2 °C)."),
                                              f"{temp:.0f}", str(self.settings.temp_c)))
             limit = snap.perf.temp_throttling if snap.perf.available else snap.saved.temp_throttling
             if self.settings.throttle_enabled and limit:
                 out += self._temperature("throttle", temp, float(limit), now,
-                                         QCoreApplication.translate("AlertMonitor", "Governor throttling"),
-                                         fmt(QCoreApplication.translate("AlertMonitor",
-                                                                        "The GPU is at %1 °C, at or above the "
-                                                                        "governor's throttling temperature of "
-                                                                        "%2 °C; the maximum clock is being "
-                                                                        "lowered."),
+                                         "Governor throttling",
+                                         fmt(("The GPU is at %1 °C, at or above the "
+                                              "governor's throttling temperature of "
+                                              "%2 °C; the maximum clock is being "
+                                              "lowered."),
                                              f"{temp:.0f}", str(limit)))
         if snap.service.active:
             self._seen_running += 1
         else:
             if self.settings.service_enabled and self._seen_running >= MISSED_POLLS and self._due("service", now):
-                state = (QCoreApplication.translate("AlertMonitor", "failed")
+                state = ("failed"
                         if snap.service.sub_state == "failed"
-                        else QCoreApplication.translate("AlertMonitor", "stopped"))
-                out.append((fmt(QCoreApplication.translate("AlertMonitor", "Governor %1"), state),
-                           fmt(QCoreApplication.translate("AlertMonitor",
-                                                           "The governor service has %1; the GPU runs at the "
-                                                           "driver's default clocks. See the Service page."),
+                        else "stopped")
+                out.append((fmt("Governor %1", state),
+                           fmt(("The governor service has %1; the GPU runs at the "
+                                "driver's default clocks. See the Service page."),
                                state)))
             self._seen_running = 0
         return out

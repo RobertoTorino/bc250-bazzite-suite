@@ -17,8 +17,7 @@ def main() -> int:
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__} (core {CORE_VERSION})")
     _, qt_args = parser.parse_known_args()
 
-    # English only so far, Qt's own menu texts included.
-    app = create_app(INFO, qt_args, lang="en")
+    app = create_app(INFO, qt_args)
     if instance.already_running(INFO.app_id):
         return 0
     from .main_window import MainWindow

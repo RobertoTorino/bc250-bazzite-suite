@@ -11,7 +11,7 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 
-from PyQt6.QtCore import QCoreApplication, QObject, QThread, pyqtSignal
+from PyQt6.QtCore import QObject, QThread, pyqtSignal
 
 from . import APP_ID, __version__, fmt
 from .backends.process import run
@@ -40,21 +40,21 @@ class UpdateResult:
     @property
     def summary(self) -> str:
         if not self.installed:
-            installed = QCoreApplication.translate("UpdateResult", "not installed")
+            installed = "not installed"
         else:
             installed = self.installed
         if self.error:
-            return fmt(QCoreApplication.translate("UpdateResult", "%1 (latest: unknown — %2)"),
+            return fmt("%1 (latest: unknown — %2)",
                          installed, self.error)
         if not self.latest:
-            return fmt(QCoreApplication.translate("UpdateResult", "%1 (latest: unknown)"), installed)
+            return fmt("%1 (latest: unknown)", installed)
         if self.update_available:
-            return fmt(QCoreApplication.translate("UpdateResult", "%1 → %2 available (%3)"),
+            return fmt("%1 → %2 available (%3)",
                          installed, self.latest, self.published)
         if self.installed:
-            return fmt(QCoreApplication.translate("UpdateResult", "%1 (up to date, latest release %2)"),
+            return fmt("%1 (up to date, latest release %2)",
                          installed, self.published)
-        return fmt(QCoreApplication.translate("UpdateResult", "%1 (latest release: %2, %3)"),
+        return fmt("%1 (latest release: %2, %3)",
                      installed, self.latest, self.published)
 
 
@@ -83,16 +83,16 @@ def latest_release() -> tuple[str, str, str, str]:
         with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
             data = json.load(response)
     except urllib.error.HTTPError as exc:
-        return "", RELEASES_PAGE, "", fmt(QCoreApplication.translate("update_check", "GitHub answered %1"),
+        return "", RELEASES_PAGE, "", fmt("GitHub answered %1",
                                            str(exc.code))
     except (urllib.error.URLError, OSError, ValueError) as exc:
         reason = str(getattr(exc, "reason", exc)).split(":")[0].strip() or exc.__class__.__name__
-        return "", RELEASES_PAGE, "", fmt(QCoreApplication.translate("update_check", "no connection (%1)"),
+        return "", RELEASES_PAGE, "", fmt("no connection (%1)",
                                            reason[:60])
     tag = str(data.get("tag_name", ""))
     match = _VERSION_RE.search(tag)
     if not match:
-        return "", RELEASES_PAGE, "", fmt(QCoreApplication.translate("update_check", "unexpected tag %1"),
+        return "", RELEASES_PAGE, "", fmt("unexpected tag %1",
                                            repr(tag))
     return match.group(0), data.get("html_url", RELEASES_PAGE), str(data.get("published_at", ""))[:10], ""
 

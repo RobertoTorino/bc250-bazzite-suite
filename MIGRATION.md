@@ -352,7 +352,7 @@ start-up), not the suite's look; no `.cso` support (the Java original had it; th
 | 3 | Board check | Install, open and uninstall the portal on a clean Bazzite account; a full passive bazzite-test run matches the original |
 | 4 | Headless smoke tests for the five GUIs without tests (cu bisect/unlock, cores bisect/unlock, gpu-oc). Built (12-10-2026): tests/ in cu-bisect, cores-bisect and gpu-oc-bisect (options, the --auto unit, both unlock gates, every window offscreen with a fake script), in CI's pytest matrix | CI green |
 | 5 | governor and helixsr onto core; per-app releases plus a portal release | Their test suites; install from the portal |
-| 6 | Bisect family: `terminal`, `runner`, `dialogs`, `systemd` into core; shared `BisectLauncher` (cu, cores, gpu-oc stay three apps); unlock GUIs onto core; names in strings become placeholders; one translation pipeline (governor's JSON catalogue + helixsr's .qm writer) | `build.py --check` loses no translation; on the board: one process after starting cu with auto-resume |
+| 6 | Bisect family: `terminal`, `runner`, `dialogs`, `systemd` into core; shared `BisectLauncher` (cu, cores, gpu-oc stay three apps); unlock GUIs onto core; names in strings become placeholders | Their test suites; on the board: one process after starting cu with auto-resume |
 | 7 | Shell: shared helpers in one `bisect-common.sh`, inlined into each script at build time with a drift check, plus a `flock` single-instance guard | Generated scripts differ only by the markers and the guard; one full bisect round per target on the board |
 | 8 | Manual: MkDocs Material, one section per app, on GitHub Pages; in-app help links to it. Done (09-10-2026): READMEs moved into the manual (READMEs keep title, description, license), Bazzite purple theme with Inter, `.github/workflows/docs.yml`, apps' README links point to the manual, Bazzite Test shows its chapter (MANUAL.md). Open: owner switches Pages on (Source: GitHub Actions); portal cards link to their chapter | `mkdocs build --strict`; every pill links to its page |
 | — | bios-reader: app built (parser, GUI, chip read, tests, installer, CI). Open: portal card in `portal/apps.toml` (`changes_board = false`) with a release (owner); try "Read BIOS chip" from the GUI on the board (pkexec path untested); dump the second board to confirm the stock fingerprints and the table hold for it; the owner decides whether the P5.00 table (screens and defaults taken from the AMI/AMD firmware) may ship. Next iteration: a description for every setting (many CBS help strings are "No help string") | Tests; on the board: values match the BIOS setup screen |
@@ -528,8 +528,7 @@ From the original proposal (not in the repository).
 **Step 5:** governor's update checker tracks the *upstream* `cyan-skillfish-governor` releases; helixsr checks
 itself and the HelixSR payload. Core supplies the mechanism (`bc250_core.updates`); what is checked stays in each
 app. Settings files must not move: governor and helixsr use `QSettings(APP_ID, APP_ID)` (`settings_org`/
-`settings_app` default to the app id). Translations: moving strings into core changes their Qt context; governor's
-`tools/i18n/build.py` already copies base-class contexts into subclasses, which is the mechanism to keep them.
+`settings_app` default to the app id).
 
 **Step 6, cu-bisect:** these come from reading the code; the current release behaves well on two boards, so check
 each on hardware rather than assume a failure.
@@ -586,3 +585,8 @@ app IDs, launchers, packages, settings folders, and the files hdmi-cec writes ke
 moves. The Steam shortcut tags take the new names (owner, 14-10-2026): shadps4-manager brings an old shortcut up to
 date with Update Game Mode, console-link with Update in Game Mode. An app's identifiers move (with an old-ID
 fallback, as console-link's `OLD_APP_ID`) only when it is ported, together with its hardware code paths.
+
+No translations (owner's decision, 15-10-2026): every app is English only, Qt's own dialog buttons included. The
+`.ts`/`.qm` files, the language pickers, `--lang`, the i18n tools and tests, core's translator loading and every
+`tr()` are gone: too much work to keep in sync for little value, as the users read English and translation tools
+exist. A language saved in an app's settings before is ignored.

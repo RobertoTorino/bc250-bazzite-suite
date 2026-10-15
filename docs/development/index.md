@@ -92,13 +92,13 @@ Code shared by the suite's apps. Nothing in it imports an app: each app passes i
 
 | Module | What it holds | Merged from |
 |---|---|---|
-| `appinfo` | `AppInfo` (id, name, version, logo, tag prefix, translation catalog, settings names) | new |
+| `appinfo` | `AppInfo` (id, name, version, logo, tag prefix, settings names) | new |
 | `theme` | Palette, `STATE_COLORS`, bundled Inter font, `header_font()`, `HOVER_STYLESHEET` | all six GUIs |
 | `text` | `fmt()` (`%1` placeholders), `fill()` (`{name}` placeholders), `plain_tooltip()`, `window_title()` | governor, helixsr |
 | `widgets` | `AppHeader` (the window header), `StatusPill`, `MetricBox`, `ClickableLogo`, `Terminal`, `TextDialog`, `RoundedToolTip`, `show_tooltip()`, `page_header()`, `hint_label()`, `accent_button()`, `set_button_active()` | governor + helixsr's Wayland tooltip + bazzite-test's manual tooltips |
-| `app` | `create_app()` / `run_app()` / `exec_app()`: names, Fusion, translators (Qt, core, app), tooltip, icon, SIGTERM | the apps' `__main__` |
+| `app` | `create_app()` / `run_app()` / `exec_app()`: names, Fusion, tooltip, icon, SIGTERM | the apps' `__main__` |
 | `settings` | `open_settings(info)` at each app's existing file, geometry helpers, `SettingsStore` (typed defaults) | bazzite-test's `AppSettings` |
-| `help` | `HelpView`, `HelpPage` (language picker; content stays in the app) | helixsr |
+| `help` | `HelpView` (the content stays in the app) | helixsr |
 | `updates` | `latest_release()` (with a tag prefix for the suite's per-app tags), `UpdateStatus`, `UpdateChecker` (any job, off the GUI thread) | helixsr + governor |
 | `platform` | XDG folders, `xdg_open()`, `launch_in_terminal()` (with an exit file the caller can watch) | the bisect GUIs' `terminal.py` |
 

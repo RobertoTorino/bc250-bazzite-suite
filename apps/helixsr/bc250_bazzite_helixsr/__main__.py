@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Entry point: python -m bc250_bazzite_helixsr [--payload DIR] [--deployments FILE] [--work DIR] [--lang CODE]"""
+"""Entry point: python -m bc250_bazzite_helixsr [--payload DIR] [--deployments FILE] [--work DIR]"""
 
 from __future__ import annotations
 
@@ -8,31 +8,15 @@ import signal
 import sys
 from pathlib import Path
 
-from PyQt6.QtCore import QLibraryInfo, QLocale, QSettings, QTimer, QTranslator
+from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
-from . import (APP_ID, APP_NAME, DEPLOYMENTS_FILE, DISPLAY_NAME, LANGUAGES, PAYLOAD_DIR, TRANSLATIONS_DIR,
-               WINDOW_ICON_PATH, __version__)
+from . import APP_ID, APP_NAME, DEPLOYMENTS_FILE, DISPLAY_NAME, PAYLOAD_DIR, WINDOW_ICON_PATH, __version__
 from .acquire import WORK_DIR
 from .main_window import MainWindow
 from .widgets import RoundedToolTip
 from . import instance
-
-
-def install_translators(app: QApplication, lang: str | None) -> str:
-    """Qt's own dialog buttons (Yes/No/Cancel…) from the qtbase_*.qm Qt ships, plus this app's strings from
-    translations/bc250_bazzite_helixsr_*.qm. *lang* overrides the system locale; "en" or a missing file leaves
-    the app in English. Returns the language code that ended up in use."""
-    locale = QLocale(lang) if lang and lang != "en" else (QLocale.system() if not lang else QLocale("en"))
-    qt_tr = QTranslator(app)
-    if qt_tr.load(locale, "qtbase", "_", QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)):
-        app.installTranslator(qt_tr)
-    app_tr = QTranslator(app)
-    if app_tr.load(locale, TRANSLATIONS_DIR.parent.name, "_", str(TRANSLATIONS_DIR)):
-        app.installTranslator(app_tr)
-        return app_tr.language() or locale.name().split("_")[0]
-    return "en"
 
 
 def main() -> int:
@@ -45,8 +29,6 @@ def main() -> int:
                         help=f"folder for downloaded HelixSR releases (default: {WORK_DIR})")
     parser.add_argument("--no-update-check", action="store_true",
                         help="do not ask GitHub for the latest releases at start (overrides the saved setting)")
-    parser.add_argument("--lang", metavar="CODE", default=None, choices=sorted(LANGUAGES),
-                        help="interface language (%(choices)s); default: the saved choice, else the system locale")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     args, qt_args = parser.parse_known_args()
 
@@ -56,8 +38,6 @@ def main() -> int:
     app.setApplicationVersion(__version__)
     app.setDesktopFileName(APP_ID)
     app.setStyle("Fusion")
-    saved = QSettings(APP_ID, APP_ID).value("ui/language", "", str)
-    install_translators(app, args.lang or saved or None)
     RoundedToolTip.install(app)
     if WINDOW_ICON_PATH.is_file():
         app.setWindowIcon(QIcon(str(WINDOW_ICON_PATH)))

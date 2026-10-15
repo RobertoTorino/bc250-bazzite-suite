@@ -18,7 +18,7 @@ def main() -> int:
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__} (core {CORE_VERSION})")
     _args, qt_args = parser.parse_known_args()
 
-    app = create_app(INFO, qt_args, lang="en")
+    app = create_app(INFO, qt_args)
     if instance.already_running(INFO.app_id):       # a double-click on the Desktop icon starts it twice
         return 0
     # With the menu entry of install.sh, the desktop file name gives the window its icon in the task bar. Without

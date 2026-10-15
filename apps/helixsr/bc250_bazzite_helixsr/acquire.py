@@ -28,7 +28,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
-from PyQt6.QtCore import QCoreApplication, QObject, QThread, pyqtSignal
+from PyQt6.QtCore import QObject, QThread, pyqtSignal
 
 from . import APP_ID, DATA_HOME, HELIXSR_RELEASES_URL, __version__
 from .backend import HELIXSR_DLL, HelixError, file_digest, payload_status, version_key
@@ -80,14 +80,14 @@ def latest_release(api_url: str, page_url: str) -> ReleaseInfo:
     try:
         data = _get_json(api_url)
     except urllib.error.HTTPError as exc:
-        return ReleaseInfo(url=page_url, error=QCoreApplication.translate("acquire", "GitHub answered {0}").format(exc.code))
+        return ReleaseInfo(url=page_url, error="GitHub answered {0}".format(exc.code))
     except (urllib.error.URLError, OSError, ValueError) as exc:
         reason = str(getattr(exc, "reason", exc)).split(":")[0].strip() or exc.__class__.__name__
-        return ReleaseInfo(url=page_url, error=QCoreApplication.translate("acquire", "no connection ({0})").format(reason[:60]))
+        return ReleaseInfo(url=page_url, error="no connection ({0})".format(reason[:60]))
     tag = str(data.get("tag_name", ""))
     match = _VERSION_RE.search(tag)
     if not match:
-        return ReleaseInfo(tag=tag, url=page_url, error=QCoreApplication.translate("acquire", "unexpected tag {0}").format(repr(tag)))
+        return ReleaseInfo(tag=tag, url=page_url, error="unexpected tag {0}".format(repr(tag)))
     info = ReleaseInfo(match.group(0), tag, str(data.get("html_url") or page_url),
                        str(data.get("published_at", ""))[:10])
     zips = [a for a in data.get("assets", []) if str(a.get("name", "")).lower().endswith(".zip")]
@@ -120,17 +120,17 @@ class UpdateStatus:
 
     @property
     def summary(self) -> str:
-        installed = self.installed or QCoreApplication.translate("acquire", "not installed")
+        installed = self.installed or "not installed"
         latest = self.latest
         if latest.error:
-            return QCoreApplication.translate("acquire", "{0} (latest: unknown, {1})").format(installed, latest.error)
+            return "{0} (latest: unknown, {1})".format(installed, latest.error)
         if not latest.version:
-            return QCoreApplication.translate("acquire", "{0} (latest: unknown)").format(installed)
+            return "{0} (latest: unknown)".format(installed)
         if self.update_available:
-            return QCoreApplication.translate("acquire", "{0} → {1} available ({2})").format(installed, latest.version, latest.published)
+            return "{0} → {1} available ({2})".format(installed, latest.version, latest.published)
         if self.installed:
-            return QCoreApplication.translate("acquire", "{0} (up to date, released {1})").format(installed, latest.published)
-        return QCoreApplication.translate("acquire", "{0}; latest release {1} ({2})").format(installed, latest.version, latest.published)
+            return "{0} (up to date, released {1})".format(installed, latest.published)
+        return "{0}; latest release {1} ({2})".format(installed, latest.version, latest.published)
 
 
 def fallback_release() -> ReleaseInfo:
@@ -182,14 +182,14 @@ def download(url: str, dest: Path, sha256: str = "", progress: Progress | None =
         raise
     except urllib.error.HTTPError as exc:
         part.unlink(missing_ok=True)
-        raise HelixError(QCoreApplication.translate("acquire", "{0}: server answered {1} for {2}").format(name, exc.code, url)) from exc
+        raise HelixError("{0}: server answered {1} for {2}".format(name, exc.code, url)) from exc
     except (urllib.error.URLError, OSError) as exc:
         part.unlink(missing_ok=True)
-        raise HelixError(QCoreApplication.translate("acquire", "{0}: download failed ({1})").format(name, getattr(exc, "reason", exc))) from exc
+        raise HelixError("{0}: download failed ({1})".format(name, getattr(exc, "reason", exc))) from exc
     if sha256 and digest.hexdigest() != sha256.lower():
         part.unlink(missing_ok=True)
-        raise HelixError(QCoreApplication.translate("acquire", "{0}: checksum mismatch, the download is not the file HelixSR expects. "
-                                                   "Nothing was kept.").format(name))
+        raise HelixError(("{0}: checksum mismatch, the download is not the file HelixSR expects. "
+                          "Nothing was kept.").format(name))
     part.replace(dest)
     return dest
 
@@ -239,7 +239,7 @@ def find_release_dir(extracted: Path) -> Path:
     for child in sorted(p for p in extracted.iterdir() if p.is_dir()):
         if (child / SETUP_SCRIPT).is_file():
             return child
-    raise HelixError(QCoreApplication.translate("acquire", "No {0} in {1}: not a HelixSR release.").format(SETUP_SCRIPT, extracted))
+    raise HelixError("No {0} in {1}: not a HelixSR release.".format(SETUP_SCRIPT, extracted))
 
 
 def extract_zip(archive: Path, dest: Path) -> Path:
@@ -248,7 +248,7 @@ def extract_zip(archive: Path, dest: Path) -> Path:
         for member in zf.infolist():
             target = (dest / member.filename).resolve()
             if not str(target).startswith(str(dest.resolve())):
-                raise HelixError(QCoreApplication.translate("acquire", "{0} contains an unsafe path: {1}").format(archive.name, member.filename))
+                raise HelixError("{0} contains an unsafe path: {1}".format(archive.name, member.filename))
         zf.extractall(dest)
     release_dir = find_release_dir(dest)
     script = release_dir / SETUP_SCRIPT
@@ -291,7 +291,7 @@ def unpack_dxc(archive: Path, helix_data: Path) -> None:
                 target.write_bytes(zf.read(name))
                 count += 1
     if not count:
-        raise HelixError(QCoreApplication.translate("acquire", "the shader compiler archive has no bin/x64 folder"))
+        raise HelixError("the shader compiler archive has no bin/x64 folder")
 
 
 def unpack_python(archive: Path, helix_data: Path) -> None:
@@ -300,11 +300,11 @@ def unpack_python(archive: Path, helix_data: Path) -> None:
     with tarfile.open(archive) as tar:
         for member in tar.getmembers():
             if member.name.startswith("/") or ".." in Path(member.name).parts:
-                raise HelixError(QCoreApplication.translate("acquire", "unsafe path in {0}: {1}").format(archive.name, member.name))
+                raise HelixError("unsafe path in {0}: {1}".format(archive.name, member.name))
         kwargs = {"filter": "data"} if sys.version_info >= (3, 12) else {}
         tar.extractall(helix_data, **kwargs)
     if not portable_python_present(helix_data):
-        raise HelixError(QCoreApplication.translate("acquire", "the portable Python archive did not produce python/bin/python3"))
+        raise HelixError("the portable Python archive did not produce python/bin/python3")
 
 
 def needed_pins(pins: dict[str, Pin], helix_data: Path, dlss_file: Path | None, immutable: bool) -> list[Pin]:
@@ -407,50 +407,50 @@ class SetupWorker(QThread):
         try:
             release_dir, version = self._run()
         except Aborted:
-            self.finished_with.emit(SetupOutcome(False, None, "", QCoreApplication.translate("acquire", "Cancelled."), time.monotonic() - started))
+            self.finished_with.emit(SetupOutcome(False, None, "", "Cancelled.", time.monotonic() - started))
         except (HelixError, OSError) as exc:
             self.finished_with.emit(SetupOutcome(False, None, "", str(exc), time.monotonic() - started))
         else:
             self.finished_with.emit(SetupOutcome(True, release_dir, version,
-                                                 QCoreApplication.translate("acquire", "HelixSR {0} is built in {1}").format(version, release_dir),
+                                                 "HelixSR {0} is built in {1}".format(version, release_dir),
                                                  time.monotonic() - started))
 
     def _run(self) -> tuple[Path, str]:
         req = self.request
         release = req.release or (fallback_release() if req.fallback else latest_release(HELIXSR_API, HELIXSR_RELEASES_URL))
         if release.error:
-            raise HelixError(QCoreApplication.translate("acquire", "Could not look up the latest HelixSR release: {0}").format(release.error)
+            raise HelixError("Could not look up the latest HelixSR release: {0}".format(release.error)
                              if not req.fallback else
-                             QCoreApplication.translate("acquire", "Could not look up HelixSR {0}: {1}").format(FALLBACK_VERSION, release.error))
+                             "Could not look up HelixSR {0}: {1}".format(FALLBACK_VERSION, release.error))
         if not release.asset_url:
-            raise HelixError(QCoreApplication.translate("acquire", "HelixSR {0} has no zip to download; see {1}").format(release.version, release.url))
+            raise HelixError("HelixSR {0} has no zip to download; see {1}".format(release.version, release.url))
         req.work_dir.mkdir(parents=True, exist_ok=True)
 
-        self.stage.emit(QCoreApplication.translate("acquire", "Downloading HelixSR {0}").format(release.version))
+        self.stage.emit("Downloading HelixSR {0}".format(release.version))
         archive = req.work_dir / release.asset_name
         if archive.is_file() and (not release.asset_size or archive.stat().st_size == release.asset_size):
-            self._say(QCoreApplication.translate("acquire", "Using the already downloaded {0}").format(archive.name))
+            self._say("Using the already downloaded {0}".format(archive.name))
         else:
-            self._say(QCoreApplication.translate("acquire", "Downloading {0}").format(release.asset_url))
+            self._say("Downloading {0}".format(release.asset_url))
             download(release.asset_url, archive, progress=self.progress.emit, cancelled=self._cancelled,
                      name=release.asset_name)
         extracted = req.work_dir / f"HelixSR-{release.version}"
         if extracted.exists():
             shutil.rmtree(extracted)
         release_dir = extract_zip(archive, extracted)
-        self._say(QCoreApplication.translate("acquire", "Extracted to {0}").format(release_dir))
+        self._say("Extracted to {0}".format(release_dir))
         if not (release_dir / HELIXSR_DLL).is_file():
-            raise HelixError(QCoreApplication.translate("acquire", "The release has no {0}.").format(HELIXSR_DLL))
+            raise HelixError("The release has no {0}.".format(HELIXSR_DLL))
 
         pins = parse_pins(release_dir)
         needed = needed_pins(pins, req.helix_data, req.dlss_file, is_immutable_system())
         unparsed = [k for k in ("dlss", "dxc", "python") if k not in pins]
         if unparsed:
-            self._say(QCoreApplication.translate("acquire", "Could not read the pinned source(s) for {0} from the setup scripts; "
-                                                 "the script will download them itself.").format(", ".join(unparsed)))
+            self._say(("Could not read the pinned source(s) for {0} from the setup scripts; "
+                       "the script will download them itself.").format(", ".join(unparsed)))
         downloads: dict[str, Path] = {}
         if needed:
-            self.stage.emit(QCoreApplication.translate("acquire", "Downloading {0} in parallel").format(", ".join(p.label for p in needed)))
+            self.stage.emit("Downloading {0} in parallel".format(", ".join(p.label for p in needed)))
             for pin in needed:
                 self._say(f"{pin.label}: {pin.url}")
             with ThreadPoolExecutor(max_workers=len(needed)) as pool:
@@ -469,11 +469,11 @@ class SetupWorker(QThread):
             if "dxc" in downloads:
                 unpack_dxc(downloads["dxc"], req.helix_data)
                 downloads["dxc"].unlink(missing_ok=True)
-                self._say(QCoreApplication.translate("acquire", "Shader compiler unpacked to {0}").format(req.helix_data / "dxc-win"))
+                self._say("Shader compiler unpacked to {0}".format(req.helix_data / "dxc-win"))
             if "python" in downloads:
                 unpack_python(downloads["python"], req.helix_data)
                 downloads["python"].unlink(missing_ok=True)
-                self._say(QCoreApplication.translate("acquire", "Portable Python unpacked to {0}").format(req.helix_data / "python"))
+                self._say("Portable Python unpacked to {0}".format(req.helix_data / "python"))
         if self._cancelled():
             raise Aborted("cancelled")
 
@@ -483,7 +483,7 @@ class SetupWorker(QThread):
         command = ["bash", str(release_dir / SETUP_SCRIPT), "--yes", *req.extra_args]
         if dlss is not None:
             command += ["--dlss", str(dlss)]
-        self.stage.emit(QCoreApplication.translate("acquire", "Building the network files (about 5-6 minutes on a BC-250)"))
+        self.stage.emit("Building the network files (about 5-6 minutes on a BC-250)")
         self._say("$ " + " ".join(command))
         env = {**os.environ, **req.script_env}
         env.setdefault("XDG_DATA_HOME", str(req.helix_data.parent))
@@ -491,7 +491,7 @@ class SetupWorker(QThread):
             self._process = subprocess.Popen(command, cwd=release_dir, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                              stderr=subprocess.STDOUT, text=True, errors="replace", bufsize=1, env=env)
         except OSError as exc:
-            raise HelixError(QCoreApplication.translate("acquire", "Could not start {0}: {1}").format(SETUP_SCRIPT, exc)) from exc
+            raise HelixError("Could not start {0}: {1}".format(SETUP_SCRIPT, exc)) from exc
         assert self._process.stdout is not None
         installer = False
         for line in self._process.stdout:
@@ -499,26 +499,26 @@ class SetupWorker(QThread):
                 continue
             if INSTALLER_START in line:
                 installer = True
-                self._say(QCoreApplication.translate("acquire", "The network is built. HelixSR's own game installer is "
-                                                     "skipped: use the Deploy page to put HelixSR into a game."))
+                self._say(("The network is built. HelixSR's own game installer is "
+                           "skipped: use the Deploy page to put HelixSR into a game."))
                 continue
             self._say(line.rstrip("\n"))
         code = self._process.wait()
         self._process = None
         if "dlss" in downloads:
             downloads["dlss"].unlink(missing_ok=True)         # NVIDIA's DLL is used once and deleted
-            self._say(QCoreApplication.translate("acquire", "Deleted the downloaded {0}").format(DLSS_DLL))
+            self._say("Deleted the downloaded {0}".format(DLSS_DLL))
         for name in UNUSED_OUTPUT:
             if (release_dir / name).is_dir():
                 shutil.rmtree(release_dir / name, ignore_errors=True)
         if self._cancelled():
             raise Aborted("cancelled")
         if code != 0:
-            raise HelixError(QCoreApplication.translate("acquire", "{0} exited with code {1}; see the output above.").format(SETUP_SCRIPT, code))
+            raise HelixError("{0} exited with code {1}; see the output above.".format(SETUP_SCRIPT, code))
         # HelixSR 1.8+ builds the network into its DLL; older releases leave the two files next to it.
         missing = payload_status(release_dir).missing()
         if missing:
-            raise HelixError(QCoreApplication.translate("acquire", "The setup finished but did not produce {0}").format(", ".join(missing)))
+            raise HelixError("The setup finished but did not produce {0}".format(", ".join(missing)))
         return release_dir, release.version
 
 

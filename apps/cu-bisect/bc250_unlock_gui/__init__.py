@@ -11,7 +11,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 LOGO_PATH = ROOT / "images" / "bc250-cu-bisect-unlock.png"
 WINDOW_ICON_PATH = LOGO_PATH
-TRANSLATIONS_DIR = Path(__file__).resolve().parent / "translations"
 REPO_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/cu-bisect"
 
 

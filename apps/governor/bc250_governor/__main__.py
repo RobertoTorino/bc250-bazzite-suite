@@ -10,33 +10,17 @@ import argparse
 import signal
 import sys
 
-from PyQt6.QtCore import QLibraryInfo, QLocale, QTimer, QTranslator
+from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
-from . import APP_ID, APP_NAME, DISPLAY_NAME, TRANSLATIONS_DIR, WINDOW_ICON_PATH, __version__
+from . import APP_ID, APP_NAME, DISPLAY_NAME, WINDOW_ICON_PATH, __version__
 from .backends import BACKENDS, detect_backend
 from . import instance
 from .main_window import MainWindow
 from .profiles import ProfileStore
 from .tray import TRAY_FLAG
 from .widgets import RoundedToolTip
-
-LANGUAGES = ("de", "es", "fr", "it", "ja", "pl", "ru", "zh")
-
-
-def _install_translators(app: QApplication, lang: str | None) -> None:
-    """Qt's own dialog buttons (Yes/No/OK/Cancel/...) via the qtbase_*.qm Qt ships, plus our own strings
-    via translations/bc250_governor_*.qm. Both are compiled .qm files; missing ones are silently skipped,
-    so the app still runs fine in English."""
-    locale = QLocale(lang) if lang else QLocale.system()
-    qt_tr = QTranslator(app)
-    if qt_tr.load(locale, "qtbase", "_", QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)):
-        app.installTranslator(qt_tr)
-    app_tr = QTranslator(app)
-    if app_tr.load(locale, "bc250_governor", "_", str(TRANSLATIONS_DIR)):
-        app.installTranslator(app_tr)
-
 
 def main() -> int:
     parser = argparse.ArgumentParser(prog="bc250_governor", description=f"{APP_NAME} {__version__}")
@@ -52,8 +36,6 @@ def main() -> int:
                         help="apply the saved profile NAME (in the running instance if there is one, otherwise "
                              "start and apply); meant for a desktop keyboard shortcut")
     parser.add_argument("--list-profiles", action="store_true", help="print the saved profile names and exit")
-    parser.add_argument("--lang", default=None, metavar="CODE",
-                        help=f"force a UI language ({', '.join(LANGUAGES)}); default: the system locale")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     args, qt_args = parser.parse_known_args()
 
@@ -72,7 +54,6 @@ def main() -> int:
     app.setApplicationVersion(__version__)
     app.setDesktopFileName(APP_ID)
     app.setStyle("Fusion")
-    _install_translators(app, args.lang)
     RoundedToolTip.install(app)     # every tooltip: rounded corners, thin purple border
     if WINDOW_ICON_PATH.is_file():
         app.setWindowIcon(QIcon(str(WINDOW_ICON_PATH)))

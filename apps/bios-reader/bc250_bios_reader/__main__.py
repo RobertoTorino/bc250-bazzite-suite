@@ -34,8 +34,7 @@ def main() -> int:
     if args.build_table:
         return build_table(args.build_table, args.out)
 
-    # English only so far, Qt's own menu texts included.
-    app = create_app(INFO, qt_args, lang="en")
+    app = create_app(INFO, qt_args)
     if instance.already_running(INFO.app_id):
         return 0
     from .main_window import MainWindow

@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import subprocess
 
-from PyQt6.QtCore import QCoreApplication
 
 from .. import fmt
 from .base import PerformanceState
@@ -31,7 +30,7 @@ RANGE_PATHS = {
 
 def _error(result: subprocess.CompletedProcess[str]) -> str:
     return (result.stderr or result.stdout).strip() or fmt(
-        QCoreApplication.translate("GovernorBus", "busctl failed (%1)"), str(result.returncode))
+        "busctl failed (%1)", str(result.returncode))
 
 
 def _parse_values(output: str) -> list[str]:
@@ -54,8 +53,7 @@ class GovernorBus:
             return False, _error(result)
         if result.stdout.strip().endswith("true"):
             return True, ""
-        return False, fmt(QCoreApplication.translate(
-            "GovernorBus", "%1 is not on the system bus (governor stopped, or [dbus] enabled = false)."),
+        return False, fmt("%1 is not on the system bus (governor stopped, or [dbus] enabled = false).",
             BUS_NAME)
 
     def _get_properties(self, path: str, iface: str, *names: str) -> list[str] | None:
@@ -74,8 +72,7 @@ class GovernorBus:
                                     "TemperatureThrottling", "TemperatureRecovery")
         if perf is None:
             state.available = False
-            state.error = QCoreApplication.translate(
-                "GovernorBus", "The governor answered on the bus, but its properties could not be read.")
+            state.error = "The governor answered on the bus, but its properties could not be read."
             return state
         state.enabled = perf[0] == "true"
         state.load_min, state.load_max = float(perf[1]), float(perf[2])
@@ -122,5 +119,5 @@ class GovernorBus:
         result = _run(["pkexec", "busctl", "--system", "call", BUS_NAME, OBJECT_PATH, TEST_IFACE, "SetTestMode",
                        "uu", str(int(mhz)), str(int(millivolts))], timeout=120)
         if result.returncode == 126:
-            return False, QCoreApplication.translate("GovernorBus", "Authentication was cancelled.")
+            return False, "Authentication was cancelled."
         return result.returncode == 0, "" if result.returncode == 0 else _error(result)

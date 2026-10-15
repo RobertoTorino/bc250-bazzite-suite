@@ -12,9 +12,6 @@ ROOT = Path(__file__).resolve().parent.parent
 LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
 WINDOW_ICON_PATH = LOGO_PATH
 FONT_DIR = Path(__file__).resolve().parent / "fonts"
-TRANSLATIONS_DIR = Path(__file__).resolve().parent / "translations"
-LANGUAGES = {"en": "English", "de": "Deutsch", "es": "Español", "fr": "Français", "it": "Italiano", "pl": "Polski",
-             "ru": "Русский", "zh": "中文（简体）", "ja": "日本語"}
 DISPLAY_NAME = f"{APP_NAME} {__version__}"
 # The app lives in the BC250 Bazzite Suite repository; its releases are tagged helixsr-v<x.y.z> there.
 SUITE_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite"

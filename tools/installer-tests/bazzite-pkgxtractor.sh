@@ -16,6 +16,19 @@ A=$D/$APP/app
 # sudo must never be needed: make it fail loudly.
 printf '#!/bin/sh\necho "sudo called: $*" >&2\nexit 1\n' > "$T/shims/sudo"
 
+# The launcher runs in the caller's folder and still takes the app's own package: a probe in place of the installed
+# module, the real python instead of the stub venv's, started from a folder that holds a look-alike package.
+probe_launcher() {   # probe_launcher <launcher> <module file under $A> <package>; prints what the probe saw
+    local stub="$T/stub-python" out
+    cp "$D/$APP/venv/bin/python" "$stub" && printf '#!/bin/sh\nexec /usr/bin/python3 "$@"\n' > "$D/$APP/venv/bin/python"
+    cp "$A/$2" "$T/module.bak"
+    printf 'import os, sys\nimport %s\nprint("cwd=" + os.getcwd())\nprint("pkg=" + os.path.dirname(%s.__file__))\nprint("args=" + "|".join(sys.argv[1:]))\n' "$3" "$3" > "$A/$2"
+    rm -rf "$T/elsewhere"; mkdir -p "$T/elsewhere/$3" && echo 'raise SystemExit("look-alike package imported")' > "$T/elsewhere/$3/__init__.py"
+    out=$(cd "$T/elsewhere" && "$1" "game 1.pkg" sub/out 2>&1)
+    cp "$T/module.bak" "$A/$2"; mv "$stub" "$D/$APP/venv/bin/python"
+    printf '%s\n' "$out"
+}
+
 echo "== 1. install from the suite checkout"
 bash "$SUITE/apps/bazzite-pkgxtractor/install.sh" > "$T/log1" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
@@ -24,9 +37,17 @@ check "app copied" "[ -f $A/bazzite_pkgxtractor/main_window.py ] && [ -f $A/bazz
 check "core bundled from checkout" "[ -f $A/bc250_core/widgets.py ] && [ ! -d $A/bc250_core/__pycache__ ]"
 check "no tests or caches copied" "[ ! -d $A/tests ] && ! find $A -name __pycache__ | grep -q ."
 check "own venv, not the suite's" "[ -x $D/$APP/venv/bin/python ] && [ ! -e $D/bc250-bazzite-suite/venv ]"
-check "launcher uses the own venv" "grep -qF '$APP/venv/bin/python\" -m bazzite_pkgxtractor \"' $HOME/.local/bin/$APP"
-check "CLI launcher uses the own venv" "grep -qF '$APP/venv/bin/python\" -m bazzite_pkgxtractor.cli' $HOME/.local/bin/$APP-cli"
-check "launchers cd into the app" "grep -qF 'cd \"$A\"' $HOME/.local/bin/$APP && grep -qF 'cd \"$A\"' $HOME/.local/bin/$APP-cli"
+check "launcher uses the own venv" "grep -qF '$APP/venv/bin/python\" -c ' $HOME/.local/bin/$APP && grep -qF '\"$A\" bazzite_pkgxtractor \"' $HOME/.local/bin/$APP"
+check "CLI launcher uses the own venv" "grep -qF '$APP/venv/bin/python\" -c ' $HOME/.local/bin/$APP-cli && grep -qF '\"$A\" bazzite_pkgxtractor.cli \"' $HOME/.local/bin/$APP-cli"
+check "launchers do not change folder" "! grep -q '^cd ' $HOME/.local/bin/$APP && ! grep -q '^cd ' $HOME/.local/bin/$APP-cli"
+out=$(probe_launcher $HOME/.local/bin/$APP bazzite_pkgxtractor/__main__.py bazzite_pkgxtractor); here=$(cd "$T/elsewhere" && pwd -P)
+check "launcher runs in the caller's folder" "printf '%s\n' \"$out\" | grep -qxF \"cwd=$here\""
+check "launcher imports the app's package, not the folder's" "printf '%s\n' \"$out\" | grep -qxF \"pkg=$A/bazzite_pkgxtractor\""
+check "launcher passes relative paths as given" "printf '%s\n' \"$out\" | grep -qxF 'args=game 1.pkg|sub/out'"
+out=$(probe_launcher $HOME/.local/bin/$APP-cli bazzite_pkgxtractor/cli.py bazzite_pkgxtractor); here=$(cd "$T/elsewhere" && pwd -P)
+check "CLI launcher runs in the caller's folder" "printf '%s\n' \"$out\" | grep -qxF \"cwd=$here\""
+check "CLI launcher imports the app's package, not the folder's" "printf '%s\n' \"$out\" | grep -qxF \"pkg=$A/bazzite_pkgxtractor\""
+check "CLI launcher passes relative paths as given" "printf '%s\n' \"$out\" | grep -qxF 'args=game 1.pkg|sub/out'"
 check "core imports from the app copy" "(cd $A && /usr/bin/python3 -c 'import importlib.util as u, sys; s=u.find_spec(\"bc250_core\"); sys.exit(0 if s and s.origin.startswith(\"$A\") else 1)')"
 check "launchers executable" "[ -x $HOME/.local/bin/$APP ] && [ -x $HOME/.local/bin/$APP-cli ]"
 check "menu entry opens a package" "grep -qx 'Exec=$HOME/.local/bin/$APP %f' $D/applications/$APP.desktop"

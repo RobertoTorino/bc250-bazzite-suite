@@ -6,17 +6,12 @@ makes it the current one, so helpers such as window_title() can find the app nam
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 SUITE_REPO_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite"
 SUITE_MANUAL_URL = "https://robertotorino.github.io/bc250-bazzite-suite/"     # one chapter per app: apps/<key>/
 
-# Endonyms, in the order the language pickers show them. "en" is the source language.
-DEFAULT_LANGUAGES: dict[str, str] = {
-    "en": "English", "de": "Deutsch", "es": "Español", "fr": "Français", "it": "Italiano", "pl": "Polski",
-    "ru": "Русский", "zh": "中文（简体）", "ja": "日本語",
-}
 
 
 @dataclass(frozen=True)
@@ -27,12 +22,9 @@ class AppInfo:
     logo: Path | None = None
     repo_url: str = SUITE_REPO_URL
     tag_prefix: str = ""                # "governor-v": this app's release tags in the suite repo
-    translations_dir: Path | None = None
-    catalog: str = ""                   # .qm prefix: "bc250_governor" -> translations/bc250_governor_de.qm
     settings_org: str = ""              # existing QSettings org/app, so no settings file moves (default: app_id)
     settings_app: str = ""
     settings_ini: bool = False          # bazzite-test keeps an .ini; the others Qt's native format (.conf)
-    languages: dict[str, str] = field(default_factory=lambda: dict(DEFAULT_LANGUAGES))
 
     @property
     def display_name(self) -> str:

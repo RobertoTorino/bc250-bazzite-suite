@@ -1,3 +1,7 @@
+Changelog: 15-10-2026 02:29:06
+
+Release 1.1.4. Pins bazzite-test-v0.1.10, governor-v0.1.6, helixsr-v0.2.6, cu-bisect-v0.1.4, cores-bisect-v0.1.5, gpu-oc-bisect-v0.1.4, persistent-acpi-v0.1.3, system-overlay-v0.1.8, bios-reader-v0.1.8, ace-queues-v0.1.10, mesh-shaders-v0.1.3, memory-manager-v0.1.9, hdmi-cec-v0.1.9, sftp-tools-v0.1.3, demo-tool-v0.1.7, dependency-checker-v0.1.17, console-link-v1.0.6, shadps4-manager-v0.1.3, decky-manager-v0.1.1.
+
 Changelog: 15-10-2026 01:26:23
 
 apps.toml lists Bazzite UMD File Renamer (bazzite-umd-file-renamer, pinned to its first release bazzite-umd-file-renamer-v0.1.0, not tagged yet) with development = true: the portal shows it under "Development only", with the icon portal/images/apps/bazzite-umd-file-renamer.png (a copy of the app's images/bazzite-umd-file-renamer-128.png). Tests: the development section holds it.

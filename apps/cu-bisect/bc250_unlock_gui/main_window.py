@@ -92,12 +92,12 @@ class MainWindow(QWidget):
         title.setStyleSheet("font-size:24px; font-weight:800; padding:0 2px;")
         title_row.addWidget(title)
         title_row.addStretch(1)
-        about_btn = QPushButton(self.tr("About"))
+        about_btn = QPushButton("About")
         about_btn.setFlat(True)
         about_btn.clicked.connect(self._on_about)
         title_row.addWidget(about_btn)
         header_right.addLayout(title_row)
-        sub = QLabel(self.tr("Keeps a CU unlock you already validated with bc250-cu-bisect.sh across reboots."))
+        sub = QLabel("Keeps a CU unlock you already validated with bc250-cu-bisect.sh across reboots.")
         sub.setWordWrap(True)
         header_right.addWidget(sub)
         header.addLayout(header_right, 1)
@@ -120,13 +120,13 @@ class MainWindow(QWidget):
         root.addWidget(self.cu_map)
 
         preview_row = QHBoxLayout()
-        preview_row.addWidget(QLabel(self.tr("Preview a mask:")))
+        preview_row.addWidget(QLabel("Preview a mask:"))
         self.mask_preview_input = QLineEdit()
         self.mask_preview_input.setPlaceholderText("0x0f,0x0f,0x0f,0x0f")
-        self.mask_preview_input.setToolTip(self.tr(
+        self.mask_preview_input.setToolTip(
             "Paste any 4-row WGP mask (SE0.SH0,SE0.SH1,SE1.SH0,SE1.SH1, e.g. from --baseline or the "
             "README) to see it on the map above, without needing it to be an accepted result. Only "
-            "even masks can be installed: 3 WGPs per row = 24 CUs (stock), 4 = 32 CUs, 5 = 40 CUs."))
+            "even masks can be installed: 3 WGPs per row = 24 CUs (stock), 4 = 32 CUs, 5 = 40 CUs.")
         self.mask_preview_input.textChanged.connect(self._on_mask_preview_changed)
         preview_row.addWidget(self.mask_preview_input, stretch=1)
         self.mask_preview_label = QLabel()
@@ -134,21 +134,18 @@ class MainWindow(QWidget):
         root.addLayout(preview_row)
 
         buttons = QHBoxLayout()
-        self.install_btn = QPushButton(self.tr("Install (apply now + keep after reboot)"))
-        self.install_btn.setToolTip(self.tr(
-            "Apply the accepted mask now and reapply it automatically on every future boot."))
+        self.install_btn = QPushButton("Install (apply now + keep after reboot)")
+        self.install_btn.setToolTip("Apply the accepted mask now and reapply it automatically on every future boot.")
         self.install_btn.clicked.connect(self._on_install)
-        self.uninstall_btn = QPushButton(self.tr("Uninstall (back to stock next boot)"))
-        self.uninstall_btn.setToolTip(self.tr(
-            "Disable the unlock service; the board returns to the stock 24 CUs from the next reboot."))
+        self.uninstall_btn = QPushButton("Uninstall (back to stock next boot)")
+        self.uninstall_btn.setToolTip(
+            "Disable the unlock service; the board returns to the stock 24 CUs from the next reboot.")
         self.uninstall_btn.clicked.connect(self._on_uninstall)
-        self.status_btn = QPushButton(self.tr("Refresh status"))
-        self.status_btn.setToolTip(self.tr(
-            "Show the installed masks, service state and live masks (no root needed)."))
+        self.status_btn = QPushButton("Refresh status")
+        self.status_btn.setToolTip("Show the installed masks, service state and live masks (no root needed).")
         self.status_btn.clicked.connect(self._refresh_status)
-        self.recheck_btn = QPushButton(self.tr("Re-check bisect results"))
-        self.recheck_btn.setToolTip(self.tr(
-            "Re-read bc250-cu-bisect.sh's recorded results, e.g. after running another retest."))
+        self.recheck_btn = QPushButton("Re-check bisect results")
+        self.recheck_btn.setToolTip("Re-read bc250-cu-bisect.sh's recorded results, e.g. after running another retest.")
         self.recheck_btn.clicked.connect(self._refresh_gate)
         buttons.addWidget(self.install_btn)
         buttons.addWidget(self.uninstall_btn)
@@ -163,7 +160,7 @@ class MainWindow(QWidget):
         self.output = QPlainTextEdit()
         self.output.setReadOnly(True)
         self.output.setMaximumBlockCount(2000)
-        self.output.setPlaceholderText(self.tr("Output of bc250-cu-unlock.sh appears here."))
+        self.output.setPlaceholderText("Output of bc250-cu-unlock.sh appears here.")
         root.addWidget(self.output, stretch=1)
 
         self._restore_geometry()
@@ -190,10 +187,10 @@ class MainWindow(QWidget):
         result: GateResult = check()
         self._gate_result = result
         if result.accepted:
-            self.gate_title.setText(self.tr("\u2714 ACCEPTED"))
+            self.gate_title.setText("\u2714 ACCEPTED")
             self.gate_title.setStyleSheet(self._BANNER_BASE + "background-color:#2e7d32; color:white;")
         else:
-            self.gate_title.setText(self.tr("\u2718 NOT ACCEPTED YET!"))
+            self.gate_title.setText("\u2718 NOT ACCEPTED YET!")
             self.gate_title.setStyleSheet(self._BANNER_BASE + "background-color:#c62828; color:white;")
         self.gate_reasons.setText("\n".join(result.reasons))
         self.install_btn.setEnabled(result.accepted and not self.runner.busy)
@@ -218,17 +215,17 @@ class MainWindow(QWidget):
             return
         if not MASK_RE.match(text):
             self.mask_preview_input.setStyleSheet("border:1px solid #c62828;")
-            self.mask_preview_label.setText(self.tr("invalid mask"))
+            self.mask_preview_label.setText("invalid mask")
             return
         self.cu_map.set_masks(text)
         if even_level(text) is None:
             self.mask_preview_input.setStyleSheet("border:1px solid #ef6c00;")
-            self.mask_preview_label.setText(self.tr(
-                "{0} CUs \u2014 not installable (needs 3, 4 or 5 WGPs on every row = 24/32/40 CUs)")
+            self.mask_preview_label.setText(
+                "{0} CUs \u2014 not installable (needs 3, 4 or 5 WGPs on every row = 24/32/40 CUs)"
                 .format(cu_count(text)))
             return
         self.mask_preview_input.setStyleSheet("border:1px solid #2e7d32;")
-        self.mask_preview_label.setText(self.tr("{0} CUs (preview)").format(cu_count(text)))
+        self.mask_preview_label.setText("{0} CUs (preview)".format(cu_count(text)))
 
     # ---------------------------------------------------------------- output
     def _append_line(self, text: str) -> None:
@@ -240,9 +237,9 @@ class MainWindow(QWidget):
         if busy:
             QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
             label = {
-                "install": self.tr("Working \u2014 installing\u2026"),
-                "uninstall": self.tr("Working \u2014 uninstalling\u2026"),
-            }.get(self._pending_action, self.tr("Working\u2026"))
+                "install": "Working \u2014 installing\u2026",
+                "uninstall": "Working \u2014 uninstalling\u2026",
+            }.get(self._pending_action, "Working\u2026")
             self.busy_label.setText(label)
         else:
             QApplication.restoreOverrideCursor()
@@ -252,7 +249,7 @@ class MainWindow(QWidget):
 
     def _on_auth_failed(self) -> None:
         self._auth_failed_this_run = True
-        self._append_line(self.tr("sudo: authentication failed."))
+        self._append_line("sudo: authentication failed.")
 
     def _on_finished(self, code: int) -> None:
         self._set_busy(False)
@@ -261,7 +258,7 @@ class MainWindow(QWidget):
         self._auth_failed_this_run = False
         if auth_failed and code != 0 and action:
             # Wrong password: let the user retry right away instead of re-clicking Install/Uninstall.
-            entered = SudoDialog.ask(self, self.tr("Incorrect password, try again."))
+            entered = SudoDialog.ask(self, "Incorrect password, try again.")
             if entered is None:
                 self._pending_action = ""
                 self._pending_args = []
@@ -273,10 +270,10 @@ class MainWindow(QWidget):
         self._pending_action = ""
         self._pending_args = []
         if action in ("install", "uninstall"):
-            self._append_line(self.tr("({0} finished, exit code {1})").format(action, code))
+            self._append_line("({0} finished, exit code {1})".format(action, code))
             self._refresh_status()
         if code != 0 and action:
-            QMessageBox.warning(self, APP_NAME, self.tr("{0} failed (exit code {1}). See the output above.")
+            QMessageBox.warning(self, APP_NAME, "{0} failed (exit code {1}). See the output above."
                                  .format(action, code))
 
     # --------------------------------------------------------------- actions
@@ -303,7 +300,7 @@ class MainWindow(QWidget):
             return
         answer = QMessageBox.question(
             self, APP_NAME,
-            self.tr("Apply {0} ({1} CUs) now and keep it enabled on every boot?")
+            "Apply {0} ({1} CUs) now and keep it enabled on every boot?"
             .format(result.masks, result.cu_total),
         )
         if answer != QMessageBox.StandardButton.Yes:
@@ -313,8 +310,8 @@ class MainWindow(QWidget):
     def _on_uninstall(self) -> None:
         answer = QMessageBox.question(
             self, APP_NAME,
-            self.tr("Disable the unlock service? The board goes back to the stock 24 CUs from the "
-                    "next reboot."),
+            ("Disable the unlock service? The board goes back to the stock 24 CUs from the "
+             "next reboot."),
         )
         if answer != QMessageBox.StandardButton.Yes:
             return

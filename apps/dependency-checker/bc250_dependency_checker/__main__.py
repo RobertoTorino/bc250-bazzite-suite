@@ -14,7 +14,7 @@ from .main_window import DependencyWindow
 
 
 def main() -> int:
-    app = create_app(INFO, sys.argv[1:], lang="en")
+    app = create_app(INFO, sys.argv[1:])
     try:
         apps = load_apps(CATALOG)
         dependencies = load_catalog(CATALOG)

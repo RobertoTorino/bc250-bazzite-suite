@@ -3,7 +3,7 @@
 
 APP_NAME = "BC250 Bazzite Suite"
 APP_ID = "bc250-bazzite-suite"
-__version__ = "1.1.3"
+__version__ = "1.1.4"
 
 import re
 from pathlib import Path
@@ -17,7 +17,7 @@ MANIFEST = ROOT / "apps.toml"
 LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
 APP_ICONS = ROOT / "images" / "apps"                    # <key>.png: the small icon on each app's card
 INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="portal-v",
-               settings_app="bc250-bazzite-suite-portal", languages={"en": "English"})
+               settings_app="bc250-bazzite-suite-portal")
 
 
 def installed_copy() -> Path | None:

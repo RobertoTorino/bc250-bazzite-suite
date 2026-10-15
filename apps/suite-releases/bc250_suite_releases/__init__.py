@@ -16,7 +16,6 @@ SUITE = ROOT.parent.parent                  # the checkout it edits
 LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
 
 # Settings in ~/.config/bc250-release/bc250-release.ini
-INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, settings_ini=True,
-               languages={"en": "English"})
+INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, settings_ini=True)
 
 __all__ = ["APP_ID", "APP_NAME", "INFO", "LOGO_PATH", "ROOT", "SUITE", "__version__"]

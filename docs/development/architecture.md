@@ -84,13 +84,12 @@ INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH
                settings_ini=True)
 ```
 
-`__main__.py` starts the app the same way in every app: `create_app()` sets the names, style, fonts, translations
-and icon; `instance.already_running()` brings an open window to the front instead of opening a second one;
+`__main__.py` starts the app the same way in every app: `create_app()` sets the names, style, fonts and icon; `instance.already_running()` brings an open window to the front instead of opening a second one;
 `exec_app()` runs the event loop and handles SIGTERM.
 
 ```python
 def main() -> int:
-    app = create_app(INFO, sys.argv[1:], lang="en")
+    app = create_app(INFO, sys.argv[1:])
     if instance.already_running(INFO.app_id):
         return 0
     window = MainWindow()
@@ -190,8 +189,9 @@ Each module of a package has one job, so the logic can be tested without a windo
 - **Comments say why,** not what the next line does: the reason for a choice, a board quirk, a finding on the
   owner's board with its date.
 - **Core imports no app;** logic modules import no Qt; an app imports core, never another app.
-- **Text in the window** is plain, short sentences for the person using the app, in English; apps with
-  translations wrap their strings in `self.tr()`. Errors say what happened and what to do next.
+- **Text in the window** is plain, short sentences for the person using the app, in English. The apps are not
+  translated: no `self.tr()`, and Qt's own dialog buttons stay English too. Errors say what happened and what to
+  do next.
 - **Shell:** `#!/usr/bin/env bash`, `set -euo pipefail`, `info`/`die` helpers, the usage text in the header
   comment (shown by `--help`), quoted variables, and no shellcheck warnings.
 - **Files** use LF line endings; scripts are executable (`tools/fix-modes.sh` sets the bit in the index).
@@ -218,7 +218,11 @@ It installs:
   `--upgrade`, so installing again brings every package to the newest version the requirements allow, a security
   fix within that range included.
 - **A launcher** `~/.local/bin/<app-id>` that changes into the app folder and runs
-  `exec "<venv>/bin/python" -m <package>`. Keep that `exec` line: the Dependency Checker reads it to find the
+  `exec "<venv>/bin/python" -m <package>`. An app that takes file or folder paths on its command line (Bazzite
+  pkgxtractor, Bazzite UMD File Renamer) stays in the folder it is started from, so a relative path means what it
+  says: `exec "<venv>/bin/python" -c '$RUN_MODULE' "<app folder>" <package> "$@"`, which puts the app folder first
+  on `sys.path` instead (see their `install.sh`), and its `__main__.py` makes the path absolute before it uses or
+  hands it on. Keep the `exec "<venv>/bin/python"` start of that line: the Dependency Checker reads it to find the
   app's Python environment.
 - **A menu entry and a Desktop icon,** both pointing at the launcher by its full path.
 

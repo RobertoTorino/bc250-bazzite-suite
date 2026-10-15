@@ -8,7 +8,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
-from PyQt6.QtCore import QCoreApplication
 
 from .. import fmt
 
@@ -80,57 +79,44 @@ class GovernorConfig:
 
     def validate(self) -> None:
         if self.method not in METHODS:
-            raise ValueError(fmt(QCoreApplication.translate("GovernorConfig", "Unsupported GPU usage method: %1"),
+            raise ValueError(fmt("Unsupported GPU usage method: %1",
                                  repr(self.method)))
         if self.temp_read not in TEMP_READS:
-            raise ValueError(fmt(QCoreApplication.translate("GovernorConfig",
-                                                             "Unsupported temperature source: %1"),
+            raise ValueError(fmt("Unsupported temperature source: %1",
                                  repr(self.temp_read)))
         if self.set_method not in SET_METHODS:
-            raise ValueError(fmt(QCoreApplication.translate("GovernorConfig",
-                                                             "Unsupported gpu.set-method: %1"),
+            raise ValueError(fmt("Unsupported gpu.set-method: %1",
                                  repr(self.set_method)))
         if self.flush_every < 1:
-            raise ValueError(QCoreApplication.translate("GovernorConfig", "flush-every must be at least 1"))
+            raise ValueError("flush-every must be at least 1")
         if self.sample_us < 1 or self.adjust_us < 1:
-            raise ValueError(QCoreApplication.translate("GovernorConfig",
-                                                        "timing.intervals must be at least 1 µs"))
+            raise ValueError("timing.intervals must be at least 1 µs")
         if self.adjust_us < self.sample_us:
-            raise ValueError(QCoreApplication.translate("GovernorConfig",
-                                                        "timing.intervals.adjust must not be shorter than "
-                                                        "sample"))
+            raise ValueError(("timing.intervals.adjust must not be shorter than "
+                              "sample"))
         if not 0 <= self.burst_samples <= BURST_SAMPLES_MAX:
-            raise ValueError(fmt(QCoreApplication.translate("GovernorConfig",
-                                                             "timing.burst-samples must be 0 (off) or 1..%1"),
+            raise ValueError(fmt("timing.burst-samples must be 0 (off) or 1..%1",
                                  str(BURST_SAMPLES_MAX)))
         if self.down_events < 1:
-            raise ValueError(QCoreApplication.translate("GovernorConfig",
-                                                        "timing.down-events must be at least 1"))
+            raise ValueError("timing.down-events must be at least 1")
         if self.ramp_normal <= 0:
-            raise ValueError(QCoreApplication.translate("GovernorConfig",
-                                                        "timing.ramp-rates.normal must be positive"))
+            raise ValueError("timing.ramp-rates.normal must be positive")
         if self.ramp_burst <= self.ramp_normal:
-            raise ValueError(QCoreApplication.translate("GovernorConfig",
-                                                        "timing.ramp-rates.burst must be greater than normal"))
+            raise ValueError("timing.ramp-rates.burst must be greater than normal")
         if self.freq_adjust < 0:
-            raise ValueError(QCoreApplication.translate("GovernorConfig",
-                                                        "frequency-thresholds.adjust cannot be negative"))
+            raise ValueError("frequency-thresholds.adjust cannot be negative")
         if self.freq_min < 0 or self.freq_max < 0:
-            raise ValueError(QCoreApplication.translate("GovernorConfig", "Frequencies cannot be negative"))
+            raise ValueError("Frequencies cannot be negative")
         if self.freq_min and self.freq_max and self.freq_min > self.freq_max:
-            raise ValueError(QCoreApplication.translate("GovernorConfig",
-                                                        "frequency-range.min must not exceed "
-                                                        "frequency-range.max"))
+            raise ValueError(("frequency-range.min must not exceed "
+                              "frequency-range.max"))
         if not 0.0 <= self.load_lower <= self.load_upper < 1.0:
-            raise ValueError(QCoreApplication.translate("GovernorConfig",
-                                                        "load-target needs 0 <= lower <= upper < 1"))
+            raise ValueError("load-target needs 0 <= lower <= upper < 1")
         if not 0 <= self.temp_throttling <= 100:
-            raise ValueError(QCoreApplication.translate("GovernorConfig",
-                                                        "temperature.throttling must be 0..100 °C"))
+            raise ValueError("temperature.throttling must be 0..100 °C")
         if self.temp_recovery and not self.temp_recovery < self.temp_throttling:
-            raise ValueError(QCoreApplication.translate("GovernorConfig",
-                                                        "temperature.throttling_recovery must be below "
-                                                        "temperature.throttling (or 0)"))
+            raise ValueError(("temperature.throttling_recovery must be below "
+                              "temperature.throttling (or 0)"))
 
     def tuning_fields(self) -> tuple:
         """The values a preset sets, for comparing a form with the presets."""

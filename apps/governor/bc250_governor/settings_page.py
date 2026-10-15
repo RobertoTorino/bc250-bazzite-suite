@@ -29,37 +29,37 @@ class SettingsPage(QWidget):
         super().__init__(parent)
         self.settings = settings
         layout = QVBoxLayout(self)
-        header, _ = page_header(self.tr("Settings"))
+        header, _ = page_header("Settings")
         layout.addLayout(header)
         layout.addWidget(hint_label(
-            self.tr("These settings concern the app, not the governor. They are stored per user.")))
+            "These settings concern the app, not the governor. They are stored per user."))
 
-        tray_box = QGroupBox(self.tr("System tray"))
+        tray_box = QGroupBox("System tray")
         tray_layout = QVBoxLayout(tray_box)
-        self.tray = QCheckBox(self.tr("Show a tray icon with the GPU load, clock and temperature in its tooltip"))
+        self.tray = QCheckBox("Show a tray icon with the GPU load, clock and temperature in its tooltip")
         self.tray.setChecked(settings.value(KEY_TRAY, True, bool) and tray_supported)
         tray_layout.addWidget(self.tray)
-        self.minimise = QCheckBox(self.tr("Closing the window keeps the app running in the tray"))
+        self.minimise = QCheckBox("Closing the window keeps the app running in the tray")
         self.minimise.setChecked(settings.value(KEY_MINIMISE, True, bool))
         self.minimise.toggled.connect(lambda v: settings.setValue(KEY_MINIMISE, v))
         tray_layout.addWidget(self.minimise)
-        tray_layout.addWidget(hint_label(self.tr("Left-click the tray icon to show or hide the window; the menu "
-                                                "also toggles performance mode (when D-Bus is reachable) and quits "
-                                                "the app.")))
+        tray_layout.addWidget(hint_label(("Left-click the tray icon to show or hide the window; the menu "
+                                          "also toggles performance mode (when D-Bus is reachable) and quits "
+                                          "the app.")))
         if not tray_supported:
             self.tray.setEnabled(False)
             self.minimise.setEnabled(False)
-            tray_layout.addWidget(hint_label(self.tr("This desktop offers no system tray (on GNOME, install the "
-                                                    "AppIndicator extension).")))
+            tray_layout.addWidget(hint_label(("This desktop offers no system tray (on GNOME, install the "
+                                              "AppIndicator extension).")))
         layout.addWidget(tray_box)
 
-        auto_box = QGroupBox(self.tr("Start at login"))
+        auto_box = QGroupBox("Start at login")
         auto_layout = QVBoxLayout(auto_box)
-        self.autostart = QCheckBox(self.tr("Start the app when I log in"))
+        self.autostart = QCheckBox("Start the app when I log in")
         self.autostart.setChecked(autostart_enabled())
         self.autostart.toggled.connect(self._autostart_changed)
         auto_layout.addWidget(self.autostart)
-        self.start_hidden = QCheckBox(self.tr("…hidden in the tray, without opening the window"))
+        self.start_hidden = QCheckBox("…hidden in the tray, without opening the window")
         self.start_hidden.setChecked(settings.value(KEY_START_HIDDEN, True, bool))
         self.start_hidden.setEnabled(tray_supported)
         self.start_hidden.toggled.connect(self._autostart_changed)
@@ -70,21 +70,21 @@ class SettingsPage(QWidget):
         auto_layout.addWidget(self.autostart_info)
         layout.addWidget(auto_box)
 
-        update_box = QGroupBox(self.tr("Governor updates"))
+        update_box = QGroupBox("Governor updates")
         update_layout = QVBoxLayout(update_box)
-        self.update_check = QCheckBox(self.tr("Check for a newer governor release when the app starts"))
+        self.update_check = QCheckBox("Check for a newer governor release when the app starts")
         self.update_check.setChecked(settings.value(KEY_UPDATE_CHECK, True, bool))
         self.update_check.toggled.connect(lambda v: settings.setValue(KEY_UPDATE_CHECK, v))
         update_layout.addWidget(self.update_check)
-        update_layout.addWidget(hint_label(self.tr(
+        update_layout.addWidget(hint_label(
             "One request to api.github.com for the latest release of filippor/cyan-skillfish-governor, compared "
-            "with the installed RPM. Nothing else is sent. The Service page has the same check as a button.")))
+            "with the installed RPM. Nothing else is sent. The Service page has the same check as a button."))
         layout.addWidget(update_box)
 
-        alert_box = QGroupBox(self.tr("Alerts"))
+        alert_box = QGroupBox("Alerts")
         alert_layout = QVBoxLayout(alert_box)
         temp_row = QHBoxLayout()
-        self.alert_temp = QCheckBox(self.tr("Notify when the GPU temperature reaches"))
+        self.alert_temp = QCheckBox("Notify when the GPU temperature reaches")
         self.alert_temp.setChecked(settings.value(KEY_ALERT_TEMP, True, bool))
         self.alert_temp.toggled.connect(lambda v: settings.setValue(KEY_ALERT_TEMP, v))
         temp_row.addWidget(self.alert_temp)
@@ -96,18 +96,18 @@ class SettingsPage(QWidget):
         temp_row.addWidget(self.alert_temp_c)
         temp_row.addStretch(1)
         alert_layout.addLayout(temp_row)
-        self.alert_throttle = QCheckBox(self.tr("Notify when the governor starts throttling for temperature"))
+        self.alert_throttle = QCheckBox("Notify when the governor starts throttling for temperature")
         self.alert_throttle.setChecked(settings.value(KEY_ALERT_THROTTLE, True, bool))
         self.alert_throttle.toggled.connect(lambda v: settings.setValue(KEY_ALERT_THROTTLE, v))
         alert_layout.addWidget(self.alert_throttle)
-        self.alert_service = QCheckBox(self.tr("Notify when the governor service stops or fails on its own"))
+        self.alert_service = QCheckBox("Notify when the governor service stops or fails on its own")
         self.alert_service.setChecked(settings.value(KEY_ALERT_SERVICE, True, bool))
         self.alert_service.toggled.connect(lambda v: settings.setValue(KEY_ALERT_SERVICE, v))
         alert_layout.addWidget(self.alert_service)
-        alert_layout.addWidget(hint_label(self.tr(
+        alert_layout.addWidget(hint_label(
             "Shown as desktop notifications through the tray icon (in the status bar when the tray is off). One "
             "message per event: a temperature alert re-arms once the GPU has cooled 5 °C below its threshold, "
-            "and the same alert repeats at most every 5 minutes.")))
+            "and the same alert repeats at most every 5 minutes."))
         layout.addWidget(alert_box)
         layout.addStretch(1)
         self._minimise_enabled()
@@ -143,14 +143,14 @@ class SettingsPage(QWidget):
             set_autostart(self.autostart.isChecked(),
                           start_in_tray=self.start_hidden.isChecked() and self.start_hidden.isEnabled())
         except OSError as exc:
-            self.autostart_info.setText(fmt(self.tr("Could not write %1: %2"), str(AUTOSTART_FILE), str(exc)))
+            self.autostart_info.setText(fmt("Could not write %1: %2", str(AUTOSTART_FILE), str(exc)))
             return
         self._describe_autostart()
 
     def _describe_autostart(self) -> None:
         if autostart_enabled():
-            self.autostart_info.setText(fmt(self.tr("Entry: %1\nCommand: %2"), str(AUTOSTART_FILE),
+            self.autostart_info.setText(fmt("Entry: %1\nCommand: %2", str(AUTOSTART_FILE),
                                              launcher_command()))
         else:
-            self.autostart_info.setText(fmt(self.tr(
-                "Writes a desktop entry to %1; nothing is installed system-wide."), str(AUTOSTART_FILE.parent)))
+            self.autostart_info.setText(fmt(
+                "Writes a desktop entry to %1; nothing is installed system-wide.", str(AUTOSTART_FILE.parent)))

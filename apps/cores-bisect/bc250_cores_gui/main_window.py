@@ -49,8 +49,8 @@ class CoreMapWidget(QWidget):
             self._grid.addWidget(cell, 1, i)
             self._cells.append((name, cell))
         self._grid.setColumnStretch(8, 1)
-        legend = QLabel(self.tr("stock = always enabled (6C/12T)   ok = passed every round   "
-                                "xx = fails every time   ?? = random   .. = not tested yet"))
+        legend = QLabel(("stock = always enabled (6C/12T)   ok = passed every round   "
+                         "xx = fails every time   ?? = random   .. = not tested yet"))
         legend.setStyleSheet("color:#888;")
         self._grid.addWidget(legend, 2, 0, 1, 9)
         self.set_cores(DEFAULT_BASE, DEFAULT_NEW, {})
@@ -103,13 +103,12 @@ class MainWindow(QWidget):
         title.setStyleSheet("font-size:24px; font-weight:800; padding:0 2px;")
         header_row.addWidget(title)
         header_row.addStretch(1)
-        about_btn = QPushButton(self.tr("About"))
+        about_btn = QPushButton("About")
         about_btn.setFlat(True)
         about_btn.clicked.connect(self._on_about)
         header_row.addWidget(about_btn)
         header_right.addLayout(header_row)
-        sub = QLabel(self.tr(
-            "Keeps the 8C/16T core unlock you already validated with bc250-cores-bisect.sh across reboots."))
+        sub = QLabel("Keeps the 8C/16T core unlock you already validated with bc250-cores-bisect.sh across reboots.")
         sub.setWordWrap(True)
         header_right.addWidget(sub)
         header.addLayout(header_right, 1)
@@ -131,24 +130,24 @@ class MainWindow(QWidget):
         root.addWidget(self.core_map)
 
         buttons = QHBoxLayout()
-        self.install_btn = QPushButton(self.tr("Install (keep 8C/16T after every boot)"))
-        self.install_btn.setToolTip(self.tr(
-            "Enable the root service that re-applies the unlock after a cold boot and warm-reboots once."))
+        self.install_btn = QPushButton("Install (keep 8C/16T after every boot)")
+        self.install_btn.setToolTip(
+            "Enable the root service that re-applies the unlock after a cold boot and warm-reboots once.")
         self.install_btn.clicked.connect(self._on_install)
-        self.uninstall_btn = QPushButton(self.tr("Uninstall (stock after next power off)"))
-        self.uninstall_btn.setToolTip(self.tr(
-            "Remove the service. The unlock stays active until the next full power off (cold boot)."))
+        self.uninstall_btn = QPushButton("Uninstall (stock after next power off)")
+        self.uninstall_btn.setToolTip(
+            "Remove the service. The unlock stays active until the next full power off (cold boot).")
         self.uninstall_btn.clicked.connect(self._on_uninstall)
-        self.status_btn = QPushButton(self.tr("Refresh status"))
-        self.status_btn.setToolTip(self.tr("Show the core presence mask, threads, service and guard state."))
+        self.status_btn = QPushButton("Refresh status")
+        self.status_btn.setToolTip("Show the core presence mask, threads, service and guard state.")
         self.status_btn.clicked.connect(self._refresh_status)
-        self.sudo_status_btn = QPushButton(self.tr("Status with sudo"))
-        self.sudo_status_btn.setToolTip(self.tr(
-            "Run the status as root (asks for the sudo password), so it also shows the core presence mask."))
+        self.sudo_status_btn = QPushButton("Status with sudo")
+        self.sudo_status_btn.setToolTip(
+            "Run the status as root (asks for the sudo password), so it also shows the core presence mask.")
         self.sudo_status_btn.clicked.connect(self._on_sudo_status)
-        self.recheck_btn = QPushButton(self.tr("Re-check bisect results"))
-        self.recheck_btn.setToolTip(self.tr(
-            "Re-read bc250-cores-bisect.sh's recorded results, e.g. after more rounds finished."))
+        self.recheck_btn = QPushButton("Re-check bisect results")
+        self.recheck_btn.setToolTip(
+            "Re-read bc250-cores-bisect.sh's recorded results, e.g. after more rounds finished.")
         self.recheck_btn.clicked.connect(self._refresh_gate)
         for btn in (self.install_btn, self.uninstall_btn, self.status_btn, self.sudo_status_btn, self.recheck_btn):
             buttons.addWidget(btn)
@@ -161,7 +160,7 @@ class MainWindow(QWidget):
         self.output = QPlainTextEdit()
         self.output.setReadOnly(True)
         self.output.setMaximumBlockCount(2000)
-        self.output.setPlaceholderText(self.tr("Output of bc250-cores-unlock.sh appears here."))
+        self.output.setPlaceholderText("Output of bc250-cores-unlock.sh appears here.")
         root.addWidget(self.output, stretch=1)
 
         self._restore_geometry()
@@ -187,10 +186,10 @@ class MainWindow(QWidget):
         result = check()
         self._gate_result = result
         if result.accepted:
-            self.gate_title.setText(self.tr("\u2714 ACCEPTED"))
+            self.gate_title.setText("\u2714 ACCEPTED")
             self.gate_title.setStyleSheet(self._BANNER_BASE + "background-color:#2e7d32; color:white;")
         else:
-            self.gate_title.setText(self.tr("\u2718 NOT ACCEPTED YET!"))
+            self.gate_title.setText("\u2718 NOT ACCEPTED YET!")
             self.gate_title.setStyleSheet(self._BANNER_BASE + "background-color:#c62828; color:white;")
         self.gate_reasons.setText("\n".join(result.reasons))
         base = result.base_cores or DEFAULT_BASE
@@ -208,9 +207,9 @@ class MainWindow(QWidget):
         if busy:
             QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
             label = {
-                "install": self.tr("Working \u2014 installing\u2026"),
-                "uninstall": self.tr("Working \u2014 uninstalling\u2026"),
-            }.get(self._pending_action, self.tr("Working\u2026"))
+                "install": "Working \u2014 installing\u2026",
+                "uninstall": "Working \u2014 uninstalling\u2026",
+            }.get(self._pending_action, "Working\u2026")
             self.busy_label.setText(label)
         else:
             QApplication.restoreOverrideCursor()
@@ -219,7 +218,7 @@ class MainWindow(QWidget):
 
     def _on_auth_failed(self) -> None:
         self._auth_failed_this_run = True
-        self._append_line(self.tr("sudo: authentication failed."))
+        self._append_line("sudo: authentication failed.")
 
     def _on_finished(self, code: int) -> None:
         self._set_busy(False)
@@ -228,7 +227,7 @@ class MainWindow(QWidget):
         self._auth_failed_this_run = False
         if auth_failed and code != 0 and action:
             # Wrong password: let the user retry right away instead of re-clicking Install/Uninstall.
-            entered = SudoDialog.ask(self, self.tr("Incorrect password, try again."))
+            entered = SudoDialog.ask(self, "Incorrect password, try again.")
             if entered is None:
                 self._pending_action = ""
                 self._pending_args = []
@@ -239,10 +238,10 @@ class MainWindow(QWidget):
         self._pending_action = ""
         self._pending_args = []
         if action in ("install", "uninstall"):
-            self._append_line(self.tr("({0} finished, exit code {1})").format(action, code))
+            self._append_line("({0} finished, exit code {1})".format(action, code))
             self._refresh_status()
         if code != 0 and action:
-            QMessageBox.warning(self, APP_NAME, self.tr("{0} failed (exit code {1}). See the output above.")
+            QMessageBox.warning(self, APP_NAME, "{0} failed (exit code {1}). See the output above."
                                 .format(action, code))
 
     # --------------------------------------------------------------- actions
@@ -269,10 +268,10 @@ class MainWindow(QWidget):
             return
         answer = QMessageBox.question(
             self, APP_NAME,
-            self.tr("Keep all 8 cores (16 threads) enabled on every boot?\n\n"
-                    "A root service checks the core mask at every boot. After a cold boot it re-applies "
-                    "the unlock and warm-reboots once. If the unlock isn't active right now, reboot (warm) "
-                    "after installing to bring the cores up."),
+            ("Keep all 8 cores (16 threads) enabled on every boot?\n\n"
+             "A root service checks the core mask at every boot. After a cold boot it re-applies "
+             "the unlock and warm-reboots once. If the unlock isn't active right now, reboot (warm) "
+             "after installing to bring the cores up."),
         )
         if answer != QMessageBox.StandardButton.Yes:
             return
@@ -281,8 +280,8 @@ class MainWindow(QWidget):
     def _on_uninstall(self) -> None:
         answer = QMessageBox.question(
             self, APP_NAME,
-            self.tr("Remove the unlock service? The 8 cores stay enabled until the next full power off "
-                    "(cold boot); after that the board is back to the stock 6C/12T."),
+            ("Remove the unlock service? The 8 cores stay enabled until the next full power off "
+             "(cold boot); after that the board is back to the stock 6C/12T."),
         )
         if answer != QMessageBox.StandardButton.Yes:
             return

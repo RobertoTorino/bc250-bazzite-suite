@@ -29,20 +29,20 @@ class BackupsPage(QWidget):
         self.read_backup = None                          # set by the main window: Path -> str
 
         layout = QVBoxLayout(self)
-        header, _ = page_header(self.tr("Backups"))
-        refresh = QPushButton(self.tr("Refresh"))
+        header, _ = page_header("Backups")
+        refresh = QPushButton("Refresh")
         refresh.clicked.connect(self.refresh_requested)
         header.addWidget(refresh)
         layout.addLayout(header)
-        layout.addWidget(hint_label(fmt(self.tr(
+        layout.addWidget(hint_label(fmt(
             "Before every write the app copies %1 to config.toml.bak-YYYYMMDD-HHMMSS next to it. "
             "Pick one to see what differs from the current file; Restore puts it back (the current file is backed "
-            "up first, so nothing is lost)."), config_path)))
+            "up first, so nothing is lost).", config_path)))
 
-        box = QGroupBox(self.tr("Copies, newest first"))
+        box = QGroupBox("Copies, newest first")
         box_layout = QVBoxLayout(box)
         self.table = QTableWidget(0, 3)
-        self.table.setHorizontalHeaderLabels([self.tr("Created"), self.tr("Size"), self.tr("File")])
+        self.table.setHorizontalHeaderLabels(["Created", "Size", "File"])
         self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -52,23 +52,23 @@ class BackupsPage(QWidget):
         self.table.setMaximumHeight(180)
         self.table.itemSelectionChanged.connect(self._selection_changed)
         box_layout.addWidget(self.table)
-        self.empty = QLabel(self.tr("No backups yet."))
+        self.empty = QLabel("No backups yet.")
         box_layout.addWidget(self.empty)
         layout.addWidget(box)
 
-        diff_box = QGroupBox(self.tr("Difference: backup → current file"))
+        diff_box = QGroupBox("Difference: backup → current file")
         diff_layout = QVBoxLayout(diff_box)
         self.diff = Terminal()
         diff_layout.addWidget(self.diff)
         layout.addWidget(diff_box, 1)
 
         row = QHBoxLayout()
-        self.restart_after = QCheckBox(self.tr("Restart the governor after restoring"))
+        self.restart_after = QCheckBox("Restart the governor after restoring")
         self.restart_after.setChecked(True)
         row.addWidget(self.restart_after)
         row.addStretch(1)
-        self.restore = accent_button(self.tr("Restore selected"),
-                                     self.tr("Make the selected copy the config again (asks for your password)."))
+        self.restore = accent_button("Restore selected",
+                                     "Make the selected copy the config again (asks for your password).")
         self.restore.setEnabled(False)
         self.restore.clicked.connect(self._restore_clicked)
         row.addWidget(self.restore)
@@ -95,7 +95,7 @@ class BackupsPage(QWidget):
             self.diff.set_text("")
             self.restore.setEnabled(False)
         elif self.selected_path() is None:
-            self.diff.set_text(self.tr("Select a backup to compare it with the current file."))
+            self.diff.set_text("Select a backup to compare it with the current file.")
 
     def selected_path(self) -> Path | None:
         rows = {index.row() for index in self.table.selectedIndexes()}
@@ -113,11 +113,11 @@ class BackupsPage(QWidget):
         try:
             old = self.read_backup(path)
         except OSError as exc:
-            self.diff.set_text(fmt(self.tr("Cannot read %1: %2"), str(path), str(exc)))
+            self.diff.set_text(fmt("Cannot read %1: %2", str(path), str(exc)))
             self.restore.setEnabled(False)
             return
         if old == self.current_text:
-            self.diff.set_text(self.tr("Identical to the current file."))
+            self.diff.set_text("Identical to the current file.")
             self.restore.setEnabled(False)
             return
         lines = difflib.unified_diff(old.splitlines(), self.current_text.splitlines(),

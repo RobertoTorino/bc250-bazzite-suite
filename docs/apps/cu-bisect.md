@@ -519,9 +519,7 @@ bc250-bisect-gui                     # or launch it from the app menu
 
 A terminal emulator is required to actually see/run the bisect (konsole, gnome-terminal, ptyxis,
 xfce4-terminal, foot, alacritty, kitty, x-terminal-emulator or xterm - `$TERMINAL` is tried first);
-the GUI shows an error if none is found. The launcher's own interface isn't translated yet (unlike
-`bc250_unlock_gui` below); that's a good candidate for a future iteration, along with buttons to tail
-the live log and show `--status` inline instead of in a separate terminal.
+the GUI shows an error if none is found.
 
 ### BC Unlock GUI
 ![bc-cu-unlock.png](../assets/cu-bisect/bc-cu-unlock.png)
@@ -550,27 +548,8 @@ the app menu or with `bc250-unlock-cu-gui`.
 Install/Uninstall run `bc250-cu-unlock.sh` through `sudo` (masked password prompt, passed to `sudo -S`
 only, never stored); nothing is installed with `rpm-ostree` for the GUI itself, a venv is enough.
 
-The GUI's own interface is translated (es, fr, de, zh, ja, it, pl, ru included); it follows your system
-locale automatically, or force one with `--lang <code>` (e.g. `bc250-unlock-cu-gui --lang de`). An **About**
-button shows the app version and repository link, and the window remembers its size and position
+An **About** button shows the app version and repository link, and the window remembers its size and position
 between runs.
-
-**Available translations:**
-
-| Code | Language |
-|------|----------|
-| es   | Spanish  |
-| fr   | French   |
-| de   | German   |
-| zh   | Chinese (Simplified) |
-| ja   | Japanese |
-| it   | Italian  |
-| pl   | Polish   |
-| ru   | Russian  |
-
-English is the default/fallback when no translation file matches `--lang` or your system locale.
-Translation sources live in `bc250_unlock_gui/translations/*.ts`; open an issue or PR to add another
-language.
 
 ## Releases
 

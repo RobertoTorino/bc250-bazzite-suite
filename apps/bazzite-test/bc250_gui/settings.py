@@ -11,10 +11,10 @@ from datetime import datetime
 from PyQt6.QtCore import QT_VERSION_STR, QEvent, QObject, Qt, pyqtSignal
 from PyQt6.QtCore import QPointF, QSize
 from PyQt6.QtGui import (
-    QKeyEvent, QMouseEvent, QPainter, QPalette, QPen, QColor, QPaintEvent, QPixmap, QStandardItemModel,
+    QKeyEvent, QMouseEvent, QPainter, QPalette, QPen, QColor, QPaintEvent, QPixmap,
 )
 from PyQt6.QtWidgets import (
-    QAbstractButton, QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QListWidget, QPushButton, QScrollArea,
+    QAbstractButton, QCheckBox, QFrame, QHBoxLayout, QLabel, QListWidget, QPushButton, QScrollArea,
     QStackedWidget, QVBoxLayout, QWidget,
 )
 
@@ -27,12 +27,6 @@ from .history import db_path
 from .logstore import log_dir
 from .sysoverview import SystemOverviewPage
 
-# (code, name shown in the menu); only English exists so far.
-LANGUAGES = [("en", "English"), ("es", "Español"), ("fr", "Français"), ("de", "Deutsch"), ("zh", "中文"),
-             ("ja", "日本語"), ("it", "Italiano"), ("pl", "Polski"), ("ru", "Русский")]
-AVAILABLE_LANGUAGES = {"en"}
-
-
 class AppSettings(SettingsStore):
     """Preferences in ~/.config/bc250-bazzite-test/bc250-bazzite-test.ini. Defaults keep as little as possible.
     get()/set()/changed and the window state come from bc250_core's SettingsStore."""
@@ -42,7 +36,6 @@ class AppSettings(SettingsStore):
         "privacy/store_system_details": False,
         "privacy/mask_logs": True,
         "privacy/use_sudo": True,
-        "general/language": "en",
         "general/notify": True,
         "run/stress_duration": 120,
         "run/stress_interval": 2,
@@ -203,23 +196,6 @@ class GeneralPage(QWidget):
         super().__init__(parent)
         layout = QVBoxLayout(self)
         layout.addWidget(_heading("General"))
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Language"))
-        self.language = QComboBox()
-        model = QStandardItemModel(self.language)
-        self.language.setModel(model)
-        for code, name in LANGUAGES:
-            self.language.addItem(name if code in AVAILABLE_LANGUAGES else f"{name} (coming soon)", code)
-            if code not in AVAILABLE_LANGUAGES:
-                item = model.item(self.language.count() - 1)
-                item.setEnabled(False)
-        current = self.language.findData(settings.get("general/language"))
-        self.language.setCurrentIndex(max(current, 0))
-        self.language.currentIndexChanged.connect(
-            lambda i: settings.set("general/language", self.language.itemData(i)))
-        row.addWidget(self.language)
-        row.addStretch(1)
-        layout.addLayout(row)
         notify = QCheckBox("Notify me when a long run finishes (1 minute or more) while I'm in another window")
         notify.setChecked(settings.get("general/notify"))
         notify.toggled.connect(lambda on: settings.set("general/notify", on))

@@ -8,7 +8,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from PyQt6.QtCore import QCoreApplication, QSettings, Qt, QTimer, QT_TRANSLATE_NOOP
+from PyQt6.QtCore import QSettings, Qt, QTimer
 from PyQt6.QtGui import QCloseEvent, QIcon, QMouseEvent
 from PyQt6.QtWidgets import (
     QApplication, QFileDialog, QFrame, QHBoxLayout, QInputDialog, QLabel, QListWidget, QMainWindow, QMessageBox,
@@ -39,8 +39,8 @@ from .tray import Tray, profile_command
 from .update_check import UpdateChecker, UpdateResult
 from .widgets import ACCENT, BLUE, GREEN, GREY, ORANGE, PURPLE, RED, ClickableLogo, MetricBox, header_font
 
-SOURCE_NAMES = {"hwmon": QT_TRANSLATE_NOOP("main_window", "amdgpu hwmon sensor"),
-                "gpu_metrics": QT_TRANSLATE_NOOP("main_window", "gpu_metrics table")}
+SOURCE_NAMES = {"hwmon": "amdgpu hwmon sensor",
+                "gpu_metrics": "gpu_metrics table"}
 
 
 def _scrollable(page: QWidget) -> QScrollArea:
@@ -81,12 +81,12 @@ class MainWindow(QMainWindow):
         header_right.addWidget(title)
         boxes = QHBoxLayout()
         boxes.setSpacing(8)
-        self.box_load = MetricBox(self.tr("GPU load"), BLUE)
-        self.box_clock = MetricBox(self.tr("GPU clock"), PURPLE)
-        self.box_temp = MetricBox(self.tr("GPU temperature"), GREY)
-        self.box_power = MetricBox(self.tr("Power"), GREY)
-        self.box_perf = MetricBox(self.tr("Performance mode"), GREY)
-        self.box_service = MetricBox(self.tr("Governor"), GREY)
+        self.box_load = MetricBox("GPU load", BLUE)
+        self.box_clock = MetricBox("GPU clock", PURPLE)
+        self.box_temp = MetricBox("GPU temperature", GREY)
+        self.box_power = MetricBox("Power", GREY)
+        self.box_perf = MetricBox("Performance mode", GREY)
+        self.box_service = MetricBox("Governor", GREY)
         for box in (self.box_load, self.box_clock, self.box_temp, self.box_power, self.box_perf, self.box_service):
             boxes.addWidget(box, 1)
         header_right.addLayout(boxes)
@@ -134,7 +134,7 @@ class MainWindow(QMainWindow):
         self.performance.copy_requested.connect(self._perf_copy)
         self.performance.refresh_requested.connect(self.refresh)
         self.performance.launch.generated.connect(
-            lambda text: self.statusBar().showMessage(fmt(self.tr("Copied: %1"), text), 6000))
+            lambda text: self.statusBar().showMessage(fmt("Copied: %1", text), 6000))
         self.safe_points = SafePointsPage(str(backend.config_path), backend.default_safe_points)
         self.safe_points.reload.clicked.connect(self._reload_config)
         self.safe_points.apply_requested.connect(self._apply_safe_points)
@@ -168,18 +168,18 @@ class MainWindow(QMainWindow):
         self.settings_page.tray_toggled.connect(self._set_tray)
         self.alerts = AlertMonitor()
         self._page_rows: dict[QWidget, int] = {}
-        for name, page in ((self.tr("Overview"), self.overview), (self.tr("GPU Usage"), self.gpu_usage),
-                           (self.tr("Tuning"), self.tuning), (self.tr("Safe points"), self.safe_points),
-                           (self.tr("Performance"), self.performance), (self.tr("Backups"), self.backups),
-                           (self.tr("Service"), self.service), (self.tr("Settings"), self.settings_page),
-                           (self.tr("Help"), HelpView(str(backend.config_path)))):
+        for name, page in (("Overview", self.overview), ("GPU Usage", self.gpu_usage),
+                           ("Tuning", self.tuning), ("Safe points", self.safe_points),
+                           ("Performance", self.performance), ("Backups", self.backups),
+                           ("Service", self.service), ("Settings", self.settings_page),
+                           ("Help", HelpView(str(backend.config_path)))):
             self.nav.addItem(name)
             self._page_rows[page] = self.stack.addWidget(_scrollable(page))
         self.nav.currentRowChanged.connect(self.stack.setCurrentIndex)
         self.nav.currentRowChanged.connect(self._bold_nav_item)
         self._apply_features()
 
-        self.statusBar().showMessage(self.tr("Ready"))
+        self.statusBar().showMessage("Ready")
         self._timer = QTimer(self)
         self._timer.setInterval(POLL_MS)
         self._timer.timeout.connect(self.refresh)
@@ -277,17 +277,17 @@ class MainWindow(QMainWindow):
         if self.tray is None:
             return
         t = snap.telemetry
-        parts = [fmt(self.tr("Load %1%"), f"{t.load_percent:.0f}") if t.load_percent is not None
-                else self.tr("Load N/A")]
+        parts = [fmt("Load %1%", f"{t.load_percent:.0f}") if t.load_percent is not None
+                else "Load N/A"]
         if t.clock_mhz is not None:
             parts.append(f"{t.clock_mhz} MHz")
         if t.temp_c is not None:
             parts.append(f"{t.temp_c:.0f} °C")
         if snap.perf.available and snap.perf.enabled:
-            parts.append(self.tr("performance mode"))
-        state = (self.tr("running") if snap.service.active
-                 else (self.tr("not installed") if not snap.service.installed else self.tr("stopped")))
-        self.tray.setToolTip(fmt(self.tr("%1\n%2\nGovernor %3"), APP_NAME, ' · '.join(parts), state))
+            parts.append("performance mode")
+        state = ("running" if snap.service.active
+                 else ("not installed" if not snap.service.installed else "stopped"))
+        self.tray.setToolTip(fmt("%1\n%2\nGovernor %3", APP_NAME, ' · '.join(parts), state))
         self.tray.set_perf(snap.perf.available, snap.perf.enabled)
         self.tray.sync_toggle()
 
@@ -313,13 +313,13 @@ class MainWindow(QMainWindow):
         if self.tray is not None and self.settings_page.minimise_on_close() and not self._quitting:
             self.hide()
             self.tray.sync_toggle()
-            self.tray.showMessage(APP_NAME, self.tr("Still running in the tray; use Quit in its menu to leave."),
+            self.tray.showMessage(APP_NAME, "Still running in the tray; use Quit in its menu to leave.",
                                   QSystemTrayIcon.MessageIcon.Information, 3000)
             event.ignore()
             return
         if self._dirty_pages():
             answer = QMessageBox.question(self, APP_NAME,
-                                          fmt(self.tr("%1 unapplied changes. Close anyway?"), self._dirty_pages()))
+                                          fmt("%1 unapplied changes. Close anyway?", self._dirty_pages()))
             if answer != QMessageBox.StandardButton.Yes:
                 event.ignore()
                 return
@@ -338,7 +338,7 @@ class MainWindow(QMainWindow):
         service = self.backend.service_status()
         # busctl is only worth asking while the governor runs; otherwise the name has no owner anyway.
         perf = (self.backend.performance_state() if service.active
-                else PerformanceState(error=self.tr("The governor service is not running.")))
+                else PerformanceState(error="The governor service is not running."))
         snap = Snapshot(install=self.backend.installation_status(), service=service,
                         mounted=self.backend.metrics_mount_active(), telemetry=self.backend.telemetry(),
                         saved=self.backend.read_config(), perf=perf,
@@ -356,41 +356,41 @@ class MainWindow(QMainWindow):
 
     def _source_hint(self, source: str, default: str) -> str:
         name = SOURCE_NAMES.get(source)
-        return QCoreApplication.translate("main_window", name) if name is not None else default
+        return name if name is not None else default
 
     def _update_boxes(self, snap: Snapshot) -> None:
         t = snap.telemetry
-        self.box_load.set_value(self.tr("N/A") if t.load_percent is None else f"{t.load_percent:.0f}%",
+        self.box_load.set_value("N/A" if t.load_percent is None else f"{t.load_percent:.0f}%",
                                 load_sensor_hint(snap) if t.load_percent is None
-                                else QCoreApplication.translate("pages", LOAD_SOURCES.get(t.load_source, "")))
+                                else LOAD_SOURCES.get(t.load_source, ""))
         self.box_clock.set_value("—" if t.clock_mhz is None else f"{t.clock_mhz} MHz",
-                                 self._source_hint(t.clock_source, self.tr("No frequency sensor.")))
+                                 self._source_hint(t.clock_source, "No frequency sensor."))
         self.box_temp.set_value("—" if t.temp_c is None else f"{t.temp_c:.0f} °C",
-                                self._source_hint(t.temp_source, self.tr("No temperature sensor.")))
+                                self._source_hint(t.temp_source, "No temperature sensor."))
         power = t.metrics.socket_power_w if t.metrics is not None else None
         self.box_power.set_value("—" if power is None else f"{power:.1f} W",
-                                 self.tr("average_socket_power of the gpu_metrics table (whole APU); the SMU "
-                                        "reports it in 24.8 fixed point, shown here in watts") if power is not None
-                                 else self.tr("The gpu_metrics table reports no socket power."))
+                                 ("average_socket_power of the gpu_metrics table (whole APU); the SMU "
+                                  "reports it in 24.8 fixed point, shown here in watts") if power is not None
+                                 else "The gpu_metrics table reports no socket power.")
         perf = snap.perf
         if perf.available:
-            no_limit = self.tr("no limit")
+            no_limit = "no limit"
             low = str(perf.current_min) if perf.current_min else no_limit
             high = str(perf.current_max) if perf.current_max else no_limit
-            self.box_perf.set_value(self.tr("On") if perf.enabled else self.tr("Off"),
-                                    fmt(self.tr("Current range %1–%2 MHz"), low, high))
+            self.box_perf.set_value("On" if perf.enabled else "Off",
+                                    fmt("Current range %1–%2 MHz", low, high))
             _paint(self.box_perf, GREEN if perf.enabled else GREY)
         else:
-            self.box_perf.set_value("—", perf.error or self.tr("D-Bus not reachable."))
+            self.box_perf.set_value("—", perf.error or "D-Bus not reachable.")
             _paint(self.box_perf, GREY)
         if not snap.service.installed:
-            state, colour = self.tr("Missing"), RED
+            state, colour = "Missing", RED
         elif snap.service.active:
-            state, colour = self.tr("Running"), GREEN
+            state, colour = "Running", GREEN
         elif snap.service.sub_state == "failed":
-            state, colour = self.tr("Failed"), RED
+            state, colour = "Failed", RED
         else:
-            state, colour = self.tr("Stopped"), ORANGE
+            state, colour = "Stopped", ORANGE
         self.box_service.set_value(state, snap.install.message)
         _paint(self.box_service, colour)
 
@@ -408,8 +408,8 @@ class MainWindow(QMainWindow):
         names = self._dirty_names()
         if not names:
             return ""
-        suffix = self.tr(" pages have") if len(names) > 1 else self.tr(" page has")
-        return self.tr(" and ").join(names) + suffix
+        suffix = " pages have" if len(names) > 1 else " page has"
+        return " and ".join(names) + suffix
 
     def _dirty_names(self) -> list[str]:
         pages = [*self.config_pages, self.safe_points]
@@ -419,7 +419,7 @@ class MainWindow(QMainWindow):
         dirty = self._dirty_pages()
         self.setWindowTitle(f"{DISPLAY_NAME}{' *' if dirty else ''}")
         self.statusBar().showMessage(
-            fmt(self.tr("Unapplied changes: %1"), ', '.join(self._dirty_names())) if dirty else self.tr("Ready"))
+            fmt("Unapplied changes: %1", ', '.join(self._dirty_names())) if dirty else "Ready")
         # Either Apply button writes the pending edits of both pages, so both wait for valid Tuning values.
         enabled = any(page.is_dirty() for page in self.config_pages) and not self.tuning.problem.text()
         for page in self.config_pages:
@@ -436,43 +436,43 @@ class MainWindow(QMainWindow):
         try:
             config.validate()
         except ValueError as exc:
-            QMessageBox.warning(self, self.tr("Invalid values"), str(exc))
+            QMessageBox.warning(self, "Invalid values", str(exc))
             return
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             backup = self.backend.write_config(config, backup=True)
         except Exception as exc:
             QApplication.restoreOverrideCursor()
-            QMessageBox.critical(self, self.tr("Could not write config.toml"), str(exc))
+            QMessageBox.critical(self, "Could not write config.toml", str(exc))
             return
         QApplication.restoreOverrideCursor()
         self._reload_config()
-        message = self.tr("Configuration applied")
+        message = "Configuration applied"
         if backup:
-            message += fmt(self.tr(", backup: %1"), backup.name)
+            message += fmt(", backup: %1", backup.name)
         self._after_write(message, restart)
 
     def _after_write(self, message: str, restart: bool) -> None:
         if restart:
             ok, output = self.backend.service_action("restart")
             if not ok:
-                QMessageBox.warning(self, self.tr("Saved, but the restart failed"),
-                                    self.tr("config.toml was updated, but the governor could not be restarted.\n\n")
-                                    + (output or self.tr("No error text was returned.")))
-                message += self.tr(" — restart failed")
+                QMessageBox.warning(self, "Saved, but the restart failed",
+                                    "config.toml was updated, but the governor could not be restarted.\n\n"
+                                    + (output or "No error text was returned."))
+                message += " — restart failed"
             else:
-                message += self.tr(", governor restarted")
+                message += ", governor restarted"
         self.statusBar().showMessage(message, 8000)
         self.refresh()
 
     def _apply_safe_points(self, points: list, restart: bool) -> None:
         top = max(f for f, _ in points)
         answer = QMessageBox.warning(
-            self, self.tr("Apply safe points"),
-            fmt(self.tr("Write %1 safe points (%2–%3 MHz) to config.toml?\n\n"
-                        "The governor will scale along this curve. A point the silicon cannot hold freezes the "
-                        "board under load; a backup of the current file is made first and can be restored from "
-                        "the Backups page."), str(len(points)), str(points[0][0]), str(top)),
+            self, "Apply safe points",
+            fmt(("Write %1 safe points (%2–%3 MHz) to config.toml?\n\n"
+                 "The governor will scale along this curve. A point the silicon cannot hold freezes the "
+                 "board under load; a backup of the current file is made first and can be restored from "
+                 "the Backups page."), str(len(points)), str(points[0][0]), str(top)),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel, QMessageBox.StandardButton.Cancel)
         if answer != QMessageBox.StandardButton.Yes:
             return
@@ -481,13 +481,13 @@ class MainWindow(QMainWindow):
             backup = self.backend.write_safe_points([tuple(p) for p in points], backup=True)
         except Exception as exc:
             QApplication.restoreOverrideCursor()
-            QMessageBox.critical(self, self.tr("Could not write config.toml"), str(exc))
+            QMessageBox.critical(self, "Could not write config.toml", str(exc))
             return
         QApplication.restoreOverrideCursor()
         self._reload_config()
-        message = self.tr("Safe points applied")
+        message = "Safe points applied"
         if backup:
-            message += fmt(self.tr(", backup: %1"), backup.name)
+            message += fmt(", backup: %1", backup.name)
         self._after_write(message, restart)
 
     # ------------------------------------------------------------ profiles
@@ -512,8 +512,8 @@ class MainWindow(QMainWindow):
         """Hotkey / command-line entry: like "Apply now", with a tray message instead of a dialog when the name
         is unknown so a mistyped shortcut does not pop a window."""
         if name not in self.profiles:
-            known = ", ".join(self.profiles.names()) or self.tr("none saved")
-            text = fmt(self.tr("No profile named '%1' (known: %2)."), name, known)
+            known = ", ".join(self.profiles.names()) or "none saved"
+            text = fmt("No profile named '%1' (known: %2).", name, known)
             self.statusBar().showMessage(text, 8000)
             if self.tray is not None:
                 self.tray.showMessage(APP_NAME, text, QSystemTrayIcon.MessageIcon.Warning, 5000)
@@ -530,7 +530,7 @@ class MainWindow(QMainWindow):
         for page in self.config_pages:
             page.show_values(config)
         self.nav.setCurrentRow(self._page_rows[self.tuning])
-        self.statusBar().showMessage(fmt(self.tr("Profile '%1' loaded into the forms; apply to write it"), name),
+        self.statusBar().showMessage(fmt("Profile '%1' loaded into the forms; apply to write it", name),
                                      6000)
 
     def _profile_apply(self, name: str) -> None:
@@ -539,8 +539,8 @@ class MainWindow(QMainWindow):
         dirty = self._dirty_pages()
         if dirty:
             answer = QMessageBox.question(
-                self, self.tr("Apply profile"),
-                fmt(self.tr("Apply '%1'? The %2 unapplied changes, they are discarded."), name, dirty),
+                self, "Apply profile",
+                fmt("Apply '%1'? The %2 unapplied changes, they are discarded.", name, dirty),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel, QMessageBox.StandardButton.Cancel)
             if answer != QMessageBox.StandardButton.Yes:
                 return
@@ -548,63 +548,63 @@ class MainWindow(QMainWindow):
         try:
             config.validate()
         except ValueError as exc:
-            QMessageBox.warning(self, self.tr("Invalid profile"),
-                                fmt(self.tr("'%1' cannot be applied: %2"), name, str(exc)))
+            QMessageBox.warning(self, "Invalid profile",
+                                fmt("'%1' cannot be applied: %2", name, str(exc)))
             return
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             backup = self.backend.write_config(config, backup=True)
         except Exception as exc:
             QApplication.restoreOverrideCursor()
-            QMessageBox.critical(self, self.tr("Could not write config.toml"), str(exc))
+            QMessageBox.critical(self, "Could not write config.toml", str(exc))
             return
         QApplication.restoreOverrideCursor()
         self._reload_config()
-        message = fmt(self.tr("Profile '%1' applied"), name)
+        message = fmt("Profile '%1' applied", name)
         if backup:
-            message += fmt(self.tr(", backup: %1"), backup.name)
+            message += fmt(", backup: %1", backup.name)
         self._after_write(message, True)
         if self.tray is not None and not self.isVisible():
-            self.tray.showMessage(APP_NAME, fmt(self.tr("Profile '%1' applied, governor restarted."), name))
+            self.tray.showMessage(APP_NAME, fmt("Profile '%1' applied, governor restarted.", name))
 
     def _profile_copy_command(self, name: str) -> None:
         command = profile_command(name)
         QApplication.clipboard().setText(command)
-        self.tuning.profiles.hint.setText(fmt(self.tr("Copied: %1"), command))
-        self.statusBar().showMessage(self.tr("Bind that command to a key in your desktop's shortcut settings; it "
-                                             "reaches the running app and applies the profile."), 10000)
+        self.tuning.profiles.hint.setText(fmt("Copied: %1", command))
+        self.statusBar().showMessage(("Bind that command to a key in your desktop's shortcut settings; it "
+                                      "reaches the running app and applies the profile."), 10000)
 
     def _profile_save(self) -> None:
         current = self.tuning.profiles.combo.currentText()
-        name, ok = QInputDialog.getText(self, self.tr("Save profile"), self.tr("Profile name:"), text=current)
+        name, ok = QInputDialog.getText(self, "Save profile", "Profile name:", text=current)
         name = clean_name(name)
         if not ok or not name:
             return
         if name in self.profiles and QMessageBox.question(
-                self, self.tr("Replace profile"),
-                fmt(self.tr("'%1' exists. Replace it with the current form values?"), name)) \
+                self, "Replace profile",
+                fmt("'%1' exists. Replace it with the current form values?", name)) \
                 != QMessageBox.StandardButton.Yes:
             return
         self.profiles.save(name, self._collect())
         self._sync_profiles(select=name)
-        self.statusBar().showMessage(fmt(self.tr("Profile '%1' saved"), name), 5000)
+        self.statusBar().showMessage(fmt("Profile '%1' saved", name), 5000)
 
     def _profile_delete(self, name: str) -> None:
         if name not in self.profiles:
             return
-        if QMessageBox.question(self, self.tr("Delete profile"),
-                                fmt(self.tr("Delete profile '%1'?"), name)) != QMessageBox.StandardButton.Yes:
+        if QMessageBox.question(self, "Delete profile",
+                                fmt("Delete profile '%1'?", name)) != QMessageBox.StandardButton.Yes:
             return
         self.profiles.delete(name)
         self._sync_profiles()
-        self.statusBar().showMessage(fmt(self.tr("Profile '%1' deleted"), name), 5000)
+        self.statusBar().showMessage(fmt("Profile '%1' deleted", name), 5000)
 
     def _restore_backup(self, path: Path, restart: bool) -> None:
-        message = fmt(self.tr("Replace %1 with %2?\n\nThe current file is backed up first."),
+        message = fmt("Replace %1 with %2?\n\nThe current file is backed up first.",
                       self.backend.config_path.name, path.name)
         if restart:
-            message += self.tr("\nThe governor is restarted afterwards.")
-        answer = QMessageBox.question(self, self.tr("Restore backup"), message)
+            message += "\nThe governor is restarted afterwards."
+        answer = QMessageBox.question(self, "Restore backup", message)
         if answer != QMessageBox.StandardButton.Yes:
             return
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
@@ -612,13 +612,13 @@ class MainWindow(QMainWindow):
             backup = self.backend.restore_backup(path)
         except Exception as exc:
             QApplication.restoreOverrideCursor()
-            QMessageBox.critical(self, self.tr("Could not restore the backup"), str(exc))
+            QMessageBox.critical(self, "Could not restore the backup", str(exc))
             return
         QApplication.restoreOverrideCursor()
         self._reload_config()
-        message = fmt(self.tr("Restored %1"), path.name)
+        message = fmt("Restored %1", path.name)
         if backup:
-            message += fmt(self.tr(", backup: %1"), backup.name)
+            message += fmt(", backup: %1", backup.name)
         self._after_write(message, restart)
 
     def _check_updates(self) -> None:
@@ -629,10 +629,10 @@ class MainWindow(QMainWindow):
         self.service.show_update(result)
         if result.update_available:
             self.statusBar().showMessage(
-                fmt(self.tr("Governor %1 is available (installed %2); see the Service page"),
+                fmt("Governor %1 is available (installed %2); see the Service page",
                     result.latest, result.installed), 15000)
             if self.tray is not None:
-                self.tray.showMessage(APP_NAME, fmt(self.tr("Governor update %1 is available."), result.latest),
+                self.tray.showMessage(APP_NAME, fmt("Governor update %1 is available.", result.latest),
                                       QSystemTrayIcon.MessageIcon.Information, 5000)
 
     def _export_history(self) -> None:
@@ -640,42 +640,42 @@ class MainWindow(QMainWindow):
         span = history.span()
         if span is None:
             return
-        path, _ = QFileDialog.getSaveFileName(self, self.tr("Export telemetry history"),
+        path, _ = QFileDialog.getSaveFileName(self, "Export telemetry history",
                                               str(Path.home() / default_csv_name(span[1])),
-                                              self.tr("CSV files (*.csv)"))
+                                              "CSV files (*.csv)")
         if not path:
             return
         try:
             rows = history.write_csv(Path(path))
         except OSError as exc:
-            QMessageBox.critical(self, self.tr("Could not write the CSV file"), str(exc))
+            QMessageBox.critical(self, "Could not write the CSV file", str(exc))
             return
         self.statusBar().showMessage(
-            fmt(self.tr("%1 samples (%2–%3) written to %4"), str(rows),
+            fmt("%1 samples (%2–%3) written to %4", str(rows),
                 f"{span[0]:%H:%M:%S}", f"{span[1]:%H:%M:%S}", path), 8000)
 
     def _compare_history(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, self.tr("Compare with an earlier telemetry export"),
-                                              str(Path.home()), self.tr("CSV files (*.csv);;All files (*)"))
+        path, _ = QFileDialog.getOpenFileName(self, "Compare with an earlier telemetry export",
+                                              str(Path.home()), "CSV files (*.csv);;All files (*)")
         if not path:
             return
         try:
             samples = read_csv(Path(path))
         except (OSError, ValueError, csv.Error) as exc:
-            QMessageBox.critical(self, self.tr("Could not read the CSV file"), str(exc))
+            QMessageBox.critical(self, "Could not read the CSV file", str(exc))
             return
         if not samples:
-            QMessageBox.warning(self, self.tr("Nothing to compare"),
-                                self.tr("The file holds no samples with a readable time."))
+            QMessageBox.warning(self, "Nothing to compare",
+                                "The file holds no samples with a readable time.")
             return
         self.overview.set_reference(samples, Path(path).name)
         self.statusBar().showMessage(
-            fmt(self.tr("%1 reference samples from %2 drawn dashed"), str(len(samples)), Path(path).name), 8000)
+            fmt("%1 reference samples from %2 drawn dashed", str(len(samples)), Path(path).name), 8000)
 
     def _export_diagnostics(self) -> None:
         start = Path.home() / default_filename()
-        target, _ = QFileDialog.getSaveFileName(self, self.tr("Export diagnostics"), str(start),
-                                                self.tr("Text files (*.txt)"))
+        target, _ = QFileDialog.getSaveFileName(self, "Export diagnostics", str(start),
+                                                "Text files (*.txt)")
         if not target:
             return
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
@@ -686,12 +686,12 @@ class MainWindow(QMainWindow):
             Path(target).write_text(report)
         except OSError as exc:
             QApplication.restoreOverrideCursor()
-            QMessageBox.warning(self, self.tr("Export failed"), str(exc))
+            QMessageBox.warning(self, "Export failed", str(exc))
             return
         QApplication.restoreOverrideCursor()
-        QMessageBox.information(self, self.tr("Diagnostics exported"),
-                                fmt(self.tr("Saved to %1.\n\nRead it before attaching it to a bug report and "
-                                            "remove anything you do not want to share."), target))
+        QMessageBox.information(self, "Diagnostics exported",
+                                fmt(("Saved to %1.\n\nRead it before attaching it to a bug report and "
+                                     "remove anything you do not want to share."), target))
 
     def _telemetry_summary(self) -> str:
         snap = self._last_snapshot
@@ -704,10 +704,10 @@ class MainWindow(QMainWindow):
         ok, output = self.backend.service_action(action)
         QApplication.restoreOverrideCursor()
         if ok:
-            self.statusBar().showMessage(fmt(self.tr("systemctl %1: done"), action), 5000)
+            self.statusBar().showMessage(fmt("systemctl %1: done", action), 5000)
         else:
-            QMessageBox.warning(self, fmt(self.tr("systemctl %1 failed"), action),
-                                output or self.tr("No error text was returned."))
+            QMessageBox.warning(self, fmt("systemctl %1 failed", action),
+                                output or "No error text was returned.")
         self.refresh()
 
     # ------------------------------------------------------------ performance mode (D-Bus)
@@ -717,56 +717,56 @@ class MainWindow(QMainWindow):
             # SetLoadTarget and SetTemperatureThresholds leave it alone.
             self._end_test()
             self.safe_points.show_test(
-                False, fmt(self.tr("The test ended because of '%1' on the Performance page."), what))
+                False, fmt("The test ended because of '%1' on the Performance page.", what))
         if ok:
-            self.statusBar().showMessage(fmt(self.tr("%1: done"), what), 5000)
+            self.statusBar().showMessage(fmt("%1: done", what), 5000)
         else:
-            QMessageBox.warning(self, fmt(self.tr("%1 failed"), what),
-                                error or self.tr("The governor returned no error text."))
+            QMessageBox.warning(self, fmt("%1 failed", what),
+                                error or "The governor returned no error text.")
         self.refresh()
 
     def _perf_enable(self, enabled: bool) -> None:
         ok, error = self.backend.bus.set_enabled(enabled)
-        what = self.tr("Performance mode on") if enabled else self.tr("Performance mode off")
+        what = "Performance mode on" if enabled else "Performance mode off"
         self._bus_call(what, ok, error)
 
     def _perf_fixed(self, mhz: int) -> None:
         ok, error = self.backend.bus.set_fixed_frequency(mhz)
-        self._bus_call(fmt(self.tr("Fixed frequency %1 MHz"), str(mhz)), ok, error)
+        self._bus_call(fmt("Fixed frequency %1 MHz", str(mhz)), ok, error)
 
     def _perf_range(self, low: int, high: int) -> None:
         ok, error = self.backend.bus.set_range(low, high)
-        no_limit = self.tr("no limit")
-        self._bus_call(fmt(self.tr("Runtime range %1–%2 MHz"), str(low) if low else no_limit,
+        no_limit = "no limit"
+        self._bus_call(fmt("Runtime range %1–%2 MHz", str(low) if low else no_limit,
                            str(high) if high else no_limit), ok, error)
 
     def _perf_load(self, lower: float, upper: float) -> None:
         ok, error = self.backend.bus.set_load_target(lower, upper)
-        self._bus_call(fmt(self.tr("Load target %1–%2 %"), f"{lower * 100:.0f}", f"{upper * 100:.0f}"),
+        self._bus_call(fmt("Load target %1–%2 %", f"{lower * 100:.0f}", f"{upper * 100:.0f}"),
                        ok, error, ends_test=False)
 
     def _perf_temperature(self, throttling: int, recovery: int) -> None:
         ok, error = self.backend.bus.set_temperature_thresholds(throttling, recovery)
-        not_set = self.tr("not set")
-        self._bus_call(fmt(self.tr("Temperature %1 °C / %2"), str(throttling), str(recovery) if recovery
+        not_set = "not set"
+        self._bus_call(fmt("Temperature %1 °C / %2", str(throttling), str(recovery) if recovery
                            else not_set), ok, error, ends_test=False)
 
     def _perf_copy(self) -> None:
         self.tuning.take_runtime(self.performance.state())
         self.nav.setCurrentRow(self._page_rows[self.tuning])
-        self.statusBar().showMessage(self.tr("Runtime values copied to the Tuning page; apply to save them"), 6000)
+        self.statusBar().showMessage("Runtime values copied to the Tuning page; apply to save them", 6000)
 
     # ------------------------------------------------------------ test mode (D-Bus, root)
     def _test_point(self, frequency: int, voltage: int, seconds: int, tool: str = NO_TOOL) -> None:
-        duration = fmt(self.tr("for %1 s"), str(seconds)) if seconds else self.tr("until you stop it")
-        load = fmt(self.tr(" and run %1 for load"), tool) if tool != NO_TOOL else ""
+        duration = fmt("for %1 s", str(seconds)) if seconds else "until you stop it"
+        load = fmt(" and run %1 for load", tool) if tool != NO_TOOL else ""
         answer = QMessageBox.warning(
-            self, self.tr("Test a safe point"),
-            fmt(self.tr("Pin the GPU to %1 MHz at %2 mV %3%4?\n\n"
-                        "The governor applies this pair as given and stops its automatic scaling; thermal "
-                        "throttling stays active. A point the silicon cannot hold freezes the board under load. "
-                        "Nothing is written to config.toml. You will be asked for your password (the TestMode "
-                        "interface is root-only)."), str(frequency), str(voltage), duration, load),
+            self, "Test a safe point",
+            fmt(("Pin the GPU to %1 MHz at %2 mV %3%4?\n\n"
+                 "The governor applies this pair as given and stops its automatic scaling; thermal "
+                 "throttling stays active. A point the silicon cannot hold freezes the board under load. "
+                 "Nothing is written to config.toml. You will be asked for your password (the TestMode "
+                 "interface is root-only)."), str(frequency), str(voltage), duration, load),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel, QMessageBox.StandardButton.Cancel)
         if answer != QMessageBox.StandardButton.Yes:
             return
@@ -774,8 +774,8 @@ class MainWindow(QMainWindow):
         ok, error = self.backend.bus.set_test_mode(frequency, voltage)
         QApplication.restoreOverrideCursor()
         if not ok:
-            QMessageBox.warning(self, self.tr("Test mode failed"),
-                                error or self.tr("The governor returned no error text."))
+            QMessageBox.warning(self, "Test mode failed",
+                                error or "The governor returned no error text.")
             return
         deadline = time.monotonic() + seconds if seconds else 0.0
         self._test = (frequency, voltage, deadline)
@@ -787,8 +787,8 @@ class MainWindow(QMainWindow):
         if tool != NO_TOOL:
             started, error = self._stress.start(tool)
             if not started:
-                self._test_tool_exit = fmt(self.tr("%1 could not be started (%2)"), tool, error)
-        self.statusBar().showMessage(fmt(self.tr("Test mode: %1 MHz @ %2 mV"), str(frequency), str(voltage)), 5000)
+                self._test_tool_exit = fmt("%1 could not be started (%2)", tool, error)
+        self.statusBar().showMessage(fmt("Test mode: %1 MHz @ %2 mV", str(frequency), str(voltage)), 5000)
         self.refresh()
 
     def _end_test(self) -> None:
@@ -803,13 +803,13 @@ class MainWindow(QMainWindow):
         if self._test is None:
             return
         # The kernel just reported amdgpu trouble: release the point now rather than wait for the freeze.
-        self._stop_test(auto=True, reason=self.tr("aborted after a GPU error in the kernel log"))
+        self._stop_test(auto=True, reason="aborted after a GPU error in the kernel log")
 
     def _stress_finished(self, code: int, crashed: bool) -> None:
         if self._test is None:
             return
-        how = self.tr("crashed") if crashed else fmt(self.tr("exited with code %1"), str(code))
-        self._test_tool_exit = fmt(self.tr("%1 %2 while the point was pinned"), self._stress.tool, how)
+        how = "crashed" if crashed else fmt("exited with code %1", str(code))
+        self._test_tool_exit = fmt("%1 %2 while the point was pinned", self._stress.tool, how)
         self.refresh()
 
     def _test_verdict(self, frequency: int, voltage: int, how: str) -> str:
@@ -817,31 +817,31 @@ class MainWindow(QMainWindow):
         started = self._test_started
         samples = [s for s in self.overview.history if started is not None and s.time >= started]
         held = round((datetime.now() - started).total_seconds()) if started is not None else 0
-        parts = [fmt(self.tr("Test of %1 MHz @ %2 mV %3 after %4 s"),
+        parts = [fmt("Test of %1 MHz @ %2 mV %3 after %4 s",
                      str(frequency), str(voltage), how, str(held))]
         if self._stress.tool and not self._test_tool_exit:
-            parts[0] += fmt(self.tr(" under %1 load"), self._stress.tool)
+            parts[0] += fmt(" under %1 load", self._stress.tool)
         temps = [s.temp for s in samples if s.temp is not None]
         clocks = [s.clock for s in samples if s.clock is not None]
         seen = []
         if temps:
-            seen.append(fmt(self.tr("peak %1 °C"), f"{max(temps):.0f}"))
+            seen.append(fmt("peak %1 °C", f"{max(temps):.0f}"))
         if clocks:
-            seen.append(fmt(self.tr("clock %1–%2 MHz"), str(min(clocks)), str(max(clocks)))
-                        if min(clocks) != max(clocks) else fmt(self.tr("clock %1 MHz"), str(clocks[0])))
+            seen.append(fmt("clock %1–%2 MHz", str(min(clocks)), str(max(clocks)))
+                        if min(clocks) != max(clocks) else fmt("clock %1 MHz", str(clocks[0])))
         if seen:
             parts.append(", ".join(seen))
         if self._test_tool_exit:
             parts.append("⚠ " + self._test_tool_exit)
         if self._kernel.events:
-            parts.append(fmt(self.tr("⚠ kernel: %1"), _short(self._kernel.events[0]))
-                         + (fmt(self.tr(" (+%1 more)"), str(len(self._kernel.events) - 1))
+            parts.append(fmt("⚠ kernel: %1", _short(self._kernel.events[0]))
+                         + (fmt(" (+%1 more)", str(len(self._kernel.events) - 1))
                             if len(self._kernel.events) > 1 else ""))
         elif self._kernel.reason:
-            parts.append(self.tr("kernel log not watched"))
+            parts.append("kernel log not watched")
         else:
-            parts.append(self.tr("no GPU errors in the kernel log"))
-        return "; ".join(parts) + self.tr(". The governor scales normally again.")
+            parts.append("no GPU errors in the kernel log")
+        return "; ".join(parts) + ". The governor scales normally again."
 
 
     def _stop_test(self, *, auto: bool = False, quiet: bool = False, reason: str = "") -> None:
@@ -857,7 +857,7 @@ class MainWindow(QMainWindow):
         if quiet:
             self._kernel.stop()
             return
-        how = reason or (self.tr("ended by the timer") if auto else self.tr("stopped"))
+        how = reason or ("ended by the timer" if auto else "stopped")
         if ok:
             text = self._test_verdict(frequency, voltage, how)
             self._kernel.stop()
@@ -869,9 +869,9 @@ class MainWindow(QMainWindow):
                 self.tray.showMessage(APP_NAME, text, icon, 6000)
         else:
             self._kernel.stop()
-            QMessageBox.warning(self, self.tr("Could not end the test"),
-                                (error or self.tr("The governor returned no error text."))
-                                + self.tr("\n\nRestarting the governor on the Service page also ends test mode."))
+            QMessageBox.warning(self, "Could not end the test",
+                                (error or "The governor returned no error text.")
+                                + "\n\nRestarting the governor on the Service page also ends test mode.")
         self.refresh()
 
     def _update_test(self, perf: PerformanceState) -> None:
@@ -881,20 +881,20 @@ class MainWindow(QMainWindow):
         if not perf.available:
             # The governor went away (stopped or restarted): test mode went with it.
             self._end_test()
-            self.safe_points.show_test(False, self.tr("The governor stopped; the test ended with it."))
+            self.safe_points.show_test(False, "The governor stopped; the test ended with it.")
             return
-        left = (fmt(self.tr(", %1 s left"), str(max(0, round(deadline - time.monotonic()))))
+        left = (fmt(", %1 s left", str(max(0, round(deadline - time.monotonic()))))
                 if deadline else "")
         if self._test_tool_exit:
-            load = fmt(self.tr(" ⚠ %1."), self._test_tool_exit)
+            load = fmt(" ⚠ %1.", self._test_tool_exit)
         elif self._stress.running:
-            load = fmt(self.tr(" %1 is loading the GPU."), self._stress.tool)
+            load = fmt(" %1 is loading the GPU.", self._stress.tool)
         else:
-            load = self.tr(" Load the GPU yourself.")
-        watch = (self.tr(" Kernel log not readable, no hang detection.") if self._kernel.reason
-                 else self.tr(" Kernel log watched.") if self._kernel.running else "")
-        self.safe_points.show_test(True, fmt(self.tr("Testing %1 MHz @ %2 mV%3.%4%5 Watch "
-                                                      "the Overview; Stop test returns to normal scaling."),
+            load = " Load the GPU yourself."
+        watch = (" Kernel log not readable, no hang detection." if self._kernel.reason
+                 else " Kernel log watched." if self._kernel.running else "")
+        self.safe_points.show_test(True, fmt(("Testing %1 MHz @ %2 mV%3.%4%5 Watch "
+                                              "the Overview; Stop test returns to normal scaling."),
                                               str(frequency), str(voltage), left, load, watch))
 
 

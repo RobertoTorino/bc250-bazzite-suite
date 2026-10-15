@@ -42,7 +42,7 @@ class StatusPill(QLabel):
     """A short coloured state word: Active, Not mounted, Unavailable, ..."""
 
     def __init__(self, text: str = "", parent: QWidget | None = None):
-        text = text or self.tr("Unknown")
+        text = text or "Unknown"
         super().__init__(text, parent)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setMinimumWidth(110)

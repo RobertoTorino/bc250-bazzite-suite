@@ -18,7 +18,7 @@ from . import APP_NAME, LOGO_PATH, REPO_URL, __version__, window_title
 class AboutDialog(QDialog):
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
-        self.setWindowTitle(window_title(self.tr("about")))
+        self.setWindowTitle(window_title("about"))
         self.setModal(True)
         layout = QVBoxLayout(self)
 
@@ -32,15 +32,13 @@ class AboutDialog(QDialog):
         name_label = QLabel(f"<b>{APP_NAME}</b>")
         name_label.setStyleSheet("font-size:16px;")
         names.addWidget(name_label)
-        names.addWidget(QLabel(self.tr("Version {0}").format(__version__)))
+        names.addWidget(QLabel("Version {0}".format(__version__)))
         top.addLayout(names)
         top.addStretch(1)
         layout.addLayout(top)
 
-        desc = QLabel(self.tr(
-            "A PyQt6 launcher for bc250-cu-bisect.sh: pick your options and start a run, which then "
-            "continues in a terminal exactly as if typed by hand."
-        ))
+        desc = QLabel(("A PyQt6 launcher for bc250-cu-bisect.sh: pick your options and start a run, which then "
+                       "continues in a terminal exactly as if typed by hand."))
         desc.setWordWrap(True)
         layout.addWidget(desc)
 
@@ -49,7 +47,7 @@ class AboutDialog(QDialog):
         link.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
         layout.addWidget(link)
 
-        layout.addWidget(QLabel(self.tr("License: GNU GPLv3.")))
+        layout.addWidget(QLabel("License: GNU GPLv3."))
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
         buttons.accepted.connect(self.accept)
@@ -62,7 +60,7 @@ class HelpDialog(QDialog):
 
     def __init__(self, script: str, parent: QWidget | None = None):
         super().__init__(parent)
-        self.setWindowTitle(window_title(self.tr("help")))
+        self.setWindowTitle(window_title("help"))
         self.setModal(True)
         self.resize(720, 560)
         layout = QVBoxLayout(self)

@@ -21,7 +21,7 @@ from .acquire import (
     UpdateChecker, UpdateStatus, latest_work_release, pinned_dlss_sha, version_tuple,
 )
 from .backend import MODE_FOLDER, MODE_REPLACE, Deployment, DeploymentStore, GameDll, HelixError
-from .help import HelpPage
+from .help import HelpView
 from .pages import POLL_MS, DeployPage, IniPage, OverviewPage
 from .setup_page import SetupPage
 from .widgets import ACCENT, BLUE, GREEN, GREY, ORANGE, PURPLE, RED, ClickableLogo, MetricBox, header_font
@@ -59,10 +59,10 @@ class MainWindow(QMainWindow):
         header_right.addWidget(title)
         boxes = QHBoxLayout()
         boxes.setSpacing(8)
-        self.box_payload = MetricBox(self.tr("HelixSR payload"), PURPLE, centred=True)
-        self.box_network = MetricBox(self.tr("Network files"), GREY, centred=True)
-        self.box_deployed = MetricBox(self.tr("Deployments"), BLUE, centred=True)
-        self.box_games = MetricBox(self.tr("Steam games"), GREY, centred=True)
+        self.box_payload = MetricBox("HelixSR payload", PURPLE, centred=True)
+        self.box_network = MetricBox("Network files", GREY, centred=True)
+        self.box_deployed = MetricBox("Deployments", BLUE, centred=True)
+        self.box_games = MetricBox("Steam games", GREY, centred=True)
         for box in (self.box_payload, self.box_network, self.box_deployed, self.box_games):
             boxes.addWidget(box, 1)
         header_right.addLayout(boxes)
@@ -116,12 +116,10 @@ class MainWindow(QMainWindow):
         self.ini_page = IniPage()
         self.ini_page.save_default_requested.connect(self._save_ini_default)
         self.ini_page.apply_requested.connect(self._write_ini_to)
-        self.help_page = HelpPage(str(payload_dir), str(self.store.path), str(work_dir),
-                                  self.settings.value("ui/language", "", str))
-        self.help_page.language_changed.connect(lambda code: self.settings.setValue("ui/language", code))
-        for name, page in ((self.tr("Overview"), self.overview), (self.tr("Setup"), self.setup_page),
-                           (self.tr("Deploy"), self.deploy_page), (self.tr("helixsr.ini"), self.ini_page),
-                           (self.tr("Help"), self.help_page)):
+        self.help_page = HelpView(str(payload_dir), str(self.store.path), str(work_dir))
+        for name, page in (("Overview", self.overview), ("Setup", self.setup_page),
+                           ("Deploy", self.deploy_page), ("helixsr.ini", self.ini_page),
+                           ("Help", self.help_page)):
             self.nav.addItem(name)
             if page in (self.deploy_page, self.ini_page):
                 # Taller than a small window: scroll instead of squeezing the hints and boxes to one line.
@@ -134,7 +132,7 @@ class MainWindow(QMainWindow):
         self.nav.currentRowChanged.connect(self.stack.setCurrentIndex)
         self.nav.currentRowChanged.connect(self._bold_nav_item)
 
-        self.statusBar().showMessage(self.tr("Ready"))
+        self.statusBar().showMessage("Ready")
         self._load_ini_page()
         self._scan_steam()
         self.refresh()
@@ -174,8 +172,8 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         if self._setup_worker is not None and self._setup_worker.isRunning():
-            if QMessageBox.question(self, self.tr("Setup running"),
-                                 self.tr("The HelixSR setup is still running. Cancel it and quit?")) \
+            if QMessageBox.question(self, "Setup running",
+                                 "The HelixSR setup is still running. Cancel it and quit?") \
                     != QMessageBox.StandardButton.Yes:
                 event.ignore()
                 return
@@ -200,20 +198,20 @@ class MainWindow(QMainWindow):
         self.ini_page.set_deployments(self.store.items)
         self.ini_page.set_helixsr_version(status.version)
 
-        self.box_payload.set_value(status.version or (self.tr("Imported") if status.dll else self.tr("Missing")),
+        self.box_payload.set_value(status.version or ("Imported" if status.dll else "Missing"),
                                    plain_tooltip(str(self.payload_dir)))
         self.box_payload.setStyleSheet(f"QFrame {{ background:{PURPLE if status.dll else RED}; border-radius:8px; }}"
                                        " QLabel { color:white; }")
-        self.box_network.set_value(self.tr("Ready") if status.network_ready else self.tr("Missing"),
-                                   self.tr("helixsr_weights.bin and helixsr_kernels.pak from helixsr-setup.sh"))
+        self.box_network.set_value("Ready" if status.network_ready else "Missing",
+                                   "helixsr_weights.bin and helixsr_kernels.pak from helixsr-setup.sh")
         self.box_network.setStyleSheet(f"QFrame {{ background:{GREEN if status.network_ready else ORANGE}; "
                                        "border-radius:8px; } QLabel { color:white; }")
         states = [backend.deployment_state(d, self.payload_dir)[0] for d in self.store.items]
         in_place = states.count("ok")
         self.box_deployed.set_value(f"{in_place} / {len(states)}" if states else "0",
-                                    self.tr("HelixSR in place / known deployments"))
+                                    "HelixSR in place / known deployments")
         self.box_games.set_value(str(len(self.deploy_page.games)),
-                                 plain_tooltip("\n".join(str(p) for p in self.libraries) or self.tr("No Steam library found")))
+                                 plain_tooltip("\n".join(str(p) for p in self.libraries) or "No Steam library found"))
 
     def _scan_steam(self) -> None:
         self.libraries = backend.steam_libraries()
@@ -226,13 +224,13 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------ payload
     def _import_folder(self) -> None:
         start = self.settings.value("import/last_dir", str(Path.home() / "Downloads"))
-        source = QFileDialog.getExistingDirectory(self, self.tr("Extracted HelixSR release folder"), start)
+        source = QFileDialog.getExistingDirectory(self, "Extracted HelixSR release folder", start)
         if source:
             self._import(Path(source))
 
     def _import_zip(self) -> None:
         start = self.settings.value("import/last_dir", str(Path.home() / "Downloads"))
-        source, _ = QFileDialog.getOpenFileName(self, self.tr("HelixSR release zip"), start, self.tr("Zip archives (*.zip)"))
+        source, _ = QFileDialog.getOpenFileName(self, "HelixSR release zip", start, "Zip archives (*.zip)")
         if source:
             self._import(Path(source))
 
@@ -241,15 +239,15 @@ class MainWindow(QMainWindow):
         try:
             result = backend.import_payload(source, self.payload_dir)
         except (HelixError, OSError) as exc:
-            QMessageBox.critical(self, self.tr("Import failed"), str(exc))
+            QMessageBox.critical(self, "Import failed", str(exc))
             return
         self._load_ini_page()
         self.refresh()
-        text = self.tr("Imported {0} file(s): {1}.").format(len(result.copied), ", ".join(result.copied))
+        text = "Imported {0} file(s): {1}.".format(len(result.copied), ", ".join(result.copied))
         if result.missing:
-            text += self.tr("\n\nStill missing: {0}. Run helixsr-setup.sh in the extracted "
-                            "release folder, then import that folder.").format(", ".join(result.missing))
-            QMessageBox.warning(self, self.tr("Payload incomplete"), text)
+            text += ("\n\nStill missing: {0}. Run helixsr-setup.sh in the extracted "
+                     "release folder, then import that folder.").format(", ".join(result.missing))
+            QMessageBox.warning(self, "Payload incomplete", text)
         else:
             self.statusBar().showMessage(text, 8000)
 
@@ -258,42 +256,42 @@ class MainWindow(QMainWindow):
             self.payload_dir.mkdir(parents=True, exist_ok=True)
             (self.payload_dir / backend.INI).write_text(text, encoding="utf-8")
         except OSError as exc:
-            QMessageBox.critical(self, self.tr("Could not write"), str(exc))
+            QMessageBox.critical(self, "Could not write", str(exc))
             return
         self.ini_page.template = text
         self.refresh()
-        self.statusBar().showMessage(self.tr("Saved {0}").format(self.payload_dir / backend.INI), 6000)
+        self.statusBar().showMessage("Saved {0}".format(self.payload_dir / backend.INI), 6000)
 
     # ------------------------------------------------------------ deploy page
     def _browse_game(self) -> None:
         start = self.deploy_page.game_path.text() or (str(self.libraries[0] / "common") if self.libraries
                                                       else str(Path.home()))
-        path = QFileDialog.getExistingDirectory(self, self.tr("Game folder"), start)
+        path = QFileDialog.getExistingDirectory(self, "Game folder", start)
         if path:
             self.deploy_page.set_game_path(Path(path))
 
     def _browse_folder(self) -> None:
         start = self.deploy_page.folder_path.text() or self.deploy_page.game_path.text() or str(Path.home())
-        path = QFileDialog.getExistingDirectory(self, self.tr("Folder for HelixSR (OptiScaler)"), start)
+        path = QFileDialog.getExistingDirectory(self, "Folder for HelixSR (OptiScaler)", start)
         if path:
             self.deploy_page.set_folder_path(Path(path))
 
     def _browse_second(self) -> None:
         start = self.deploy_page.second_path.text() or self.deploy_page.game_path.text() or str(Path.home())
-        path, _ = QFileDialog.getOpenFileName(self, self.tr("Second FidelityFX upscaler DLL (e.g. AMD's with FSR 4)"), start,
-                                              self.tr("DLL files (*.dll)"))
+        path, _ = QFileDialog.getOpenFileName(self, "Second FidelityFX upscaler DLL (e.g. AMD's with FSR 4)", start,
+                                              "DLL files (*.dll)")
         if path:
             self.deploy_page.set_second_upscaler(Path(path))
 
     def _browse_exe(self) -> None:
         start = self.deploy_page.exe_path.text() or self.deploy_page.game_path.text() or str(Path.home())
-        path = QFileDialog.getExistingDirectory(self, self.tr("The folder of the game's .exe"), start)
+        path = QFileDialog.getExistingDirectory(self, "The folder of the game's .exe", start)
         if path:
             self.deploy_page.set_exe_folder(Path(path))
 
     def _scan(self, game_dir: Path) -> None:
         if not game_dir.is_dir():
-            self.deploy_page.show_found([], game_dir, self.tr("{0} is not a folder.").format(game_dir))
+            self.deploy_page.show_found([], game_dir, "{0} is not a folder.".format(game_dir))
             return
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
@@ -301,7 +299,7 @@ class MainWindow(QMainWindow):
             self.deploy_page.set_exe_folder(backend.find_exe_folder(game_dir))
         except OSError as exc:
             found = []
-            self.deploy_page.show_found([], game_dir, self.tr("Could not scan {0}: {1}").format(game_dir, exc))
+            self.deploy_page.show_found([], game_dir, "Could not scan {0}: {1}".format(game_dir, exc))
             return
         finally:
             QApplication.restoreOverrideCursor()
@@ -313,8 +311,8 @@ class MainWindow(QMainWindow):
     def _deploy(self, info: GameDll | None, mode: str, folder: Path | None, write_ini: bool,
                 second: Path | None = None, exe_dir: Path | None = None) -> None:
         if write_ini and not self.ini_page.valid():
-            QMessageBox.warning(self, self.tr("helixsr.ini"), self.tr("The helixsr.ini page has invalid values; fix them or untick "
-                                "writing the ini."))
+            QMessageBox.warning(self, "helixsr.ini", ("The helixsr.ini page has invalid values; fix them or untick "
+                                                      "writing the ini."))
             return
         ini_text = self.ini_page.text() if write_ini else None
         version = backend.payload_status(self.payload_dir).version
@@ -323,8 +321,8 @@ class MainWindow(QMainWindow):
                 if info is None:
                     return
                 if not info.deployed and QMessageBox.question(
-                        self, self.tr("Deploy HelixSR"),
-                        self.tr("Rename\n{path}\nto {original} and put HelixSR in its place?").format(
+                        self, "Deploy HelixSR",
+                        "Rename\n{path}\nto {original} and put HelixSR in its place?".format(
                             path=info.path, original=info.original.name)) \
                         != QMessageBox.StandardButton.Yes:
                     return
@@ -334,9 +332,9 @@ class MainWindow(QMainWindow):
                 if folder is None:
                     return
                 if exe_dir is not None and backend.optiscaler_record(folder) is None and QMessageBox.question(
-                        self, self.tr("Install OptiScaler"),
-                        self.tr("Put OptiScaler into\n{exe_dir}\nnext to the game's .exe, pointed at HelixSR in\n{folder}?"
-                                "\n\nA file of the game it replaces is kept in {backup}; Remove puts it back.").format(
+                        self, "Install OptiScaler",
+                        ("Put OptiScaler into\n{exe_dir}\nnext to the game's .exe, pointed at HelixSR in\n{folder}?"
+                         "\n\nA file of the game it replaces is kept in {backup}; Remove puts it back.").format(
                                     exe_dir=exe_dir, folder=folder, backup=folder / backend.OPTISCALER_BACKUP)) \
                         != QMessageBox.StandardButton.Yes:
                     return
@@ -345,27 +343,29 @@ class MainWindow(QMainWindow):
                     written += backend.install_optiscaler(exe_dir, folder, self.payload_dir)
                 location = folder
         except (HelixError, OSError) as exc:
-            QMessageBox.critical(self, self.tr("Deploy failed"), str(exc))
+            QMessageBox.critical(self, "Deploy failed", str(exc))
             return
         game_dir = self.deploy_page.game_dir()
         self.store.record(location, mode, self._game_name(game_dir or location), version)
         self.refresh()
         if game_dir:
             self._scan(game_dir)
-        self.statusBar().showMessage(self.tr("HelixSR deployed: {0} file(s) written to {1}").format(
+        self.statusBar().showMessage("HelixSR deployed: {0} file(s) written to {1}".format(
             len(written), location.parent if mode == MODE_REPLACE else location), 8000)
         if mode == MODE_FOLDER:
             record = backend.optiscaler_record(folder)
-            text = (self.tr("HelixSR is in\n{folder}\nand OptiScaler, as {name}, in\n{exe_dir}\n\nStart the game and select "
-                            "DLSS. OptiScaler's menu (Insert) shows FSR HelixSR.").format(
+            text = (("HelixSR is in\n{folder}\nand OptiScaler, as {name}, in\n{exe_dir}\n\nStart the game and select "
+                     "DLSS. OptiScaler's menu (Insert) shows FSR HelixSR.").format(
                                 folder=folder, name=record["optiscaler"], exe_dir=record["exe_dir"])
                     if exe_dir is not None and record else
-                    self.tr("HelixSR is in\n{folder}\n\nNow point OptiScaler at it: the OptiScaler.ini lines "
-                            "on the Deploy page (Copy button) go into the game's OptiScaler.ini.").format(folder=folder))
-            QMessageBox.information(self, self.tr("HelixSR folder ready"),
+                    ("HelixSR is in\n{folder}\n\nNow point OptiScaler at it: the OptiScaler.ini lines "
+                     "on the Deploy page (Copy button) go into the game's OptiScaler.ini.").format(folder=folder))
+            QMessageBox.information(self, "HelixSR folder ready",
                                     text
-                                    + ("\n\n" + self.tr("The second upscaler is in the folder as {0}; OptiScaler's FFX Upscaler menu "
-                                                         "lists its upscalers after HelixSR.").format(backend.SECOND_UPSCALER_DLL)
+                                    + (
+                                        "\n\n" + (
+                                            "The second upscaler is in the folder as {0}; OptiScaler's FFX Upscaler menu "
+                                            "lists its upscalers after HelixSR.").format(backend.SECOND_UPSCALER_DLL)
                                        if second is not None else ""))
 
     def _remove_from_deploy_page(self, info: GameDll | None, mode: str, folder: Path | None) -> None:
@@ -378,22 +378,22 @@ class MainWindow(QMainWindow):
         self._remove(dep.location, dep.mode)
 
     def _remove(self, location: Path, mode: str) -> None:
-        what = (self.tr("Delete HelixSR's files next to\n{0}\nand rename the game's .original.dll back?").format(location)
-                if mode == MODE_REPLACE else self.tr("Delete HelixSR's files in\n{0}?").format(location))
-        if QMessageBox.question(self, self.tr("Remove HelixSR"), what) != QMessageBox.StandardButton.Yes:
+        what = ("Delete HelixSR's files next to\n{0}\nand rename the game's .original.dll back?".format(location)
+                if mode == MODE_REPLACE else "Delete HelixSR's files in\n{0}?".format(location))
+        if QMessageBox.question(self, "Remove HelixSR", what) != QMessageBox.StandardButton.Yes:
             return
         try:
             removed = (backend.remove(location, self.payload_dir) if mode == MODE_REPLACE
                        else backend.remove_folder(location, self.payload_dir))
         except (HelixError, OSError) as exc:
-            QMessageBox.critical(self, self.tr("Remove failed"), str(exc))
+            QMessageBox.critical(self, "Remove failed", str(exc))
             return
         self.store.forget(location)
         self.refresh()
         game_dir = self.deploy_page.game_dir()
         if game_dir:
             self._scan(game_dir)
-        self.statusBar().showMessage(self.tr("Removed {0} file(s); HelixSR is gone from {1}").format(
+        self.statusBar().showMessage("Removed {0} file(s); HelixSR is gone from {1}".format(
             len(removed), location.parent if mode == MODE_REPLACE else location), 8000)
 
     def _forget(self, dep: Deployment) -> None:
@@ -403,15 +403,15 @@ class MainWindow(QMainWindow):
     def _write_ini_to(self, dep: Deployment, text: str) -> None:
         target = dep.folder / backend.INI
         if not dep.folder.is_dir():
-            QMessageBox.warning(self, self.tr("Folder gone"), self.tr("{0} does not exist any more.").format(dep.folder))
+            QMessageBox.warning(self, "Folder gone", "{0} does not exist any more.".format(dep.folder))
             return
         try:
             target.write_text(text, encoding="utf-8")
         except OSError as exc:
-            QMessageBox.critical(self, self.tr("Could not write"), str(exc))
+            QMessageBox.critical(self, "Could not write", str(exc))
             return
         self.refresh()
-        self.statusBar().showMessage(self.tr("Wrote {0}").format(target), 6000)
+        self.statusBar().showMessage("Wrote {0}".format(target), 6000)
 
     # ------------------------------------------------------------ updates
     def check_for_updates(self) -> None:
@@ -427,20 +427,20 @@ class MainWindow(QMainWindow):
             return
         if helix.latest.error:
             self.overview.show_update("", "neutral")
-            self.statusBar().showMessage(self.tr("Update check: {0}").format(helix.latest.error), 8000)
+            self.statusBar().showMessage("Update check: {0}".format(helix.latest.error), 8000)
         elif helix.update_available and self.setup_page.fallback() and \
                 version_tuple(helix.installed) == version_tuple(FALLBACK_VERSION):
-            self.overview.show_update(self.tr("HelixSR {version} is out ({published}); the payload has {installed}, "
-                                          "the fallback picked on the Setup page.").format(
+            self.overview.show_update(("HelixSR {version} is out ({published}); the payload has {installed}, "
+                                       "the fallback picked on the Setup page.").format(
                                               version=helix.latest.version, published=helix.latest.published,
                                               installed=helix.installed), "info")
         elif helix.update_available:
-            self.overview.show_update(self.tr("HelixSR {version} is out ({published}); the payload "
-                                          "has {installed}. Get HelixSR… updates it.").format(
+            self.overview.show_update(("HelixSR {version} is out ({published}); the payload "
+                                       "has {installed}. Get HelixSR… updates it.").format(
                                               version=helix.latest.version, published=helix.latest.published,
                                               installed=helix.installed), "warn")
         elif not helix.installed and helix.latest.version:
-            self.overview.show_update(self.tr("Latest HelixSR release: {version} ({published}).").format(
+            self.overview.show_update("Latest HelixSR release: {version} ({published}).".format(
                 version=helix.latest.version, published=helix.latest.published), "info")
         else:
             self.overview.show_update("", "ok")
@@ -450,7 +450,7 @@ class MainWindow(QMainWindow):
         if self._setup_worker is not None:
             return
         if dlss_file is not None and not dlss_file.is_file():
-            QMessageBox.warning(self, DLSS_DLL, self.tr("{0} does not exist.").format(dlss_file))
+            QMessageBox.warning(self, DLSS_DLL, "{0} does not exist.".format(dlss_file))
             return
         fallback = self.setup_page.fallback()
         helix = self.updates.get("helixsr")
@@ -458,14 +458,14 @@ class MainWindow(QMainWindow):
         wanted = FALLBACK_VERSION if fallback else release.version if release is not None else ""
         status = backend.payload_status(self.payload_dir)
         if status.ready and wanted and version_tuple(status.version) == version_tuple(wanted) and QMessageBox.question(
-                self, self.tr("Payload is current"),
-                self.tr("The payload already has HelixSR {version} with its network files. "
-                        "Download and build again anyway?").format(
-                            version=status.version or self.tr("(unknown version)"))) != QMessageBox.StandardButton.Yes:
-            self.setup_page.set_stage(self.tr("Nothing to do: the payload already has HelixSR {version} "
-                                      "with its network files. Use Deploy to install it into a game.").format(
+                self, "Payload is current",
+                ("The payload already has HelixSR {version} with its network files. "
+                 "Download and build again anyway?").format(
+                            version=status.version or "(unknown version)")) != QMessageBox.StandardButton.Yes:
+            self.setup_page.set_stage(("Nothing to do: the payload already has HelixSR {version} "
+                                       "with its network files. Use Deploy to install it into a game.").format(
                                           version=status.version or ""))
-            self.statusBar().showMessage(self.tr("Payload is already current."), 6000)
+            self.statusBar().showMessage("Payload is already current.", 6000)
             return
         request = SetupRequest(release, self.work_dir, self.helix_data, dlss_file, fallback=fallback)
         worker = SetupWorker(request, self)
@@ -475,13 +475,13 @@ class MainWindow(QMainWindow):
         worker.finished_with.connect(self._setup_finished)
         self._setup_worker = worker
         self.setup_page.set_running(True)
-        self.statusBar().showMessage(self.tr("HelixSR setup running…"))
+        self.statusBar().showMessage("HelixSR setup running…")
         worker.start()
 
     def _cancel_setup(self) -> None:
         if self._setup_worker is not None:
             self._setup_worker.cancel()
-            self.setup_page.set_stage(self.tr("Cancelling…"))
+            self.setup_page.set_stage("Cancelling…")
 
     def _setup_finished(self, outcome: SetupOutcome) -> None:
         worker, self._setup_worker = self._setup_worker, None
@@ -492,12 +492,12 @@ class MainWindow(QMainWindow):
         self.setup_page.set_built(outcome.release_dir if outcome.ok else None)
         self.setup_page.set_running(False)
         if not outcome.ok:
-            self.statusBar().showMessage(self.tr("HelixSR setup failed: {0}").format(outcome.message.splitlines()[0]),
+            self.statusBar().showMessage("HelixSR setup failed: {0}".format(outcome.message.splitlines()[0]),
                                          10000)
             if outcome.message != "Cancelled.":
-                QMessageBox.critical(self, self.tr("HelixSR setup failed"), outcome.message)
+                QMessageBox.critical(self, "HelixSR setup failed", outcome.message)
             return
-        self.statusBar().showMessage(self.tr("{message} ({seconds:.0f} s)").format(
+        self.statusBar().showMessage("{message} ({seconds:.0f} s)".format(
             message=outcome.message, seconds=outcome.seconds), 10000)
         self._import(outcome.release_dir)
         self.check_for_updates()
@@ -505,7 +505,7 @@ class MainWindow(QMainWindow):
     def _browse_dlss(self) -> None:
         start = self.setup_page.dlss_path.text() or (str(self.libraries[0] / "common") if self.libraries
                                                     else str(Path.home()))
-        path, _ = QFileDialog.getOpenFileName(self, self.tr("NVIDIA {0} (310.7.0)").format(DLSS_DLL), start,
+        path, _ = QFileDialog.getOpenFileName(self, "NVIDIA {0} (310.7.0)".format(DLSS_DLL), start,
                                         f"{DLSS_DLL} ({DLSS_DLL})")
         if path:
             self.setup_page.dlss_path.setText(path)
@@ -513,10 +513,10 @@ class MainWindow(QMainWindow):
     def _find_dlss(self) -> None:
         if self._dlss_finder is not None or not self.libraries:
             if not self.libraries:
-                self.setup_page.append(self.tr("No Steam library found on this PC."))
+                self.setup_page.append("No Steam library found on this PC.")
             return
         self.setup_page.find_dlss.setEnabled(False)
-        self.setup_page.append(self.tr("Looking for {dll} in {libraries} …").format(
+        self.setup_page.append("Looking for {dll} in {libraries} …".format(
             dll=DLSS_DLL, libraries=", ".join(str(p) for p in self.libraries)))
         finder = DlssFinder(self.libraries, pinned_dlss_sha(latest_work_release(self.work_dir)), self)
         finder.found.connect(self._dlss_found)
@@ -533,11 +533,11 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------ misc
     def _copy(self, text: str) -> None:
         QApplication.clipboard().setText(text)
-        self.statusBar().showMessage(self.tr("Copied to the clipboard"), 4000)
+        self.statusBar().showMessage("Copied to the clipboard", 4000)
 
     def _open_folder(self, folder: Path) -> None:
         folder.mkdir(parents=True, exist_ok=True)
         try:
             subprocess.Popen(["xdg-open", str(folder)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except OSError as exc:
-            QMessageBox.warning(self, self.tr("Could not open"), f"{folder}\n{exc}")
+            QMessageBox.warning(self, "Could not open", f"{folder}\n{exc}")

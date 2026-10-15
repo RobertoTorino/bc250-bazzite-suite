@@ -107,15 +107,19 @@ info "Installing PyQt6 into the venv (downloads ~100 MB the first time)"
 "$VENV/bin/python" -c 'import PyQt6.QtWidgets' || die "PyQt6 does not load from the venv."
 
 # --- 3. Launcher, menu entry, Desktop icon ----------------------------------------------------------
+# The launcher runs python in the folder they are started from, so a relative path on the command line means what
+# it says. python -m would put that folder first on sys.path; this puts the app folder there instead, so $PACKAGE
+# and the bc250_core bundled with it always come from the app, as they did when the launcher changed into it.
+RUN_MODULE='import runpy, sys; sys.path[0] = sys.argv.pop(1); runpy.run_module(sys.argv.pop(1), run_name="__main__", alter_sys=True)'
 info "Creating the launcher $LAUNCHER"
 mkdir -p "$(dirname "$LAUNCHER")"
 cat >"$LAUNCHER" <<EOF
 #!/usr/bin/env bash
-# $APP_NAME launcher, written by install.sh. Starts from the app folder, so python -m never picks up a
-# $PACKAGE folder from the current directory, and imports the bc250_core bundled there.
+# $APP_NAME launcher, written by install.sh: python runs $PACKAGE from the app folder, with the
+# bc250_core bundled there, in the folder this is started from.
 #   $APP_ID [folder or file.iso]
-cd "$APP_DIR" || { echo "$APP_NAME is not installed in $APP_DIR; run install.sh again." >&2; exit 1; }
-exec "$VENV/bin/python" -m $PACKAGE "\$@"
+[ -d "$APP_DIR" ] || { echo "$APP_NAME is not installed in $APP_DIR; run install.sh again." >&2; exit 1; }
+exec "$VENV/bin/python" -c '$RUN_MODULE' "$APP_DIR" $PACKAGE "\$@"
 EOF
 chmod 755 "$LAUNCHER"
 

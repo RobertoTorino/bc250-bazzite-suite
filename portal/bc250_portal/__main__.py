@@ -37,7 +37,7 @@ def main() -> int:
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__} (core {CORE_VERSION})")
     args, qt_args = parser.parse_known_args()
 
-    app = create_app(INFO, qt_args, lang="en")
+    app = create_app(INFO, qt_args)
     # PyQt6 ends the whole app on an exception in a slot. The portal may be mid-install: show it and carry on.
     sys.excepthook = _show_error
     try:
