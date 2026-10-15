@@ -20,7 +20,7 @@ name: Release
 # tag the portal when the combination is tested.
 #
 # Only a commit that CI passed becomes a release: the first job waits for every CI run on the tagged commit (the
-# push to main and this tag's own run, up to 75 minutes) and stops everything when one did not pass.
+# push to main; a tag starts no CI of its own), up to 75 minutes, and stops everything when one did not pass.
 # tools/tag-release.sh asks the same before it tags.
 
 on:
@@ -37,6 +37,7 @@ concurrency:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    timeout-minutes: 80                 # ci_state waits up to 75
     permissions:
       actions: read
       contents: read

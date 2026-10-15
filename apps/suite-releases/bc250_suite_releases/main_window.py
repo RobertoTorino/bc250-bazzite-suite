@@ -31,7 +31,7 @@ from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout, QH
                              QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
 
 from bc250_core.platform import launch_in_terminal
-from bc250_core.theme import BLUE, GREEN, GREY, ORANGE, RED
+from bc250_core.theme import ACCENT, BLUE, GREEN, GREY, ORANGE, RED
 from bc250_core.updates import UpdateChecker
 from bc250_core.widgets import AppHeader, Terminal, accent_button, hint_label
 
@@ -40,6 +40,15 @@ from . import plan as rp
 
 COLUMNS = ("Release", "App", "VERSION", "Last tag", "Needs release", "New version", "Notes")
 LOG_DIR = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "bc250-release" / "run"
+# A selected cell and the input field being typed in: a purple outline with rounded corners on a transparent
+# background, not the desktop's solid highlight. The line edit inside an editable combo box keeps the combo's frame.
+SELECTION_STYLESHEET = (
+    "QTableWidget { outline:0; selection-background-color:transparent; selection-color:palette(text); }"
+    "QTableWidget::item { border:2px solid transparent; border-radius:6px; }"
+    f"QTableWidget::item:selected {{ background:transparent; color:palette(text); border-color:{ACCENT}; }}"
+    f"QLineEdit:focus {{ background:transparent; border:2px solid {ACCENT}; border-radius:6px; }}"
+    "QComboBox QLineEdit:focus { border:none; }"
+)
 
 
 def run_check(root: Path, *args: str) -> str:
@@ -55,6 +64,8 @@ def needs_tooltip(unit: rp.Unit) -> str:
                "of those apps (ticked with them, not here)."
         if unit.in_apps:
             text += "\n\nChanged: " + ", ".join(unit.changed) + "\nGoes into: " + ", ".join(unit.in_apps)
+            if unit.current:
+                text += f"\n\nCore {unit.version} already has these changes: it needs no new version."
         return text
     if unit.last_tag is None:
         return "Never released."
@@ -106,6 +117,10 @@ class AppsPage(QWidget):
         self.rows = []
         for i, unit in enumerate(shown):
             tick = QCheckBox()
+            if unit.kind == "core" and unit.current:        # its version already covers it: nothing to write
+                tick.setEnabled(False)
+                tick.setToolTip(f"Core {unit.version} already holds every change since its last version; the app "
+                                "releases carry it as it is")
             self.table.setCellWidget(i, 0, tick)
             reason = unit.release_reason
             if unit.needs_release and unit.last_tag and not unit.released:
@@ -120,7 +135,10 @@ class AppsPage(QWidget):
                 self.table.setItem(i, col, item)
             combo = QComboBox()
             combo.setEditable(True)
-            choices = [] if unit.released or unit.kind == "core" else [unit.version]
+            if unit.kind == "core":
+                choices = [unit.version] if unit.current else []
+            else:
+                choices = [] if unit.released else [unit.version]
             choices += list(rp.next_versions(unit.version).values())
             combo.addItems(choices)
             notes = QLineEdit()
@@ -739,6 +757,7 @@ class ReleaseWindow(QMainWindow):
         self.start = start
         self.setWindowTitle(APP_NAME)
         self.resize(1100, 760)
+        self.setStyleSheet(SELECTION_STYLESHEET)
         stamp = rp.checkout_stamp(root)                 # never released: the commit says which code runs
         header = AppHeader(LOGO_PATH, APP_NAME, f"{__version__} · {stamp}" if stamp else __version__)
         self.status = QLabel()                     # the working tree, clean or changed

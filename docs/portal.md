@@ -309,15 +309,16 @@ The release stays on GitHub, so its history is kept, but nothing installs it any
 ### Checking a release
 
 A release tarball has the same content when you build its tag yourself, but usually not the same checksum: the
-gzip compression differs between zlib builds (Fedora uses zlib-ng, GitHub's Ubuntu runners zlib), and Bazzite
-Test records its build time in `bc250_gui/_build_info.py`. So compare the unpacked files, not the `.tar.gz`:
+gzip compression differs between zlib builds (Fedora uses zlib-ng, GitHub's Ubuntu runners zlib), so compare the
+unpacked files, not the `.tar.gz`. Bazzite Test's build time in `bc250_gui/_build_info.py` is the commit time too;
+older Bazzite Test releases recorded the clock, and there only that line differs:
 
 ```bash
 git archive <tag> | tar -x -C /tmp/src
 SOURCE_DATE_EPOCH=$(git log -1 --format=%ct <tag>) python3 /tmp/src/tools/build_release.py <tag> /tmp/local
 curl -LO https://github.com/RobertoTorino/bc250-bazzite-suite/releases/download/<tag>/<tag>.tar.gz
 mkdir -p /tmp/a /tmp/b && tar -xzf <tag>.tar.gz -C /tmp/a && tar -xzf /tmp/local/<tag>.tar.gz -C /tmp/b
-diff -r /tmp/a /tmp/b              # Bazzite Test: only BUILD_DATE in _build_info.py differs
+diff -r /tmp/a /tmp/b
 ```
 
 The checksum pinned in `apps.toml` is always the one of the published tarball. That is also why the release

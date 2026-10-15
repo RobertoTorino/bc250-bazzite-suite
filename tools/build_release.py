@@ -169,9 +169,10 @@ def build(tag: str, out: Path, bundle: Path | None = None) -> Path:
                   "This tarball is what the portal downloads; install it by hand only without the portal.", ""]
     with tempfile.TemporaryDirectory() as tmp:
         stage_dir = stage_app.stage(app, Path(tmp) / tag)
-        if app == "bazzite-test":
+        epoch = source_epoch()
+        if app == "bazzite-test":                   # its build date is the commit time too: the same tag, the same bytes
             subprocess.run([sys.executable, str(stage_dir / "development" / "tools" / "build_info.py")], check=True,
-                           stdout=subprocess.DEVNULL)
+                           stdout=subprocess.DEVNULL, env=dict(os.environ, SOURCE_DATE_EPOCH=str(epoch)))
         if app == "portal":
             if bundle is None:
                 raise SystemExit("a portal release needs --bundle with the pinned bazzite-test release")
@@ -186,7 +187,7 @@ def build(tag: str, out: Path, bundle: Path | None = None) -> Path:
             core = (SUITE / "core" / "VERSION").read_text(encoding="utf-8").strip()
             notes += [f"Bundles the suite core `bc250_core` {core}.", ""]
         archive = out / f"{tag}.tar.gz"
-        write_tarball(stage_dir, tag, archive, source_epoch())
+        write_tarball(stage_dir, tag, archive, epoch)
     digest = sha256_of(archive)
     (out / "SHA256SUMS").write_text(f"{digest}  {archive.name}\n", encoding="utf-8")
     changes = latest_changes(src / "CHANGELOG")

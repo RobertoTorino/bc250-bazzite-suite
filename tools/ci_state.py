@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Whether GitHub's CI passed on a commit: every run of .github/workflows/ci.yml on it (the push to main and a tag's
-own run) finished and passed. tools/tag-release.sh asks it before tagging, and release.yml before it builds, so
+"""Whether GitHub's CI passed on a commit: every run of .github/workflows/ci.yml on it (the push to main; a tag
+starts none of its own) finished and passed. tools/tag-release.sh asks it before tagging, and release.yml before it builds, so
 only a commit that CI passed becomes a release.
 
     python3 tools/ci_state.py [--wait MINUTES] <commit>

@@ -1,3 +1,11 @@
+Changelog: 15-10-2026 07:06:37
+
+Release 0.1.13.
+
+Changelog: 15-10-2026 06:49:07
+
+development/tools/build_info.py records SOURCE_DATE_EPOCH as the build date when it is set (a release build passes the commit time), else the current time as before: building the same tag twice gives the same archive. About shows the commit time of a release as its build date.
+
 Changelog: 15-10-2026 05:51:59
 
 Release 0.1.12.

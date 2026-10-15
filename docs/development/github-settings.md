@@ -95,3 +95,59 @@ token is only sent to GitHub's API and never stored by the app. The limit as it 
 curl -s https://api.github.com/rate_limit                                            # without signing in
 curl -s -H "Authorization: Bearer $(gh auth token)" https://api.github.com/rate_limit # signed in
 ```
+
+## The GitHub CLI
+
+`gh` reads and steers the workflows from a terminal, signed in as above. It works from the checkout, so start it
+there. These are the commands a release needs most.
+
+The runs of the last push, and one run's jobs (`<run id>` is the number in the list):
+
+```bash
+gh run list --limit 10
+gh run view <run id>
+gh run watch <run id>                       # follows it until it ends
+```
+
+The runs on one commit. `--commit` needs the full SHA, not the short one `git log` shows, so let git expand it:
+
+```bash
+gh run list --workflow CI --commit "$(git rev-parse HEAD)"
+gh run list --workflow Release --commit "$(git rev-parse bfd16e3)" --limit 30
+```
+
+Whether CI passed on a commit, as `tools/tag-release.sh` and the release workflow ask it:
+
+```bash
+python3 tools/ci_state.py "$(git rev-parse HEAD)"
+```
+
+Why a run failed: the log of its failed steps only, or one job's full log (`<job id>` from `gh run view`):
+
+```bash
+gh run view <run id> --log-failed
+gh run view --job <job id> --log
+```
+
+A job that hangs keeps its log until it ends; cancel the run to read it. Then run what failed again, on the same
+commit:
+
+```bash
+gh run cancel <run id>
+gh run rerun <run id> --failed
+```
+
+When CI failed or hung on a release commit, each release on that commit stopped too. Once CI passes, run them again
+in one go:
+
+```bash
+gh run list --workflow Release --commit "$(git rev-parse bfd16e3)" --status failure --limit 30 \
+  --json databaseId -q '.[].databaseId' | xargs -n1 gh run rerun --failed
+```
+
+A release, its files and its notes:
+
+```bash
+gh release view governor-v0.1.8
+gh release download governor-v0.1.8 --pattern SHA256SUMS --output -
+```

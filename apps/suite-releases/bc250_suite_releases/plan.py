@@ -124,6 +124,7 @@ class Unit:
     pinned_sha: str = ""
     changed: list[str] | None = None    # shipped files that differ from the last tag; None: never released
     in_apps: list[str] = field(default_factory=list)  # core only: the apps whose release would carry its changes
+    current: bool = False               # core only: nothing it ships changed since its VERSION was last bumped
     standalone: bool = False            # apps only: released separately, never pinned in the portal
 
     @property
@@ -135,7 +136,10 @@ class Unit:
     def release_reason(self) -> str:
         if self.kind == "core":
             n = len(self.in_apps)
-            return f"changed: goes into {n} app release{'s' if n != 1 else ''}" if n else "no"
+            releases = f"{n} app release{'s' if n != 1 else ''}"
+            if n and self.current:
+                return f"{self.version} has it: goes into {releases}"
+            return f"changed: goes into {releases}" if n else "no"
         if self.last_tag is None:
             return "first release"
         if not self.changed:
@@ -225,7 +229,18 @@ def load_units(root: Path = SUITE) -> list[Unit]:
     carriers = [u for u in units if u.kind != "core" and any(f.startswith("core/") for f in u.changed or [])]
     core.in_apps = [u.key for u in carriers]
     core.changed = sorted({f for u in carriers for f in u.changed or [] if f.startswith("core/")})
+    core.current = core_is_current(root)
     return units
+
+
+def core_is_current(root: Path) -> bool:
+    """Whether core's VERSION already covers what it ships: nothing under core/bc250_core changed since the commit
+    that last changed core/VERSION, or that VERSION is changed and not committed yet (a bump in progress). Then an
+    app release carries core as it is, and core needs no new version."""
+    if git(root, "diff", "--quiet", "HEAD", "--", "core/VERSION") is None:
+        return True
+    bump = (git(root, "log", "-1", "--format=%H", "--", "core/VERSION") or "").strip()
+    return bool(bump) and not changed_since(root, bump, ["core/bc250_core"])
 
 
 # --- Edits -----------------------------------------------------------------------------------------------------
