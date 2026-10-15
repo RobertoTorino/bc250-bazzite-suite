@@ -1,3 +1,7 @@
+Changelog: 15-10-2026 05:05:09
+
+Release 1.1.6. Pins bazzite-pkgxtractor-v0.1.2, bazzite-netcatgui-v0.1.2, bazzite-umd-file-renamer-v0.1.2, console-link-v1.0.8.
+
 Changelog: 15-10-2026 03:46:55
 
 Release 1.1.5. Pins bazzite-test-v0.1.11, governor-v0.1.7, helixsr-v0.2.7, cu-bisect-v0.1.5, cores-bisect-v0.1.6, gpu-oc-bisect-v0.1.5, persistent-acpi-v0.1.4, system-overlay-v0.1.9, bios-reader-v0.1.9, ace-queues-v0.1.11, mesh-shaders-v0.1.4, memory-manager-v0.1.10, hdmi-cec-v0.1.10, sftp-tools-v0.1.4, dependency-checker-v0.1.18, bazzite-pkgxtractor-v0.1.1, bazzite-netcatgui-v0.1.1, bazzite-umd-file-renamer-v0.1.1, rpcs3-manager-v0.1.1, console-link-v1.0.7, shadps4-manager-v0.1.4, decky-manager-v0.1.2.
