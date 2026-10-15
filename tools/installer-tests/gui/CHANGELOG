@@ -1,3 +1,7 @@
+Changelog: 15-10-2026 05:27:59
+
+New icon: images/bc250-installer-test-gui.png (512 px) and its 128 px copy.
+
 Changelog: 15-10-2026 02:01:27
 
 instance.py follows core's: a second launch can hand its arguments to the running instance (already_running(app_id, args), serve(..., on_args)). The window passes none, so it behaves as before: a second launch shows the open window.

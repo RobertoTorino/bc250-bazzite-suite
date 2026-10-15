@@ -86,6 +86,13 @@ def git(root: Path, *args: str) -> str | None:
     return result.stdout if result.returncode == 0 else None
 
 
+def checkout_stamp(root: Path) -> str:
+    """The checkout's last commit and its date ("c109b51 · 15-10-2026"): Suite Releases is never released, so its
+    VERSION stays put and this says which code runs. "" outside a git checkout."""
+    out = (git(root, "log", "-1", "--format=%h %cd", "--date=format:%d-%m-%Y") or "").split()
+    return " · ".join(out) if len(out) == 2 else ""
+
+
 def tags_of(root: Path, key: str) -> list[str]:
     """The release tags of one app (or the portal), oldest first."""
     found = []

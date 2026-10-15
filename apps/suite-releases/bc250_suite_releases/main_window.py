@@ -600,6 +600,7 @@ def desktop_notify(summary: str, body: str) -> bool:
     return ok
 
 
+TEXT = "palette(window-text)"           # the theme's text colour: white on a dark desktop, dark on a light one
 BUILD_BUSY_MS = 30_000                  # how often to look while a build runs
 BUILD_IDLE_MS = 300_000                 # and otherwise (unchanged answers do not count against GitHub's limit)
 BUILD_LOOK = {"running": (BLUE, "\u25cf GitHub: building"), "passed": (GREEN, "\u2714 GitHub: passed"),
@@ -693,10 +694,10 @@ class BuildIndicator(QPushButton):
         """How many of GitHub's requests are left this hour: none left is GitHub's limit, not a fault here."""
         if rate is None:
             self.rate.setText("GitHub API: limit not known yet")
-            self.rate.setStyleSheet(f"color:{GREY};")
+            self.rate.setStyleSheet(f"color:{TEXT};")
         else:
             self.rate.setText(rate.text)
-            color = RED if rate.remaining == 0 else ORANGE if rate.remaining < rate.limit / 10 else GREY
+            color = RED if rate.remaining == 0 else ORANGE if rate.remaining < rate.limit / 10 else TEXT
             self.rate.setStyleSheet(f"color:{color};")
         sign_in = "" if rate is not None and rate.signed_in else \
             " Signed in with gh (gh auth login), it is 5,000 an hour instead of 60."
@@ -738,7 +739,8 @@ class ReleaseWindow(QMainWindow):
         self.start = start
         self.setWindowTitle(APP_NAME)
         self.resize(1100, 760)
-        header = AppHeader(LOGO_PATH, APP_NAME, __version__)
+        stamp = rp.checkout_stamp(root)                 # never released: the commit says which code runs
+        header = AppHeader(LOGO_PATH, APP_NAME, f"{__version__} · {stamp}" if stamp else __version__)
         self.status = QLabel()                     # the working tree, clean or changed
         header.add_second(self.status)
         self.build = BuildIndicator(self, runs_source, notify)

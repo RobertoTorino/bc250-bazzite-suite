@@ -674,7 +674,7 @@ def test_window_build_indicator_notifies_when_a_run_ends(repo, tmp_path):
     assert "not known yet" in build.rate.text()
     build.checked((None, "e2", rp.RateInfo(5000, 4905, 1_900_000_000, signed_in=True)))
     assert "4,905 of 5,000 left" in build.rate.text() and "signed in" in build.rate.text()
-    assert main_window.GREY in build.rate.styleSheet() and "gh auth login" not in build.rate.toolTip()
+    assert main_window.TEXT in build.rate.styleSheet() and "gh auth login" not in build.rate.toolTip()
     build.checked((None, "e2", rp.RateInfo(60, 3, 1_900_000_000, signed_in=False)))
     assert main_window.ORANGE in build.rate.styleSheet() and "gh auth login" in build.rate.toolTip()
     build.checked(OSError("offline"))
@@ -688,6 +688,19 @@ def test_window_build_indicator_notifies_when_a_run_ends(repo, tmp_path):
     assert "gh auth login" not in build.toolTip() and build.timer.interval() == main_window.BUILD_IDLE_MS
     w.close()
     assert main_window.ReleaseWindow(repo, runs_source=None).build.isHidden()
+
+
+def test_title_names_the_checkouts_commit_and_date(window, repo, tmp_path):
+    from PyQt6.QtWidgets import QLabel
+    from bc250_suite_releases import __version__
+    head = subprocess.run(["git", "log", "-1", "--format=%h %cd", "--date=format:%d-%m-%Y"], cwd=repo,
+                          capture_output=True, text=True).stdout.split()
+    stamp = f"{head[0]} · {head[1]}"
+    assert rp.checkout_stamp(repo) == stamp
+    assert any(f"v{__version__} · {stamp}" in label.text() for label in window.findChildren(QLabel))
+    elsewhere = tmp_path / "not-a-checkout"
+    elsewhere.mkdir()
+    assert rp.checkout_stamp(elsewhere) == ""
 
 
 def test_window_withdraws_and_tests(window, repo, monkeypatch):

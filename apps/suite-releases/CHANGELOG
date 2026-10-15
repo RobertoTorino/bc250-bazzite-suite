@@ -1,3 +1,15 @@
+Changelog: 15-10-2026 05:27:59
+
+New icon: images/bc250-release.png (512 px) and its 128 px copy.
+
+Changelog: 15-10-2026 05:13:53
+
+The title shows the checkout's last commit and its date beside the version ("v0.1.0 · 6de8ccd · 15-10-2026"; plan.checkout_stamp): the app runs from the checkout and is never released, so VERSION stays put and the commit says which code runs. Uncommitted changes show beside it as before ("working tree has changes"). Tests: the stamp, and the title with it.
+
+Changelog: 15-10-2026 05:08:01
+
+The GitHub API line beside the GitHub button is in the theme's text colour (white on a dark desktop, dark on a light one) instead of grey, which was barely readable on a dark desktop; orange and red still mark few and none left.
+
 Changelog: 15-10-2026 04:13:25
 
 Beside the GitHub button the window shows GitHub's hourly API limit as its last answer reported it ("GitHub API: 4,894 of 5,000 left until 04:16, signed in"; orange under a tenth, red at none), read from the X-RateLimit headers of every answer, the unchanged ones that do not count included; its tooltip says that none left is GitHub's limit, not a fault. plan.fetch_runs returns that RateInfo as a third value. github_token() is safe when checks overlap: it asked gh after storing "" already, so a second check in that moment went out without the token; it now holds a lock and stores only the finished answer. Tests: the limit from normal and unchanged answers, the label's text and colours, overlapping token lookups.
