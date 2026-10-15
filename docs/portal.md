@@ -160,7 +160,8 @@ The comment at the top of [`apps.toml`](https://github.com/RobertoTorino/bc250-b
 Releasing an app and pinning it in the portal:
 
 1. Bump `apps/<app>/VERSION` (and the copies that `tools/check_versions.py` lists), and update its CHANGELOG.
-2. Commit and push, then tag with `tools/tag-release.sh <app>-v<x.y.z>`; [`release.yml`](https://github.com/RobertoTorino/bc250-bazzite-suite/blob/main/.github/workflows/release.yml) builds
+2. Commit and push, then tag with `tools/tag-release.sh <app>-v<x.y.z>` (it waits until CI passed on that
+   commit); [`release.yml`](https://github.com/RobertoTorino/bc250-bazzite-suite/blob/main/.github/workflows/release.yml) builds
    `<tag>.tar.gz` and `SHA256SUMS` with [`tools/build_release.py`](https://github.com/RobertoTorino/bc250-bazzite-suite/blob/main/tools/build_release.py).
    An app with a Windows executable (SFTP Tools) also gets a Windows job on its tag, which adds
    `<app-id>-<version>-windows.zip` and its `.sha256` to the release; the portal ignores them.
@@ -239,8 +240,11 @@ version: the tag was made before the version bump was committed, and `release.ym
 (the line shows how), commit and push the bump, and tag again with `tools/tag-release.sh`.
 
 `tools/tag-release.sh <tag> [...]` tags HEAD and pushes the tags, but refuses while HEAD does not hold each tag's
-version (the bump is not committed yet), while that folder has uncommitted changes, or while HEAD is not pushed to
-`origin/main`. A plain `git tag` tags whatever HEAD is at that moment, also the commit from before the bump.
+version (the bump is not committed yet), while that folder has uncommitted changes, while HEAD is not pushed to
+`origin/main`, or when CI did not pass on HEAD: it asks GitHub (`tools/ci_state.py`) and waits while CI still runs,
+up to an hour. A plain `git tag` tags whatever HEAD is at that moment, also the commit from before the bump or one
+CI failed. `release.yml` asks the same before it builds anything: a tag on a commit CI did not pass gives no
+release.
 
 `python3 tools/release_plan.py` lists every app with its version, its last tag and its pin, without Qt.
 

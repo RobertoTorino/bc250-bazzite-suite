@@ -99,9 +99,12 @@ The same repository is used from both systems.
 
 ## Checks before handing work over
 
-The same checks as CI (`.github/workflows/ci.yml`), from the repo root:
+The same checks as CI (`.github/workflows/ci.yml`), from the repo root. `tools/ci-local.sh` runs them as CI does
+(Python 3.12, each job with only its own requirements, in a container), which `./test.sh` in the full venv on a
+newer Python cannot show; run it before saying work is ready:
 
 ```bash
+tools/ci-local.sh                                   # every CI job as GitHub runs it (podman); --list shows them
 ./test.sh                                           # every test suite, offscreen
 python3 tools/check_versions.py                     # versions = VERSION
 python3 tools/check_manifest.py --base origin/main  # portal/apps.toml rules, against the last push
@@ -139,7 +142,8 @@ can be read without `gh` through the public API:
 The owner does every step of a release; Claude does none of them, and doesn't offer to:
 
 - bumping a `VERSION` (and the copies `tools/check_versions.py` checks), or `portal/VERSION`;
-- tagging (`<app>-v<x.y.z>` or `portal-v<x.y.z>`), which starts `.github/workflows/release.yml`;
+- tagging (`<app>-v<x.y.z>` or `portal-v<x.y.z>`, with `tools/tag-release.sh`, which waits until CI passed on the
+  commit), which starts `.github/workflows/release.yml` (it, too, builds only a commit CI passed);
 - building or publishing release assets (`tools/build_release.py`) and the GitHub releases themselves;
 - pinning a release in `portal/apps.toml` (`tools/pin_app.py`, the `tag` and `sha256` lines);
 - the release entries in the CHANGELOGs.

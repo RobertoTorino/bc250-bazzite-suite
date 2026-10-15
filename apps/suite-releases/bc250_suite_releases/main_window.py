@@ -21,6 +21,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from PyQt6.QtCore import QProcess, QSize, Qt, QTimer, QUrl
@@ -608,7 +609,8 @@ BUILD_LOOK = {"running": (BLUE, "\u25cf GitHub: building"), "passed": (GREEN, "\
 class BuildIndicator(QPushButton):
     """Whether GitHub built the newest push: CI, Release and Manual on its commit. Looks every 30 s while a build
     runs and every 5 minutes otherwise; a run seen running that finishes gives a desktop notification. A click opens
-    the run that failed (or still runs), else the Actions page."""
+    the run that failed (or still runs), else the Actions page. When GitHub's hourly limit is used up it says until
+    when and waits till then. Requests carry the token of a gh login when there is one (plan.github_token)."""
 
     def __init__(self, window: "ReleaseWindow", source, notify):
         super().__init__()
@@ -625,7 +627,10 @@ class BuildIndicator(QPushButton):
         self.checker.finished.connect(self.checked)
         self.timer = QTimer(self, singleShot=True)
         self.timer.timeout.connect(self.check)
+        self.rate = QLabel()                    # GitHub's hourly limit: placed beside the button by the window
+        self.rate.setVisible(source is not None)
         self.show_state("", "Not looked yet.")
+        self.show_rate(None)
         self.setVisible(source is not None)
 
     def check(self) -> None:
@@ -642,11 +647,21 @@ class BuildIndicator(QPushButton):
             return exc
 
     def checked(self, result: object) -> None:
+        if isinstance(result, rp.RateLimited):
+            self.show_rate(result.rate)
+            back = time.strftime("%H:%M", time.localtime(result.reset))
+            hint = "" if result.signed_in else \
+                "\n\nSigned in with gh (gh auth login), GitHub allows 5,000 requests an hour instead of 60."
+            self.show_state("", f"{result}; looking again then.{hint}", limited=back)
+            self.timer.start(max(BUILD_IDLE_MS, int((result.reset - time.time()) * 1000) + 5_000))
+            return
         if isinstance(result, Exception):
             self.show_state("", f"GitHub could not be reached: {result}", unreachable=True)
             self.timer.start(BUILD_IDLE_MS)
             return
-        runs, self.etag = result
+        runs, self.etag, *rate = result         # the limit as a third value (rp.fetch_runs); tests may leave it out
+        if rate:
+            self.show_rate(rate[0])
         if runs is not None:
             finished = rp.just_finished(self.seen, runs)
             self.runs, self.seen = runs, {r.url: r for r in runs}
@@ -664,12 +679,31 @@ class BuildIndicator(QPushButton):
         head = f"{latest[0].sha[:7]} {latest[0].title}"
         return "\n".join([head, *(f"{r.label}: {r.outcome}" for r in latest), "", "Click to open it on GitHub."])
 
-    def show_state(self, state: str, tooltip: str, unreachable: bool = False) -> None:
-        color, text = (GREY, "GitHub: not reachable") if unreachable else BUILD_LOOK[state]
-        self.state = "unreachable" if unreachable else state
+    def show_state(self, state: str, tooltip: str, unreachable: bool = False, limited: str = "") -> None:
+        if limited:
+            color, text, self.state = GREY, f"GitHub: limit reached, back at {limited}", "limited"
+        else:
+            color, text = (GREY, "GitHub: not reachable") if unreachable else BUILD_LOOK[state]
+            self.state = "unreachable" if unreachable else state
         self.setText(text)
         self.setStyleSheet(f"color:{color}; font-weight:700;")
         self.setToolTip(tooltip)
+
+    def show_rate(self, rate: "rp.RateInfo | None") -> None:
+        """How many of GitHub's requests are left this hour: none left is GitHub's limit, not a fault here."""
+        if rate is None:
+            self.rate.setText("GitHub API: limit not known yet")
+            self.rate.setStyleSheet(f"color:{GREY};")
+        else:
+            self.rate.setText(rate.text)
+            color = RED if rate.remaining == 0 else ORANGE if rate.remaining < rate.limit / 10 else GREY
+            self.rate.setStyleSheet(f"color:{color};")
+        sign_in = "" if rate is not None and rate.signed_in else \
+            " Signed in with gh (gh auth login), it is 5,000 an hour instead of 60."
+        self.rate.setToolTip(
+            "GitHub's API answers a limited number of requests an hour; answers that did not change since the last "
+            "look do not count. The limit is shared by everything on this network that asks GitHub without signing "
+            f"in.{sign_in} When none are left, nothing is broken: GitHub answers again after the time shown.")
 
     def announce(self, finished: list[rp.BuildRun]) -> None:
         failed = [r for r in finished if not r.passed]
@@ -709,6 +743,7 @@ class ReleaseWindow(QMainWindow):
         header.add_second(self.status)
         self.build = BuildIndicator(self, runs_source, notify)
         header.add_second(self.build)
+        header.add_second(self.build.rate)
         header.second_row.addStretch(1)
         self.refresh_button = QPushButton("Refresh")
         self.refresh_button.setToolTip("Read the checkout and its tags again, for changes made in a terminal; "

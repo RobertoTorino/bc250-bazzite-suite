@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Tags release commits and pushes the tags, but only when they can be built: HEAD must hold each tag's version
-# (the bump is committed), have no uncommitted changes in that folder, and be pushed to origin/main. A plain
-# `git tag` tags whatever HEAD is, also a commit from before the bump, which release.yml then refuses.
+# (the bump is committed), have no uncommitted changes in that folder, be pushed to origin/main, and have passed CI
+# on GitHub (tools/ci_state.py; it waits while CI still runs, up to an hour). A plain `git tag` tags whatever HEAD
+# is, also a commit from before the bump or one CI failed, which release.yml then refuses.
 #
 #   tools/tag-release.sh portal-v0.9.5
 #   tools/tag-release.sh governor-v0.1.1 helixsr-v0.2.1
@@ -35,6 +36,10 @@ done
 git fetch -q origin main || die "Could not reach origin to check that HEAD is pushed."
 git merge-base --is-ancestor HEAD origin/main ||
     die "HEAD ($(git rev-parse --short HEAD)) is not on origin/main yet: git push first, then run this again."
+
+info "Checking that CI passed on $(git rev-parse --short HEAD) (waits while it runs, up to an hour)"
+python3 tools/ci_state.py --wait 60 "$(git rev-parse HEAD)" ||
+    die "CI has not passed on HEAD ($(git rev-parse --short HEAD)), so it gets no tag: fix what failed, commit and push, then run this again."
 
 for tag in "$@"; do
     git tag "$tag"

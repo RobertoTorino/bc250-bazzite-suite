@@ -27,8 +27,12 @@ import re
 import shlex
 import urllib.error
 import urllib.request
+import os
+import shutil
 import subprocess
 import sys
+import threading
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlparse
@@ -525,20 +529,93 @@ def parse_runs(data: object) -> list[BuildRun]:
                      str(r.get("display_title") or "")) for r in runs if isinstance(r, dict)]
 
 
-def fetch_runs(etag: str = "") -> tuple[list[BuildRun] | None, str]:
-    """The newest workflow runs (newest first) and the ETag to send next time; None when nothing changed since
-    *etag*. GitHub answers that with 304, which does not count against its 60 requests an hour without a token.
-    Raises OSError offline or when GitHub refuses (rate limit)."""
+GH_FALLBACK = "/home/linuxbrew/.linuxbrew/bin/gh"   # Homebrew's gh on Bazzite: not on PATH when started from the menu
+
+
+@dataclass(frozen=True)
+class RateInfo:
+    """GitHub's hourly limit as its last answer reported it (the X-RateLimit headers, also on unchanged answers)."""
+    limit: int
+    remaining: int
+    reset: float                        # seconds since the epoch
+    signed_in: bool
+
+    @classmethod
+    def from_headers(cls, headers, signed_in: bool) -> "RateInfo | None":
+        try:
+            return cls(int(headers.get("X-RateLimit-Limit")), int(headers.get("X-RateLimit-Remaining")),
+                       float(headers.get("X-RateLimit-Reset")), signed_in)
+        except (TypeError, ValueError, AttributeError):
+            return None
+
+    @property
+    def until(self) -> str:
+        return time.strftime("%H:%M", time.localtime(self.reset))
+
+    @property
+    def text(self) -> str:
+        who = "signed in" if self.signed_in else "not signed in"
+        return f"GitHub API: {self.remaining:,} of {self.limit:,} left until {self.until}, {who}"
+
+
+class RateLimited(OSError):
+    """GitHub refuses until *reset* (seconds since the epoch): the hour's requests are used up."""
+
+    def __init__(self, reset: float, signed_in: bool, rate: RateInfo | None = None):
+        super().__init__(f"GitHub's hourly limit is used up until {time.strftime('%H:%M', time.localtime(reset))}")
+        self.reset = reset
+        self.signed_in = signed_in
+        self.rate = rate or RateInfo(60 if not signed_in else 5000, 0, reset, signed_in)
+
+
+_token: str | None = None               # the token found once per run; "" when there is none
+_token_lock = threading.Lock()          # the checks run in worker threads: one asks gh, the others wait for it
+
+
+def github_token(run=subprocess.run) -> str:
+    """GITHUB_TOKEN or GH_TOKEN, else the token of a gh login (gh auth token); "" without one. With a token GitHub
+    allows 5,000 requests an hour instead of 60. It is only sent to GitHub's API and never stored here."""
+    global _token
+    with _token_lock:
+        if _token is None:
+            token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN") or ""
+            gh = shutil.which("gh") or (GH_FALLBACK if os.access(GH_FALLBACK, os.X_OK) else "")
+            if not token and gh:
+                try:
+                    out = run([gh, "auth", "token"], capture_output=True, text=True, timeout=10)
+                    token = out.stdout.strip() if out.returncode == 0 else ""
+                except (OSError, subprocess.SubprocessError):
+                    token = ""
+            _token = token              # only the finished answer: never "" while gh is still being asked
+        return _token
+
+
+def fetch_runs(etag: str = "") -> tuple[list[BuildRun] | None, str, RateInfo | None]:
+    """The newest workflow runs (newest first), the ETag to send next time and GitHub's hourly limit as it stands;
+    runs None when nothing changed since *etag*. GitHub answers that with 304, which does not count against the
+    limit (60 requests without a token, 5,000 with the token of a gh login). Raises RateLimited when the limit is
+    used up, OSError offline."""
+    global _token
+    token = github_token()
     headers = {"Accept": "application/vnd.github+json", "User-Agent": "bc250-release"}
     if etag:
         headers["If-None-Match"] = etag
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
     request = urllib.request.Request(RUNS_URL.format(repo=repo_slug()), headers=headers)
     try:
         with urllib.request.urlopen(request, timeout=15) as response:
-            return parse_runs(json.load(response)), response.headers.get("ETag", "")
+            return (parse_runs(json.load(response)), response.headers.get("ETag", ""),
+                    RateInfo.from_headers(response.headers, bool(token)))
     except urllib.error.HTTPError as exc:
         if exc.code == 304:
-            return None, etag
+            return None, etag, RateInfo.from_headers(exc.headers, bool(token))
+        if exc.code == 401 and token:            # an expired or revoked login: go on without it
+            _token = ""
+            return fetch_runs(etag)
+        if exc.code in (403, 429) and exc.headers.get("X-RateLimit-Remaining") == "0":
+            raise RateLimited(float(exc.headers.get("X-RateLimit-Reset") or time.time() + 3600), bool(token),
+                              RateInfo.from_headers(exc.headers, bool(token))) from exc
         raise
 
 

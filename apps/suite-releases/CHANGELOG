@@ -1,3 +1,11 @@
+Changelog: 15-10-2026 04:13:25
+
+Beside the GitHub button the window shows GitHub's hourly API limit as its last answer reported it ("GitHub API: 4,894 of 5,000 left until 04:16, signed in"; orange under a tenth, red at none), read from the X-RateLimit headers of every answer, the unchanged ones that do not count included; its tooltip says that none left is GitHub's limit, not a fault. plan.fetch_runs returns that RateInfo as a third value. github_token() is safe when checks overlap: it asked gh after storing "" already, so a second check in that moment went out without the token; it now holds a lock and stores only the finished answer. Tests: the limit from normal and unchanged answers, the label's text and colours, overlapping token lookups.
+
+Changelog: 15-10-2026 04:06:38
+
+The GitHub button uses the token of a gh login when there is one (GITHUB_TOKEN or GH_TOKEN first, else gh auth token, also Homebrew's gh when started from the menu): GitHub then allows 5,000 requests an hour instead of 60, which a running build used up in about half an hour of looking every 30 seconds. The token is only sent to GitHub's API and never stored; a refused token is dropped and the button goes on without it. When the limit is used up the button says "GitHub: limit reached, back at HH:MM" instead of "not reachable", with a hint to sign in with gh when it was not signed in, and looks again only after the reset. Tests: the token lookup, the signed-in and refused requests, the limit and the button's waiting; a version bump keeps a comment after the copy.
+
 Changelog: 15-10-2026 02:31:31
 
 No translations (owner's decision): core's create_app() no longer takes lang, and AppInfo no longer has languages; the app was English only already and stays so.

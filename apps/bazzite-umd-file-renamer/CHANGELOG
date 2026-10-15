@@ -1,3 +1,15 @@
+Changelog: 15-10-2026 04:57:24
+
+Release 0.1.2.
+
+Changelog: 15-10-2026 04:56:51
+
+Release 0.1.2.
+
+Changelog: 15-10-2026 04:06:38
+
+__version__ equals VERSION again (0.1.1): the release left it at 0.1.0, as the comment after it hid it from tools/check_versions.py and from Suite Releases' bump. The comment is gone, as in the other apps. The 0.1.1 release reports itself as 0.1.0 in its window and --version.
+
 Changelog: 15-10-2026 03:27:56
 
 Release 0.1.1.

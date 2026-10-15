@@ -1,2 +1,3 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 pytest>=8
+pyyaml>=6,<7                    # tools/ci_local.py reads ci.yml

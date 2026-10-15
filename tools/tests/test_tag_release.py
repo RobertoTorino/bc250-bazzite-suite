@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""tools/tag-release.sh: it tags only a pushed HEAD that holds the version, never a commit from before the bump."""
+"""tools/tag-release.sh: it tags only a pushed HEAD that holds the version and passed CI, never a commit from before
+the bump or one CI failed. GitHub's answer comes from BC250_CI_STATE here (tools/ci_state.py)."""
 
 from __future__ import annotations
 
@@ -11,7 +12,8 @@ from pathlib import Path
 import pytest
 
 SCRIPT = Path(__file__).resolve().parent.parent / "tag-release.sh"
-ENV = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t")
+ENV = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t",
+           BC250_CI_STATE="passed")
 
 pytestmark = pytest.mark.skipif(shutil.which("bash") is None or shutil.which("git") is None, reason="needs bash, git")
 
@@ -26,6 +28,7 @@ def repo(tmp_path) -> Path:
     subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(origin)], check=True)
     (root / "tools").mkdir(parents=True)
     shutil.copy(SCRIPT, root / "tools" / "tag-release.sh")
+    shutil.copy(SCRIPT.with_name("ci_state.py"), root / "tools" / "ci_state.py")
     for folder, version in (("portal", "0.9.4"), ("apps/governor", "0.1.0")):
         (root / folder).mkdir(parents=True)
         (root / folder / "VERSION").write_text(version + "\n")
@@ -37,9 +40,9 @@ def repo(tmp_path) -> Path:
     return root
 
 
-def tag(root: Path, *tags: str) -> subprocess.CompletedProcess:
+def tag(root: Path, *tags: str, ci: str = "passed") -> subprocess.CompletedProcess:
     return subprocess.run(["bash", str(root / "tools" / "tag-release.sh"), *tags], cwd=root, capture_output=True,
-                          text=True, env=ENV)
+                          text=True, env=dict(ENV, BC250_CI_STATE=ci))
 
 
 def remote_tags(root: Path) -> str:
@@ -79,3 +82,16 @@ def test_checks_every_tag_before_tagging_any(repo):
     dirty = tag(repo, "governor-v0.1.1")
     assert dirty.returncode != 0 and "not committed" in dirty.stderr
     assert tag(repo, "governor-0.1.1").returncode != 0               # not <name>-v<x.y.z>
+
+
+def test_tags_only_a_commit_ci_passed(repo):
+    (repo / "portal" / "VERSION").write_text("0.9.5\n")
+    git(repo, "commit", "-qam", "Release portal-v0.9.5")
+    git(repo, "push", "-q", "origin", "main")
+    failed = tag(repo, "portal-v0.9.5", ci="failed")
+    assert failed.returncode != 0 and "CI has not passed on HEAD" in failed.stderr
+    assert git(repo, "tag") == "" and remote_tags(repo) == ""
+    assert tag(repo, "portal-v0.9.5", ci="running").returncode != 0          # still running after the wait: no tag
+    assert git(repo, "tag") == ""
+    assert tag(repo, "portal-v0.9.5", ci="passed").returncode == 0
+    assert "refs/tags/portal-v0.9.5" in remote_tags(repo)

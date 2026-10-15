@@ -98,6 +98,13 @@ def test_versions():
     assert "not x.y.z" in rp.check_new_version("0.1.0", "0.2", released=False)
 
 
+def test_set_version_changes_a_copy_with_a_comment(repo):
+    init = repo / "apps/alpha/alpha/__init__.py"
+    init.write_text('APP = "alpha"\n__version__ = "0.1.0"   # equal to VERSION\n')
+    rp.set_version(repo, unit(repo, "alpha"), "0.2.0")
+    assert init.read_text() == 'APP = "alpha"\n__version__ = "0.2.0"   # equal to VERSION\n'      # comment kept
+
+
 def test_set_version_changes_every_copy_but_tests(repo):
     alpha = unit(repo, "alpha")
     changed = rp.set_version(repo, alpha, "0.2.0")
@@ -539,8 +546,10 @@ def test_fetch_runs_sends_the_etag(monkeypatch):
     import urllib.error
     sent = []
 
+    rate = {"X-RateLimit-Limit": "60", "X-RateLimit-Remaining": "57", "X-RateLimit-Reset": "1900000000"}
+
     class Response(io.BytesIO):
-        headers = {"ETag": 'W/"new"'}
+        headers = {"ETag": 'W/"new"', **rate}
 
         def __enter__(self):
             return self
@@ -551,13 +560,89 @@ def test_fetch_runs_sends_the_etag(monkeypatch):
     def urlopen(request, timeout):
         sent.append(request.get_header("If-none-match"))
         if sent[-1] == 'W/"new"':
-            raise urllib.error.HTTPError(request.full_url, 304, "Not Modified", {}, None)
+            headers = dict(rate, **{"X-RateLimit-Remaining": "56"})
+            raise urllib.error.HTTPError(request.full_url, 304, "Not Modified", headers, None)
         return Response(json.dumps({"workflow_runs": [run()]}).encode())
 
     monkeypatch.setattr(rp.urllib.request, "urlopen", urlopen)
-    runs, etag = rp.fetch_runs()
+    monkeypatch.setattr(rp, "_token", "")                                      # no login: never the real gh
+    runs, etag, limit = rp.fetch_runs()
     assert [r.label for r in runs] == ["CI on main"] and etag == 'W/"new"' and sent == [None]
-    assert rp.fetch_runs(etag) == (None, 'W/"new"')                           # unchanged: 304
+    assert limit == rp.RateInfo(60, 57, 1_900_000_000, signed_in=False)
+    unchanged = rp.fetch_runs(etag)                                           # unchanged: 304, the limit still read
+    assert unchanged[:2] == (None, 'W/"new"') and unchanged[2].remaining == 56
+    assert "57 of 60 left until" in limit.text and limit.text.endswith("not signed in")
+    assert rp.RateInfo.from_headers({}, False) is None
+
+
+def test_github_token_from_the_environment_or_a_gh_login(monkeypatch):
+    monkeypatch.setattr(rp, "_token", None)
+    monkeypatch.setenv("GH_TOKEN", "from-env")
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    assert rp.github_token(run=lambda *a, **k: pytest.fail("gh asked although a token was set")) == "from-env"
+    monkeypatch.setattr(rp, "_token", None)
+    monkeypatch.delenv("GH_TOKEN")
+    monkeypatch.setattr(rp.shutil, "which", lambda name: "/usr/bin/gh")
+    asked = []
+
+    def gh(argv, **kw):
+        asked.append(argv)
+        return subprocess.CompletedProcess(argv, 0, "gho_login\n", "")
+    assert rp.github_token(run=gh) == "gho_login" and asked == [["/usr/bin/gh", "auth", "token"]]
+    assert rp.github_token(run=gh) == "gho_login" and len(asked) == 1         # asked once per run
+    monkeypatch.setattr(rp, "_token", None)
+    assert rp.github_token(run=lambda argv, **kw: subprocess.CompletedProcess(argv, 1, "", "not logged in")) == ""
+
+
+def test_github_token_asked_once_while_checks_overlap(monkeypatch):
+    import threading
+    import time
+    monkeypatch.setattr(rp, "_token", None)
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    monkeypatch.delenv("GH_TOKEN", raising=False)
+    monkeypatch.setattr(rp.shutil, "which", lambda name: "/usr/bin/gh")
+    asked = []
+
+    def slow_gh(argv, **kw):
+        asked.append(argv)
+        time.sleep(0.3)                                                       # gh still answering ...
+        return subprocess.CompletedProcess(argv, 0, "gho_login\n", "")
+    got = []
+    first = threading.Thread(target=lambda: got.append(rp.github_token(run=slow_gh)))
+    first.start()
+    time.sleep(0.05)
+    got.append(rp.github_token(run=slow_gh))                                  # ... when a second check asks
+    first.join()
+    assert got == ["gho_login", "gho_login"] and len(asked) == 1
+
+
+def test_fetch_runs_signs_in_and_reports_the_limit(monkeypatch):
+    import urllib.error
+    from email.message import Message
+    sent = []
+
+    def limited(reset):
+        headers = Message()
+        headers["X-RateLimit-Remaining"] = "0"
+        headers["X-RateLimit-Reset"] = str(reset)
+        return headers
+
+    def urlopen(request, timeout):
+        sent.append(request.get_header("Authorization"))
+        if sent[-1] == "Bearer expired":
+            raise urllib.error.HTTPError(request.full_url, 401, "Bad credentials", Message(), None)
+        raise urllib.error.HTTPError(request.full_url, 403, "rate limit exceeded", limited(1_900_000_000), None)
+
+    monkeypatch.setattr(rp.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(rp, "_token", "expired")
+    with pytest.raises(rp.RateLimited) as caught:
+        rp.fetch_runs()
+    assert sent == ["Bearer expired", None]                                   # a refused login: on without it
+    assert caught.value.reset == 1_900_000_000 and not caught.value.signed_in and rp._token == ""
+    monkeypatch.setattr(rp, "_token", "gho_login")
+    with pytest.raises(rp.RateLimited) as caught:
+        rp.fetch_runs()
+    assert sent[-1] == "Bearer gho_login" and caught.value.signed_in
 
 
 def test_window_build_indicator_notifies_when_a_run_ends(repo, tmp_path):
@@ -586,8 +671,21 @@ def test_window_build_indicator_notifies_when_a_run_ends(repo, tmp_path):
     assert build.state == "failed" and "failed" in build.text()
     assert notes == [("GitHub build failed", "Release on governor-v0.1.1: failure")]
     assert build.target() == "https://github.invalid/runs/1" and build.timer.interval() == main_window.BUILD_IDLE_MS
+    assert "not known yet" in build.rate.text()
+    build.checked((None, "e2", rp.RateInfo(5000, 4905, 1_900_000_000, signed_in=True)))
+    assert "4,905 of 5,000 left" in build.rate.text() and "signed in" in build.rate.text()
+    assert main_window.GREY in build.rate.styleSheet() and "gh auth login" not in build.rate.toolTip()
+    build.checked((None, "e2", rp.RateInfo(60, 3, 1_900_000_000, signed_in=False)))
+    assert main_window.ORANGE in build.rate.styleSheet() and "gh auth login" in build.rate.toolTip()
     build.checked(OSError("offline"))
     assert build.state == "unreachable" and "offline" in build.toolTip()
+    import time
+    build.checked(rp.RateLimited(time.time() + 1800, signed_in=False))
+    assert build.state == "limited" and "back at" in build.text() and "gh auth login" in build.toolTip()
+    assert "0 of 60 left" in build.rate.text() and main_window.RED in build.rate.styleSheet()
+    assert build.timer.interval() >= 1800_000                                 # waits for the reset
+    build.checked(rp.RateLimited(time.time() + 60, signed_in=True))
+    assert "gh auth login" not in build.toolTip() and build.timer.interval() == main_window.BUILD_IDLE_MS
     w.close()
     assert main_window.ReleaseWindow(repo, runs_source=None).build.isHidden()
 

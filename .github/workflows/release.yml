@@ -18,6 +18,10 @@ name: Release
 #
 # After an app release: python3 tools/pin_app.py <tag>, bump portal/VERSION as tools/check_manifest.py asks, and
 # tag the portal when the combination is tested.
+#
+# Only a commit that CI passed becomes a release: the first job waits for every CI run on the tagged commit (the
+# push to main and this tag's own run, up to 75 minutes) and stops everything when one did not pass.
+# tools/tag-release.sh asks the same before it tags.
 
 on:
   push:
@@ -31,7 +35,20 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  ci:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: CI passed on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/ci_state.py --wait 75 "$GITHUB_SHA"
+
   release:
+    needs: ci
     runs-on: ubuntu-latest
     env:
       TAG: ${{ github.ref_name }}

@@ -5,7 +5,7 @@ github.com/RobertoTorino/umd-file-renamer (qt/)."""
 
 APP_NAME = "Bazzite UMD File Renamer"
 APP_ID = "bazzite-umd-file-renamer"
-__version__ = "0.1.0"                     # equal to VERSION; tools/check_versions.py checks it
+__version__ = "0.1.2"
 
 from pathlib import Path  # noqa: E402  (constants first, as the suite's apps do)
 

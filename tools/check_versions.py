@@ -11,9 +11,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PATTERNS = {
-    ".py": re.compile(r'^__version__ = "([^"]+)"$', re.M),
-    ".sh": re.compile(r'^VERSION="([^"]+)"$', re.M),
+PATTERNS = {                            # a comment may follow on the line
+    ".py": re.compile(r'^__version__ = "([^"]+)"[ \t]*(?:#[^\n]*)?$', re.M),
+    ".sh": re.compile(r'^VERSION="([^"]+)"[ \t]*(?:#[^\n]*)?$', re.M),
     ".toml": re.compile(r'^version = "([^"]+)"', re.M),         # pyproject.toml [project] version, Cargo.toml
 }
 
@@ -28,6 +28,21 @@ def cargo_lock_pattern(lock: Path) -> re.Pattern | None:
     if name is None:
         return None
     return re.compile(r'^\[\[package\]\]\nname = "' + re.escape(name.group(1)) + r'"\nversion = "([^"]+)"', re.M)
+
+
+# A line that assigns a literal version: one the pattern cannot read is an error, not a copy that is skipped (and
+# then left behind by Suite Releases' bump, which changes exactly the copies found here). Lines that read VERSION at
+# run time (VERSION=$(...), __version__ = _read_version()) are no copies and stay out.
+CANDIDATES = {".py": re.compile(r"""^__version__\s*=\s*["'].*$""", re.M),
+              ".sh": re.compile(r"""^VERSION=["']?\d.*$""", re.M)}
+
+
+def unreadable(path: Path, text: str) -> list[str]:
+    """The lines of *text* that look like a version copy but do not match its pattern."""
+    candidate, pattern = CANDIDATES.get(path.suffix), PATTERNS.get(path.suffix)
+    if candidate is None:
+        return []
+    return [line for line in candidate.findall(text) if not pattern.fullmatch(line)]
 
 
 def version_pattern(path: Path) -> re.Pattern | None:
@@ -60,7 +75,10 @@ def main() -> int:
             pattern = version_pattern(path)
             if pattern is None:
                 continue
-            for got in pattern.findall(path.read_text(encoding="utf-8")):
+            text = path.read_text(encoding="utf-8")
+            for line in unreadable(path, text):
+                errors.append(f"{path.relative_to(ROOT)}: version copy not in the form check_versions.py reads: {line}")
+            for got in pattern.findall(text):
                 checked += 1
                 if got != want:
                     errors.append(f"{path.relative_to(ROOT)}: {got} != VERSION {want}")

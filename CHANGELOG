@@ -1,3 +1,15 @@
+Changelog: 15-10-2026 04:42:09
+
+Only a commit that CI passed becomes a release, and CI can be run locally as GitHub runs it. tools/ci_state.py asks GitHub whether every CI run on a commit passed (passed, failed, running, none; waits while CI runs; signs in with gh when it can). tools/tag-release.sh asks it before tagging and waits while CI runs, up to an hour; release.yml has a first job, ci, that does the same before anything is built or published (up to 75 minutes), so a tag on a failing commit gives no release. tools/ci-local.sh runs the jobs of .github/workflows/ci.yml in a container (tools/ci-local/Containerfile: Python 3.12 and what GitHub's runner has, libevdev included) with tools/ci_local.py: each job, and each matrix entry, in a venv with only its own requirements, as the jobs run as an ordinary user on a staged copy of the checkout; the jobs come from ci.yml itself, the Windows job is reported as not run. About 75 seconds for every job once the image and Console Link's FFmpeg are built (kept in ~/.cache/bc250-ci-local). It catches the failures of the last releases before the push: a Python 3.13 function (read_text(newline=)) and a test that needed a package only the full venv had. pyyaml joins tools/requirements-dev.txt. The wiki's Development page and the portal chapter describe it; CLAUDE.md lists tools/ci-local.sh first among the checks. Tests: tools/tests/test_ci_state.py, test_ci_local.py and test_tag_release.py (a failed or running CI gets no tag).
+
+Changelog: 15-10-2026 04:13:25
+
+The wiki's GitHub settings page (Development) has a section on GitHub's API limit: 60 requests an hour without signing in, shared per network address, 5,000 signed in, unchanged answers free; how BC250 Suite Releases shows it, that a used-up limit is nothing to fix, and how to sign in with gh so the app uses that login.
+
+Changelog: 15-10-2026 04:06:38
+
+tools/check_versions.py reads a version copy with a comment after it (__version__ = "x.y.z"  # ...), and a line that assigns a literal version in another form is an error instead of being skipped. The comment made it skip the copies of Bazzite NetcatGUI, Bazzite pkgxtractor and Bazzite UMD File Renamer, so Suite Releases' bump, which changes exactly the copies found there, left them at 0.1.0 while VERSION went to 0.1.1, and their version tests failed in CI. 36 copies are checked now, up from 33. Tests: tools/tests/test_check_versions.py.
+
 Changelog: 15-10-2026 03:40:32
 
 Tests: tools/tests/test_mkdocs_hooks.py skips without MkDocs again, as in CI's tools job. It asked for "mkdocs", which the hook's own folder tools/mkdocs/ also answers when pytest runs from tools/; it now asks for mkdocs.structure.files.

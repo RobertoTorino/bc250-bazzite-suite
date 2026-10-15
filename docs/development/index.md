@@ -30,6 +30,24 @@ python3 tools/check_versions.py    # hard-coded versions = VERSION
 mkdocs build --strict              # from the venv
 ```
 
+### CI on your own machine
+
+`./test.sh` runs every suite in one venv that holds everything, on whatever Python your system has. GitHub's CI runs
+each job on Python 3.12 with only that job's own requirements, so a test can pass here and still fail there: a
+Python 3.13 function, or a package only the full venv has. `tools/ci-local.sh` runs the jobs of
+`.github/workflows/ci.yml` the way GitHub does, in a container (podman, which Bazzite has, or docker):
+
+```bash
+tools/ci-local.sh                      # every job, about a minute and a half once the image is built
+tools/ci-local.sh pytest/tools shell   # some jobs; a matrix job by its value, pytest for all of them
+tools/ci-local.sh --list               # the jobs, read from ci.yml
+```
+
+It reads the jobs from `ci.yml` itself, so a new app in the matrix or a new installer step needs no change. The
+first run builds the image from `tools/ci-local/Containerfile` (Python 3.12 and the packages GitHub's runner has)
+and Console Link's FFmpeg; both are kept, with the venvs and the logs, in `~/.cache/bc250-ci-local`. It works on a
+copy of the checkout with every change staged, as the commit will have it. Only the Windows job does not run here.
+
 To preview the manual locally, run `mkdocs serve` from the repository root with the development venv active,
 then open <http://127.0.0.1:8000/bc250-bazzite-suite/>. Stop the server with Ctrl+C.
 
