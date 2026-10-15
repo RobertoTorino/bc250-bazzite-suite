@@ -17,7 +17,7 @@ jobs:
   decky-loader:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Decky Loader against the pin in apps/decky-manager
         run: python3 tools/check_upstream.py
         env:
