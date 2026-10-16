@@ -1,3 +1,7 @@
+Changelog: 16-10-2026 07:10:13
+
+Release 1.5.0. Pins helixsr-v0.2.11, console-link-v1.1.0.
+
 Changelog: 16-10-2026 06:10:44
 
 Release 1.4.0. Pins bazzite-test-v0.2.0, system-overlay-v0.2.0, bios-reader-v0.2.0, ace-queues-v0.2.0, mesh-shaders-v0.2.0, memory-manager-v0.2.0, hdmi-cec-v0.2.0, sftp-tools-v0.2.0, dependency-checker-v0.2.0, bazzite-netcatgui-v0.2.0, rpcs3-manager-v0.2.0, shadps4-manager-v0.2.0, decky-manager-v0.2.0, bazzite-datstation-v0.2.0, ppsspp-manager-v0.2.0, pcsx2-manager-v0.2.0.
