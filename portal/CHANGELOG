@@ -1,3 +1,7 @@
+Changelog: 16-10-2026 06:10:44
+
+Release 1.4.0. Pins bazzite-test-v0.2.0, system-overlay-v0.2.0, bios-reader-v0.2.0, ace-queues-v0.2.0, mesh-shaders-v0.2.0, memory-manager-v0.2.0, hdmi-cec-v0.2.0, sftp-tools-v0.2.0, dependency-checker-v0.2.0, bazzite-netcatgui-v0.2.0, rpcs3-manager-v0.2.0, shadps4-manager-v0.2.0, decky-manager-v0.2.0, bazzite-datstation-v0.2.0, ppsspp-manager-v0.2.0, pcsx2-manager-v0.2.0.
+
 Changelog: 16-10-2026 05:48:42
 
 Fixed. A tile's icon shows a light purple behind it on hover (#D1C4E9 at 85 %), in the family of the suite's accent,
