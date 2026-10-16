@@ -1,13 +1,17 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Shared fixtures: an offscreen QApplication, settings and XDG folders in a temp folder, and PS2 games made here:
 a small ISO 9660 with SYSTEM.CNF in its root, as a PS2 disc names its boot file, and PCSX2's own folder with a
-BIOS dump."""
+BIOS dump. For the memory cards: mymc++'s own test data (fixtures/mymcplusplus-data.tar.gz, its test/data.tar.gz
+at the pinned commit) and its clock fixed as its tests fix it."""
 
 from __future__ import annotations
 
+import hashlib
 import os
+import shutil
 import struct
 import sys
+import tarfile
 from pathlib import Path
 
 import pytest
@@ -18,6 +22,7 @@ if str(CORE) not in sys.path:
     sys.path.insert(0, str(CORE))           # bc250_core from the checkout, as the installer bundles it
 
 SECTOR = 2048
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 
 def _record(name: bytes, sector: int, size: int, directory: bool) -> bytes:
@@ -96,3 +101,42 @@ def settings_dir(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
     monkeypatch.setenv("XDG_CURRENT_DESKTOP", "KDE")
     return tmp_path / "settings"
+
+
+def md5(path: Path) -> str:
+    return hashlib.md5(path.read_bytes()).hexdigest()
+
+
+@pytest.fixture(scope="session")
+def mymc_data(tmp_path_factory) -> Path:
+    """mymc++'s test data: two 8 MB cards (mc01.ps2 with Rez's save and the PS2's system configuration, mc02.ps2
+    empty), Rez's save in each format the import reads, and a PS2 and a PS1 save as .psv."""
+    folder = tmp_path_factory.mktemp("mymc")
+    with tarfile.open(FIXTURES / "mymcplusplus-data.tar.gz") as tar:
+        tar.extractall(folder, filter="data")
+    return folder
+
+
+@pytest.fixture
+def cards(mymc_data, tmp_path) -> Path:
+    """A memcards folder with copies of both cards."""
+    folder = tmp_path / "memcards"
+    folder.mkdir()
+    for name in ("mc01.ps2", "mc02.ps2"):
+        shutil.copy(mymc_data / name, folder / name)
+    return folder
+
+
+@pytest.fixture
+def fixed_time(monkeypatch):
+    """The cards' clock as mymc++'s tests fix it (20-04-2018 22:37:42 on the PS2's clock), in every module of the
+    card code that reads it, so a changed card has the checksum mymc++'s tests expect."""
+    from bc250_pcsx2_manager import mymc
+    from bc250_pcsx2_manager.mymc import ps2mc, ps2mc_dir
+    from bc250_pcsx2_manager.mymc.save import ps2save
+
+    def tod_now():
+        return 42, 37, 22, 20, 4, 2018
+    for module in (ps2mc, ps2mc_dir, ps2save, mymc):
+        if hasattr(module, "tod_now"):
+            monkeypatch.setattr(module, "tod_now", tod_now)

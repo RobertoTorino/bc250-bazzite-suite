@@ -1,3 +1,11 @@
+Changelog: 16-10-2026 09:27:04
+
+MIGRATION.md: new app candidates from a look for apps to port to Bazzite or the BC-250, none built yet: a
+Vita3K manager (PS Vita), fan control with a thermal guard for the board (the NCT6686 SuperIO and which driver could
+set its fans), a port of mymc++ for PS2 memory cards into the PCSX2 Manager, and an lsfg-vk manager beside HelixSR.
+The owner's order: mymc++ first (started), then Vita3K, fan control last; lsfg-vk dropped (its licence), and a PS1
+manager with DuckStation recorded as investigated and not built: its licence rules it out (owner).
+
 Changelog: 16-10-2026 06:38:26
 
 tools/check_upstream.py checks HelixSR too: the HelixSR Manager pins no release but gets the latest, so a stable

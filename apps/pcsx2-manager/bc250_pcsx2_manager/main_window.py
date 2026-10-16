@@ -21,7 +21,7 @@ from bc250_core.settings import SettingsStore
 from bc250_core.updates import ReleaseInfo, UpdateChecker
 from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, hint_label
 
-from . import APP_NAME, INFO, LOGO_PATH, ROOT, __version__, emulator, shortcuts, style, userdata
+from . import APP_NAME, INFO, LOGO_PATH, ROOT, __version__, emulator, memcards, shortcuts, style, userdata
 from .games import Game, scan
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/pcsx2-manager/"
@@ -164,11 +164,16 @@ class MainWindow(QMainWindow):
         self.pcsx2_button.setToolTip("Open PCSX2's own window: its settings, the BIOS choice, controllers and its "
                                      "game list (the first start asks for the BIOS)")
         self.pcsx2_button.clicked.connect(self.on_open_pcsx2)
+        self.memcards_button = QPushButton("Memory cards…")
+        self.memcards_button.setToolTip("The saves on PCSX2's memory cards: import, export, copy, delete; a new "
+                                        "card, format and check")
+        self.memcards_button.clicked.connect(self.on_memcards)
         self.steam_button = style.primary_button("Update Game Mode", STEAM_TIP)
         self.steam_button.clicked.connect(self.on_update_steam)
         buttons = QHBoxLayout()
         buttons.addWidget(self.play_button)
         buttons.addWidget(self.pcsx2_button)
+        buttons.addWidget(self.memcards_button)
         buttons.addStretch(1)
         buttons.addWidget(self.steam_button)
 
@@ -414,6 +419,7 @@ class MainWindow(QMainWindow):
         self.forget_button.setEnabled(idle and bool(self.folders))
         self.play_button.setEnabled(idle and installed_ and self.chosen() is not None)
         self.pcsx2_button.setEnabled(idle and installed_)
+        self.memcards_button.setEnabled(idle)
         add, remove = self.steam_plan()
         named = shortcuts.names(add)        # a name in Steam that differs (one from before the prefix) is renamed
         changed = bool(remove) or any(self.in_steam.get(str(g.file)) != named[g.file] for g in add)
@@ -547,6 +553,13 @@ class MainWindow(QMainWindow):
         command = self.pcsx2_command()
         if not QProcess.startDetached(command[0], command[1:])[0]:
             self.running.setText(f"PCSX2 could not be started: {command[0]} did not run.")
+
+    def on_memcards(self) -> None:
+        """The Memory cards window, on the folder PCSX2 keeps its cards in."""
+        from .memcard_dialog import MemcardDialog
+        dialog = MemcardDialog(memcards.card_folder(self.pcsx2_home), memcards.slot_cards(self.pcsx2_home),
+                               parent=self)
+        dialog.exec()
 
     def on_update_steam(self) -> None:
         if self.steam_dir is None:

@@ -6,7 +6,8 @@
 
 Plays **PS2 games** on the **AMD BC-250** with [PCSX2](https://pcsx2.net), an open-source PS2 emulator. The app
 installs the PCSX2 release it was tried with, checks your PS2 BIOS, finds your games and adds them to Steam, so
-they start from **Game Mode** like any other game.
+they start from **Game Mode** like any other game. Its [Memory cards](#memory-cards) window manages the saves on
+PCSX2's memory cards.
 
 Whether a game runs, and how well, is up to PCSX2. Its
 [compatibility list](https://pcsx2.net/compat) shows what others found.
@@ -49,6 +50,7 @@ the title here is the file's name: name your images well.
 - **Play** (or a double-click) starts the chosen game on the desktop, in a window.
 - **PCSX2 settings** opens PCSX2's own window, with its settings, the BIOS choice, its controller settings and its
   game list.
+- **Memory cards…** opens the [Memory cards](#memory-cards) window.
 
 ### Game Mode
 
@@ -72,6 +74,39 @@ Steam's overlay works over a game started from Steam, in Game Mode and on the de
 A game started from Steam reads your controllers itself. [How it works](#how-it-works) explains both.
 
 Change Game Mode from Desktop Mode: in Game Mode Steam is the session itself and cannot close for the change.
+
+## Memory cards
+
+**Memory cards…** shows the memory cards in PCSX2's memory card folder (`~/.config/PCSX2/memcards`, or the folder
+set in PCSX2) and the saves on the card you choose: each save's title, its folder on the card, its size and when
+it was saved. The card in each of PCSX2's slots is marked **(slot 1)** or **(slot 2)**. Select a save to see its
+3D icon as the PS2's browser shows it, as a still picture.
+
+- **Import…** puts save files on the card: MAX Drive (`.max`), EMS (`.psu`), SharkPort (`.sps`), X-Port (`.xps`),
+  Code Breaker (`.cbs`) and PSV (`.psv`, from a PS3). A save that is already on the card is left as it is: delete
+  it first to replace it. When the card has too little space for all of them, none is put on it.
+- **Export…** saves the selected saves as `.psu` or `.max` files, to keep or to share. One save asks for a file
+  name; several go into a folder you choose, each named after its folder, title and a checksum.
+- **Copy to…** copies the selected saves onto another card.
+- **Delete…** deletes the selected saves.
+- **New card…** makes a new, empty card. A name ending in `.ps2` is PCSX2's own kind; `.mc2` is a card without the
+  error-correcting code (ECC), as a MemCard PRO2 reads. The PS2's own card is 8 MB; PCSX2 also takes 16, 32 and
+  64 MB, which not every game works with. Which card is in which slot is set in PCSX2's own window
+  (**Settings > Memory Cards**).
+- **Format…** empties the card: every save on it goes.
+- **Check** checks the card's file system, and every page against its ECC, and says what it found.
+
+Before every change, the window copies the card beside it as `<card>.<date and time>.bak`, for example
+`Mcd001.ps2.20261016-093000.bak`; the newest 10 per card are kept. PCSX2 does not list these as cards. To go back
+to one, close PCSX2, rename the card and give the backup the card's name. A change is made on a copy of the card,
+which takes its place when it is finished, so a change that fails leaves the card as it was.
+
+Nothing is written while PCSX2 runs: it keeps the card in memory and would write its own copy over the change. The
+window says so, and import, copy, delete and format wait until PCSX2 is closed. Export and check only read the card.
+
+The window reads PS2 cards. PCSX2 can also keep a card as a folder, and play PS1 games with PS1 cards (`.mcd`,
+`.mcr`); the window lists those and says it cannot read them. A PS1 save on a PS2 card, as a PS2 makes when it
+copies one, is listed with its title.
 
 ## From a terminal
 
@@ -140,6 +175,7 @@ already.
 | The app | `~/.local/share/bc250-pcsx2-manager/app` |
 | PCSX2 | `~/.local/share/bc250-pcsx2-manager/emulator` |
 | PCSX2's BIOS, memory cards, saves, settings | `~/.config/PCSX2` (PCSX2's own folder) |
+| The memory cards' backups | Beside each card, in PCSX2's memory card folder |
 | The app's settings, with the game folders | `~/.config/bc250-pcsx2-manager` |
 | The Game Mode shortcuts | Steam's `shortcuts.vdf` and `grid` folder, per Steam user |
 | Launchers | `~/.local/bin/bc250-pcsx2-manager`, `~/.local/bin/bc250-pcsx2-run` |
@@ -165,3 +201,5 @@ PlayStation and PS2 are trademarks of their owner.
 ## License
 
 GPL-3.0-or-later. PCSX2 is a separate program under its own license (GPL-3.0), downloaded from its own release.
+The memory card code is from [mymc++](https://github.com/Adubbz/mymcplusplus) (GPL-3.0-or-later) by Adubbz, based on
+mymc+ by Florian Märkl and mymc by Ross Ridge.

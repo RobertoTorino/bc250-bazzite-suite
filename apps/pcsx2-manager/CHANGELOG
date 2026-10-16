@@ -1,3 +1,20 @@
+Changelog: 16-10-2026 10:17:05
+
+Release 0.3.0.
+
+Changelog: 16-10-2026 10:06:19
+
+Added. Memory cards window (owner's decision 16-10-2026: a port of mymc++ into this app): the saves on PCSX2's
+memory cards, with the selected save's 3D icon as a still picture; import (.max, .psu, .sps, .xps, .cbs, .psv),
+export (.psu, .max), copy to another card, delete, a new card (8 to 64 MB, .ps2 or .mc2 without ECC), format and
+check. The card code is mymc++'s (GPL-3.0-or-later), kept in bc250_pcsx2_manager/mymc at commit 3247c9c0afac with
+each changed line marked: names with a byte over 127 (its issue #11), a save with a folder in it deleted, a failed
+import cleaned up, an icon frame without keys (its issue #26), no debug or progress output, no native LZARI module
+looked for, a .max title without ASCII. A change is made on a copy of the card that then takes its place, after a
+dated backup beside the card (the newest 10 kept), with the space counted first; nothing is written while PCSX2
+runs. The tests use mymc++'s own test cards and expect its checksums for every import format, export, delete and
+format; the icon is compared with a picture from mymc++'s OpenGL viewer.
+
 Changelog: 16-10-2026 06:02:49
 
 Release 0.2.0.

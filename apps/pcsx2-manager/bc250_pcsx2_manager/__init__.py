@@ -4,7 +4,7 @@ chosen folders and adds them to Steam for Game Mode."""
 
 APP_NAME = "PCSX2 Manager"
 APP_ID = "bc250-pcsx2-manager"
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 from pathlib import Path
 

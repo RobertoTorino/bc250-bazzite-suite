@@ -665,6 +665,66 @@ Bazzite's).
   is in the kernel (MediaTek MT7921AU, MT7612U, Realtek RTL8821CU/8822BU), which works at once and after updates.
   First step when picked up, in a new session: the groundwork (Secure Boot state, headers for the running kernel,
   which driver fork supports it), which says whether it is the short or the long job.
+- **PS1 emulator manager with DuckStation (`stenzek/duckstation`): investigated, not built (owner, 16-10-2026:
+  the licence rules it out).** Technically it fits the PCSX2 Manager's pattern: an x86-64 AppImage with a SHA-256
+  per asset on numbered releases (`v0.1-11894`, 12-09-2026; `latest` and `preview` are moving tags), Vulkan, a PS1
+  or PS2 BIOS. But since September 2024 it is CC BY-NC-ND 4.0: no modified versions, and its README counts
+  "pre-configured settings and packages" as modifications; its developer has said packaging is not permitted at all
+  and removed their own Arch package script in August 2025. A manager that downloads the unmodified AppImage could
+  arguably stay within it, but no settings for the BC-250 and no reuse of its code, and the developer's stance makes
+  it a grey area the suite does not take on.
+
+Investigated 16-10-2026 (owner's question: an app out there that could be ported to Bazzite or the BC-250); the order
+below is the owner's (16-10-2026): mymc++ now, Vita3K when it is finished, fan control last. Observation from the
+repository as it stands: the Gaming section covers the PSP, PS2, PS3 and PS4 with emulator managers built one way (a
+pinned, checksummed release, the games found, Game Mode shortcuts), so a new emulator manager is mostly reuse; on the
+board side the one gap MIGRATION.md itself names is the fan (Known issues: Governor performance mode runs hot).
+Things already decided against were left out (the Bluetooth helper, the exploit host, a Sunshine setup app).
+
+- **1. PS2 memory cards in the PCSX2 Manager: a port of mymc++ (owner 16-10-2026: started; built 16-10-2026).**
+  `github.com/Adubbz/mymcplusplus`, GPL-3.0-or-later, Python, a command line and an optional wxPython window; active
+  (last commit 28-07-2026, 3.2.0), 14 open issues. Decided by the owner (16-10-2026): the window lists the saves and
+  imports (.max, .psu, .sps, .xps, .cbs, .psv), exports (.psu, .max), deletes, copies between cards, makes a new
+  card, formats and checks; the save's 3D icon as a still picture; the card code kept at a pinned commit; a dated
+  backup beside the card before every change, and no writes while PCSX2 runs. Built: the card code kept in
+  bc250_pcsx2_manager/mymc at commit 3247c9c0afac (every changed line marked bc250:, the fixes for its issues #11 and
+  #26 among them), memcards.py (the changes made on a copy that takes the card's place, the space counted first),
+  memcard_icon.py (the icon drawn in Python; against mymc++'s own OpenGL viewer: mean difference 1.4 of 255) and the
+  Memory cards window, its button in the main window; mymc++'s own test data and checksums in the tests (every import
+  format, export, delete and format give the card mymc++'s tests expect). Choices of Claude's for the owner to
+  confirm or change: the newest 10 backups kept per card; new cards of 8, 16, 32 and 64 MB offered (PCSX2's sizes), a
+  .mc2 name for a card without ECC. Open: on the board, the window with PCSX2's own cards (a card PCSX2 made and
+  formatted, a save imported and loaded in a game, PCSX2 running refused), a new 16 MB card in PCSX2; the release of
+  the PCSX2 Manager (owner).
+- **2. PS Vita emulator manager: Vita3K (owner 16-10-2026: after mymc++ is finished).** Completes the PlayStation
+  line. Vita3K (`github.com/Vita3K/Vita3K`) is GPL-2.0 (dictated by Unicorn, its CPU emulator); the manager only
+  downloads it, as the other managers do. No stable releases: the newest build sits under a rolling `continuous` tag,
+  older ones in a separate Vita3K-builds repository, so the RPCS3 Manager is the pattern (one build pinned with
+  GitHub's asset digest, a newer-build notice, the installed file's size to notice a self-update). To check at the
+  pinned build, from its source: the Linux asset (AppImage or archive), the data folders, the command line for
+  starting a game full screen (the Steam shortcut), and how games are installed (`.vpk`, `.pkg` with a zRIF licence,
+  or a dumped folder: only the user's own dumps, as for the other consoles). The firmware is Sony's own PS Vita
+  update file, which the user downloads from Sony; the app points to it and installs it through Vita3K, it does not
+  ship it. Gaming section, `changes_board = false`. Not checked yet: performance on the BC-250 (Vulkan through RADV
+  on gfx1013), and the controller under Steam's environment (the wrapper's two steps, as for shadPS4 and RPCS3).
+- **3. Fan control and a thermal guard (the board's gap; owner 16-10-2026: last, the guard first, PWM only after the
+  sensor check on the board, which needs the owner at the board).** Answers the known issue above (no app controls
+  the fan; the Governor's alerts only while it runs). From mothenjoyer69's bc250-documentation: `CPU_FAN1` is a
+  normal 4-pin PWM header (J4003 carries PWM and tachometer lines for fans 2 to 5, without power); the SuperIO is an
+  NCT6686 (ID 0xd441), seen by lm-sensors only after `modprobe nct6683 force=true`. Mainline nct6683 reads, it does
+  not set the fans. Writing PWM needs another driver: Fred78290/nct6687d (pwm1-8 with manual and firmware modes; DKMS
+  and an akmod) documents the NCT6687-R only, so whether it drives the 6686 is the first thing to find on the board.
+  A kernel module means the same build-per-kernel and Secure Boot work as the AIC8800 item above. The other route:
+  Bazzite installs CoolerControl (`ujust install-coolercontrol`, then `coolercontrold` enabled); the app could check
+  for it and add what is the BC-250's (the guard below, the sensor setup) rather than a fan curve editor of its own.
+  The guard as proposed in Known issues: watch GPU and CPU temperatures in the background, warn, leave performance
+  mode, and shut down cleanly at a critical limit (limits the owner's). Does nothing for a fan powered from the PSU
+  (the app says so). `changes_board = true`. First step, in a new session: on the board, `nct6683 force=true` and
+  `sensors`, which fans and temperatures show, and how the owner's fans are connected.
+- **Frame generation beside HelixSR: lsfg-vk (dropped, owner 16-10-2026).** CC BY-NC-ND 4.0 since 27-08-2026 (before:
+  MIT/GPLv3), its source self-hosted, builds as a tarball from builds.lsfg-vk.dev. The developer allows use and
+  reuploads but no derivatives, and wants integrations agreed with them first; the owner does not take on a project
+  kept under such guard.
 
 ## Details for later steps
 

@@ -10,6 +10,7 @@ dumped with a homebrew tool (biosdrain). A dump is a .bin or .rom file of 4 MB, 
 
 from __future__ import annotations
 
+import configparser
 from pathlib import Path
 
 from bc250_core.platform import config_home
@@ -33,3 +34,14 @@ def bios_files(folder: Path) -> list[Path]:
                       if p.is_file() and p.suffix.lower() in BIOS_SUFFIXES)
     except OSError:
         return []
+
+
+def ini_value(home: Path, section: str, key: str) -> str:
+    """A value from PCSX2's settings (inis/PCSX2.ini), "" when it or the file is not there."""
+    ini = configparser.ConfigParser(interpolation=None, strict=False)
+    ini.optionxform = str                               # PCSX2's keys are case-sensitive: Slot1_Filename
+    try:
+        ini.read(home / "inis" / "PCSX2.ini", encoding="utf-8")
+    except (configparser.Error, UnicodeDecodeError):
+        return ""
+    return ini.get(section, key, fallback="").strip()
