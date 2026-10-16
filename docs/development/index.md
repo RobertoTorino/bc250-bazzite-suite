@@ -101,7 +101,7 @@ Each app is released on its own tag (`bazzite-test-v0.1.0`, `governor-v0.4.0`, â
 `portal/apps.toml`; a change there needs a portal version bump at least as large as the largest app bump.
 The release steps are in [Portal](../portal.md#appstoml-and-releases).
 
-### Upstream releases an app pins
+### Upstream releases an app pins or follows
 
 Decky Loader Manager installs one Decky Loader release, pinned in
 `apps/decky-manager/bc250_decky_manager/loader.py` (`VERSION`, `TAG`, `SHA256`), and writes Decky's service unit
@@ -115,11 +115,17 @@ The shadPS4 Manager installs one shadPS4 release, pinned in `apps/shadps4-manage
 (`VERSION`, `TAG`, `ASSET`, `SHA256`). The same tool checks it: a newer stable release, with the Linux zip and the
 SHA-256 GitHub publishes for it that a new pin needs, and the SHA-256 of the pinned zip. A new shadPS4 can change
 what the app relies on (its `config.json`, the shadNet protocol), so a new pin also needs a look at what changed.
-The workflow runs the two checks as two jobs.
+The workflow runs each check as a job of its own.
+
+The HelixSR Manager pins no HelixSR release: it gets the latest, or the fallback HelixSR's developer names. Its
+`apps/helixsr/bc250_bazzite_helixsr/acquire.py` holds `KNOWN_VERSION`, the newest release the app was checked
+against, and `FALLBACK_VERSION`. The same tool reports a newer stable release (users get it at once, so what changed
+in its setup, its zip and `helixsr.ini` needs a look and a try on the board; then `KNOWN_VERSION` moves), a fallback
+named in the latest release's notes that is not `FALLBACK_VERSION`, and a fallback release without its zip.
 
 ```bash
-python3 tools/check_upstream.py            # both
-python3 tools/check_upstream.py shadps4    # one: decky or shadps4
+python3 tools/check_upstream.py            # all three
+python3 tools/check_upstream.py helixsr    # one: decky, shadps4 or helixsr
 ```
 
 ## bc250_core

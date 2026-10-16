@@ -34,9 +34,12 @@ from . import APP_ID, DATA_HOME, HELIXSR_RELEASES_URL, __version__
 from .backend import HELIXSR_DLL, HelixError, file_digest, payload_status, version_key
 
 HELIXSR_API = "https://api.github.com/repos/lonewolf0622/HelixSR/releases/latest"
-# The release HelixSR's developer points to when the latest one does not work ("If 1.7.0 does not work for you, use
-# HelixSR 1.4.3"): the Setup page offers it next to the latest. Its setup only builds the network files.
-FALLBACK_VERSION = "1.4.3"
+# The newest HelixSR release this app was checked against. tools/check_upstream.py reports a newer one every week.
+KNOWN_VERSION = "1.8.1"
+# The release HelixSR's developer points to when the latest one does not work ("If 1.9.0 does not work for you, use
+# HelixSR 1.8.1"): the Setup page offers it next to the latest. tools/check_upstream.py reports when the latest
+# release's notes name another one.
+FALLBACK_VERSION = "1.8.1"
 FALLBACK_TAG = f"v{FALLBACK_VERSION}"
 HELIXSR_TAG_API = "https://api.github.com/repos/lonewolf0622/HelixSR/releases/tags/{tag}"
 HELIXSR_DATA_DIR = DATA_HOME / "HelixSR"            # where helixsr-setup.sh keeps its Python and DXC
@@ -44,8 +47,12 @@ WORK_DIR = DATA_HOME / APP_ID / "work"              # downloaded releases live h
 SETUP_SCRIPT = "helixsr-setup.sh"
 # Written by the setup of HelixSR 1.7+ for installs by hand, with more copies of the network; not used here.
 UNUSED_OUTPUT = ("manual-install", "fsr3-drop-in")
-# The first line of that game installer: what follows are its questions, which the app does not answer.
-INSTALLER_START = "looking for games with DLSS, XeSS or FSR"
+# The start of that game installer's first line ("... with DLSS, XeSS or FSR", from 1.9.0 on "... with FSR 3.1"):
+# what follows are its questions, which the app does not answer.
+INSTALLER_START = "looking for games with"
+# From HelixSR 1.9.0 on the setup also builds frame generation for HelixSR Scaler (about 400 MB from NVIDIA), which
+# the app does not deploy: --no-fg skips it. Older setups do not know the option.
+NO_FG_FROM = (1, 9, 0)
 DLSS_DLL = "nvngx_dlss.dll"
 TIMEOUT = 15
 CHUNK = 1 << 18
@@ -63,7 +70,7 @@ class ReleaseInfo:
     tag: str = ""
     url: str = ""                   # release page
     published: str = ""             # YYYY-MM-DD
-    asset_name: str = ""            # the zip, when the release has exactly one
+    asset_name: str = ""            # the release's HelixSR-x.y.z.zip, else its first zip
     asset_url: str = ""
     asset_size: int = 0
     error: str = ""
@@ -91,6 +98,8 @@ def latest_release(api_url: str, page_url: str) -> ReleaseInfo:
     info = ReleaseInfo(match.group(0), tag, str(data.get("html_url") or page_url),
                        str(data.get("published_at", ""))[:10])
     zips = [a for a in data.get("assets", []) if str(a.get("name", "")).lower().endswith(".zip")]
+    # From 1.9.0 on a release has other zips too (HelixSR Scaler): HelixSR's own is the one named after the version.
+    zips.sort(key=lambda a: str(a.get("name", "")).lower() != f"helixsr-{info.version}.zip")
     if zips:
         info.asset_name, info.asset_url = str(zips[0]["name"]), str(zips[0]["browser_download_url"])
         info.asset_size = int(zips[0].get("size") or 0)
@@ -483,6 +492,8 @@ class SetupWorker(QThread):
         command = ["bash", str(release_dir / SETUP_SCRIPT), "--yes", *req.extra_args]
         if dlss is not None:
             command += ["--dlss", str(dlss)]
+        if version_tuple(release.version) >= NO_FG_FROM:
+            command.append("--no-fg")
         self.stage.emit("Building the network files (about 5-6 minutes on a BC-250)")
         self._say("$ " + " ".join(command))
         env = {**os.environ, **req.script_env}

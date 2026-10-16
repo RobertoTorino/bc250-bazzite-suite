@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """tools/check_upstream.py on a fake GitHub: in step, a newer Decky release, a replaced asset, a changed service unit
-(at the pinned tag or only on main), no network; and the same for shadPS4's pin, read from emulator.py."""
+(at the pinned tag or only on main), no network; the same for shadPS4's pin, read from emulator.py; and HelixSR
+against what acquire.py knows (a newer release, another fallback in the notes, a fallback without its zip)."""
 
 from __future__ import annotations
 
@@ -19,6 +20,8 @@ UNIT = LOADER.unit_text(check_upstream.TEMPLATE).encode()
 API = check_upstream.API.format(repo=LOADER.REPO)
 PIN = check_upstream.load_shadps4_pin()
 SHAD_API = check_upstream.API.format(repo=PIN.REPO)
+HELIX = check_upstream.load_helixsr_pin()
+HELIX_API = check_upstream.API.format(repo=check_upstream.HELIXSR_REPO)
 
 
 def github(latest: str = LOADER.TAG, digest: str = f"sha256:{LOADER.SHA256}", unit_at_tag: bytes = UNIT,
@@ -132,3 +135,62 @@ def test_an_older_shadps4_is_not_newer():
 def test_a_replaced_shadps4_zip():
     report = check_upstream.check_shadps4(PIN, shad_github(digest="sha256:" + "0" * 64))
     assert len(report.drift) == 1 and "the asset was replaced" in report.drift[0]
+
+
+# --- HelixSR ----------------------------------------------------------------------------------------------------
+
+def helix_github(latest: str = f"v{HELIX.KNOWN_VERSION}", body: str | None = None, fallback_zip: bool = True,
+                 fallback_gone: bool = False):
+    version = latest.lstrip("v")
+    body = (f"If {version} does not work for you, use [HelixSR {HELIX.FALLBACK_VERSION}]"
+            f"(https://github.com/lonewolf0622/HelixSR/releases/tag/v{HELIX.FALLBACK_VERSION})."
+            if body is None else body)
+    answers = {
+        f"{HELIX_API}/releases/latest": {"tag_name": latest, "published_at": "2026-10-15T10:06:18Z", "body": body,
+                                          "html_url": f"https://github.com/lonewolf0622/HelixSR/releases/tag/{latest}",
+                                          "assets": [{"name": "HelixSR-Scaler-1.0.3.zip"},
+                                                     {"name": f"HelixSR-{version}.zip"}]},
+        f"{HELIX_API}/releases/tags/v{HELIX.FALLBACK_VERSION}": {
+            "assets": [{"name": f"HelixSR-{HELIX.FALLBACK_VERSION}.zip"}] if fallback_zip else []},
+    }
+
+    def get(url: str) -> bytes:
+        if fallback_gone and url.endswith(f"/v{HELIX.FALLBACK_VERSION}"):
+            raise check_upstream.CheckError(f"{url}: GitHub answered 404")
+        return json.dumps(answers[url]).encode()
+    return get
+
+
+def test_the_helixsr_constants_are_read_from_acquire_py():
+    assert HELIX.KNOWN_VERSION.count(".") == 2 and HELIX.FALLBACK_VERSION.count(".") == 2
+    assert f"repos/{check_upstream.HELIXSR_REPO}/" in check_upstream.ACQUIRE.read_text(encoding="utf-8")
+
+
+def test_helixsr_in_step():
+    report = check_upstream.check_helixsr(HELIX, helix_github())
+    assert report.drift == [] and len(report.fine) == 3
+    assert report.text().startswith(f"HelixSR: known v{HELIX.KNOWN_VERSION}, latest stable v{HELIX.KNOWN_VERSION}. "
+                                     "In step.")
+
+
+def test_a_newer_helixsr():
+    report = check_upstream.check_helixsr(HELIX, helix_github("v9.0.0"))
+    assert len(report.drift) == 1 and "HelixSR moved:" in report.text()
+    assert report.drift[0].startswith("v9.0.0 is out (2026-10-15)") and "HelixSR-9.0.0.zip is there" in report.drift[0]
+    assert "set KNOWN_VERSION to 9.0.0" in report.drift[0]
+    assert check_upstream.check_helixsr(HELIX, helix_github("v1.0.0")).drift == []
+
+
+@pytest.mark.parametrize("body, moved", [("If it does not work for you, use HelixSR 1.4.3.", True),
+                                         ("use [HelixSR v9.9.9](https://x)", True),
+                                         ("No fallback this time.", False), ("", False)])
+def test_the_fallback_the_notes_name(body, moved):
+    report = check_upstream.check_helixsr(HELIX, helix_github(body=body))
+    assert bool(report.drift) == moved
+    if moved:
+        assert "as the fallback, the app offers" in report.drift[0]
+
+
+def test_a_fallback_without_its_zip():
+    assert "has no zip any more" in check_upstream.check_helixsr(HELIX, helix_github(fallback_zip=False)).drift[0]
+    assert "is gone from GitHub" in check_upstream.check_helixsr(HELIX, helix_github(fallback_gone=True)).drift[0]

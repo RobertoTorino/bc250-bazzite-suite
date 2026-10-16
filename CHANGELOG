@@ -1,3 +1,12 @@
+Changelog: 16-10-2026 06:38:26
+
+tools/check_upstream.py checks HelixSR too: the HelixSR Manager pins no release but gets the latest, so a stable
+release newer than KNOWN_VERSION in the app's acquire.py (the newest one it was checked against) is reported, as are
+a fallback named in the latest release's notes that is not the app's FALLBACK_VERSION, and a fallback release without
+its zip. `check_upstream.py helixsr` checks it alone; the Upstream workflow runs it as a third job every Monday, so it
+comes up with the Decky and shadPS4 checks. The tests cover it on a fake GitHub; the development chapter of the wiki
+and MIGRATION.md describe it.
+
 Changelog: 16-10-2026 04:52:58
 
 The wiki's Architecture and consistency chapter has a section on Steam shortcuts and their artwork, with a table of

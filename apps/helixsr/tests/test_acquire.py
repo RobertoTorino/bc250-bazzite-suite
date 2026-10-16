@@ -8,6 +8,7 @@ import io
 import json
 import tarfile
 import zipfile
+from dataclasses import replace
 from pathlib import Path
 from unittest import mock
 
@@ -93,6 +94,16 @@ def test_latest_release_parses_github_json():
         assert "no connection" in latest_release("api", "page").error
     with mock.patch.object(acquire, "_get_json", return_value={"tag_name": "latest"}):
         assert "unexpected tag" in latest_release("api", "page").error
+
+
+def test_latest_release_takes_helixsrs_own_zip():
+    """From 1.9.0 on a release also has HelixSR Scaler's zip, whichever comes first."""
+    assets = [{"name": "HelixSR-Scaler-1.0.3.zip", "browser_download_url": "https://x/scaler.zip", "size": 132504212},
+              {"name": "HelixSR-Scaler-1.0.3-linux.tar.gz", "browser_download_url": "https://x/s.tgz", "size": 1},
+              {"name": "HelixSR-1.9.0.zip", "browser_download_url": "https://x/z.zip", "size": 3803249}]
+    with mock.patch.object(acquire, "_get_json", return_value={"tag_name": "v1.9.0", "assets": assets}):
+        info = latest_release("api", "page")
+    assert (info.asset_name, info.asset_url, info.asset_size) == ("HelixSR-1.9.0.zip", "https://x/z.zip", 3803249)
 
 
 def test_update_status():
@@ -284,7 +295,7 @@ def test_update_check_covers_only_helixsr():
 
 # HelixSR 1.7's script ends with its game installer, which asks per Steam game and writes manual-install/.
 INSTALLER_SCRIPT = GOOD_SCRIPT + """
-echo "[helixsr-setup] looking for games with DLSS, XeSS or FSR ..."
+echo "[helixsr-setup] {installer_line}"
 echo "  f = FSR   o = OptiScaler   n = skip"
 printf 'GodOfWar: install? [o/n] '
 if read -r answer; then echo "answered: $answer" > "$HERE/stdin.txt"; else echo "no input" > "$HERE/stdin.txt"; fi
@@ -294,8 +305,10 @@ cp "$HERE/amd_fidelityfx_dx12.dll" "$HERE/fsr3-drop-in/"
 """
 
 
-def test_setup_worker_gives_the_script_no_input(qapp, tmp_path):
-    release, _ = prepared(tmp_path, INSTALLER_SCRIPT)
+@pytest.mark.parametrize("installer_line", ["looking for games with DLSS, XeSS or FSR ...",      # 1.7.0 to 1.8.1
+                                            "looking for games with FSR 3.1 ..."])             # 1.9.0
+def test_setup_worker_gives_the_script_no_input(qapp, tmp_path, installer_line):
+    release, _ = prepared(tmp_path, INSTALLER_SCRIPT.replace("{installer_line}", installer_line))
     with mock.patch.object(acquire, "is_immutable_system", return_value=True):
         outcome, log = run_worker(qapp, SetupRequest(release, tmp_path / "work", tmp_path / "data" / "HelixSR"))
     assert outcome.ok, outcome.message
@@ -307,12 +320,22 @@ def test_setup_worker_gives_the_script_no_input(qapp, tmp_path):
     assert (outcome.release_dir / backend.WEIGHTS).is_file()
 
 
+@pytest.mark.parametrize("version, no_fg", [("1.2.0", False), ("1.8.1", False), ("1.9.0", True), ("2.0.0", True)])
+def test_setup_worker_skips_frame_generation_from_1_9(qapp, tmp_path, version, no_fg):
+    release, _ = prepared(tmp_path)
+    with mock.patch.object(acquire, "is_immutable_system", return_value=True):
+        outcome, _ = run_worker(qapp, SetupRequest(replace(release, version=version), tmp_path / "work",
+                                                   tmp_path / "data" / "HelixSR"))
+    assert outcome.ok, outcome.message
+    assert ("--no-fg" in (outcome.release_dir / "args.txt").read_text()) == no_fg
+
+
 def test_setup_worker_fallback_looks_up_the_pinned_tag(qapp, tmp_path):
-    assert acquire.FALLBACK_TAG == "v1.4.3"
+    assert acquire.FALLBACK_TAG == "v1.8.1"
     with mock.patch.object(acquire, "latest_release", return_value=ReleaseInfo(error="GitHub answered 404")) as lookup:
         outcome, _ = run_worker(qapp, SetupRequest(None, tmp_path / "work", tmp_path / "data", fallback=True))
-    assert lookup.call_args.args[0] == "https://api.github.com/repos/lonewolf0622/HelixSR/releases/tags/v1.4.3"
-    assert not outcome.ok and "1.4.3" in outcome.message and "404" in outcome.message
+    assert lookup.call_args.args[0] == "https://api.github.com/repos/lonewolf0622/HelixSR/releases/tags/v1.8.1"
+    assert not outcome.ok and "1.8.1" in outcome.message and "404" in outcome.message
 
 
 # HelixSR 1.8's setup appends the network to its DLL and leaves no separate network files.

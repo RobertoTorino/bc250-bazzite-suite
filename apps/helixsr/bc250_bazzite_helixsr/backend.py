@@ -572,7 +572,7 @@ def install_optiscaler(exe_dir: Path, folder: Path, payload_dir: Path) -> list[P
     the same name goes to <folder>/backup, an existing OptiScaler.ini is kept there as a copy and edited; again on
     the same folder it updates OptiScaler and keeps the record. Returns the files written."""
     if not optiscaler_available(payload_dir):
-        raise HelixError("The payload has no OptiScaler. HelixSR 1.7 and newer ship it: get or import such a release.")
+        raise HelixError("The payload has no OptiScaler. HelixSR 1.7.0 to 1.8.1 ship it: get or import such a release.")
     if not exe_dir.is_dir():
         raise HelixError("{0} does not exist.".format(exe_dir))
     if exe_dir.resolve() == folder.resolve():

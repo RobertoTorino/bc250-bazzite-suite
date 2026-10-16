@@ -27,16 +27,18 @@ app does exactly that, reversibly, and nothing else on the system is touched. No
   BC-250, because it compiles the network's shaders for both wave sizes through Proton. The Setup page shows the
   elapsed time. From HelixSR 1.7.0 on, the script ends with its own game installer, which asks about each Steam
   game; the app gives it no input, so it stops there and only the network files are built. From HelixSR 1.8.0
-  on, the network is built into HelixSR's DLL instead of two separate files.
+  on, the network is built into HelixSR's DLL instead of two separate files. From HelixSR 1.9.0 on, the script
+  can also build frame generation for HelixSR Scaler (about 400 MB from NVIDIA); the app does not deploy that, so
+  it skips this step (`--no-fg`).
 - **Version choice** – *Version* on the Setup page picks the latest HelixSR release (the default) or HelixSR
-  1.4.3, the version HelixSR's developer recommends when the latest one does not work for you (please then open
+  1.8.1, the version HelixSR's developer recommends when the latest one does not work for you (please then open
   an issue at [HelixSR](https://github.com/lonewolf0622/HelixSR/issues) with the game's `helixsr.log`).
   Switching builds the network files for that version and replaces the payload; deploy again per game
   afterwards.
 - **Update checks** – at start (can be turned off) or on demand: the payload against the latest HelixSR release
   on GitHub. The app itself is updated through the BC250 Bazzite Suite portal. A newer HelixSR is flagged on the Overview; building again
   updates the payload and deployed games show *Older build* until redeployed (*Newer build* after switching
-  back to 1.4.3).
+  back to 1.8.1).
 - **Payload** – one imported HelixSR release, kept under `~/.local/share/bc250-bazzite-helixsr-gui/payload`.
   Filled by the Setup page, or by hand: run the release's `helixsr-setup.sh` yourself and import the folder or
   the zip. It builds `helixsr_weights.bin` and `helixsr_kernels.pak` from NVIDIA's DLSS DLL – those files are
@@ -50,8 +52,9 @@ app does exactly that, reversibly, and nothing else on the system is touched. No
     games bury it under `Engine/Plugins/.../ThirdParty/Win64`), backs it up and deploys. *Remove* restores
     the original. Re-deploying a newer build never overwrites the real original.
   - *Stand-alone folder for OptiScaler* – for games without FSR 3.1: writes a folder with the DLL under both
-    FidelityFX names, the network files and the ini. With a payload from HelixSR 1.7 or newer, which ships the
-    official OptiScaler, it also installs OptiScaler next to the game's `.exe` (Scan finds that folder): as
+    FidelityFX names, the network files and the ini. With a payload from HelixSR 1.7.0 to 1.8.1, which ship the
+    official OptiScaler (1.9.0 and newer do not; the fallback on the Setup page brings it, and the payload keeps
+    it when you switch back to the latest), it also installs OptiScaler next to the game's `.exe` (Scan finds that folder): as
     `dxgi.dll`, or under the name of an OptiScaler the game already has, with `fakenvapi`, and its
     `OptiScaler.ini` pointed at the HelixSR folder. Select DLSS in the game. What it replaces is kept in the
     HelixSR folder's `backup`; *Remove* puts it back. If OptiScaler's menu (Insert) does not appear in a game, add
@@ -121,7 +124,7 @@ lookup at start. `--version` prints the version.
 - **Overview** – payload status (version from the release's README, DLL, weights, kernels, ini) with
   *Import folder* / *Import zip* / *Open payload folder*, and the deployment table with *Open folder*,
   *Remove* (restores the original or deletes the stand-alone folder) and *Forget*.
-- **Setup** – release status for HelixSR with *Check now*; the version to get (latest or 1.4.3);
+- **Setup** – release status for HelixSR with *Check now*; the version to get (latest or 1.8.1);
   *Download and build* with progress, the script's output, *Cancel*, *Import built release* and *Open work
   folder*; optional local `nvngx_dlss.dll`.
 - **Deploy** – choose a Steam game or browse to any folder, scan for upscaler DLLs, pick the mode, decide

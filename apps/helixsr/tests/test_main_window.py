@@ -148,12 +148,12 @@ def test_ini_page_greys_out_what_the_version_ignores(window):
 
 def test_setup_page_fallback_choice(window):
     from bc250_bazzite_helixsr.acquire import ReleaseInfo, UpdateStatus
-    latest = ReleaseInfo("1.7.0", "v1.7.0", "u", "2026-10-10", "HelixSR-1.7.0.zip", "https://x/z.zip", 10)
-    window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.4.3", latest)})
-    assert "1.7.0" in window.overview.update_hint.text() and "Get HelixSR" in window.overview.update_hint.text()
+    latest = ReleaseInfo("1.9.0", "v1.9.0", "u", "2026-10-15", "HelixSR-1.9.0.zip", "https://x/z.zip", 10)
+    window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.8.1", latest)})
+    assert "1.9.0" in window.overview.update_hint.text() and "Get HelixSR" in window.overview.update_hint.text()
     window.setup_page.version.setCurrentIndex(1)
     assert window.setup_page.fallback() and window.settings.value("setup/fallback", type=bool)
-    window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.4.3", latest)})
+    window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.8.1", latest)})
     assert "fallback" in window.overview.update_hint.text()
     with mock.patch("bc250_bazzite_helixsr.main_window.SetupWorker") as worker:
         window.setup_page.start_requested.emit(None)

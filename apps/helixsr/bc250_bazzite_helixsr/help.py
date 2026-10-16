@@ -90,8 +90,9 @@ def help_html(payload_dir: str, deployments_file: str,
          'point OptiScaler there (Windows paths; <code>Z:</code> is the Linux root under Proton). Install '
          'OptiScaler for the game as its documentation describes, paste the lines, and pick <b>FSR HelixSR '
          "(3.1.5)</b> in OptiScaler's FFX Upscaler menu.</p>"),
-        ("<p><b>Install OptiScaler next to the game's .exe</b> (on when the payload has OptiScaler: HelixSR 1.7 and "
-         'newer ship the official one): the app does that part too. Scan finds the folder of the game\'s .exe; '
+        ("<p><b>Install OptiScaler next to the game's .exe</b> (on when the payload has OptiScaler: HelixSR 1.7.0 "
+         'to 1.8.1 ship the official one, 1.9.0 and newer do not; the fallback on the Setup page brings it, and the '
+         'payload keeps it when you switch back to the latest): the app does that part too. Scan finds the folder of the game\'s .exe; '
          "OptiScaler goes there as <code>dxgi.dll</code> (or under the name of an OptiScaler the game already "
          'has) with <code>fakenvapi</code>, and its <code>OptiScaler.ini</code> points at the HelixSR folder. '
          "Start the game and select <b>DLSS</b>. A file of the game it replaces, and an <code>OptiScaler.ini</code> "

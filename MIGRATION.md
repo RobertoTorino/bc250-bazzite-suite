@@ -565,6 +565,13 @@ Bazzite's).
   shadPS4 too (owner, 16-10-2026): the same tool and workflow (a job of its own) check the shadps4-manager pin: a
   newer stable release, with its Linux zip and SHA-256 for the new pin, or a replaced zip. Moving the pin also needs
   a look at what changed in shadPS4 (0.20.0 moved shadNet's settings); the board test and release stay the owner's.
+  HelixSR too (owner, 16-10-2026): a third job checks HelixSR against `KNOWN_VERSION` and `FALLBACK_VERSION` in
+  apps/helixsr's acquire.py (a newer stable release, another fallback in its notes, a fallback without its zip).
+  HelixSR 1.9.0 (15-10-2026) prepared in code: its own zip among the Scaler's, `--no-fg`, the new installer line,
+  fallback 1.8.1 (owner), no OptiScaler from 1.9.0 on (owner: a hint only for now). Open: build and deploy 1.9.0
+  and the 1.8.1 fallback from the app on the board, then `KNOWN_VERSION = "1.9.0"` (until then the weekly job
+  fails); a helixsr release (owner). 1.9.0 is under the HelixSR Freeware License (no redistribution of modified
+  copies, no modification); the app only downloads it and runs its setup, as before.
 - **PS3 emulator manager (built 14-10-2026 as rpcs3-manager, RPCS3 Manager).** Owner's request: the
   shadPS4 Manager's implementation for RPCS3. Built the same way, same window, wrapper and installer; choices made
   in building it, the owner's to confirm or change: `development = true` first (as shadps4 was), the indigo

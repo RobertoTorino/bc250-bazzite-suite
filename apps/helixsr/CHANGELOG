@@ -1,3 +1,18 @@
+Changelog: 16-10-2026 07:00:31
+
+Release 0.2.11.
+
+Changelog: 16-10-2026 06:38:26
+
+Fixed. HelixSR 1.9.0: a release now also carries HelixSR Scaler's zip, so the Setup page takes the zip named
+HelixSR-x.y.z.zip instead of the first one. The 1.9.0 setup can also build frame generation for HelixSR Scaler (about
+400 MB from NVIDIA), which the app does not deploy: from 1.9.0 on the app passes --no-fg. The game installer at the
+end of the setup starts with another line in 1.9.0 ("looking for games with FSR 3.1"); its questions are hidden again.
+The fallback on the Setup page is 1.8.1, the version HelixSR's developer now names, instead of 1.4.3. 1.9.0 no longer
+ships OptiScaler: the Deploy page's hint, the help and the wiki say that 1.7.0 to 1.8.1 ship it and that the fallback
+brings it. acquire.py has KNOWN_VERSION (1.8.1), the newest HelixSR the app was checked against, for the weekly
+upstream check.
+
 Changelog: 16-10-2026 01:19:38
 
 Release 0.2.10.

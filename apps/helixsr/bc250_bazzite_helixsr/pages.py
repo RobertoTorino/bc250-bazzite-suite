@@ -511,7 +511,9 @@ class DeployPage(QWidget):
             widget.setVisible(folder)
         self.install_opti.setEnabled(self.optiscaler_available)
         self.install_opti.setToolTip(
-            "" if self.optiscaler_available else "The payload has no OptiScaler: HelixSR 1.7 and newer ship it. Get such a release on the Setup page.")
+            "" if self.optiscaler_available else
+            ("The payload has no OptiScaler: HelixSR 1.7.0 to 1.8.1 ship it, 1.9.0 and newer do not. Get the fallback "
+             "release on the Setup page; the payload keeps its OptiScaler when you switch back."))
         auto = self.optiscaler_available and self.install_opti.isChecked()
         self.exe_path.setEnabled(auto)
         self.browse_exe.setEnabled(auto)
