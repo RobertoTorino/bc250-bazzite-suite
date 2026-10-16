@@ -123,6 +123,28 @@ against, and `FALLBACK_VERSION`. The same tool reports a newer stable release (u
 in its setup, its zip and `helixsr.ini` needs a look and a try on the board; then `KNOWN_VERSION` moves), a fallback
 named in the latest release's notes that is not `FALLBACK_VERSION`, and a fallback release without its zip.
 
+The Vita3K Manager installs one Vita3K build, pinned in `apps/vita3k-manager/bc250_vita3k_manager/emulator.py`
+(`BUILD`, `SEMVER`, `COMMIT`, `SHA256`, `SIZE`). Vita3K has no stable releases: every change is a build, kept as a
+release of `Vita3K/Vita3K-builds` tagged with its number, with `Vita3K-x86_64.AppImage` and the SHA-256 GitHub
+publishes for it. Builds come almost daily, so the tool does not check them; the app itself says when a newer build
+is out. A new pin takes the asset's digest and size from that release, and a look at what the app relies on in
+Vita3K's source at the new build:
+
+- the command line (`vita3k/config/src/config.cpp`): `-r <title ID>`, `--frontend sdl`, `--firmware`,
+  `--pkg` with `--zrif`, and a `.vpk`, `.zip` or folder as the positional argument;
+- the folders (`vita3k/app/src/app_init.cpp`, `init_paths`): settings in `$XDG_CONFIG_HOME/Vita3K/config.yml`, the
+  storage in `$XDG_DATA_HOME/Vita3K/Vita3K` unless `pref-path` in config.yml moves it, games in its `ux0/app`;
+- the firmware's three parts (`vita3k/app/src/app.cpp`, `get_firmware_state`): `vs0`, `sa0` and `pd0` counted as
+  installed when they hold anything;
+- the SDL frontend (`vita3k/sdl-frontend`): it runs the game given by `-r` and quits with it, and has no full screen
+  of its own. `--fullscreen` is not used: Vita3K writes it into config.yml as `boot-apps-full-screen`;
+- the AppImage's self-updater (`bin/10-self-updater.hook` in the AppImage): it overwrites the AppImage with the
+  newest continuous build unless `DISABLE_AUTO_UPDATES=1`, which the run wrapper sets. `vita3k --version` on the new
+  AppImage confirms the build and commit.
+
+The tests hold the `config.yml` the pinned build writes on its first start (`tests/fixtures/config-4186.yml`); a new
+pin replaces it with the new build's, renamed for it.
+
 ```bash
 python3 tools/check_upstream.py            # all three
 python3 tools/check_upstream.py helixsr    # one: decky, shadps4 or helixsr

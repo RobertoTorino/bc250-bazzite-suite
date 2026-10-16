@@ -41,6 +41,7 @@ SOURCES = {
     "shadps4-manager": "apps/shadps4-manager/images/bc250-shadps4-manager-128.png",
     "suite-releases": "apps/suite-releases/images/bc250-release-128.png",
     "system-overlay": "apps/system-overlay/images/bc250-system-overlay-128.png",
+    "vita3k-manager": "apps/vita3k-manager/images/bc250-vita3k-manager-128.png",
 }
 
 

@@ -167,6 +167,7 @@ Where the pictures come from depends on what the app has:
 | shadPS4 Manager | The game's own pictures (`icon0.png`, `pic1.png`), its icon as the logo |
 | RPCS3 Manager | The game's own pictures (`ICON0.PNG`, `PIC1.PNG`), its icon as the logo |
 | PPSSPP Manager | The game's own pictures (`ICON0.PNG`, `PIC1.PNG`), its icon as the logo |
+| Vita3K Manager | The game's own pictures (`icon0.png`, `pic0.png`), its icon as the logo |
 
 `steam_art.draw_icon_art()` is for an app with no pictures of its own: the background is near black in the icon's
 own colour with a glow of it, the portrait and the wide picture show the icon with a title and a line under it, the

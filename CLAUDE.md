@@ -14,13 +14,13 @@ its manifest. **bazzite-test** is always installed and always listed first; ever
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
 - `apps/<name>/`: bazzite-test, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
-  system-overlay, bios-reader, ace-queues, mesh-shaders, memory-manager, hdmi-cec, sftp-tools, console-link, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, decky-manager, demo-tool, dependency-checker, bazzite-netcatgui, bazzite-datstation, suite-releases. Each has its
+  system-overlay, bios-reader, ace-queues, mesh-shaders, memory-manager, hdmi-cec, sftp-tools, console-link, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, demo-tool, dependency-checker, bazzite-netcatgui, bazzite-datstation, suite-releases. Each has its
   own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; console-link is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; bazzite-netcatgui is GPL-2.0-only, a port of NetcatGUI; the rest
   GPL-3.0-or-later), .gitignore. Simple
   Demo Tool, the Dependency Checker and Bazzite NetcatGUI are `development = true` in `portal/apps.toml`: the portal
   lists them under "Development only". HelixSR, ACE Queues, Mesh Shaders, Console Link, the shadPS4 Manager, the Decky Loader Manager, the RPCS3 Manager,
-  Bazzite DatStation, the PPSSPP Manager and the PCSX2 Manager are `section = "gaming"`: listed under "Gaming". Suite Releases (the release front end) has `.standalone` and `.checkout-only`: it runs
+  Bazzite DatStation, the PPSSPP Manager, the PCSX2 Manager and the Vita3K Manager are `section = "gaming"`: listed under "Gaming". Suite Releases (the release front end) has `.standalone` and `.checkout-only`: it runs
   from the checkout, is never released, and is listed as `[checkout.suite-releases]`, also under "Development only":
   a portal from a release finds the checkout on the machine (it asks only when there is none) and remembers it, the
   released apps still come from their releases. Install every app through the portal, so what is installed stays in step. BC-250 Installer Tests (`tools/installer-tests/gui`) is
@@ -142,6 +142,9 @@ shellcheck -S warning apps/mesh-shaders/bc250-mesh-shaders.sh apps/mesh-shaders/
   apps/mesh-shaders/install.sh apps/mesh-shaders/mesa/build-in-container.sh
 shellcheck -S warning apps/shadps4-manager/install.sh apps/shadps4-manager/bc250-shadps4-run
 shellcheck -S warning apps/rpcs3-manager/install.sh apps/rpcs3-manager/bc250-rpcs3-run
+shellcheck -S warning apps/ppsspp-manager/install.sh apps/ppsspp-manager/bc250-ppsspp-run \
+  apps/pcsx2-manager/install.sh apps/pcsx2-manager/bc250-pcsx2-run apps/vita3k-manager/install.sh \
+  apps/vita3k-manager/bc250-vita3k-run
 shellcheck -S warning apps/decky-manager/install.sh apps/bazzite-netcatgui/install.sh \
   apps/bazzite-datstation/install.sh
 for t in tools/installer-tests/*.sh; do [ "${t##*/}" = shims.sh ] || bash "$t"; done   # every installer test

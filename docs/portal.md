@@ -32,9 +32,9 @@ away when you click its name; it is open until you close it, and the portal reme
 [BC-250 ACE Queues](apps/ace-queues.md), [BC-250 Mesh Shaders](apps/mesh-shaders.md),
 [Console Link](apps/console-link.md), [shadPS4 Manager](apps/shadps4-manager.md),
 [Decky Loader Manager](apps/decky-manager.md), [RPCS3 Manager](apps/rpcs3-manager.md),
-[Bazzite DatStation](apps/bazzite-datstation.md), [PPSSPP Manager](apps/ppsspp-manager.md) and
-[PCSX2 Manager](apps/pcsx2-manager.md). It is open until you close it, and the portal remembers whether
-it was open.
+[Bazzite DatStation](apps/bazzite-datstation.md), [PPSSPP Manager](apps/ppsspp-manager.md),
+[PCSX2 Manager](apps/pcsx2-manager.md) and [Vita3K Manager](apps/vita3k-manager.md). It is open until you close it,
+and the portal remembers whether it was open.
 
 **Development only**, below that, opens a separate section with tools for working on the suite:
 [Simple Demo Tool](other-tools/simple-demo-tool.md), [Dependency Checker](apps/dependency-checker.md),

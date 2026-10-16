@@ -52,6 +52,7 @@ uses. You do not need them.
 - <img src="portal/images/apps/bazzite-datstation.png" width="20" height="20" alt=""/> **[Bazzite DatStation](apps/bazzite-datstation)**: PlayStation quiz, console history, system versions, region codes, user guides and news, with your scores.
 - <img src="portal/images/apps/ppsspp-manager.png" width="20" height="20" alt=""/> **[PPSSPP Manager](apps/ppsspp-manager)**: PSP games with the PPSSPP emulator: a tested PPSSPP release, your games found and added to Game Mode.
 - <img src="portal/images/apps/pcsx2-manager.png" width="20" height="20" alt=""/> **[PCSX2 Manager](apps/pcsx2-manager)**: PS2 games with the PCSX2 emulator: a tested PCSX2 release, your PS2 BIOS, your games found and added to Game Mode.
+- <img src="portal/images/apps/vita3k-manager.png" width="20" height="20" alt=""/> **[Vita3K Manager](apps/vita3k-manager)**: PS Vita games with the Vita3K emulator: a tested Vita3K build, the firmware and your games installed through it, added to Game Mode.
 
 **Development only**: tools for working on the suite, in their own section of the portal. You do not need them to
 use the board.

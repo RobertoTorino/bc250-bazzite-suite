@@ -1,3 +1,12 @@
+Changelog: 16-10-2026 11:35:40
+
+Release 0.3.0.
+
+Changelog: 16-10-2026 11:20:26
+
+Added. The catalogue lists the Vita3K Manager: its launcher, its PyQt6, and its use of Steam (Update Game Mode)
+and fusermount (Vita3K's AppImage).
+
 Changelog: 16-10-2026 06:02:49
 
 Release 0.2.0.

@@ -696,17 +696,42 @@ Things already decided against were left out (the Bluetooth helper, the exploit 
   .mc2 name for a card without ECC. Open: on the board, the window with PCSX2's own cards (a card PCSX2 made and
   formatted, a save imported and loaded in a game, PCSX2 running refused), a new 16 MB card in PCSX2; the release of
   the PCSX2 Manager (owner).
-- **2. PS Vita emulator manager: Vita3K (owner 16-10-2026: after mymc++ is finished).** Completes the PlayStation
-  line. Vita3K (`github.com/Vita3K/Vita3K`) is GPL-2.0 (dictated by Unicorn, its CPU emulator); the manager only
-  downloads it, as the other managers do. No stable releases: the newest build sits under a rolling `continuous` tag,
-  older ones in a separate Vita3K-builds repository, so the RPCS3 Manager is the pattern (one build pinned with
-  GitHub's asset digest, a newer-build notice, the installed file's size to notice a self-update). To check at the
-  pinned build, from its source: the Linux asset (AppImage or archive), the data folders, the command line for
-  starting a game full screen (the Steam shortcut), and how games are installed (`.vpk`, `.pkg` with a zRIF licence,
-  or a dumped folder: only the user's own dumps, as for the other consoles). The firmware is Sony's own PS Vita
-  update file, which the user downloads from Sony; the app points to it and installs it through Vita3K, it does not
-  ship it. Gaming section, `changes_board = false`. Not checked yet: performance on the BC-250 (Vulkan through RADV
-  on gfx1013), and the controller under Steam's environment (the wrapper's two steps, as for shadPS4 and RPCS3).
+- **2. PS Vita emulator manager: Vita3K (owner 16-10-2026: after mymc++ is finished; started 16-10-2026, built
+  16-10-2026 as vita3k-manager, Vita3K Manager).** Completes the PlayStation line. Vita3K (`github.com/Vita3K/Vita3K`)
+  is GPL-2.0 (dictated by Unicorn, its CPU emulator); the manager only downloads it, as the other managers do.
+  Decided by the owner (16-10-2026): games are installed from the app (a `.pkg` with its zRIF, a `.vpk`, `.zip` or
+  dumped folder). Built as the RPCS3 Manager is (window, wrapper, installer, tests, installer test), in Vita3K's
+  crimson #BD1550. Pinned: build 4186 (0.2.1, commit f0273e4c, 16-10-2026), `Vita3K-x86_64.AppImage` from the
+  Vita3K-builds release `4186`, SHA-256 `1be29192…a06a` (GitHub's asset digest, checked on a download), 78 489 697
+  bytes; the newer-build notice reads Vita3K-builds' latest release (its tag is the number, which core's
+  latest_release does not read). Facts from its source at that build: settings in `$XDG_CONFIG_HOME/Vita3K`
+  (`config.yml`, flat YAML; `pref-path` moves the storage), the storage ("Vita FS") in
+  `$XDG_DATA_HOME/Vita3K/Vita3K`, games in its `ux0/app/<title ID>` (`eboot.bin`, `sce_sys/param.sfo`, `icon0.png`,
+  `pic0.png`), started with `-r <title ID>`; `--frontend sdl` (new 08-10-2026, shared with Android) is a plain window
+  that runs the game and quits with it, so the Steam shortcuts use it; `--fullscreen` is left out, as Vita3K writes
+  it into config.yml (`boot-apps-full-screen`) for its own window too; `--firmware`, `--pkg`/`--zrif` install
+  without a window and quit, a `.vpk`/`.zip`/folder as the positional argument installs and then boots the game.
+  The firmware is three Sony files, each `PSP2UPDAT.PUP`: the system software (vs0, os0), the font package (sa0),
+  the optional preinstalled apps (pd0); Vita3K counts a part as installed when its folder holds anything, and exits
+  0 on a file it cannot use (the app looks at what was written). Vita3K's own updater only links to its download
+  page; the AppImage (anylinux, sharun) carries a self-updater hook (`bin/10-self-updater.hook`: asks from the
+  second start, then overwrites itself with the newest continuous build through appimageupdatetool), which the
+  wrapper turns off with `DISABLE_AUTO_UPDATES=1` (checked with the real AppImage: no update policy written); the
+  size check stays for an AppImage started some other way. Checked on this machine with the real build: the
+  wrapper's `--version`, `--firmware` on a junk file, `-r` with an unknown and a known ID. Choices of Claude's for the
+  owner to confirm or change: the SDL frontend for Game Mode and Play, the zRIF asked in a text box, the firmware
+  box showing Ready/Partly. Not tried on the board: everything (Install, the firmware's three files, a game from
+  each kind of dump, Play, Game Mode: does Game Mode's compositor show the 960 × 544 SDL window full screen, Exit
+  game; performance with Vulkan through RADV on gfx1013; the controller under Steam and the overlay on the
+  desktop). On the desktop the SDL window is not full screen (Vita3K's SDL frontend has no full screen option at
+  this build). Release (owner): `vita3k-manager-v0.1.0` and a portal minor bump (a new card); until then `apps.toml`
+  pins it without sha256.
+- **A code path to check in the PPSSPP Manager (found 16-10-2026 while building the Vita3K Manager).** The pinned
+  `PPSSPP-v1.20.4-anylinux-x86_64.AppImage` carries the same self-updater hook (`bin/self-updater.hook`, honouring
+  `DISABLE_AUTO_UPDATES=1`), while emulator.py says PPSSPP does not update itself on Linux and the wrapper does not
+  turn it off. Not seen on the board yet: whether its question appears from the second start and what Install shows
+  after an update. The PCSX2 2.8.2 AppImage has no such hook. The fix would be the Vita3K Manager's (the variable in
+  the wrapper, the size check), the owner's call.
 - **3. Fan control and a thermal guard (the board's gap; owner 16-10-2026: last, the guard first, PWM only after the
   sensor check on the board, which needs the owner at the board).** Answers the known issue above (no app controls
   the fan; the Governor's alerts only while it runs). From mothenjoyer69's bc250-documentation: `CPU_FAN1` is a

@@ -377,7 +377,8 @@ def test_board_tools_in_a_section_open_until_closed(window, qapp):
 def test_gaming_apps_apart_and_open(window, qapp):
     gaming = {key for key, card in window.cards.items() if card.entry.section == "gaming"}
     assert gaming == {"helixsr", "ace-queues", "mesh-shaders", "console-link", "shadps4-manager",
-                      "decky-manager", "rpcs3-manager", "bazzite-datstation", "ppsspp-manager", "pcsx2-manager"}
+                      "decky-manager", "rpcs3-manager", "bazzite-datstation", "ppsspp-manager", "pcsx2-manager",
+                      "vita3k-manager"}
     assert all(window.gaming_grid.indexOf(window.cards[key]) >= 0 for key in gaming)
     assert all(window.grid.indexOf(window.cards[key]) < 0 and window.dev_grid.indexOf(window.cards[key]) < 0
                for key in gaming)

@@ -333,6 +333,19 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-pcsx2-manager"]
 launch = [["Open", "~/.local/bin/bc250-pcsx2-manager"]]
 
+[apps.vita3k-manager]
+name = "Vita3K Manager"
+summary = "PS Vita games with the Vita3K emulator: a tested Vita3K build, the firmware and your games installed through it, added to Game Mode."
+tag = "vita3k-manager-v0.1.0"
+sha256 = ""
+required = false
+changes_board = false
+section = "gaming"
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-vita3k-manager"]
+launch = [["Open", "~/.local/bin/bc250-vita3k-manager"]]
+
 [checkout.suite-releases]
 name = "BC250 Suite Releases"
 summary = "The release front end: versions, pins and the board checks of a release. Edits the checkout it runs from."

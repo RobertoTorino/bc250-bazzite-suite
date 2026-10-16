@@ -96,6 +96,10 @@ launchers = ["~/.local/bin/bc250-ppsspp-manager"]
 name = "PCSX2 Manager"
 launchers = ["~/.local/bin/bc250-pcsx2-manager"]
 
+[app.vita3k-manager]
+name = "Vita3K Manager"
+launchers = ["~/.local/bin/bc250-vita3k-manager"]
+
 [app.decky-manager]
 name = "Decky Loader Manager"
 launchers = ["~/.local/bin/bc250-decky-manager"]
@@ -814,6 +818,12 @@ usage = "Update Game Mode (a Steam shortcut per game) closes Steam with steam -s
 anchor = "game-mode"
 
 [[tool.source]]
+owner = "vita3k-manager"
+need = "optional"
+usage = "Update Game Mode (a Steam shortcut per game) closes Steam with steam -shutdown and starts it again with bazzite-steam."
+anchor = "game-mode"
+
+[[tool.source]]
 owner = "bazzite-datstation"
 need = "optional"
 usage = "Add to Steam and Remove from Steam (the app's own shortcut) close Steam with steam -shutdown and start it again with bazzite-steam."
@@ -853,6 +863,12 @@ anchor = "what-you-need"
 owner = "pcsx2-manager"
 need = "optional"
 usage = "PCSX2 is an AppImage with its own FUSE library; without fusermount it unpacks itself to a temporary folder on every start, which is slower."
+anchor = "what-you-need"
+
+[[tool.source]]
+owner = "vita3k-manager"
+need = "optional"
+usage = "Vita3K is an AppImage with its own FUSE library; without fusermount it unpacks itself to a temporary folder on every start, which is slower."
 anchor = "what-you-need"
 
 [[tool]]
@@ -937,6 +953,10 @@ specifier = ">=6.11,<7"
 
 [[dependency.source]]
 owner = "pcsx2-manager"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
+owner = "vita3k-manager"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]

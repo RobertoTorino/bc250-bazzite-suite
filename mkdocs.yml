@@ -79,6 +79,7 @@ nav:
       - RPCS3 Manager: apps/rpcs3-manager.md
       - PPSSPP Manager: apps/ppsspp-manager.md
       - PCSX2 Manager: apps/pcsx2-manager.md
+      - Vita3K Manager: apps/vita3k-manager.md
       - Decky Loader Manager: apps/decky-manager.md
       - Bazzite DatStation: apps/bazzite-datstation.md
   - Development:
