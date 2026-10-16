@@ -1,3 +1,8 @@
+Changelog: 16-10-2026 03:14:57
+
+The tools tests' requirements (tools/requirements-dev.txt) include Pillow: the check that the wiki's icon shows the
+portal's icon needs it, and CI's tools job failed without it.
+
 Changelog: 16-10-2026 02:24:33
 
 Wiki pages: the Dependency Checker and Simple Demo Tool chapters show their app's icon beside the heading, as
