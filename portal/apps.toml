@@ -323,8 +323,8 @@ launch = [["Open", "~/.local/bin/bc250-ppsspp-manager"]]
 [apps.pcsx2-manager]
 name = "PCSX2 Manager"
 summary = "PS2 games with the PCSX2 emulator: a tested PCSX2 release, your PS2 BIOS, your games found and added to Game Mode."
-tag = "pcsx2-manager-v0.2.0"
-sha256 = "725a679207f2fa21d4b7e5c654b4aacb106582d385e050b6c48d20e52a9c9488"
+tag = "pcsx2-manager-v0.3.0"
+sha256 = "9204ae68aaf2fd7cd6ba2e87dc11e146ec709e4638cc215c1d4c72c818137895"
 required = false
 changes_board = false
 section = "gaming"
