@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The app as a non-Steam game, for Game Mode: a shortcut that runs the launcher install.sh wrote
-(~/.local/bin/bazzite-datstation), with artwork drawn from the app's logo. The file and its format are core's
+(~/.local/bin/bazzite-datstation), with artwork drawn from the app's logo by core's steam_art. The file and its format are core's
 (bc250_core.steam); the pattern is the shadPS4 Manager's."""
 
 from __future__ import annotations
@@ -8,13 +8,12 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 
-from bc250_core import steam
+from bc250_core import steam, steam_art
 from bc250_core.platform import bin_home
 
 from . import APP_ID, APP_NAME
 
 TAGS = ("PlayStation", APP_NAME)
-BACKGROUND_TOP, BACKGROUND_BOTTOM = "#0b2a6b", "#02102a"
 
 
 class NotInstalled(Exception):
@@ -73,46 +72,6 @@ def remove(logo: Path, launcher: Path | None = None, steam_dir: Path | None = No
 # --- The artwork -----------------------------------------------------------------------------------------------
 
 def draw_art(logo: Path) -> dict[str, bytes]:
-    """The portrait, the wide picture and the banner as PNG bytes: the logo on a PlayStation blue gradient, the
-    name under it on the portrait; the logo file itself as the logo on the banner."""
-    from PyQt6.QtCore import QRectF, Qt
-    from PyQt6.QtGui import QColor, QFont, QImage, QLinearGradient, QPainter
-
-    icon = QImage(str(logo))
-    images = {}
-    for suffix in ("p", "", "_hero"):
-        width, height = steam.ART[suffix]
-        image = QImage(width, height, QImage.Format.Format_ARGB32)
-        painter = QPainter(image)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
-        gradient = QLinearGradient(0, 0, 0, height)
-        gradient.setColorAt(0, QColor(BACKGROUND_TOP))
-        gradient.setColorAt(1, QColor(BACKGROUND_BOTTOM))
-        painter.fillRect(0, 0, width, height, gradient)
-        if suffix != "_hero" and not icon.isNull():
-            side = min(width, height) * (0.7 if suffix == "p" else 0.62)
-            top = height * 0.12 if suffix == "p" else (height - side) / 2
-            painter.drawImage(QRectF((width - side) / 2, top, side, side), icon)
-        if suffix == "p":
-            font = QFont()
-            font.setBold(True)
-            font.setPixelSize(int(width * 0.08))
-            painter.setFont(font)
-            painter.setPen(QColor("#ffffff"))
-            painter.drawText(QRectF(width * 0.05, height * 0.74, width * 0.9, height * 0.2),
-                             Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap, APP_NAME)
-        painter.end()
-        images[suffix] = _png(image)
-    if logo.is_file() and not icon.isNull():
-        images["_logo"] = logo.read_bytes()
-    return images
-
-
-def _png(image) -> bytes:
-    from PyQt6.QtCore import QBuffer, QByteArray, QIODevice
-    data = QByteArray()
-    buffer = QBuffer(data)
-    buffer.open(QIODevice.OpenModeFlag.WriteOnly)
-    image.save(buffer, "PNG")
-    return bytes(data)
+    """The four images as PNG bytes, drawn from the app's icon by core's steam_art: the icon with the app's name, and
+    the icon file itself as the logo on the banner."""
+    return steam_art.draw_icon_art(logo, APP_NAME, TAGS[0])

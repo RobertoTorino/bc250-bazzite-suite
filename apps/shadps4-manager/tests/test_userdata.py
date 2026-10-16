@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""shadPS4's own folder (userdata.py): config.json as shadPS4 0.19.0 writes it, the system modules, and the users
-with their shadNet accounts, read and written as shadPS4 writes them."""
+"""shadPS4's own folder (userdata.py): config.json as shadPS4 0.19.0 and 0.20.0 write it, the system modules, and the
+users with their shadNet accounts, read and written as shadPS4 writes them."""
 
 from __future__ import annotations
 
@@ -92,6 +92,22 @@ def test_saving_shadnet_before_shadps4_ran_or_for_no_user(tmp_path, shad_files):
     (shad_files / "users.json").write_text("{not json")
     with pytest.raises(userdata.UserDataError, match="could not be read"):
         userdata.save_shadnet(shad_files, 1000, "Player_1", "x", "", True, "srv:1")
+
+
+def test_shadnet_in_the_network_section(shad_files):
+    """shadPS4 0.20.0 keeps shadNet's settings in Network and takes them from General only while Network does not
+    have them; once it saved its config, General has none."""
+    config = json.loads((shad_files / "config.json").read_text())
+    assert userdata.shadnet_server({"General": {"shadnet_server": "old:1"}, "Network": {}}) == "old:1"
+    general = config["General"]
+    config["Network"] = {"connected_to_network": False, "shad_net_enabled": general.pop("shad_net_enabled"),
+                         "shadnet_server": general.pop("shadnet_server"), "p2p_port": 3658}
+    (shad_files / "config.json").write_text(json.dumps(config, indent=2))
+    userdata.save_shadnet(shad_files, 1000, "Player_1", "secret", "", True, "192.168.1.20:31313")
+    saved = json.loads((shad_files / "config.json").read_text())
+    config["Network"].update(shad_net_enabled=True, shadnet_server="192.168.1.20:31313")
+    assert saved == config and "shadnet_server" not in saved["General"]
+    assert userdata.shadnet_on(saved) and userdata.shadnet_server(saved) == "192.168.1.20:31313"
 
 
 def test_whether_shadps4_runs(tmp_path):

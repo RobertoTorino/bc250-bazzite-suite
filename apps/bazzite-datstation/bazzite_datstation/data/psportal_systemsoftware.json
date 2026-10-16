@@ -1,5 +1,29 @@
 [
   {
+    "version": "System Software Version 7.3.0",
+    "releaseDate": "October 10, 2026",
+    "notes": [
+      "You can turn 3D audio on or off while playing a game. Go to Settings > System > 3D Audio.",
+      "We’ve updated the search experience. You can now:",
+      "See results in real time as you type.",
+      "Scan a QR code to continue your search in PlayStation Store on PlayStation App or in a web browser.",
+      "We’ve improved system software performance and stability.",
+      "We’ve improved the messages and usability on some screens."
+    ]
+  },
+  {
+    "version": "System Software Version 7.1.7",
+    "releaseDate": "September 25, 2026",
+    "notes": [
+      "This update introduces changes to how your PS Portal charges in order to support the long-term battery health of your device. After updating, your device will charge to 80% by default. You can change the charge limit at any time in Settings > System > Battery.",
+      "Selecting a charge limit over 80% might impact battery performance and overall stability, reducing long-term battery health.",
+      "Make sure to update your PlayStation Link device to the latest device software version to connect to PlayStation Portal.",
+      "To update your PlayStation Link device, connect it to a PS5 or PC using its PlayStation Link USB adapter.",
+      "We’ve improved system software performance and stability.",
+      "We’ve improved the messages and usability on some screens."
+    ]
+  },
+  {
     "version": "System Software Version 7.0.2",
     "releaseDate": "April 8, 2026",
     "notes": [

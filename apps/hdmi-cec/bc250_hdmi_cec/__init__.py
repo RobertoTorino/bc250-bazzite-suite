@@ -4,7 +4,7 @@ switch it to the board, and the automatic behaviour of Valve's CEC daemon (cecd)
 
 APP_NAME = "HDMI CEC Manager"
 APP_ID = "bc250-hdmi-cec"
-__version__ = "0.1.13"
+__version__ = "0.2.0"
 
 from pathlib import Path
 

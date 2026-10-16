@@ -1,3 +1,9 @@
+Changelog: 16-10-2026 05:54:31
+
+Added. Step 1 ticks every app that needs a release by itself, when the window opens and on each reload; Tick what
+needs a release still ticks them all again. Refresh keeps your own ticks and unticks, and ticks an app that needs a
+release only since the last refresh. A core that already holds its changes stays unticked, as before.
+
 Changelog: 15-10-2026 23:22:38
 
 Added. Semantic versioning (owner's decision, 15-10-2026): the version step 1 offers first follows the CHANGELOG

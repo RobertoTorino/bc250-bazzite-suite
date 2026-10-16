@@ -12,8 +12,8 @@ from bazzite_datstation.versions_page import entry_html, series_html
 
 def test_every_shipped_file_loads():
     totals = {page.file: count(load_page(page)) for page in PAGES}
-    assert totals == {"ps6_systemsoftware.json": 1, "ps5_systemsoftware.json": 69,
-                      "psportal_systemsoftware.json": 14, "ps4_systemsoftware.json": 96,
+    assert totals == {"ps6_systemsoftware.json": 1, "ps5_systemsoftware.json": 71,
+                      "psportal_systemsoftware.json": 16, "ps4_systemsoftware.json": 97,
                       "ps3_systemsoftware.json": 81, "psvita_systemsoftware.json": 54,
                       "psp_systemsoftware.json": 61, "ps2_systemsoftware.json": 208, "ps1_systemsoftware.json": 46}
     ps1 = load_page(PAGES[-1])
@@ -23,7 +23,7 @@ def test_every_shipped_file_loads():
     assert [name for name, _ in first.specs] == ["Region Free", "CD-R Copies", "A/V Direct Out", "Parallel Port",
                                                  "Serial Port"]
     ps5 = load_page(PAGES[1])
-    assert len(ps5) == 1 and ps5[0].name == "" and ps5[0].entries[0].release_date.startswith("August")
+    assert len(ps5) == 1 and ps5[0].name == "" and ps5[0].entries[0].release_date.startswith("October")
 
 
 def test_the_three_shapes_and_bad_files(tmp_path):

@@ -101,7 +101,7 @@ def test_the_logo_opens_the_wiki(window, monkeypatch):
 
 def test_the_tiles_icon_hover_and_press(window):
     style = window.cards["governor"].icon.styleSheet()
-    assert "hover:enabled { background:#D9FAF7F0; }" in style               # off-white, visible on the dark theme
+    assert "hover:enabled { background:#D9D1C4E9; }" in style               # light purple, visible on the dark theme
     assert "pressed:enabled" in style and "padding-top:2px" in style        # the icon sinks while pressed
 
 

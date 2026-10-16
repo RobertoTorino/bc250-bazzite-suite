@@ -42,9 +42,9 @@ the venv, the launcher and the menu entry, and keeps your settings and scores; `
 removes those too.
 
 **Steam Game Mode:** in the app, open the **Menu** beside the title and choose **Add to Steam**. It adds the app
-as a non-Steam game for every Steam user on the board, with artwork, and the title line shows **In Steam**. Steam
-closes while its shortcut file changes and starts again afterwards, so do this from Desktop Mode; from Game Mode
-the app asks you to switch. **Remove from Steam** takes it out again, artwork included.
+as a non-Steam game for every Steam user on the board, with artwork drawn from the app's icon, and the title line
+shows **In Steam**. Steam closes while its shortcut file changes and starts again afterwards, so do this from Desktop
+Mode; from Game Mode the app asks you to switch. **Remove from Steam** takes it out again, artwork included.
 
 ## Using it
 

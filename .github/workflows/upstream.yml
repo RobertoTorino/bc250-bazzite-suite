@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 name: Upstream
 
-# Weekly: is Decky Loader Manager still in step with Decky Loader (tools/check_upstream.py)? A failed run means
-# Decky moved: a newer release, a replaced asset or a changed service unit; the run's summary says which. It only
-# reads from GitHub; nothing is changed or published.
+# Weekly: are the apps that pin an upstream release still in step with it (tools/check_upstream.py)? A failed job
+# means that upstream moved: for Decky Loader a newer release, a replaced asset or a changed service unit, for shadPS4
+# a newer release (the summary gives its zip and SHA-256) or a replaced zip. It only reads from GitHub; nothing is
+# changed or published.
 
 on:
   schedule:
@@ -19,6 +20,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Decky Loader against the pin in apps/decky-manager
-        run: python3 tools/check_upstream.py
+        run: python3 tools/check_upstream.py decky
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  shadps4:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: shadPS4 against the pin in apps/shadps4-manager
+        run: python3 tools/check_upstream.py shadps4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

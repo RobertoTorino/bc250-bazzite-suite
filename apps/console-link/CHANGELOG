@@ -1,3 +1,24 @@
+Changelog: 16-10-2026 06:02:49
+
+Release 1.1.0.
+
+Changelog: 16-10-2026 05:03:33
+
+Added. The app takes the gold of its icon (owner, 16-10-2026), in a new style.py: the header's boxes and the
+Settings box are a dark gold (#86650F, white text at 5.4:1) in place of the blue, and the main buttons' outline, the
+selected console card and the controller test's dots are the icon's bright gold (#D09F0C) in place of core's purple
+and the blue.
+
+Changelog: 16-10-2026 04:36:28
+
+Added. A console's Steam shortcut has artwork drawn from the app's icon (images/bc250-console-link.png, 512 px) by
+core's steam_art, in place of the pictures in images/steam/, which are gone (owner, 16-10-2026): the cards follow
+the icon by themselves. The background is near black in the icon's own colour, with a glow of that colour behind the
+icon. The portrait and the wide picture have the icon, the console's name and its model; the banner has the name and
+"CONSOLE LINK · <model>" centred, as a game's banner has its title, and the icon itself is the logo Steam lays over
+it at the bottom left. Without the icon the background is dark blue and the logo is the console's name. The tests
+cover the sizes, the icon as the logo and the missing icon; core's tests the rest.
+
 Changelog: 15-10-2026 23:29:43
 
 Release 1.0.10.

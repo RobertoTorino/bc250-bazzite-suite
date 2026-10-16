@@ -203,9 +203,9 @@ apps/suite-releases/install.sh --uninstall             # remove them; the checko
 
 - **1. Apps:** the **Needs release** column marks in orange every app that ships something new since its last
   tag: a changed file in its folder (tests and `requirements-dev.txt` do not count), in the core it bundles, or in
-  its manual chapter, committed or not. Hover it for the files; **Tick what needs a release** ticks those apps.
-  Step 2 says the same for the portal. Tick the apps to release and enter their version. The version offered first
-  follows [semantic versioning](development/architecture.md#versions-changelogs-and-releases) from the CHANGELOG
+  its manual chapter, committed or not. Hover it for the files. Step 2 says the same for the portal. Those apps are
+  ticked when the window opens; untick what waits (**Tick what needs a release** ticks them all again) and enter the
+  versions. The version offered first follows [semantic versioning](development/architecture.md#versions-changelogs-and-releases) from the CHANGELOG
   entries since the last tag (`Breaking.` major, `Added.` minor, `Fixed.` patch); its tooltip says why. A version
   that was never tagged (the first release) can be released as it is. **Apply** writes `VERSION`, every copy `tools/check_versions.py` checks and a
   `Release x.y.z.` CHANGELOG entry with your notes, which become the release notes on GitHub. The release notes

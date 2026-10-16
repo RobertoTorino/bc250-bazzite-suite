@@ -1,3 +1,13 @@
+Changelog: 16-10-2026 04:52:58
+
+Added. steam_art.draw_icon_art(): the four pictures of a Steam shortcut drawn from an app's icon, for apps with no
+pictures of their own. The background is near black in the icon's own colour (the mean of its bright, saturated
+pixels), lighter towards the middle, with a glow of that colour; the portrait and the wide picture have the icon, a
+title and a line under it, the banner the title and its own line centred, and the icon file itself is the logo. A
+long title wraps and shrinks to fit. Without the icon the background is dark blue and the title is the logo. Moved
+from Console Link, which drew it first; Console Link, the PCSX2 Manager and Bazzite DatStation use it. Tests: Steam's
+sizes, the icon as the logo, the colour taken from the icon, a long title and no icon.
+
 Changelog: 15-10-2026 22:35:35
 
 steam.write_shortcuts: a shortcut that is renamed gets a new Steam number (from its program and name), so the

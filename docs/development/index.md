@@ -111,8 +111,15 @@ SHA-256 GitHub publishes for the pinned binary, and Decky's `plugin_loader-relea
 could not check. The Upstream workflow (`.github/workflows/upstream.yml`) runs it every Monday and can be started by
 hand; a failed run means a new version of the app is due, with the new pin tried on the board first.
 
+The shadPS4 Manager installs one shadPS4 release, pinned in `apps/shadps4-manager/bc250_shadps4_manager/emulator.py`
+(`VERSION`, `TAG`, `ASSET`, `SHA256`). The same tool checks it: a newer stable release, with the Linux zip and the
+SHA-256 GitHub publishes for it that a new pin needs, and the SHA-256 of the pinned zip. A new shadPS4 can change
+what the app relies on (its `config.json`, the shadNet protocol), so a new pin also needs a look at what changed.
+The workflow runs the two checks as two jobs.
+
 ```bash
-python3 tools/check_upstream.py
+python3 tools/check_upstream.py            # both
+python3 tools/check_upstream.py shadps4    # one: decky or shadps4
 ```
 
 ## bc250_core
@@ -130,6 +137,8 @@ Code shared by the suite's apps. Nothing in it imports an app: each app passes i
 | `help` | `HelpView` (the content stays in the app) | helixsr |
 | `updates` | `latest_release()` (with a tag prefix for the suite's per-app tags), `UpdateStatus`, `UpdateChecker` (any job, off the GUI thread) | helixsr + governor |
 | `platform` | XDG folders, `xdg_open()`, `launch_in_terminal()` (with an exit file the caller can watch) | the bisect GUIs' `terminal.py` |
+| `steam` | Steam's folders and users, `with_steam_closed()`, `shortcuts.vdf` and the shortcuts' artwork in `grid/` (standard library only) | console-link |
+| `steam_art` | `draw_icon_art()`: a shortcut's four pictures drawn from an app's icon, in the icon's colour | console-link |
 
 Core is **bundled per app**: `tools/stage_app.py` copies `bc250_core/` next to the package of every app that
 imports it, so each release runs on the core it was tested with.

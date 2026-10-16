@@ -143,8 +143,8 @@ wrong account ID is reported in the log at the bottom.
   time to that game; time on the home screen is not counted. Streams from the Game Mode shortcut count too; play on
   the console itself does not. **Clear history** forgets it all.
 - **Add to Game Mode:** a Steam shortcut for the selected console, so it can be played from Bazzite's Game Mode
-  like a game: it is in the library under **Non-Steam**, with the app's artwork and the console's name and model
-  on it. Starting it wakes the console when it is in rest mode and streams it full screen; **Exit game** in
+  like a game: it is in the library under **Non-Steam**, with artwork drawn from the app's icon and the console's
+  name and model on it. Starting it wakes the console when it is in rest mode and streams it full screen; **Exit game** in
   Steam's menu ends it. Steam has to close for the change: the app asks, closes it and starts it again. After a
   change of the console's name, press **Update in Game Mode**. It needs the app installed through the portal (the
   shortcut runs `~/.local/bin/bc250-console-link`). From a terminal, `bc250-console-link --stream <console>` does

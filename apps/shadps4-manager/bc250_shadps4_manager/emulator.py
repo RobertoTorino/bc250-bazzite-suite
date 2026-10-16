@@ -30,10 +30,10 @@ from bc250_core.updates import Fetch, ReleaseInfo, github_fetch, latest_release,
 
 from . import APP_ID, __version__
 
-VERSION = "0.19.0"
-TAG = "v.0.19.0"                        # shadPS4 tags its releases "v.0.19.0"
-ASSET = "shadps4-linux-sdl-0.19.0.zip"
-SHA256 = "a6e3b83fd6c9ea7b29c37e77e1aa687802d4ecd98c2ea794ca9e1d97b24a0cf9"
+VERSION = "0.20.0"
+TAG = "v.0.20.0"                        # shadPS4 tags its releases "v.0.20.0"
+ASSET = "shadps4-linux-sdl-0.20.0.zip"
+SHA256 = "be25d0324cd7b74068d32cdb66fa1b7b1e7bb499b062be51c7006d27d41d4255"
 SIZE_MB = 31                            # the zip, for the question before downloading
 MEMBER = "Shadps4-sdl.AppImage"         # the only file in the zip
 REPO = "shadps4-emu/shadPS4"
@@ -60,7 +60,7 @@ def appimage(home: Path) -> Path:
 
 
 def installed_version(home: Path) -> str:
-    """The installed shadPS4 version ("0.19.0"), "" when none is."""
+    """The installed shadPS4 version ("0.20.0"), "" when none is."""
     current = home / "current"
     if not (current / MEMBER).is_file():
         return ""

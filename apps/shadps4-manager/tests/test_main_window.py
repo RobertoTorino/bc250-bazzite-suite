@@ -314,18 +314,18 @@ def test_the_nightly_channel_says_when_a_newer_build_is_out(qapp, folders):
     assert window.install_button.isEnabled()
     # The newer-stable notice belongs to the stable channel only.
     from bc250_core.updates import ReleaseInfo
-    window.newer = ReleaseInfo("0.20.0", "v.0.20.0", "https://github.com/x/v.0.20.0", "2026-11-20")
+    window.newer = ReleaseInfo("0.21.0", "v.0.21.0", "https://github.com/x/v.0.21.0", "2026-11-20")
     window._show_state()
     assert "is out" not in window.emulator_state.text()
     window.nightly_check.setChecked(False)
-    assert "shadPS4 0.20.0 is out" in window.emulator_state.text()
+    assert "shadPS4 0.21.0 is out" in window.emulator_state.text()
     window.close()
 
 
 def test_a_newer_shadps4_is_mentioned(qapp, folders):
     from bc250_core.updates import ReleaseInfo
     _install(folders["home"])
-    release = ReleaseInfo("0.20.0", "v.0.20.0", "https://github.com/shadps4-emu/shadPS4/releases/tag/v.0.20.0",
+    release = ReleaseInfo("0.21.0", "v.0.21.0", "https://github.com/shadps4-emu/shadPS4/releases/tag/v.0.21.0",
                           "2026-11-20")
     window = _window(folders, newer_release=lambda: release)
     deadline = time.monotonic() + 10
@@ -333,7 +333,7 @@ def test_a_newer_shadps4_is_mentioned(qapp, folders):
         qapp.processEvents()
         time.sleep(0.01)
     text = window.emulator_state.text()
-    assert "shadPS4 0.20.0 is out (2026-11-20)" in text and "releases/tag/v.0.20.0" in text
+    assert "shadPS4 0.21.0 is out (2026-11-20)" in text and "releases/tag/v.0.21.0" in text
     assert window.install_button.isEnabled() is False                              # it never installs that one
     window.close()
 

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The app's look: one blue, #006FCD (the owner's choice, 14-10-2026), on core's widgets. The style sheet goes on the
-main window, so everything in it takes the blue and the rest of the suite keeps core's purple."""
+"""The app's look: one blue, #0A55B0, the blue of the app's icon (owner, 16-10-2026), on core's widgets. The style
+sheet goes on the main window, so everything in it takes the blue and the rest of the suite keeps core's purple."""
 
 from __future__ import annotations
 
@@ -8,12 +8,12 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QPalette
 from PyQt6.QtWidgets import QLabel, QPushButton, QWidget
 
-BLUE = "#006FCD"
-BLUE_HOVER = "#1A85E0"
-BLUE_PRESSED = "#00589F"
-BLUE_TINT = "#1A006FCD"                 # #AARRGGBB: 10 % blue, for hover and every other table row
-BLUE_LINE = "#59006FCD"                 # 35 % blue, for outlines
-LINK_ON_DARK = "#4DA3EF"                # #006FCD is too dark to read as a link on a dark window
+BLUE = "#0A55B0"
+BLUE_HOVER = "#2A6CC4"
+BLUE_PRESSED = "#08448D"
+BLUE_TINT = "#1A0A55B0"                 # #AARRGGBB: 10 % blue, for hover and every other table row
+BLUE_LINE = "#590A55B0"                 # 35 % blue, for outlines
+LINK_ON_DARK = "#5B93DA"                # #0A55B0 is too dark to read as a link on a dark window
 DISABLED = "#80808080"                  # 50 % grey: a disabled button, readable as such on light and dark
 
 STYLESHEET = f"""

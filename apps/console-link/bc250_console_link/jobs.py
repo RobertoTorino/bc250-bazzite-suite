@@ -333,12 +333,8 @@ def steam_guide_focus(on: bool, steam: Path, **kwargs) -> Outcome:
     return Outcome(True, f"Steam {what} on the PS button.{again}", on)
 
 
-STEAM_PICTURES = LOGO_PATH.parent / "steam"            # the app's own pictures for the shortcut, where it has them
-
-
 def steam_shortcut(console: RegisteredConsole, steam: Path, remove: bool = False,
-                   launcher: Path | None = None, logo: Path = LOGO_PATH, pictures: Path = STEAM_PICTURES,
-                   **kwargs) -> Outcome:
+                   launcher: Path | None = None, logo: Path = LOGO_PATH, **kwargs) -> Outcome:
     """The console's Steam shortcut for Game Mode, added (or brought up to date) or removed; Steam restarts when it
     was running."""
     launcher = launcher or Path(steam_shortcuts.LAUNCHER).expanduser()
@@ -346,7 +342,7 @@ def steam_shortcut(console: RegisteredConsole, steam: Path, remove: bool = False
         return Outcome(False, f"The shortcut runs {launcher}, which is not there: install Console Link through "
                               "the portal first.")
     name = steam_shortcuts.shortcut_name(console)
-    art = {} if remove else steam_shortcuts.draw_art(console, logo, pictures)
+    art = {} if remove else steam_shortcuts.draw_art(console, logo)
     try:
         restarted = steam_settings.with_steam_closed(
             lambda: steam_shortcuts.write_shortcut(steam, console, launcher, logo, art, remove), **kwargs)

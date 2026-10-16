@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (QComboBox, QDialog, QGridLayout, QGroupBox, QHBoxLa
 
 from bc250_core.widgets import hint_label
 
-from . import APP_NAME, gamepad, genuine
+from . import APP_NAME, gamepad, genuine, style
 from .gamepad import PadInfo, Reading
 
 REFRESH_MS = 30
@@ -62,7 +62,7 @@ class StickView(QWidget):
         painter.drawEllipse(centre, r, r)
         painter.drawEllipse(centre, r * DRIFT, r * DRIFT)
         x, y = (v / 32768 for v in self.position)
-        painter.setBrush(QColor("#1565c0"))
+        painter.setBrush(QColor(style.GOLD_BRIGHT))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.drawEllipse(QPointF(centre.x() + x * r, centre.y() + y * r), 6, 6)
 
@@ -86,7 +86,7 @@ class TouchView(QWidget):
         area = QRectF(2, 2, self.width() - 4, self.height() - 4)
         painter.setPen(QPen(self.palette().mid().color(), 1))
         painter.drawRoundedRect(area, 6, 6)
-        painter.setBrush(QColor("#1565c0"))
+        painter.setBrush(QColor(style.GOLD_BRIGHT))
         painter.setPen(Qt.PenStyle.NoPen)
         for x, y in self.fingers:
             painter.drawEllipse(QPointF(area.x() + x * area.width(), area.y() + y * area.height()), 7, 7)
@@ -261,9 +261,9 @@ class ControllerTest(QDialog):
         seen = self.seen.setdefault(pad_id, set())
         seen.update(b for b in reading.buttons if b in self.button_labels)
         for button, label in self.button_labels.items():
-            style = PRESSED if button in reading.buttons else (SEEN if button in seen else UNSEEN)
-            if label.styleSheet() != style:
-                label.setStyleSheet(style)
+            sheet = PRESSED if button in reading.buttons else (SEEN if button in seen else UNSEEN)
+            if label.styleSheet() != sheet:
+                label.setStyleSheet(sheet)
         self.seen_label.setText(f"{len(seen)} of {len(self.button_labels)} buttons pressed at least once.")
         lx, ly, rx, ry, l2, r2 = reading.axes
         self.left_view.set_position(lx, ly)

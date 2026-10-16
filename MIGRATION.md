@@ -506,8 +506,8 @@ Bazzite's).
   from Game Mode (the shortcut, full screen, Exit game), the artwork in Steam, whether Steam's environment for a
   non-Steam game (its library path, its overlay) disturbs the AppImage, as it did Console Link's Qt; then the presets.
   Released as `shadps4-v0.1.0`. Renamed (owner, 14-10-2026) to `shadps4-manager` (package
-  `bc250_shadps4_manager`) and moved to Gaming; the app's own blue #006FCD (owner). Release (owner): the next
-  version as `shadps4-manager-v<x.y.z>` and a portal minor bump (the key changed); until then `apps.toml` pins
+  `bc250_shadps4_manager`) and moved to Gaming; the app's own blue, since 16-10-2026 the icon's #0A55B0 (owner).
+  Release (owner): the next version as `shadps4-manager-v<x.y.z>` and a portal minor bump (the key changed); until then `apps.toml` pins
   `shadps4-manager-v0.1.0` without sha256. A board with the old install shows it as installed, version unknown,
   until it is installed again from the portal.
   shadNet (owner, 14-10-2026: the client side, not a server of our own). shadNet 0.1.0 is a server; shadPS4 0.19.0
@@ -562,6 +562,9 @@ Bazzite's).
   (Mondays, and by hand), fails when Decky moved: a newer stable release, a replaced PluginLoader, or a changed
   release unit at the pinned tag or on main. A move is a new decky-manager version with the new pin, tried on the
   board first. Decky updating itself on a board stays allowed (owner): the app shows it and leaves it.
+  shadPS4 too (owner, 16-10-2026): the same tool and workflow (a job of its own) check the shadps4-manager pin: a
+  newer stable release, with its Linux zip and SHA-256 for the new pin, or a replaced zip. Moving the pin also needs
+  a look at what changed in shadPS4 (0.20.0 moved shadNet's settings); the board test and release stay the owner's.
 - **PS3 emulator manager (built 14-10-2026 as rpcs3-manager, RPCS3 Manager).** Owner's request: the
   shadPS4 Manager's implementation for RPCS3. Built the same way, same window, wrapper and installer; choices made
   in building it, the owner's to confirm or change: `development = true` first (as shadps4 was), the indigo
@@ -619,8 +622,9 @@ Bazzite's).
   the same single member `Shadps4-sdl.AppImage`; a downloaded nightly zip matched its digest), and the owner decided
   15-10-2026 to build it there too: shadps4-manager has the same box (the stable flow unchanged, shown by its
   tests and installer test; open: a version bump, a board test and the release, owner). Also found 15-10-2026:
-  shadPS4 released 0.20.0 on 14-10-2026, so the shadps4-manager pin (0.19.0) has a newer stable; moving it is a
-  release task (owner).
+  shadPS4 released 0.20.0 on 14-10-2026, so the shadps4-manager pin (0.19.0) has a newer stable. The pin was
+  moved to 0.20.0 on 16-10-2026 (its config.json keeps shadNet's settings in a new Network section, which the app
+  now follows; the rest it relies on compared unchanged); open: a board test, a version bump and the release (owner).
 - **Windows: a cut-down portal on Nagi (on hold, owner 15-10-2026).** Nagi (`github.com/D-Ogi/amdgpu-wddm`, also
   amdgpu-wddm) is a WDDM driver for Windows 11 written for the BC-250: AMD's amdgpu code in the kernel driver, RADV,
   DXVK and vkd3d-proton behind the Windows runtimes; D3D12 (12_1, DXR), D3D11, D3D9 through D3D9On12 and Vulkan run.

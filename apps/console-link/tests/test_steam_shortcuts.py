@@ -87,24 +87,19 @@ def test_a_first_shortcut_and_no_users(tmp_path):
 def test_artwork(qapp):
     from PyQt6.QtGui import QImage
     art = ss.draw_art(PS4, LOGO_PATH)
+    assert art["_logo"] == LOGO_PATH.read_bytes()                             # the icon itself, laid over the banner
     for suffix, (width, height) in ss.ART.items():
-        image = QImage.fromData(art[suffix], "PNG")
-        assert (image.width(), image.height()) == (width, height), suffix
+        if suffix != "_logo":
+            image = QImage.fromData(art[suffix], "PNG")
+            assert (image.width(), image.height()) == (width, height), suffix
 
 
-def test_the_apps_own_pictures_are_used(qapp, tmp_path):
-    from PyQt6.QtGui import QColor, QImage
-    (tmp_path / "hero.png").write_bytes(b"OWN HERO")
-    own = QImage(1200, 1800, QImage.Format.Format_ARGB32)
-    own.fill(QColor("#ff0000"))
-    own.save(str(tmp_path / "portrait.png"))
-    art = ss.draw_art(PS4, LOGO_PATH, tmp_path)
-    assert art["_hero"] == b"OWN HERO"                                        # as it is: the logo goes over it
-    portrait = QImage.fromData(art["p"], "PNG")
-    assert (portrait.width(), portrait.height()) == (1200, 1800)              # its own size, kept
-    assert portrait.pixelColor(10, 10).name() == "#ff0000"                     # the picture itself, untouched
-    assert portrait.pixelColor(10, 1790).red() < 200                          # the dark band with the name
-    assert QImage.fromData(art[""], "PNG").size().width() == 920              # the wide one drawn
+def test_artwork_without_the_icon(qapp, tmp_path):
+    from PyQt6.QtGui import QImage
+    art = ss.draw_art(PS4, tmp_path / "none.png")
+    logo = QImage.fromData(art["_logo"], "PNG")                               # the console's name instead
+    assert (logo.width(), logo.height()) == ss.ART["_logo"] and logo.pixelColor(0, 0).alpha() == 0
+    assert QImage.fromData(art["p"], "PNG").width() == ss.ART["p"][0]
 
 
 def test_the_job_closes_steam_for_it(qapp, tmp_path):

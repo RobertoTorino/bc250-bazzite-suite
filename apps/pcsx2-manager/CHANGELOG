@@ -1,3 +1,14 @@
+Changelog: 16-10-2026 06:02:49
+
+Release 0.2.0.
+
+Changelog: 16-10-2026 04:52:58
+
+Added. A game's Steam artwork is drawn from the app's icon by core's steam_art (owner, 16-10-2026), where it was the
+title and "PCSX2 Manager" on a fixed dark background: a background in the icon's colour, the icon with the game's
+title and "PS2 · PCSX2 Manager" on the portrait and the wide picture, the title centred on the banner, and the icon
+as the logo Steam lays over the banner. A long title wraps and shrinks to fit.
+
 Changelog: 16-10-2026 01:19:38
 
 Release 0.1.1.

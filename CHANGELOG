@@ -1,3 +1,18 @@
+Changelog: 16-10-2026 04:52:58
+
+The wiki's Architecture and consistency chapter has a section on Steam shortcuts and their artwork, with a table of
+what each app's Steam card shows: drawn from the app's icon by core's new steam_art (Console Link, the PCSX2 Manager,
+Bazzite DatStation) or the game's own pictures (the shadPS4, RPCS3 and PPSSPP Managers). The Development chapter's
+table of core's modules lists steam and steam_art.
+
+Changelog: 16-10-2026 04:21:23
+
+tools/check_upstream.py checks the shadPS4 Manager's pin as well as Decky Loader's: a newer stable shadPS4 release,
+reported with its Linux zip and the SHA-256 GitHub publishes for it (what a new pin needs), and a replaced pinned zip.
+It reads the pin from emulator.py without importing the app. `check_upstream.py decky` or `shadps4` checks one, with
+no name both; the Upstream workflow runs them as two jobs every Monday. The tests cover shadPS4 on a fake GitHub;
+the development chapter of the wiki and MIGRATION.md describe it.
+
 Changelog: 16-10-2026 03:14:57
 
 The tools tests' requirements (tools/requirements-dev.txt) include Pillow: the check that the wiki's icon shows the

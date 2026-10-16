@@ -1,3 +1,22 @@
+Changelog: 16-10-2026 06:02:49
+
+Release 0.2.0.
+
+Changelog: 16-10-2026 05:03:33
+
+Added. The app's blue is the blue of its icon (owner, 16-10-2026): #0A55B0 in place of #006FCD, with its hover,
+pressed, tint and outline shades and a lighter link colour on a dark window (#5B93DA) to match.
+
+Changelog: 16-10-2026 04:11:04
+
+Added. The app installs shadPS4 0.20.0 (14-10-2026), the newest stable release, in place of 0.19.0: Install brings
+it where 0.19.0 is installed. The zip is checked against the SHA-256 GitHub publishes for it and still holds the one
+Shadps4-sdl.AppImage. shadPS4 0.20.0 keeps shadNet's settings in a Network section of config.json and no longer
+reads them from General once that section is there, so the app reads and writes them in Network when config.json
+has one, and in General as before when it has not (0.19.0, or a config 0.20.0 has not saved yet). The rest of what
+the app relies on is unchanged from 0.19.0: shadNet's protocol 1 and its sign-in messages, the log lines the app
+reads, the default server, the system modules shadPS4 needs and the game folder names.
+
 Changelog: 15-10-2026 23:29:43
 
 Release 0.1.6.

@@ -101,8 +101,8 @@ class AppsPage(QWidget):
         self.output = Terminal()
         lay = QVBoxLayout(self)
         lay.addWidget(hint_label(
-            "Tick the apps to release and enter their version: a never-tagged version can be released as it is. "
-            "Apply writes VERSION, its copies (__version__, VERSION=, pyproject, Cargo.toml and Cargo.lock) and a "
+            "The apps that need a release are ticked; untick what waits and enter their version: a never-tagged "
+            "version can be released as it is. Apply writes VERSION, its copies (__version__, VERSION=, pyproject, Cargo.toml and Cargo.lock) and a "
             "\"Release x.y.z.\" CHANGELOG entry with the notes, which become the release notes on GitHub. Core is "
             "bundled with the "
             "apps and gets a version only, no tag. <b>Needs release</b> (orange): something the app ships (its "
@@ -127,6 +127,8 @@ class AppsPage(QWidget):
                 tick.setEnabled(False)
                 tick.setToolTip(f"Core {unit.version} already holds every change since its last version; the app "
                                 "releases carry it as it is")
+            else:
+                tick.setChecked(unit.needs_release)         # ticked from the start; untick what waits
             self.table.setCellWidget(i, 0, tick)
             reason = unit.release_reason
             if unit.needs_release and unit.last_tag and not unit.released:
@@ -150,16 +152,18 @@ class AppsPage(QWidget):
             self.table.setCellWidget(i, 6, notes)
             self.rows.append((unit, tick, combo, notes))
 
-    def typed(self) -> dict[str, tuple[bool, str | None, str]]:
-        """What was entered per app: the tick, a version only if it differs from the one offered, the notes."""
+    def typed(self) -> dict[str, tuple[bool, str | None, str, bool]]:
+        """What was entered per app: the tick, a version only if it differs from the one offered, the notes; and
+        whether it needed a release then."""
         return {unit.key: (tick.isChecked(), None if combo.currentText() == combo.itemText(0) else combo.currentText(),
-                           notes.text()) for unit, tick, combo, notes in self.rows}
+                           notes.text(), unit.needs_release) for unit, tick, combo, notes in self.rows}
 
-    def restore(self, typed: dict[str, tuple[bool, str | None, str]]) -> None:
+    def restore(self, typed: dict[str, tuple[bool, str | None, str, bool]]) -> None:
+        """Puts back what was entered; an app that needs a release only since then is ticked, as fill() does."""
         for unit, tick, combo, notes in self.rows:
             if unit.key in typed:
-                checked, version, text = typed[unit.key]
-                tick.setChecked(checked)
+                checked, version, text, needed = typed[unit.key]
+                tick.setChecked(checked or (unit.needs_release and not needed and tick.isEnabled()))
                 if version is not None:
                     combo.setEditText(version)
                 notes.setText(text)

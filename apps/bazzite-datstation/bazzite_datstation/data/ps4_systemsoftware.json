@@ -1,5 +1,12 @@
 [
   {
+    "version": "System Software Version 14.00",
+    "releaseDate": "September 16, 2026",
+    "notes": [
+      "We’ve improved system software performance and stability."
+    ]
+  },
+  {
     "version": "System Software Version 13.52",
     "releaseDate": "June 17, 2026",
     "notes": [

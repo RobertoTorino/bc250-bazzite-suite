@@ -5,8 +5,8 @@ the game does).
 
 The file and its format are core's (bc250_core.steam). The shortcut runs the wrapper, not the AppImage, so its
 Steam number (from the program and the name) stays the same when the app brings another PCSX2. A PS2 disc carries
-no pictures, so the artwork is drawn: the game's title and the app's name on a dark background (the owner's images
-come later)."""
+no pictures, so the artwork is drawn from the app's icon by core's steam_art (owner, 16-10-2026): a background in
+the icon's colour, the icon and the game's title."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ import shlex
 from collections.abc import Iterable
 from pathlib import Path
 
-from bc250_core import steam
+from bc250_core import steam, steam_art
 
 from .games import Game
 
@@ -82,7 +82,7 @@ def changes(add: Iterable[Game], remove: Iterable[Game], run: Path, logo: Path, 
     so its artwork, numbered by the name, goes too."""
     add, remove = list(add), list(remove)
     named = names(add)
-    result = [steam.Change(entry(g, named[g.file], run, logo), for_game(g), draw_art(g) if art else {})
+    result = [steam.Change(entry(g, named[g.file], run, logo), for_game(g), draw_art(g, logo) if art else {})
               for g in add]
     result += [steam.Change(entry(g, existing.get(str(g.file), g.title), run, logo), for_game(g), remove=True)
                for g in remove]
@@ -91,44 +91,7 @@ def changes(add: Iterable[Game], remove: Iterable[Game], run: Path, logo: Path, 
 
 # --- The artwork -----------------------------------------------------------------------------------------------
 
-def draw_art(game: Game) -> dict[str, bytes]:
-    """The portrait, the wide picture and the banner as PNG bytes: the game's title and "PCSX2 Manager" on a dark
-    background. The owner decides the real artwork later; a PS2 disc gives none of its own."""
-    from PyQt6.QtCore import QRectF, Qt
-    from PyQt6.QtGui import QColor, QFont, QImage, QLinearGradient, QPainter
-
-    images = {}
-    for suffix in ("p", "", "_hero"):
-        width, height = steam.ART[suffix]
-        image = QImage(width, height, QImage.Format.Format_ARGB32)
-        painter = QPainter(image)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        gradient = QLinearGradient(0, 0, 0, height)
-        gradient.setColorAt(0, QColor("#0b3540"))
-        gradient.setColorAt(1, QColor("#04111a"))
-        painter.fillRect(0, 0, width, height, gradient)
-        font = QFont()
-        font.setBold(True)
-        painter.setPen(QColor("#ffffff"))
-        if suffix != "_hero":
-            font.setPixelSize(int(width * (0.08 if suffix == "p" else 0.05)))
-            painter.setFont(font)
-            painter.drawText(QRectF(width * 0.05, height * 0.2, width * 0.9, height * 0.5),
-                             Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap, game.title)
-        font.setPixelSize(int(height * (0.045 if suffix == "p" else 0.08)))
-        painter.setFont(font)
-        painter.setPen(QColor(255, 255, 255, 180))
-        painter.drawText(QRectF(0, height * 0.78, width, height * 0.15), Qt.AlignmentFlag.AlignCenter,
-                         "PCSX2 Manager")
-        painter.end()
-        images[suffix] = _png(image)
-    return images
-
-
-def _png(image) -> bytes:
-    from PyQt6.QtCore import QBuffer, QByteArray, QIODevice
-    data = QByteArray()
-    buffer = QBuffer(data)
-    buffer.open(QIODevice.OpenModeFlag.WriteOnly)
-    image.save(buffer, "PNG")
-    return bytes(data)
+def draw_art(game: Game, logo: Path) -> dict[str, bytes]:
+    """The four images as PNG bytes, drawn from the app's icon (*logo*) by core's steam_art: a PS2 disc gives no
+    pictures, so the icon with the game's title, and the icon as the logo on the banner."""
+    return steam_art.draw_icon_art(logo, game.title, f"{TAGS[0]} · {TAGS[1]}", f"{TAGS[1].upper()} · {TAGS[0]}")

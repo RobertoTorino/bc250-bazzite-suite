@@ -299,7 +299,7 @@ def test_window_reads_new_tags_when_step_2_opens(window, repo):
 
 def test_window_refresh_reads_changes_and_keeps_what_was_typed(window, repo):
     _, tick, combo, notes = row(window, "alpha")
-    tick.setChecked(True)
+    row(window, "beta")[1].setChecked(False)                  # ticked by fill(); unticked: it waits
     combo.setEditText("0.2.0")
     notes.setText("Fixes.")
     window.portal_page.portal_notes.setText("Pins.")
@@ -310,7 +310,7 @@ def test_window_refresh_reads_changes_and_keeps_what_was_typed(window, repo):
     _, tick, combo, notes = row(window, "alpha")
     assert (tick.isChecked(), combo.currentText(), notes.text()) == (True, "0.2.0", "Fixes.")
     _, btick, bcombo, _ = row(window, "beta")
-    assert not btick.isChecked() and bcombo.currentText() == "0.1.1"   # not typed: what is offered now
+    assert not btick.isChecked() and bcombo.currentText() == "0.1.1"   # the untick kept; the version offered now
     assert window.portal_page.portal_notes.text() == "Pins."
 
 
@@ -389,7 +389,20 @@ def test_window_offers_a_current_core_as_it_is(window, repo):
     assert combo.itemText(0) == "0.1.1" and tick.isEnabled()                      # the next version, to tick
 
 
+def test_window_ticks_what_needs_a_release_from_the_start(window, repo):
+    ticked = lambda: [u.key for u, tick, _, _ in window.apps_page.rows if tick.isChecked()]   # noqa: E731
+    assert ticked() == ["alpha", "beta"]                      # no click needed
+    row(window, "alpha")[1].setChecked(False)
+    write(repo / "apps/standalone/extra.py", "x = 1\n")      # needs a release only since the window filled
+    window.refresh()
+    assert ticked() == ["beta", "standalone"]                 # the untick kept, the new one ticked
+    window.reload()
+    assert ticked() == ["alpha", "beta", "standalone"]        # a reload without restore: what needs a release
+
+
 def test_window_ticks_what_needs_a_release(window, repo):
+    for _, tick, _, _ in window.apps_page.rows:
+        tick.setChecked(False)
     window.apps_page.tick_needed()
     ticked = [u.key for u, tick, _, _ in window.apps_page.rows if tick.isChecked()]
     assert ticked == ["alpha", "beta"]

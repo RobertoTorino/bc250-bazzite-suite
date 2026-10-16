@@ -26,12 +26,11 @@ from bc250_core import SUITE_MANUAL_URL
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import config_home
 from bc250_core.settings import SettingsStore
-from bc250_core.theme import ACCENT
 from bc250_core.updates import UpdateChecker
-from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, accent_button, hint_label
+from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, hint_label
 
 from . import (APP_ID, APP_NAME, INFO, LOGO_PATH, __version__, jobs, privacy, psn, steam_settings, steam_shortcuts,
-               stream_stats)
+               stream_stats, style)
 from .consoles import ConsoleStore, RegisteredConsole, parse_account_id, parse_login_pin, parse_pin
 from .discovery import Console
 from .jobs import Outcome
@@ -43,7 +42,6 @@ from .stream_view import StreamWindow
 from .target import rp_version, software_version
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/console-link/"
-DARK_BLUE = "#0d47a1"
 FIELD = "#ffffff"                                       # the search fields: light in either colour scheme
 FIELD_TEXT = "#202124"
 FIELD_BUTTON = "#e3e3e8"
@@ -123,8 +121,8 @@ class AccountDialog(QDialog):
         clipboard.dataChanged.connect(self._clipboard)
         self.setWindowTitle(f"{APP_NAME}: find your account ID")
         self.url = psn.login_url()
-        open_button = accent_button("Open the PlayStation sign-in",
-                                    "Opens the PlayStation sign-in page in your browser")
+        open_button = style.accent_button("Open the PlayStation sign-in",
+                                          "Opens the PlayStation sign-in page in your browser")
         open_button.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(self.url, QUrl.ParsingMode.StrictMode)))
         copy_button = QPushButton("Copy the link")
         copy_button.setToolTip("For a browser on another device")
@@ -295,15 +293,16 @@ def settings_button() -> QPushButton:
     button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
     button.setCursor(Qt.CursorShape.PointingHandCursor)
     button.setToolTip("Personal details and Steam's PS button")
-    button.setStyleSheet(f"QPushButton {{ background:{DARK_BLUE}; color:white; border:none; border-radius:8px; "
+    button.setStyleSheet(f"QPushButton {{ background:{style.GOLD}; color:white; border:none; border-radius:8px; "
                          "padding:8px 14px 8px 8px; font-size:14px; font-weight:700; text-align:left; }"
-                         "QPushButton:hover { background:#1565c0; } QPushButton:pressed { background:#0b3d91; }")
+                         f"QPushButton:hover {{ background:{style.GOLD_HOVER}; }} "
+                         f"QPushButton:pressed {{ background:{style.GOLD_PRESSED}; }}")
     return button
 
 
 class CardDelegate(QStyledItemDelegate):
     """A table's rows as cards: each row a rounded card with a line between its cells, each value after its caption
-    (Model: PS4), the first one in bold; the selected card outlined in the accent colour. The items keep the plain
+    (Model: PS4), the first one in bold; the selected card outlined in the icon's gold. The items keep the plain
     values."""
 
     PAD, RADIUS, GAP = 10, 8, 3
@@ -350,9 +349,9 @@ class CardDelegate(QStyledItemDelegate):
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setClipRect(cell)
-        painter.fillPath(shape, _mix(fill, QColor(ACCENT), 0.22) if selected else fill)
+        painter.fillPath(shape, _mix(fill, QColor(style.GOLD_BRIGHT), 0.22) if selected else fill)
         if selected:
-            painter.setPen(QPen(QColor(ACCENT), 2))
+            painter.setPen(QPen(QColor(style.GOLD_BRIGHT), 2))
             painter.drawPath(shape)
         if not first:
             painter.setPen(QPen(palette.color(QPalette.ColorRole.Mid), 1))
@@ -482,10 +481,10 @@ class MainWindow(QMainWindow):
         header = AppHeader(LOGO_PATH, APP_NAME, __version__)
         self.badge = StatusText()
         header.add_state(self.badge)
-        self.found_box = MetricBox("On the network", DARK_BLUE)
-        self.registered_box = MetricBox("Registered", DARK_BLUE)
-        self.session_box = MetricBox("Last session", DARK_BLUE)
-        self.console_box = MetricBox("Console type", DARK_BLUE)
+        self.found_box = MetricBox("On the network", style.GOLD)
+        self.registered_box = MetricBox("Registered", style.GOLD)
+        self.session_box = MetricBox("Last session", style.GOLD)
+        self.console_box = MetricBox("Console type", style.GOLD)
         for box in (self.found_box, self.registered_box, self.session_box, self.console_box):
             header.add_second(box, 1)
         self.settings_button = settings_button()
@@ -560,14 +559,14 @@ class MainWindow(QMainWindow):
         self.wake_button = QPushButton("Wake")
         self.wake_button.setToolTip("Turn the console on from rest mode")
         self.wake_button.clicked.connect(self.wake)
-        self.test_button = accent_button("Test session", "Start a session, keep it a few seconds and close it")
+        self.test_button = style.accent_button("Test session", "Start a session, keep it a few seconds and close it")
         self.test_button.clicked.connect(self.test_session)
         self.stream_button = QPushButton("Test stream")
         self.stream_button.setToolTip("Start a session, test the network, run the stream for a few seconds and count "
                                       "the video and audio that arrive, without showing them")
         self.stream_button.clicked.connect(self.test_stream)
-        self.watch_button = accent_button("Stream", "Show the console's picture and play its sound until you close "
-                                          "the window; the controllers on the board play")
+        self.watch_button = style.accent_button("Stream", "Show the console's picture and play its sound until you "
+                                                "close the window; the controllers on the board play")
         self.watch_button.clicked.connect(self.watch)
         self.options_button = QPushButton("Stream settings…")
         self.options_button.setToolTip("Resolution, frame rate, bitrate, the picture's fit, audio delay and low "

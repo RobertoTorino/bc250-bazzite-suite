@@ -153,6 +153,26 @@ Before you write a helper in an app, look in core. If two apps need the same cod
 test. Apps that are not on core yet keep a copy of core's `instance.py`; `tools/tests/test_instance_copies.py`
 keeps those copies equal to core's.
 
+## Steam shortcuts and their artwork
+
+Apps that add something to Steam's library for Game Mode do it through core's `steam` module: the shortcut in
+`shortcuts.vdf` and its four pictures in `grid/` (portrait, wide, banner and the logo Steam lays over the banner).
+Where the pictures come from depends on what the app has:
+
+| App | What the Steam card shows |
+|---|---|
+| Console Link | Drawn from the app's icon (`steam_art`), with the console's name and model |
+| PCSX2 Manager | Drawn from the app's icon (`steam_art`), with the game's title: a PS2 disc has no pictures |
+| Bazzite DatStation | Drawn from the app's icon (`steam_art`), with the app's name |
+| shadPS4 Manager | The game's own pictures (`icon0.png`, `pic1.png`), its icon as the logo |
+| RPCS3 Manager | The game's own pictures (`ICON0.PNG`, `PIC1.PNG`), its icon as the logo |
+| PPSSPP Manager | The game's own pictures (`ICON0.PNG`, `PIC1.PNG`), its icon as the logo |
+
+`steam_art.draw_icon_art()` is for an app with no pictures of its own: the background is near black in the icon's
+own colour with a glow of it, the portrait and the wide picture show the icon with a title and a line under it, the
+banner shows the title centred, and the icon file itself is the logo. A new icon changes the cards by itself. The
+emulator managers keep the games' own pictures and draw only what a game lacks.
+
 ## Inside an app, and code style
 
 ### The technical layout of an app

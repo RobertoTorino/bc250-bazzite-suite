@@ -58,7 +58,7 @@ def test_add_then_take_out(tmp_path, qapp):
     assert shortcuts.in_steam(folder) == {str(first.file): "[PS2] One", str(second.file): "[PS2] Two"}
     config = steam.user_folders(folder)[0]
     assert sorted(p.name for p in (config / "grid").iterdir()) == sorted(
-        f"{n}{suffix}.png" for n in numbers for suffix in ("p", "", "_hero"))     # drawn: no logo
+        f"{n}{suffix}.png" for n in numbers for suffix in ("p", "", "_hero", "_logo"))     # the logo: the icon
     existing = shortcuts.in_steam(folder)
     steam.write_shortcuts(folder, shortcuts.changes([], [first, second], RUN, LOGO_PATH, existing))
     assert shortcuts.in_steam(folder) == {} and steam.shortcuts(folder) == [OTHER]
@@ -81,8 +81,9 @@ def test_a_shortcut_taken_out_under_the_name_it_has(tmp_path):
 def test_the_drawn_artwork(tmp_path, qapp):
     from PyQt6.QtGui import QImage
     game = Game(Path("/games/Okami.iso"), "Okami", "SLUS-21115")
-    art = shortcuts.draw_art(game)
-    assert set(art) == {"p", "", "_hero"}                                        # a PS2 disc gives no pictures
+    art = shortcuts.draw_art(game, LOGO_PATH)
+    assert set(art) == {"p", "", "_hero", "_logo"}                               # a PS2 disc gives no pictures
+    assert art["_logo"] == LOGO_PATH.read_bytes()                                # the app's icon instead
     for suffix in ("p", "", "_hero"):
         image = QImage.fromData(art[suffix], "PNG")
         assert (image.width(), image.height()) == steam.ART[suffix], suffix

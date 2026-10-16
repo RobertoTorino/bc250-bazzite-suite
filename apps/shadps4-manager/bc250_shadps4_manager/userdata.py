@@ -6,7 +6,7 @@ users.json). shadPS4 writes these files; the app writes only the shadNet setting
 by two, no newline at the end), and every other setting in them stays as it is.
 
 System modules are libraries of the PS4's firmware (.sprx), which the app cannot ship: they come from the user's own
-console. shadPS4 0.19.0 loads these from the folder when a game asks for them (sysmodule_internal.cpp); for some it
+console. shadPS4 0.20.0 loads these from the folder when a game asks for them (sysmodule_internal.cpp); for some it
 has its own version and does without, for the others a game that needs one does not run without it."""
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from bc250_core.platform import data_home
 
 from .shadnet import DEFAULT_SERVER
 
-# shadPS4 0.19.0 has no replacement of its own for these.
+# shadPS4 0.20.0 has no replacement of its own for these.
 NEEDED = (
     "libSceUlt.sprx", "libSceAvPlayerStreaming.sprx", "libSceJpegDec.sprx", "libSceJson.sprx", "libSceJson2.sprx",
     "libSceCesCs.sprx", "libSceAt9Enc.sprx", "libSceAudiodec.sprx", "libSceAudiodecCpu.sprx",
@@ -52,6 +52,15 @@ def read_config(home: Path) -> dict:
 def _general(config: dict) -> dict:
     general = config.get("General")
     return general if isinstance(general, dict) else {}
+
+
+def _network(config: dict, key: str):
+    """A shadNet setting where shadPS4 reads it: 0.19.0 keeps them in General, 0.20.0 in Network, and takes one from
+    General only while Network does not have it (a config from before 0.20.0)."""
+    network = config.get("Network")
+    if isinstance(network, dict) and key in network:
+        return network[key]
+    return _general(config).get(key)
 
 
 def game_folders(config: dict) -> list[Path]:
@@ -101,7 +110,7 @@ class UserDataError(Exception):
 
 @dataclass(frozen=True)
 class User:
-    """One of shadPS4's users (users.json; 0.19.0 makes four, the first is player 1) with its shadNet account."""
+    """One of shadPS4's users (users.json; 0.20.0 makes four, the first is player 1) with its shadNet account."""
     user_id: int
     name: str
     npid: str = ""
@@ -132,11 +141,11 @@ def read_users(home: Path) -> list[User]:
 
 def shadnet_on(config: dict) -> bool:
     """shadPS4's own switch for shadNet (its settings window's "Enable ShadNet"), for all users."""
-    return bool(_general(config).get("shad_net_enabled", False))
+    return bool(_network(config, "shad_net_enabled"))
 
 
 def shadnet_server(config: dict) -> str:
-    server = _general(config).get("shadnet_server")
+    server = _network(config, "shadnet_server")
     return server if isinstance(server, str) and server.strip() else DEFAULT_SERVER
 
 
@@ -159,17 +168,18 @@ def save_shadnet(home: Path, user_id: int, npid: str, password: str, email: str,
     except (OSError, ValueError) as error:
         raise UserDataError(f"shadPS4's settings could not be read: {error}") from error
     if not isinstance(config, dict) or not isinstance(users, dict):
-        raise UserDataError("shadPS4's settings are not what shadPS4 0.19.0 writes.")
+        raise UserDataError("shadPS4's settings are not what shadPS4 writes.")
     listed = [u for u in _users_list(users) if isinstance(u, dict)]
     user = next((u for u in listed if u.get("user_id") == user_id), None)
     if user is None:
         raise UserDataError(f"shadPS4 has no user {user_id}.")
     user.update(shadnet_npid=npid, shadnet_password=password, shadnet_email=email, shadnet_enabled=on)
-    general = config.setdefault("General", {})
-    if not isinstance(general, dict):
-        raise UserDataError("shadPS4's settings are not what shadPS4 0.19.0 writes.")
-    general["shad_net_enabled"] = any(bool(u.get("shadnet_enabled")) for u in listed)
-    general["shadnet_server"] = server
+    # 0.20.0 has a Network section and no longer reads these from General once it is there.
+    section = config["Network"] if isinstance(config.get("Network"), dict) else config.setdefault("General", {})
+    if not isinstance(section, dict):
+        raise UserDataError("shadPS4's settings are not what shadPS4 writes.")
+    section["shad_net_enabled"] = any(bool(u.get("shadnet_enabled")) for u in listed)
+    section["shadnet_server"] = server
     try:
         _write_json(home / "users.json", users)
         _write_json(home / "config.json", config)

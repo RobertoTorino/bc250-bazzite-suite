@@ -1,5 +1,31 @@
 [
   {
+    "version": "System Software v26.06-14.10.00",
+    "releaseDate": "October 4, 2026",
+    "notes": [
+      "We’ve made some security fixes to the system software.",
+      "We’ve improved system software performance and stability."
+    ]
+  },
+  {
+    "version": "System Software v26.06-14.00.00",
+    "releaseDate": "September 17, 2026",
+    "notes": [
+      "We’ve turned on Enhance PSSR Image Quality as a default setting. When you update the system software, this setting automatically turns on.",
+      "When you enable this feature, enhanced PSSR is used even for games that support the previous version of PSSR, so you can enjoy a sharper and clearer visual experience.",
+      "You can now see who’s speaking while you’re in a voice chat.",
+      "To show the speaker indicator, go to the voice chat card in the control center. Select More > Display Who’s Speaking and turn on Display Names.",
+      "To choose where the speaker indicator appears on your screen, select Position.",
+      "We’ve added the Community Activity widget to your Welcome Hub. You can switch between the following views.",
+      "Trending Now displays ten multiplayer games or multiplayer modes that are surging in popularity. Look here for new game releases or games with major content updates.",
+      "Top 10 displays the ten most popular games in the last week for your country or region. Look here to see what games have a large community of players you can join.",
+      "We’ve changed the following features for PS5 consoles and PS5 Pro consoles in certain countries or regions.",
+      "If you go to Settings > Accessories > General > Advanced Settings and select Turn Off Bluetooth, your console does not enter rest mode and HDMI Device Link does not function.",
+      "The Turn Off Bluetooth function is for managing controller connections at esports venues and similar locations. Do not use this feature for any other purpose.",
+      "We’ve improved system software performance and stability."
+    ]
+  },
+  {
     "version": "System Software v3.0-14.00.00 (Beta)",
     "releaseDate": "August 6, 2026",
     "notes": [
