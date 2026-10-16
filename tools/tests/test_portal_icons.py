@@ -55,3 +55,18 @@ def test_every_tile_icon_is_the_apps_own():
              if (SUITE / "portal" / "images" / "apps" / f"{key}.png").read_bytes()
              != (SUITE / source).read_bytes()]
     assert not stale, f"these copies no longer match the app's icon: {', '.join(stale)}"
+
+
+def test_the_wiki_icon_is_the_portals():
+    """The wiki's logo and favicon (docs/images/wiki-icon.*) are scaled copies of the portal's icon, so they are
+    compared by their pixels at 32 px: they lagged once after the icon changed (seen 16-10-2026)."""
+    from PIL import Image, ImageChops, ImageStat
+
+    def small(path: Path) -> Image.Image:
+        return Image.open(path).convert("RGBA").resize((32, 32), Image.Resampling.LANCZOS)
+
+    portal = small(SUITE / "portal" / "images" / "bc250-bazzite-suite.png")
+    off = {name: sum(ImageStat.Stat(ImageChops.difference(portal, small(SUITE / "docs" / "images" / name))).mean) / 4
+           for name in ("wiki-icon.png", "wiki-icon.webp")}
+    stale = [name for name, mean in off.items() if mean > 4]
+    assert not stale, f"these no longer show the portal's icon: {', '.join(stale)}"

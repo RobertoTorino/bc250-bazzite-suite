@@ -76,7 +76,6 @@
 .md-typeset details,
 .md-typeset .highlight,
 .md-typeset pre,
-.md-typeset__table,
 .md-search__output {
   border-radius: var(--suite-radius-medium);
 }
@@ -93,11 +92,6 @@
 
 .md-typeset table:not([class]) {
   border-radius: var(--suite-radius-medium);
-}
-
-.md-typeset__table {
-  overflow: hidden;
-  border: 1px solid var(--md-default-fg-color--lightest);
 }
 
 .md-typeset img:not(.app-icon):not(.app-logo) {
@@ -130,13 +124,23 @@
   border-radius: var(--suite-radius-medium);
 }
 
-/* The small app icon in front of a name, as on the portal's cards. */
+/* The app icon in front of a name, as on the portal's cards; on a wide screen the name stays on one line. */
 .md-typeset img.app-icon {
-  width: 1.6em;
-  height: 1.6em;
+  width: 2.6em;
+  height: 2.6em;
   vertical-align: middle;
-  margin-right: 0.35em;
+  margin-right: 0.6em;
   border-radius: 0.3em;
+}
+
+@media screen and (min-width: 45em) {
+  .md-typeset td:has(> img.app-icon) {
+    white-space: nowrap;
+  }
+}
+
+.md-typeset tr:has(img.app-icon) > td {
+  vertical-align: middle;
 }
 
 /* An app's own icon at the top of its chapter: it comes before the heading in the page, floats right of it and
@@ -152,6 +156,25 @@
   margin: 0;
 }
 
+/* A page's own icon where an app chapter has the app's logo: a symbol in the suite's colour, as large. */
+.md-typeset .page-icon {
+  float: right;
+  margin: 0 0 1em 1em;
+}
+
+.md-typeset .page-icon .twemoji,
+.md-typeset .page-icon svg {
+  width: 128px;
+  height: 128px;
+  max-height: none;
+  fill: var(--suite-primary);
+}
+
+.md-typeset p:has(> .page-icon) {
+  margin: 0;
+}
+
+.md-typeset p:has(> .page-icon) + h1,
 .md-typeset p:has(> img.app-logo) + h1,
 .md-typeset p:has(> img.app-logo) + h2,
 .md-typeset p:has(> img.app-logo) + h3 {

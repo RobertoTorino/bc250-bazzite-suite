@@ -1,5 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
+<span class="page-icon">:material-tray-arrow-down:</span>
+
 # Install
 
 Install the portal, not the apps one by one: it installs, updates and removes the apps for you. Download

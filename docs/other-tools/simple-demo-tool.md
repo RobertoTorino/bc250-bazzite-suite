@@ -1,5 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
+![Simple Demo Tool](../assets/demo-tool/simple-demo-tool.png){ .app-logo }
+
 # Simple Demo Tool
 
 A standalone Qt app for recording a BC250 Bazzite Suite installation demo on Bazzite. The suite portal lists it

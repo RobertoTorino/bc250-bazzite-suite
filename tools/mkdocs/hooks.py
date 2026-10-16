@@ -3,6 +3,7 @@
 
 * assets/apps/<key>.png    the small app icons the portal shows on its cards (portal/images/apps/)
 * assets/<app>/<file>      an app's own images (apps/<app>/images/): its icon and its screenshots
+* assets/portal/<file>     the portal's own images (portal/images/): its icon
 
 The apps, their installers and the portal load these as PNG, so they stay PNG in the repository. The wiki gets a
 WebP copy of each PNG and JPG instead, made while it is built (a tenth of the size for the apps' icons), and its
@@ -32,6 +33,8 @@ _webp: set[str] = set()                 # the asset paths that have a WebP copy 
 def pictures() -> dict[str, Path]:
     """Site path -> source file."""
     found = {f"assets/apps/{p.name}": p for p in (SUITE / "portal" / "images" / "apps").iterdir()}
+    portal = SUITE / "portal" / "images"
+    found.update({f"assets/portal/{p.name}": p for p in sorted(portal.glob("*")) if p.is_file()})
     for app in sorted((SUITE / "apps").iterdir()):
         for p in sorted((app / "images").glob("*")) if (app / "images").is_dir() else []:
             found[f"assets/{app.name}/{p.name}"] = p

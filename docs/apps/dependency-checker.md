@@ -1,5 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
+![Dependency Checker](../assets/dependency-checker/bc250-dependency-checker.png){ .app-logo }
+
 # Dependency Checker
 
 Dependency Checker lists the Python packages and external tools of the BC250 Bazzite Suite's apps, and which

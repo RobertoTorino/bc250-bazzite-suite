@@ -1,5 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
+<span class="page-icon">:material-eye-off-outline:</span>
+
 # Privacy
 
 The BC250 Bazzite Suite collects nothing about you. It has no accounts, no statistics, no analytics, no crash

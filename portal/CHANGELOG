@@ -1,3 +1,8 @@
+Changelog: 16-10-2026 01:57:12
+
+Fixed. The header's title sits further from the icon (14 px more space) and is larger: 32 px instead of
+24 px, its version 16 px instead of 14 px.
+
 Changelog: 16-10-2026 01:32:59
 
 Release 1.3.0. Pins bazzite-test-v0.1.14, governor-v0.1.9, helixsr-v0.2.10, cu-bisect-v0.1.7, cores-bisect-v0.1.8, gpu-oc-bisect-v0.1.7, persistent-acpi-v0.1.5, system-overlay-v0.1.11, bios-reader-v0.1.11, ace-queues-v0.1.13, mesh-shaders-v0.1.6, memory-manager-v0.1.13, hdmi-cec-v0.1.12, sftp-tools-v0.1.7, demo-tool-v0.1.10, dependency-checker-v0.1.22, bazzite-netcatgui-v0.1.4, rpcs3-manager-v0.1.3, console-link-v1.0.10, shadps4-manager-v0.1.6, decky-manager-v0.1.6, bazzite-datstation-v0.1.1, pcsx2-manager-v0.1.1.

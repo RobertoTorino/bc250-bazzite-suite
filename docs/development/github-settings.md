@@ -1,5 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
+<span class="page-icon">:material-github:</span>
+
 # GitHub settings
 
 The repository's settings on GitHub, and why. They suit a repository where one person pushes straight to `main`

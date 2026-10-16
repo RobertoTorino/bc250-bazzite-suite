@@ -1,3 +1,29 @@
+Changelog: 16-10-2026 02:24:33
+
+Wiki pages: the Dependency Checker and Simple Demo Tool chapters show their app's icon beside the heading, as
+every other app chapter does; tools/tests/test_mkdocs_hooks.py now checks that each app chapter has one. The
+Security, Privacy and GitHub settings pages show a symbol there (a shield with a lock, a crossed-out eye, the GitHub
+mark), as the Install page does. The Bazzite Test internals page's heading uses a plain dash. The unused
+images/bc250-bazzite-suite.png went: it still held the icon the suite replaced.
+
+Changelog: 16-10-2026 02:18:54
+
+Wiki pages: the Portal page shows the portal's icon beside its heading, as the app chapters show theirs
+(tools/mkdocs/hooks.py now also serves portal/images/ as assets/portal/), and the Install page shows an install
+symbol there (arrow into a tray, as on the portal's Install button). The app icons in the tables of the Apps page
+are larger (2.6em instead of 1.6em), centred beside the name, which stays on one line on a wide screen.
+
+Changelog: 16-10-2026 02:06:15
+
+The wiki's tables are one box again: suite.css gave the wrapper around each table a border of its own, so
+every table sat in a second, wider frame. The table keeps its own rounded border.
+
+Changelog: 16-10-2026 02:00:25
+
+The wiki's logo and favicon (docs/images/wiki-icon.png and .webp) now really are the portal's icon,
+portal/images/bc250-bazzite-suite.png scaled to 256 px: the earlier refresh still showed the old icon.
+tools/tests/test_portal_icons.py compares them with the portal's icon, so they cannot lag again unnoticed.
+
 Changelog: 16-10-2026 00:18:19
 
 The wiki's logo and favicon (docs/images/wiki-icon.png and .webp) are the suite's current icon, made from
