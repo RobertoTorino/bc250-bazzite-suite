@@ -95,3 +95,24 @@ def test_tags_only_a_commit_ci_passed(repo):
     assert git(repo, "tag") == ""
     assert tag(repo, "portal-v0.9.5", ci="passed").returncode == 0
     assert "refs/tags/portal-v0.9.5" in remote_tags(repo)
+
+
+def test_a_portal_tag_waits_for_the_app_releases_it_pins(repo):
+    """The portal release that failed: tagged with an app release that was not tagged yet, pinned without sha256."""
+    manifest = repo / "portal" / "apps.toml"
+    manifest.write_text('[apps.governor]\nname = "Governor"\ntag = "governor-v0.1.0"\nsha256 = ""\n')
+    (repo / "portal" / "VERSION").write_text("0.9.5\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-qm", "Release portal-v0.9.5")
+    git(repo, "push", "-q", "origin", "main")
+    untagged = tag(repo, "portal-v0.9.5")
+    assert untagged.returncode != 0 and "pins governor-v0.1.0, which is not tagged yet" in untagged.stderr
+    assert tag(repo, "governor-v0.1.0").returncode == 0
+    unpinned = tag(repo, "portal-v0.9.5")
+    assert unpinned.returncode != 0 and "without its sha256" in unpinned.stderr
+    manifest.write_text(manifest.read_text().replace('sha256 = ""', f'sha256 = "{"a" * 64}"'))
+    (repo / "portal" / "VERSION").write_text("0.9.6\n")
+    git(repo, "commit", "-qam", "Release portal-v0.9.6")
+    git(repo, "push", "-q", "origin", "main")
+    assert tag(repo, "portal-v0.9.6").returncode == 0
+    assert "refs/tags/portal-v0.9.6" in remote_tags(repo) and "portal-v0.9.5" not in remote_tags(repo)

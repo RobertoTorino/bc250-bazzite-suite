@@ -1,3 +1,11 @@
+Changelog: 16-10-2026 12:10:30
+
+tools/tag-release.sh refuses a portal tag until every app release that HEAD's apps.toml pins is tagged on origin
+and pinned with its sha256: the portal-v1.9.0 tag was pushed before vita3k-manager-v0.1.0 existed, and its release
+failed on check_manifest.py --require-tags. The message says what comes first (tag the app, then step 2's pin). Its message for a tag that exists already
+says that deleting it needs the release-tag ruleset disabled for a moment, as GitHub refuses it otherwise.
+Tests: tools/tests/test_tag_release.py; the wiki's portal page says it.
+
 Changelog: 16-10-2026 11:57:04
 
 tools/check_changelogs.py checks that no CHANGELOG loses history: every entry a CHANGELOG had at the base (its

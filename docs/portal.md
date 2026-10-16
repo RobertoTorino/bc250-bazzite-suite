@@ -262,7 +262,8 @@ version: the tag was made before the version bump was committed, and `release.ym
 `tools/tag-release.sh <tag> [...]` tags HEAD and pushes the tags, but refuses while HEAD does not hold each tag's
 version (the bump is not committed yet), while that folder has uncommitted changes, while HEAD is not pushed to
 `origin/main`, or when CI did not pass on HEAD: it asks GitHub (`tools/ci_state.py`) and waits while CI still runs,
-up to an hour. A plain `git tag` tags whatever HEAD is at that moment, also the commit from before the bump or one
+up to an hour. A portal tag also waits for the app releases it pins: each one tagged on GitHub and pinned with its
+sha256 (step 2), as the portal's release needs them. A plain `git tag` tags whatever HEAD is at that moment, also the commit from before the bump or one
 CI failed. `release.yml` asks the same before it builds anything: a tag on a commit CI did not pass gives no
 release.
 
