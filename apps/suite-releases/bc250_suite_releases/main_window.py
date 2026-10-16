@@ -204,14 +204,16 @@ class AppsPage(QWidget):
         # the last push, with the portal bump it needs.
         base, portal_version = self.release_window.base(), self.release_window.portal_version()
         minimum, why = rp.portal_minimum(root, base, portal_version)
-        if minimum and minimum != portal_version:
+        needs_portal = minimum if minimum and minimum != portal_version else ""
+        if needs_portal:
             log.append(f"apps.toml changed since {base} ({why}), so this push also needs portal {minimum}: do step "
                        "2's Bump portal before you commit, or CI fails.")
         log += ["", run_check(root, "tools/check_versions.py"),
                 run_check(root, "tools/check_manifest.py", "--base", base)]
         if tags:
-            log += ["Then:", rp.app_commands(tags)]
-            self.release_window.commands.offer(rp.app_commands(tags))
+            commands = rp.app_commands(tags, portal=needs_portal)
+            log += ["Then:", commands]
+            self.release_window.commands.offer(commands)
         self.output.set_text("\n".join(log))
         self.release_window.reload()
 

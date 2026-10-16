@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # The quick checks of CI's versions and shell jobs, before a push leaves this machine: the versions match each
 # VERSION, apps.toml with its portal bump against what the remote has (the check a release push failed on), the
-# scripts' exec bits and the line endings. A few seconds; tools/ci-local.sh runs every job (a minute or two).
+# CHANGELOGs keeping every entry the remote has, the scripts' exec bits and the line endings. A few seconds; tools/ci-local.sh runs every job (a minute or two).
 #
 # As git's pre-push hook, once per checkout:   git config core.hooksPath tools/hooks
 # By hand:                                     tools/pre-push.sh [BASE]        (BASE: default origin/main)
@@ -56,6 +56,10 @@ for push in "${pushes[@]}"; do
         printf '%s\n' "$out" >&2
         fail "portal/apps.toml: bump portal/VERSION in this push (Suite Releases, step 2: Bump portal)"
     fi
+    if [ -n "$base" ] && ! out=$("$python" tools/check_changelogs.py --base "$base" 2>&1); then
+        printf '%s\n' "$out" >&2
+        fail "a CHANGELOG lost entries the remote has: put them back below the new ones"
+    fi
     missing=$(git ls-tree -r "$sha" | awk '($4 ~ /\.sh$/ || $4 ~ /^tools\/hooks\//) && $1 != "100755" { print $4 }')
     [ -z "$missing" ] || fail "not executable in git (tools/fix-modes.sh, then amend the commit): $(echo "$missing" | tr '\n' ' ')"
     crlf=$(git ls-files --eol | awk '$1 ~ /^i\/(crlf|mixed)/ { print $NF }')
@@ -69,4 +73,4 @@ if [ "$failed" != 0 ]; then
     echo "pre-push: not pushed. CI would fail on the same; fix it, or push anyway with git push --no-verify." >&2
     exit 1
 fi
-info "versions, apps.toml, exec bits and line endings are fine"
+info "versions, apps.toml, CHANGELOGs, exec bits and line endings are fine"

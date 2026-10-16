@@ -1,3 +1,9 @@
+Changelog: 16-10-2026 11:57:04
+
+Fixed. When apps.toml changed since the last push, the commands after step 1's Apply start with "First: step 2's
+Bump portal (portal x.y.z)": before, they began with git commit, so a release committed without the portal bump
+failed CI on the push (plan.py: app_commands takes the portal version the push needs).
+
 Changelog: 16-10-2026 05:54:31
 
 Added. Step 1 ticks every app that needs a release by itself, when the window opens and on each reload; Tick what

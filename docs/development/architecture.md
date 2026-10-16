@@ -321,4 +321,5 @@ the requirements files, a version copy that does not match `VERSION`, a package 
 | Copies of `instance.py` equal core's | `tools/tests/test_instance_copies.py` |
 | The Dependency Checker's catalogue matches the requirements files, the portal's apps, and the tools the apps use | `apps/dependency-checker/tests/test_dependencies.py` |
 | `portal/apps.toml` rules and version bumps | `tools/check_manifest.py` |
+| A CHANGELOG keeps every entry it had at the last push | `tools/check_changelogs.py` |
 | The manual builds with no broken link | `mkdocs build --strict` |

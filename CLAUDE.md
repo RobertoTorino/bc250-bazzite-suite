@@ -126,6 +126,7 @@ tools/pre-push.sh                                   # CI's quick checks against 
 ./test.sh                                           # every test suite, offscreen
 python3 tools/check_versions.py                     # versions = VERSION
 python3 tools/check_manifest.py --base origin/main  # portal/apps.toml rules, against the last push
+python3 tools/check_changelogs.py --base origin/main  # no CHANGELOG lost an entry since the last push
 find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 -n1 bash -n
 find apps portal tools -name '*.sh' -print0 | xargs -0 shellcheck -x -S error test.sh install.sh
 shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \

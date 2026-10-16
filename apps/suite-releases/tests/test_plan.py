@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 
 from bc250_suite_releases import plan as rp
+from bc250_suite_releases.command_line import command_lines
 
 SHA = "cd" * 32
 
@@ -185,6 +186,14 @@ def test_commands():
     order = [text.index(s) for s in ("git commit", "check-release.sh local", "git push\n", "tag-release.sh",
                                      "check-release.sh release")]
     assert order == sorted(order)                             # commit, test, push and tag, then check the release
+
+
+def test_app_commands_put_the_portal_bump_first_when_the_push_needs_it():
+    text = rp.app_commands(["alpha-v0.2.0"], linux=True, portal="1.9.0")
+    first, second = text.splitlines()[:2]
+    assert first.startswith("# First: step 2's Bump portal (portal 1.9.0)") and second.startswith("git add -A")
+    assert command_lines(text) == command_lines(rp.app_commands(["alpha-v0.2.0"], linux=True))   # a comment only
+    assert not rp.app_commands(["alpha-v0.2.0"]).startswith("#")
 
 
 def test_withdrawal(repo):

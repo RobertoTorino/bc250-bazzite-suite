@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """tools/pre-push.sh, git's pre-push hook through tools/hooks/pre-push: CI's quick checks before a push, against what
-the remote has. check_versions.py and check_manifest.py are stubs here that record how they were called."""
+the remote has. check_versions.py, check_manifest.py and check_changelogs.py are stubs here that record how they were called."""
 
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ def repo(tmp_path) -> Path:
     for name in ("pre-push.sh", "hooks/pre-push"):
         shutil.copy(TOOLS / name, root / "tools" / name)
         (root / "tools" / name).chmod(0o755)
-    for name in ("check_versions.py", "check_manifest.py"):
+    for name in ("check_versions.py", "check_manifest.py", "check_changelogs.py"):
         (root / "tools" / name).write_text(STUB)
     (root / ".gitignore").write_text("calls.txt\n")
     git(root, "init", "-q", "-b", "main")
@@ -66,7 +66,8 @@ def test_checks_against_what_the_remote_has(repo):
     head = git(repo, "rev-parse", "HEAD")
     result = hook(repo, [f"refs/heads/main {head} refs/heads/main {base}"])
     assert result.returncode == 0, result.stderr
-    assert calls(repo) == ["check_versions.py ", f"check_manifest.py --base {base}"]
+    assert calls(repo) == ["check_versions.py ", f"check_manifest.py --base {base}",
+                           f"check_changelogs.py --base {base}"]
 
 
 def test_a_portal_bump_missing_stops_the_push(repo):
@@ -75,6 +76,13 @@ def test_a_portal_bump_missing_stops_the_push(repo):
     result = hook(repo, [f"refs/heads/main {head} refs/heads/main {head}"], FAIL_CHECK_MANIFEST="1")
     assert result.returncode == 1
     assert "Bump portal" in result.stderr and "not pushed" in result.stderr and "--no-verify" in result.stderr
+
+
+def test_a_changelog_that_lost_entries_stops_the_push(repo):
+    head = git(repo, "rev-parse", "HEAD")
+    result = hook(repo, [f"refs/heads/main {head} refs/heads/main {head}"], FAIL_CHECK_CHANGELOGS="1")
+    assert result.returncode == 1
+    assert "CHANGELOG lost entries" in result.stderr and "not pushed" in result.stderr
 
 
 def test_a_version_mismatch_stops_the_push(repo):
@@ -123,4 +131,4 @@ def test_by_hand_against_a_base(repo):
     result = subprocess.run(["bash", "tools/pre-push.sh", base], cwd=repo, capture_output=True, text=True, env=ENV,
                             stdin=subprocess.DEVNULL)
     assert result.returncode == 0, result.stderr
-    assert calls(repo)[-1] == f"check_manifest.py --base {base}"
+    assert calls(repo)[-2:] == [f"check_manifest.py --base {base}", f"check_changelogs.py --base {base}"]

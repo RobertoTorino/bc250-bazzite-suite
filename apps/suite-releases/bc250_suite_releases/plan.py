@@ -782,8 +782,11 @@ def push_command(linux: bool | None = None) -> str:
     return f"{CI_LOCAL} && git push" if linux else "git push"
 
 
-def app_commands(tags: list[str], linux: bool | None = None) -> str:
-    lines = ["git add -A && tools/fix-modes.sh", f'git commit -m "Release {", ".join(tags)}"', push_command(linux)]
+def app_commands(tags: list[str], linux: bool | None = None, portal: str = "") -> str:
+    """The commands after step 1's Apply. *portal*: the portal version this push also needs (apps.toml changed since
+    the last push), which comes first: committed without it, the push fails CI."""
+    lines = [f"# First: step 2's Bump portal (portal {portal}), or CI fails on this push; then:"] if portal else []
+    lines += ["git add -A && tools/fix-modes.sh", f'git commit -m "Release {", ".join(tags)}"', push_command(linux)]
     lines += [f"{TAG_SCRIPT} {' '.join(tags)}     # refuses until the bump is committed and pushed"]
     lines += ["# when GitHub has built the releases: step 2 (pin and portal)"]
     return "\n".join(lines)
