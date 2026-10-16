@@ -1,3 +1,15 @@
+Changelog: 16-10-2026 07:40:47
+
+Release 0.3.0.
+
+Changelog: 16-10-2026 07:33:05
+
+Added. The app takes the copper and cyan of its icon (owner, 16-10-2026) in place of the suite's purple, in a new
+style.py: the header's boxes are a dark copper (#8A5A2E) and a dark teal (#0E6F75), both with white text at 5.9:1 (red
+and orange still mark a missing payload or network files); the selected page and the main buttons' outline are the
+icon's cyan (#26A9B0); links are a bright cyan on a dark window (#3FC8CF) and the teal on a light one. widgets.py
+keeps the suite's palette, so the tooltips' border stays purple.
+
 Changelog: 16-10-2026 07:13:33
 
 Release 0.2.11.

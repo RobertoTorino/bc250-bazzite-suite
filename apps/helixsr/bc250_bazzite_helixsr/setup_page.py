@@ -14,7 +14,8 @@ from PyQt6.QtWidgets import (
 
 from . import plain_tooltip
 from .acquire import DLSS_DLL, FALLBACK_VERSION, ReleaseInfo, UpdateStatus
-from .widgets import StatusPill, Terminal, accent_button, hint_label, page_header
+from .style import accent_button
+from .widgets import StatusPill, Terminal, hint_label, page_header
 
 
 def _size(n: int) -> str:

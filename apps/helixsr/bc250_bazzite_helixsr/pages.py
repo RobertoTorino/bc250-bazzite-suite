@@ -21,7 +21,8 @@ from .backend import (
     GameDll, HelixIni, PayloadStatus, deployment_state, ini_ignored_fields, optiscaler_snippet, render_ini,
     validate_ini,
 )
-from .widgets import STATE_COLORS, StatusPill, Terminal, accent_button, hint_label, page_header
+from .style import accent_button
+from .widgets import STATE_COLORS, StatusPill, Terminal, hint_label, page_header
 
 POLL_MS = 5000
 

@@ -24,7 +24,8 @@ from .backend import MODE_FOLDER, MODE_REPLACE, Deployment, DeploymentStore, Gam
 from .help import HelpView
 from .pages import POLL_MS, DeployPage, IniPage, OverviewPage
 from .setup_page import SetupPage
-from .widgets import ACCENT, BLUE, GREEN, GREY, ORANGE, PURPLE, RED, ClickableLogo, MetricBox, header_font
+from .style import COPPER, CYAN, TEAL
+from .widgets import ORANGE, RED, ClickableLogo, MetricBox, header_font
 
 
 class MainWindow(QMainWindow):
@@ -59,10 +60,10 @@ class MainWindow(QMainWindow):
         header_right.addWidget(title)
         boxes = QHBoxLayout()
         boxes.setSpacing(8)
-        self.box_payload = MetricBox("HelixSR payload", PURPLE, centred=True)
-        self.box_network = MetricBox("Network files", GREY, centred=True)
-        self.box_deployed = MetricBox("Deployments", BLUE, centred=True)
-        self.box_games = MetricBox("Steam games", GREY, centred=True)
+        self.box_payload = MetricBox("HelixSR payload", COPPER, centred=True)
+        self.box_network = MetricBox("Network files", TEAL, centred=True)
+        self.box_deployed = MetricBox("Deployments", COPPER, centred=True)
+        self.box_games = MetricBox("Steam games", TEAL, centred=True)
         for box in (self.box_payload, self.box_network, self.box_deployed, self.box_games):
             boxes.addWidget(box, 1)
         header_right.addLayout(boxes)
@@ -77,7 +78,7 @@ class MainWindow(QMainWindow):
             "QListWidget::item { padding:6px; margin:2px 4px; border:2px solid transparent; border-radius:6px; }"
             "QListWidget::item:hover { border-color:palette(mid); }"
             "QListWidget::item:selected { background:transparent; color:palette(text);"
-            f" border-color:{ACCENT}; }}")
+            f" border-color:{CYAN}; }}")
         self.stack = QStackedWidget()
         main.addWidget(self.nav)
         main.addWidget(self.stack, 1)
@@ -200,11 +201,11 @@ class MainWindow(QMainWindow):
 
         self.box_payload.set_value(status.version or ("Imported" if status.dll else "Missing"),
                                    plain_tooltip(str(self.payload_dir)))
-        self.box_payload.setStyleSheet(f"QFrame {{ background:{PURPLE if status.dll else RED}; border-radius:8px; }}"
+        self.box_payload.setStyleSheet(f"QFrame {{ background:{COPPER if status.dll else RED}; border-radius:8px; }}"
                                        " QLabel { color:white; }")
         self.box_network.set_value("Ready" if status.network_ready else "Missing",
                                    "helixsr_weights.bin and helixsr_kernels.pak from helixsr-setup.sh")
-        self.box_network.setStyleSheet(f"QFrame {{ background:{GREEN if status.network_ready else ORANGE}; "
+        self.box_network.setStyleSheet(f"QFrame {{ background:{TEAL if status.network_ready else ORANGE}; "
                                        "border-radius:8px; } QLabel { color:white; }")
         states = [backend.deployment_state(d, self.payload_dir)[0] for d in self.store.items]
         in_place = states.count("ok")
