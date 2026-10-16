@@ -1,3 +1,12 @@
+Changelog: 16-10-2026 12:51:06
+
+Release 1.1.1.
+
+Changelog: 16-10-2026 12:37:03
+
+Fixed. The Settings box shows the gear in white without its dark tile, and both search fields have the 8 px
+corners of the header's boxes (their search buttons 4 px, inside them) in place of round ends.
+
 Changelog: 16-10-2026 06:02:49
 
 Release 1.1.0.

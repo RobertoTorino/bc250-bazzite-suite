@@ -223,12 +223,9 @@ def search_icon(size: int = 20) -> QIcon:
 
 
 def gear_icon(size: int = 40) -> QIcon:
-    """A white gear on a dark rounded tile, drawn like search_icon()."""
+    """A white gear with a see-through hub, drawn like search_icon()."""
     pixmap, painter = _canvas(size)
-    tile = QColor("#3a3a40")
     painter.setPen(Qt.PenStyle.NoPen)
-    painter.setBrush(tile)
-    painter.drawRoundedRect(QRectF(0, 0, size, size), size * 0.15, size * 0.15)
     painter.translate(size / 2, size / 2)
     painter.setBrush(QColor("#ffffff"))
     painter.drawEllipse(QPointF(0, 0), size * 0.25, size * 0.25)
@@ -236,7 +233,7 @@ def gear_icon(size: int = 40) -> QIcon:
     for step in range(8):
         painter.drawRoundedRect(tooth, size * 0.02, size * 0.02)
         painter.rotate(45)
-    painter.setBrush(tile)
+    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Clear)
     painter.drawEllipse(QPointF(0, 0), size * 0.1, size * 0.1)
     painter.end()
     return QIcon(pixmap)
@@ -261,10 +258,10 @@ class SearchPill(QFrame):
         palette.setColor(QPalette.ColorRole.PlaceholderText, QColor("#6b6b73"))
         field.setPalette(palette)
         self.setStyleSheet(
-            f"QFrame#searchPill {{ background:{FIELD}; border:1px solid rgba(0,0,0,0.14); border-radius:19px; }}"
+            f"QFrame#searchPill {{ background:{FIELD}; border:1px solid rgba(0,0,0,0.14); border-radius:8px; }}"
             f"QFrame#searchPill QLabel, QFrame#searchPill QLineEdit {{ background:transparent; border:none; "
             f"color:{FIELD_TEXT}; font-size:15px; }}"
-            f"QFrame#searchPill QToolButton {{ background:{FIELD_BUTTON}; border:none; border-radius:15px; }}"
+            f"QFrame#searchPill QToolButton {{ background:{FIELD_BUTTON}; border:none; border-radius:4px; }}"
             "QFrame#searchPill QToolButton:hover { background:#d2d2da; }"
             "QFrame#searchPill QToolButton:disabled { background:#f0f0f2; }")
         self.setFixedHeight(38)
