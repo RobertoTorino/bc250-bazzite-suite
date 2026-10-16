@@ -190,11 +190,11 @@ class AppTile(QFrame):
         self.icon.setIconSize(QSize(ICON_PX, ICON_PX))
         self.icon.setFixedSize(ICON_PX + 8, ICON_PX + 8)
         self.icon.setAutoRaise(True)
-        # Light purple behind the icon on hover, in the accent's family (palette(midlight) was near-black on the
-        # dark theme), and a press that shows: a deeper solid purple and the icon nudged down-right, as a real
-        # button sinks.
-        self.icon.setStyleSheet("QToolButton { border:none; border-radius:18px; }"
-                                "QToolButton:hover:enabled { background:#D9D1C4E9; }"
+        # A thin light purple border around the icon on hover, in the accent's family (palette(midlight) was
+        # near-black on the dark theme; the transparent border keeps the icon still), and a press that shows: a
+        # deeper solid purple and the icon nudged down-right, as a real button sinks.
+        self.icon.setStyleSheet("QToolButton { border:2px solid transparent; border-radius:18px; }"
+                                "QToolButton:hover:enabled { border-color:#D9D1C4E9; }"
                                 "QToolButton:pressed:enabled { background:#FFB39DDB; padding-top:2px;"
                                 " padding-left:2px; }"
                                 "QToolButton::menu-indicator { image:none; width:0; }")

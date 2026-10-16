@@ -1,3 +1,11 @@
+Changelog: 16-10-2026 09:04:41
+
+Release 1.7.0.
+
+Changelog: 16-10-2026 08:17:25
+
+Fixed. Hovering over a tile's icon shows a thin light purple border around it instead of a filled background.
+
 Changelog: 16-10-2026 07:50:17
 
 Release 1.6.0. Pins helixsr-v0.3.0.
