@@ -8,7 +8,7 @@ import pytest
 from conftest import KERNEL, LOG_FAILED, LOG_WORKED, fake_build, fake_source, set_stick, write  # noqa: F401
 from PyQt6.QtWidgets import QMessageBox
 
-from bc250_usb_wifi import builder, driver
+from bc250_usb_wifi import __version__, builder, driver
 from bc250_usb_wifi.main_window import MainWindow, StepRunner
 
 
@@ -167,7 +167,7 @@ def test_install_update_and_remove(qapp, sys_root, proc_root, usr_root, paths, t
     w.install()
     assert helper.calls == [["install", "--branch", "legacy-mcu1", "--build", str(layout.output), "--source",
                              str(layout.source), "--commit", builder.PINS["legacy-mcu1"].commit, "--app-version",
-                             "0.1.0", "--kernel", KERNEL]]
+                             __version__, "--kernel", KERNEL]]
     assert driver.installed(paths).branch == "legacy-mcu1"
     assert w.driver_box.value.text() == "legacy-mcu1" and w.badge.text() == "Connected"
     assert w.install_button.text() == "Update…" and w.remove_button.isEnabled()

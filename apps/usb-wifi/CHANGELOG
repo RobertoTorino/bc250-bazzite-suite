@@ -1,3 +1,8 @@
+Changelog: 17-10-2026 11:26:44
+
+Fixed. The window test compared the install command's --app-version with the literal 0.1.0, so it failed as soon
+as VERSION was bumped; it compares with the package's __version__ now.
+
 Changelog: 17-10-2026 11:06:03
 
 Release 0.1.1.
