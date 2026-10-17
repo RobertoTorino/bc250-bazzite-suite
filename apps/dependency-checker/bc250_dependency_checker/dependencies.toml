@@ -124,7 +124,7 @@ launchers = ["~/.local/bin/bc250-portal-dependency-checker"]
 name = "Bazzite NetcatGUI"
 launchers = ["~/.local/bin/bazzite-netcatgui"]
 
-[app.bazzite-datstation]
+[app.datstation]
 name = "Bazzite DatStation"
 launchers = ["~/.local/bin/bazzite-datstation"]
 
@@ -877,7 +877,7 @@ usage = "Update Game Mode (a Steam shortcut per game) closes Steam with steam -s
 anchor = "game-mode"
 
 [[tool.source]]
-owner = "bazzite-datstation"
+owner = "datstation"
 need = "optional"
 usage = "Add to Steam and Remove from Steam (the app's own shortcut) close Steam with steam -shutdown and start it again with bazzite-steam."
 anchor = "install"
@@ -1053,7 +1053,7 @@ owner = "ncgui"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "bazzite-datstation"
+owner = "datstation"
 specifier = ">=6.11,<7"
 
 [[dependency]]

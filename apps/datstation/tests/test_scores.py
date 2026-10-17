@@ -5,8 +5,8 @@ from __future__ import annotations
 
 import json
 
-from bazzite_datstation.quiz import QUICK, Result
-from bazzite_datstation.scores import PERFECT, ScoreStore, default_path
+from datstation.quiz import QUICK, Result
+from datstation.scores import PERFECT, ScoreStore, default_path
 
 
 def _result(score: int, category: str = "PS1", perfect: bool = False, round_number: int = 1) -> Result:

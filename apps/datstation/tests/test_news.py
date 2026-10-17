@@ -8,8 +8,8 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from bazzite_datstation import news
-from bazzite_datstation.news_page import items_html
+from datstation import news
+from datstation.news_page import items_html
 from conftest import FIXTURES
 
 FEED = (FIXTURES / "feed.xml").read_bytes()

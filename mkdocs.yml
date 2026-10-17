@@ -83,7 +83,7 @@ nav:
       - PCSX2 Manager: apps/pcsx2-manager.md
       - Vita3K Manager: apps/vita3k-manager.md
       - Decky Loader Manager: apps/decky-manager.md
-      - Bazzite DatStation: apps/bazzite-datstation.md
+      - Bazzite DatStation: apps/datstation.md
   - Development:
       - development/index.md
       - Architecture and consistency: development/architecture.md

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Entry point: python -m bazzite_datstation"""
+"""Entry point: python -m datstation"""
 
 from __future__ import annotations
 

@@ -1,3 +1,13 @@
+Changelog: 17-10-2026 08:56:40
+
+Release 0.4.2.
+
+Changelog: 17-10-2026 08:47:31
+
+Fixed. The catalogue lists Bazzite DatStation as [app.datstation] (was [app.bazzite-datstation]), its key in the
+portal after the app's move to apps/datstation; its sources name that owner, and its wiki links go to
+apps/datstation/.
+
 Changelog: 17-10-2026 07:36:38
 
 Release 0.4.1.

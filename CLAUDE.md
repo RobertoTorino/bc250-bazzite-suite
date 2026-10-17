@@ -14,7 +14,7 @@ its manifest. **bazzite-test** is always installed and always listed first; ever
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
 - `apps/<name>/`: bazzite-test, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
-  system-overlay, bios-reader, ace, mesh-shaders, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, console-link, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, demo-tool, dependency-checker, ncgui, bazzite-datstation, suite-releases. Each has its
+  system-overlay, bios-reader, ace, mesh-shaders, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, console-link, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, demo-tool, dependency-checker, ncgui, datstation, suite-releases. Each has its
   own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; console-link is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; ncgui is GPL-2.0-only, a port of NetcatGUI; the rest
   GPL-3.0-or-later), .gitignore. Simple
@@ -155,7 +155,7 @@ shellcheck -S warning apps/ppsspp-manager/install.sh apps/ppsspp-manager/bc250-p
   apps/pcsx2-manager/install.sh apps/pcsx2-manager/bc250-pcsx2-run apps/vita3k-manager/install.sh \
   apps/vita3k-manager/bc250-vita3k-run
 shellcheck -S warning apps/decky-manager/install.sh apps/ncgui/install.sh \
-  apps/bazzite-datstation/install.sh
+  apps/datstation/install.sh
 for t in tools/installer-tests/*.sh; do [ "${t##*/}" = shims.sh ] || bash "$t"; done   # every installer test
 mkdocs build --strict                               # from the venv
 ```

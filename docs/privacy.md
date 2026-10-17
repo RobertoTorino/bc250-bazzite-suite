@@ -42,7 +42,7 @@ app downloads its Python packages from PyPI.
   account you set. shadPS4 keeps the password as it is and shadNet sends it unencrypted: use one you use nowhere
   else.
 - [Bazzite SFTP Tools](apps/sftp-tools.md) connects only to the host you enter.
-- [Bazzite DatStation](apps/bazzite-datstation.md#privacy) loads the PlayStation Blog's feed on its PS News page.
+- [Bazzite DatStation](apps/datstation.md#privacy) loads the PlayStation Blog's feed on its PS News page.
 - [BC-250 Bazzite Test](apps/bazzite-test.md): its network test resolves and pings `google.com` and asks
   `www.example.com` for a page header; the optional speed test uses Ookla's servers and about 1 GB of data.
 - [BC-250 ACE Queues](apps/ace.md) and [BC-250 Mesh Shaders](apps/mesh-shaders.md) download Mesa's source

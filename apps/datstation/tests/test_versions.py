@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import json
 
-from bazzite_datstation.versions import PAGES, Entry, count, load_page, load_series
-from bazzite_datstation.versions_page import entry_html, series_html
+from datstation.versions import PAGES, Entry, count, load_page, load_series
+from datstation.versions_page import entry_html, series_html
 
 
 def test_every_shipped_file_loads():

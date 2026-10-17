@@ -74,21 +74,33 @@ def test_a_second_launch_opens_no_window(monkeypatch):
     assert entry.main() == 0 and asked == [entry.INFO.app_id]
 
 
-def test_the_logs_sit_under_the_steps_side_by_side(window, monkeypatch):
-    """Under the tabs, in a splitter: the current step's log on the left, the command line on the right, each the
-    full height (owner, 17-10-2026: the two boxes stacked were too flat to read). A finished command reads the
-    checkout again (a commit, a push)."""
-    from PyQt6.QtCore import Qt
+def test_the_logs_are_tabs_of_their_own(window, monkeypatch):
+    """Log 1 (the log of the step last open) and Log 2 (the command line) are tabs after the steps, each the whole
+    tab area (owner, 17-10-2026: boxes under the steps were too flat to read). A step that writes its log opens
+    Log 1; opening a step makes Log 1 its log again. A finished command reads the checkout again (a commit, a push)."""
     w, _app = window
-    assert w.splitter.widget(0) is w.tabs and w.splitter.widget(1) is w.logs
-    assert w.logs.orientation() == Qt.Orientation.Horizontal
-    assert w.logs.widget(0) is w.outputs and w.logs.widget(1) is w.commands
     pages = (w.apps_page, w.portal_page, w.withdraw_page, w.run_page)
+    assert [w.tabs.tabText(i) for i in range(w.tabs.count())] == \
+        ["1. Apps", "2. Pin and portal", "3. Withdraw", "Run from checkout", "Log 1", "Log 2"]
+    assert w.tabs.widget(w.log_tab) is w.outputs and w.tabs.widget(w.commands_tab) is w.commands
     assert [w.outputs.widget(i) for i in range(w.outputs.count())] == [p.output for p in pages]
-    assert not any(p.isAncestorOf(p.output) for p in pages)             # no longer inside the tab
+    assert not any(p.isAncestorOf(p.output) for p in pages)             # no longer inside the step's tab
+    assert w.tabs.widget(w.log_tab).parent() is not None and w.centralWidget().isAncestorOf(w.tabs)
     for index, page in enumerate(pages):
         w.tabs.setCurrentIndex(index)
         assert w.outputs.currentWidget() is page.output
+    w.tabs.setCurrentIndex(w.log_tab)
+    assert w.outputs.currentWidget() is w.run_page.output               # a log tab leaves it as it is
+    w.tabs.setCurrentIndex(1)
+    w.portal_page.output.set_text("Tags fetched.")                      # the open step wrote: Log 1 opens
+    assert w.tabs.currentIndex() == w.log_tab and w.outputs.currentWidget() is w.portal_page.output
+    w.tabs.setCurrentIndex(0)
+    w.portal_page.output.set_text("later")                              # another step's log: no switch
+    assert w.tabs.currentIndex() == 0
+    w.run_page.output.appendPlainText("alpha started")                  # Run from checkout never switches
+    w.tabs.setCurrentIndex(3)
+    w.run_page.output.appendPlainText("alpha closed.")
+    assert w.tabs.currentIndex() == 3
     w.tabs.setCurrentIndex(0)
     assert w.commands.root == w.root
     refreshed = []

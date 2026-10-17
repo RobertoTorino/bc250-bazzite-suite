@@ -6,9 +6,9 @@ from __future__ import annotations
 
 from PyQt6.QtGui import QImageReader
 
-from bazzite_datstation import CONSOLES_DIR, history, regions
-from bazzite_datstation.history_page import page_html as history_html
-from bazzite_datstation.regions_page import page_html as regions_html, table_html
+from datstation import CONSOLES_DIR, history, regions
+from datstation.history_page import page_html as history_html
+from datstation.regions_page import page_html as regions_html, table_html
 
 
 def test_every_console_picture_exists_and_loads(qapp):

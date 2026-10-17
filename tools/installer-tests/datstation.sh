@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Exercise apps/bazzite-datstation/install.sh: install from the checkout (the app's own venv, the launcher, core
+# Exercise apps/datstation/install.sh: install from the checkout (the app's own venv, the launcher, core
 # bundled, no sudo), a staged release replacing it, the refusals, uninstall (settings and scores kept) and --purge.
 # Runs with the shims from shims.sh (CI, or WSL on Windows).
 set -u
@@ -30,19 +30,19 @@ probe_launcher() {   # probe_launcher <launcher> <module file under $A> <package
 }
 
 echo "== 1. install from the suite checkout"
-bash "$SUITE/apps/bazzite-datstation/install.sh" > "$T/log1" 2>&1; rc=$?
+bash "$SUITE/apps/datstation/install.sh" > "$T/log1" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "no sudo used" "! grep -q 'sudo called' $T/log1 && [ -z \"\$(ls -A $T/opt)\" ]"
-check "app copied" "[ -f $A/bazzite_datstation/main_window.py ] && [ -f $A/images/$APP.png ]"
-check "data, music and pictures copied" "[ -f $A/bazzite_datstation/data/questions.json ] && [ -f $A/bazzite_datstation/sounds/sea_breeze.ogg ] && [ -f $A/images/consoles/ps1.webp ]"
+check "app copied" "[ -f $A/datstation/main_window.py ] && [ -f $A/images/$APP.png ]"
+check "data, music and pictures copied" "[ -f $A/datstation/data/questions.json ] && [ -f $A/datstation/sounds/sea_breeze.ogg ] && [ -f $A/images/consoles/ps1.webp ]"
 check "core bundled from checkout" "[ -f $A/bc250_core/widgets.py ] && [ ! -d $A/bc250_core/__pycache__ ]"
 check "no tests or caches copied" "[ ! -d $A/tests ] && ! find $A -name __pycache__ | grep -q ."
 check "own venv, not the suite's" "[ -x $D/$APP/venv/bin/python ] && [ ! -e $D/bc250-bazzite-suite/venv ]"
-check "launcher uses the own venv" "grep -qF '$APP/venv/bin/python\" -c ' $HOME/.local/bin/$APP && grep -qF '\"$A\" bazzite_datstation \"' $HOME/.local/bin/$APP"
+check "launcher uses the own venv" "grep -qF '$APP/venv/bin/python\" -c ' $HOME/.local/bin/$APP && grep -qF '\"$A\" datstation \"' $HOME/.local/bin/$APP"
 check "launcher does not change folder" "! grep -q '^cd ' $HOME/.local/bin/$APP"
-out=$(probe_launcher $HOME/.local/bin/$APP bazzite_datstation/__main__.py bazzite_datstation); here=$(cd "$T/elsewhere" && pwd -P)
+out=$(probe_launcher $HOME/.local/bin/$APP datstation/__main__.py datstation); here=$(cd "$T/elsewhere" && pwd -P)
 check "launcher runs in the caller's folder" "printf '%s\n' \"$out\" | grep -qxF \"cwd=$here\""
-check "launcher imports the app's package, not the folder's" "printf '%s\n' \"$out\" | grep -qxF \"pkg=$A/bazzite_datstation\""
+check "launcher imports the app's package, not the folder's" "printf '%s\n' \"$out\" | grep -qxF \"pkg=$A/datstation\""
 check "launcher passes relative paths as given" "printf '%s\n' \"$out\" | grep -qxF 'args=game 1.pkg|sub/out'"
 check "core imports from the app copy" "(cd $A && /usr/bin/python3 -c 'import importlib.util as u, sys; s=u.find_spec(\"bc250_core\"); sys.exit(0 if s and s.origin.startswith(\"$A\") else 1)')"
 check "launcher executable" "[ -x $HOME/.local/bin/$APP ]"
@@ -50,12 +50,12 @@ check "menu entry starts the launcher" "grep -qx 'Exec=$HOME/.local/bin/$APP' $D
 check "desktop icon, executable" "[ -x $HOME/Desktop/$APP.desktop ]"
 
 echo "== 2. install a staged release (core bundled in the tarball) without the Desktop icon"
-rm -rf "$T/stage"; /usr/bin/python3 "$SUITE/tools/stage_app.py" bazzite-datstation "$T/stage" > /dev/null
-echo "# release marker" >> "$T/stage/bazzite_datstation/__init__.py"
+rm -rf "$T/stage"; /usr/bin/python3 "$SUITE/tools/stage_app.py" datstation "$T/stage" > /dev/null
+echo "# release marker" >> "$T/stage/datstation/__init__.py"
 echo "# release marker" >> "$T/stage/bc250_core/__init__.py"
 bash "$T/stage/install.sh" --no-desktop-shortcut > "$T/log2" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
-check "the release's own code used" "grep -q 'release marker' $A/bazzite_datstation/__init__.py"
+check "the release's own code used" "grep -q 'release marker' $A/datstation/__init__.py"
 check "the release's own core used" "grep -q 'release marker' $A/bc250_core/__init__.py"
 check "manual bundled" "[ -f $A/MANUAL.md ]"
 check "no development files bundled" "[ ! -e $A/requirements-dev.txt ] && [ ! -d $A/tests ]"

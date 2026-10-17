@@ -14,13 +14,13 @@ from PyQt6.QtWidgets import QMessageBox
 
 from bc250_core import steam
 
-from bazzite_datstation import history_page, news
-from bazzite_datstation.front_page import COLUMNS, KEYS, ROWS
-from bazzite_datstation.main_window import GUIDES_URL, MainWindow
-from bazzite_datstation.news import NewsItem
-from bazzite_datstation.quiz import ALL, QUICK, State
-from bazzite_datstation.quiz_page import Music, QuizPage
-from bazzite_datstation.scores import ScoreStore
+from datstation import history_page, news
+from datstation.front_page import COLUMNS, KEYS, ROWS
+from datstation.main_window import GUIDES_URL, MainWindow
+from datstation.news import NewsItem
+from datstation.quiz import ALL, QUICK, State
+from datstation.quiz_page import Music, QuizPage
+from datstation.scores import ScoreStore
 from conftest import FIXTURES
 
 
@@ -197,7 +197,7 @@ def test_a_perfect_quick_quiz_and_the_mute_setting(qapp, tmp_path, questions):
 
 
 def test_the_scores_page_shows_the_store(window, tmp_path, monkeypatch):
-    from bazzite_datstation.quiz import Result
+    from datstation.quiz import Result
     window.store.add(Result("PS2", 120, 2, 15, 15, 15, 0, 30, True), "2026-10-15T09:00:00")
     window.open("scores")
     html = window.pages["scores"].view.toPlainText()

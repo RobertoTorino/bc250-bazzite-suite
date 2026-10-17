@@ -7,12 +7,61 @@ describe only what exists.
 
 ## Resume here (13-10-2026, after the break)
 
+**First (17-10-2026, evening): finish portal-v1.13.0, then go on with the renaming.** State at the end of that
+session, everything in the working tree and nothing committed by Claude:
+
+1. **Portal release 1.13.0** (owner). Done: ace-v0.2.0, ncgui-v0.2.0 and dependency-checker-v0.4.1 are released
+   on GitHub and pinned with their checksums in `portal/apps.toml`; `portal/VERSION` is 1.13.0 and its CHANGELOG
+   has the 1.13.0 entry from the bump before the push. Left: in Suite Releases step 2, Bump portal with 1.13.0 (it
+   adds the release entry naming the three pins and lists the portal commands), then commit, `tools/ci-local.sh`,
+   push, `tools/tag-release.sh portal-v1.13.0`. The commit must carry the working tree's tools change: CI's
+   `tools/check_manifest.py` now counts the portal bump from the last portal release (the newest `portal-v` tag),
+   not from the last push, so pinning the checksums after the bump needs no second bump (it asked for 1.13.1
+   before). Suite Releases' minimum follows the same rule, Apply makes the portal bump itself when the push needs
+   it, and the logs are the tabs Log 1 and Log 2.
+2. **The (re)naming convention** (owner, 17-10-2026), one app per step, the owner names each: the folder under
+   `apps/` is a short name, the package the app's name without its BC-250 or Bazzite prefix, as a Python
+   identifier. Done: `apps/ace/ace_queues/` (was ace-queues/bc250_ace_queues), `apps/ncgui/netcat_gui/` (was
+   bazzite-netcatgui/bazzite_netcatgui) and `apps/datstation/datstation/` (was bazzite-datstation/bazzite_datstation;
+   the owner's choice, 17-10-2026: the package takes the folder's name where the name without its prefix is that
+   word, nothing in the tooling minds). The owner picks the next app and both names; do not guess them. Still
+   to rename, with their packages now: bazzite-test (bc250_gui),
+   bios-reader (bc250_bios_reader), console-link (bc250_console_link), cores-bisect (bc250_cores_bisect_gui,
+   bc250_cores_gui), cu-bisect (bc250_bisect_gui, bc250_unlock_gui), decky-manager (bc250_decky_manager),
+   demo-tool (simple_demo_tool), dependency-checker (bc250_dependency_checker), fan-control (bc250_fan_control),
+   governor (bc250_governor), gpu-oc-bisect (bc250_gpu_oc_gui), hdmi-cec (bc250_hdmi_cec), helixsr
+   (bc250_bazzite_helixsr), memory-manager (bc250_memory_manager), mesh-shaders (bc250_mesh_shaders),
+   pcsx2-manager (bc250_pcsx2_manager), persistent-acpi (bc250_acpi_gui), ppsspp-manager (bc250_ppsspp_manager),
+   rpcs3-manager (bc250_rpcs3_manager), sftp-tools (bc250_sftp_tools), shadps4-manager (bc250_shadps4_manager),
+   suite-releases (bc250_suite_releases, checkout-only: no pin, no tag), system-overlay (bc250_overlay), usb-wifi
+   (bc250_usb_wifi), vita3k-manager (bc250_vita3k_manager). The recipe, as done for ace and ncgui:
+   - `git mv` the folder and the package; rename `docs/apps/<old>.md`, `tools/installer-tests/<old>.sh` and
+     `portal/images/apps/<old>.png` to the new short name. The tooling ties the folder name to the portal key, the
+     tag prefix, the chapter, the installer test and the tile icon, so all of them follow the folder.
+   - Replace the package name everywhere (imports, `python -m`, the installer's launcher line and its file check,
+     the installer test), `apps/<old>` paths (ci.yml matrix and shellcheck lines, CLAUDE.md, README, the icon
+     SOURCES in `tools/tests/test_portal_icons.py`), the docs links and `assets/<old>/` in the chapter, the mkdocs
+     nav, the key in `portal/apps.toml` (`[apps.<new>]`, tag `<new>-v<current VERSION>`, `sha256 = ""`: the
+     placeholder for the first release under the new prefix, which an app release accepts and a portal release
+     waits for), `[app.<new>]` and its `owner` lines in the dependency catalogue, the portal tests' key sets, and
+     `tag_prefix="<new>-v"` in the app's `__init__.py`.
+   - Keep the installed identity: APP_ID, the launcher in `~/.local/bin`, the scripts, settings and state folders,
+     the display name and the icon file names. Add the old key to `RENAMED` in `portal/bc250_portal/manifest.py`:
+     the portal moves the record of an installed copy to the new key, the tag's prefix with it.
+   - CHANGELOG entries: the app (`Fixed.`), the portal (`Added.`, a key was added), the dependency checker
+     (`Fixed.`) and the root; the convention row under Open gets the app.
+   - Checks: the app's tests, its installer test, portal, dependency-checker, suite-releases and tools tests,
+     check_versions, check_manifest (it asks for a portal minor bump until the owner releases: expected),
+     shellcheck, the strict wiki build, `tools/ci-local.sh` for the touched jobs.
+   - Then the owner: release the app under the new prefix (Suite Releases offers the current version first), pin,
+     bump the portal, release the portal. Several renamed apps can share one portal release.
+
 Next session (owner, 17-10-2026, releasing everything that stands at that point), in this order:
 1. **The new app icons.** The owner is preparing the next batch of frame-art icons (see App icons below): put each
    512 px PNG in as it is, scale the 128 px copy and the portal's card copy from it, replace the placeholder of
    BC-250 USB Wi-Fi among them, and check the wiki and the Steam cards that draw from an icon.
 2. **Bazzite DatStation's quiz questions.** The owner has a new `.json` file with quiz questions: it replaces
-   `apps/bazzite-datstation/bazzite_datstation/data/questions.json` (quiz.py reads it); check its shape against
+   `apps/datstation/datstation/data/questions.json` (quiz.py reads it); check its shape against
    what quiz.py expects and the tests, and give DatStation a CHANGELOG entry (Added or Fixed by what changed).
 Then the open board tests of USB Wi-Fi and Console Link below.
 
@@ -410,11 +459,12 @@ the board: Rename files on real images (and once in Game Mode: a renamed game ne
 
 ## Bazzite DatStation (joined 15-10-2026)
 
-Until 15-10-2026 its own repository (github.com/RobertoTorino/bazzite-datstation); now `apps/bazzite-datstation`, in
+Until 15-10-2026 its own repository (github.com/RobertoTorino/bazzite-datstation); now `apps/datstation` (the
+folder was `apps/bazzite-datstation` until the naming convention, 17-10-2026), in
 the portal under "Gaming" (owner, 15-10-2026), short name DatStation, pinned to `bazzite-datstation-v0.1.0` (not
 tagged yet). The PlayStation knowledge part of the owner's DatStation Android app (github.com/RobertoTorino/DatStation,
 Kotlin + Compose) as Python + Qt, built on bc250_core from the start. Its bundled `bc250_core/` (identical to core's),
-CLAUDE.md, test.sh and .gitattributes went; its mkdocs.md is the manual chapter `docs/apps/bazzite-datstation.md`.
+CLAUDE.md, test.sh and .gitattributes went; its mkdocs.md is the manual chapter `docs/apps/datstation.md`.
 The project page and `AppInfo.repo_url` now point to the suite, where its releases are. GPL-3.0-or-later.
 
 Decided by the owner before the move (15-10-2026): the questions ship as plain JSON (the Android app encrypts them
@@ -435,7 +485,7 @@ Open, in this order:
 
 1. The stray shortcut in the owner's Steam (above): Remove from Steam in the installed app, or by hand with Steam
    closed.
-2. On the board: install from the portal (or `bash apps/bazzite-datstation/install.sh`), open the app, try every tile;
+2. On the board: install from the portal (or `bash apps/datstation/install.sh`), open the app, try every tile;
    Add to Steam from Desktop Mode; start it from Game Mode with a controller (D-pad, A, B as Escape, keys 1 to 4 if
    mapped); the music plays and Music off is kept; how the tile symbols (△ ○ × □ ◇ ◆ ★) and the Inter font render.
 3. The first release, and the portal release that pins it (apps.toml changed: at least a portal minor bump).
@@ -476,7 +526,7 @@ card icon in `portal/images/apps/` is a copy of that (`tools/tests/test_portal_i
 | Step | What | Gate |
 |---|---|---|
 | 3 | Board check | Install, open and uninstall the portal on a clean Bazzite account; a full passive bazzite-test run matches the original |
-| — | **Naming convention** (owner, 17-10-2026): an app's folder under apps/ is a short name, its package the app's name without its BC-250 or Bazzite prefix; with the folder go the portal key, the tag prefix, the wiki chapter, the installer test and the tile icon, while the installed launcher, scripts, settings and state keep their names. Done (17-10-2026): ace-queues → `apps/ace/ace_queues`, bazzite-netcatgui → `apps/ncgui/netcat_gui`; the portal moves an installed copy's record to the new key (`RENAMED` in portal/bc250_portal/manifest.py, used by Records in sources.py: add each renamed app there). Open for both (owner): the first release under the new prefix (`ace-v…`, `ncgui-v…`; apps.toml pins ace-v0.2.0 and ncgui-v0.2.0 without a checksum until then, which an app release accepts and a portal release waits for), its pin, and the portal minor bump check_manifest asks for (keys were added and removed). The other apps follow one at a time, each the same way. | Its tests, installer test and the suite's checks; the portal lists the app under the new key |
+| — | **Naming convention** (owner, 17-10-2026): an app's folder under apps/ is a short name, its package the app's name without its BC-250 or Bazzite prefix; with the folder go the portal key, the tag prefix, the wiki chapter, the installer test and the tile icon, while the installed launcher, scripts, settings and state keep their names. Done (17-10-2026): ace-queues → `apps/ace/ace_queues`, bazzite-netcatgui → `apps/ncgui/netcat_gui`, bazzite-datstation → `apps/datstation/datstation`; the portal moves an installed copy's record to the new key (`RENAMED` in portal/bc250_portal/manifest.py, used by Records in sources.py: add each renamed app there). Open for each (owner): the first release under the new prefix (`ace-v…`, `ncgui-v…`, `datstation-v…`; ace-v0.2.0 and ncgui-v0.2.0 are released and pinned, apps.toml pins datstation-v0.2.1 without a checksum until then, which an app release accepts and a portal release waits for), its pin, and the portal minor bump check_manifest asks for (keys were added and removed). The other apps follow one at a time, each the same way. | Its tests, installer test and the suite's checks; the portal lists the app under the new key |
 | 4 | Headless smoke tests for the five GUIs without tests (cu bisect/unlock, cores bisect/unlock, gpu-oc). Built (12-10-2026): tests/ in cu-bisect, cores-bisect and gpu-oc-bisect (options, the --auto unit, both unlock gates, every window offscreen with a fake script), in CI's pytest matrix | CI green |
 | 5 | governor and helixsr onto core; per-app releases plus a portal release | Their test suites; install from the portal |
 | 6 | Bisect family: `terminal`, `runner`, `dialogs`, `systemd` into core; shared `BisectLauncher` (cu, cores, gpu-oc stay three apps); unlock GUIs onto core; names in strings become placeholders | Their test suites; on the board: one process after starting cu with auto-resume |

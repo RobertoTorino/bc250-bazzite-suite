@@ -317,12 +317,12 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-decky-manager"]
 launch = [["Open", "~/.local/bin/bc250-decky-manager"]]
 
-[apps.bazzite-datstation]
+[apps.datstation]
 name = "Bazzite DatStation"
 short = "DatStation"
 summary = "PlayStation quiz, console history, system versions, region codes, user guides and news, with your scores."
-tag = "bazzite-datstation-v0.2.1"
-sha256 = "d775f043d947e71648d32378c66c0c70c2adbc8c559ce08d66d3df81fd1d7589"
+tag = "datstation-v0.2.1"
+sha256 = ""
 required = false
 changes_board = false
 section = "gaming"

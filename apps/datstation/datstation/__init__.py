@@ -22,7 +22,7 @@ REPO_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite"
 
 # Settings in ~/.config/bazzite-datstation/bazzite-datstation.ini; scores in ~/.local/share/bazzite-datstation/.
 INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH,
-               tag_prefix="bazzite-datstation-v", settings_ini=True)
+               tag_prefix="datstation-v", settings_ini=True)
 
 __all__ = ["APP_ID", "APP_NAME", "CONSOLES_DIR", "DATA_DIR", "INFO", "LOGO_PATH", "PACKAGE_DIR", "REPO_URL",
            "ROOT", "SOUNDS_DIR", "__version__"]

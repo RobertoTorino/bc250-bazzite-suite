@@ -5,6 +5,13 @@ minimum CI accepts was counted from the last push, where pinning the checksums i
 counted from the last portal release, as tools/check_manifest.py does since this change, so the version bumped
 before the push stays the one offered, and Apply makes no second bump for the pins.
 
+Changelog: 17-10-2026 08:33:32
+
+Fixed. The logs are two tabs after the steps, each the whole tab area: Log 1, the log of the step last open (what
+Apply, Pin, Bump portal, Withdraw or an app started from the checkout wrote; a step that writes its log opens
+it), and Log 2, the command line with its output. Before, the step's log sat inside its tab above the command
+line, and the two flat boxes were hard to read (owner, 17-10-2026).
+
 Changelog: 17-10-2026 08:07:25
 
 Fixed. The two log boxes under the steps sit side by side, each the full height of that area: the step's own

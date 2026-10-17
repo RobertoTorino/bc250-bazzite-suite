@@ -10,7 +10,7 @@ import pytest
 
 from bc250_core import steam
 
-from bazzite_datstation import APP_ID, APP_NAME, LOGO_PATH, steam_shortcut
+from datstation import APP_ID, APP_NAME, LOGO_PATH, steam_shortcut
 
 OTHER = {"appid": -1234, "AppName": "RetroArch", "Exe": '"/usr/bin/retroarch"', "StartDir": '"/usr/bin/"',
          "LaunchOptions": "", "LastPlayTime": 1700000000, "tags": {"0": "Emulators"}}

@@ -57,7 +57,7 @@ def no_real_steam(tmp_path, monkeypatch):
 @pytest.fixture
 def questions():
     """Twelve questions: ten multiple choice over four categories and two true/false, one with an explanation."""
-    from bazzite_datstation.quiz import Question
+    from datstation.quiz import Question
     items = []
     for n in range(10):
         category = ("PlayStation1", "PlayStation2", "General", "App")[n % 4]

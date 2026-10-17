@@ -1,3 +1,11 @@
+Changelog: 17-10-2026 08:47:31
+
+The naming convention applied to Bazzite DatStation: apps/bazzite-datstation is apps/datstation with the package
+datstation (the owner's choice, 17-10-2026: where the app's name without its prefix is the short name itself, the
+package takes that same word); with it the portal key, the wiki chapter (docs/apps/datstation.md), the installer
+test, the portal's tile icon, CI's steps, the dependency catalogue, CLAUDE.md's list and the wiki's Architecture
+page. The portal moves the record of an installed copy to the new key.
+
 Changelog: 17-10-2026 08:22:18
 
 tools/check_manifest.py counts the portal bump apps.toml needs from the last portal release (the newest portal-v

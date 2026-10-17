@@ -31,7 +31,7 @@ from pathlib import Path
 from PyQt6.QtCore import QProcess, QSize, Qt, QTimer, QUrl
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView,
-                             QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPushButton, QSplitter, QStackedWidget,
+                             QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPushButton, QStackedWidget,
                              QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
 
 from bc250_core.platform import launch_in_terminal
@@ -826,26 +826,22 @@ class ReleaseWindow(QMainWindow):
         # was typed in it.
         self.tabs.currentChanged.connect(lambda i: i == 1 and self.portal_page.fill(rp.load_units(self.root)))
         self.commands = CommandLine(root, settings, finished=self.refresh)    # a commit or push: read it again
-        # Under the steps, side by side: the current step's log (what Apply, Bump portal, Withdraw or a started app
-        # wrote) on the left, the command line with its output on the right. Two tall boxes read better than the
-        # two flat ones that were stacked (owner, 17-10-2026).
+        # The logs are tabs of their own, each the whole tab area (owner, 17-10-2026: boxes under the steps were
+        # too flat to read). Log 1 shows the log of the step last open (what Apply, Pin, Bump portal, Withdraw or
+        # a started app wrote); a step that writes its log opens it. Log 2 is the command line with its output.
+        self.step_pages = (self.apps_page, self.portal_page, self.withdraw_page, self.run_page)
         self.outputs = QStackedWidget()
-        for page in (self.apps_page, self.portal_page, self.withdraw_page, self.run_page):
+        for page in self.step_pages:
             self.outputs.addWidget(page.output)
-        self.tabs.currentChanged.connect(self.outputs.setCurrentIndex)
-        self.logs = QSplitter(Qt.Orientation.Horizontal)
-        self.logs.addWidget(self.outputs)
-        self.logs.addWidget(self.commands)
-        self.logs.setStretchFactor(0, 1)
-        self.logs.setStretchFactor(1, 1)
-        self.splitter = QSplitter(Qt.Orientation.Vertical)
-        self.splitter.addWidget(self.tabs)
-        self.splitter.addWidget(self.logs)
-        self.splitter.setCollapsible(0, False)
-        self.splitter.setStretchFactor(0, 2)
-        self.splitter.setStretchFactor(1, 1)
-        self.logs.setSizes([550, 550])                  # half and half; the table's size hint would take it all
-        self.splitter.setSizes([400, 260])
+        self.log_tab = self.tabs.addTab(self.outputs, "Log 1")
+        self.commands_tab = self.tabs.addTab(self.commands, "Log 2")
+        self.tabs.setTabToolTip(self.log_tab, "The log of the step last open: what Apply, Pin, Bump portal, Withdraw "
+                                              "or an app started from the checkout wrote")
+        self.tabs.setTabToolTip(self.commands_tab, "The command line: runs a command in the checkout and shows its "
+                                                   "output; Commands offers what the last step showed")
+        self.tabs.currentChanged.connect(self._tab_changed)
+        for page in self.step_pages[:3]:                 # not Run from checkout: its lines come while you click
+            page.output.textChanged.connect(lambda page=page: self._show_log(page))
         central = QWidget()
         lay = QVBoxLayout(central)
         lay.addLayout(header)
@@ -854,15 +850,26 @@ class ReleaseWindow(QMainWindow):
         self.bad_tags.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.bad_tags.setStyleSheet("color:#c62828; font-weight:600;")
         lay.addWidget(self.bad_tags)
-        lay.addWidget(self.splitter, 1)
+        lay.addWidget(self.tabs, 1)
         lay.addWidget(hint_label("Only files change here. Commit, push and tag yourself, with the commands shown: "
-                                 "type them in the command line above (Commands offers them) or in a terminal."))
+                                 "type them in the command line in Log 2 (Commands offers them) or in a terminal."))
         version = QLabel(f"{APP_NAME} {__version__} · edits {self.root}")
         version.setStyleSheet("color:palette(placeholder-text);")
         lay.addWidget(version, 0, Qt.AlignmentFlag.AlignRight)
         self.setCentralWidget(central)
         self.reload()
         self.build.check()
+
+    def _tab_changed(self, index: int) -> None:
+        """A step opened: Log 1 shows that step's log from now on (a log tab opened leaves it as it is)."""
+        if index < len(self.step_pages):
+            self.outputs.setCurrentIndex(index)
+
+    def _show_log(self, page: QWidget) -> None:
+        """The open step wrote its log: show it in Log 1, the whole window wide."""
+        if self.tabs.currentWidget() is page and page.output.toPlainText().strip():
+            self.outputs.setCurrentWidget(page.output)
+            self.tabs.setCurrentIndex(self.log_tab)
 
     def base(self) -> str:
         return self.portal_page.base_edit.text().strip() or "origin/main"

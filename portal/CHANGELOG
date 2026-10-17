@@ -1,3 +1,14 @@
+Changelog: 17-10-2026 08:56:40
+
+Release 1.14.0. Pins datstation-v0.2.1.
+
+Changelog: 17-10-2026 08:47:31
+
+Added. Bazzite DatStation is listed as [apps.datstation] (was [apps.bazzite-datstation]), after the app's move to
+apps/datstation; its tile icon is images/apps/datstation.png. The entry pins the first release under its new tag
+prefix (datstation-v0.2.1) without a checksum until that release exists. The record of a copy installed under the
+old key moves to the new key when the portal starts, as for ace and ncgui.
+
 Changelog: 17-10-2026 08:25:51
 
 Release 1.13.0. Pins dependency-checker-v0.4.1.

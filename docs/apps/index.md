@@ -35,7 +35,7 @@ other app is optional.
 | ![](../assets/apps/ppsspp-manager.png){ .app-icon } [PPSSPP Manager](ppsspp-manager.md) | PSP games with the PPSSPP emulator: a tested PPSSPP release, your games found and added to Game Mode. |
 | ![](../assets/apps/pcsx2-manager.png){ .app-icon } [PCSX2 Manager](pcsx2-manager.md) | PS2 games with the PCSX2 emulator: a tested PCSX2 release, your PS2 BIOS, your games found and added to Game Mode. |
 | ![](../assets/apps/vita3k-manager.png){ .app-icon } [Vita3K Manager](vita3k-manager.md) | PS Vita games with the Vita3K emulator: a tested Vita3K build, the firmware and your games installed through it, added to Game Mode. |
-| ![](../assets/apps/bazzite-datstation.png){ .app-icon } [Bazzite DatStation](bazzite-datstation.md) | PlayStation quiz, console history, system versions, region codes, user guides and news, with your scores. |
+| ![](../assets/apps/datstation.png){ .app-icon } [Bazzite DatStation](datstation.md) | PlayStation quiz, console history, system versions, region codes, user guides and news, with your scores. |
 
 **Development only**: tools for working on the suite, in their own section of the [portal](../portal.md). You do not
 need them to use the board.

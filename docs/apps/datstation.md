@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![Bazzite DatStation](../assets/bazzite-datstation/bazzite-datstation.png){ .app-logo }
+![Bazzite DatStation](../assets/datstation/bazzite-datstation.png){ .app-logo }
 
 # Bazzite DatStation
 
@@ -24,7 +24,7 @@ The app does not change how the board runs. Nothing is installed system-wide and
 
 In the [portal](../portal.md), click the Install button beside its icon. Or by hand: from the suite's
 [Releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases) page, download the
-`bazzite-datstation-v<version>.tar.gz` release and extract it. Run `install.sh` as your own user, without `sudo`:
+`datstation-v<version>.tar.gz` release and extract it. Run `install.sh` as your own user, without `sudo`:
 
 ```shell
 ./install.sh
@@ -156,7 +156,7 @@ stay in the files above, in your home folder, and go with `--uninstall --purge`.
 
 ## Development
 
-The app follows the suite's [architecture](../development/architecture.md): the package `bazzite_datstation/` at
+The app follows the suite's [architecture](../development/architecture.md): the package `datstation/` at
 the app root (its data in `data/`, the music in `sounds/`), `images/` (the icon and the console pictures),
 `tests/`, `install.sh`, `VERSION`, `CHANGELOG`, `LICENSE` and `.gitignore`, on `bc250_core` (the header, the
 settings, the Steam shortcuts, the one-instance socket). The quiz engine (`quiz.py`) and the feed reader
@@ -164,7 +164,7 @@ settings, the Steam shortcuts, the one-instance socket). The quiz engine (`quiz.
 
 ```bash
 ./test.sh                                                  # every test suite of the checkout, offscreen
-.venv-linux/bin/python -m pytest apps/bazzite-datstation/tests   # this app's only
+.venv-linux/bin/python -m pytest apps/datstation/tests   # this app's only
 ```
 
 **How the data got here.** The questions are the Android app's `questions.dat`, decrypted once and shipped as

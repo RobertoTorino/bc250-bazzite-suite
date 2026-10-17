@@ -8,8 +8,8 @@ import random
 
 import pytest
 
-from bazzite_datstation import quiz
-from bazzite_datstation.quiz import (ALL, CATEGORIES, DATA_CATEGORIES, PENALTY, QUICK, QUICK_QUESTIONS,
+from datstation import quiz
+from datstation.quiz import (ALL, CATEGORIES, DATA_CATEGORIES, PENALTY, QUICK, QUICK_QUESTIONS,
                                      ROUND_GROWTH, ROUND_QUESTIONS, START_TIME, TRUE_FALSE, Quiz, State,
                                      load_questions, matches, review)
 

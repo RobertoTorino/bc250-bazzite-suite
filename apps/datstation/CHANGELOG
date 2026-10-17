@@ -1,3 +1,17 @@
+Changelog: 17-10-2026 08:56:40
+
+Release 0.2.1.
+
+Changelog: 17-10-2026 08:47:31
+
+Fixed. The app's folder in the suite is apps/datstation (was apps/bazzite-datstation) and its package is datstation
+(was bazzite_datstation): the suite's naming convention (owner, 17-10-2026), a short folder name and the package
+named after the app without the Bazzite prefix, here the same word. With the folder go its key in the portal, its
+chapter of the wiki (apps/datstation/), its installer test and its release tags: datstation-v<x.y.z> from the next
+release on, which is also what the app's update check looks for. The installed app keeps its name, its launcher
+bazzite-datstation, its settings, its scores and its folders; the portal moves its record of the installed copy
+to the new key.
+
 Changelog: 17-10-2026 05:35:55
 
 Release 0.2.1.

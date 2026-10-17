@@ -50,7 +50,7 @@ jobs:
               apps/suite-releases,
               apps/system-overlay, apps/bios-reader, apps/ace, apps/memory-manager, apps/hdmi-cec, apps/sftp-tools,
               apps/console-link, apps/mesh-shaders, apps/shadps4-manager, apps/rpcs3-manager, apps/decky-manager,
-              apps/bazzite-datstation, apps/ppsspp-manager, apps/pcsx2-manager, apps/vita3k-manager, apps/fan-control,
+              apps/datstation, apps/ppsspp-manager, apps/pcsx2-manager, apps/vita3k-manager, apps/fan-control,
               apps/usb-wifi,
               tools/installer-tests/gui]   # every folder with tests/
     defaults:
@@ -171,7 +171,7 @@ jobs:
           shellcheck -S warning apps/demo-tool/install.sh
           shellcheck -S warning apps/dependency-checker/install.sh
           shellcheck -S warning apps/ncgui/install.sh
-          shellcheck -S warning apps/bazzite-datstation/install.sh
+          shellcheck -S warning apps/datstation/install.sh
           shellcheck -S warning apps/suite-releases/*.sh
 
       - name: Line endings
@@ -268,7 +268,7 @@ jobs:
       - name: NetcatGUI installer
         run: bash tools/installer-tests/ncgui.sh
       - name: DatStation installer
-        run: bash tools/installer-tests/bazzite-datstation.sh
+        run: bash tools/installer-tests/datstation.sh
       - name: Suite Releases installer
         run: bash tools/installer-tests/suite-releases.sh
       - name: Installer Tests installer

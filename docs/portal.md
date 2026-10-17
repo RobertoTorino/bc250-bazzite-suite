@@ -32,7 +32,7 @@ away when you click its name; it is open until you close it, and the portal reme
 [BC-250 ACE Queues](apps/ace.md), [BC-250 Mesh Shaders](apps/mesh-shaders.md),
 [Console Link](apps/console-link.md), [shadPS4 Manager](apps/shadps4-manager.md),
 [Decky Loader Manager](apps/decky-manager.md), [RPCS3 Manager](apps/rpcs3-manager.md),
-[Bazzite DatStation](apps/bazzite-datstation.md), [PPSSPP Manager](apps/ppsspp-manager.md),
+[Bazzite DatStation](apps/datstation.md), [PPSSPP Manager](apps/ppsspp-manager.md),
 [PCSX2 Manager](apps/pcsx2-manager.md) and [Vita3K Manager](apps/vita3k-manager.md). It is open until you close it,
 and the portal remembers whether it was open.
 
@@ -235,14 +235,14 @@ apps/suite-releases/install.sh --uninstall             # remove them; the checko
   checkout with `mkdocs serve` (the development venv has MkDocs) and opens it in the browser at
   `http://127.0.0.1:8765/bc250-bazzite-suite/`. It rebuilds on every save; its log is `mkdocs.log` there. When it
   is already running, a click only opens the page again.
-- **The command line**, under the steps on the right (on the left is the step's own log: what Apply, Bump
-  portal, Withdraw or a started app wrote), runs a command in the checkout, so you need no separate terminal for
-  the commands the steps show. Type it and press Enter; its output appears above the line as it runs. **Commands**
+- **Log 1** shows the log of the step last open, the whole window wide: what Apply, Pin, Bump portal, Withdraw
+  or an app started from the checkout wrote. A step that writes its log opens Log 1; open the step again to go on.
+- **The command line** in **Log 2** runs a command in the checkout, so you need no separate terminal for the
+  commands the steps show. Type it and press Enter; its output appears above the line as it runs. **Commands**
   lists the commands the last step showed (Apply, Bump portal or Withdraw), one per line: pick one to put it on
   the line, then check it and press Enter. Up and Down bring back earlier commands, also from earlier sessions.
   **Stop** or Ctrl+C interrupts a command, along with anything it started in the background; `clear` or **Clear**
-  empties the output. Drag the line above the two boxes to give them more room, or the one between them to widen
-  one of them.
+  empties the output.
   Each command runs with `bash -lc` in the folder the last `cd` left; variables you set do not carry over to the
   next command. A command cannot read input, so nothing can ask you something: git does not prompt for a password,
   opens no editor (commit with `-m`) and pages nothing. For a command that must ask, use a terminal. After each

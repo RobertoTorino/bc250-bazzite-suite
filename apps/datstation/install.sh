@@ -18,7 +18,7 @@ set -euo pipefail
 
 APP_ID="bazzite-datstation"
 APP_NAME="Bazzite DatStation"
-PACKAGE="bazzite_datstation"
+PACKAGE="datstation"
 DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 APP_HOME="$DATA_DIR/$APP_ID"
@@ -30,7 +30,7 @@ DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
 DESKTOP_ICON="$DESKTOP_DIR/$APP_ID.desktop"
 
 SRC=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
-# bc250_core: bundled next to bazzite_datstation in a release; in the suite checkout it lives in core/.
+# bc250_core: bundled next to datstation in a release; in the suite checkout it lives in core/.
 if [ -d "$SRC/bc250_core" ]; then CORE_SRC="$SRC/bc250_core"; else CORE_SRC="$SRC/../../core/bc250_core"; fi
 
 info() { printf '\033[1;35m==>\033[0m %s\n' "$1"; }
