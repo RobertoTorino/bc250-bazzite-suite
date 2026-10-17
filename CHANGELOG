@@ -1,3 +1,81 @@
+Changelog: 17-10-2026 12:35:30
+
+The naming convention applied to PCSX2 Manager: apps/pcsx2-manager is apps/pcsx2 with the package pcsx2_manager
+(was bc250_pcsx2_manager). With it the portal key, the wiki chapter (docs/apps/pcsx2.md), the installer test, the
+portal's tile icon, CI's steps and shellcheck line, the dependency catalogue, and CLAUDE.md's list and shellcheck
+line. The portal moves the record of an installed copy to the new key.
+
+Changelog: 17-10-2026 12:32:49
+
+The naming convention applied to BC-250 Mesh Shaders: apps/mesh-shaders is apps/mesh with the package mesh_shaders
+(was bc250_mesh_shaders). With it the portal key, the wiki chapter (docs/apps/mesh.md), the installer test, the
+portal's tile icon, CI's steps and shellcheck lines, the dependency catalogue, and CLAUDE.md's list, shellcheck
+lines and board-changes sentence. The portal moves the record of an installed copy to the new key.
+
+Changelog: 17-10-2026 12:29:59
+
+The naming convention applied to BC-250 Memory Manager: apps/memory-manager is apps/vram with the package
+vram_manager (was bc250_memory_manager). With it the portal key, the wiki chapter (docs/apps/vram.md; the
+development chapter Memory Manager internals keeps its file name), the installer test, the portal's tile icon, CI's
+steps and shellcheck line, the dependency catalogue, CLAUDE.md's list, shellcheck line and board-changes sentence,
+and a comment in Decky Loader Manager that names the app. The portal moves the record of an installed copy to the
+new key.
+
+Changelog: 17-10-2026 12:27:00
+
+The naming convention applied to HelixSR Manager: the package is helixsr_manager (was bc250_bazzite_helixsr); the
+folder apps/helixsr keeps its name, and with it the key, the chapter, the installer test and the tags. With it the
+installer, the wiki chapter, the development chapter, tools/check_upstream.py's path to the HelixSR pin, the widget
+parity test in core and a comment in Suite Releases. The installers of HelixSR Manager, BC-250 GPU Governor Manager
+and BC-250 CU Bisect remove the package folder under its old name when they install over an older copy, which their
+installer tests now check.
+
+Changelog: 17-10-2026 12:21:59
+
+The naming convention applied to HDMI CEC Manager: apps/hdmi-cec is apps/cec with the package hdmi_cec (was
+bc250_hdmi_cec). With it the portal key, the wiki chapter (docs/apps/cec.md), the installer test (which now also
+checks that an install moves an older watcher unit to the new module), the portal's tile icon, CI's steps and
+shellcheck line, the dependency catalogue, CLAUDE.md's list and shellcheck line, and a comment in the CI-local
+Containerfile. The portal moves the record of an installed copy to the new key.
+
+Changelog: 17-10-2026 12:18:12
+
+The naming convention applied to BC-250 GPU OC Bisect: apps/gpu-oc-bisect is apps/oc with the package oc_bisect
+(was bc250_gpu_oc_gui). With it the portal key, the wiki chapter (docs/apps/oc.md), the installer test, the
+portal's tile icon, CI's steps and shellcheck line, the issue template, the dependency catalogue, CLAUDE.md's list
+and shellcheck line, and the links to the app from the GPU Governor Manager and the Bazzite Test chapter. The
+portal moves the record of an installed copy to the new key.
+
+Changelog: 17-10-2026 12:09:45
+
+The naming convention applied to BC-250 GPU Governor Manager: apps/governor is apps/gpu with the package
+gpu_governor (was bc250_governor). With it the portal key, the wiki chapter (docs/apps/gpu.md), the installer test,
+the portal's tile icon, CI's steps, the issue template, the dependency catalogue, the root requirements-dev.txt,
+CLAUDE.md's list, and the tool tests and comments that used the governor as their example of an app. The portal
+moves the record of an installed copy to the new key.
+
+Changelog: 17-10-2026 12:04:59
+
+The naming convention applied to BC-250 Fan Control: apps/fan-control is apps/fan with the package fan_control
+(was bc250_fan_control). With it the portal key, the wiki chapter (docs/apps/fan.md), the installer test, the
+portal's tile icon, CI's steps, the dependency catalogue and CLAUDE.md's list and shellcheck line. The portal moves
+the record of an installed copy to the new key.
+
+Changelog: 17-10-2026 12:01:38
+
+The naming convention applied to Decky Loader Manager: apps/decky-manager is apps/decky with the package
+decky_manager (was bc250_decky_manager). With it the portal key, the wiki chapter (docs/apps/decky.md), the installer
+test, the portal's tile icon, CI's steps, the upstream workflow's step name, tools/check_upstream.py's path to the
+Decky pin, the dependency catalogue and CLAUDE.md's list. The portal moves the record of an installed copy to the
+new key.
+
+Changelog: 17-10-2026 11:56:42
+
+The naming convention applied to BC-250 CU Bisect: apps/cu-bisect is apps/compute with the packages cu_bisect (was
+bc250_bisect_gui) and cu_unlock (was bc250_unlock_gui). With it the portal key, the wiki chapter
+(docs/apps/compute.md), the installer test, the portal's tile icon, CI's steps, the issue template, the dependency
+catalogue and CLAUDE.md's list. The portal moves the record of an installed copy to the new key.
+
 Changelog: 17-10-2026 11:02:44
 
 The naming convention applied to BC-250 Cores Bisect: apps/cores-bisect is apps/cores with the packages

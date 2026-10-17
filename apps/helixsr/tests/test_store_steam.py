@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from bc250_bazzite_helixsr import backend
+from helixsr_manager import backend
 
 
 def test_store_round_trip(tmp_path):

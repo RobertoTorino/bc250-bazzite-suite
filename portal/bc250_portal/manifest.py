@@ -15,7 +15,11 @@ SECTIONS = {"gaming": "Gaming"}                 # section = "<key>": the portal'
 # Apps renamed in the suite (old key: new key), for the record of a copy installed under the old key.
 RENAMED = {"ace-queues": "ace", "bazzite-netcatgui": "ncgui", "bazzite-datstation": "datstation",
            "bazzite-test": "check", "bios-reader": "bios",
-           "console-link": "consoles", "cores-bisect": "cores"}
+           "console-link": "consoles", "cores-bisect": "cores", "cu-bisect": "compute",
+           "decky-manager": "decky", "fan-control": "fan",
+           "governor": "gpu", "gpu-oc-bisect": "oc",
+           "hdmi-cec": "cec", "memory-manager": "vram",
+           "mesh-shaders": "mesh", "pcsx2-manager": "pcsx2"}
 
 
 class ManifestError(ValueError):
@@ -24,7 +28,7 @@ class ManifestError(ValueError):
 
 @dataclass(frozen=True)
 class AppEntry:
-    key: str                                    # "cu-bisect": folder under apps/, tag prefix
+    key: str                                    # "compute": folder under apps/, tag prefix
     name: str
     summary: str
     tag: str                                    # "" for a checkout-only app: it is never released

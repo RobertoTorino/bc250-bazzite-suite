@@ -35,7 +35,7 @@ fail() { printf '\033[1;31merror:\033[0m %s\n' "$*" >&2; exit 1; }
 
 uninstall() {
     say "Removing $APP_ID"
-    rm -rf "$APP_DIR/venv" "$APP_DIR/bc250_bazzite_helixsr" "$APP_DIR/images"
+    rm -rf "$APP_DIR/venv" "$APP_DIR/helixsr_manager" "$APP_DIR/bc250_bazzite_helixsr" "$APP_DIR/images"
     rm -f "$APP_DIR/requirements.txt" "$APP_DIR/LICENSE" "$APP_DIR/README.md"
     if $PURGE; then
         say "Removing the imported payload and the settings"
@@ -72,15 +72,15 @@ $PURGE && ! $UNINSTALL && fail "--purge only goes with --uninstall"
 [[ "$(id -u)" -ne 0 ]] || fail "run this as your own user, not with sudo: the app, venv and launcher belong in your home folder"
 if $UNINSTALL; then uninstall; exit 0; fi
 
-[[ -f "$SRC_DIR/bc250_bazzite_helixsr/__main__.py" ]] || fail "run this script from the unpacked release directory"
+[[ -f "$SRC_DIR/helixsr_manager/__main__.py" ]] || fail "run this script from the unpacked release directory"
 command -v python3 >/dev/null || fail "python3 is required"
 python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' || fail "Python 3.11 or newer is required"
 python3 -c 'import venv, ensurepip' 2>/dev/null || fail "python3 venv/ensurepip modules are missing"
 
 say "Installing the app to $APP_DIR"
 mkdir -p "$APP_DIR" "$BIN_DIR" "$APPS_DIR" "$ICON_DIR"
-rm -rf "$APP_DIR/bc250_bazzite_helixsr" "$APP_DIR/images"
-cp -R "$SRC_DIR/bc250_bazzite_helixsr" "$SRC_DIR/images" "$APP_DIR/"
+rm -rf "$APP_DIR/helixsr_manager" "$APP_DIR/bc250_bazzite_helixsr" "$APP_DIR/images"   # and the package before its rename
+cp -R "$SRC_DIR/helixsr_manager" "$SRC_DIR/images" "$APP_DIR/"
 cp "$SRC_DIR/requirements.txt" "$SRC_DIR/LICENSE" "$SRC_DIR/README.md" "$APP_DIR/" 2>/dev/null || true
 find "$APP_DIR" -name '__pycache__' -type d -prune -exec rm -rf {} +
 
@@ -96,7 +96,7 @@ say "Installing the launcher, desktop entry and icon"
 cat > "$BIN_DIR/$APP_ID" <<EOF
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-cd "$APP_DIR" && exec "$VENV_DIR/bin/python" -m bc250_bazzite_helixsr "\$@"
+cd "$APP_DIR" && exec "$VENV_DIR/bin/python" -m helixsr_manager "\$@"
 EOF
 chmod 755 "$BIN_DIR/$APP_ID"
 

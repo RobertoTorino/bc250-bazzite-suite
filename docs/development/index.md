@@ -82,7 +82,7 @@ The repo is used from both systems, so it is set up to behave the same on each:
 
 ## Where things are installed
 
-- **Root-owned `/opt`:** the portal (`/opt/bc250-bazzite-suite`), Bazzite Test (`check`), cores, gpu-oc-bisect and
+- **Root-owned `/opt`:** the portal (`/opt/bc250-bazzite-suite`), Bazzite Test (`check`), cores, oc and
   persistent-acpi, whose scripts run as root: a normal user cannot change code that sudo runs.
 - **Your home folder:** the shared venv `~/.local/share/bc250-bazzite-suite/venv` (PyQt6, used by all suite
   GUIs and removed with the last of them), plus each app's settings, results and launchers.
@@ -97,7 +97,7 @@ The repo is used from both systems, so it is set up to behave the same on each:
 also written in a script or package (`VERSION="…"`, `__version__ = "…"`, pyproject `version`) must match it, which
 CI checks with `tools/check_versions.py`. Everything started at 0.1.0 with the suite.
 
-Each app is released on its own tag (`check-v0.1.0`, `governor-v0.4.0`, …); the release workflow builds
+Each app is released on its own tag (`check-v0.1.0`, `gpu-v0.4.0`, …); the release workflow builds
 `<tag>.tar.gz` and `SHA256SUMS`. The portal has `portal-vX.Y.Z` and pins one release of every app in
 `portal/apps.toml`; a change there since the last portal release needs a portal version bump at least as large as the largest app bump.
 The release steps are in [Portal](../portal.md#appstoml-and-releases).
@@ -105,7 +105,7 @@ The release steps are in [Portal](../portal.md#appstoml-and-releases).
 ### Upstream releases an app pins or follows
 
 Decky Loader Manager installs one Decky Loader release, pinned in
-`apps/decky-manager/bc250_decky_manager/loader.py` (`VERSION`, `TAG`, `SHA256`), and writes Decky's service unit
+`apps/decky/decky_manager/loader.py` (`VERSION`, `TAG`, `SHA256`), and writes Decky's service unit
 itself (`unit_text()`). `tools/check_upstream.py` compares both with Decky's repository: a newer stable release, the
 SHA-256 GitHub publishes for the pinned binary, and Decky's `plugin_loader-release.service` at the pinned tag and on
 `main` (Decky's own updater installs `main`'s). It exits with 0 when they match, 1 when Decky moved and 2 when it
@@ -119,7 +119,7 @@ what the app relies on (its `config.json`, the shadNet protocol), so a new pin a
 The workflow runs each check as a job of its own.
 
 The HelixSR Manager pins no HelixSR release: it gets the latest, or the fallback HelixSR's developer names. Its
-`apps/helixsr/bc250_bazzite_helixsr/acquire.py` holds `KNOWN_VERSION`, the newest release the app was checked
+`apps/helixsr/helixsr_manager/acquire.py` holds `KNOWN_VERSION`, the newest release the app was checked
 against, and `FALLBACK_VERSION`. The same tool reports a newer stable release (users get it at once, so what changed
 in its setup, its zip and `helixsr.ini` needs a look and a try on the board; then `KNOWN_VERSION` moves), a fallback
 named in the latest release's notes that is not `FALLBACK_VERSION`, and a fallback release without its zip.
@@ -178,5 +178,5 @@ imports it, so each release runs on the core it was tested with.
 cd core && QT_QPA_PLATFORM=offscreen python -m pytest -q tests
 ```
 
-`tests/test_parity.py` renders core's widgets next to the copies in `apps/governor` and `apps/helixsr` and requires
+`tests/test_parity.py` renders core's widgets next to the copies in `apps/gpu` and `apps/helixsr` and requires
 identical pixels; a case is skipped once its app no longer has its own copy.

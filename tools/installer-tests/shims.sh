@@ -32,7 +32,7 @@ case "$1" in -m|-c) exit 0 ;; esac
 exec /usr/bin/python3 "$@"
 Y
      chmod +x "$d/bin/python"
-     # pip called directly (the cu-bisect installers): the same as "python -m pip".
+     # pip called directly (the compute installers): the same as "python -m pip".
      printf '#!/bin/sh\nexec "$(dirname "$0")/python" -m pip "$@"\n' > "$d/bin/pip"
      chmod +x "$d/bin/pip"; exit 0 ;;
 esac

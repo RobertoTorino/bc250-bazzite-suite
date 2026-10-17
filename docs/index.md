@@ -28,27 +28,27 @@ hide:
 [Bazzite Test](apps/check.md) checks, stress-tests and benchmarks the board,
 [BIOS Reader](apps/bios.md) shows every BIOS setting, hidden menus too, and
 [System Overlay](apps/system-overlay.md) keeps CPU, GPU, fan and temperatures on top,
-[Fan Control](apps/fan-control.md) guards the board against overheating, and
+[Fan Control](apps/fan.md) guards the board against overheating, and
 [USB Wi-Fi](apps/usb-wifi.md) brings the driver for AIC8800D80 Wi-Fi sticks.
 </div>
 <div class="home-card" markdown>
 #### :material-speedometer: Tuning
 
-[GPU Governor Manager](apps/governor.md) tunes the GPU governor, [GPU OC Bisect](apps/gpu-oc-bisect.md) finds your
+[GPU Governor Manager](apps/gpu.md) tunes the GPU governor, [GPU OC Bisect](apps/oc.md) finds your
 board's safe overclock and undervolt, and [Persistent ACPI](apps/persistent-acpi.md) gives the CPU its C-states and
 frequency scaling.
 </div>
 <div class="home-card" markdown>
 #### :material-lock-open-variant: Unlocks
 
-[CU Bisect](apps/cu-bisect.md) and [Cores Bisect](apps/cores.md) tell bad CUs and cores apart from an
-unstable unlock, and [Memory Manager](apps/memory-manager.md) sets the VRAM split.
+[CU Bisect](apps/compute.md) and [Cores Bisect](apps/cores.md) tell bad CUs and cores apart from an
+unstable unlock, and [Memory Manager](apps/vram.md) sets the VRAM split.
 </div>
 <div class="home-card" markdown>
 #### :material-gamepad-variant: Gaming
 
 [HelixSR Manager](apps/helixsr.md) deploys an FSR 3.1 drop-in upscaler into games, and
-[ACE Queues](apps/ace.md) and [Mesh Shaders](apps/mesh-shaders.md) bring async compute and mesh shaders,
+[ACE Queues](apps/ace.md) and [Mesh Shaders](apps/mesh.md) bring async compute and mesh shaders,
 beside the system Mesa.
 </div>
 <div class="home-card" markdown>
@@ -61,8 +61,8 @@ beside the system Mesa.
 <div class="home-card" markdown>
 #### :material-television: Living room
 
-[HDMI CEC Manager](apps/hdmi-cec.md) turns the TV on and off with the board, [SFTP Tools](apps/sftp-tools.md) moves files
-between computers, and [Decky Loader Manager](apps/decky-manager.md) adds plugins to Game Mode.
+[HDMI CEC Manager](apps/cec.md) turns the TV on and off with the board, [SFTP Tools](apps/sftp-tools.md) moves files
+between computers, and [Decky Loader Manager](apps/decky.md) adds plugins to Game Mode.
 </div>
 </div>
 

@@ -10,11 +10,11 @@ body:
       options:
         - portal
         - check
-        - governor
+        - gpu
         - helixsr
-        - cu-bisect
+        - compute
         - cores
-        - gpu-oc-bisect
+        - oc
         - persistent-acpi
         - system-overlay
     validations:
@@ -45,7 +45,7 @@ body:
   - type: input
     id: governor
     attributes:
-      label: Governor version (governor and gpu-oc-bisect)
+      label: Governor version (gpu and oc)
       description: Run `rpm -q cyan-skillfish-governor-smu` in a terminal.
       placeholder: "cyan-skillfish-governor-smu-0.4.13-1.fc42.x86_64"
   - type: dropdown
@@ -65,7 +65,7 @@ body:
     attributes:
       label: Report, diagnostics or log
       description: >-
-        check: Show Logs → the full report of the run. governor: Service page → "Export diagnostics…".
+        check: Show Logs → the full report of the run. gpu: Service page → "Export diagnostics…".
         Bisect apps: the results folder under ~/.local/share/. Drag the file here or paste the relevant part.
   - type: checkboxes
     id: privacy

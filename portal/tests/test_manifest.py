@@ -8,10 +8,10 @@ from bc250_portal.manifest import ManifestError, load, parse, parse_checkout
 from conftest import SUITE
 
 MINIMAL = """
-[apps.cu-bisect]
+[apps.compute]
 name = "CU"
 summary = "s"
-tag = "cu-bisect-v1.2.3"
+tag = "compute-v1.2.3"
 install = ["bash a.sh"]
 uninstall = ["bash b.sh"]
 detect = ["~/.local/bin/x"]
@@ -30,16 +30,16 @@ detect = ["~/.local/bin/bt"]
 
 def test_required_first_then_file_order():
     entries = parse(MINIMAL)
-    assert [e.key for e in entries] == ["check", "cu-bisect"]
+    assert [e.key for e in entries] == ["check", "compute"]
     cu = entries[1]
-    assert (cu.version, cu.asset) == ("1.2.3", "cu-bisect-v1.2.3.tar.gz")
+    assert (cu.version, cu.asset) == ("1.2.3", "compute-v1.2.3.tar.gz")
     assert cu.launch == (("Bisect", "~/.local/bin/x"), ("Unlock", "~/.local/bin/y"))
     assert not cu.required and not cu.changes_board and cu.sha256 == ""
 
 
 @pytest.mark.parametrize("change, message", [
-    (('tag = "cu-bisect-v1.2.3"', 'tag = "cores-bisect-v1.2.3"'), "is not cu-bisect-v"),
-    (('tag = "cu-bisect-v1.2.3"', 'tag = "cu-bisect-v1.2"'), "is not cu-bisect-v"),
+    (('tag = "compute-v1.2.3"', 'tag = "cores-bisect-v1.2.3"'), "is not compute-v"),
+    (('tag = "compute-v1.2.3"', 'tag = "compute-v1.2"'), "is not compute-v"),
     (('install = ["bash a.sh"]', 'install = []'), "must not be empty"),
     (('install = ["bash a.sh"]', 'install = "bash a.sh"'), "list of non-empty strings"),
     (('launch = [["Bisect", "~/.local/bin/x"], ["Unlock", "~/.local/bin/y"]]', 'launch = [["Bisect"]]'), "pairs"),
@@ -54,7 +54,7 @@ def test_rejects(change, message):
 def test_a_withdrawn_release():
     assert parse(MINIMAL)[1].withdrawn == ""
     withdrawn = parse(MINIMAL.replace('name = "CU"', 'name = "CU"\nwithdrawn = " Shows the account ID. "', 1))
-    assert withdrawn[1].withdrawn == "Shows the account ID." and withdrawn[1].tag == "cu-bisect-v1.2.3"
+    assert withdrawn[1].withdrawn == "Shows the account ID." and withdrawn[1].tag == "compute-v1.2.3"
     with pytest.raises(ManifestError, match="must say why"):
         parse(MINIMAL.replace('name = "CU"', 'name = "CU"\nwithdrawn = ""', 1))
     with pytest.raises(ManifestError, match="required app cannot be withdrawn"):
@@ -83,7 +83,7 @@ def test_short_name_for_the_tile():
 
 def test_bad_sha_and_toml():
     with pytest.raises(ManifestError, match="sha256"):
-        parse(MINIMAL.replace('summary = "s"\ntag = "cu', 'summary = "s"\nsha256 = "abc"\ntag = "cu', 1))
+        parse(MINIMAL.replace('summary = "s"\ntag = "co', 'summary = "s"\nsha256 = "abc"\ntag = "co', 1))
     with pytest.raises(ManifestError, match="not valid TOML"):
         parse("[apps")
 
@@ -106,7 +106,7 @@ def test_shipped_manifest_install_scripts_exist():
 
 def test_board_changing_apps_are_marked():
     marked = {e.key for e in load(MANIFEST) if e.changes_board}
-    assert {"cu-bisect", "cores", "gpu-oc-bisect", "persistent-acpi", "governor"} <= marked
+    assert {"compute", "cores", "oc", "persistent-acpi", "gpu"} <= marked
     assert "check" not in marked
 
 
@@ -126,7 +126,7 @@ def test_checkout_tables_are_development_apps_in_a_folder():
     assert gui.folder == "apps/gui"                                         # the default
     (moved,) = parse_checkout(CHECKOUT.replace('summary = "s"', 'summary = "s"\nfolder = "tools/x/gui"'))
     assert moved.folder == "tools/x/gui"
-    assert [e.key for e in parse(MINIMAL + CHECKOUT)] == ["check", "cu-bisect"]   # never pinned
+    assert [e.key for e in parse(MINIMAL + CHECKOUT)] == ["check", "compute"]   # never pinned
 
 
 @pytest.mark.parametrize("extra, message", [
@@ -141,4 +141,4 @@ def test_checkout_tables_reject(extra, message):
 
 def test_folder_only_for_checkout_tables():
     with pytest.raises(ManifestError, match="only for"):
-        parse(MINIMAL.replace('summary = "s"\ntag = "cu', 'summary = "s"\nfolder = "x"\ntag = "cu', 1))
+        parse(MINIMAL.replace('summary = "s"\ntag = "co', 'summary = "s"\nfolder = "x"\ntag = "co', 1))

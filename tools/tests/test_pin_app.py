@@ -19,11 +19,11 @@ SHA = "ab" * 32
 
 def test_pin_changes_only_that_app():
     text = (TOOLS.parent / "portal" / "apps.toml").read_text(encoding="utf-8")
-    block = text[text.index("[apps.cu-bisect]"):]
+    block = text[text.index("[apps.compute]"):]
     old_tag, old_sha = (re.search(rf'^{f} = "(.*)"$', block, re.M)[1] for f in ("tag", "sha256"))
-    new = pin_app.pin(text, "cu-bisect", "cu-bisect-v9.9.9", SHA)
+    new = pin_app.pin(text, "compute", "compute-v9.9.9", SHA)
     changed = [(a, b) for a, b in zip(text.splitlines(), new.splitlines()) if a != b]
-    assert changed == [(f'tag = "{old_tag}"', 'tag = "cu-bisect-v9.9.9"'),
+    assert changed == [(f'tag = "{old_tag}"', 'tag = "compute-v9.9.9"'),
                        (f'sha256 = "{old_sha}"', f'sha256 = "{SHA}"')]
     assert len(new.splitlines()) == len(text.splitlines())
 

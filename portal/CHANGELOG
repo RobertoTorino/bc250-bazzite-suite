@@ -1,3 +1,76 @@
+Changelog: 17-10-2026 12:45:18
+
+Release 1.18.0. Pins gpu-v0.1.9, compute-v0.1.9, oc-v0.1.9, mesh-v0.2.1, vram-v0.2.0, fan-v0.1.0, cec-v0.2.0, decky-v0.2.0, pcsx2-v0.3.1.
+
+Changelog: 17-10-2026 12:35:30
+
+Added. PCSX2 Manager is listed as [apps.pcsx2] (was [apps.pcsx2-manager]), after the app's move to apps/pcsx2; its
+tile icon is images/apps/pcsx2.png. The entry pins the first release under its new tag prefix (pcsx2-v0.3.1)
+without a checksum until that release exists, which an app release accepts and a portal release waits for. The
+record of a copy installed under the old key moves to the new key when the portal starts, as for the apps renamed
+before it.
+
+Changelog: 17-10-2026 12:32:49
+
+Added. BC-250 Mesh Shaders is listed as [apps.mesh] (was [apps.mesh-shaders]), after the app's move to apps/mesh;
+its tile icon is images/apps/mesh.png. The entry pins the first release under its new tag prefix (mesh-v0.2.1)
+without a checksum until that release exists, which an app release accepts and a portal release waits for. The
+record of a copy installed under the old key moves to the new key when the portal starts, as for the apps renamed
+before it.
+
+Changelog: 17-10-2026 12:29:59
+
+Added. BC-250 Memory Manager is listed as [apps.vram] (was [apps.memory-manager]), after the app's move to
+apps/vram; its tile icon is images/apps/vram.png. The entry pins the first release under its new tag prefix
+(vram-v0.2.0) without a checksum until that release exists, which an app release accepts and a portal release waits
+for. The record of a copy installed under the old key moves to the new key when the portal starts, as for the apps
+renamed before it.
+
+Changelog: 17-10-2026 12:21:59
+
+Added. HDMI CEC Manager is listed as [apps.cec] (was [apps.hdmi-cec]), after the app's move to apps/cec; its tile
+icon is images/apps/cec.png. The entry pins the first release under its new tag prefix (cec-v0.2.0) without a
+checksum until that release exists, which an app release accepts and a portal release waits for. The record of a
+copy installed under the old key moves to the new key when the portal starts, as for the apps renamed before it.
+
+Changelog: 17-10-2026 12:18:12
+
+Added. BC-250 GPU OC Bisect is listed as [apps.oc] (was [apps.gpu-oc-bisect]), after the app's move to apps/oc; its
+tile icon is images/apps/oc.png. The entry pins the first release under its new tag prefix (oc-v0.1.9) without a
+checksum until that release exists, which an app release accepts and a portal release waits for. The record of a
+copy installed under the old key moves to the new key when the portal starts, as for the apps renamed before it.
+
+Changelog: 17-10-2026 12:09:45
+
+Added. BC-250 GPU Governor Manager is listed as [apps.gpu] (was [apps.governor]), after the app's move to apps/gpu;
+its tile icon is images/apps/gpu.png. The entry pins the first release under its new tag prefix (gpu-v0.1.9)
+without a checksum until that release exists, which an app release accepts and a portal release waits for. The
+record of a copy installed under the old key moves to the new key when the portal starts, as for the apps renamed
+before it.
+
+Changelog: 17-10-2026 12:04:59
+
+Added. BC-250 Fan Control is listed as [apps.fan] (was [apps.fan-control]), after the app's move to apps/fan; its
+tile icon is images/apps/fan.png. The entry pins the first release under its new tag prefix (fan-v0.1.0) without a
+checksum until that release exists, which an app release accepts and a portal release waits for. The record of a
+copy installed under the old key moves to the new key when the portal starts, as for the apps renamed before it.
+
+Changelog: 17-10-2026 12:01:38
+
+Added. Decky Loader Manager is listed as [apps.decky] (was [apps.decky-manager]), after the app's move to
+apps/decky; its tile icon is images/apps/decky.png. The entry pins the first release under its new tag prefix
+(decky-v0.2.0) without a checksum until that release exists, which an app release accepts and a portal release
+waits for. The record of a copy installed under the old key moves to the new key when the portal starts, as for
+the apps renamed before it.
+
+Changelog: 17-10-2026 11:56:42
+
+Added. BC-250 CU Bisect is listed as [apps.compute] (was [apps.cu-bisect]), after the app's move to apps/compute;
+its tile icon is images/apps/compute.png and the Unlock button keeps its own. The entry pins the first release under
+its new tag prefix (compute-v0.1.9) without a checksum until that release exists, which an app release accepts and
+a portal release waits for. The record of a copy installed under the old key moves to the new key when the portal
+starts, as for the apps renamed before it.
+
 Changelog: 17-10-2026 11:42:46
 
 Release 1.17.0. Pins check-v0.3.1, cu-bisect-v0.1.9, gpu-oc-bisect-v0.1.9, usb-wifi-v0.1.1, dependency-checker-v0.4.5.

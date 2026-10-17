@@ -4,7 +4,7 @@
 -r portal/requirements-dev.txt
 -r tools/requirements-dev.txt
 -r apps/check/requirements-dev.txt
--r apps/governor/requirements-dev.txt
+-r apps/gpu/requirements-dev.txt
 -r apps/helixsr/requirements-dev.txt
 -r apps/persistent-acpi/requirements-dev.txt
 -r apps/system-overlay/requirements-dev.txt

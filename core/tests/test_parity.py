@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import QPushButton, QWidget
 from bc250_core import widgets as core
 from conftest import SUITE
 
-APPS = {"governor": "bc250_governor", "helixsr": "bc250_bazzite_helixsr"}
+APPS = {"gpu": "gpu_governor", "helixsr": "helixsr_manager"}
 
 
 def _app_widgets(app: str):
@@ -57,7 +57,7 @@ CASES = {
 @pytest.mark.parametrize("app", sorted(APPS))
 @pytest.mark.parametrize("case", sorted(CASES))
 def test_renders_like_app(qapp, app, case):
-    if app == "governor" and case == "status_pill_default":
+    if app == "gpu" and case == "status_pill_default":
         pytest.skip("core takes helixsr's StatusPill(); governor's differs only for text=None, which it never passes")
     old = _app_widgets(app)
     make = CASES[case]
@@ -65,7 +65,7 @@ def test_renders_like_app(qapp, app, case):
 
 
 def test_set_button_active_like_governor(qapp):
-    old = _app_widgets("governor")
+    old = _app_widgets("gpu")
     a, b = QPushButton("Stress test"), QPushButton("Stress test")
     old.set_button_active(a, True)
     core.set_button_active(b, True)

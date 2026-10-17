@@ -23,37 +23,37 @@ checks each download against its checksum.
 
 3. Start **BC250 Bazzite Suite** from the app menu or the Desktop, and install the apps you want from there.
 
-The other releases on the Releases page (`governor-v…`, `helixsr-v…` and so on) are the app downloads the portal
+The other releases on the Releases page (`gpu-v…`, `helixsr-v…` and so on) are the app downloads the portal
 uses. You do not need them.
 
 ## The apps
 
 - <img src="portal/images/apps/check.png" width="20" height="20" alt=""/> **[BC-250 Bazzite Test](apps/check)**: Read-only diagnostics, stress test and benchmarks. Always installed.
-- <img src="portal/images/apps/governor.png" width="20" height="20" alt=""/> **[BC-250 GPU Governor Manager](apps/governor)**: Manage the cyan-skillfish GPU governor: tuning, safe points, profiles, backups.
-- <img src="portal/images/apps/cu-bisect.png" width="20" height="20" alt=""/> **[BC-250 CU Bisect](apps/cu-bisect)**: Tell bad CUs apart from an unstable CU unlock, and apply a tested unlock.
+- <img src="portal/images/apps/gpu.png" width="20" height="20" alt=""/> **[BC-250 GPU Governor Manager](apps/gpu)**: Manage the cyan-skillfish GPU governor: tuning, safe points, profiles, backups.
+- <img src="portal/images/apps/compute.png" width="20" height="20" alt=""/> **[BC-250 CU Bisect](apps/compute)**: Tell bad CUs apart from an unstable CU unlock, and apply a tested unlock.
 - <img src="portal/images/apps/cores.png" width="20" height="20" alt=""/> **[BC-250 Cores Bisect](apps/cores)**: Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock.
-- <img src="portal/images/apps/gpu-oc-bisect.png" width="20" height="20" alt=""/> **[BC-250 GPU OC Bisect](apps/gpu-oc-bisect)**: Find your board's safe GPU overclock and undervolt, one step at a time.
+- <img src="portal/images/apps/oc.png" width="20" height="20" alt=""/> **[BC-250 GPU OC Bisect](apps/oc)**: Find your board's safe GPU overclock and undervolt, one step at a time.
 - <img src="portal/images/apps/persistent-acpi.png" width="20" height="20" alt=""/> **[BC-250 Persistent ACPI](apps/persistent-acpi)**: CPU C-states and frequency scaling through a persistent ACPI override (GRUB early initrd).
 - <img src="portal/images/apps/system-overlay.png" width="20" height="20" alt=""/> **[System Overlay](apps/system-overlay)**: CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top.
 - <img src="portal/images/apps/bios.png" width="20" height="20" alt=""/> **[BC-250 BIOS Reader](apps/bios)**: The BIOS settings as the setup screen shows them, hidden menus included. Stock or modded BIOS. Read-only.
-- <img src="portal/images/apps/memory-manager.png" width="20" height="20" alt=""/> **[BC-250 Memory Manager](apps/memory-manager)**: The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it.
-- <img src="portal/images/apps/fan-control.png" width="20" height="20" alt=""/> **[BC-250 Fan Control](apps/fan-control)**: A thermal guard that warns, cools and shuts down cleanly at a critical temperature, and the fans.
+- <img src="portal/images/apps/vram.png" width="20" height="20" alt=""/> **[BC-250 Memory Manager](apps/vram)**: The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it.
+- <img src="portal/images/apps/fan.png" width="20" height="20" alt=""/> **[BC-250 Fan Control](apps/fan)**: A thermal guard that warns, cools and shuts down cleanly at a critical temperature, and the fans.
 - <img src="portal/images/apps/usb-wifi.png" width="20" height="20" alt=""/> **[BC-250 USB Wi-Fi](apps/usb-wifi)**: The driver for AIC8800D80 USB Wi-Fi sticks: built for the running kernel, loaded at boot, rebuilt after a kernel update.
-- <img src="portal/images/apps/hdmi-cec.png" width="20" height="20" alt=""/> **[HDMI CEC Manager](apps/hdmi-cec)**: Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC.
+- <img src="portal/images/apps/cec.png" width="20" height="20" alt=""/> **[HDMI CEC Manager](apps/cec)**: Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC.
 - <img src="portal/images/apps/sftp-tools.png" width="20" height="20" alt=""/> **[Bazzite SFTP Tools](apps/sftp-tools)**: Move files between computers over SFTP, and manage the SSH server of a Bazzite host.
 
 **Gaming**: apps for playing, in their own section of the portal.
 
 - <img src="portal/images/apps/helixsr.png" width="20" height="20" alt=""/> **[HelixSR Manager](apps/helixsr)**: Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games.
 - <img src="portal/images/apps/ace.png" width="20" height="20" alt=""/> **[BC-250 ACE Queues](apps/ace)**: Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use.
-- <img src="portal/images/apps/mesh-shaders.png" width="20" height="20" alt=""/> **[BC-250 Mesh Shaders](apps/mesh-shaders)**: Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use.
+- <img src="portal/images/apps/mesh.png" width="20" height="20" alt=""/> **[BC-250 Mesh Shaders](apps/mesh)**: Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use.
 - <img src="portal/images/apps/consoles.png" width="20" height="20" alt=""/> **[Console Link](apps/consoles)**: Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session.
 - <img src="portal/images/apps/shadps4-manager.png" width="20" height="20" alt=""/> **[shadPS4 Manager](apps/shadps4-manager)**: PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found (or unpacked from .pkg files) and added to Game Mode.
-- <img src="portal/images/apps/decky-manager.png" width="20" height="20" alt=""/> **[Decky Loader Manager](apps/decky-manager)**: Plugins in Game Mode with Decky Loader: a tested Decky release as a system service, its state and its plugins.
+- <img src="portal/images/apps/decky.png" width="20" height="20" alt=""/> **[Decky Loader Manager](apps/decky)**: Plugins in Game Mode with Decky Loader: a tested Decky release as a system service, its state and its plugins.
 - <img src="portal/images/apps/rpcs3-manager.png" width="20" height="20" alt=""/> **[RPCS3 Manager](apps/rpcs3-manager)**: PS3 games with the RPCS3 emulator: a tested RPCS3 build, the firmware, your games found and added to Game Mode.
 - <img src="portal/images/apps/datstation.png" width="20" height="20" alt=""/> **[Bazzite DatStation](apps/datstation)**: PlayStation quiz, console history, system versions, region codes, user guides and news, with your scores.
 - <img src="portal/images/apps/ppsspp-manager.png" width="20" height="20" alt=""/> **[PPSSPP Manager](apps/ppsspp-manager)**: PSP games with the PPSSPP emulator: a tested PPSSPP release, your games found and added to Game Mode.
-- <img src="portal/images/apps/pcsx2-manager.png" width="20" height="20" alt=""/> **[PCSX2 Manager](apps/pcsx2-manager)**: PS2 games with the PCSX2 emulator: a tested PCSX2 release, your PS2 BIOS, your games found and added to Game Mode.
+- <img src="portal/images/apps/pcsx2.png" width="20" height="20" alt=""/> **[PCSX2 Manager](apps/pcsx2)**: PS2 games with the PCSX2 emulator: a tested PCSX2 release, your PS2 BIOS, your games found and added to Game Mode.
 - <img src="portal/images/apps/vita3k-manager.png" width="20" height="20" alt=""/> **[Vita3K Manager](apps/vita3k-manager)**: PS Vita games with the Vita3K emulator: a tested Vita3K build, the firmware and your games installed through it, added to Game Mode.
 
 **Development only**: tools for working on the suite, in their own section of the portal. You do not need them to

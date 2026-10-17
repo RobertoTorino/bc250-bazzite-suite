@@ -14,8 +14,8 @@ from unittest import mock
 
 import pytest
 
-from bc250_bazzite_helixsr import acquire, backend
-from bc250_bazzite_helixsr.acquire import (
+from helixsr_manager import acquire, backend
+from helixsr_manager.acquire import (
     Pin, ReleaseInfo, SetupRequest, SetupWorker, UpdateStatus, download, extract_zip, find_dlss_dlls, latest_release,
     needed_pins, parse_pins, unpack_dxc, unpack_python,
 )

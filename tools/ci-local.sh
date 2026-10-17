@@ -5,7 +5,7 @@
 # so "passes here, fails in CI" shows up here first.
 #
 #   tools/ci-local.sh                     # every job
-#   tools/ci-local.sh pytest/tools shell  # these jobs (a matrix job by its value: pytest/apps/governor)
+#   tools/ci-local.sh pytest/tools shell  # these jobs (a matrix job by its value: pytest/apps/gpu)
 #   tools/ci-local.sh --list              # the jobs
 #
 # Needs podman (Bazzite has it) or docker. The image is built the first time and when the Containerfile changes;

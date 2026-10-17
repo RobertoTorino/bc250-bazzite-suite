@@ -10,13 +10,13 @@ describe only what exists.
 **First (17-10-2026): go on with the renaming.** State at the end of the last session, nothing committed by
 Claude:
 
-1. **Releases** (owner). Done, 17-10-2026: check-v0.3.0, cores-bisect-v0.1.9, cu-bisect-v0.1.8,
-   dependency-checker-v0.4.3, gpu-oc-bisect-v0.1.8 and persistent-acpi-v0.1.6 are tagged and pinned with checksums,
-   portal-v1.15.0 is released (it bundles check-v0.3.0); bios-v0.2.0 and dependency-checker-v0.4.4 followed, and
-   commit 3339b54 "Release portal-v1.16.0" is pushed with CI passed but not tagged yet (`tools/tag-release.sh
-   portal-v1.16.0`). Open after the consoles and cores renames below: their releases under the new prefixes (consoles-v1.1.2 and
-   cores-v0.1.9 are pinned without a checksum), their pins, the portal minor bump check_manifest asks for, and the portal release; the
-   next renamed apps can share that portal release. Done this session besides the renames:
+1. **Releases** (owner). Done, 17-10-2026: every app renamed before this one is released and pinned with a
+   checksum under its new prefix (ace, ncgui, datstation, check, bios, consoles-v1.1.2, cores-v0.1.9), and
+   portal-v1.17.0 is tagged. Open after the compute, decky, fan, gpu, oc, cec, vram, mesh and pcsx2 renames below:
+   compute-v0.1.9, decky-v0.2.0, fan-v0.1.0, gpu-v0.1.9, oc-v0.1.9, cec-v0.2.0, vram-v0.2.0, mesh-v0.2.1 and
+   pcsx2-v0.3.1 are pinned without a checksum until the first release under each new prefix, then
+   their pins, the portal minor bump check_manifest asks for, and the
+   portal release; the next renamed apps can share that portal release. Done this session besides the renames:
    DatStation's revised quiz questions (item 2 under Next session below).
 2. **The (re)naming convention** (owner, 17-10-2026), one app per step, the owner names each: the folder under
    `apps/` is a short name, the package the app's name without its BC-250 or Bazzite prefix, as a Python
@@ -30,13 +30,18 @@ Claude:
    (was console-link/bc250_console_link, 17-10-2026, both names the owner's; the native core keeps its name
    bc250_console_link_core, the wheel in the installed environment) and `apps/cores/cores_bisect/` with
    `apps/cores/cores_unlock/` (was cores-bisect/bc250_cores_bisect_gui and bc250_cores_gui, 17-10-2026; two
-   windows, two packages, each named after its window). The owner picks the next app and both
-   names; do not guess them. Still to rename, with their packages now:
-   cu-bisect (bc250_bisect_gui, bc250_unlock_gui), decky-manager (bc250_decky_manager),
-   demo-tool (simple_demo_tool), dependency-checker (bc250_dependency_checker), fan-control (bc250_fan_control),
-   governor (bc250_governor), gpu-oc-bisect (bc250_gpu_oc_gui), hdmi-cec (bc250_hdmi_cec), helixsr
-   (bc250_bazzite_helixsr), memory-manager (bc250_memory_manager), mesh-shaders (bc250_mesh_shaders),
-   pcsx2-manager (bc250_pcsx2_manager), persistent-acpi (bc250_acpi_gui), ppsspp-manager (bc250_ppsspp_manager),
+   windows, two packages, each named after its window) and `apps/compute/cu_bisect/` with `apps/compute/cu_unlock/`
+   (was cu-bisect/bc250_bisect_gui and bc250_unlock_gui, 17-10-2026, the same way) and `apps/decky/decky_manager/`
+   (was decky-manager/bc250_decky_manager, 17-10-2026) and `apps/fan/fan_control/` (was fan-control/bc250_fan_control,
+   17-10-2026) and `apps/gpu/gpu_governor/` (was governor/bc250_governor, 17-10-2026) and `apps/oc/oc_bisect/` (was
+   gpu-oc-bisect/bc250_gpu_oc_gui, 17-10-2026) and `apps/cec/hdmi_cec/` (was hdmi-cec/bc250_hdmi_cec, 17-10-2026;
+   its installer moves an installed watcher unit to the new module) and `apps/helixsr/helixsr_manager/` (was
+   bc250_bazzite_helixsr, 17-10-2026; the folder kept its name, so the key, tags and pin did too) and `apps/vram/vram_manager/` (was
+   memory-manager/bc250_memory_manager, 17-10-2026) and `apps/mesh/mesh_shaders/` (was
+   mesh-shaders/bc250_mesh_shaders, 17-10-2026) and `apps/pcsx2/pcsx2_manager/` (was
+   pcsx2-manager/bc250_pcsx2_manager, 17-10-2026). The owner picks the next app and both names; do not guess
+   them. Still to rename, with their packages now: demo-tool (simple_demo_tool), dependency-checker
+   (bc250_dependency_checker), persistent-acpi (bc250_acpi_gui), ppsspp-manager (bc250_ppsspp_manager),
    rpcs3-manager (bc250_rpcs3_manager), sftp-tools (bc250_sftp_tools), shadps4-manager (bc250_shadps4_manager),
    suite-releases (bc250_suite_releases, checkout-only: no pin, no tag), system-overlay (bc250_overlay), usb-wifi
    (bc250_usb_wifi), vita3k-manager (bc250_vita3k_manager). The recipe, as done for ace and ncgui:
@@ -53,6 +58,10 @@ Claude:
    - Keep the installed identity: APP_ID, the launcher in `~/.local/bin`, the scripts, settings and state folders,
      the display name and the icon file names. Add the old key to `RENAMED` in `portal/bc250_portal/manifest.py`:
      the portal moves the record of an installed copy to the new key, the tag's prefix with it.
+   - Installed files outside the app folder that name the package (a systemd unit's `-m <package>`, as hdmi-cec's
+     watcher had) break on an update: the installer moves them over, and its installer test proves it.
+   - An installer that clears the package folder by name (rather than the whole app folder) also removes the old
+     name, on install and uninstall, as helixsr, gpu and compute do; its installer test plants the old folder.
    - CHANGELOG entries: the app (`Fixed.`), the portal (`Added.`, a key was added), the dependency checker
      (`Fixed.`) and the root; the convention row under Open gets the app.
    - Checks: the app's tests, its installer test, portal, dependency-checker, suite-releases and tools tests,
@@ -532,7 +541,7 @@ card icon in `portal/images/apps/` is a copy of that (`tools/tests/test_portal_i
 | Step | What | Gate |
 |---|---|---|
 | 3 | Board check | Install, open and uninstall the portal on a clean Bazzite account; a full passive bazzite-test run matches the original |
-| — | **Naming convention** (owner, 17-10-2026): an app's folder under apps/ is a short name, its package the app's name without its BC-250 or Bazzite prefix; with the folder go the portal key, the tag prefix, the wiki chapter, the installer test and the tile icon, while the installed launcher, scripts, settings and state keep their names. Done (17-10-2026): ace-queues → `apps/ace/ace_queues`, bazzite-netcatgui → `apps/ncgui/netcat_gui`, bazzite-datstation → `apps/datstation/datstation`, bazzite-test → `apps/check/bazzite_check`, bios-reader → `apps/bios/bios_reader`, console-link → `apps/consoles/consoles_link`, cores-bisect → `apps/cores/cores_bisect` + `cores_unlock`; the portal moves an installed copy's record to the new key (`RENAMED` in portal/bc250_portal/manifest.py, used by Records in sources.py: add each renamed app there). Open for each (owner): the first release under the new prefix (`ace-v…`, `ncgui-v…`, `datstation-v…`, `check-v…`, `bios-v…`, `consoles-v…`, `cores-v…`; ace-v0.2.0, ncgui-v0.2.0, datstation-v0.2.1, check-v0.3.0 and bios-v0.2.0 are released and pinned, apps.toml pins consoles-v1.1.2 and cores-v0.1.9 without a checksum until then, which an app release accepts and a portal release waits for), its pin, and the portal minor bump check_manifest asks for (keys were added and removed). The other apps follow one at a time, each the same way. | Its tests, installer test and the suite's checks; the portal lists the app under the new key |
+| — | **Naming convention** (owner, 17-10-2026): an app's folder under apps/ is a short name, its package the app's name without its BC-250 or Bazzite prefix; with the folder go the portal key, the tag prefix, the wiki chapter, the installer test and the tile icon, while the installed launcher, scripts, settings and state keep their names. Done (17-10-2026): ace-queues → `apps/ace/ace_queues`, bazzite-netcatgui → `apps/ncgui/netcat_gui`, bazzite-datstation → `apps/datstation/datstation`, bazzite-test → `apps/check/bazzite_check`, bios-reader → `apps/bios/bios_reader`, console-link → `apps/consoles/consoles_link`, cores-bisect → `apps/cores/cores_bisect` + `cores_unlock`, cu-bisect → `apps/compute/cu_bisect` + `cu_unlock`, decky-manager → `apps/decky/decky_manager`, fan-control → `apps/fan/fan_control`, governor → `apps/gpu/gpu_governor`, gpu-oc-bisect → `apps/oc/oc_bisect`, hdmi-cec → `apps/cec/hdmi_cec`, helixsr → `apps/helixsr/helixsr_manager`, memory-manager → `apps/vram/vram_manager`, mesh-shaders → `apps/mesh/mesh_shaders`, pcsx2-manager → `apps/pcsx2/pcsx2_manager`; the portal moves an installed copy's record to the new key (`RENAMED` in portal/bc250_portal/manifest.py, used by Records in sources.py: add each renamed app there). Open for each (owner): the first release under the new prefix (`ace-v…`, `ncgui-v…`, `datstation-v…`, `check-v…`, `bios-v…`, `consoles-v…`, `cores-v…`, `compute-v…`, `decky-v…`, `fan-v…`, `gpu-v…`, `oc-v…`, `cec-v…`, `vram-v…`, `mesh-v…`, `pcsx2-v…`; ace-v0.2.0, ncgui-v0.2.0, datstation-v0.2.1, check-v0.3.1, bios-v0.2.0, consoles-v1.1.2 and cores-v0.1.9 are released and pinned, apps.toml pins compute-v0.1.9, decky-v0.2.0, fan-v0.1.0, gpu-v0.1.9, oc-v0.1.9, cec-v0.2.0, vram-v0.2.0, mesh-v0.2.1 and pcsx2-v0.3.1 without a checksum until then, which an app release accepts and a portal release waits for), its pin, and the portal minor bump check_manifest asks for (keys were added and removed). The other apps follow one at a time, each the same way. | Its tests, installer test and the suite's checks; the portal lists the app under the new key |
 | 4 | Headless smoke tests for the five GUIs without tests (cu bisect/unlock, cores bisect/unlock, gpu-oc). Built (12-10-2026): tests/ in cu-bisect, cores-bisect and gpu-oc-bisect (options, the --auto unit, both unlock gates, every window offscreen with a fake script), in CI's pytest matrix | CI green |
 | 5 | governor and helixsr onto core; per-app releases plus a portal release | Their test suites; install from the portal |
 | 6 | Bisect family: `terminal`, `runner`, `dialogs`, `systemd` into core; shared `BisectLauncher` (cu, cores, gpu-oc stay three apps); unlock GUIs onto core; names in strings become placeholders | Their test suites; on the board: one process after starting cu with auto-resume |

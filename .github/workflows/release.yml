@@ -2,7 +2,7 @@
 name: Release
 
 # One GitHub release per tag. Tags are made by hand, one per app: <app>-v<x.y.z> (check-v0.1.0,
-# governor-v0.4.0, ...) or portal-v<x.y.z>. The tag's version must equal that app's VERSION file.
+# gpu-v0.4.0, ...) or portal-v<x.y.z>. The tag's version must equal that app's VERSION file.
 #
 # The assets are <tag>.tar.gz, SHA256SUMS and the notes, all built by tools/build_release.py, so a local build
 # has the same content (see docs/portal.md, "Checking a release"). A portal release bundles the release of Bazzite Test (check) that portal/apps.toml pins (downloaded

@@ -1,3 +1,56 @@
+Changelog: 17-10-2026 12:45:18
+
+Release 0.4.6.
+
+Changelog: 17-10-2026 12:35:30
+
+Fixed. The catalogue lists PCSX2 Manager as [app.pcsx2] (was [app.pcsx2-manager]), its key in the portal after the
+app's move to apps/pcsx2; its sources (the emulator's needs and the Python packages) name that owner.
+
+Changelog: 17-10-2026 12:32:49
+
+Fixed. The catalogue lists BC-250 Mesh Shaders as [app.mesh] (was [app.mesh-shaders]), its key in the portal after
+the app's move to apps/mesh; its sources (podman, the Vulkan tools and the Python packages) name that owner.
+
+Changelog: 17-10-2026 12:29:59
+
+Fixed. The catalogue lists BC-250 Memory Manager as [app.vram] (was [app.memory-manager]), its key in the portal
+after the app's move to apps/vram; its sources (pkexec and the Python packages) name that owner.
+
+Changelog: 17-10-2026 12:21:59
+
+Fixed. The catalogue lists HDMI CEC Manager as [app.cec] (was [app.hdmi-cec]), its key in the portal after the
+app's move to apps/cec; its sources (the CEC tools and the Python packages) name that owner.
+
+Changelog: 17-10-2026 12:18:12
+
+Fixed. The catalogue lists BC-250 GPU OC Bisect as [app.oc] (was [app.gpu-oc-bisect]), its key in the portal after
+the app's move to apps/oc; its sources (the governor package, the load tools the sweep uses, and the Python
+packages) name that owner.
+
+Changelog: 17-10-2026 12:09:45
+
+Fixed. The catalogue lists BC-250 GPU Governor Manager as [app.gpu] (was [app.governor]), its key in the portal
+after the app's move to apps/gpu; its sources (the governor package, the stress and metrics tools, and the Python
+packages) name that owner.
+
+Changelog: 17-10-2026 12:04:59
+
+Fixed. The catalogue lists BC-250 Fan Control as [app.fan] (was [app.fan-control]), its key in the portal after the
+app's move to apps/fan; its sources (the sensors and the tools the guard uses, and the Python packages) name that
+owner.
+
+Changelog: 17-10-2026 12:01:38
+
+Fixed. The catalogue lists Decky Loader Manager as [app.decky] (was [app.decky-manager]), its key in the portal after
+the app's move to apps/decky; its sources (the tools Decky's install uses, and the Python packages) name that owner.
+
+Changelog: 17-10-2026 11:56:42
+
+Fixed. The catalogue lists BC-250 CU Bisect as [app.compute] (was [app.cu-bisect]), its key in the portal after the
+app's move to apps/compute; its sources (umr and the other tools the bisect and the unlock use, and the Python
+packages) name that owner.
+
 Changelog: 17-10-2026 11:06:03
 
 Release 0.4.5.

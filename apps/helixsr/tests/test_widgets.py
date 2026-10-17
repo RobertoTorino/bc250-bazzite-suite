@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
-from bc250_bazzite_helixsr.widgets import RoundedToolTip
+from helixsr_manager.widgets import RoundedToolTip
 
 
 def test_tooltip_filter_is_removed_when_the_app_quits(qapp, monkeypatch):

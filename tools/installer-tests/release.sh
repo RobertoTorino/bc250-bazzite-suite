@@ -16,7 +16,7 @@ fail=0
 check() { if eval "$2"; then echo "  ok   $1"; else echo "  FAIL $1"; fail=1; fi; }
 D=$XDG_DATA_HOME
 ver() { tr -d '[:space:]' < "$SUITE/$1/VERSION"; }
-BT="check-v$(ver apps/check)"; GOV="governor-v$(ver apps/governor)"; PORTAL="portal-v$(ver portal)"
+BT="check-v$(ver apps/check)"; GOV="gpu-v$(ver apps/gpu)"; PORTAL="portal-v$(ver portal)"
 export SOURCE_DATE_EPOCH=1790000000
 
 echo "== 1. build the releases"
@@ -57,10 +57,10 @@ from bc250_portal.sources import Sources, SourceError
 dist = Path(sys.argv[1])
 def download(url, dest):                     # serve the "GitHub release" from the dist folder
     shutil.copy(dist / url.rsplit("/", 1)[1], dest)
-entry = next(e for e in load(MANIFEST) if e.key == "governor")
+entry = next(e for e in load(MANIFEST) if e.key == "gpu")
 folder = Sources(Path(sys.argv[2]), download=download).prepare(entry)
 print(folder)
-assert (folder / "install.sh").is_file() and (folder / "bc250_governor" / "__main__.py").is_file()
+assert (folder / "install.sh").is_file() and (folder / "gpu_governor" / "__main__.py").is_file()
 data = bytearray((dist / entry.asset).read_bytes())
 data[len(data) // 2] ^= 0xFF                                                       # tamper
 (dist / entry.asset).write_bytes(bytes(data))

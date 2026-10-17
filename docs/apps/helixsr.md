@@ -112,7 +112,7 @@ a reinstalled app can still restore them.
 ```shell
 git clone https://github.com/RobertoTorino/bc250-bazzite-suite.git
 cd bc250-bazzite-suite/apps/helixsr
-python3 -m venv python && python/bin/pip install -r requirements.txt && python/bin/python -m bc250_bazzite_helixsr
+python3 -m venv python && python/bin/pip install -r requirements.txt && python/bin/python -m helixsr_manager
 ```
 
 `--payload DIR`, `--deployments FILE` and `--work DIR` point the app at another payload folder, deployment
@@ -139,9 +139,9 @@ games found; it refreshes every 5 seconds.
 ## Development
 
 ```
-bc250_bazzite_helixsr/
+helixsr_manager/
   __init__.py       app name, version, XDG paths
-  __main__.py       entry point (python -m bc250_bazzite_helixsr)
+  __main__.py       entry point (python -m helixsr_manager)
   backend.py        pure file logic: payload import, DLL discovery, deploy/remove (both modes),
                     helixsr.ini parse/render/validate, deployment store, Steam library discovery
   acquire.py        GitHub release lookup, pinned-source parsing, verified parallel downloads,
@@ -174,5 +174,5 @@ The backend has no Qt dependency so it can be exercised from the command line or
 ## License
 
 GPL-3.0-or-later, see [LICENSE](https://github.com/RobertoTorino/bc250-bazzite-suite/blob/main/apps/helixsr/LICENSE). The bundled Inter font is under the SIL Open Font License
-(`bc250_bazzite_helixsr/fonts/Inter-LICENSE.txt`). HelixSR is a separate project under its own license; its
+(`helixsr_manager/fonts/Inter-LICENSE.txt`). HelixSR is a separate project under its own license; its
 network files are derived from NVIDIA's DLSS and are never distributed by this app.

@@ -53,7 +53,7 @@ def test_pyinstaller_gets_one_windowed_exe_with_the_logo_and_core_fonts(tmp_path
 
 def test_an_app_without_a_windows_build_is_refused(tmp_path):
     with pytest.raises(SystemExit, match="no Windows build"):
-        bwe.build("governor", tmp_path)
+        bwe.build("gpu", tmp_path)
 
 
 def test_release_workflow_builds_and_uploads_each_windows_app():

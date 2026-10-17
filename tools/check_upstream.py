@@ -4,7 +4,7 @@
 
     python3 tools/check_upstream.py [decky] [shadps4] [helixsr]     # all when none is named
 
-Decky Loader Manager pins one Decky release (apps/decky-manager/bc250_decky_manager/loader.py: VERSION, TAG, SHA256)
+Decky Loader Manager pins one Decky release (apps/decky/decky_manager/loader.py: VERSION, TAG, SHA256)
 and writes Decky's release unit itself (loader.unit_text()). This compares them with Decky's GitHub repository:
  * the latest stable release: newer than the pin means a new version of the app, tried on the board first;
  * the pinned release's PluginLoader: the SHA-256 GitHub publishes for it must still be the pinned one;
@@ -18,7 +18,7 @@ ASSET, SHA256), read here without importing the app:
  * the pinned release's zip: the SHA-256 GitHub publishes for it must still be the pinned one.
 
 The HelixSR Manager gets the latest HelixSR release, or the fallback its developer names
-(apps/helixsr/bc250_bazzite_helixsr/acquire.py: KNOWN_VERSION, FALLBACK_VERSION), read here without importing the app:
+(apps/helixsr/helixsr_manager/acquire.py: KNOWN_VERSION, FALLBACK_VERSION), read here without importing the app:
  * the latest stable release: newer than KNOWN_VERSION means the app gets it without having been checked against it;
    what changed (setup options, the files in the zip, helixsr.ini) needs a look, and a try on the board;
  * the fallback the latest release's notes name ("If 1.9.0 does not work for you, use HelixSR 1.8.1") must be
@@ -45,9 +45,9 @@ from pathlib import Path
 from types import ModuleType
 
 SUITE = Path(__file__).resolve().parent.parent
-LOADER = SUITE / "apps" / "decky-manager" / "bc250_decky_manager" / "loader.py"
+LOADER = SUITE / "apps" / "decky" / "decky_manager" / "loader.py"
 EMULATOR = SUITE / "apps" / "shadps4-manager" / "bc250_shadps4_manager" / "emulator.py"
-ACQUIRE = SUITE / "apps" / "helixsr" / "bc250_bazzite_helixsr" / "acquire.py"
+ACQUIRE = SUITE / "apps" / "helixsr" / "helixsr_manager" / "acquire.py"
 HELIXSR_REPO = "lonewolf0622/HelixSR"
 # How the release notes name the fallback: "use [HelixSR 1.8.1](...)", earlier "use HelixSR 1.4.3".
 FALLBACK_RE = re.compile(r"use \[?HelixSR v?(\d+\.\d+\.\d+)")

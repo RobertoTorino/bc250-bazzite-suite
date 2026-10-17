@@ -44,13 +44,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [core, portal, tools, apps/check, apps/governor, apps/helixsr, apps/persistent-acpi,
-              apps/cu-bisect, apps/cores, apps/gpu-oc-bisect,
+        dir: [core, portal, tools, apps/check, apps/gpu, apps/helixsr, apps/persistent-acpi,
+              apps/compute, apps/cores, apps/oc,
               apps/demo-tool, apps/dependency-checker, apps/ncgui,
               apps/suite-releases,
-              apps/system-overlay, apps/bios, apps/ace, apps/memory-manager, apps/hdmi-cec, apps/sftp-tools,
-              apps/consoles, apps/mesh-shaders, apps/shadps4-manager, apps/rpcs3-manager, apps/decky-manager,
-              apps/datstation, apps/ppsspp-manager, apps/pcsx2-manager, apps/vita3k-manager, apps/fan-control,
+              apps/system-overlay, apps/bios, apps/ace, apps/vram, apps/cec, apps/sftp-tools,
+              apps/consoles, apps/mesh, apps/shadps4-manager, apps/rpcs3-manager, apps/decky,
+              apps/datstation, apps/ppsspp-manager, apps/pcsx2, apps/vita3k-manager, apps/fan,
               apps/usb-wifi,
               tools/installer-tests/gui]   # every folder with tests/
     defaults:
@@ -147,27 +147,27 @@ jobs:
       # that their own release workflows already held to it.
       - name: shellcheck (errors, all scripts)
         run: find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 shellcheck -x -S error
-      - name: shellcheck (warnings, cores, gpu-oc-bisect, persistent-acpi, system-overlay, bios, ace, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, consoles, mesh-shaders, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, netcatgui, datstation and the suite's own scripts)
+      - name: shellcheck (warnings, cores, oc, persistent-acpi, system-overlay, bios, ace, vram, fan, usb-wifi, cec, sftp-tools, consoles, mesh, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2, vita3k-manager, decky, netcatgui, datstation and the suite's own scripts)
         run: |
           shellcheck -x -S warning portal/install.sh apps/check/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \
             tools/hooks/pre-push
           shellcheck -S warning apps/cores/bc250-cores-bisect.sh apps/cores/bc250-cores-unlock.sh \
             apps/cores/install.sh apps/cores/packaging/bazzite/*.sh
-          shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
+          shellcheck -S warning apps/oc/bc250-gpu-oc-bisect.sh apps/oc/install.sh
           shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh
-          shellcheck -S warning apps/system-overlay/install.sh apps/bios/install.sh apps/memory-manager/install.sh
-          shellcheck -S warning apps/fan-control/install.sh apps/usb-wifi/install.sh
-          shellcheck -S warning apps/hdmi-cec/install.sh apps/sftp-tools/install.sh apps/consoles/install.sh
+          shellcheck -S warning apps/system-overlay/install.sh apps/bios/install.sh apps/vram/install.sh
+          shellcheck -S warning apps/fan/install.sh apps/usb-wifi/install.sh
+          shellcheck -S warning apps/cec/install.sh apps/sftp-tools/install.sh apps/consoles/install.sh
           shellcheck -S warning apps/ace/bc250-ace-queues.sh apps/ace/bc250-ace-queues-run \
             apps/ace/install.sh apps/ace/mesa/build-in-container.sh
-          shellcheck -S warning apps/mesh-shaders/bc250-mesh-shaders.sh apps/mesh-shaders/bc250-mesh-shaders-run \
-            apps/mesh-shaders/install.sh apps/mesh-shaders/mesa/build-in-container.sh
+          shellcheck -S warning apps/mesh/bc250-mesh-shaders.sh apps/mesh/bc250-mesh-shaders-run \
+            apps/mesh/install.sh apps/mesh/mesa/build-in-container.sh
           shellcheck -S warning apps/shadps4-manager/install.sh apps/shadps4-manager/bc250-shadps4-run
           shellcheck -S warning apps/rpcs3-manager/install.sh apps/rpcs3-manager/bc250-rpcs3-run
           shellcheck -S warning apps/ppsspp-manager/install.sh apps/ppsspp-manager/bc250-ppsspp-run
-          shellcheck -S warning apps/pcsx2-manager/install.sh apps/pcsx2-manager/bc250-pcsx2-run
+          shellcheck -S warning apps/pcsx2/install.sh apps/pcsx2/bc250-pcsx2-run
           shellcheck -S warning apps/vita3k-manager/install.sh apps/vita3k-manager/bc250-vita3k-run
-          shellcheck -S warning apps/decky-manager/install.sh
+          shellcheck -S warning apps/decky/install.sh
           shellcheck -S warning apps/demo-tool/install.sh
           shellcheck -S warning apps/dependency-checker/install.sh
           shellcheck -S warning apps/ncgui/install.sh
@@ -215,16 +215,16 @@ jobs:
         run: sudo apt-get install -y -q fakeroot
       - name: check installer
         run: bash tools/installer-tests/check.sh
-      - name: governor installer
-        run: bash tools/installer-tests/governor.sh
+      - name: gpu installer
+        run: bash tools/installer-tests/gpu.sh
       - name: helixsr installer
         run: bash tools/installer-tests/helixsr.sh
-      - name: cu-bisect installers
-        run: bash tools/installer-tests/cu-bisect.sh
+      - name: compute installers
+        run: bash tools/installer-tests/compute.sh
       - name: cores installer
         run: bash tools/installer-tests/cores.sh
-      - name: gpu-oc-bisect installer
-        run: bash tools/installer-tests/gpu-oc-bisect.sh
+      - name: oc installer
+        run: bash tools/installer-tests/oc.sh
       - name: portal installer
         run: bash tools/installer-tests/portal.sh
       - name: persistent-acpi installer
@@ -235,28 +235,28 @@ jobs:
         run: bash tools/installer-tests/bios.sh
       - name: ace installer
         run: bash tools/installer-tests/ace.sh
-      - name: mesh-shaders installer
-        run: bash tools/installer-tests/mesh-shaders.sh
+      - name: mesh installer
+        run: bash tools/installer-tests/mesh.sh
       - name: shadps4-manager installer
         run: bash tools/installer-tests/shadps4-manager.sh
       - name: rpcs3-manager installer
         run: bash tools/installer-tests/rpcs3-manager.sh
       - name: ppsspp-manager installer
         run: bash tools/installer-tests/ppsspp-manager.sh
-      - name: pcsx2-manager installer
-        run: bash tools/installer-tests/pcsx2-manager.sh
+      - name: pcsx2 installer
+        run: bash tools/installer-tests/pcsx2.sh
       - name: vita3k-manager installer
         run: bash tools/installer-tests/vita3k-manager.sh
-      - name: decky-manager installer
-        run: bash tools/installer-tests/decky-manager.sh
-      - name: memory-manager installer
-        run: bash tools/installer-tests/memory-manager.sh
-      - name: fan-control installer
-        run: bash tools/installer-tests/fan-control.sh
+      - name: decky installer
+        run: bash tools/installer-tests/decky.sh
+      - name: vram installer
+        run: bash tools/installer-tests/vram.sh
+      - name: fan installer
+        run: bash tools/installer-tests/fan.sh
       - name: usb-wifi installer
         run: bash tools/installer-tests/usb-wifi.sh
-      - name: hdmi-cec installer
-        run: bash tools/installer-tests/hdmi-cec.sh
+      - name: cec installer
+        run: bash tools/installer-tests/cec.sh
       - name: sftp-tools installer
         run: bash tools/installer-tests/sftp-tools.sh
       - name: consoles installer

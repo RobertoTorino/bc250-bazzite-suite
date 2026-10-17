@@ -60,9 +60,9 @@ def test_bazzite_test_first_without_uninstall(window):
     keys = list(window.cards)
     assert keys[0] == "check"
     assert window.cards["check"].uninstall_button.isHidden()
-    assert not window.cards["governor"].uninstall_button.isHidden()
+    assert not window.cards["gpu"].uninstall_button.isHidden()
     assert not window.cards["persistent-acpi"].open_button.isHidden()
-    assert window.cards["cu-bisect"].open_button.menu() is not None        # Bisect / Unlock
+    assert window.cards["compute"].open_button.menu() is not None        # Bisect / Unlock
 
 
 def test_every_card_has_its_icon(qapp, home, settings_dir, tmp_path, launched):
@@ -76,7 +76,7 @@ def test_every_card_has_its_icon(qapp, home, settings_dir, tmp_path, launched):
 
 
 def test_open_menu_shows_each_window_icon(window):
-    for key in ("cu-bisect", "cores"):
+    for key in ("compute", "cores"):
         actions = window.cards[key].icon.menu().actions()
         assert [a.text() for a in actions] == ["Bisect", "Unlock"]
         assert all(not a.icon().isNull() for a in actions), key
@@ -100,7 +100,7 @@ def test_the_logo_opens_the_wiki(window, monkeypatch):
 
 
 def test_the_tiles_icon_hover_and_press(window):
-    style = window.cards["governor"].icon.styleSheet()
+    style = window.cards["gpu"].icon.styleSheet()
     assert "hover:enabled { border-color:#D9D1C4E9; }" in style             # a thin light purple border, visible on dark
     assert "pressed:enabled" in style and "padding-top:2px" in style        # the icon sinks while pressed
 
@@ -109,13 +109,13 @@ def test_short_names_drop_the_suite_prefix(window):
     assert mw.short_name("BC-250 Bazzite Test") == "Bazzite Test"
     assert mw.short_name("BC250 Suite Releases") == "Suite Releases"
     assert mw.short_name("Simple Demo Tool") == "Simple Demo Tool"
-    assert window.cards["governor"].title.text() == "GPU Governor Manager"
-    assert "BC-250 GPU Governor Manager" in window.cards["governor"].icon.toolTip()     # the full name on hover
-    assert window.cards["hdmi-cec"].title.text() == "HDMI-CEC"                          # apps.toml's short
+    assert window.cards["gpu"].title.text() == "GPU Governor Manager"
+    assert "BC-250 GPU Governor Manager" in window.cards["gpu"].icon.toolTip()     # the full name on hover
+    assert window.cards["cec"].title.text() == "HDMI-CEC"                          # apps.toml's short
 
 
 def test_icon_opens_only_an_installed_program(qapp, home, settings_dir, tmp_path, launched, monkeypatch):
-    entries = [replace(e, launch=()) if e.key == "governor" else e for e in load(MANIFEST)]
+    entries = [replace(e, launch=()) if e.key == "gpu" else e for e in load(MANIFEST)]
     w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
     acpi = w.cards["persistent-acpi"]
     assert not acpi.icon.isEnabled() and "Not installed" in acpi.icon.toolTip()
@@ -123,7 +123,7 @@ def test_icon_opens_only_an_installed_program(qapp, home, settings_dir, tmp_path
         (home / ".local" / "bin" / name).write_text("#!/bin/sh\n")
     w.refresh()
     assert acpi.icon.isEnabled() and "Click to open it." in acpi.icon.toolTip()
-    assert not w.cards["governor"].icon.isEnabled()                         # not a program
+    assert not w.cards["gpu"].icon.isEnabled()                         # not a program
     opened = []
     monkeypatch.setattr(w, "open_app", lambda entry, command: opened.append(command))
     acpi.open_clicked.disconnect()
@@ -142,22 +142,22 @@ def test_icon_is_greyed_until_installed(window, home):
 
 
 def test_board_warning_under_the_icon(window):
-    assert not window.cards["governor"].board.isHidden()
+    assert not window.cards["gpu"].board.isHidden()
     assert window.cards["system-overlay"].board.isHidden()
 
 
 def test_states_follow_detection_and_records(window, home):
-    card = window.cards["governor"]
+    card = window.cards["gpu"]
     assert card.status == "Not installed" and card.install_button.toolTip().startswith("Install ")
     assert not card.uninstall_button.isEnabled()
     (home / ".local" / "bin" / "bc250-governor-manager").write_text("#!/bin/sh\n")
     window.refresh()
     assert card.status == "Reinstall needed" and card.install_button.toolTip().startswith("Reinstall ")
     assert card.uninstall_button.isEnabled()
-    window.records.set("governor", next(e.tag for e in window.entries if e.key == "governor"))
+    window.records.set("gpu", next(e.tag for e in window.entries if e.key == "gpu"))
     window.refresh()
     assert card.status == "Installed" and card.install_button.toolTip().startswith("Reinstall ")
-    window.records.set("governor", "governor-v0.0.9")
+    window.records.set("gpu", "gpu-v0.0.9")
     window.refresh()
     assert card.status == "Update" and card.install_button.toolTip().startswith("Update ")
 
@@ -197,24 +197,24 @@ def test_no_warning_for_bazzite_test(window, launched, monkeypatch):
     assert line.endswith("&& bash install.sh") and "local-check" not in line
     assert window.pending is not None and window.cards["check"].status == "Installing…"
     assert not window.cards["check"].busy_label.isHidden()
-    assert not window.cards["governor"].install_button.isEnabled()          # one action at a time
+    assert not window.cards["gpu"].install_button.isEnabled()          # one action at a time
 
 
 def test_install_success_records_tag(window, launched, monkeypatch, home):
     monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: YES)
-    entry = next(e for e in window.entries if e.key == "governor")
+    entry = next(e for e in window.entries if e.key == "gpu")
     window.install(entry)
     assert wait_for(lambda: launched)
     _, exit_file = launched[0]
     (home / ".local" / "bin" / "bc250-governor-manager").write_text("#!/bin/sh\n")
     exit_file.write_text("0\n")
-    old = window.sources.work / "governor-v0.0.9"                          # the release it updates from
+    old = window.sources.work / "gpu-v0.0.9"                          # the release it updates from
     old.mkdir(parents=True)
     window._check_pending()
     assert window.pending is None
-    assert window.records.get("governor") == entry.tag
+    assert window.records.get("gpu") == entry.tag
     assert not old.exists() and window.sources.folder(entry).is_dir()      # only the installed release stays
-    assert window.cards["governor"].status == "Installed"
+    assert window.cards["gpu"].status == "Installed"
 
 
 def test_failed_install_warns_and_records_nothing(window, launched, monkeypatch):
@@ -250,7 +250,7 @@ def test_closed_terminal_can_be_abandoned(window, launched, monkeypatch):
     assert wait_for(lambda: launched)
     monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: YES)
     window._on_refresh()
-    assert window.pending is None and window.cards["governor"].install_button.isEnabled()
+    assert window.pending is None and window.cards["gpu"].install_button.isEnabled()
 
 
 def test_shell_line_quotes_folder():
@@ -261,16 +261,16 @@ def test_shell_line_quotes_folder():
 def test_red_dot_and_count_for_updates(window, home):
     for name in ("bc250-governor-manager", "bc250-bazzite-helixsr-gui"):
         (home / ".local" / "bin" / name).write_text("#!/bin/sh\n")
-    window.records.set("governor", "governor-v0.0.9")              # older than the pin: an update
+    window.records.set("gpu", "gpu-v0.0.9")              # older than the pin: an update
     window.records.set("helixsr", next(e.tag for e in window.entries if e.key == "helixsr"))   # the pinned one
     window.refresh()
-    assert not window.cards["governor"].dot.isHidden()
+    assert not window.cards["gpu"].dot.isHidden()
     assert window.cards["helixsr"].dot.isHidden()
-    assert "governor-v0.0.9" in window.cards["governor"].dot.toolTip()
+    assert "gpu-v0.0.9" in window.cards["gpu"].dot.toolTip()
     assert not window.updates_label.isHidden() and window.updates_label.text().endswith("1 update")
-    window.records.set("governor", next(e.tag for e in window.entries if e.key == "governor"))
+    window.records.set("gpu", next(e.tag for e in window.entries if e.key == "gpu"))
     window.refresh()
-    assert window.cards["governor"].dot.isHidden() and window.updates_label.isHidden()
+    assert window.cards["gpu"].dot.isHidden() and window.updates_label.isHidden()
 
 
 def test_circular_arrow_and_count_for_reinstalls(window, home):
@@ -279,7 +279,7 @@ def test_circular_arrow_and_count_for_reinstalls(window, home):
         (home / ".local" / "bin" / name).write_text("#!/bin/sh\n")
     window.records.set("helixsr", "helixsr-v0.0.1")                          # an update, for the count
     window.refresh()
-    card = window.cards["governor"]
+    card = window.cards["gpu"]
     assert card.status == "Reinstall needed" and not card.badge.isHidden() and card.dot.isHidden()
     assert "Reinstall needed" in card.icon.toolTip() and "version is unknown" in card.badge.toolTip()
     assert card.install_button.toolTip().startswith("Reinstall ")
@@ -289,17 +289,17 @@ def test_circular_arrow_and_count_for_reinstalls(window, home):
     (home / ".local" / "bin" / "bc250-bazzite-helixsr-gui").unlink()
     window.refresh()
     assert window.updates_label.text().endswith("\u25cf 1 reinstall")
-    window.records.set("governor", next(e.tag for e in window.entries if e.key == "governor"))
+    window.records.set("gpu", next(e.tag for e in window.entries if e.key == "gpu"))
     window.refresh()
     assert card.badge.isHidden() and card.status == "Installed" and window.updates_label.isHidden()
 
 
 def test_not_installed_and_withdrawn_need_no_reinstall(qapp, home, settings_dir, tmp_path, launched):
-    entries = [replace(e, withdrawn="test") if e.key == "governor" else e for e in load(MANIFEST)]
+    entries = [replace(e, withdrawn="test") if e.key == "gpu" else e for e in load(MANIFEST)]
     w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
     (home / ".local" / "bin" / "bc250-governor-manager").write_text("#!/bin/sh\n")
     w.refresh()
-    assert w.cards["governor"].badge.isHidden()                              # the portal removes it instead
+    assert w.cards["gpu"].badge.isHidden()                              # the portal removes it instead
     assert w.cards["system-overlay"].badge.isHidden()                        # not installed
     w.close()
 
@@ -376,8 +376,8 @@ def test_board_tools_in_a_section_open_until_closed(window, qapp):
 
 def test_gaming_apps_apart_and_open(window, qapp):
     gaming = {key for key, card in window.cards.items() if card.entry.section == "gaming"}
-    assert gaming == {"helixsr", "ace", "mesh-shaders", "consoles", "shadps4-manager",
-                      "decky-manager", "rpcs3-manager", "datstation", "ppsspp-manager", "pcsx2-manager",
+    assert gaming == {"helixsr", "ace", "mesh", "consoles", "shadps4-manager",
+                      "decky", "rpcs3-manager", "datstation", "ppsspp-manager", "pcsx2",
                       "vita3k-manager"}
     assert all(window.gaming_grid.indexOf(window.cards[key]) >= 0 for key in gaming)
     assert all(window.grid.indexOf(window.cards[key]) < 0 and window.dev_grid.indexOf(window.cards[key]) < 0
@@ -451,7 +451,7 @@ def test_a_release_portal_finds_the_checkout_without_asking(qapp, home, settings
     assert sources.apps_checkout == SUITE and remembered_checkout() == SUITE
     assert launched[0][0].startswith(f"cd {SUITE / 'tools/installer-tests/gui'} && ")
     assert sources.prepared == ["installer-tests"] and w.pending.tag == "local"
-    assert sources.folder(w.cards["governor"].entry).name == w.cards["governor"].entry.tag   # releases as before
+    assert sources.folder(w.cards["gpu"].entry).name == w.cards["gpu"].entry.tag   # releases as before
     w.cancel_pending()
     w.close()
 
@@ -549,7 +549,7 @@ def test_an_install_with_icons_off_removes_the_new_icon(qapp, home, settings_dir
     monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.No)
     w = icons_window(tmp_path, desktop)
     w.settle_icons()
-    entry = next(e for e in w.entries if e.key == "hdmi-cec")
+    entry = next(e for e in w.entries if e.key == "cec")
     w.install(entry)
     assert wait_for(lambda: launched)
     (desktop / "bc250-hdmi-cec.desktop").write_text("[Desktop Entry]\n")                   # the installer's icon
@@ -575,7 +575,7 @@ def test_a_withdrawn_app_is_not_available(qapp, home, settings_dir, tmp_path, la
         assert card.status == "App not available" and not card.install_button.isEnabled()
         assert "Privacy: shows the account ID." in card.install_button.toolTip()
         assert "It cannot be installed." in card.icon.toolTip()
-        assert w.cards["governor"].withdrawn.isHidden()
+        assert w.cards["gpu"].withdrawn.isHidden()
         w.remove_withdrawn()                                # not installed: nothing to remove
         assert launched == []
     finally:

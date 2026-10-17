@@ -59,20 +59,20 @@ nav:
   - Apps:
       - apps/index.md
       - BC-250 Bazzite Test: apps/check.md
-      - BC-250 GPU Governor Manager: apps/governor.md
+      - BC-250 GPU Governor Manager: apps/gpu.md
       - HelixSR Manager: apps/helixsr.md
-      - BC-250 CU Bisect: apps/cu-bisect.md
+      - BC-250 CU Bisect: apps/compute.md
       - BC-250 Cores Bisect: apps/cores.md
-      - BC-250 GPU OC Bisect: apps/gpu-oc-bisect.md
+      - BC-250 GPU OC Bisect: apps/oc.md
       - BC-250 Persistent ACPI: apps/persistent-acpi.md
       - System Overlay: apps/system-overlay.md
       - BC-250 BIOS Reader: apps/bios.md
-      - BC-250 Memory Manager: apps/memory-manager.md
-      - BC-250 Fan Control: apps/fan-control.md
+      - BC-250 Memory Manager: apps/vram.md
+      - BC-250 Fan Control: apps/fan.md
       - BC-250 USB Wi-Fi: apps/usb-wifi.md
       - BC-250 ACE Queues: apps/ace.md
-      - BC-250 Mesh Shaders: apps/mesh-shaders.md
-      - HDMI CEC Manager: apps/hdmi-cec.md
+      - BC-250 Mesh Shaders: apps/mesh.md
+      - HDMI CEC Manager: apps/cec.md
       - Bazzite SFTP Tools: apps/sftp-tools.md
       - Dependency Checker: apps/dependency-checker.md
       - Bazzite NetcatGUI: apps/ncgui.md
@@ -80,9 +80,9 @@ nav:
       - shadPS4 Manager: apps/shadps4-manager.md
       - RPCS3 Manager: apps/rpcs3-manager.md
       - PPSSPP Manager: apps/ppsspp-manager.md
-      - PCSX2 Manager: apps/pcsx2-manager.md
+      - PCSX2 Manager: apps/pcsx2.md
       - Vita3K Manager: apps/vita3k-manager.md
-      - Decky Loader Manager: apps/decky-manager.md
+      - Decky Loader Manager: apps/decky.md
       - Bazzite DatStation: apps/datstation.md
   - Development:
       - development/index.md

@@ -463,7 +463,7 @@ explanation are grouped per program, with the command to read them.
 | 29 | Display Session       | Identifies the display manager, session type and compositor.               |
 | 47 | Vulkan Futureproof Matrix | Vulkan API level and the feature set modern games need: ray tracing, mesh shaders, VRS, pipeline libraries and the VRAM carveout vs today's 8 GiB recommendation. Hard evidence of which current and upcoming titles can run at all. |
 | 50 | Video Decode and Encode (VCN) | `vainfo` codec matrix: H.264/HEVC/VP9/AV1 decode and encode. Matters for streaming, OBS recording and video playback while gaming. |
-| 51 | HDMI-CEC | The CEC adapter of the DisplayPort output (only when the DP-to-HDMI converter tunnels CEC), whether the TV answers a poll, and Bazzite's CEC mode. Whether the board can turn the TV on and off; see [HDMI CEC Manager](hdmi-cec.md). |
+| 51 | HDMI-CEC | The CEC adapter of the DisplayPort output (only when the DP-to-HDMI converter tunnels CEC), whether the TV answers a poll, and Bazzite's CEC mode. Whether the board can turn the TV on and off; see [HDMI CEC Manager](cec.md). |
 | 52 | HDMI-CEC Services | Whether the services behind the TV control run: Valve's CEC daemon (`cecd`), HDMI CEC Manager's background and boot services when installed, and Bazzite's dGPU CEC services when enabled. A service that is installed but not running is a warning; one that is not installed is only reported. |
 
 ### CPU and firmware
@@ -889,7 +889,7 @@ which does its own unlock and also makes it **persistent**:
 3. **Undo:** `sudo ./bc250-cores-unlock.sh --uninstall`, then a full power off: stock 6C/12T returns.
 
 **For the extra CUs without flashing:**
-[cu-bisect](https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/cu-bisect) (a suite app) unlocks CUs at runtime
+[BC-250 CU Bisect](https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/compute) (a suite app) unlocks CUs at runtime
 by writing the GPU's WGP mask registers with `umr`, and keeps a validated unlock across reboots:
 
 1. **Test first:** `bc250-cu-bisect.sh` tests every locked WGP (2 CUs) on its own over several rounds and
@@ -928,7 +928,7 @@ Minor caveats, not performance losses:
 - A CMOS reset/battery pull would revert the `bc250_memcfg` split — just rerun it.
 - Validate cores/CUs with the bisect tools first; silicon quality is per board, independent of BIOS.
 
-Going beyond stock: [gpu-oc-bisect](https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/gpu-oc-bisect) (a suite app)
+Going beyond stock: [BC-250 GPU OC Bisect](https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/oc) (a suite app)
 sweeps the governor's top GPU safe-point (clock up, voltage down) the same bisect way, to find the
 safe overclock or undervolt for your specific board — no BIOS involved either.
 

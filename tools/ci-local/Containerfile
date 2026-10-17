@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # The environment of .github/workflows/ci.yml for tools/ci-local.sh: Python 3.12 as CI sets it up, plus what
 # GitHub's ubuntu-latest runner brings or the jobs install with apt-get (Qt's runtime libraries, libevdev for
-# hdmi-cec's key names, shellcheck, fakeroot, git, nasm and the libva headers, Rust with clippy). Built once; rebuilt when this file changes. The jobs
+# cec's key names, shellcheck, fakeroot, git, nasm and the libva headers, Rust with clippy). Built once; rebuilt when this file changes. The jobs
 # run as an ordinary user, as on GitHub (the installers refuse root), so Rust sits in /opt for everyone.
 FROM docker.io/library/python:3.12-bookworm
 RUN apt-get update -q \

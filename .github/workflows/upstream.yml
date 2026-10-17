@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Decky Loader against the pin in apps/decky-manager
+      - name: Decky Loader against the pin in apps/decky
         run: python3 tools/check_upstream.py decky
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

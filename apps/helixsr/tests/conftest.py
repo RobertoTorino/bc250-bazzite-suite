@@ -39,7 +39,7 @@ def settings_dir(tmp_path, monkeypatch):
     for fmt in (QSettings.Format.NativeFormat, QSettings.Format.IniFormat):
         QSettings.setPath(fmt, QSettings.Scope.UserScope, str(tmp_path / "settings"))
     if sys.platform == "win32":
-        from bc250_bazzite_helixsr import __main__ as main_module, main_window
+        from helixsr_manager import __main__ as main_module, main_window
 
         class FileSettings(QSettings):
             def __init__(self, *args):
@@ -54,7 +54,7 @@ def settings_dir(tmp_path, monkeypatch):
 
 def make_release(folder: Path, *, network: bool = True, ini: bool = True, readme: bool = True) -> Path:
     """Lay out an extracted HelixSR release (what the user points the import at)."""
-    from bc250_bazzite_helixsr import backend
+    from helixsr_manager import backend
     folder.mkdir(parents=True, exist_ok=True)
     (folder / backend.HELIXSR_DLL).write_bytes(FAKE_DLL)
     if network:
@@ -82,7 +82,7 @@ def payload(tmp_path: Path) -> Path:
 @pytest.fixture
 def game(tmp_path: Path) -> Path:
     """A game folder with the FSR DLL in a nested Win64 folder, like Unreal games have."""
-    from bc250_bazzite_helixsr import backend
+    from helixsr_manager import backend
     root = tmp_path / "steamapps" / "common" / "SomeGame"
     win64 = root / "Engine" / "Plugins" / "FSR3" / "ThirdParty" / "Win64"
     win64.mkdir(parents=True)

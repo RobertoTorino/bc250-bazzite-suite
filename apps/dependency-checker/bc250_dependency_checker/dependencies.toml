@@ -24,7 +24,7 @@ launchers = []
 name = "BC-250 Bazzite Test"
 launchers = ["~/.local/bin/bc250-bazzite-test"]
 
-[app.governor]
+[app.gpu]
 name = "BC-250 GPU Governor Manager"
 launchers = ["~/.local/bin/bc250-governor-manager"]
 
@@ -32,7 +32,7 @@ launchers = ["~/.local/bin/bc250-governor-manager"]
 name = "HelixSR Manager"
 launchers = ["~/.local/bin/bc250-bazzite-helixsr-gui"]
 
-[app.cu-bisect]
+[app.compute]
 name = "BC-250 CU Bisect"
 launchers = ["~/.local/bin/bc250-bisect-gui", "~/.local/bin/bc250-unlock-cu-gui"]
 
@@ -40,7 +40,7 @@ launchers = ["~/.local/bin/bc250-bisect-gui", "~/.local/bin/bc250-unlock-cu-gui"
 name = "BC-250 Cores Bisect"
 launchers = ["~/.local/bin/bc250-cores-bisect-gui", "~/.local/bin/bc250-cores-unlock-gui"]
 
-[app.gpu-oc-bisect]
+[app.oc]
 name = "BC-250 GPU OC Bisect"
 launchers = ["~/.local/bin/bc250-gpu-oc-bisect-gui"]
 
@@ -60,15 +60,15 @@ launchers = ["~/.local/bin/bc250-bios-reader"]
 name = "BC-250 ACE Queues"
 launchers = ["~/.local/bin/bc250-ace-queues"]
 
-[app.mesh-shaders]
+[app.mesh]
 name = "BC-250 Mesh Shaders"
 launchers = ["~/.local/bin/bc250-mesh-shaders"]
 
-[app.memory-manager]
+[app.vram]
 name = "BC-250 Memory Manager"
 launchers = ["~/.local/bin/bc250-memory-manager"]
 
-[app.fan-control]
+[app.fan]
 name = "BC-250 Fan Control"
 launchers = ["~/.local/bin/bc250-fan-control"]
 
@@ -76,7 +76,7 @@ launchers = ["~/.local/bin/bc250-fan-control"]
 name = "BC-250 USB Wi-Fi"
 launchers = ["~/.local/bin/bc250-usb-wifi"]
 
-[app.hdmi-cec]
+[app.cec]
 name = "HDMI CEC Manager"
 launchers = ["~/.local/bin/bc250-hdmi-cec"]
 
@@ -100,7 +100,7 @@ launchers = ["~/.local/bin/bc250-rpcs3-manager"]
 name = "PPSSPP Manager"
 launchers = ["~/.local/bin/bc250-ppsspp-manager"]
 
-[app.pcsx2-manager]
+[app.pcsx2]
 name = "PCSX2 Manager"
 launchers = ["~/.local/bin/bc250-pcsx2-manager"]
 
@@ -108,7 +108,7 @@ launchers = ["~/.local/bin/bc250-pcsx2-manager"]
 name = "Vita3K Manager"
 launchers = ["~/.local/bin/bc250-vita3k-manager"]
 
-[app.decky-manager]
+[app.decky]
 name = "Decky Loader Manager"
 launchers = ["~/.local/bin/bc250-decky-manager"]
 
@@ -154,12 +154,12 @@ usage = "Runs the flashrom read with a password prompt."
 anchor = "reading-the-bios-flash-chip-optional"
 
 [[tool.source]]
-owner = "memory-manager"
+owner = "vram"
 need = "required"
 usage = "Password prompt for reading and writing CMOS."
 
 [[tool.source]]
-owner = "fan-control"
+owner = "fan"
 need = "required"
 usage = "Password prompt for turning the thermal guard on, changing it and turning it off."
 
@@ -169,7 +169,7 @@ need = "required"
 usage = "Password prompt for installing, updating and removing the Wi-Fi driver and its service."
 
 [[tool.source]]
-owner = "governor"
+owner = "gpu"
 need = "required"
 usage = "Password prompt for privileged configuration, service actions and safe-point tests."
 
@@ -179,12 +179,12 @@ need = "required"
 usage = "Password prompt for installing and removing the patched driver."
 
 [[tool.source]]
-owner = "mesh-shaders"
+owner = "mesh"
 need = "required"
 usage = "Password prompt for installing and removing the DirectMesh driver."
 
 [[tool.source]]
-owner = "decky-manager"
+owner = "decky"
 need = "required"
 usage = "Password prompt for installing, removing and restarting Decky Loader's system service, and for the /home/deck link."
 anchor = "using-it"
@@ -201,7 +201,7 @@ need = "optional"
 usage = "Read live GPU registers for the active compute-unit count."
 
 [[tool.source]]
-owner = "cu-bisect"
+owner = "compute"
 need = "required"
 usage = "Read and change the GPU compute-unit registers."
 anchor = "requirements"
@@ -217,13 +217,13 @@ need = "optional"
 usage = "Verified GPU load for stress tests."
 
 [[tool.source]]
-owner = "cu-bisect"
+owner = "compute"
 need = "optional"
 usage = "Recommended: verify GPU load results during CU testing."
 anchor = "requirements"
 
 [[tool.source]]
-owner = "gpu-oc-bisect"
+owner = "oc"
 need = "optional"
 usage = "Recommended: verify GPU load results during overclock testing."
 anchor = "requirements"
@@ -265,12 +265,12 @@ need = "optional"
 usage = "GPU benchmark and fallback GPU load."
 
 [[tool.source]]
-owner = "cu-bisect"
+owner = "compute"
 need = "optional"
 usage = "Fallback GPU load during CU testing."
 
 [[tool.source]]
-owner = "gpu-oc-bisect"
+owner = "oc"
 need = "optional"
 usage = "Fallback GPU load during overclock testing."
 
@@ -285,17 +285,17 @@ need = "optional"
 usage = "Fallback GPU load during stress tests."
 
 [[tool.source]]
-owner = "cu-bisect"
+owner = "compute"
 need = "optional"
 usage = "Fallback GPU load during CU testing."
 
 [[tool.source]]
-owner = "gpu-oc-bisect"
+owner = "oc"
 need = "optional"
 usage = "Fallback GPU load during overclock testing."
 
 [[tool.source]]
-owner = "governor"
+owner = "gpu"
 need = "optional"
 usage = "GPU load generator for safe-point tests."
 
@@ -310,17 +310,17 @@ need = "optional"
 usage = "Fallback GPU load during stress tests."
 
 [[tool.source]]
-owner = "cu-bisect"
+owner = "compute"
 need = "optional"
 usage = "Fallback GPU load during CU testing."
 
 [[tool.source]]
-owner = "gpu-oc-bisect"
+owner = "oc"
 need = "optional"
 usage = "Fallback GPU load during overclock testing."
 
 [[tool.source]]
-owner = "governor"
+owner = "gpu"
 need = "optional"
 usage = "GPU load generator for safe-point tests."
 
@@ -330,7 +330,7 @@ description = "The Wayland build of the glmark2 OpenGL benchmark, for a desktop 
 executables = ["glmark2-wayland"]
 
 [[tool.source]]
-owner = "governor"
+owner = "gpu"
 need = "optional"
 usage = "Wayland GPU load generator for safe-point tests."
 
@@ -345,7 +345,7 @@ need = "optional"
 usage = "Fallback GPU load during stress tests."
 
 [[tool.source]]
-owner = "governor"
+owner = "gpu"
 need = "optional"
 usage = "GPU load generator for safe-point tests."
 
@@ -355,7 +355,7 @@ description = "The OpenGL gears demo from the Mesa demos. A light GPU load."
 executables = ["glxgears"]
 
 [[tool.source]]
-owner = "governor"
+owner = "gpu"
 need = "optional"
 usage = "GPU load generator for safe-point tests."
 
@@ -534,7 +534,7 @@ description = "Runs a command as root after asking for your password in the term
 executables = ["sudo"]
 
 [[tool.source]]
-owner = "cu-bisect"
+owner = "compute"
 need = "required"
 usage = "Privilege for GPU register access and kernel log checks."
 
@@ -549,7 +549,7 @@ need = "required"
 usage = "Privilege for system checks and tests that need administrator access."
 
 [[tool.source]]
-owner = "gpu-oc-bisect"
+owner = "oc"
 need = "required"
 usage = "Privilege for governor configuration and kernel log checks."
 anchor = "requirements"
@@ -570,7 +570,7 @@ need = "optional"
 usage = "Regenerate the GRUB configuration (ujust regenerate-grub); else grub2-mkconfig."
 
 [[tool.source]]
-owner = "hdmi-cec"
+owner = "cec"
 need = "optional"
 usage = "Switch Bazzite's CEC mode to native (ujust cec-mode native)."
 
@@ -591,7 +591,7 @@ description = "Controls systemd: starts, stops, enables and inspects system and 
 executables = ["systemctl"]
 
 [[tool.source]]
-owner = "governor"
+owner = "gpu"
 need = "required"
 usage = "Manage and inspect the GPU governor system service."
 
@@ -601,7 +601,7 @@ need = "required"
 usage = "Install, remove and inspect the persistent core-unlock service."
 
 [[tool.source]]
-owner = "decky-manager"
+owner = "decky"
 need = "required"
 usage = "Install, start, restart and inspect Decky Loader's service, plugin_loader."
 anchor = "using-it"
@@ -612,12 +612,12 @@ need = "required"
 usage = "Manage the driver guard service."
 
 [[tool.source]]
-owner = "hdmi-cec"
+owner = "cec"
 need = "required"
 usage = "Read Bazzite's CEC mode and tell Valve's CEC daemon to reload its settings."
 
 [[tool.source]]
-owner = "fan-control"
+owner = "fan"
 need = "required"
 usage = "Install, start and remove the thermal guard's service; the guard powers the board off with it at the shutdown limit."
 
@@ -637,7 +637,7 @@ need = "required"
 usage = "Read the chip's answer and the loader's messages from the kernel log."
 
 [[tool.source]]
-owner = "governor"
+owner = "gpu"
 need = "required"
 usage = "Read and follow system and service logs."
 
@@ -647,13 +647,13 @@ need = "required"
 usage = "Check machine-check and kernel errors during testing."
 
 [[tool.source]]
-owner = "decky-manager"
+owner = "decky"
 need = "optional"
 usage = "Log shows Decky Loader's lines from the system journal."
 anchor = "using-it"
 
 [[tool.source]]
-owner = "cu-bisect"
+owner = "compute"
 need = "required"
 usage = "Check GPU kernel errors during testing."
 
@@ -663,7 +663,7 @@ need = "optional"
 usage = "Read system and kernel logs for diagnostics."
 
 [[tool.source]]
-owner = "gpu-oc-bisect"
+owner = "oc"
 need = "required"
 usage = "Check GPU kernel errors during testing."
 anchor = "requirements"
@@ -676,12 +676,12 @@ locations = ["/etc/cyan-skillfish-governor-smu/config.toml", "/usr/lib/systemd/s
 probe = "path"
 
 [[tool.source]]
-owner = "governor"
+owner = "gpu"
 need = "required"
 usage = "System service and configuration managed by the GPU Governor Manager."
 
 [[tool.source]]
-owner = "gpu-oc-bisect"
+owner = "oc"
 need = "required"
 usage = "Service and configuration for overclock/undervolt testing."
 anchor = "requirements"
@@ -692,12 +692,12 @@ description = "Talks to services over D-Bus from the command line (systemd)."
 executables = ["busctl"]
 
 [[tool.source]]
-owner = "governor"
+owner = "gpu"
 need = "required"
 usage = "Communicate with the governor service over D-Bus."
 
 [[tool.source]]
-owner = "fan-control"
+owner = "fan"
 need = "optional"
 usage = "The thermal guard turns the governor's performance mode off at the cooling limit."
 
@@ -707,7 +707,7 @@ description = "Shows a desktop notification (libnotify)."
 executables = ["notify-send"]
 
 [[tool.source]]
-owner = "fan-control"
+owner = "fan"
 need = "optional"
 usage = "The thermal guard's warnings on the desktop; without it they go only to the journal and the app."
 
@@ -722,7 +722,7 @@ description = "Shows the load of the parts of an AMD GPU (shaders, memory, video
 executables = ["radeontop"]
 
 [[tool.source]]
-owner = "governor"
+owner = "gpu"
 need = "optional"
 usage = "Fallback GPU load sensor."
 
@@ -738,7 +738,7 @@ usage = "Download Mesa source and signatures for the driver build."
 anchor = "before-you-start"
 
 [[tool.source]]
-owner = "mesh-shaders"
+owner = "mesh"
 need = "required"
 usage = "Download Mesa source and signatures for the driver build."
 anchor = "before-you-start"
@@ -755,7 +755,7 @@ usage = "Build the patched driver in a Fedora container."
 anchor = "before-you-start"
 
 [[tool.source]]
-owner = "mesh-shaders"
+owner = "mesh"
 need = "required"
 usage = "Build the DirectMesh driver in a Fedora container."
 anchor = "before-you-start"
@@ -766,7 +766,7 @@ description = "Controls HDMI-CEC adapters (v4l-utils): it sends the TV CEC messa
 executables = ["cec-ctl"]
 
 [[tool.source]]
-owner = "hdmi-cec"
+owner = "cec"
 need = "required"
 usage = "Read the CEC adapter and send the TV its messages (package v4l-utils)."
 
@@ -781,7 +781,7 @@ description = "Valve's CEC daemon, Bazzite's native CEC mode: it turns the TV on
 executables = ["cecd"]
 
 [[tool.source]]
-owner = "hdmi-cec"
+owner = "cec"
 need = "optional"
 usage = "Valve's CEC daemon (Bazzite's native CEC mode), for the TV with the board's sleep and the remote."
 
@@ -865,7 +865,7 @@ usage = "Update Game Mode (a Steam shortcut per game) closes Steam with steam -s
 anchor = "game-mode"
 
 [[tool.source]]
-owner = "pcsx2-manager"
+owner = "pcsx2"
 need = "optional"
 usage = "Update Game Mode (a Steam shortcut per game) closes Steam with steam -shutdown and starts it again with bazzite-steam."
 anchor = "game-mode"
@@ -913,7 +913,7 @@ usage = "PPSSPP is an AppImage with its own FUSE library; without fusermount it 
 anchor = "what-you-need"
 
 [[tool.source]]
-owner = "pcsx2-manager"
+owner = "pcsx2"
 need = "optional"
 usage = "PCSX2 is an AppImage with its own FUSE library; without fusermount it unpacks itself to a temporary folder on every start, which is slower."
 anchor = "what-you-need"
@@ -953,7 +953,7 @@ owner = "check"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "governor"
+owner = "gpu"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
@@ -961,7 +961,7 @@ owner = "helixsr"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "cu-bisect"
+owner = "compute"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
@@ -969,7 +969,7 @@ owner = "cores"
 specifier = ">=6.5,<7"
 
 [[dependency.source]]
-owner = "gpu-oc-bisect"
+owner = "oc"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
@@ -989,7 +989,7 @@ owner = "ace"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "mesh-shaders"
+owner = "mesh"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
@@ -1005,7 +1005,7 @@ owner = "ppsspp-manager"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "pcsx2-manager"
+owner = "pcsx2"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
@@ -1013,15 +1013,15 @@ owner = "vita3k-manager"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "decky-manager"
+owner = "decky"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "memory-manager"
+owner = "vram"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "fan-control"
+owner = "fan"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
@@ -1029,7 +1029,7 @@ owner = "usb-wifi"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "hdmi-cec"
+owner = "cec"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
@@ -1065,7 +1065,7 @@ owner = "check"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "governor"
+owner = "gpu"
 specifier = ">=6.11,<7"
 
 [[tool]]

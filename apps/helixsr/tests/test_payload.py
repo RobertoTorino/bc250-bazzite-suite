@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from bc250_bazzite_helixsr import backend
+from helixsr_manager import backend
 from tests.conftest import make_release
 
 

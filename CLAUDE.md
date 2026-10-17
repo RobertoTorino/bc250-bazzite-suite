@@ -13,8 +13,8 @@ The **BC250 Bazzite Suite** (exactly that name): tools for the AMD BC-250 on Baz
 its manifest. **check** (BC-250 Bazzite Test) is always installed and always listed first; every other listed app is an optional
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
-- `apps/<name>/`: check, governor, helixsr, cu-bisect, cores, gpu-oc-bisect, persistent-acpi,
-  system-overlay, bios, ace, mesh-shaders, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, consoles, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, demo-tool, dependency-checker, ncgui, datstation, suite-releases. Each has its
+- `apps/<name>/`: check, gpu, helixsr, compute, cores, oc, persistent-acpi,
+  system-overlay, bios, ace, mesh, vram, fan, usb-wifi, cec, sftp-tools, consoles, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2, vita3k-manager, decky, demo-tool, dependency-checker, ncgui, datstation, suite-releases. Each has its
   own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; consoles is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; ncgui is GPL-2.0-only, a port of NetcatGUI; the rest
   GPL-3.0-or-later), .gitignore. Simple
@@ -37,7 +37,7 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
   and say what is ready; don't offer to commit.
 - **Releases are the owner's, all of it.** See [Releases](#releases): Claude prepares code, never a release.
 - **Warn before board changes.** Apps that change how the board runs (CU/core unlocks, GPU governor, GPU
-  overclocking, ACPI override, the patched RADV of ace, the DirectMesh RADV of mesh-shaders, the VRAM split of memory-manager, the thermal guard of fan-control, the kernel module of usb-wifi) are marked `changes_board` and the portal asks first. Frame it as standard caution:
+  overclocking, ACPI override, the patched RADV of ace, the DirectMesh RADV of mesh, the VRAM split of vram, the thermal guard of fan, the kernel module of usb-wifi) are marked `changes_board` and the portal asks first. Frame it as standard caution:
   the apps are software-only and reversible, not "risky".
 - **Advice, not reboots.** No app reboots, powers off or logs out the board; when one is needed, the app says so
   (and which command does it). The exception, by design (owner, 15-10-2026): CU Bisect and Cores Bisect, whose
@@ -115,7 +115,7 @@ The same repository is used from both systems.
   `python3` has no PyQt6. Create one from the repo root:
   - Linux: `python3 -m venv .venv-linux && .venv-linux/bin/python -m pip install -r requirements-dev.txt`
   - Windows (Git Bash): `py -m venv .venv-windows && .venv-windows/Scripts/python.exe -m pip install -r requirements-dev.txt`
-- **Windows-only test failures:** governor's tests need `os.getuid` and one helixsr test needs the exec bit; both
+- **Windows-only test failures:** gpu's tests need `os.getuid` and one helixsr test needs the exec bit; both
   pass on Linux and in CI.
 - **Tests must not write to the Windows registry** (QSettings' native format there): the conftest fixtures turn
   settings into .ini files in a temp folder.
@@ -140,21 +140,21 @@ shellcheck -x -S warning portal/install.sh apps/check/install.sh tools/*.sh tool
   tools/hooks/pre-push
 shellcheck -S warning apps/cores/bc250-cores-bisect.sh apps/cores/bc250-cores-unlock.sh \
   apps/cores/install.sh apps/cores/packaging/bazzite/*.sh
-shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
+shellcheck -S warning apps/oc/bc250-gpu-oc-bisect.sh apps/oc/install.sh
 shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh \
-  apps/system-overlay/install.sh apps/bios/install.sh apps/memory-manager/install.sh apps/fan-control/install.sh \
-  apps/hdmi-cec/install.sh apps/sftp-tools/install.sh \
+  apps/system-overlay/install.sh apps/bios/install.sh apps/vram/install.sh apps/fan/install.sh \
+  apps/cec/install.sh apps/sftp-tools/install.sh \
   apps/consoles/install.sh apps/demo-tool/install.sh apps/suite-releases/*.sh
 shellcheck -S warning apps/ace/bc250-ace-queues.sh apps/ace/bc250-ace-queues-run \
   apps/ace/install.sh apps/ace/mesa/build-in-container.sh
-shellcheck -S warning apps/mesh-shaders/bc250-mesh-shaders.sh apps/mesh-shaders/bc250-mesh-shaders-run \
-  apps/mesh-shaders/install.sh apps/mesh-shaders/mesa/build-in-container.sh
+shellcheck -S warning apps/mesh/bc250-mesh-shaders.sh apps/mesh/bc250-mesh-shaders-run \
+  apps/mesh/install.sh apps/mesh/mesa/build-in-container.sh
 shellcheck -S warning apps/shadps4-manager/install.sh apps/shadps4-manager/bc250-shadps4-run
 shellcheck -S warning apps/rpcs3-manager/install.sh apps/rpcs3-manager/bc250-rpcs3-run
 shellcheck -S warning apps/ppsspp-manager/install.sh apps/ppsspp-manager/bc250-ppsspp-run \
-  apps/pcsx2-manager/install.sh apps/pcsx2-manager/bc250-pcsx2-run apps/vita3k-manager/install.sh \
+  apps/pcsx2/install.sh apps/pcsx2/bc250-pcsx2-run apps/vita3k-manager/install.sh \
   apps/vita3k-manager/bc250-vita3k-run
-shellcheck -S warning apps/decky-manager/install.sh apps/ncgui/install.sh \
+shellcheck -S warning apps/decky/install.sh apps/ncgui/install.sh \
   apps/datstation/install.sh
 for t in tools/installer-tests/*.sh; do [ "${t##*/}" = shims.sh ] || bash "$t"; done   # every installer test
 mkdocs build --strict                               # from the venv
@@ -183,10 +183,10 @@ The owner does every step of a release; Claude does none of them, and doesn't of
 (`apps/suite-releases/`: `main_window.py` on `plan.py`, and `check-release.sh` for the board checks). Claude may
 change it and its tests, but never uses it on the repository.
 
-Decky Loader is pinned in decky-manager (`loader.py`); `tools/check_upstream.py`, weekly in
+Decky Loader is pinned in decky (`loader.py`); `tools/check_upstream.py`, weekly in
 `.github/workflows/upstream.yml`, says when Decky moved past the pin (a new release, a replaced asset, a changed
 service unit). Moving the pin is code Claude may prepare (with its CHANGELOG entry); the board test and the
-decky-manager release are the owner's, and the handover says so.
+decky release are the owner's, and the handover says so.
 
 Claude may change the release tools and their tests, and runs `tools/installer-tests/release.sh` as a test (it
 works in a temp folder and publishes nothing). When finished work will need a release or a version bump, the

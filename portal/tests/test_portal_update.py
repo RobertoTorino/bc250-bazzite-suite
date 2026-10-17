@@ -28,7 +28,7 @@ def text_of(entries) -> str:
 
 def test_compare_names_the_changed_apps():
     current = load(MANIFEST)
-    new = bumped(current, governor="governor-v9.0.0", helixsr="helixsr-v9.1.0")
+    new = bumped(current, gpu="gpu-v9.0.0", helixsr="helixsr-v9.1.0")
     changes = pu.compare(current, new)
     assert [(c.name, c.new) for c in changes] == [("BC-250 GPU Governor Manager", "9.0.0"),
                                                   ("HelixSR Manager", "9.1.0")]
@@ -68,7 +68,7 @@ def test_check_reads_the_pins_at_the_release_tag():
 
     def read(url, _agent):
         urls.append(url)
-        return text_of(bumped(current, governor="governor-v9.0.0"))
+        return text_of(bumped(current, gpu="gpu-v9.0.0"))
 
     update = pu.check("owner/repo", "portal-v", current, "ua", release_of=lambda *a, **k: RELEASE, read=read)
     assert urls == ["https://raw.githubusercontent.com/owner/repo/portal-v99.0.0/portal/apps.toml"]

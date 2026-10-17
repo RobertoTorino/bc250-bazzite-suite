@@ -61,7 +61,7 @@ class Result:
 
 
 def load_jobs(workflow: Path) -> list[Job]:
-    """Every job of the workflow, a matrix job once per combination ("pytest/apps/governor")."""
+    """Every job of the workflow, a matrix job once per combination ("pytest/apps/gpu")."""
     jobs = []
     for name, spec in yaml.safe_load(workflow.read_text(encoding="utf-8"))["jobs"].items():
         matrix = (spec.get("strategy") or {}).get("matrix") or {}

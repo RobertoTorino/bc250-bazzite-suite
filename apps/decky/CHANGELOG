@@ -1,0 +1,74 @@
+Changelog: 17-10-2026 12:45:18
+
+Release 0.2.0.
+
+Changelog: 17-10-2026 12:01:38
+
+Fixed. The app's folder in the suite is apps/decky (was apps/decky-manager) and its package is decky_manager (was
+bc250_decky_manager): the suite's naming convention (owner, 17-10-2026), a short folder name and the package named
+after the app without the BC-250 prefix; both names are the owner's. With the folder go its key in the portal, its
+chapter of the wiki (apps/decky/, which the Manual button opens), its installer test and its release tags:
+decky-v<x.y.z> from the next release on, which the app's update check follows. The installed app keeps its name,
+its launcher bc250-decky-manager, its folder under ~/.local/share, its settings and state, and the Decky pin in
+loader.py; the portal moves its record of the installed copy to the new key.
+
+Changelog: 16-10-2026 06:02:49
+
+Release 0.2.0.
+
+Changelog: 16-10-2026 01:19:38
+
+Release 0.1.6.
+
+Changelog: 16-10-2026 01:14:19
+
+Fixed. The app has a new icon, images/bc250-decky-manager.png; images/bc250-decky-manager-128.png is its 128 px
+copy, scaled from the 512 px file, and the portal's tile shows it.
+
+Changelog: 15-10-2026 23:29:43
+
+Release 0.1.5.
+
+Changelog: 15-10-2026 22:51:19
+
+Release 0.1.5.
+
+Changelog: 15-10-2026 13:14:35
+
+Release 0.1.4.
+
+Changelog: 15-10-2026 13:11:26
+
+Release 0.1.4.
+
+Changelog: 15-10-2026 13:08:21
+
+Release 0.1.4.
+
+Changelog: 15-10-2026 05:52:00
+
+Release 0.1.3.
+
+Changelog: 15-10-2026 03:27:57
+
+Release 0.1.2.
+
+Changelog: 15-10-2026 02:31:31
+
+No translations (owner's decision): core's create_app() no longer takes lang, and AppInfo no longer has languages; the app was English only already and stays so.
+
+Changelog: 15-10-2026 02:10:51
+
+Release 0.1.1.
+
+Changelog: 14-10-2026 18:22:56
+
+The app no longer has the BC-250 prefix in its name, as it is not tied to the board: Decky Loader Manager (window, menu entry, README, manual). Its app ID, launcher, package and settings are unchanged.
+
+Changelog: 14-10-2026 11:22:29
+
+Release 0.1.0.
+
+Changelog: 14-10-2026 11:04:58
+
+New app decky-manager (BC-250 Decky Loader Manager): Decky Loader, the plugin loader for Steam's Game Mode, on the BC-250. Install downloads Decky Loader 3.2.10, the release the app pins (its PluginLoader binary, SHA-256 c2cf316a…8258), checks it, and installs it the way Decky's own installer does, so Decky's updater, Bazzite's ujust setup-decky and the plugins find what they expect: the binary in ~/homebrew/services (labelled bin_t for SELinux), its version in .loader.version, the plugins folder, Decky's release unit as /etc/systemd/system/plugin_loader.service (enabled and started), and Steam's .cef-enable-remote-debugging, through which Decky loads into Steam. One change to Decky's layout: ~/homebrew/services is root's, so nothing running as the user can replace the binary that root starts. The root steps run in loader.py through pkexec with the system Python in isolated mode; it checks the binary's SHA-256 again itself, takes the user from pkexec, and refuses a link in place of ~/homebrew or its services folder. Remove stops Decky and removes its service and binary, its plugins and their settings kept unless you choose to remove them too, and switches Steam's remote debugging off. The window shows the installed version (also one Decky updated itself to, and a newer Decky release when there is one), the service (running, at boot, Restart, Log from the journal), Steam's switch (on and off), the /home/deck link for plugins written for the Steam Deck (Link and Unlink, as Bazzite's ujust setup-decky makes it) and the plugins in ~/homebrew/plugins with their version, author and whether Decky has them switched off. Steps that need root are greyed in Game Mode, which has no password dialog. The installer uses the suite's shared venv; removing the app leaves Decky itself in place and says how to remove it. The icon is a placeholder.

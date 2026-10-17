@@ -18,11 +18,11 @@ from bc250_portal.sources import (
 )
 from conftest import SUITE
 
-ENTRY = AppEntry(key="cu-bisect", name="CU", summary="s", tag="cu-bisect-v1.0.0", install=("bash install.sh",),
+ENTRY = AppEntry(key="compute", name="CU", summary="s", tag="compute-v1.0.0", install=("bash install.sh",),
                  uninstall=("bash install.sh --uninstall",), detect=("~/.local/bin/bc250-bisect-gui",))
 
 
-def make_tarball(path: Path, files: dict[str, bytes], top: str = "cu-bisect-v1.0.0") -> str:
+def make_tarball(path: Path, files: dict[str, bytes], top: str = "compute-v1.0.0") -> str:
     with tarfile.open(path, "w:gz") as tar:
         for name, data in files.items():
             info = tarfile.TarInfo(f"{top}/{name}" if top else name)
@@ -46,8 +46,8 @@ class FakeRelease:
 
 
 def test_expected_sha256():
-    sums = "aa" * 32 + "  cu-bisect-v1.0.0.tar.gz\n" + "bb" * 32 + " *other.tar.gz\n"
-    assert expected_sha256(sums, "cu-bisect-v1.0.0.tar.gz") == "aa" * 32
+    sums = "aa" * 32 + "  compute-v1.0.0.tar.gz\n" + "bb" * 32 + " *other.tar.gz\n"
+    assert expected_sha256(sums, "compute-v1.0.0.tar.gz") == "aa" * 32
     assert expected_sha256(sums, "other.tar.gz") == "bb" * 32
     assert expected_sha256(sums, "missing.tar.gz") == ""
 
@@ -61,8 +61,8 @@ def test_release_download_verified_with_sha256sums(tmp_path):
     sources = Sources(tmp_path / "work", repo_url="https://github.com/o/r", download=fake)
     folder = sources.prepare(ENTRY)
     assert (folder / "install.sh").read_bytes() == b"echo hi\n"
-    assert fake.urls == ["https://github.com/o/r/releases/download/cu-bisect-v1.0.0/cu-bisect-v1.0.0.tar.gz",
-                         "https://github.com/o/r/releases/download/cu-bisect-v1.0.0/SHA256SUMS"]
+    assert fake.urls == ["https://github.com/o/r/releases/download/compute-v1.0.0/compute-v1.0.0.tar.gz",
+                         "https://github.com/o/r/releases/download/compute-v1.0.0/SHA256SUMS"]
     fake.urls.clear()
     assert sources.prepare(ENTRY) == folder and fake.urls == []        # a tag never changes: reused
     sources.forget(ENTRY)
@@ -93,7 +93,7 @@ def test_wrong_top_folder(tmp_path):
     assets.mkdir()
     digest = make_tarball(assets / ENTRY.asset, {"install.sh": b"x"}, top="something-else")
     pinned = replace(ENTRY, sha256=digest)
-    with pytest.raises(SourceError, match="has no cu-bisect-v1.0.0/ folder"):
+    with pytest.raises(SourceError, match="has no compute-v1.0.0/ folder"):
         Sources(tmp_path / "w", download=FakeRelease(assets)).prepare(pinned)
 
 
@@ -134,12 +134,12 @@ def test_checkout_stages_app_with_core(tmp_path):
 
 def test_prune_keeps_only_the_installed_release(tmp_path):
     work = tmp_path / "work"
-    for name in ("cu-bisect-v0.9.0", "cu-bisect-v1.0.0", "local-cu-bisect", "cores-bisect-v0.1.0", ".x.part"):
+    for name in ("compute-v0.9.0", "compute-v1.0.0", "local-compute", "cores-bisect-v0.1.0", ".x.part"):
         (work / name).mkdir(parents=True)
-    Sources(work).prune(ENTRY)                                              # installed cu-bisect-v1.0.0
-    assert sorted(p.name for p in work.iterdir()) == [".x.part", "cores-bisect-v0.1.0", "cu-bisect-v1.0.0"]
+    Sources(work).prune(ENTRY)                                              # installed compute-v1.0.0
+    assert sorted(p.name for p in work.iterdir()) == [".x.part", "compute-v1.0.0", "cores-bisect-v0.1.0"]
     Sources(work, checkout=SUITE).prune(ENTRY)                              # then from the checkout
-    assert sorted(p.name for p in work.iterdir()) == [".x.part", "cores-bisect-v0.1.0"]   # local-cu-bisect not made
+    assert sorted(p.name for p in work.iterdir()) == [".x.part", "cores-bisect-v0.1.0"]   # local-compute not made
     Sources(tmp_path / "none").prune(ENTRY)                                 # no folder yet: nothing to do
 
 
@@ -178,25 +178,25 @@ def test_is_installed(home):
 def test_records_round_trip(tmp_path):
     path = tmp_path / "state" / "installed.json"
     records = Records(path)
-    assert records.get("cu-bisect") == ""
-    records.set("cu-bisect", "cu-bisect-v1.0.0")
-    records.set("governor", "local")
+    assert records.get("compute") == ""
+    records.set("compute", "compute-v1.0.0")
+    records.set("gpu", "local")
     again = Records(path)
-    assert (again.get("cu-bisect"), again.get("governor")) == ("cu-bisect-v1.0.0", "local")
-    again.remove("cu-bisect")
-    assert Records(path).get("cu-bisect") == ""
+    assert (again.get("compute"), again.get("gpu")) == ("compute-v1.0.0", "local")
+    again.remove("compute")
+    assert Records(path).get("compute") == ""
     path.write_text("not json")
-    assert Records(path).get("governor") == ""
+    assert Records(path).get("gpu") == ""
 
 
 def test_records_follow_an_app_renamed_in_the_suite(tmp_path):
     """A copy installed under an app's old key (ace-queues) is recorded under its new key (ace) with its tag's
     prefix renamed, so the portal neither asks for a reinstall nor offers the version it has as an update."""
     path = tmp_path / "installed.json"
-    path.write_text('{"ace-queues": "ace-queues-v0.2.0", "bazzite-netcatgui": "local", "governor": "governor-v0.4.0"}')
+    path.write_text('{"ace-queues": "ace-queues-v0.2.0", "bazzite-netcatgui": "local", "gpu": "gpu-v0.4.0"}')
     records = Records(path)
     assert (records.get("ace"), records.get("ncgui"), records.get("ace-queues")) == ("ace-v0.2.0", "local", "")
-    assert json.loads(path.read_text()) == {"ace": "ace-v0.2.0", "ncgui": "local", "governor": "governor-v0.4.0"}
+    assert json.loads(path.read_text()) == {"ace": "ace-v0.2.0", "ncgui": "local", "gpu": "gpu-v0.4.0"}
     path.write_text('{"ace-queues": "ace-queues-v0.1.9", "ace": "ace-v0.2.1"}')
     assert Records(path).get("ace") == "ace-v0.2.1"                  # a record under the new key stays
 

@@ -1,3 +1,15 @@
+Changelog: 17-10-2026 12:45:18
+
+Release 0.3.1.
+
+Changelog: 17-10-2026 12:27:00
+
+Fixed. The app's package is helixsr_manager (was bc250_bazzite_helixsr): the suite's naming convention (owner,
+17-10-2026), the package named after the app without its prefix; the folder stays apps/helixsr, and with it the
+portal key, the wiki chapter and the helixsr-v<x.y.z> release tags. The installed app keeps its name, its launcher
+bc250-bazzite-helixsr-gui, its folder, its settings, the imported payload and the deployments in games. Installing
+over an older copy removes its package folder under the old name, and so does an uninstall.
+
 Changelog: 16-10-2026 07:40:47
 
 Release 0.3.0.

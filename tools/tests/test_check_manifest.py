@@ -23,10 +23,10 @@ install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bt"]
 
-[apps.governor]
+[apps.gpu]
 name = "Gov"
 summary = "s"
-tag = "governor-v0.4.0"
+tag = "gpu-v0.4.0"
 install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/g"]
@@ -50,48 +50,48 @@ def test_unchanged_needs_nothing():
 
 
 @pytest.mark.parametrize("app_tag, portal_new, ok", [
-    ("governor-v0.4.1", "0.1.1", True),         # app patch -> portal patch is enough
-    ("governor-v0.4.1", "0.1.0", False),        # ... but some bump is needed
-    ("governor-v0.5.0", "0.1.1", False),        # app minor -> portal patch is too small
-    ("governor-v0.5.0", "0.2.0", True),
-    ("governor-v1.0.0", "0.2.0", False),        # app major -> portal major
-    ("governor-v1.0.0", "1.0.0", True),
+    ("gpu-v0.4.1", "0.1.1", True),         # app patch -> portal patch is enough
+    ("gpu-v0.4.1", "0.1.0", False),        # ... but some bump is needed
+    ("gpu-v0.5.0", "0.1.1", False),        # app minor -> portal patch is too small
+    ("gpu-v0.5.0", "0.2.0", True),
+    ("gpu-v1.0.0", "0.2.0", False),        # app major -> portal major
+    ("gpu-v1.0.0", "1.0.0", True),
 ])
 def test_portal_bump_at_least_app_bump(app_tag, portal_new, ok):
-    result = errors(BASE.replace("governor-v0.4.0", app_tag), "0.1.0", portal_new)
+    result = errors(BASE.replace("gpu-v0.4.0", app_tag), "0.1.0", portal_new)
     assert (result == []) is ok, result
     if not ok:
         assert "portal/VERSION needs at least" in result[0]
 
 
 def test_largest_app_bump_counts():
-    new = BASE.replace("governor-v0.4.0", "governor-v0.4.1").replace("check-v1.2.3", "check-v1.3.0")
+    new = BASE.replace("gpu-v0.4.0", "gpu-v0.4.1").replace("check-v1.2.3", "check-v1.3.0")
     assert errors(new, "0.1.0", "0.1.1")                    # minor needed because of check
     assert errors(new, "0.1.0", "0.2.0") == []
 
 
 def test_other_changes_need_a_patch_bump():
-    new = BASE.replace('summary = "s"\ntag = "governor', 'summary = "changed"\ntag = "governor')
+    new = BASE.replace('summary = "s"\ntag = "gpu', 'summary = "changed"\ntag = "gpu')
     assert errors(new, "0.1.0", "0.1.0")
     assert errors(new, "0.1.0", "0.1.1") == []
 
 
 def test_added_app_needs_minor():
-    new = BASE + BASE.split("[apps.governor]")[1].replace("governor", "helixsr").join(["\n[apps.helixsr]", ""])
+    new = BASE + BASE.split("[apps.gpu]")[1].replace("gpu", "helixsr").join(["\n[apps.helixsr]", ""])
     assert errors(new, "0.1.0", "0.1.1")
     assert errors(new, "0.1.0", "0.2.0") == []
 
 
 def test_withdrawn_app_needs_minor():
     new = BASE.replace('name = "Gov"', 'name = "Gov"\nwithdrawn = "Privacy: shows the account ID."')
-    assert errors(new, "0.1.0", "0.1.1") and "governor was withdrawn" in errors(new, "0.1.0", "0.1.1")[0]
+    assert errors(new, "0.1.0", "0.1.1") and "gpu was withdrawn" in errors(new, "0.1.0", "0.1.1")[0]
     assert errors(new, "0.1.0", "0.2.0") == []
     back = cm.bump_errors(new, BASE, "0.2.0", "0.2.1")                  # taken back: a minor bump too
-    assert back and "governor was no longer withdrawn" in back[0]
+    assert back and "gpu was no longer withdrawn" in back[0]
 
 
 def test_app_moving_back_is_refused():
-    result = errors(BASE.replace("governor-v0.4.0", "governor-v0.3.9"), "0.1.0", "1.0.0")
+    result = errors(BASE.replace("gpu-v0.4.0", "gpu-v0.3.9"), "0.1.0", "1.0.0")
     assert result and "moves back" in result[0]
 
 
@@ -106,7 +106,7 @@ def test_bump_is_counted_since_the_last_portal_release(tmp_path, monkeypatch):
     and the next push, with their checksums pinned, was asked for 1.13.1 against the last push. A portal version
     that is not tagged yet may still change what it pins, so the comparison is with the last portal tag; the last
     push only while there is none."""
-    new_text = BASE.replace('tag = "governor-v0.4.0"', 'tag = "governor-v0.4.1"')
+    new_text = BASE.replace('tag = "gpu-v0.4.0"', 'tag = "gpu-v0.4.1"')
     (tmp_path / "portal").mkdir()
     (tmp_path / "portal/apps.toml").write_text(new_text + 'sha256 = ""\n')         # the checksum pinned later
     (tmp_path / "portal/VERSION").write_text("1.1.0\n")
@@ -144,10 +144,10 @@ def test_shipped_manifest_passes_without_required_tags():
 
 
 def test_checkout_tables_match_the_checkout_only_folders():
-    entry = cm.manifest.AppEntry(key="governor", name="Gov", summary="s", tag="", checkout_only=True)
+    entry = cm.manifest.AppEntry(key="gpu", name="Gov", summary="s", tag="", checkout_only=True)
     errors = cm.check_checkout_entries([entry])
     assert any("suite-releases has .checkout-only" in e for e in errors)
-    assert any("[checkout.governor]: apps/governor has no .checkout-only" in e for e in errors)
+    assert any("[checkout.gpu]: apps/gpu has no .checkout-only" in e for e in errors)
     elsewhere = cm.manifest.AppEntry(key="gui", name="G", summary="s", tag="", checkout_only=True, folder="tools")
     assert any("[checkout.gui]: tools has no .checkout-only" in e for e in cm.check_checkout_entries([elsewhere]))
 

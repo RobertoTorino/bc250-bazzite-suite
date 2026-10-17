@@ -118,8 +118,8 @@ def commits_since(root: Path, tag: str | None, path: str) -> int | None:
 
 @dataclass
 class Unit:
-    key: str                            # "governor", "portal", "core"
-    path: str                           # "apps/governor"
+    key: str                            # "gpu", "portal", "core"
+    path: str                           # "apps/gpu"
     version: str
     last_tag: str | None                # newest <key>-v* tag; None for core (bundled, never tagged)
     commits: int | None                 # commits touching the folder since that tag
@@ -543,7 +543,7 @@ def portal_minimum(root: Path, base: str, portal_version: str) -> tuple[str, str
 class Launch:
     """One window of an app, as `python -m <module>` in the checkout: how an app is tried before its release."""
     key: str                            # the app folder under apps/
-    module: str                         # "bc250_bazzite_helixsr"
+    module: str                         # "helixsr_manager"
     name: str                           # its APP_NAME, else the module
     folder: Path                        # where the module runs from: its package's parent
     version: str

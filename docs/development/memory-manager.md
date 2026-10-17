@@ -3,7 +3,7 @@
 # Memory Manager internals
 
 How BC-250 Memory Manager reads and writes the VRAM split in CMOS, and the board dumps the layout was checked
-against. The user's side is in [its chapter](../apps/memory-manager.md).
+against. The user's side is in [its chapter](../apps/vram.md).
 
 ## Where the split is stored
 
@@ -85,16 +85,16 @@ The rest of bank 2:
   board: unused memory that was never written.
 
 So nothing outside 0x90-0xAB belongs to the memory configuration, and the app never writes there. The tests use
-both reads as fixtures (`apps/memory-manager/tests/dumps.py`).
+both reads as fixtures (`apps/vram/tests/dumps.py`).
 
 ## Reading and writing
 
-The GUI runs as the user. Everything that touches CMOS is in `bc250_memory_manager/cmos.py`, which pkexec runs as
+The GUI runs as the user. Everything that touches CMOS is in `vram_manager/cmos.py`, which pkexec runs as
 root with the system Python in isolated mode:
 
 ```
-pkexec /usr/bin/python3 -I .../bc250_memory_manager/cmos.py --read
-pkexec /usr/bin/python3 -I .../bc250_memory_manager/cmos.py --set-uma 6144
+pkexec /usr/bin/python3 -I .../vram_manager/cmos.py --read
+pkexec /usr/bin/python3 -I .../vram_manager/cmos.py --set-uma 6144
 ```
 
 `-I` keeps the user's environment and the current folder out of the root process; the helper only needs the
@@ -125,7 +125,7 @@ whether the kernel got it. Undo writes back the UMA_SIZE of the block before the
 
 ## The figures without root
 
-`bc250_memory_manager/system.py` reads, without root:
+`vram_manager/system.py` reads, without root:
 
 | Figure | Source |
 |---|---|

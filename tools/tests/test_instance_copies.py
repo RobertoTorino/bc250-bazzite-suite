@@ -21,11 +21,11 @@ def body(path: Path) -> str:
 
 def test_copies_exist():
     packages = {p.parent.name for p in COPIES}
-    assert {"bc250_bazzite_helixsr", "bc250_bisect_gui", "bc250_unlock_gui", "cores_bisect",
-            "cores_unlock", "bc250_gpu_oc_gui", "bc250_acpi_gui", "simple_demo_tool", "installer_test_gui"} <= packages
+    assert {"helixsr_manager", "cu_bisect", "cu_unlock", "cores_bisect",
+            "cores_unlock", "oc_bisect", "bc250_acpi_gui", "simple_demo_tool", "installer_test_gui"} <= packages
 
 
-@pytest.mark.parametrize("copy", [p for p in COPIES if p.parent.name != "bc250_governor"],
+@pytest.mark.parametrize("copy", [p for p in COPIES if p.parent.name != "gpu_governor"],
                          ids=lambda p: str(p.relative_to(SUITE)))
 def test_copy_matches_core(copy):
     assert body(copy) == body(CORE), f"{copy.relative_to(SUITE)} differs from core/bc250_core/instance.py"

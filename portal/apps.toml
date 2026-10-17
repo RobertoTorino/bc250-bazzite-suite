@@ -39,11 +39,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-bazzite-test"]
 launch = [["Open", "~/.local/bin/bc250-bazzite-test"]]
 
-[apps.governor]
+[apps.gpu]
 name = "BC-250 GPU Governor Manager"
 summary = "Manage the cyan-skillfish GPU governor: tuning, safe points, profiles, backups."
-tag = "governor-v0.1.9"
-sha256 = "e96416526fba53ceada8beba0476b60aef8671a89cc1631688deba435b4327d0"
+tag = "gpu-v0.1.9"
+sha256 = ""
 required = false
 changes_board = true
 install = ["bash install.sh"]
@@ -64,11 +64,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-bazzite-helixsr-gui"]
 launch = [["Open", "~/.local/bin/bc250-bazzite-helixsr-gui"]]
 
-[apps.cu-bisect]
+[apps.compute]
 name = "BC-250 CU Bisect"
 summary = "Tell bad CUs apart from an unstable CU unlock, and apply a tested unlock."
-tag = "cu-bisect-v0.1.9"
-sha256 = "116648f5d5487514a2fdc6a0e0c64ca131b575e67853335f219c016a86dc1c25"
+tag = "compute-v0.1.9"
+sha256 = ""
 required = false
 changes_board = true
 install = ["bash packaging/bazzite/install-bisect-gui.sh", "bash packaging/bazzite/install-gui.sh"]
@@ -88,11 +88,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-cores-bisect-gui", "~/.local/bin/bc250-cores-unlock-gui"]
 launch = [["Bisect", "~/.local/bin/bc250-cores-bisect-gui"], ["Unlock", "~/.local/bin/bc250-cores-unlock-gui"]]
 
-[apps.gpu-oc-bisect]
+[apps.oc]
 name = "BC-250 GPU OC Bisect"
 summary = "Find your board's safe GPU overclock and undervolt, one step at a time."
-tag = "gpu-oc-bisect-v0.1.9"
-sha256 = "85175c6932c849466ae4128e850522e152d2f28affa55d31833a3b9300d394ae"
+tag = "oc-v0.1.9"
+sha256 = ""
 required = false
 changes_board = true
 install = ["bash install.sh"]
@@ -149,11 +149,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-ace-queues"]
 launch = [["Open", "~/.local/bin/bc250-ace-queues"]]
 
-[apps.mesh-shaders]
+[apps.mesh]
 name = "BC-250 Mesh Shaders"
 summary = "Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use."
-tag = "mesh-shaders-v0.2.1"
-sha256 = "a18dfbf9378edb65dbaedcad9928de54c0034fa22dadaf88d2a4142a7e79d219"
+tag = "mesh-v0.2.1"
+sha256 = ""
 required = false
 changes_board = true
 section = "gaming"
@@ -162,11 +162,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-mesh-shaders"]
 launch = [["Open", "~/.local/bin/bc250-mesh-shaders"]]
 
-[apps.memory-manager]
+[apps.vram]
 name = "BC-250 Memory Manager"
 summary = "The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it."
-tag = "memory-manager-v0.2.0"
-sha256 = "9a6b948044c023cadc319d94965ab8ea2f2cddf5a28200bedf4de31f308a49e1"
+tag = "vram-v0.2.0"
+sha256 = ""
 required = false
 changes_board = true
 install = ["bash install.sh"]
@@ -174,11 +174,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-memory-manager"]
 launch = [["Open", "~/.local/bin/bc250-memory-manager"]]
 
-[apps.fan-control]
+[apps.fan]
 name = "BC-250 Fan Control"
 summary = "A thermal guard that warns, cools and shuts down cleanly at a critical temperature, and the fans."
-tag = "fan-control-v0.1.0"
-sha256 = "a065b0f61e6b5a00b8bcbf39b0954235893ed68b61146f2b8abc971a1a320d9f"
+tag = "fan-v0.1.0"
+sha256 = ""
 required = false
 changes_board = true
 install = ["bash install.sh"]
@@ -198,12 +198,12 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-usb-wifi"]
 launch = [["Open", "~/.local/bin/bc250-usb-wifi"]]
 
-[apps.hdmi-cec]
+[apps.cec]
 name = "HDMI CEC Manager"
 short = "HDMI-CEC"
 summary = "Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC."
-tag = "hdmi-cec-v0.2.0"
-sha256 = "aac216e08980e1797e04420137d1ea37f7d9b135229b0d335bac48b6ee5cdabc"
+tag = "cec-v0.2.0"
+sha256 = ""
 required = false
 changes_board = false
 install = ["bash install.sh"]
@@ -304,11 +304,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-shadps4-manager"]
 launch = [["Open", "~/.local/bin/bc250-shadps4-manager"]]
 
-[apps.decky-manager]
+[apps.decky]
 name = "Decky Loader Manager"
 summary = "Plugins in Game Mode with Decky Loader: a tested Decky release as a system service, its state and its plugins."
-tag = "decky-manager-v0.2.0"
-sha256 = "2303e657899998fdb0d02168d152cc2ce2ebb74db29983adeb908d8258f9442c"
+tag = "decky-v0.2.0"
+sha256 = ""
 required = false
 changes_board = false
 section = "gaming"
@@ -344,11 +344,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-ppsspp-manager"]
 launch = [["Open", "~/.local/bin/bc250-ppsspp-manager"]]
 
-[apps.pcsx2-manager]
+[apps.pcsx2]
 name = "PCSX2 Manager"
 summary = "PS2 games with the PCSX2 emulator: a tested PCSX2 release, your PS2 BIOS, your games found and added to Game Mode."
-tag = "pcsx2-manager-v0.3.1"
-sha256 = "b580f671f6893a842ba28c4d79551147a677bc6add46de3aa696edb8f5f05fc8"
+tag = "pcsx2-v0.3.1"
+sha256 = ""
 required = false
 changes_board = false
 section = "gaming"

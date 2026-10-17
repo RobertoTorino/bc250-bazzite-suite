@@ -29,11 +29,11 @@ tile, left to right in the order of `apps.toml` and as many to a row as the wind
 away when you click its name; it is open until you close it, and the portal remembers whether it was open.
 
 **Gaming**, below the apps, holds the apps for playing: [HelixSR Manager](apps/helixsr.md),
-[BC-250 ACE Queues](apps/ace.md), [BC-250 Mesh Shaders](apps/mesh-shaders.md),
+[BC-250 ACE Queues](apps/ace.md), [BC-250 Mesh Shaders](apps/mesh.md),
 [Console Link](apps/consoles.md), [shadPS4 Manager](apps/shadps4-manager.md),
-[Decky Loader Manager](apps/decky-manager.md), [RPCS3 Manager](apps/rpcs3-manager.md),
+[Decky Loader Manager](apps/decky.md), [RPCS3 Manager](apps/rpcs3-manager.md),
 [Bazzite DatStation](apps/datstation.md), [PPSSPP Manager](apps/ppsspp-manager.md),
-[PCSX2 Manager](apps/pcsx2-manager.md) and [Vita3K Manager](apps/vita3k-manager.md). It is open until you close it,
+[PCSX2 Manager](apps/pcsx2.md) and [Vita3K Manager](apps/vita3k-manager.md). It is open until you close it,
 and the portal remembers whether it was open.
 
 **Development only**, below that, opens a separate section with tools for working on the suite:

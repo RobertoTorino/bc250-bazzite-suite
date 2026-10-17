@@ -124,7 +124,7 @@ def test_every_tool_names_its_need_and_root():
         "flashrom", "umr", "smartctl", "fio", "setpci", "ras-mc-ctl", "grub2-mkconfig"}
     assert tool_need(tools["stress-ng"], {"cores"}) == "required"
     assert tool_need(tools["stress-ng"], {"check"}) == "optional"
-    assert tool_need(tools["stress-ng"], {"governor"}) == ""
+    assert tool_need(tools["stress-ng"], {"gpu"}) == ""
     # Bazzite Test runs Ookla's speedtest, else speedtest-cli: one entry, either one will do.
     assert tools["speedtest"].executables == ("speedtest", "speedtest-cli")
     assert "speedtest-cli" not in tools
@@ -192,15 +192,15 @@ def test_installed_environments_follow_each_launcher(tmp_path):
     apps = {
         "check": App("check", "Test", (str(tmp_path / "bin" / "test"),)),
         "demo-tool": App("demo-tool", "Demo", (str(tmp_path / "bin" / "demo"),)),
-        "cu-bisect": App("cu-bisect", "CU", (str(tmp_path / "bin" / "bisect"), str(tmp_path / "bin" / "unlock"))),
-        "governor": App("governor", "Governor", (str(tmp_path / "bin" / "governor"),)),
+        "compute": App("compute", "CU", (str(tmp_path / "bin" / "bisect"), str(tmp_path / "bin" / "unlock"))),
+        "gpu": App("gpu", "Governor", (str(tmp_path / "bin" / "gpu"),)),
         "core": App("core", "Shared core"),
     }
     environments = installed_environments(apps)
     assert environments == {
         "check": (shared,),
         "demo-tool": (own,),
-        "cu-bisect": (tmp_path / "bisect" / "venv", tmp_path / "unlock" / "venv"),
+        "compute": (tmp_path / "bisect" / "venv", tmp_path / "unlock" / "venv"),
     }
 
 
@@ -243,11 +243,11 @@ def test_packages_of_apps_that_are_not_installed_are_not_needed():
 def test_package_version_that_misses_the_requirement_is_reported(tmp_path):
     dependency = next(dependency for dependency in load_catalog(CATALOG) if dependency.name == "PyQt6")
     old = _venv(tmp_path / "old", {"PyQt6": "6.9.1"})
-    result = check_dependencies([dependency], "agent", {"cores": (old,), "governor": (old,)},
+    result = check_dependencies([dependency], "agent", {"cores": (old,), "gpu": (old,)},
                                 get_latest=lambda *_args: "6.11.0", get_vulnerabilities=NO_CVES)[0]
     # cores accepts >=6.5, the governor wants >=6.11.
-    assert result.unmet == (EnvironmentVersion(str(old), ("governor", "cores"), "6.9.1", ("governor",), (),
-                                               ("governor",)),)                    # older than wanted: outdated
+    assert result.unmet == (EnvironmentVersion(str(old), ("gpu", "cores"), "6.9.1", ("gpu",), (),
+                                               ("gpu",)),)                    # older than wanted: outdated
     assert result.needs_update == result.unmet
 
 
@@ -412,7 +412,7 @@ def test_vulnerabilities_are_checked_once_per_installed_version(tmp_path):
         asked.append((name, version))
         return (cve,)
 
-    result = check_dependencies([dependency], "agent", {"portal": (shared,), "governor": (own,)},
+    result = check_dependencies([dependency], "agent", {"portal": (shared,), "gpu": (own,)},
                                 get_latest=lambda *_args: "6.11.0", get_vulnerabilities=vulns)[0]
     assert result.vulnerabilities == (("6.10.0", cve),)
     assert result.cve_checked

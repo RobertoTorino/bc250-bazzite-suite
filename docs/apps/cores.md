@@ -18,7 +18,7 @@ board — and you want to know that before you persist it and let a flaky core c
 
 `bc250-cores-bisect.sh` does its own unlock, so no other tool is involved, and tests in a way that
 separates the possible causes. Sibling project of
-[bc250-cu-bisect](cu-bisect.md), which does the same for the GPU CUs.
+[bc250-cu-bisect](compute.md), which does the same for the GPU CUs.
 
 > **Warning:** this talks to the SMU and runs heavy CPU load. A bad core can freeze the system or
 > corrupt data. Save your work first. Use at your own risk.

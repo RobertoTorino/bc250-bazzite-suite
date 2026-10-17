@@ -10,8 +10,8 @@ from unittest import mock
 import pytest
 from PyQt6.QtWidgets import QMessageBox
 
-from bc250_bazzite_helixsr import backend
-from bc250_bazzite_helixsr.main_window import MainWindow
+from helixsr_manager import backend
+from helixsr_manager.main_window import MainWindow
 from tests.conftest import FAKE_DLL
 
 
@@ -67,8 +67,8 @@ def test_ini_page_saves_default(window, payload):
 def test_setup_page_builds_and_imports(qapp, tmp_path):
     """Setup page -> SetupWorker (fake release over file://) -> payload imported, Overview updated."""
     from PyQt6.QtCore import QEventLoop, QTimer
-    from bc250_bazzite_helixsr import acquire
-    from bc250_bazzite_helixsr.acquire import UpdateStatus
+    from helixsr_manager import acquire
+    from helixsr_manager.acquire import UpdateStatus
     from tests.test_acquire import prepared
 
     release, _ = prepared(tmp_path)
@@ -95,7 +95,7 @@ def test_setup_page_builds_and_imports(qapp, tmp_path):
 
 
 def test_update_hint_on_overview(window):
-    from bc250_bazzite_helixsr.acquire import ReleaseInfo, UpdateStatus
+    from helixsr_manager.acquire import ReleaseInfo, UpdateStatus
     newer = ReleaseInfo("9.0.0", "v9.0.0", "u", "2030-01-01", "HelixSR-9.0.0.zip", "https://x/z.zip", 10)
     window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.2.0", newer)})
     assert "9.0.0" in window.overview.update_hint.text() and window.setup_page.helix_pill.text() == "Update"
@@ -147,7 +147,7 @@ def test_ini_page_greys_out_what_the_version_ignores(window):
 
 
 def test_setup_page_fallback_choice(window):
-    from bc250_bazzite_helixsr.acquire import ReleaseInfo, UpdateStatus
+    from helixsr_manager.acquire import ReleaseInfo, UpdateStatus
     latest = ReleaseInfo("1.9.0", "v1.9.0", "u", "2026-10-15", "HelixSR-1.9.0.zip", "https://x/z.zip", 10)
     window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.8.1", latest)})
     assert "1.9.0" in window.overview.update_hint.text() and "Get HelixSR" in window.overview.update_hint.text()
@@ -155,7 +155,7 @@ def test_setup_page_fallback_choice(window):
     assert window.setup_page.fallback() and window.settings.value("setup/fallback", type=bool)
     window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.8.1", latest)})
     assert "fallback" in window.overview.update_hint.text()
-    with mock.patch("bc250_bazzite_helixsr.main_window.SetupWorker") as worker:
+    with mock.patch("helixsr_manager.main_window.SetupWorker") as worker:
         window.setup_page.start_requested.emit(None)
     request = worker.call_args.args[0]
     assert request.fallback and request.release is None

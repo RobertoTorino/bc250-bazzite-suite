@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from bc250_bazzite_helixsr import backend
+from helixsr_manager import backend
 
 INI = ("[Upscalers]\r\n; which upscaler\r\nDx12Upscaler=auto\r\n\r\n[Libraries]\r\n; paths\r\n"
        "FfxDx12Path=auto\r\nFfxDx12SRPath=auto\r\n")
