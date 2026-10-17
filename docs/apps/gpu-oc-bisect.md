@@ -13,7 +13,7 @@ the GPU with a load that verifies its results, and see where your board stops be
 
 `bc250-gpu-oc-bisect.sh` does exactly that, in the same way its sibling projects bisect
 [CUs](cu-bisect.md) and
-[CPU cores](cores-bisect.md).
+[CPU cores](cores.md).
 
 In plain words: an **overclock** (OC) gives more performance at the same voltage, an **undervolt**
 (UV) gives the same performance with less heat and power. The script finds how far your board can
@@ -154,7 +154,7 @@ governor config. `--status` (and a finished run) writes a readable report to you
 ## Related projects
 
 - [bc250-cu-bisect](cu-bisect.md) - CU unlock and bisect
-- [bc250-cores-bisect](cores-bisect.md) - CPU cores unlock and bisect
+- [bc250-cores-bisect](cores.md) - CPU cores unlock and bisect
 - [BC-250 Bazzite Test](check.md) - health-check test suite
 - The **CPU** side (voltage/frequency via SMU) is covered by
   [bc250_smu_oc](https://github.com/bc250-collective/bc250_smu_oc) from the BC-250 collective - this

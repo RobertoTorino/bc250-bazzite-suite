@@ -78,9 +78,9 @@ jobs:
           mkdir -p bundle
           gh release download "$bt" --pattern "$bt.tar.gz" --pattern SHA256SUMS --dir bundle
 
-      - name: Native wheel (console-link releases)
-        if: startsWith(github.ref_name, 'console-link-v')
-        working-directory: apps/console-link/native
+      - name: Native wheel (consoles releases)
+        if: startsWith(github.ref_name, 'consoles-v')
+        working-directory: apps/consoles/native
         run: |
           sudo apt-get update -q && sudo apt-get install -y -q nasm libva-dev
           ffmpeg/build.sh "$RUNNER_TEMP/ffmpeg"

@@ -45,11 +45,11 @@ jobs:
       fail-fast: false
       matrix:
         dir: [core, portal, tools, apps/check, apps/governor, apps/helixsr, apps/persistent-acpi,
-              apps/cu-bisect, apps/cores-bisect, apps/gpu-oc-bisect,
+              apps/cu-bisect, apps/cores, apps/gpu-oc-bisect,
               apps/demo-tool, apps/dependency-checker, apps/ncgui,
               apps/suite-releases,
               apps/system-overlay, apps/bios, apps/ace, apps/memory-manager, apps/hdmi-cec, apps/sftp-tools,
-              apps/console-link, apps/mesh-shaders, apps/shadps4-manager, apps/rpcs3-manager, apps/decky-manager,
+              apps/consoles, apps/mesh-shaders, apps/shadps4-manager, apps/rpcs3-manager, apps/decky-manager,
               apps/datstation, apps/ppsspp-manager, apps/pcsx2-manager, apps/vita3k-manager, apps/fan-control,
               apps/usb-wifi,
               tools/installer-tests/gui]   # every folder with tests/
@@ -80,7 +80,7 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: python -X faulthandler -m pytest -v tests        # -v: a crash log names the test
 
-  # Console Link's native core (Rust, apps/console-link/native): its own tests, clippy, and the Python module
+  # Console Link's native core (Rust, apps/consoles/native): its own tests, clippy, and the Python module
   # built into a wheel and tested from Python, all with the video decoder (FFmpeg from native/ffmpeg/build.sh, kept
   # in the cache until the script changes); clippy also without it, as a clone without FFmpeg builds it. Rust is
   # preinstalled on ubuntu-latest. The pytest job above skips tests/test_native.py, which needs the built module.
@@ -89,7 +89,7 @@ jobs:
     timeout-minutes: 45
     defaults:
       run:
-        working-directory: apps/console-link/native
+        working-directory: apps/consoles/native
     steps:
       - uses: actions/checkout@v7
 
@@ -105,7 +105,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.cache/bc250-console-link
-          key: ffmpeg-${{ runner.os }}-${{ hashFiles('apps/console-link/native/ffmpeg/build.sh') }}
+          key: ffmpeg-${{ runner.os }}-${{ hashFiles('apps/consoles/native/ffmpeg/build.sh') }}
 
       - name: FFmpeg
         if: steps.ffmpeg.outputs.cache-hit != 'true'
@@ -125,7 +125,7 @@ jobs:
           maturin build --release --locked --compatibility linux --features python,pyo3/extension-module,decoder -o dist
 
       - name: Test the module from Python
-        working-directory: apps/console-link         # the app's package imports from here, as in test.sh
+        working-directory: apps/consoles         # the app's package imports from here, as in test.sh
         run: |
           python -m pip install -q -r requirements-dev.txt native/dist/*.whl     # conftest.py uses PyQt6
           python -m pytest -v tests/test_native.py tests/test_stream.py tests/test_senkusha.py
@@ -147,17 +147,17 @@ jobs:
       # that their own release workflows already held to it.
       - name: shellcheck (errors, all scripts)
         run: find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 shellcheck -x -S error
-      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios, ace, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, console-link, mesh-shaders, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, netcatgui, datstation and the suite's own scripts)
+      - name: shellcheck (warnings, cores, gpu-oc-bisect, persistent-acpi, system-overlay, bios, ace, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, consoles, mesh-shaders, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, netcatgui, datstation and the suite's own scripts)
         run: |
           shellcheck -x -S warning portal/install.sh apps/check/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \
             tools/hooks/pre-push
-          shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/bc250-cores-unlock.sh \
-            apps/cores-bisect/install.sh apps/cores-bisect/packaging/bazzite/*.sh
+          shellcheck -S warning apps/cores/bc250-cores-bisect.sh apps/cores/bc250-cores-unlock.sh \
+            apps/cores/install.sh apps/cores/packaging/bazzite/*.sh
           shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
           shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh
           shellcheck -S warning apps/system-overlay/install.sh apps/bios/install.sh apps/memory-manager/install.sh
           shellcheck -S warning apps/fan-control/install.sh apps/usb-wifi/install.sh
-          shellcheck -S warning apps/hdmi-cec/install.sh apps/sftp-tools/install.sh apps/console-link/install.sh
+          shellcheck -S warning apps/hdmi-cec/install.sh apps/sftp-tools/install.sh apps/consoles/install.sh
           shellcheck -S warning apps/ace/bc250-ace-queues.sh apps/ace/bc250-ace-queues-run \
             apps/ace/install.sh apps/ace/mesa/build-in-container.sh
           shellcheck -S warning apps/mesh-shaders/bc250-mesh-shaders.sh apps/mesh-shaders/bc250-mesh-shaders-run \
@@ -221,8 +221,8 @@ jobs:
         run: bash tools/installer-tests/helixsr.sh
       - name: cu-bisect installers
         run: bash tools/installer-tests/cu-bisect.sh
-      - name: cores-bisect installer
-        run: bash tools/installer-tests/cores-bisect.sh
+      - name: cores installer
+        run: bash tools/installer-tests/cores.sh
       - name: gpu-oc-bisect installer
         run: bash tools/installer-tests/gpu-oc-bisect.sh
       - name: portal installer
@@ -259,8 +259,8 @@ jobs:
         run: bash tools/installer-tests/hdmi-cec.sh
       - name: sftp-tools installer
         run: bash tools/installer-tests/sftp-tools.sh
-      - name: console-link installer
-        run: bash tools/installer-tests/console-link.sh
+      - name: consoles installer
+        run: bash tools/installer-tests/consoles.sh
       - name: Demo Tool installer
         run: bash tools/installer-tests/demo-tool.sh
       - name: Dependency checker installer

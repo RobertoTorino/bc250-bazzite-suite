@@ -76,11 +76,11 @@ uninstall = ["bash packaging/bazzite/uninstall-bisect-gui.sh", "bash packaging/b
 detect = ["~/.local/bin/bc250-bisect-gui", "~/.local/bin/bc250-unlock-cu-gui"]
 launch = [["Bisect", "~/.local/bin/bc250-bisect-gui"], ["Unlock", "~/.local/bin/bc250-unlock-cu-gui"]]
 
-[apps.cores-bisect]
+[apps.cores]
 name = "BC-250 Cores Bisect"
 summary = "Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock."
-tag = "cores-bisect-v0.1.9"
-sha256 = "88a8bd68d5a7c502248f3fa865e361f81cec901efbeeddee59cc6e98834b1c80"
+tag = "cores-v0.1.9"
+sha256 = ""
 required = false
 changes_board = true
 install = ["bash install.sh"]
@@ -277,12 +277,12 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-rpcs3-manager"]
 launch = [["Open", "~/.local/bin/bc250-rpcs3-manager"]]
 
-[apps.console-link]
+[apps.consoles]
 name = "Console Link"
 short = "Console Link"
 summary = "Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session."
-tag = "console-link-v1.1.2"
-sha256 = "2cf453d26b67e717f89c13c40913bafbd2d3b4c3da9b6173f7de5f5f01d2dadb"
+tag = "consoles-v1.1.2"
+sha256 = ""
 required = false
 changes_board = false
 section = "gaming"

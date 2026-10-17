@@ -59,7 +59,7 @@ GAMING_OPEN_KEY = "portal/gaming_open"
 TOOLS_OPEN_KEY = "portal/tools_open"
 DESKTOP_ICONS_KEY = "portal/desktop_icons"
 APP_ICON_FILES = {"dependency-checker": "portal-dependency-checker"}
-LAUNCH_ICON_FILES = {("cu-bisect", "Unlock"): "cu-unlock", ("cores-bisect", "Unlock"): "cores-unlock"}  # else the app's
+LAUNCH_ICON_FILES = {("cu-bisect", "Unlock"): "cu-unlock", ("cores", "Unlock"): "cores-unlock"}  # else the app's
 
 BOARD_WARNING = (
     "<p><b>{name} changes how your BC-250 runs</b> (clocks, voltages, unlocked units or firmware tables).</p>"

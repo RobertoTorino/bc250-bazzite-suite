@@ -13,9 +13,9 @@ The **BC250 Bazzite Suite** (exactly that name): tools for the AMD BC-250 on Baz
 its manifest. **check** (BC-250 Bazzite Test) is always installed and always listed first; every other listed app is an optional
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
-- `apps/<name>/`: check, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
-  system-overlay, bios, ace, mesh-shaders, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, console-link, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, demo-tool, dependency-checker, ncgui, datstation, suite-releases. Each has its
-  own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; console-link is AGPL-3.0, its protocol code ported from
+- `apps/<name>/`: check, governor, helixsr, cu-bisect, cores, gpu-oc-bisect, persistent-acpi,
+  system-overlay, bios, ace, mesh-shaders, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, consoles, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, demo-tool, dependency-checker, ncgui, datstation, suite-releases. Each has its
+  own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; consoles is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; ncgui is GPL-2.0-only, a port of NetcatGUI; the rest
   GPL-3.0-or-later), .gitignore. Simple
   Demo Tool, the Dependency Checker and Bazzite NetcatGUI are `development = true` in `portal/apps.toml`: the portal
@@ -138,13 +138,13 @@ find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 -n1 ba
 find apps portal tools -name '*.sh' -print0 | xargs -0 shellcheck -x -S error test.sh install.sh
 shellcheck -x -S warning portal/install.sh apps/check/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \
   tools/hooks/pre-push
-shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/bc250-cores-unlock.sh \
-  apps/cores-bisect/install.sh apps/cores-bisect/packaging/bazzite/*.sh
+shellcheck -S warning apps/cores/bc250-cores-bisect.sh apps/cores/bc250-cores-unlock.sh \
+  apps/cores/install.sh apps/cores/packaging/bazzite/*.sh
 shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
 shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh \
   apps/system-overlay/install.sh apps/bios/install.sh apps/memory-manager/install.sh apps/fan-control/install.sh \
   apps/hdmi-cec/install.sh apps/sftp-tools/install.sh \
-  apps/console-link/install.sh apps/demo-tool/install.sh apps/suite-releases/*.sh
+  apps/consoles/install.sh apps/demo-tool/install.sh apps/suite-releases/*.sh
 shellcheck -S warning apps/ace/bc250-ace-queues.sh apps/ace/bc250-ace-queues-run \
   apps/ace/install.sh apps/ace/mesa/build-in-container.sh
 shellcheck -S warning apps/mesh-shaders/bc250-mesh-shaders.sh apps/mesh-shaders/bc250-mesh-shaders-run \

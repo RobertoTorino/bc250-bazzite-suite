@@ -1,3 +1,23 @@
+Changelog: 17-10-2026 11:06:04
+
+Release 1.17.0. Pins cores-v0.1.9, consoles-v1.1.2.
+
+Changelog: 17-10-2026 11:02:44
+
+Added. BC-250 Cores Bisect is listed as [apps.cores] (was [apps.cores-bisect]), after the app's move to
+apps/cores; its tile icon is images/apps/cores.png and the Unlock button keeps its own. The entry pins the first
+release under its new tag prefix (cores-v0.1.9) without a checksum until that release exists, which an app release
+accepts and a portal release waits for. The record of a copy installed under the old key moves to the new key when
+the portal starts, as for the apps renamed before it.
+
+Changelog: 17-10-2026 10:54:05
+
+Added. Console Link is listed as [apps.consoles] (was [apps.console-link]), after the app's move to apps/consoles;
+its tile icon is images/apps/consoles.png. The entry pins the first release under its new tag prefix
+(consoles-v1.1.2) without a checksum until that release exists, which an app release accepts and a portal release
+waits for. The record of a copy installed under the old key moves to the new key when the portal starts, as for
+the apps renamed before it.
+
 Changelog: 17-10-2026 10:48:19
 
 Release 1.16.0.

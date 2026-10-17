@@ -31,7 +31,7 @@ uses. You do not need them.
 - <img src="portal/images/apps/check.png" width="20" height="20" alt=""/> **[BC-250 Bazzite Test](apps/check)**: Read-only diagnostics, stress test and benchmarks. Always installed.
 - <img src="portal/images/apps/governor.png" width="20" height="20" alt=""/> **[BC-250 GPU Governor Manager](apps/governor)**: Manage the cyan-skillfish GPU governor: tuning, safe points, profiles, backups.
 - <img src="portal/images/apps/cu-bisect.png" width="20" height="20" alt=""/> **[BC-250 CU Bisect](apps/cu-bisect)**: Tell bad CUs apart from an unstable CU unlock, and apply a tested unlock.
-- <img src="portal/images/apps/cores-bisect.png" width="20" height="20" alt=""/> **[BC-250 Cores Bisect](apps/cores-bisect)**: Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock.
+- <img src="portal/images/apps/cores.png" width="20" height="20" alt=""/> **[BC-250 Cores Bisect](apps/cores)**: Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock.
 - <img src="portal/images/apps/gpu-oc-bisect.png" width="20" height="20" alt=""/> **[BC-250 GPU OC Bisect](apps/gpu-oc-bisect)**: Find your board's safe GPU overclock and undervolt, one step at a time.
 - <img src="portal/images/apps/persistent-acpi.png" width="20" height="20" alt=""/> **[BC-250 Persistent ACPI](apps/persistent-acpi)**: CPU C-states and frequency scaling through a persistent ACPI override (GRUB early initrd).
 - <img src="portal/images/apps/system-overlay.png" width="20" height="20" alt=""/> **[System Overlay](apps/system-overlay)**: CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top.
@@ -47,7 +47,7 @@ uses. You do not need them.
 - <img src="portal/images/apps/helixsr.png" width="20" height="20" alt=""/> **[HelixSR Manager](apps/helixsr)**: Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games.
 - <img src="portal/images/apps/ace.png" width="20" height="20" alt=""/> **[BC-250 ACE Queues](apps/ace)**: Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use.
 - <img src="portal/images/apps/mesh-shaders.png" width="20" height="20" alt=""/> **[BC-250 Mesh Shaders](apps/mesh-shaders)**: Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use.
-- <img src="portal/images/apps/console-link.png" width="20" height="20" alt=""/> **[Console Link](apps/console-link)**: Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session.
+- <img src="portal/images/apps/consoles.png" width="20" height="20" alt=""/> **[Console Link](apps/consoles)**: Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session.
 - <img src="portal/images/apps/shadps4-manager.png" width="20" height="20" alt=""/> **[shadPS4 Manager](apps/shadps4-manager)**: PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found (or unpacked from .pkg files) and added to Game Mode.
 - <img src="portal/images/apps/decky-manager.png" width="20" height="20" alt=""/> **[Decky Loader Manager](apps/decky-manager)**: Plugins in Game Mode with Decky Loader: a tested Decky release as a system service, its state and its plugins.
 - <img src="portal/images/apps/rpcs3-manager.png" width="20" height="20" alt=""/> **[RPCS3 Manager](apps/rpcs3-manager)**: PS3 games with the RPCS3 emulator: a tested RPCS3 build, the firmware, your games found and added to Game Mode.

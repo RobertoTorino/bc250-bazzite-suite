@@ -20,7 +20,7 @@ from pathlib import Path
 
 SUITE = Path(__file__).resolve().parent.parent
 SKIP_DIRS = {"tests", "python", "_python", "__pycache__", ".pytest_cache", ".idea", ".venv",
-             "target"}                          # cargo's build output (console-link/native)
+             "target"}                          # cargo's build output (consoles/native)
 SKIP_FILES = {"requirements-dev.txt", ".gitignore", ".gitattributes", ".standalone"}
 _USES_CORE = re.compile(r"^\s*(from|import)\s+bc250_core\b", re.M)
 

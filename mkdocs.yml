@@ -62,7 +62,7 @@ nav:
       - BC-250 GPU Governor Manager: apps/governor.md
       - HelixSR Manager: apps/helixsr.md
       - BC-250 CU Bisect: apps/cu-bisect.md
-      - BC-250 Cores Bisect: apps/cores-bisect.md
+      - BC-250 Cores Bisect: apps/cores.md
       - BC-250 GPU OC Bisect: apps/gpu-oc-bisect.md
       - BC-250 Persistent ACPI: apps/persistent-acpi.md
       - System Overlay: apps/system-overlay.md
@@ -76,7 +76,7 @@ nav:
       - Bazzite SFTP Tools: apps/sftp-tools.md
       - Dependency Checker: apps/dependency-checker.md
       - Bazzite NetcatGUI: apps/ncgui.md
-      - Console Link: apps/console-link.md
+      - Console Link: apps/consoles.md
       - shadPS4 Manager: apps/shadps4-manager.md
       - RPCS3 Manager: apps/rpcs3-manager.md
       - PPSSPP Manager: apps/ppsspp-manager.md

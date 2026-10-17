@@ -122,7 +122,7 @@ def test_every_tool_names_its_need_and_root():
     tools = {tool.name: tool for tool in load_tools(CATALOG)}
     assert {name for name, tool in tools.items() if tool.root} == {
         "flashrom", "umr", "smartctl", "fio", "setpci", "ras-mc-ctl", "grub2-mkconfig"}
-    assert tool_need(tools["stress-ng"], {"cores-bisect"}) == "required"
+    assert tool_need(tools["stress-ng"], {"cores"}) == "required"
     assert tool_need(tools["stress-ng"], {"check"}) == "optional"
     assert tool_need(tools["stress-ng"], {"governor"}) == ""
     # Bazzite Test runs Ookla's speedtest, else speedtest-cli: one entry, either one will do.
@@ -139,7 +139,7 @@ def test_external_tool_catalog_covers_app_specific_tools():
     assert tools["pkexec"].sources[0].owner == "bios"
     assert tools["cyan-skillfish-governor-smu"].probe == "path"
     assert "check" in {source.owner for source in tools["stress-ng"].sources}
-    assert "cores-bisect" in {source.owner for source in tools["stress-ng"].sources}
+    assert "cores" in {source.owner for source in tools["stress-ng"].sources}
     assert {"mangohud", "vainfo", "clinfo", "rocminfo", "ujust", "grub2-mkconfig"} <= set(tools)
 
 
@@ -243,10 +243,10 @@ def test_packages_of_apps_that_are_not_installed_are_not_needed():
 def test_package_version_that_misses_the_requirement_is_reported(tmp_path):
     dependency = next(dependency for dependency in load_catalog(CATALOG) if dependency.name == "PyQt6")
     old = _venv(tmp_path / "old", {"PyQt6": "6.9.1"})
-    result = check_dependencies([dependency], "agent", {"cores-bisect": (old,), "governor": (old,)},
+    result = check_dependencies([dependency], "agent", {"cores": (old,), "governor": (old,)},
                                 get_latest=lambda *_args: "6.11.0", get_vulnerabilities=NO_CVES)[0]
-    # cores-bisect accepts >=6.5, the governor wants >=6.11.
-    assert result.unmet == (EnvironmentVersion(str(old), ("governor", "cores-bisect"), "6.9.1", ("governor",), (),
+    # cores accepts >=6.5, the governor wants >=6.11.
+    assert result.unmet == (EnvironmentVersion(str(old), ("governor", "cores"), "6.9.1", ("governor",), (),
                                                ("governor",)),)                    # older than wanted: outdated
     assert result.needs_update == result.unmet
 
@@ -481,7 +481,7 @@ def test_ffmpeg_not_found_without_the_app_or_its_core(tmp_path, monkeypatch):
 
 def test_console_link_lists_what_the_stream_needs():
     tools = {tool.name: tool for tool in load_tools(CATALOG)}
-    needs = {name: tool_need(tools[name], {"console-link"}) for name in ("FFmpeg", "libva", "SDL3", "Steam", "Rust")}
+    needs = {name: tool_need(tools[name], {"consoles"}) for name in ("FFmpeg", "libva", "SDL3", "Steam", "Rust")}
     assert needs == {"FFmpeg": "required", "libva": "required", "SDL3": "optional", "Steam": "optional",
                      "Rust": "optional"}
 

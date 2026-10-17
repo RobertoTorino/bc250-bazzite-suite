@@ -35,7 +35,7 @@ app downloads its Python packages from PyPI.
 
 **Only when you ask for it:**
 
-- [Console Link](apps/console-link.md#privacy) talks to your own consoles on your own network, and to PlayStation
+- [Console Link](apps/consoles.md#privacy) talks to your own consoles on your own network, and to PlayStation
   (PSN) only for **Find my account ID**; the sign-in happens in your browser. Its window masks your account ID,
   online ID and the consoles' addresses.
 - [shadPS4 Manager](apps/shadps4-manager.md#shadnet): shadPS4 signs in to the shadNet server you set, with the
@@ -58,7 +58,7 @@ the exact list. Nothing of it is uploaded. Uninstalling with `--purge` removes t
 
 Some of it can identify you: host and user names, serial numbers, MAC and IP addresses, account IDs. Where an app
 shows or saves such details, it masks them: [Bazzite Test](apps/check.md) masks them in saved logs (on by
-default, in **Settings › Privacy**), and [Console Link](apps/console-link.md#privacy) in its window and log. Before
+default, in **Settings › Privacy**), and [Console Link](apps/consoles.md#privacy) in its window and log. Before
 you share a log or a screenshot, for example in an issue, look it over for anything you would rather keep to
 yourself.
 

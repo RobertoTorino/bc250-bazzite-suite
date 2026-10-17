@@ -561,7 +561,7 @@ just want to run the scripts or the GUIs; the portal installs it for you too.
 
 ## Related
 
-[bc250-cores-bisect](cores-bisect.md): sibling project, the same
+[bc250-cores-bisect](cores.md): sibling project, the same
 strategy for the 2 fused-off CPU cores — control, per-core bisect, verdict, then a reversible
 persistent 8C/16T unlock.
 

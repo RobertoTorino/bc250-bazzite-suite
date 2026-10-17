@@ -30,7 +30,7 @@ away when you click its name; it is open until you close it, and the portal reme
 
 **Gaming**, below the apps, holds the apps for playing: [HelixSR Manager](apps/helixsr.md),
 [BC-250 ACE Queues](apps/ace.md), [BC-250 Mesh Shaders](apps/mesh-shaders.md),
-[Console Link](apps/console-link.md), [shadPS4 Manager](apps/shadps4-manager.md),
+[Console Link](apps/consoles.md), [shadPS4 Manager](apps/shadps4-manager.md),
 [Decky Loader Manager](apps/decky-manager.md), [RPCS3 Manager](apps/rpcs3-manager.md),
 [Bazzite DatStation](apps/datstation.md), [PPSSPP Manager](apps/ppsspp-manager.md),
 [PCSX2 Manager](apps/pcsx2-manager.md) and [Vita3K Manager](apps/vita3k-manager.md). It is open until you close it,

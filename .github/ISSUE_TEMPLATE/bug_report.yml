@@ -13,7 +13,7 @@ body:
         - governor
         - helixsr
         - cu-bisect
-        - cores-bisect
+        - cores
         - gpu-oc-bisect
         - persistent-acpi
         - system-overlay

@@ -38,7 +38,7 @@ LATEST_PORTAL_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite/releas
 _TAG = re.compile(r"^(?P<app>[a-z0-9-]+)-v(?P<version>\d+\.\d+\.\d+)$")
 # The app's folder for the wheel of its native core (Rust with FFmpeg inside), which release.yml builds before this
 # runs: users install it with pip and need no compiler. Its version is the app's.
-NATIVE_WHEELS = {"console-link": Path("native/wheel")}
+NATIVE_WHEELS = {"consoles": Path("native/wheel")}
 
 
 def _load(name: str, path: Path):

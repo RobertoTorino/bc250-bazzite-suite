@@ -14,7 +14,8 @@ _SHA256 = re.compile(r"^([0-9a-f]{64})?$")
 SECTIONS = {"gaming": "Gaming"}                 # section = "<key>": the portal's own section for those apps
 # Apps renamed in the suite (old key: new key), for the record of a copy installed under the old key.
 RENAMED = {"ace-queues": "ace", "bazzite-netcatgui": "ncgui", "bazzite-datstation": "datstation",
-           "bazzite-test": "check", "bios-reader": "bios"}
+           "bazzite-test": "check", "bios-reader": "bios",
+           "console-link": "consoles", "cores-bisect": "cores"}
 
 
 class ManifestError(ValueError):

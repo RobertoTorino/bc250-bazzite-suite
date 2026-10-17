@@ -33,7 +33,7 @@ apps/<name>/
 │   ├── main_window.py         the window
 │   └── ...                    the app's own modules, and data it reads (a catalogue, tables)
 ├── images/                    <app-id>.png (512 px) and, for the portal, a 128 px version
-├── native/                    only an app with a native core (console-link): a Rust crate, see below
+├── native/                    only an app with a native core (consoles): a Rust crate, see below
 ├── tests/                     conftest.py and test_*.py
 ├── install.sh                 install, update and uninstall for your own user
 ├── requirements.txt           runtime Python packages (PyQt6, ...)

@@ -1,3 +1,19 @@
+Changelog: 17-10-2026 11:06:03
+
+Release 0.4.5.
+
+Changelog: 17-10-2026 11:02:44
+
+Fixed. The catalogue lists BC-250 Cores Bisect as [app.cores] (was [app.cores-bisect]), its key in the portal after
+the app's move to apps/cores; its sources (stress-ng and the other tools the bisect uses, and the Python packages)
+name that owner.
+
+Changelog: 17-10-2026 10:54:05
+
+Fixed. The catalogue lists Console Link as [app.consoles] (was [app.console-link]), its key in the portal after
+the app's move to apps/consoles; its sources (FFmpeg, libva, SDL3, Steam, Rust and the Python packages) name that
+owner. The FFmpeg probe still asks the app's environment for bc250_console_link_core, which keeps its name.
+
 Changelog: 17-10-2026 10:10:41
 
 Release 0.4.4.

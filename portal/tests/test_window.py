@@ -76,7 +76,7 @@ def test_every_card_has_its_icon(qapp, home, settings_dir, tmp_path, launched):
 
 
 def test_open_menu_shows_each_window_icon(window):
-    for key in ("cu-bisect", "cores-bisect"):
+    for key in ("cu-bisect", "cores"):
         actions = window.cards[key].icon.menu().actions()
         assert [a.text() for a in actions] == ["Bisect", "Unlock"]
         assert all(not a.icon().isNull() for a in actions), key
@@ -376,7 +376,7 @@ def test_board_tools_in_a_section_open_until_closed(window, qapp):
 
 def test_gaming_apps_apart_and_open(window, qapp):
     gaming = {key for key, card in window.cards.items() if card.entry.section == "gaming"}
-    assert gaming == {"helixsr", "ace", "mesh-shaders", "console-link", "shadps4-manager",
+    assert gaming == {"helixsr", "ace", "mesh-shaders", "consoles", "shadps4-manager",
                       "decky-manager", "rpcs3-manager", "datstation", "ppsspp-manager", "pcsx2-manager",
                       "vita3k-manager"}
     assert all(window.gaming_grid.indexOf(window.cards[key]) >= 0 for key in gaming)

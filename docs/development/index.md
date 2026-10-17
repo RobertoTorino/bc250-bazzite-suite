@@ -82,7 +82,7 @@ The repo is used from both systems, so it is set up to behave the same on each:
 
 ## Where things are installed
 
-- **Root-owned `/opt`:** the portal (`/opt/bc250-bazzite-suite`), Bazzite Test (`check`), cores-bisect, gpu-oc-bisect and
+- **Root-owned `/opt`:** the portal (`/opt/bc250-bazzite-suite`), Bazzite Test (`check`), cores, gpu-oc-bisect and
   persistent-acpi, whose scripts run as root: a normal user cannot change code that sudo runs.
 - **Your home folder:** the shared venv `~/.local/share/bc250-bazzite-suite/venv` (PyQt6, used by all suite
   GUIs and removed with the last of them), plus each app's settings, results and launchers.
@@ -166,8 +166,8 @@ Code shared by the suite's apps. Nothing in it imports an app: each app passes i
 | `help` | `HelpView` (the content stays in the app) | helixsr |
 | `updates` | `latest_release()` (with a tag prefix for the suite's per-app tags), `UpdateStatus`, `UpdateChecker` (any job, off the GUI thread) | helixsr + governor |
 | `platform` | XDG folders, `xdg_open()`, `launch_in_terminal()` (with an exit file the caller can watch) | the bisect GUIs' `terminal.py` |
-| `steam` | Steam's folders and users, `with_steam_closed()`, `shortcuts.vdf` and the shortcuts' artwork in `grid/` (standard library only) | console-link |
-| `steam_art` | `draw_icon_art()`: a shortcut's four pictures drawn from an app's icon, in the icon's colour | console-link |
+| `steam` | Steam's folders and users, `with_steam_closed()`, `shortcuts.vdf` and the shortcuts' artwork in `grid/` (standard library only) | consoles |
+| `steam_art` | `draw_icon_art()`: a shortcut's four pictures drawn from an app's icon, in the icon's colour | consoles |
 
 Core is **bundled per app**: `tools/stage_app.py` copies `bc250_core/` next to the package of every app that
 imports it, so each release runs on the core it was tested with.

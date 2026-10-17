@@ -41,7 +41,7 @@ frequency scaling.
 <div class="home-card" markdown>
 #### :material-lock-open-variant: Unlocks
 
-[CU Bisect](apps/cu-bisect.md) and [Cores Bisect](apps/cores-bisect.md) tell bad CUs and cores apart from an
+[CU Bisect](apps/cu-bisect.md) and [Cores Bisect](apps/cores.md) tell bad CUs and cores apart from an
 unstable unlock, and [Memory Manager](apps/memory-manager.md) sets the VRAM split.
 </div>
 <div class="home-card" markdown>
@@ -56,7 +56,7 @@ beside the system Mesa.
 
 [shadPS4 Manager](apps/shadps4-manager.md) plays PS4 games with the shadPS4 emulator,
 [RPCS3 Manager](apps/rpcs3-manager.md) PS3 games with the RPCS3 emulator, and
-[Console Link](apps/console-link.md) finds, wakes and registers PS4 and PS5 consoles for Remote Play.
+[Console Link](apps/consoles.md) finds, wakes and registers PS4 and PS5 consoles for Remote Play.
 </div>
 <div class="home-card" markdown>
 #### :material-television: Living room

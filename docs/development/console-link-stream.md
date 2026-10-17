@@ -4,7 +4,7 @@
 
 How Console Link keeps picture, sound and controller in step during a stream, why Python's global
 interpreter lock (the GIL) matters for it, and how to measure it. For the app itself, see its
-[manual](../apps/console-link.md).
+[manual](../apps/consoles.md).
 
 ## The threads
 
@@ -57,7 +57,7 @@ log as it happens and the statistics file has the recovery per second.
 ## Measuring it
 
 Each stream writes a statistics file, one line per second, in `~/.local/state/bc250-console-link/streams/`
-(`stream_stats.py`; the [manual](../apps/console-link.md#when-it-does-not-work) explains it for users). What to look
+(`stream_stats.py`; the [manual](../apps/consoles.md#when-it-does-not-work) explains it for users). What to look
 for:
 
 | Field | Healthy | What a bad value points to |

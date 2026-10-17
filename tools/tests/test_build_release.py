@@ -128,19 +128,19 @@ def test_demo_tool_release_has_the_standard_layout_and_omits_suite_marker(tmp_pa
 
 
 def test_native_wheel_is_required_and_named(tmp_path, monkeypatch):
-    version = (br.SUITE / "apps/console-link/VERSION").read_text().strip()
+    version = (br.SUITE / "apps/consoles/VERSION").read_text().strip()
     wheels = tmp_path / "wheel"
-    monkeypatch.setattr(br, "NATIVE_WHEELS", {"console-link": wheels})
+    monkeypatch.setattr(br, "NATIVE_WHEELS", {"consoles": wheels})
     with pytest.raises(SystemExit, match="exactly one .whl"):
-        br.build(f"console-link-v{version}", tmp_path / "out")
+        br.build(f"consoles-v{version}", tmp_path / "out")
     wheels.mkdir()
     (wheels / "bc250_console_link_core-0.0.1-cp310-abi3-linux_x86_64.whl").touch()
     with pytest.raises(SystemExit, match="is not version"):
-        br.build(f"console-link-v{version}", tmp_path / "out")
+        br.build(f"consoles-v{version}", tmp_path / "out")
     (wheels / "bc250_console_link_core-0.0.1-cp310-abi3-linux_x86_64.whl").unlink()
     name = f"bc250_console_link_core-{version}-cp310-abi3-linux_x86_64.whl"
     (wheels / name).touch()
-    br.build(f"console-link-v{version}", tmp_path / "out")
+    br.build(f"consoles-v{version}", tmp_path / "out")
     assert f"Includes its native core as `{name}`" in (tmp_path / "out" / "notes.md").read_text()
 
 

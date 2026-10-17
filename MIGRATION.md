@@ -12,9 +12,11 @@ Claude:
 
 1. **Releases** (owner). Done, 17-10-2026: check-v0.3.0, cores-bisect-v0.1.9, cu-bisect-v0.1.8,
    dependency-checker-v0.4.3, gpu-oc-bisect-v0.1.8 and persistent-acpi-v0.1.6 are tagged and pinned with checksums,
-   portal-v1.15.0 is released (it bundles check-v0.3.0). Open after the bios rename below: its release under the new
-   prefix (bios-v0.2.0 is pinned without a checksum), its pin, the portal minor bump check_manifest asks for, and the
-   portal release; the next renamed apps can share that portal release. Done this session besides the renames:
+   portal-v1.15.0 is released (it bundles check-v0.3.0); bios-v0.2.0 and dependency-checker-v0.4.4 followed, and
+   commit 3339b54 "Release portal-v1.16.0" is pushed with CI passed but not tagged yet (`tools/tag-release.sh
+   portal-v1.16.0`). Open after the consoles and cores renames below: their releases under the new prefixes (consoles-v1.1.2 and
+   cores-v0.1.9 are pinned without a checksum), their pins, the portal minor bump check_manifest asks for, and the portal release; the
+   next renamed apps can share that portal release. Done this session besides the renames:
    DatStation's revised quiz questions (item 2 under Next session below).
 2. **The (re)naming convention** (owner, 17-10-2026), one app per step, the owner names each: the folder under
    `apps/` is a short name, the package the app's name without its BC-250 or Bazzite prefix, as a Python
@@ -24,10 +26,13 @@ Claude:
    word, nothing in the tooling minds) and `apps/check/bazzite_check/` (was bazzite-test/bc250_gui; the owner,
    17-10-2026: check rather than test, so that no folder is called test; the Steam launch option the In-Game page hands
    out names the package, and one copied before is to be copied again: no shim, nobody runs one yet) and
-   `apps/bios/bios_reader/` (was bios-reader/bc250_bios_reader, 17-10-2026). The owner picks the next app and both
+   `apps/bios/bios_reader/` (was bios-reader/bc250_bios_reader, 17-10-2026) and `apps/consoles/consoles_link/`
+   (was console-link/bc250_console_link, 17-10-2026, both names the owner's; the native core keeps its name
+   bc250_console_link_core, the wheel in the installed environment) and `apps/cores/cores_bisect/` with
+   `apps/cores/cores_unlock/` (was cores-bisect/bc250_cores_bisect_gui and bc250_cores_gui, 17-10-2026; two
+   windows, two packages, each named after its window). The owner picks the next app and both
    names; do not guess them. Still to rename, with their packages now:
-   console-link (bc250_console_link), cores-bisect (bc250_cores_bisect_gui,
-   bc250_cores_gui), cu-bisect (bc250_bisect_gui, bc250_unlock_gui), decky-manager (bc250_decky_manager),
+   cu-bisect (bc250_bisect_gui, bc250_unlock_gui), decky-manager (bc250_decky_manager),
    demo-tool (simple_demo_tool), dependency-checker (bc250_dependency_checker), fan-control (bc250_fan_control),
    governor (bc250_governor), gpu-oc-bisect (bc250_gpu_oc_gui), hdmi-cec (bc250_hdmi_cec), helixsr
    (bc250_bazzite_helixsr), memory-manager (bc250_memory_manager), mesh-shaders (bc250_mesh_shaders),
@@ -527,7 +532,7 @@ card icon in `portal/images/apps/` is a copy of that (`tools/tests/test_portal_i
 | Step | What | Gate |
 |---|---|---|
 | 3 | Board check | Install, open and uninstall the portal on a clean Bazzite account; a full passive bazzite-test run matches the original |
-| — | **Naming convention** (owner, 17-10-2026): an app's folder under apps/ is a short name, its package the app's name without its BC-250 or Bazzite prefix; with the folder go the portal key, the tag prefix, the wiki chapter, the installer test and the tile icon, while the installed launcher, scripts, settings and state keep their names. Done (17-10-2026): ace-queues → `apps/ace/ace_queues`, bazzite-netcatgui → `apps/ncgui/netcat_gui`, bazzite-datstation → `apps/datstation/datstation`, bazzite-test → `apps/check/bazzite_check`, bios-reader → `apps/bios/bios_reader`; the portal moves an installed copy's record to the new key (`RENAMED` in portal/bc250_portal/manifest.py, used by Records in sources.py: add each renamed app there). Open for each (owner): the first release under the new prefix (`ace-v…`, `ncgui-v…`, `datstation-v…`, `check-v…`, `bios-v…`; ace-v0.2.0, ncgui-v0.2.0 and datstation-v0.2.1 are released and pinned, apps.toml pins check-v0.3.0 and bios-v0.2.0 without a checksum until then, which an app release accepts and a portal release waits for; a portal release bundles the check one, so it waits for it), its pin, and the portal minor bump check_manifest asks for (keys were added and removed). The other apps follow one at a time, each the same way. | Its tests, installer test and the suite's checks; the portal lists the app under the new key |
+| — | **Naming convention** (owner, 17-10-2026): an app's folder under apps/ is a short name, its package the app's name without its BC-250 or Bazzite prefix; with the folder go the portal key, the tag prefix, the wiki chapter, the installer test and the tile icon, while the installed launcher, scripts, settings and state keep their names. Done (17-10-2026): ace-queues → `apps/ace/ace_queues`, bazzite-netcatgui → `apps/ncgui/netcat_gui`, bazzite-datstation → `apps/datstation/datstation`, bazzite-test → `apps/check/bazzite_check`, bios-reader → `apps/bios/bios_reader`, console-link → `apps/consoles/consoles_link`, cores-bisect → `apps/cores/cores_bisect` + `cores_unlock`; the portal moves an installed copy's record to the new key (`RENAMED` in portal/bc250_portal/manifest.py, used by Records in sources.py: add each renamed app there). Open for each (owner): the first release under the new prefix (`ace-v…`, `ncgui-v…`, `datstation-v…`, `check-v…`, `bios-v…`, `consoles-v…`, `cores-v…`; ace-v0.2.0, ncgui-v0.2.0, datstation-v0.2.1, check-v0.3.0 and bios-v0.2.0 are released and pinned, apps.toml pins consoles-v1.1.2 and cores-v0.1.9 without a checksum until then, which an app release accepts and a portal release waits for), its pin, and the portal minor bump check_manifest asks for (keys were added and removed). The other apps follow one at a time, each the same way. | Its tests, installer test and the suite's checks; the portal lists the app under the new key |
 | 4 | Headless smoke tests for the five GUIs without tests (cu bisect/unlock, cores bisect/unlock, gpu-oc). Built (12-10-2026): tests/ in cu-bisect, cores-bisect and gpu-oc-bisect (options, the --auto unit, both unlock gates, every window offscreen with a fake script), in CI's pytest matrix | CI green |
 | 5 | governor and helixsr onto core; per-app releases plus a portal release | Their test suites; install from the portal |
 | 6 | Bisect family: `terminal`, `runner`, `dialogs`, `systemd` into core; shared `BisectLauncher` (cu, cores, gpu-oc stay three apps); unlock GUIs onto core; names in strings become placeholders | Their test suites; on the board: one process after starting cu with auto-resume |

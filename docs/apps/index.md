@@ -10,7 +10,7 @@ other app is optional.
 | ![](../assets/apps/check.png){ .app-icon } [BC-250 Bazzite Test](check.md) | Read-only diagnostics, stress test and benchmarks. Always installed. |
 | ![](../assets/apps/governor.png){ .app-icon } [BC-250 GPU Governor Manager](governor.md) | Manage the cyan-skillfish GPU governor: tuning, safe points, profiles, backups. **Changes the board.** |
 | ![](../assets/apps/cu-bisect.png){ .app-icon } [BC-250 CU Bisect](cu-bisect.md) | Tell bad CUs apart from an unstable CU unlock, and apply a tested unlock. **Changes the board.** |
-| ![](../assets/apps/cores-bisect.png){ .app-icon } [BC-250 Cores Bisect](cores-bisect.md) | Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock. **Changes the board.** |
+| ![](../assets/apps/cores.png){ .app-icon } [BC-250 Cores Bisect](cores.md) | Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock. **Changes the board.** |
 | ![](../assets/apps/gpu-oc-bisect.png){ .app-icon } [BC-250 GPU OC Bisect](gpu-oc-bisect.md) | Find your board's safe GPU overclock and undervolt, one step at a time. **Changes the board.** |
 | ![](../assets/apps/persistent-acpi.png){ .app-icon } [BC-250 Persistent ACPI](persistent-acpi.md) | CPU C-states and frequency scaling through a persistent ACPI override (GRUB early initrd). **Changes the board.** |
 | ![](../assets/apps/system-overlay.png){ .app-icon } [System Overlay](system-overlay.md) | CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top. |
@@ -28,7 +28,7 @@ other app is optional.
 | ![](../assets/apps/helixsr.png){ .app-icon } [HelixSR Manager](helixsr.md) | Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games. |
 | ![](../assets/apps/ace.png){ .app-icon } [BC-250 ACE Queues](ace.md) | Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use. **Changes the board.** |
 | ![](../assets/apps/mesh-shaders.png){ .app-icon } [BC-250 Mesh Shaders](mesh-shaders.md) | Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use. **Changes the board.** |
-| ![](../assets/apps/console-link.png){ .app-icon } [Console Link](console-link.md) | Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session. |
+| ![](../assets/apps/consoles.png){ .app-icon } [Console Link](consoles.md) | Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session. |
 | ![](../assets/apps/shadps4-manager.png){ .app-icon } [shadPS4 Manager](shadps4-manager.md) | PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found (or unpacked from .pkg files) and added to Game Mode. |
 | ![](../assets/apps/decky-manager.png){ .app-icon } [Decky Loader Manager](decky-manager.md) | Plugins in Game Mode with Decky Loader: a tested Decky release as a system service, its state and its plugins. |
 | ![](../assets/apps/rpcs3-manager.png){ .app-icon } [RPCS3 Manager](rpcs3-manager.md) | PS3 games with the RPCS3 emulator: a tested RPCS3 build, the firmware, your games found and added to Game Mode. |

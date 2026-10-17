@@ -52,7 +52,7 @@ def test_window_displays_package_and_tool_results(qapp):
          ToolStatus(tools["speedtest"], "/home/test/.local/bin/speedtest"),
          ToolStatus(tools["mprime"]),
          ToolStatus(tools["setpci"])],
-        frozenset({"portal", "check", "demo-tool", "bios", "cores-bisect"}),
+        frozenset({"portal", "check", "demo-tool", "bios", "cores"}),
     )
     window = _window(result)
     try:
@@ -151,7 +151,7 @@ def test_cve_marks(qapp):
 
 def test_missing_tools_advise_what_they_are_needed_for(qapp):
     dependencies, tools = _catalog()
-    installed = frozenset({"bios", "cores-bisect", "check"})
+    installed = frozenset({"bios", "cores", "check"})
     advice = tool_advice(tools["stress-ng"], installed, load_apps(CATALOG))
     assert advice.startswith("<b>Advice:</b> Install stress-ng to be able to use:")
     assert "BC-250 Cores Bisect</a>: Verified CPU load during core testing. <b>(required)</b>" in advice
@@ -181,15 +181,15 @@ def test_needs_update_when_an_app_wants_newer_or_a_release_fixes_a_vulnerability
     unfixed = Vulnerability("CVE-2026-2", "another hole")
     result = CheckResult(
         [DependencyStatus(dependencies["cryptography"],
-                          (EnvironmentVersion(link, ("console-link",), "41.0.0", ("console-link",), (),
-                                              ("console-link",)),), "46.0.0"),
+                          (EnvironmentVersion(link, ("consoles",), "41.0.0", ("consoles",), (),
+                                              ("consoles",)),), "46.0.0"),
          DependencyStatus(dependencies["paramiko"], (EnvironmentVersion(sftp, ("sftp-tools",), "3.4.0", (),
                                                                         (fixed,)),), "3.5.0"),
          DependencyStatus(dependencies["obsws-python"], (EnvironmentVersion(DEMO, ("demo-tool",), "1.8.0", (),
                                                                             (unfixed,)),), "1.8.0"),
          DependencyStatus(dependencies["PyQt6"], (EnvironmentVersion(DEMO, ("demo-tool",), "7.0.0",
                                                                      ("demo-tool",)),), "7.0.0")],
-        [], frozenset({"console-link", "sftp-tools", "demo-tool"}))
+        [], frozenset({"consoles", "sftp-tools", "demo-tool"}))
     window = _window(result)
     try:
         crypto, paramiko = window.cards["cryptography"], window.cards["paramiko"]

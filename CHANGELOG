@@ -1,3 +1,18 @@
+Changelog: 17-10-2026 11:02:44
+
+The naming convention applied to BC-250 Cores Bisect: apps/cores-bisect is apps/cores with the packages
+cores_bisect (was bc250_cores_bisect_gui) and cores_unlock (was bc250_cores_gui). With it the portal key, the wiki
+chapter (docs/apps/cores.md), the installer test, the portal's tile icon, CI's steps, the issue template, the
+dependency catalogue and CLAUDE.md's list. The portal moves the record of an installed copy to the new key.
+
+Changelog: 17-10-2026 10:54:05
+
+The naming convention applied to Console Link: apps/console-link is apps/consoles with the package consoles_link
+(was bc250_console_link). With it the portal key, the wiki chapter (docs/apps/consoles.md), the installer test,
+the portal's tile icon, CI's steps and native job, the release workflow's native wheel step (consoles-v tags),
+tools/build_release.py's wheel table, the dependency catalogue and CLAUDE.md's list. The native core keeps its
+name. The portal moves the record of an installed copy to the new key.
+
 Changelog: 17-10-2026 10:05:20
 
 The naming convention applied to BC-250 BIOS Reader: apps/bios-reader is apps/bios with the package bios_reader

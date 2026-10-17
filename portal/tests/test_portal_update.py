@@ -38,7 +38,7 @@ def test_compare_names_the_changed_apps():
 
 def test_compare_names_a_withdrawn_app():
     current = load(MANIFEST)
-    new = [replace(e, withdrawn="Privacy: shows the account ID.") if e.key == "console-link" else e for e in current]
+    new = [replace(e, withdrawn="Privacy: shows the account ID.") if e.key == "consoles" else e for e in current]
     changes = pu.compare(current, new)
     assert [(c.name, c.withdrawn) for c in changes] == [("Console Link", "Privacy: shows the account ID.")]
     update = pu.PortalUpdate(RELEASE, changes)

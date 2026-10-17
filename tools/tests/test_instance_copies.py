@@ -21,8 +21,8 @@ def body(path: Path) -> str:
 
 def test_copies_exist():
     packages = {p.parent.name for p in COPIES}
-    assert {"bc250_bazzite_helixsr", "bc250_bisect_gui", "bc250_unlock_gui", "bc250_cores_bisect_gui",
-            "bc250_cores_gui", "bc250_gpu_oc_gui", "bc250_acpi_gui", "simple_demo_tool", "installer_test_gui"} <= packages
+    assert {"bc250_bazzite_helixsr", "bc250_bisect_gui", "bc250_unlock_gui", "cores_bisect",
+            "cores_unlock", "bc250_gpu_oc_gui", "bc250_acpi_gui", "simple_demo_tool", "installer_test_gui"} <= packages
 
 
 @pytest.mark.parametrize("copy", [p for p in COPIES if p.parent.name != "bc250_governor"],
