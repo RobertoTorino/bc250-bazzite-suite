@@ -1,3 +1,15 @@
+Changelog: 17-10-2026 09:05:54
+
+Release 0.2.1.
+
+Changelog: 17-10-2026 09:04:09
+
+Fixed. The quiz questions are the owner's revised set (17-10-2026): 25 questions dropped, 110 reworded, 43 answers
+or answer options corrected, and the true/false options spelt True and False throughout; 1,436 questions in the
+same 11 categories, 230 of them true/false. The quiz tile on the front page counts the shipped questions instead
+of naming a number, so it stays right when the file changes; the test of the shipped questions expects the new
+count.
+
 Changelog: 17-10-2026 08:56:40
 
 Release 0.2.1.

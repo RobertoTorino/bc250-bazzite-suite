@@ -16,7 +16,7 @@ from datstation.quiz import (ALL, CATEGORIES, DATA_CATEGORIES, PENALTY, QUICK, Q
 
 def test_the_shipped_questions_are_complete_and_answerable():
     questions = load_questions()
-    assert len(questions) == 1461
+    assert len(questions) == 1436
     assert all(q.correct in q.options for q in questions)
     assert all(q.type in ("MC", "TF") and q.text and q.points > 0 for q in questions)
     assert len({q.id for q in questions}) == len(questions)

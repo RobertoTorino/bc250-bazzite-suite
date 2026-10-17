@@ -16,6 +16,7 @@ from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QKeyEvent, QShowEvent
 from PyQt6.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
 
+from .quiz import DATA_CATEGORIES, load_questions
 from .style import label
 
 COLUMNS, ROWS = 4, 4
@@ -33,8 +34,9 @@ class Feature:
 
 
 FEATURES = (
-    Feature("quiz", "△", TRIANGLE, "PlayStation Quiz",
-            "1,461 questions in 11 categories, against the clock. Perfect rounds earn trophies."),
+    Feature("quiz", "△", TRIANGLE, "PlayStation Quiz",            # the count follows the shipped questions file
+            f"{len(load_questions()):,} questions in {len(DATA_CATEGORIES)} categories, against the clock. "
+            "Perfect rounds earn trophies."),
     Feature("history", "○", CIRCLE, "PlayStation History",
             "Every console since 1994: what it sold, how many titles, and pictures of each model."),
     Feature("versions", "×", CROSS, "System Version History",

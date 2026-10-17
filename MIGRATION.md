@@ -60,9 +60,10 @@ Next session (owner, 17-10-2026, releasing everything that stands at that point)
 1. **The new app icons.** The owner is preparing the next batch of frame-art icons (see App icons below): put each
    512 px PNG in as it is, scale the 128 px copy and the portal's card copy from it, replace the placeholder of
    BC-250 USB Wi-Fi among them, and check the wiki and the Steam cards that draw from an icon.
-2. **Bazzite DatStation's quiz questions.** The owner has a new `.json` file with quiz questions: it replaces
-   `apps/datstation/datstation/data/questions.json` (quiz.py reads it); check its shape against
-   what quiz.py expects and the tests, and give DatStation a CHANGELOG entry (Added or Fixed by what changed).
+2. **Bazzite DatStation's quiz questions.** Done (17-10-2026): the owner's revised `questions.json` is in
+   (same shape; 1,436 questions, 25 dropped, 110 reworded, 43 answers corrected), the count test and the quiz
+   tile follow the file, DatStation has its CHANGELOG entry (Fixed). The commit that carried the file had the
+   old count in the test, so CI failed on it and the datstation-v0.2.1 tag waits for the fix.
 Then the open board tests of USB Wi-Fi and Console Link below.
 
 Released by the owner during the break: console-link-v1.0.0 and portal-v1.0.0 (with dependency-checker-v0.1.9),

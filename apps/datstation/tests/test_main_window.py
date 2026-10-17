@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import QMessageBox
 from bc250_core import steam
 
 from datstation import history_page, news
-from datstation.front_page import COLUMNS, KEYS, ROWS
+from datstation.front_page import COLUMNS, FEATURES, KEYS, ROWS
 from datstation.main_window import GUIDES_URL, MainWindow
 from datstation.news import NewsItem
 from datstation.quiz import ALL, QUICK, State
@@ -254,3 +254,9 @@ def test_the_versions_page_switches_systems(window):
     text = page.view.toPlainText()
     assert "PlayStation 1 System Software" in text and "DTL-H1000" in text and "46 versions" in text
     assert Path(page.folder).is_dir()
+
+
+def test_the_quiz_tile_counts_the_shipped_questions():
+    from datstation.quiz import load_questions
+    assert FEATURES[0].key == "quiz"
+    assert FEATURES[0].text.startswith(f"{len(load_questions()):,} questions in 11 categories")
