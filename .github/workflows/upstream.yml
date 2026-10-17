@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: shadPS4 against the pin in apps/shadps4-manager
+      - name: shadPS4 against the pin in apps/shadps4
         run: python3 tools/check_upstream.py shadps4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

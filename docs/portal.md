@@ -30,14 +30,14 @@ away when you click its name; it is open until you close it, and the portal reme
 
 **Gaming**, below the apps, holds the apps for playing: [HelixSR Manager](apps/helixsr.md),
 [BC-250 ACE Queues](apps/ace.md), [BC-250 Mesh Shaders](apps/mesh.md),
-[Console Link](apps/consoles.md), [shadPS4 Manager](apps/shadps4-manager.md),
-[Decky Loader Manager](apps/decky.md), [RPCS3 Manager](apps/rpcs3-manager.md),
-[Bazzite DatStation](apps/datstation.md), [PPSSPP Manager](apps/ppsspp-manager.md),
-[PCSX2 Manager](apps/pcsx2.md) and [Vita3K Manager](apps/vita3k-manager.md). It is open until you close it,
+[Console Link](apps/consoles.md), [shadPS4 Manager](apps/shadps4.md),
+[Decky Loader Manager](apps/decky.md), [RPCS3 Manager](apps/rpcs3.md),
+[Bazzite DatStation](apps/datstation.md), [PPSSPP Manager](apps/ppsspp.md),
+[PCSX2 Manager](apps/pcsx2.md) and [Vita3K Manager](apps/vita3k.md). It is open until you close it,
 and the portal remembers whether it was open.
 
 **Development only**, below that, opens a separate section with tools for working on the suite:
-[Simple Demo Tool](other-tools/simple-demo-tool.md), [Dependency Checker](apps/dependency-checker.md),
+[Simple Demo Tool](other-tools/simple-demo-tool.md), [Dependency Checker](apps/package.md),
 [Bazzite NetcatGUI](apps/ncgui.md), the
 release front end
 [BC250 Suite Releases](#the-release-front-end) and BC-250 Installer Tests (`tools/installer-tests/gui`), a window

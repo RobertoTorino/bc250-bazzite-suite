@@ -1,0 +1,85 @@
+Changelog: 17-10-2026 13:24:38
+
+Release 0.1.2.
+
+Changelog: 17-10-2026 13:10:58
+
+Fixed. The app's folder in the suite is apps/vita3k (was apps/vita3k-manager) and its package is vita3k_manager
+(was bc250_vita3k_manager): the suite's naming convention (owner, 17-10-2026), a short folder name and the package
+named after the app without the BC-250 prefix; both names are the owner's. With the folder go its key in the
+portal, its chapter of the wiki (apps/vita3k/, which the Manual link opens), its installer test and its release
+tags: vita3k-v<x.y.z> from the next release on, which the app's update check follows. The installed app keeps its
+name, its launcher bc250-vita3k-manager, the run wrapper bc250-vita3k-run that the Steam shortcuts start, its folder
+under ~/.local/share with the installed Vita3K, and its settings; the portal moves its record of the installed copy
+to the new key.
+
+Changelog: 17-10-2026 05:35:56
+
+Release 0.1.2.
+
+Changelog: 17-10-2026 02:23:22
+
+Fixed. The app's icon is replaced by the owner's newer version (owner, 17-10-2026): VITA3K with MANAGER below it, on
+the same dark-blue frame, so the window's blue stays as it is. images/bc250-vita3k-manager.png is the owner's 512 px
+file; images/bc250-vita3k-manager-128.png is scaled from it.
+
+Changelog: 17-10-2026 01:11:56
+
+Fixed. The app's colour follows its new icon (owner, 17-10-2026): the icon's blue, #0A55B0, with links in #5B93DA on a
+dark window, in place of the gold of its old icon (#94721A). White text on it reads at 7:1. The style is the shadPS4
+Manager's, which has the same blue.
+
+Changelog: 17-10-2026 01:05:19
+
+Fixed. The app has a new icon (owner, 17-10-2026): its name, VITA3K, in bold outlined letters on the dark-blue frame.
+images/bc250-vita3k-manager.png is the owner's 512 px file; images/bc250-vita3k-manager-128.png is scaled from it. The
+window, the menu entry, the Desktop icon and the Steam artwork of the games use it.
+
+Changelog: 16-10-2026 13:22:03
+
+Fixed. The app's colour is the gold of its icon (#94721A, links #E6C65A on a dark window) in place of the crimson
+#BD1550: the header boxes, buttons, step numbers and table. The background of the Steam art made for a game is dark
+gold in place of dark red.
+
+Changelog: 16-10-2026 12:51:06
+
+Release 0.1.1.
+
+Changelog: 16-10-2026 11:41:27
+
+Release 0.1.0.
+
+Changelog: 16-10-2026 11:35:40
+
+Release 0.1.0.
+
+Changelog: 16-10-2026 11:20:26
+
+Added. New app vita3k-manager (Vita3K Manager): PS Vita games on the BC-250 with the Vita3K emulator, built as the
+RPCS3 Manager is (owner, 16-10-2026). Install downloads Vita3K build 4186 (0.2.1, commit f0273e4c), the build the app
+pins: Vita3K-x86_64.AppImage from that build's release in Vita3K/Vita3K-builds, checked against its SHA-256 (the
+digest GitHub publishes for it) and installed in ~/.local/share/bc250-vita3k-manager/emulator as vita3k.AppImage,
+with "current" pointing to it; Remove takes it out, Vita3K's own folders (~/.config/Vita3K, and the storage in
+~/.local/share/Vita3K/Vita3K or where config.yml's pref-path puts it) stay. When the window opens, the app asks
+GitHub for Vita3K's newest build (Vita3K-builds' latest release, tagged with its number) and says when it is newer,
+with a link; it installs only the build it was tried with. The firmware step shows the three parts of the PS Vita's
+firmware as Vita3K counts them (the system software in vs0, the font package in sa0, the optional preinstalled apps
+in pd0), with links to the official firmware page and Sony's two other files, and Install firmware… has Vita3K
+install the user's own PSP2UPDAT.PUP without a window (--firmware), then says which part it filled; the app never
+downloads the firmware. Install game… (owner, 16-10-2026: in the app) installs the user's own dumps: a .pkg with its
+zRIF licence key through Vita3K without a window (--pkg, --zrif), a .vpk, .zip or dumped folder handed to Vita3K,
+which installs it and starts it in its own window, the list following once the game is in ux0/app. The games are
+those in the storage's ux0/app with eboot.bin and sce_sys/param.sfo (title, ID and version as Vita3K shows them).
+Play starts a game alone (--frontend sdl -r <ID>), Vita3K settings opens Vita3K's own window. Update Game Mode adds
+the ticked games to Steam as non-Steam games and takes out the others and games no longer installed, with Steam
+closed for it and started again (core's bc250_core.steam), named "[PS Vita] Title"; the artwork is drawn from the
+game's icon0.png and pic0.png, with icon0.png as the logo. The shortcuts run bc250-vita3k-run --frontend sdl -r
+<ID>: Vita3K's plain SDL window, which quits with the game, without --fullscreen (Vita3K would write it into its
+config.yml for its own window too). The run wrapper starts the installed Vita3K, turns off the AppImage's own
+self-updater (DISABLE_AUTO_UPDATES=1: it would write the newest continuous build over itself), lets the AppImage
+unpack itself when there is no fusermount, and, as the RPCS3 Manager's, has Vita3K read a real controller instead of
+Steam's virtual one when Steam starts it, and open its windows through XWayland (SDL_VIDEO_DRIVER=x11,
+QT_QPA_PLATFORM=xcb) when Steam starts it on a Wayland desktop. Should the AppImage have been replaced all the same,
+the app sees it by the file's size and Install puts the pinned build back. The window has its own look in Vita3K's
+crimson #BD1550 (style.py). The installer uses the suite's shared venv and installs the wrapper in ~/.local/bin. The
+icon is a placeholder until the owner's images are ready. Tests: the config.yml build 4186 writes is a fixture.

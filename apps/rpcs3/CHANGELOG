@@ -1,0 +1,99 @@
+Changelog: 17-10-2026 13:24:38
+
+Release 0.2.1.
+
+Changelog: 17-10-2026 13:00:58
+
+Fixed. The app's folder in the suite is apps/rpcs3 (was apps/rpcs3-manager) and its package is rpcs3_manager (was
+bc250_rpcs3_manager): the suite's naming convention (owner, 17-10-2026), a short folder name and the package named
+after the app without the BC-250 prefix; both names are the owner's. With the folder go its key in the portal, its
+chapter of the wiki (apps/rpcs3/, which the Manual link opens), its installer test and its release tags:
+rpcs3-v<x.y.z> from the next release on, which the app's update check follows. The installed app keeps its name,
+its launcher bc250-rpcs3-manager, the run wrapper bc250-rpcs3-run that the Steam shortcuts start, its folder under
+~/.local/share with the installed RPCS3, and its settings; the portal moves its record of the installed copy to the
+new key.
+
+Changelog: 17-10-2026 05:35:56
+
+Release 0.2.1.
+
+Changelog: 17-10-2026 02:23:22
+
+Fixed. The app's icon is replaced by the owner's newer version (owner, 17-10-2026): RPCS3 with MANAGER below it, on
+the same dark-blue frame, so the window's blue stays as it is. images/bc250-rpcs3-manager.png is the owner's 512 px
+file; images/bc250-rpcs3-manager-128.png is scaled from it.
+
+Changelog: 17-10-2026 01:11:56
+
+Fixed. The app's colour follows its new icon (owner, 17-10-2026): the icon's blue, #0A55B0, with links in #5B93DA on a
+dark window, in place of the indigo of RPCS3's own logo (#4F34C9). White text on it reads at 7:1. The style is the
+shadPS4 Manager's, which has the same blue.
+
+Changelog: 17-10-2026 01:05:19
+
+Fixed. The app has a new icon (owner, 17-10-2026): its name, RPCS3, in bold outlined letters on the dark-blue frame.
+images/bc250-rpcs3-manager.png is the owner's 512 px file; images/bc250-rpcs3-manager-128.png is scaled from it. The
+window, the menu entry, the Desktop icon and the Steam artwork of the games use it.
+
+Changelog: 16-10-2026 06:02:49
+
+Release 0.2.0.
+
+Changelog: 15-10-2026 23:29:43
+
+Release 0.1.3.
+
+Changelog: 15-10-2026 22:51:19
+
+Release 0.1.3.
+
+Changelog: 15-10-2026 22:35:35
+
+Game Mode shortcuts are named with the system first, "[PS3] Title" (owner, 15-10-2026), so Steam's menus, such as the
+recent games in the tray icon's menu, tell a game apart from the same title on Steam or on another system. A shortcut
+in Steam with another name than the app gives it now, as one from before, turns Update Game Mode on; the update
+renames it, keeps its play time, and removes the artwork under its old Steam number (core's write_shortcuts).
+
+Changelog: 15-10-2026 16:02:21
+
+The manual chapter says the app is under Gaming in the portal, no longer under Development only.
+
+Changelog: 15-10-2026 13:56:22
+
+A new icon in place of the PS3 placeholder: the purple circuit design (images/bc250-rpcs3-manager.png and the 128 px copy).
+
+Changelog: 15-10-2026 05:52:00
+
+Release 0.1.2.
+
+Changelog: 15-10-2026 03:27:57
+
+Release 0.1.1.
+
+Changelog: 15-10-2026 02:31:31
+
+No translations (owner's decision): core's create_app() no longer takes lang, and AppInfo no longer has languages; the app was English only already and stays so.
+
+Changelog: 15-10-2026 02:10:51
+
+Release 0.1.0.
+
+Changelog: 14-10-2026 18:24:12
+
+The Game Mode shortcuts carry the app's new name as their Steam tag: "RPCS3 Manager" (with "PS3").
+
+Changelog: 14-10-2026 18:22:56
+
+The app no longer has the BC-250 prefix in its name, as it is not tied to the board: RPCS3 Manager (window, menu entry, messages, README, manual). The tags on its Steam shortcuts are PS3 and RPCS3 Manager. Its app ID, launcher, package and settings are unchanged.
+
+Changelog: 14-10-2026 18:15:04
+
+The manual's What you need says it as the firmware step does: download the firmware here (official page), then press Install firmware.
+
+Changelog: 14-10-2026 18:08:29
+
+The firmware step says "download the firmware here (official page), then press Install firmware", with "here" the link to the official download page. The README and the manual have a disclaimer, as BC250 Console Link's: an independent project, not affiliated with or endorsed by the makers of PlayStation; PlayStation and PS3 are trademarks of their owner (owner, 14-10-2026). The manual names no company: the firmware is "the PS3's system software".
+
+Changelog: 14-10-2026 17:35:13
+
+New app rpcs3-manager (BC-250 RPCS3 Manager): PS3 games on the BC-250 with the RPCS3 emulator, built like BC-250 shadPS4 Manager. Install downloads RPCS3 0.0.43-20133, the Linux build of RPCS3's v0.0.43 landmark that the app pins (rpcs3-v0.0.43-20133-53d44aa4_linux64.AppImage from RPCS3/rpcs3-binaries-linux), checks it against its SHA-256 and installs it in ~/.local/share/bc250-rpcs3-manager/emulator as rpcs3.AppImage, with "current" pointing to it; Remove takes it out, RPCS3's own folder (~/.config/rpcs3: firmware, saves, settings, installed games) stays. RPCS3's own window offers newer builds and writes them over the AppImage when asked; the app sees that by the file's size, says so in the first step and Install puts the pinned build back. When the window opens, the app asks GitHub for RPCS3's newest landmark (RPCS3/rpcs3 releases, not every build) and says when it is newer than 0.0.43, with a link; it installs only the build it was tried with. The firmware step shows the installed PS3 firmware's version (dev_flash/vsh/etc/version.txt, as RPCS3 reads it) and Install firmware… gives the user's own PS3UPDAT.PUP to RPCS3 (--installfw), with a link to PlayStation's download page; the app never downloads the firmware. Games: those installed in RPCS3's dev_hdd0/game, the disc games in RPCS3's games.yml, and the disc games (PS3_GAME beside PS3_DISC.SFB) up to five folders deep in the game folders chosen in the app (Add folder…, Remove folder…, kept in the app's settings); title, ID and version from PARAM.SFO, updates (category GD) left out, a disc game without a valid PS3_DISC.SFB shown in red, as RPCS3 does not start it. Where RPCS3 keeps its drives comes from its vfs.yml; the app reads RPCS3's files and never writes them. Play starts a game alone on the desktop (--no-gui), RPCS3 settings opens RPCS3's own window. Update Game Mode adds the ticked games to Steam as non-Steam games and takes out the others and games no longer found, with Steam closed for it and started again (core's bc250_core.steam); the artwork is drawn from the game's ICON0.PNG and PIC1.PNG, with ICON0.PNG as the logo. The shortcuts run bc250-rpcs3-run --no-gui --fullscreen "<EBOOT.BIN>": the run wrapper starts the installed RPCS3, lets the AppImage unpack itself when there is no fusermount, and, as the shadPS4 Manager's, has RPCS3 read a real controller instead of Steam's virtual one when Steam starts it, and open its windows through XWayland (QT_QPA_PLATFORM=xcb) when Steam starts it on a Wayland desktop. The window has its own look in RPCS3's indigo #4F34C9 (style.py). The installer uses the suite's shared venv and installs the wrapper in ~/.local/bin. The icon is a placeholder.

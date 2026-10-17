@@ -54,8 +54,8 @@ beside the system Mesa.
 <div class="home-card" markdown>
 #### :material-gamepad-variant: PlayStation
 
-[shadPS4 Manager](apps/shadps4-manager.md) plays PS4 games with the shadPS4 emulator,
-[RPCS3 Manager](apps/rpcs3-manager.md) PS3 games with the RPCS3 emulator, and
+[shadPS4 Manager](apps/shadps4.md) plays PS4 games with the shadPS4 emulator,
+[RPCS3 Manager](apps/rpcs3.md) PS3 games with the RPCS3 emulator, and
 [Console Link](apps/consoles.md) finds, wakes and registers PS4 and PS5 consoles for Remote Play.
 </div>
 <div class="home-card" markdown>

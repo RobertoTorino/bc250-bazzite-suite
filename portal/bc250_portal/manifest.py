@@ -19,7 +19,10 @@ RENAMED = {"ace-queues": "ace", "bazzite-netcatgui": "ncgui", "bazzite-datstatio
            "decky-manager": "decky", "fan-control": "fan",
            "governor": "gpu", "gpu-oc-bisect": "oc",
            "hdmi-cec": "cec", "memory-manager": "vram",
-           "mesh-shaders": "mesh", "pcsx2-manager": "pcsx2"}
+           "mesh-shaders": "mesh", "pcsx2-manager": "pcsx2",
+           "ppsspp-manager": "ppsspp", "rpcs3-manager": "rpcs3",
+           "shadps4-manager": "shadps4", "vita3k-manager": "vita3k",
+           "demo-tool": "dtool", "dependency-checker": "package"}
 
 
 class ManifestError(ValueError):

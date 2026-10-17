@@ -58,7 +58,6 @@ DEV_OPEN_KEY = "portal/development_open"
 GAMING_OPEN_KEY = "portal/gaming_open"
 TOOLS_OPEN_KEY = "portal/tools_open"
 DESKTOP_ICONS_KEY = "portal/desktop_icons"
-APP_ICON_FILES = {"dependency-checker": "portal-dependency-checker"}
 LAUNCH_ICON_FILES = {("compute", "Unlock"): "cu-unlock", ("cores", "Unlock"): "cores-unlock"}  # else the app's
 
 BOARD_WARNING = (
@@ -179,7 +178,7 @@ class AppTile(QFrame):
         under.setSpacing(2)
         row.addLayout(under)
 
-        file = APP_ICONS / f"{APP_ICON_FILES.get(entry.key, entry.key)}.png"
+        file = APP_ICONS / f"{entry.key}.png"
         loaded = QPixmap(str(file)) if file.is_file() else QPixmap()
         self.has_icon = not loaded.isNull()
         pixmap = loaded.scaled(ICON_PX, ICON_PX, Qt.AspectRatioMode.KeepAspectRatio,

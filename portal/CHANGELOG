@@ -1,3 +1,56 @@
+Changelog: 17-10-2026 13:24:39
+
+Release 1.19.0. Pins dtool-v0.1.10, package-v0.4.6, rpcs3-v0.2.1, shadps4-v0.2.1, ppsspp-v0.2.1, vita3k-v0.1.2.
+
+Changelog: 17-10-2026 13:21:37
+
+Added. The Dependency Checker is listed as [apps.package] (was [apps.dependency-checker]), after the app's move to
+apps/package. Its tile icon is images/apps/package.png (was portal-dependency-checker.png, from the app's first
+name), so the tile icon follows the key as every other app's does and the portal no longer maps it to another file.
+The entry pins the first release under its new tag prefix (package-v0.4.6) without a checksum until that release
+exists, which an app release accepts and a portal release waits for. The record of a copy installed under the old
+key moves to the new key when the portal starts, as for the apps renamed before it.
+
+Changelog: 17-10-2026 13:17:20
+
+Added. Simple Demo Tool is listed as [apps.dtool] (was [apps.demo-tool]), after the tool's move to apps/dtool; its
+tile icon is images/apps/dtool.png. The entry pins the first release under its new tag prefix (dtool-v0.1.10)
+without a checksum until that release exists, which an app release accepts and a portal release waits for. The
+record of a copy installed under the old key moves to the new key when the portal starts, as for the apps renamed
+before it.
+
+Changelog: 17-10-2026 13:10:58
+
+Added. Vita3K Manager is listed as [apps.vita3k] (was [apps.vita3k-manager]), after the app's move to apps/vita3k;
+its tile icon is images/apps/vita3k.png. The entry pins the first release under its new tag prefix (vita3k-v0.1.2)
+without a checksum until that release exists, which an app release accepts and a portal release waits for. The
+record of a copy installed under the old key moves to the new key when the portal starts, as for the apps renamed
+before it.
+
+Changelog: 17-10-2026 13:05:02
+
+Added. shadPS4 Manager is listed as [apps.shadps4] (was [apps.shadps4-manager]), after the app's move to
+apps/shadps4; its tile icon is images/apps/shadps4.png. The entry pins the first release under its new tag prefix
+(shadps4-v0.2.1) without a checksum until that release exists, which an app release accepts and a portal release
+waits for. The record of a copy installed under the old key moves to the new key when the portal starts, as for the
+apps renamed before it.
+
+Changelog: 17-10-2026 13:00:58
+
+Added. RPCS3 Manager is listed as [apps.rpcs3] (was [apps.rpcs3-manager]), after the app's move to apps/rpcs3; its
+tile icon is images/apps/rpcs3.png. The entry pins the first release under its new tag prefix (rpcs3-v0.2.1)
+without a checksum until that release exists, which an app release accepts and a portal release waits for. The
+record of a copy installed under the old key moves to the new key when the portal starts, as for the apps renamed
+before it.
+
+Changelog: 17-10-2026 12:58:02
+
+Added. PPSSPP Manager is listed as [apps.ppsspp] (was [apps.ppsspp-manager]), after the app's move to apps/ppsspp;
+its tile icon is images/apps/ppsspp.png. The entry pins the first release under its new tag prefix (ppsspp-v0.2.1)
+without a checksum until that release exists, which an app release accepts and a portal release waits for. The
+record of a copy installed under the old key moves to the new key when the portal starts, as for the apps renamed
+before it.
+
 Changelog: 17-10-2026 12:51:42
 
 Release 1.18.0. Pins check-v0.3.2, helixsr-v0.3.1, cores-v0.1.10, dependency-checker-v0.4.6.

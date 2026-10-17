@@ -69,8 +69,7 @@ def test_every_card_has_its_icon(qapp, home, settings_dir, tmp_path, launched):
     entries = load(MANIFEST) + load_checkout(MANIFEST)
     w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
     for key, card in w.cards.items():
-        icon = mw.APP_ICON_FILES.get(key, key)
-        assert (mw.APP_ICONS / f"{icon}.png").is_file(), key
+        assert (mw.APP_ICONS / f"{key}.png").is_file(), key
         assert card.has_icon and card.icon.iconSize().width() == mw.ICON_PX, key
     w.close()
 
@@ -274,7 +273,8 @@ def test_red_dot_and_count_for_updates(window, home):
 
 
 def test_circular_arrow_and_count_for_reinstalls(window, home):
-    # Installed but not recorded: by hand, or under an earlier name of the app (shadps4 became shadps4-manager).
+    # Installed but not recorded: by hand, or under an earlier key that RENAMED does not know (shadps4 became
+    # shadps4-manager before RENAMED existed).
     for name in ("bc250-governor-manager", "bc250-bazzite-helixsr-gui"):
         (home / ".local" / "bin" / name).write_text("#!/bin/sh\n")
     window.records.set("helixsr", "helixsr-v0.0.1")                          # an update, for the count
@@ -357,7 +357,7 @@ def test_tiles_flow_in_file_order(window, qapp):
 
 def test_development_apps_apart_and_closed(window, qapp):
     dev = {key for key, card in window.cards.items() if card.entry.development}
-    assert dev == {"demo-tool", "dependency-checker", "ncgui"}
+    assert dev == {"dtool", "package", "ncgui"}
     assert all(window.dev_grid.indexOf(window.cards[key]) >= 0 for key in dev)
     assert all(window.grid.indexOf(window.cards[key]) < 0 for key in dev)
     assert not window.dev_toggle.isHidden() and window.dev_box.isHidden()   # closed until asked for
@@ -376,9 +376,9 @@ def test_board_tools_in_a_section_open_until_closed(window, qapp):
 
 def test_gaming_apps_apart_and_open(window, qapp):
     gaming = {key for key, card in window.cards.items() if card.entry.section == "gaming"}
-    assert gaming == {"helixsr", "ace", "mesh", "consoles", "shadps4-manager",
-                      "decky", "rpcs3-manager", "datstation", "ppsspp-manager", "pcsx2",
-                      "vita3k-manager"}
+    assert gaming == {"helixsr", "ace", "mesh", "consoles", "shadps4",
+                      "decky", "rpcs3", "datstation", "ppsspp", "pcsx2",
+                      "vita3k"}
     assert all(window.gaming_grid.indexOf(window.cards[key]) >= 0 for key in gaming)
     assert all(window.grid.indexOf(window.cards[key]) < 0 and window.dev_grid.indexOf(window.cards[key]) < 0
                for key in gaming)
@@ -498,7 +498,7 @@ def test_an_installed_checkout_app_still_opens(qapp, home, settings_dir, tmp_pat
     w.refresh()
     card = w.cards["suite-releases"]
     assert card.status == "Reinstall needed" and card.icon.isEnabled() and card.uninstall_button.isEnabled()
-    assert w.cards["demo-tool"].install_button.isEnabled()                  # released development apps as usual
+    assert w.cards["dtool"].install_button.isEnabled()                  # released development apps as usual
     w.close()
 
 

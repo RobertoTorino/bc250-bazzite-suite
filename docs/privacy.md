@@ -28,7 +28,7 @@ The servers see your IP address, as any website you open does.
   [GPU Governor Manager](apps/gpu.md) look for a newer release of what they install at start; each can be
   told not to in its settings.
 
-**PyPI and OSV.dev**: the [Dependency Checker](apps/dependency-checker.md) sends the names and versions of the
+**PyPI and OSV.dev**: the [Dependency Checker](apps/package.md) sends the names and versions of the
 Python packages in the apps' environments, to learn whether newer ones or known vulnerabilities exist. Its
 Bazzite card and weekly reminder read Bazzite's update state on the board itself and send nothing. Installing an
 app downloads its Python packages from PyPI.
@@ -38,7 +38,7 @@ app downloads its Python packages from PyPI.
 - [Console Link](apps/consoles.md#privacy) talks to your own consoles on your own network, and to PlayStation
   (PSN) only for **Find my account ID**; the sign-in happens in your browser. Its window masks your account ID,
   online ID and the consoles' addresses.
-- [shadPS4 Manager](apps/shadps4-manager.md#shadnet): shadPS4 signs in to the shadNet server you set, with the
+- [shadPS4 Manager](apps/shadps4.md#shadnet): shadPS4 signs in to the shadNet server you set, with the
   account you set. shadPS4 keeps the password as it is and shadNet sends it unencrypted: use one you use nowhere
   else.
 - [Bazzite SFTP Tools](apps/sftp-tools.md) connects only to the host you enter.

@@ -11,7 +11,7 @@ and writes Decky's release unit itself (loader.unit_text()). This compares them 
  * dist/plugin_loader-release.service at the pinned tag and on main: Decky's own updater installs main's, so a change
    there reaches boards that update Decky from its settings, without a new Decky release.
 
-The shadPS4 Manager pins one shadPS4 release (apps/shadps4-manager/bc250_shadps4_manager/emulator.py: VERSION, TAG,
+The shadPS4 Manager pins one shadPS4 release (apps/shadps4/shadps4_manager/emulator.py: VERSION, TAG,
 ASSET, SHA256), read here without importing the app:
  * the latest stable release: newer than the pin means a new version of the app; the report gives the new release's
    Linux zip and the SHA-256 GitHub publishes for it, for the pin;
@@ -46,7 +46,7 @@ from types import ModuleType
 
 SUITE = Path(__file__).resolve().parent.parent
 LOADER = SUITE / "apps" / "decky" / "decky_manager" / "loader.py"
-EMULATOR = SUITE / "apps" / "shadps4-manager" / "bc250_shadps4_manager" / "emulator.py"
+EMULATOR = SUITE / "apps" / "shadps4" / "shadps4_manager" / "emulator.py"
 ACQUIRE = SUITE / "apps" / "helixsr" / "helixsr_manager" / "acquire.py"
 HELIXSR_REPO = "lonewolf0622/HelixSR"
 # How the release notes name the fallback: "use [HelixSR 1.8.1](...)", earlier "use HelixSR 1.4.3".

@@ -310,7 +310,7 @@ not run one.
    `.github/workflows/ci.yml`. Write `tools/installer-tests/<name>.sh` and add its step to the same file.
 6. Add the app to `portal/apps.toml` (name, summary, `changes_board`, install, uninstall, detect, launch).
 7. Add the app to the Dependency Checker's catalogue (`[app.<name>]` with its launchers), its Python packages and
-   the external tools it runs (`apps/dependency-checker/bc250_dependency_checker/dependencies.toml`).
+   the external tools it runs (`apps/package/package_checker/dependencies.toml`).
 8. Write its manual chapter, `docs/apps/<name>.md`, add it to `mkdocs.yml`, and give it a row in the apps overview,
    `docs/apps/index.md`.
 9. Run the checks from [Development](index.md) and every installer test.
@@ -329,7 +329,7 @@ the requirements files, a version copy that does not match `VERSION`, a package 
 | Version copies equal `VERSION` | `tools/check_versions.py` |
 | Every app and portal entry has an installer test, and CI runs it | `tools/tests/test_installer_tests.py` |
 | Copies of `instance.py` equal core's | `tools/tests/test_instance_copies.py` |
-| The Dependency Checker's catalogue matches the requirements files, the portal's apps, and the tools the apps use | `apps/dependency-checker/tests/test_dependencies.py` |
+| The Dependency Checker's catalogue matches the requirements files, the portal's apps, and the tools the apps use | `apps/package/tests/test_dependencies.py` |
 | `portal/apps.toml` rules and version bumps | `tools/check_manifest.py` |
 | A CHANGELOG keeps every entry it had at the last push | `tools/check_changelogs.py` |
 | The manual builds with no broken link | `mkdocs build --strict` |

@@ -1,0 +1,238 @@
+Changelog: 17-10-2026 13:24:38
+
+Release 0.2.1.
+
+Changelog: 17-10-2026 13:05:02
+
+Fixed. The app's folder in the suite is apps/shadps4 (was apps/shadps4-manager) and its package is shadps4_manager
+(was bc250_shadps4_manager): the suite's naming convention (owner, 17-10-2026), a short folder name and the package
+named after the app without the BC-250 prefix; both names are the owner's. With the folder go its key in the
+portal, its chapter of the wiki (apps/shadps4/, which the Manual link opens), its installer test and its release
+tags: shadps4-v<x.y.z> from the next release on, which the app's update check follows. The installed app keeps its
+name, its launchers bc250-shadps4-manager and bc250-shadps4-pkg-cli (which the installer writes with the package's
+new name), the run wrapper bc250-shadps4-run that the Steam shortcuts start, its folder and venv under
+~/.local/share with the installed shadPS4, and its settings; the portal moves its record of the installed copy to
+the new key.
+
+Changelog: 17-10-2026 05:35:56
+
+Release 0.2.1.
+
+Changelog: 17-10-2026 02:23:22
+
+Fixed. The app's icon is replaced by the owner's newer version (owner, 17-10-2026): SHADPS4 with MANAGER below it, on
+the same dark-blue frame, so the window's blue stays as it is. images/bc250-shadps4-manager.png is the owner's 512 px
+file; images/bc250-shadps4-manager-128.png is scaled from it.
+
+Changelog: 17-10-2026 01:05:19
+
+Fixed. The app has a new icon (owner, 17-10-2026): its name, SHADPS4, in bold outlined letters on the dark-blue frame.
+images/bc250-shadps4-manager.png is the owner's 512 px file; images/bc250-shadps4-manager-128.png is scaled from it.
+The window, the menu entry, the Desktop icon and the Steam artwork of the games use it.
+
+Changelog: 16-10-2026 06:02:49
+
+Release 0.2.0.
+
+Changelog: 16-10-2026 05:03:33
+
+Added. The app's blue is the blue of its icon (owner, 16-10-2026): #0A55B0 in place of #006FCD, with its hover,
+pressed, tint and outline shades and a lighter link colour on a dark window (#5B93DA) to match.
+
+Changelog: 16-10-2026 04:11:04
+
+Added. The app installs shadPS4 0.20.0 (14-10-2026), the newest stable release, in place of 0.19.0: Install brings
+it where 0.19.0 is installed. The zip is checked against the SHA-256 GitHub publishes for it and still holds the one
+Shadps4-sdl.AppImage. shadPS4 0.20.0 keeps shadNet's settings in a Network section of config.json and no longer
+reads them from General once that section is there, so the app reads and writes them in Network when config.json
+has one, and in General as before when it has not (0.19.0, or a config 0.20.0 has not saved yet). The rest of what
+the app relies on is unchanged from 0.19.0: shadNet's protocol 1 and its sign-in messages, the log lines the app
+reads, the default server, the system modules shadPS4 needs and the game folder names.
+
+Changelog: 15-10-2026 23:29:43
+
+Release 0.1.6.
+
+Changelog: 15-10-2026 22:51:19
+
+Release 0.1.6.
+
+Changelog: 15-10-2026 22:35:35
+
+Game Mode shortcuts are named with the system first, "[PS4] Title" (owner, 15-10-2026), so Steam's menus, such as the
+recent games in the tray icon's menu, tell a game apart from the same title on Steam or on another system. A shortcut
+in Steam with another name than the app gives it now, as one from before, turns Update Game Mode on; the update
+renames it, keeps its play time, and removes the artwork under its old Steam number (core's write_shortcuts).
+
+Changelog: 15-10-2026 21:28:55
+
+Extract PKG (owner's decision 15-10-2026): the standalone Bazzite pkgxtractor is absorbed into this app and dropped
+from the suite. Extract PKG… in the third step, a .pkg dropped on the window, or a package given to the app
+(bc250-shadps4-manager file.pkg, the menu entry's %f; a later launch hands it to the open window) opens its window as
+a dialog: the SFO preview, the icon and pictures (save as wallpaper), Rename to CONTENT_ID, Extract, Preview Only,
+Salvage Mode and the two Compare tools, with the standalone's workers and messages. The output starts in the last used
+folder or else the first game folder, with a line saying whether it is a game folder, and the games are looked for
+again after an extraction, so the game shows up in the list. The window does not close while an extraction runs. The
+package code (pkg, crypto, keys, pkg_type, psf, compare, compare_delta, cli) is in bc250_shadps4_manager/pkgxtractor/
+unchanged; the terminal extractor is ~/.local/bin/bc250-shadps4-pkg-cli. The log, crash marker and progress are
+~/.local/share/bc250-shadps4-manager/pkgxtractor.*; the last used folders are in the app's settings, adopted once from
+the standalone's. The app has its own venv now (~/.local/share/bc250-shadps4-manager/venv, PyQt6 and cryptography):
+the installer leaves the suite's shared venv, which goes when no other app uses it, and removes an installed
+standalone pkgxtractor (not its settings). The launcher runs in the folder it is started from, so a relative path
+means what it says. Without cryptography (an install from before) Extract PKG says to install the app again. Tests:
+the standalone's (package, crypto, PSF, CLI, compare, the window as the dialog) plus the game folders as output, the
+adopted folders, no closing during an extraction, the crash marker, the main window's button, a dropped package, a
+later package and the games found after an extraction; the installer test covers the own venv, both launchers in the
+caller's folder and the standalone removed.
+
+Changelog: 15-10-2026 18:58:07
+
+A nightly channel (owner's decision 15-10-2026: shadPS4's nightly builds are mostly stable). The first step has a
+Nightly builds box: ticked, Install downloads shadPS4's newest nightly (its rolling GitHub pre-release,
+Pre-release-shadPS4-<date>-<commit>, the same zip with the same Shadps4-sdl.AppImage inside) and checks it against
+the SHA-256 GitHub computed for that build (the asset's digest in the API), which proves the download is whole, not
+that the build was tried on the board; the window says so, says when a newer nightly is out, and the newer-stable
+notice stays on the stable channel. Unticked (the default), Install puts the tested stable release back; that flow
+is unchanged. The channel is remembered in the settings.
+
+Changelog: 15-10-2026 05:52:00
+
+Release 0.1.5.
+
+Changelog: 15-10-2026 03:27:57
+
+Release 0.1.4.
+
+Changelog: 15-10-2026 02:31:31
+
+No translations (owner's decision): core's create_app() no longer takes lang, and AppInfo no longer has languages; the
+app was English only already and stays so.
+
+Changelog: 15-10-2026 02:10:51
+
+Release 0.1.3.
+
+Changelog: 14-10-2026 18:22:56
+
+The app no longer has the BC-250 prefix in its name, as it is not tied to the board: shadPS4 Manager (window, menu
+entry, messages, README, manual). The tags on its Steam shortcuts are PS4 and shadPS4 Manager; a shortcut made before
+with the old name's tag turns Update Game Mode on, and the update gives it the new tags. Its app ID, launcher, package
+and settings are unchanged.
+
+Changelog: 14-10-2026 18:08:29
+
+The README and the manual have a disclaimer, as BC250 Console Link's: an independent project, not affiliated with or
+endorsed by the makers of PlayStation; PlayStation and PS4 are trademarks of their owner (owner, 14-10-2026).
+
+Changelog: 14-10-2026 15:12:03
+
+Release 0.1.2.
+
+Changelog: 14-10-2026 14:55:41
+
+The header shows shadNet's state beside the app's own (owner, 14-10-2026): shadNet Online, Offline or Off. While
+shadPS4 runs it comes from shadPS4's newest log, read every 5 s (shadnet.session: "Logged in npid=...", "Login
+rejected error code N", a dropped connection); otherwise from whether the server answers, without signing in
+(shadnet.server_answers: the server's greeting, as shadPS4's own probe), off the GUI thread, at start and on every
+refresh; Off when no user signs in. The tooltip says why. shadnet.py's connection and its errors are one helper now
+(_connection), shared by the requests and the check. The manual says what the three states mean. Tests: the check
+without a sign-in, the session from the newest log (signed in, refused, dropped, nothing yet), and the pill in the
+window (Off, Online, Offline, and from shadPS4's log while it runs).
+
+Changelog: 14-10-2026 14:23:32
+
+Release 0.1.1.
+
+Changelog: 14-10-2026 14:09:44
+
+shadNet, shadPS4's online service: a fourth step in the window says whether shadPS4 signs in and with which account,
+and Account… opens a window to set it up (shadnet_dialog.py): the server (shadPS4's srv.shadps4.net:31313 by default),
+which shadPS4 user, the shadNet name, password and email, and a registration key for a server that wants one. Create
+account makes the account on the server and Try sign-in signs in once, off the GUI thread (shadnet.py: shadNet's
+protocol 1 as shadPS4 0.19.0 speaks it, plain TCP, the two requests' protobuf messages encoded by hand, the server's
+error codes as plain sentences). Save writes the account into shadPS4's users.json and the server and its shadNet
+switch into config.json (userdata.save_shadnet: only those keys, written as shadPS4 writes them, through a temporary
+file; refused while shadPS4 runs, which writes its own copy back). Newer shadPS4 releases: when the window opens, the
+app asks GitHub for shadPS4's newest stable release (emulator.newer_release, through core's latest_release; daily
+builds left out) and, when it is newer than the pinned 0.19.0, says so in the first step with a link; it installs only
+the release it was tried with. The README and the manual (a shadNet section, New shadPS4 releases, What goes where)
+describe both. Tests: the protocol against a fake server (requests, errors, another server or version, no server), the
+server address and name rules, saving shadNet in shadPS4's files (other settings untouched, the switch, the format),
+whether shadPS4 runs, the release check, and the window and the shadNet window.
+
+Changelog: 14-10-2026 13:55:19
+
+The manual has a section How it works: why a game started from Steam reads the real controllers itself (Steam's
+virtual controller, its missing sensors and Steam's desktop layout) and why on the desktop it opens its window through
+XWayland (Steam's overlay sees only X11 windows). The Game Mode section links to it.
+
+Changelog: 14-10-2026 13:50:21
+
+Steam's overlay over a game started from Steam on the desktop: shadPS4 opened its window through Wayland (its log:
+VK_KHR_wayland_surface), which Steam does not see, so Shift+Tab and the PS button did nothing and there was no way to
+the game's page, controller layout or settings while it ran (owner's board, 14-10-2026). The run wrapper sets
+SDL_VIDEO_DRIVER=x11 when Steam starts it (SteamGameId) on a Wayland desktop with XWayland, unless SDL_VIDEO_DRIVER is
+set already; started outside Steam nothing changes. The manual says how to reach the overlay. Test: the wrapper on a
+Wayland desktop, outside Steam, X11 only, and with the user's own choice.
+
+Changelog: 14-10-2026 13:35:36
+
+Game Mode: the shortcut's logo on the banner (Steam's Properties > Customization > Logo) is the game's
+sce_sys/icon0.png, copied as it is; a game without one gets none and Steam shows its name. Update Game Mode is on for
+a game in Steam whose shortcut has no logo yet (made by an earlier version), so it gets one (shortcuts.logo_missing).
+Controllers: a game started from Steam got SDL told to ignore the real controllers and only Steam's virtual controller
+(28DE:11FF), without motion sensors or touchpad, which on the desktop followed Steam's Desktop Configuration, so the
+game got no controller input (owner's board, 14-10-2026: shadPS4 registered a pad without gyro, Steam's controller log
+showed its desktop layout active). The run wrapper now replaces Steam's list with Steam's virtual controller while a
+real controller is connected (in /proc/bus/input/devices), as BC250 Console Link does; with none, Steam's choice
+stands. Started outside Steam, nothing changes. Tests: the logo with and without icon0.png, a shortcut without its
+logo in the window, and the run wrapper with the board's input devices.
+
+Changelog: 14-10-2026 10:56:03
+
+Release 0.1.0.
+
+Changelog: 14-10-2026 10:52:57
+
+The manual has a section on game updates and mods: where they go (a folder beside the game ending in -UPDATE, -patch
+or -mods), with an example layout, and how the game list treats them.
+
+Changelog: 14-10-2026 10:45:26
+
+The app's folder is apps/shadps4-manager and its package bc250_shadps4_manager, so its key, release tags
+(shadps4-manager-v<x.y.z>, also what the update check looks for), installer test and manual chapter
+(apps/shadps4-manager/) all carry its name; the launcher, the run wrapper bc250-shadps4-run (which the Game Mode
+shortcuts start), the folders and the settings keep theirs. The game list now shows a game copied from a PS4 that had
+its update installed: its param.sfo says category "gp", as an update's does, and the scan dropped every such folder
+(LUMINES REMASTERED, CUSA11624, on the owner's board). A "gp" folder is now left out only when its game, with the same
+title ID, is found too; updates in a folder named with -UPDATE, -patch or -mods are left out as before. The window has
+its own look in the blue #006FCD (style.py): the status boxes, the table's header and selection, the links and the
+main buttons (Install, Update Game Mode) filled in it, the other buttons outlined in it, and the three steps numbered
+in blue circles. Tests: a "gp" game alone and beside its game, and the look.
+
+Changelog: 14-10-2026 09:30:47
+
+Release 0.1.0.
+
+Changelog: 14-10-2026 01:56:03
+
+The owner's icons replace the placeholder: images/bc250-shadps4-manager.png (512 px, the window header, menu entry and
+Desktop icon) and images/bc250-shadps4-manager-128.png (128 px, also the portal's and the manual's icon).
+
+Changelog: 14-10-2026 00:46:54
+
+New app shadps4 (BC-250 shadPS4 Manager): PS4 games on the BC-250 with the shadPS4 emulator. Install downloads shadPS4
+0.19.0, the release the app pins (the Linux AppImage in shadps4-linux-sdl-0.19.0.zip), checks the zip against its
+SHA-256 before unpacking and installs it in ~/.local/share/bc250-shadps4-manager/emulator, with "current" pointing to
+it; Remove takes it out, shadPS4's own folder (saves, settings, system modules) stays. The window shows how many of
+the system modules shadPS4 0.19.0 cannot do without are in its module folder (the app ships none: they come from the
+user's own PS4), adds game folders through shadPS4's own --add-game-folder, and lists the games found in them (up to
+five folders deep; title, ID and version from sce_sys/param.sfo, the folder's name without "[PS4]" when it has none;
+updates, mods and add-ons left out). The scan follows the owner's Windows launcher Nexus. Play starts a game on the
+desktop, shadPS4 settings opens shadPS4's own window (-b). Update Game Mode adds the ticked games to Steam as non-
+Steam games and takes out the others and games no longer found, with Steam closed for it and started again (core's
+bc250_core.steam); the artwork is drawn from the game's own icon0.png and pic1.png. The shortcuts run
+bc250-shadps4-run -f true -g "<eboot.bin>": the run wrapper starts the installed shadPS4 from beside the AppImage (so
+a "user" folder in the current folder is never taken as shadPS4's portable folder), and lets the AppImage unpack
+itself when libfuse.so.2 is missing. The installer uses the suite's shared venv and installs the wrapper in
+~/.local/bin. The icon is a placeholder.

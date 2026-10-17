@@ -569,7 +569,7 @@ def test_window_check_buttons(window, repo):
 
 def add_windows(root: Path) -> None:
     """alpha and beta get a window each, beta changes the board, the standalone app keeps its package a level deeper
-    (like demo-tool), and the checkout-only app has one too (like this app)."""
+    (like dtool), and the checkout-only app has one too (like this app)."""
     for key in ("alpha", "beta"):
         write(root / f"apps/{key}/{key}/__main__.py", "print('hi')\n")
     write(root / "apps/alpha/alpha/__init__.py",

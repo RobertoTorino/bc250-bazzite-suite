@@ -14,7 +14,7 @@ its manifest. **check** (BC-250 Bazzite Test) is always installed and always lis
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
 - `apps/<name>/`: check, gpu, helixsr, compute, cores, oc, persistent-acpi,
-  system-overlay, bios, ace, mesh, vram, fan, usb-wifi, cec, sftp-tools, consoles, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2, vita3k-manager, decky, demo-tool, dependency-checker, ncgui, datstation, suite-releases. Each has its
+  system-overlay, bios, ace, mesh, vram, fan, usb-wifi, cec, sftp-tools, consoles, shadps4, rpcs3, ppsspp, pcsx2, vita3k, decky, dtool, package, ncgui, datstation, suite-releases. Each has its
   own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; consoles is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; ncgui is GPL-2.0-only, a port of NetcatGUI; the rest
   GPL-3.0-or-later), .gitignore. Simple
@@ -144,16 +144,16 @@ shellcheck -S warning apps/oc/bc250-gpu-oc-bisect.sh apps/oc/install.sh
 shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh \
   apps/system-overlay/install.sh apps/bios/install.sh apps/vram/install.sh apps/fan/install.sh \
   apps/cec/install.sh apps/sftp-tools/install.sh \
-  apps/consoles/install.sh apps/demo-tool/install.sh apps/suite-releases/*.sh
+  apps/consoles/install.sh apps/dtool/install.sh apps/suite-releases/*.sh
 shellcheck -S warning apps/ace/bc250-ace-queues.sh apps/ace/bc250-ace-queues-run \
   apps/ace/install.sh apps/ace/mesa/build-in-container.sh
 shellcheck -S warning apps/mesh/bc250-mesh-shaders.sh apps/mesh/bc250-mesh-shaders-run \
   apps/mesh/install.sh apps/mesh/mesa/build-in-container.sh
-shellcheck -S warning apps/shadps4-manager/install.sh apps/shadps4-manager/bc250-shadps4-run
-shellcheck -S warning apps/rpcs3-manager/install.sh apps/rpcs3-manager/bc250-rpcs3-run
-shellcheck -S warning apps/ppsspp-manager/install.sh apps/ppsspp-manager/bc250-ppsspp-run \
-  apps/pcsx2/install.sh apps/pcsx2/bc250-pcsx2-run apps/vita3k-manager/install.sh \
-  apps/vita3k-manager/bc250-vita3k-run
+shellcheck -S warning apps/shadps4/install.sh apps/shadps4/bc250-shadps4-run
+shellcheck -S warning apps/rpcs3/install.sh apps/rpcs3/bc250-rpcs3-run
+shellcheck -S warning apps/ppsspp/install.sh apps/ppsspp/bc250-ppsspp-run \
+  apps/pcsx2/install.sh apps/pcsx2/bc250-pcsx2-run apps/vita3k/install.sh \
+  apps/vita3k/bc250-vita3k-run
 shellcheck -S warning apps/decky/install.sh apps/ncgui/install.sh \
   apps/datstation/install.sh
 for t in tools/installer-tests/*.sh; do [ "${t##*/}" = shims.sh ] || bash "$t"; done   # every installer test

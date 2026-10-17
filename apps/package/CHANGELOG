@@ -1,0 +1,510 @@
+Changelog: 17-10-2026 13:24:38
+
+Release 0.4.6.
+
+Changelog: 17-10-2026 13:21:37
+
+Fixed. The app's folder in the suite is apps/package (was apps/dependency-checker) and its package is
+package_checker (was bc250_dependency_checker): the suite's naming convention (owner, 17-10-2026), a short folder
+name and the package named after what the app checks, without the BC-250 prefix; both names are the owner's. With
+the folder go its key in the portal, its chapter of the wiki (apps/package/), its installer test and its release
+tags: package-v<x.y.z> from the next release on, which the app's update check follows. The catalogue lists the app
+itself as [app.package] (was [app.dependency-checker]). The installed app keeps its name, its launcher
+bc250-portal-dependency-checker, its folder under ~/.local/share, its settings, and the Bazzite update reminder's
+timer, which starts the launcher; the portal moves its record of the installed copy to the new key.
+
+Changelog: 17-10-2026 13:17:20
+
+Fixed. The catalogue lists Simple Demo Tool as [app.dtool] (was [app.demo-tool]), its key in the portal after the
+tool's move to apps/dtool; its sources (OBS and the Python packages) name that owner.
+
+Changelog: 17-10-2026 13:10:58
+
+Fixed. The catalogue lists Vita3K Manager as [app.vita3k] (was [app.vita3k-manager]), its key in the portal after
+the app's move to apps/vita3k; its sources (the emulator's needs and the Python packages) name that owner.
+
+Changelog: 17-10-2026 13:05:02
+
+Fixed. The catalogue lists shadPS4 Manager as [app.shadps4] (was [app.shadps4-manager]), its key in the portal after
+the app's move to apps/shadps4; its sources (the emulator's needs and the Python packages) name that owner.
+
+Changelog: 17-10-2026 13:00:58
+
+Fixed. The catalogue lists RPCS3 Manager as [app.rpcs3] (was [app.rpcs3-manager]), its key in the portal after the
+app's move to apps/rpcs3; its sources (the emulator's needs and the Python packages) name that owner.
+
+Changelog: 17-10-2026 12:58:02
+
+Fixed. The catalogue lists PPSSPP Manager as [app.ppsspp] (was [app.ppsspp-manager]), its key in the portal after
+the app's move to apps/ppsspp; its sources (the emulator's needs and the Python packages) name that owner.
+
+Changelog: 17-10-2026 12:45:18
+
+Release 0.4.6.
+
+Changelog: 17-10-2026 12:35:30
+
+Fixed. The catalogue lists PCSX2 Manager as [app.pcsx2] (was [app.pcsx2-manager]), its key in the portal after the
+app's move to apps/pcsx2; its sources (the emulator's needs and the Python packages) name that owner.
+
+Changelog: 17-10-2026 12:32:49
+
+Fixed. The catalogue lists BC-250 Mesh Shaders as [app.mesh] (was [app.mesh-shaders]), its key in the portal after
+the app's move to apps/mesh; its sources (podman, the Vulkan tools and the Python packages) name that owner.
+
+Changelog: 17-10-2026 12:29:59
+
+Fixed. The catalogue lists BC-250 Memory Manager as [app.vram] (was [app.memory-manager]), its key in the portal
+after the app's move to apps/vram; its sources (pkexec and the Python packages) name that owner.
+
+Changelog: 17-10-2026 12:21:59
+
+Fixed. The catalogue lists HDMI CEC Manager as [app.cec] (was [app.hdmi-cec]), its key in the portal after the
+app's move to apps/cec; its sources (the CEC tools and the Python packages) name that owner.
+
+Changelog: 17-10-2026 12:18:12
+
+Fixed. The catalogue lists BC-250 GPU OC Bisect as [app.oc] (was [app.gpu-oc-bisect]), its key in the portal after
+the app's move to apps/oc; its sources (the governor package, the load tools the sweep uses, and the Python
+packages) name that owner.
+
+Changelog: 17-10-2026 12:09:45
+
+Fixed. The catalogue lists BC-250 GPU Governor Manager as [app.gpu] (was [app.governor]), its key in the portal
+after the app's move to apps/gpu; its sources (the governor package, the stress and metrics tools, and the Python
+packages) name that owner.
+
+Changelog: 17-10-2026 12:04:59
+
+Fixed. The catalogue lists BC-250 Fan Control as [app.fan] (was [app.fan-control]), its key in the portal after the
+app's move to apps/fan; its sources (the sensors and the tools the guard uses, and the Python packages) name that
+owner.
+
+Changelog: 17-10-2026 12:01:38
+
+Fixed. The catalogue lists Decky Loader Manager as [app.decky] (was [app.decky-manager]), its key in the portal after
+the app's move to apps/decky; its sources (the tools Decky's install uses, and the Python packages) name that owner.
+
+Changelog: 17-10-2026 11:56:42
+
+Fixed. The catalogue lists BC-250 CU Bisect as [app.compute] (was [app.cu-bisect]), its key in the portal after the
+app's move to apps/compute; its sources (umr and the other tools the bisect and the unlock use, and the Python
+packages) name that owner.
+
+Changelog: 17-10-2026 11:06:03
+
+Release 0.4.5.
+
+Changelog: 17-10-2026 11:02:44
+
+Fixed. The catalogue lists BC-250 Cores Bisect as [app.cores] (was [app.cores-bisect]), its key in the portal after
+the app's move to apps/cores; its sources (stress-ng and the other tools the bisect uses, and the Python packages)
+name that owner.
+
+Changelog: 17-10-2026 10:54:05
+
+Fixed. The catalogue lists Console Link as [app.consoles] (was [app.console-link]), its key in the portal after
+the app's move to apps/consoles; its sources (FFmpeg, libva, SDL3, Steam, Rust and the Python packages) name that
+owner. The FFmpeg probe still asks the app's environment for bc250_console_link_core, which keeps its name.
+
+Changelog: 17-10-2026 10:10:41
+
+Release 0.4.4.
+
+Changelog: 17-10-2026 10:05:20
+
+Fixed. The catalogue lists BC-250 BIOS Reader as [app.bios] (was [app.bios-reader]), its key in the portal after
+the app's move to apps/bios; its sources (flashrom, pkexec and the Python packages) name that owner.
+
+Changelog: 17-10-2026 09:41:48
+
+Release 0.4.3.
+
+Changelog: 17-10-2026 09:27:13
+
+Fixed. The catalogue lists BC-250 Bazzite Test as [app.check] (was [app.bazzite-test]), its key in the portal
+after the app's move to apps/check; its sources name that owner, and its wiki links go to apps/check/.
+
+Changelog: 17-10-2026 09:05:54
+
+Release 0.4.2.
+
+Changelog: 17-10-2026 08:56:40
+
+Release 0.4.2.
+
+Changelog: 17-10-2026 08:47:31
+
+Fixed. The catalogue lists Bazzite DatStation as [app.datstation] (was [app.bazzite-datstation]), its key in the
+portal after the app's move to apps/datstation; its sources name that owner, and its wiki links go to
+apps/datstation/.
+
+Changelog: 17-10-2026 07:36:38
+
+Release 0.4.1.
+
+Changelog: 17-10-2026 07:30:38
+
+Fixed. The catalogue lists BC-250 ACE Queues as [app.ace] (was [app.ace-queues]) and Bazzite NetcatGUI as
+[app.ncgui] (was [app.bazzite-netcatgui]), their keys in the portal after the apps' moves to apps/ace and
+apps/ncgui; their sources name those owners, and their wiki links go to apps/ace/ and apps/ncgui/.
+
+Changelog: 17-10-2026 05:35:56
+
+Release 0.4.0.
+
+Changelog: 17-10-2026 05:34:01
+
+Added. The catalogue lists BC-250 USB Wi-Fi: its launcher, its PyQt6, and its use of pkexec, systemctl, journalctl
+and notify-send, plus six tools new to the catalogue, which the app and its service run: gcc, make, git (building
+and fetching the Wi-Fi driver), kmod (insmod, modprobe, rmmod: loading it), eject (switching the stick out of
+storage mode) and udevadm (reloading the stick's rule).
+
+Changelog: 16-10-2026 18:43:14
+
+Added. The catalogue lists BC-250 Fan Control: its launcher, its PyQt6, and its use of pkexec and systemctl (the
+thermal guard's service), busctl (performance mode off) and notify-send (the guard's warnings on the desktop).
+
+Changelog: 16-10-2026 11:41:27
+
+Release 0.3.0.
+
+Changelog: 16-10-2026 11:35:40
+
+Release 0.3.0.
+
+Changelog: 16-10-2026 11:20:26
+
+Added. The catalogue lists the Vita3K Manager: its launcher, its PyQt6, and its use of Steam (Update Game Mode)
+and fusermount (Vita3K's AppImage).
+
+Changelog: 16-10-2026 06:02:49
+
+Release 0.2.0.
+
+Changelog: 16-10-2026 03:15:56
+
+Release 0.1.23.
+
+Changelog: 16-10-2026 03:10:04
+
+Release 0.1.23.
+
+Changelog: 16-10-2026 01:19:38
+
+Release 0.1.22.
+
+Changelog: 16-10-2026 00:54:44
+
+Fixed. images/bc250-dependency-checker-128.png is the 128 px copy of the new icon
+(images/bc250-dependency-checker.png), scaled from the 512 px file; the portal's tile shows it.
+
+Changelog: 15-10-2026 23:29:43
+
+Release 0.1.21.
+
+Changelog: 15-10-2026 22:51:19
+
+Release 0.1.21.
+
+Changelog: 15-10-2026 22:04:04
+
+Bazzite's update state (owner's decision 15-10-2026, an exception to the suite's scope rule): a Bazzite card on top
+(bazzite.py) shows the running image with its build date, an update installed and waiting for a reboot (Reboot to
+update; a rollback is not taken for one), and uupd's last run, warning when it failed or has not run for over a week.
+It only reads, from rpm-ostree status --json and systemctl show, without root or the network. A weekly reminder:
+--bazzite-reminder shows no window and gives a desktop notification (notify-send) only when an update waits or the
+updater failed or stopped; install.sh writes the systemd user units bc250-bazzite-update-reminder.service and .timer
+(Mondays 10:00, Persistent, so a missed Monday is caught up at the next login) and enables them (without a user
+session by the enable link itself), and --uninstall stops and removes them. The portal, README and wiki summaries
+mention it. Tests: tests/test_bazzite.py (the owner's board's recorded state, an update waiting, a rollback, the
+updater failed, stale or never run, no rpm-ostree, only read commands, the notification, the entry point) and the card
+in test_window.py; the installer test covers the units, enabling with and without a session, and the removal.
+
+Changelog: 15-10-2026 21:28:55
+
+The catalogue no longer lists Bazzite pkgxtractor: the app is absorbed into the shadPS4 Manager, which now uses
+cryptography (Extract PKG decrypts packages with it), in its own venv.
+
+Changelog: 15-10-2026 21:03:51
+
+images/bc250-dependency-checker-128.png is the 128 px copy of the new icon (images/bc250-dependency-checker.png),
+scaled from the 512 px file; the portal's tile shows it.
+
+Changelog: 15-10-2026 19:18:30
+
+The catalogue no longer lists Bazzite UMD File Renamer: the app is absorbed into PPSSPP Manager, which the catalogue
+already covers.
+
+Changelog: 15-10-2026 17:54:45
+
+The catalogue lists the PPSSPP Manager and the PCSX2 Manager: their launchers, their PyQt6, and their use of Steam
+(Update Game Mode) and fusermount (the AppImages mount themselves with it).
+
+Changelog: 15-10-2026 16:02:21
+
+The catalogue lists Bazzite DatStation: its launcher, PyQt6 (>=6.11,<7) and Steam (optional, for Add to Steam and
+Remove from Steam).
+
+Changelog: 15-10-2026 05:52:00
+
+Release 0.1.20.
+
+Changelog: 15-10-2026 05:34:53
+
+Release 0.1.19.
+
+Changelog: 15-10-2026 05:27:59
+
+New icon: images/bc250-dependency-checker.png (512 px) and its 128 px copy.
+
+Changelog: 15-10-2026 03:27:57
+
+Release 0.1.18.
+
+Changelog: 15-10-2026 02:31:31
+
+No translations (owner's decision): core's create_app() no longer takes lang, and AppInfo no longer has languages; the
+app was English only already and stays so.
+
+Changelog: 15-10-2026 02:18:10
+
+Tests: launcher_python reads the launchers that run in the caller's folder (exec "<venv>/bin/python" -c ..., Bazzite
+pkgxtractor and Bazzite UMD File Renamer) as before.
+
+Changelog: 15-10-2026 02:10:51
+
+Release 0.1.17.
+
+Changelog: 15-10-2026 01:26:23
+
+The catalogue has Bazzite UMD File Renamer: its launcher and its PyQt6. PPSSPP, which the app can start a game with,
+is not a catalogue tool: the app finds it as a Flatpak first, which a lookup on the PATH does not see.
+
+Changelog: 15-10-2026 01:18:28
+
+The catalogue has Bazzite NetcatGUI: its launcher and its PyQt6.
+
+Changelog: 14-10-2026 18:22:56
+
+The catalogue names the apps that are not tied to the board without the BC-250 or BC250 prefix: HelixSR Manager,
+System Overlay, HDMI CEC Manager, Bazzite SFTP Tools, Console Link, shadPS4 Manager, RPCS3 Manager and Decky Loader
+Manager.
+
+Changelog: 14-10-2026 17:35:13
+
+The catalogue has BC-250 RPCS3 Manager: its launcher, its PyQt6, Steam (Update Game Mode) and a new tool, fusermount
+(fusermount3 or fusermount), with which RPCS3's AppImage mounts itself.
+
+Changelog: 14-10-2026 16:15:38
+
+The catalogue has Bazzite pkgxtractor: its launcher (the window's; the terminal extractor runs in the same venv), and
+its PyQt6 and cryptography; the cryptography description says what it uses it for.
+
+Changelog: 14-10-2026 15:12:03
+
+Release 0.1.16.
+
+Changelog: 14-10-2026 11:52:39
+
+The Check again button looks like the boxes beside it: the same grey, rounded corners with the same radius, no border,
+and a white icon whatever the desktop theme.
+
+Changelog: 14-10-2026 11:22:29
+
+Release 0.1.15.
+
+Changelog: 14-10-2026 11:12:20
+
+The catalogue lists BC-250 Decky Loader Manager (decky-manager): its launcher, PyQt6, and the tools it runs: pkexec
+and systemctl (required) and journalctl (optional).
+
+Changelog: 14-10-2026 10:56:03
+
+Release 0.1.14.
+
+Changelog: 14-10-2026 10:45:26
+
+The catalogue names BC-250 shadPS4 Manager by its new key, shadps4-manager (its app, its PyQt6 and the tools it uses).
+
+Changelog: 14-10-2026 10:19:37
+
+The Check again button in the header is now an icon (a refresh arrow) the same size as the boxes beside it; its name
+stays in the tooltip.
+
+Changelog: 14-10-2026 09:30:47
+
+Release 0.1.13.
+
+Changelog: 14-10-2026 00:45:15
+
+The catalogue lists BC-250 shadPS4 Manager: its launcher, PyQt6, Steam (optional: Update Game Mode closes and restarts
+it) and FUSE 2 (libfuse.so.2, optional: shadPS4 is an AppImage, which unpacks itself on every start without it).
+
+Changelog: 14-10-2026 00:37:33
+
+Release 0.1.12.
+
+Changelog: 13-10-2026 22:59:01
+
+Release 0.1.11.
+
+Changelog: 13-10-2026 22:02:36
+
+The catalogue knows BC-250 Mesh Shaders: its launcher, PyQt6 in its environment, and the tools it uses (pkexec, curl,
+podman).
+
+Changelog: 13-10-2026 15:53:27
+
+Release 0.1.10.
+
+Changelog: 13-10-2026 15:51:48
+
+The installer installs the Python packages with pip --upgrade (owner's decision, 13-10-2026): installing again brings
+each package to the newest version its requirements allow, so a security fix within that range arrives with a
+reinstall from the portal.
+
+Changelog: 13-10-2026 15:45:38
+
+Needs update (owner, 13-10-2026: a status for action required): a package must be updated when an installed app needs
+a newer version than the one installed (too_old: below a lower bound of the app's specifier) or when a newer release
+fixes a known vulnerability of the installed version. It comes before Wrong version (now only a version an update does
+not fix, newer than allowed) and Vulnerable (now only when no release fixes it yet); Update available stays for a
+newer version that is not needed. The status's tooltip says why and to which version; a red Needs update box beside
+Missing counts them, and the line at the bottom names them. The manual has a table of every status (owner asked what
+Not installed and Available mean). Tests: too old or too new, an environment that needs an update, the card, the box
+and the line; two tests follow the change (an older PyQt6 than wanted, a vulnerability with a fix).
+
+Changelog: 13-10-2026 15:37:48
+
+Console Link's dependencies (owner, 13-10-2026: every new dependency in the checker): FFmpeg (required; it is inside
+the app's native core, so the new probe console-link-ffmpeg asks the installed core through the app's python which
+FFmpeg it holds and the card shows the version; a core built without the video decoder or one that does not load is
+said so), libva (required: the native core links libva and libva-drm and does not load without them), Steam (optional:
+Add to Game Mode and the PS button setting run steam and bazzite-steam) and Rust (optional: cargo builds the native
+core when the app is installed from a checkout). SDL3 was there already. Tool cards show a version when the check
+finds one. The manual says how a library an app brings itself is checked. Tests: the probe with a version, without the
+decoder, not loading, and without the app or its core; Console Link's needs.
+
+Changelog: 13-10-2026 14:27:47
+
+Release 0.1.9.
+
+Changelog: 13-10-2026 09:40:13
+
+SDL3 in the catalogue, checked by its library file: BC250 Console Link reads the board's controllers with it
+(optional; without it the console sees a controller lying still).
+
+Changelog: 13-10-2026 01:27:26
+
+Release 0.1.8.
+
+Changelog: 13-10-2026 01:25:57
+
+BC250 Remote Play is renamed BC250 Console Link: its entry [app.console-link] (launcher ~/.local/bin/bc250-console-
+link) and the owner of its packages.
+
+Changelog: 12-10-2026 22:00:05
+
+Release 0.1.7.
+
+Changelog: 12-10-2026 21:51:19
+
+The catalogue lists BC250 Remote Play: its launcher, PyQt6 and cryptography (its own venv).
+
+Changelog: 12-10-2026 21:32:31
+
+The catalogue lists BC250 Bazzite SFTP Tools: its launcher, paramiko (its own venv) and paplay (optional, for the
+sound at the end of a transfer).
+
+Changelog: 12-10-2026 09:19:23
+
+Release 0.1.6.
+
+Changelog: 12-10-2026 09:09:15
+
+Release 0.1.6.
+
+Changelog: 12-10-2026 08:07:21
+
+The header is core's AppHeader, the same as the other apps', instead of its own copy of it.
+
+Changelog: 12-10-2026 07:46:06
+
+Python packages are looked up in OSV.dev for known vulnerabilities, each installed version once: a green "✓ CVE" when
+none is known, a red "✗ CVE" with each CVE ID linked to security.snyk.io (OSV IDs without a CVE link to osv.dev), its
+summary and the release that fixes it, and "CVE ?" when the check failed. One CVE that OSV.dev has as both a GHSA and
+a PYSEC entry is shown once. A vulnerable package's status is "Vulnerable", and a "Known CVEs" box counts them.
+Missing packages and tools get an Advice line: what to install and which features of the installed apps need it; a
+vulnerable package the release to update to.
+
+Changelog: 12-10-2026 07:39:58
+
+The app has the same layout as the other apps: the package is bc250_dependency_checker at the app's root (it was
+portal-dependency-checker/portal_dependency_checker), with dependencies.toml inside it and the icon as
+images/bc250-dependency-checker.png. Its ID, folders and launcher stay bc250-portal-dependency-checker, so an
+installed copy is updated in place. Python packages are now checked in the environment each installed app runs in,
+found from the app's launcher, instead of only in the checker's own; obsws-python and dbus-next showed "Not installed
+here" although Simple Demo Tool had them in its own venv. A package no installed app uses shows "Not needed", one
+missing from an app's environment "Missing", and a version outside the app's requirement "Wrong version". Tools are
+also looked for in ~/.local/bin and Homebrew, like Bazzite Test does, and speedtest and speedtest-cli are one entry
+(Bazzite Test needs one of them). Each tool's use per app is marked required or optional; a missing optional tool
+shows "Not installed", a missing required one "Missing", one no installed app uses "Not needed". Tools that work only
+as root (flashrom, umr, smartctl, fio, setpci, ras-mc-ctl, grub2-mkconfig) say "Needs root." in orange. The catalogue
+was checked against the apps: mangohud, vainfo, clinfo, rocminfo (Bazzite Test), ujust (HDMI CEC, Persistent ACPI) and
+grub2-mkconfig (Persistent ACPI) were missing. Every package and tool has a description, shown by the information
+button beside its name. The summary names the missing tools instead of counting them. The window has the header of the
+other apps: the icon at 96 px beside the title and a row with the counts and Check again.
+
+Changelog: 12-10-2026 06:14:55
+
+Release 0.1.5. now also installs from the portal
+
+Changelog: 12-10-2026 06:06:00
+
+install.sh failed with "Could not open requirements file": it copies only portal-dependency-checker/ into the app
+folder, and requirements.txt is one folder up. It copies requirements.txt next to it now. The app's name is Dependency
+Checker (window, launcher, menu entry, manual, portal tile); its ID, folders and launcher path stay bc250-portal-
+dependency-checker, so an installed copy is found as before.
+
+Changelog: 11-10-2026 22:27:40
+
+Release 0.1.4.
+
+Changelog: 11-10-2026 20:43:41
+
+Release 0.1.3.
+
+Changelog: 11-10-2026 20:21:41
+
+BC250 HDMI CEC in the catalogue: its PyQt6, cec-ctl (also Bazzite Test's test 51), cecd, and systemctl; and its label.
+
+Changelog: 11-10-2026 19:25:11
+
+Release 0.1.2.
+
+Changelog: 11-10-2026 17:17:19
+
+Release 0.1.1.
+
+Changelog: 11-10-2026 17:01:09
+
+A new app icon (images/portal-dependency-checker.png, 512 px, by the owner); the portal tile uses its 128 px version.
+
+Changelog: 11-10-2026 16:32:48
+
+Listed in the portal under "Development only" (portal/apps.toml, development = true); the .standalone marker is gone.
+
+Changelog: 11-10-2026 11:04:45
+
+Release 0.1.0. first release
+
+Changelog: 11-10-2026 09:02:11
+
+Use the new portal-dependency-checker.png icon in the app.
+
+Changelog: 11-10-2026 08:49:10
+
+Create the standalone desktop app under apps/dependency-checker/portal-dependency-checker. Its catalog covers
+Python runtime packages and external tools used across the suite; it checks PyPI versions and local tool
+availability without installing or changing anything.

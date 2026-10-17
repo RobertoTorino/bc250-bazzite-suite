@@ -1,3 +1,51 @@
+Changelog: 17-10-2026 13:21:37
+
+The naming convention applied to the Dependency Checker: apps/dependency-checker is apps/package with the package
+package_checker (was bc250_dependency_checker). With it the portal key, the wiki chapter (docs/apps/package.md),
+the installer test, the portal's tile icon (now package.png, the key's name, so the portal's exception for its old
+file name is gone), CI's steps and shellcheck line, the links to the chapter in the wiki, the architecture
+chapter's path to the catalogue, and CLAUDE.md's list. The portal moves the record of an installed copy to the new
+key.
+
+Changelog: 17-10-2026 13:17:20
+
+The naming convention applied to Simple Demo Tool: apps/demo-tool is apps/dtool with the package demo_tool (was
+simple_demo_tool). With it the portal key, the installer test (which now also checks that an install removes the
+package folder under its old name), the portal's tile icon, the assets path in its wiki chapter (which stays under
+Other tools), CI's steps and shellcheck line, the dependency catalogue and its tests, the release and manifest
+tests that use the tool as their example, a test in Suite Releases, and CLAUDE.md's list and shellcheck line. The
+portal moves the record of an installed copy to the new key.
+
+Changelog: 17-10-2026 13:10:58
+
+The naming convention applied to Vita3K Manager: apps/vita3k-manager is apps/vita3k with the package vita3k_manager
+(was bc250_vita3k_manager). With it the portal key, the wiki chapter (docs/apps/vita3k.md), the installer test, the
+portal's tile icon, CI's steps and shellcheck line, the dependency catalogue, the development chapter's path to the
+Vita3K pin, and CLAUDE.md's list and shellcheck lines. The portal moves the record of an installed copy to the new
+key.
+
+Changelog: 17-10-2026 13:05:02
+
+The naming convention applied to shadPS4 Manager: apps/shadps4-manager is apps/shadps4 with the package
+shadps4_manager (was bc250_shadps4_manager). With it the portal key, the wiki chapter (docs/apps/shadps4.md), the
+installer test, the portal's tile icon, CI's steps and shellcheck line, the upstream workflow's step name,
+tools/check_upstream.py's path to the shadPS4 pin, the root requirements-dev.txt, the dependency catalogue, and
+CLAUDE.md's list and shellcheck line. The portal moves the record of an installed copy to the new key.
+
+Changelog: 17-10-2026 13:00:58
+
+The naming convention applied to RPCS3 Manager: apps/rpcs3-manager is apps/rpcs3 with the package rpcs3_manager
+(was bc250_rpcs3_manager). With it the portal key, the wiki chapter (docs/apps/rpcs3.md), the installer test, the
+portal's tile icon, CI's steps and shellcheck line, the dependency catalogue, and CLAUDE.md's list and shellcheck
+line. The portal moves the record of an installed copy to the new key.
+
+Changelog: 17-10-2026 12:58:02
+
+The naming convention applied to PPSSPP Manager: apps/ppsspp-manager is apps/ppsspp with the package
+ppsspp_manager (was bc250_ppsspp_manager). With it the portal key, the wiki chapter (docs/apps/ppsspp.md), the
+installer test, the portal's tile icon, CI's steps and shellcheck line, the dependency catalogue, and CLAUDE.md's
+list and shellcheck line. The portal moves the record of an installed copy to the new key.
+
 Changelog: 17-10-2026 12:35:30
 
 The naming convention applied to PCSX2 Manager: apps/pcsx2-manager is apps/pcsx2 with the package pcsx2_manager

@@ -224,11 +224,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-bazzite-sftp-tools"]
 launch = [["Open", "~/.local/bin/bc250-bazzite-sftp-tools"]]
 
-[apps.demo-tool]
+[apps.dtool]
 name = "Simple Demo Tool"
 summary = "Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite."
-tag = "demo-tool-v0.1.10"
-sha256 = "4c15346124a066d39ae40cb3b8a8f24f8e4e088187058c762e47b972fa46bffd"
+tag = "dtool-v0.1.10"
+sha256 = ""
 required = false
 changes_board = false
 development = true
@@ -237,11 +237,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/simple-demo-tool"]
 launch = [["Open", "~/.local/bin/simple-demo-tool"]]
 
-[apps.dependency-checker]
+[apps.package]
 name = "Dependency Checker"
 summary = "The suite's Python packages and external tools, which apps use them, and whether newer ones exist; and whether a Bazzite update waits for a reboot."
-tag = "dependency-checker-v0.4.6"
-sha256 = "34acf87f6feb7b2deef914e3935e046fd66ed311469d326ffd22b5a18d67133e"
+tag = "package-v0.4.6"
+sha256 = ""
 required = false
 changes_board = false
 development = true
@@ -264,11 +264,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bazzite-netcatgui"]
 launch = [["Open", "~/.local/bin/bazzite-netcatgui"]]
 
-[apps.rpcs3-manager]
+[apps.rpcs3]
 name = "RPCS3 Manager"
 summary = "PS3 games with the RPCS3 emulator: a tested RPCS3 build, the firmware, your games found and added to Game Mode."
-tag = "rpcs3-manager-v0.2.1"
-sha256 = "ea8b871e11355aa8c1611a3e6b5531d3363d416cc54f37021bbc1b2eb43e0dfc"
+tag = "rpcs3-v0.2.1"
+sha256 = ""
 required = false
 changes_board = false
 section = "gaming"
@@ -291,11 +291,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-console-link"]
 launch = [["Open", "~/.local/bin/bc250-console-link"]]
 
-[apps.shadps4-manager]
+[apps.shadps4]
 name = "shadPS4 Manager"
 summary = "PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found (or unpacked from .pkg files) and added to Game Mode."
-tag = "shadps4-manager-v0.2.1"
-sha256 = "58592d172ed04c6b29ab36f4c983ddde6cbf1fd817d025e276b969cc56cf88c7"
+tag = "shadps4-v0.2.1"
+sha256 = ""
 required = false
 changes_board = false
 section = "gaming"
@@ -331,11 +331,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bazzite-datstation"]
 launch = [["Open", "~/.local/bin/bazzite-datstation"]]
 
-[apps.ppsspp-manager]
+[apps.ppsspp]
 name = "PPSSPP Manager"
 summary = "PSP games with the PPSSPP emulator: a tested PPSSPP release, your games found and added to Game Mode."
-tag = "ppsspp-manager-v0.2.1"
-sha256 = "7e2e1aed1faa3560ce8216172bf0cb88013e0fbc4348bc3225b115459a527c25"
+tag = "ppsspp-v0.2.1"
+sha256 = ""
 required = false
 changes_board = false
 section = "gaming"
@@ -357,11 +357,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-pcsx2-manager"]
 launch = [["Open", "~/.local/bin/bc250-pcsx2-manager"]]
 
-[apps.vita3k-manager]
+[apps.vita3k]
 name = "Vita3K Manager"
 summary = "PS Vita games with the Vita3K emulator: a tested Vita3K build, the firmware and your games installed through it, added to Game Mode."
-tag = "vita3k-manager-v0.1.2"
-sha256 = "8c5ae99c79dfce4d3f2ab21dc7cd420abe97f247bac1e1e600c44756a45ef940"
+tag = "vita3k-v0.1.2"
+sha256 = ""
 required = false
 changes_board = false
 section = "gaming"
