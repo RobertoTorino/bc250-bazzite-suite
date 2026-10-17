@@ -323,6 +323,29 @@ def test_window_refresh_reads_changes_and_keeps_what_was_typed(window, repo):
     assert window.portal_page.portal_notes.text() == "Pins."
 
 
+def test_window_pins_a_new_app_listed_without_a_sha256_line(window, repo, monkeypatch):
+    """A new app's entry has a tag but no sha256 line until its first release (apps.toml allows it): Pin adds the
+    line. And when pin_app refuses an entry, the window says so and pins the others, instead of exiting."""
+    toml = repo / "portal/apps.toml"
+    text = toml.read_text()
+    toml.write_text(text.replace('tag = "beta-v0.1.0"\nsha256 = ""\n', 'tag = "beta-v0.1.0"\n'))
+    sh(repo, "tag", "beta-v0.1.0")                            # released; alpha-v0.1.0 is tagged in the fixture
+    window.reload()
+    page = window.portal_page
+    assert [u.tag for u, _ in page.candidates] == ["alpha-v0.1.0", "beta-v0.1.0"]
+    page.pin()
+    assert f'tag = "beta-v0.1.0"\nsha256 = "{SHA}"\nrequired = false' in toml.read_text()
+    assert "beta-v0.1.0: pinned" in page.output.toPlainText()
+    assert page.candidates == []
+
+    rp.set_version(repo, unit(repo, "alpha"), "0.1.1")
+    sh(repo, "tag", "alpha-v0.1.1")
+    window.reload()
+    monkeypatch.setattr(rp, "pin", lambda root, unit, sha: (_ for _ in ()).throw(SystemExit("no [apps.alpha]")))
+    page.pin()                                                # the window stays; the log says why
+    assert "alpha-v0.1.1: not pinned (no [apps.alpha])." in page.output.toPlainText()
+
+
 def test_window_explains_an_empty_pin_list(window, repo):
     rp.pin(repo, unit(repo, "alpha"), SHA)
     window.reload()

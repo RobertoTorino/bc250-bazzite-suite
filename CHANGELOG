@@ -1,3 +1,9 @@
+Changelog: 17-10-2026 06:29:57
+
+tools/pin_app.py pins an app whose [apps.<name>] table has no sha256 line yet, as a new app is listed until its
+first release: the line is added after the tag line. Before, it stopped with "[apps.<name>] has no sha256 line",
+which took BC250 Suite Releases down with it on the owner's Pin of fan-control-v0.1.0 (17-10-2026).
+
 Changelog: 17-10-2026 05:12:58
 
 A new app, BC-250 USB Wi-Fi (apps/usb-wifi, changes_board): the driver for AIC8800D80 USB Wi-Fi sticks, which

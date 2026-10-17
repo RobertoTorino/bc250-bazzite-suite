@@ -5,7 +5,8 @@
     python3 tools/pin_app.py <app>-v<x.y.z> [--sha256 HEX]
 
 Without --sha256 the checksum is read from the release's SHA256SUMS on GitHub. Only the tag and sha256 lines of
-that app's [apps.<app>] table change; comments and layout stay. Afterwards bump portal/VERSION as
+that app's [apps.<app>] table change (a table without a sha256 line, a new app before its first release, gets one
+after its tag line); comments and layout stay. Afterwards bump portal/VERSION as
 tools/check_manifest.py asks (at least as much as the app moved) and add the app release to the portal CHANGELOG."""
 
 from __future__ import annotations
@@ -42,10 +43,12 @@ def pin(text: str, app: str, tag: str, sha256: str) -> str:
     following = re.search(r"^\[", text[start.end():], re.M)
     end = start.end() + following.start() if following else len(text)
     block = text[start.end():end]
-    for field, value in (("tag", tag), ("sha256", sha256)):
-        block, count = re.subn(rf'^{field} = ".*"$', f'{field} = "{value}"', block, count=1, flags=re.M)
-        if count != 1:
-            raise SystemExit(f"[apps.{app}] has no {field} line")
+    block, count = re.subn(r'^tag = ".*"$', f'tag = "{tag}"', block, count=1, flags=re.M)
+    if count != 1:
+        raise SystemExit(f"[apps.{app}] has no tag line")
+    block, count = re.subn(r'^sha256 = ".*"$', f'sha256 = "{sha256}"', block, count=1, flags=re.M)
+    if count != 1:                              # a new app is listed without one until its first release
+        block = re.sub(r'^(tag = ".*"\n)', rf'\g<1>sha256 = "{sha256}"\n', block, count=1, flags=re.M)
     return text[:start.end()] + block + text[end:]
 
 

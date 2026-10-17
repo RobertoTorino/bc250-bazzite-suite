@@ -1,3 +1,7 @@
+Changelog: 17-10-2026 06:32:52
+
+Release 1.12.0. Pins bazzite-test-v0.3.0, mesh-shaders-v0.2.1, dependency-checker-v0.4.0, rpcs3-manager-v0.2.1, console-link-v1.1.2, shadps4-manager-v0.2.1, bazzite-datstation-v0.2.1, ppsspp-manager-v0.2.1, pcsx2-manager-v0.3.1, vita3k-manager-v0.1.2.
+
 Changelog: 17-10-2026 06:15:56
 
 Release 1.11.0. Pins fan-control-v0.1.0, usb-wifi-v0.1.0.

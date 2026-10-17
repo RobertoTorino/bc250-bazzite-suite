@@ -33,3 +33,15 @@ def test_pin_last_table_and_missing_app():
     assert 'tag = "a-v1.0.1"' in pin_app.pin(text, "a", "a-v1.0.1", SHA)
     with pytest.raises(SystemExit, match="no \\[apps.b\\]"):
         pin_app.pin(text, "b", "b-v1.0.0", SHA)
+
+
+def test_pin_adds_the_sha256_line_a_new_app_lacks():
+    """A new app is listed with its first tag and no sha256 line until that release exists (apps.toml allows it):
+    the pin adds the line after the tag, in its place, and leaves the rest alone."""
+    text = '[apps.a]\nname = "a"\ntag = "a-v0.1.0"\nrequired = false\n\n[apps.b]\ntag = "b-v1.0.0"\nsha256 = ""\n'
+    new = pin_app.pin(text, "a", "a-v0.1.0", SHA)
+    assert new == f'[apps.a]\nname = "a"\ntag = "a-v0.1.0"\nsha256 = "{SHA}"\nrequired = false\n\n[apps.b]\n' \
+                  'tag = "b-v1.0.0"\nsha256 = ""\n'
+    assert pin_app.pin(new, "a", "a-v0.1.1", "ef" * 32).count("sha256 =") == 2       # replaced, not added again
+    with pytest.raises(SystemExit, match="no tag line"):
+        pin_app.pin('[apps.a]\nname = "a"\n', "a", "a-v0.1.0", SHA)

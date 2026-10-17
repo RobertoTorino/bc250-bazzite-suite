@@ -372,7 +372,11 @@ class PortalPage(QWidget):
             except (OSError, SystemExit) as exc:
                 log.append(f"{unit.tag}: no checksum yet ({exc}). Has GitHub finished that release?")
                 continue
-            rp.pin(self.release_window.root, unit, sha)
+            try:
+                rp.pin(self.release_window.root, unit, sha)
+            except SystemExit as exc:           # pin_app refuses (no such table, no tag line): say so, go on
+                log.append(f"{unit.tag}: not pinned ({exc}).")
+                continue
             log.append(f"{unit.tag}: pinned ({sha[:16]}…)")
         self.release_window.reload()
         self.output.set_text("\n".join(log) or "Tick a release to pin.")

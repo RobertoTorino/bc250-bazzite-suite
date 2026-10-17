@@ -1,3 +1,9 @@
+Changelog: 17-10-2026 06:29:57
+
+Fixed. Pin no longer closes the window when tools/pin_app.py refuses an entry: it says so in the log ("not
+pinned (...)") and pins the others. And pin_app itself now adds the sha256 line a new app's entry lacks until its
+first release, which is what closed the window on the owner's Pin of fan-control-v0.1.0.
+
 Changelog: 16-10-2026 11:57:04
 
 Fixed. When apps.toml changed since the last push, the commands after step 1's Apply start with "First: step 2's
