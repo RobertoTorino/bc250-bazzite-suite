@@ -10,10 +10,10 @@ BC250
 
 The **BC250 Bazzite Suite** (exactly that name): tools for the AMD BC-250 on Bazzite, in one repository,
 `github.com/RobertoTorino/bc250-bazzite-suite` (branch `main`). A **portal** installs and starts the apps listed in
-its manifest. **bazzite-test** is always installed and always listed first; every other listed app is an optional
+its manifest. **check** (BC-250 Bazzite Test) is always installed and always listed first; every other listed app is an optional
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
-- `apps/<name>/`: bazzite-test, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
+- `apps/<name>/`: check, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
   system-overlay, bios-reader, ace, mesh-shaders, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, console-link, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, demo-tool, dependency-checker, ncgui, datstation, suite-releases. Each has its
   own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; console-link is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; ncgui is GPL-2.0-only, a port of NetcatGUI; the rest
@@ -136,7 +136,7 @@ python3 tools/check_manifest.py --base origin/main  # portal/apps.toml rules, th
 python3 tools/check_changelogs.py --base origin/main  # no CHANGELOG lost an entry since the last push
 find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 -n1 bash -n
 find apps portal tools -name '*.sh' -print0 | xargs -0 shellcheck -x -S error test.sh install.sh
-shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \
+shellcheck -x -S warning portal/install.sh apps/check/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \
   tools/hooks/pre-push
 shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/bc250-cores-unlock.sh \
   apps/cores-bisect/install.sh apps/cores-bisect/packaging/bazzite/*.sh

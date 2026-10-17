@@ -43,7 +43,7 @@ def _catalog():
 def test_window_displays_package_and_tool_results(qapp):
     dependencies, tools = _catalog()
     result = CheckResult(
-        [DependencyStatus(dependencies["PyQt6"], (EnvironmentVersion(SHARED, ("portal", "bazzite-test"), "6.11.0"),
+        [DependencyStatus(dependencies["PyQt6"], (EnvironmentVersion(SHARED, ("portal", "check"), "6.11.0"),
                                                   EnvironmentVersion(DEMO, ("demo-tool",), "6.11.0")), "6.12.0"),
          DependencyStatus(dependencies["obsws-python"], (EnvironmentVersion(DEMO, ("demo-tool",), "1.8.0"),),
                           "1.8.0"),
@@ -52,7 +52,7 @@ def test_window_displays_package_and_tool_results(qapp):
          ToolStatus(tools["speedtest"], "/home/test/.local/bin/speedtest"),
          ToolStatus(tools["mprime"]),
          ToolStatus(tools["setpci"])],
-        frozenset({"portal", "bazzite-test", "demo-tool", "bios-reader", "cores-bisect"}),
+        frozenset({"portal", "check", "demo-tool", "bios-reader", "cores-bisect"}),
     )
     window = _window(result)
     try:
@@ -151,7 +151,7 @@ def test_cve_marks(qapp):
 
 def test_missing_tools_advise_what_they_are_needed_for(qapp):
     dependencies, tools = _catalog()
-    installed = frozenset({"bios-reader", "cores-bisect", "bazzite-test"})
+    installed = frozenset({"bios-reader", "cores-bisect", "check"})
     advice = tool_advice(tools["stress-ng"], installed, load_apps(CATALOG))
     assert advice.startswith("<b>Advice:</b> Install stress-ng to be able to use:")
     assert "BC-250 Cores Bisect</a>: Verified CPU load during core testing. <b>(required)</b>" in advice

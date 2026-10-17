@@ -4,7 +4,7 @@
 Usage, in the game's Properties > Launch options (the Game details page shows the exact line with a Copy
 button — Steam starts this wrapper in the game's folder, so PYTHONPATH must point at the app's folder):
 
-    PYTHONPATH=<app folder> <python> -m bc250_gui.gamemon %command%
+    PYTHONPATH=<app folder> <python> -m bazzite_check.gamemon %command%
 
 It starts the game unchanged and, while the game runs, samples FPS (from MangoHud's log, when MangoHud
 is active), the game's CPU and GPU share, total CPU/GPU load, the GPU clocks, temperature, power,
@@ -78,7 +78,7 @@ def start_overlay() -> subprocess.Popen | None:
     env = dict(os.environ)
     env.setdefault("QT_QPA_PLATFORM", "xcb;wayland")
     try:
-        proc = subprocess.Popen([sys.executable, "-m", "bc250_gui.overlay"],
+        proc = subprocess.Popen([sys.executable, "-m", "bazzite_check.overlay"],
                                 stdin=subprocess.PIPE, stdout=subprocess.DEVNULL,
                                 text=True, env=env)
     except OSError as exc:

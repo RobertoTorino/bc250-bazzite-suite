@@ -9,7 +9,7 @@ body:
       label: App
       options:
         - portal
-        - bazzite-test
+        - check
         - governor
         - helixsr
         - cu-bisect
@@ -65,7 +65,7 @@ body:
     attributes:
       label: Report, diagnostics or log
       description: >-
-        bazzite-test: Show Logs → the full report of the run. governor: Service page → "Export diagnostics…".
+        check: Show Logs → the full report of the run. governor: Service page → "Export diagnostics…".
         Bisect apps: the results folder under ~/.local/share/. Drag the file here or paste the relevant part.
   - type: checkboxes
     id: privacy

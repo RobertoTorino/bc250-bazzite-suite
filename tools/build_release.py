@@ -6,15 +6,15 @@
 
 <out-dir> gets <tag>.tar.gz (unpacks into <tag>/), SHA256SUMS and notes.md. The tag's version must equal the app's
 VERSION. An app in NATIVE_WHEELS needs the wheel of its native core in that folder first, built by release.yml;
-it goes into the tarball, so the portal's checksum covers it. bazzite-test gets its engine checksum recorded
-(development/tools/build_info.py), which makes it a release build that refuses a changed engine. A portal tag needs --bundle: a folder with the pinned bazzite-test release
+it goes into the tarball, so the portal's checksum covers it. Bazzite Test (check) gets its engine checksum recorded
+(development/tools/build_info.py), which makes it a release build that refuses a changed engine. A portal tag needs --bundle: a folder with the pinned check release
 (<tag>.tar.gz and SHA256SUMS, as published); it is verified against apps.toml and unpacked into bundled/.
 
 The tar inside is reproducible and the same on Linux and Windows: sorted entries, root:root, the commit time (or
 SOURCE_DATE_EPOCH) as mtime, and modes set here (755 for folders and scripts, 644 for the rest), not taken from the
 file system, which on Windows has no exec bit. The .tar.gz is only byte for byte the same with the same zlib: its
-compressed bytes differ between zlib builds (Fedora's zlib-ng, Ubuntu's zlib). bazzite-test also records its build
-time in bc250_gui/_build_info.py."""
+compressed bytes differ between zlib builds (Fedora's zlib-ng, Ubuntu's zlib). Bazzite Test also records its build
+time in bazzite_check/_build_info.py."""
 
 from __future__ import annotations
 
@@ -110,8 +110,8 @@ def latest_changes(changelog: Path) -> str:
 
 
 def bundle_bazzite_test(stage_dir: Path, bundle: Path) -> str:
-    """Verify the pinned bazzite-test release in *bundle* and unpack it into stage_dir/bundled/. Returns its tag."""
-    entry = next(e for e in manifest.load(MANIFEST) if e.key == "bazzite-test")
+    """Verify the pinned check release in *bundle* and unpack it into stage_dir/bundled/. Returns its tag."""
+    entry = next(e for e in manifest.load(MANIFEST) if e.key == "check")
     archive = bundle / entry.asset
     if not archive.is_file():
         raise SystemExit(f"--bundle {bundle} has no {entry.asset} (the tag apps.toml pins)")
@@ -170,12 +170,12 @@ def build(tag: str, out: Path, bundle: Path | None = None) -> Path:
     with tempfile.TemporaryDirectory() as tmp:
         stage_dir = stage_app.stage(app, Path(tmp) / tag)
         epoch = source_epoch()
-        if app == "bazzite-test":                   # its build date is the commit time too: the same tag, the same bytes
+        if app == "check":                   # its build date is the commit time too: the same tag, the same bytes
             subprocess.run([sys.executable, str(stage_dir / "development" / "tools" / "build_info.py")], check=True,
                            stdout=subprocess.DEVNULL, env=dict(os.environ, SOURCE_DATE_EPOCH=str(epoch)))
         if app == "portal":
             if bundle is None:
-                raise SystemExit("a portal release needs --bundle with the pinned bazzite-test release")
+                raise SystemExit("a portal release needs --bundle with the pinned check release")
             bundled = bundle_bazzite_test(stage_dir, bundle)
             pins = "\n".join(f"- `{e.tag}`" for e in manifest.load(MANIFEST))
             notes += ["This portal release installs and pins these app releases:", "", pins, "",
@@ -203,7 +203,7 @@ def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("tag")
     parser.add_argument("out", type=Path)
-    parser.add_argument("--bundle", type=Path, help="folder with the pinned bazzite-test release (portal tags)")
+    parser.add_argument("--bundle", type=Path, help="folder with the pinned check release (portal tags)")
     args = parser.parse_args(argv)
     archive = build(args.tag, args.out, args.bundle)
     print(f"{archive} {sha256_of(archive)}")

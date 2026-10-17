@@ -43,7 +43,7 @@ app downloads its Python packages from PyPI.
   else.
 - [Bazzite SFTP Tools](apps/sftp-tools.md) connects only to the host you enter.
 - [Bazzite DatStation](apps/datstation.md#privacy) loads the PlayStation Blog's feed on its PS News page.
-- [BC-250 Bazzite Test](apps/bazzite-test.md): its network test resolves and pings `google.com` and asks
+- [BC-250 Bazzite Test](apps/check.md): its network test resolves and pings `google.com` and asks
   `www.example.com` for a page header; the optional speed test uses Ookla's servers and about 1 GB of data.
 - [BC-250 ACE Queues](apps/ace.md) and [BC-250 Mesh Shaders](apps/mesh-shaders.md) download Mesa's source
   from `archive.mesa3d.org` when they build their driver.
@@ -57,7 +57,7 @@ Each app keeps its settings in `~/.config/<app>` and its data and logs in `~/.lo
 the exact list. Nothing of it is uploaded. Uninstalling with `--purge` removes the settings and logs too.
 
 Some of it can identify you: host and user names, serial numbers, MAC and IP addresses, account IDs. Where an app
-shows or saves such details, it masks them: [Bazzite Test](apps/bazzite-test.md) masks them in saved logs (on by
+shows or saves such details, it masks them: [Bazzite Test](apps/check.md) masks them in saved logs (on by
 default, in **Settings › Privacy**), and [Console Link](apps/console-link.md#privacy) in its window and log. Before
 you share a log or a screenshot, for example in an issue, look it over for anything you would rather keep to
 yourself.

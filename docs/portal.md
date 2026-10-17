@@ -145,7 +145,7 @@ PYTHONPATH=../core ../.venv-linux/bin/python -m bc250_portal    # --source relea
 ```
 
 To install from the checkout, run `./install.sh` in the repository root (or here in `portal/`). It bundles
-`../core` and installs `../apps/bazzite-test`. The installed portal then installs the other apps from the
+`../core` and installs `../apps/check`. The installed portal then installs the other apps from the
 checkout too, so keep the checkout where it is.
 
 ## apps.toml and releases
@@ -173,7 +173,7 @@ Releasing an app and pinning it in the portal:
 4. Bump `portal/VERSION` as `tools/check_manifest.py` asks, and list the app release in the portal CHANGELOG.
 5. Once the pinned app releases are tested together on a BC-250 (see
    [Testing a portal release before its tag](#testing-a-portal-release-before-its-tag)), commit steps 3 and 4,
-   push, and tag with `tools/tag-release.sh portal-v<x.y.z>`. That release bundles the pinned bazzite-test release.
+   push, and tag with `tools/tag-release.sh portal-v<x.y.z>`. That release bundles the pinned Bazzite Test release (`check-v…`).
 
 ![BC250 Suite Releases](assets/suite-releases/bc250-release-128.png){ .app-logo }
 
@@ -336,7 +336,7 @@ The release stays on GitHub, so its history is kept, but nothing installs it any
 
 A release tarball has the same content when you build its tag yourself, but usually not the same checksum: the
 gzip compression differs between zlib builds (Fedora uses zlib-ng, GitHub's Ubuntu runners zlib), so compare the
-unpacked files, not the `.tar.gz`. Bazzite Test's build time in `bc250_gui/_build_info.py` is the commit time too;
+unpacked files, not the `.tar.gz`. Bazzite Test's build time in `bazzite_check/_build_info.py` is the commit time too;
 older Bazzite Test releases recorded the clock, and there only that line differs:
 
 ```bash

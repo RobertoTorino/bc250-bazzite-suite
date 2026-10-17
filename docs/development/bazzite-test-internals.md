@@ -28,14 +28,14 @@ Install nothing with `rpm-ostree` for the GUI itself — a venv in your home dir
 The real script needs systemd, journald and the BC-250 sysfs nodes. For UI work use the stand-in, which accepts the same options and prints the same line format:
 
 ```bash
-_python/bin/python -m bc250_gui --script development/tools/fake-test-bazzite.sh --no-sudo
+_python/bin/python -m bazzite_check --script development/tools/fake-test-bazzite.sh --no-sudo
 ```
 
 To drive the GUI with a real report from the board instead of simulated output, point `BC250_REPLAY`at a `/var/log/bc250-bazzite-test/bc250-test-results-*.log` file. Selected tests (`--only`) are cut from that report:
 
 ```bash
 BC250_REPLAY=debug/bc250-test-results-20260929-093526.log \
-  _python/bin/python -m bc250_gui --script development/tools/fake-test-bazzite.sh --no-sudo
+  _python/bin/python -m bazzite_check --script development/tools/fake-test-bazzite.sh --no-sudo
 ```
 
 ### Local Bazzite image build (package testing)

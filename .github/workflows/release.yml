@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 name: Release
 
-# One GitHub release per tag. Tags are made by hand, one per app: <app>-v<x.y.z> (bazzite-test-v0.1.0,
+# One GitHub release per tag. Tags are made by hand, one per app: <app>-v<x.y.z> (check-v0.1.0,
 # governor-v0.4.0, ...) or portal-v<x.y.z>. The tag's version must equal that app's VERSION file.
 #
 # The assets are <tag>.tar.gz, SHA256SUMS and the notes, all built by tools/build_release.py, so a local build
-# has the same content (see docs/portal.md, "Checking a release"). A portal release bundles the bazzite-test release that portal/apps.toml pins (downloaded
+# has the same content (see docs/portal.md, "Checking a release"). A portal release bundles the release of Bazzite Test (check) that portal/apps.toml pins (downloaded
 # from its own release and checked against the pin) and requires every pinned tag to exist.
 #
 # Console Link ships the wheel of its native core in the tarball (native/wheel, build_release.py checks it is
@@ -74,7 +74,7 @@ jobs:
       - name: Bundled Bazzite Test (portal releases)
         if: startsWith(github.ref_name, 'portal-v')
         run: |
-          bt=$(python -c 'import tomllib; print(tomllib.load(open("portal/apps.toml", "rb"))["apps"]["bazzite-test"]["tag"])')
+          bt=$(python -c 'import tomllib; print(tomllib.load(open("portal/apps.toml", "rb"))["apps"]["check"]["tag"])')
           mkdir -p bundle
           gh release download "$bt" --pattern "$bt.tar.gz" --pattern SHA256SUMS --dir bundle
 

@@ -42,7 +42,7 @@ sudo ./test-bazzite.sh --help                 # show options
 | `--gui`              | Word the how-to-run hints for the GUI instead of these options (used by the GUI). |
 | `-h`, `--help`       | Show usage and exit.                                                       |
 
-The GUI is described in [Bazzite Test internals](bazzite-test-internals.md) (developers) and [BC-250 Bazzite Test](../apps/bazzite-test.md) (users).
+The GUI is described in [Bazzite Test internals](bazzite-test-internals.md) (developers) and [BC-250 Bazzite Test](../apps/check.md) (users).
 
 ### Output
 

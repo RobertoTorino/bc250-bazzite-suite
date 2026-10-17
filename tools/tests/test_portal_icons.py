@@ -15,7 +15,7 @@ SOURCES = {
     "ace": "apps/ace/images/bc250-ace-queues-128.png",
     "datstation": "apps/datstation/images/bazzite-datstation-128.png",
     "ncgui": "apps/ncgui/images/bazzite-netcatgui-128.png",
-    "bazzite-test": "apps/bazzite-test/images/bc250-bazzite-test-128.png",
+    "check": "apps/check/images/bc250-bazzite-test-128.png",
     "bios-reader": "apps/bios-reader/images/bc250-bios-reader-128.png",
     "console-link": "apps/console-link/images/bc250-console-link-128.png",
     "cores-bisect": "apps/cores-bisect/images/bc250-cores-bisect-128.png",

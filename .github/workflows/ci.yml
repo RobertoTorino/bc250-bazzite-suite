@@ -44,7 +44,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [core, portal, tools, apps/bazzite-test, apps/governor, apps/helixsr, apps/persistent-acpi,
+        dir: [core, portal, tools, apps/check, apps/governor, apps/helixsr, apps/persistent-acpi,
               apps/cu-bisect, apps/cores-bisect, apps/gpu-oc-bisect,
               apps/demo-tool, apps/dependency-checker, apps/ncgui,
               apps/suite-releases,
@@ -149,7 +149,7 @@ jobs:
         run: find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 shellcheck -x -S error
       - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, console-link, mesh-shaders, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, netcatgui, datstation and the suite's own scripts)
         run: |
-          shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \
+          shellcheck -x -S warning portal/install.sh apps/check/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \
             tools/hooks/pre-push
           shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/bc250-cores-unlock.sh \
             apps/cores-bisect/install.sh apps/cores-bisect/packaging/bazzite/*.sh
@@ -213,8 +213,8 @@ jobs:
       - uses: actions/checkout@v7
       - name: fakeroot
         run: sudo apt-get install -y -q fakeroot
-      - name: bazzite-test installer
-        run: bash tools/installer-tests/bazzite-test.sh
+      - name: check installer
+        run: bash tools/installer-tests/check.sh
       - name: governor installer
         run: bash tools/installer-tests/governor.sh
       - name: helixsr installer

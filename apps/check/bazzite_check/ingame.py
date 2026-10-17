@@ -89,10 +89,10 @@ def session_duration(path: Path) -> float | None:
 
 def launch_line(with_mangohud: bool = False) -> str:
     # Steam runs the launch options through /bin/sh with the game's folder as working directory,
-    # so the package location must be on PYTHONPATH for `-m bc250_gui.gamemon` to be found.
+    # so the package location must be on PYTHONPATH for `-m bazzite_check.gamemon` to be found.
     game = "mangohud %command%" if with_mangohud else "%command%"
     return (f"PYTHONPATH={shlex.quote(str(ROOT))} "
-            f"{shlex.quote(sys.executable)} -m bc250_gui.gamemon {game}")
+            f"{shlex.quote(sys.executable)} -m bazzite_check.gamemon {game}")
 
 
 def session_files(key: str) -> list[Path]:
@@ -377,7 +377,7 @@ class InGamePage(QWidget):
         test_overlay.setToolTip(plain_tooltip(
             "Shows the overlay with sample numbers for about 45 s. Drag it with the mouse to where\n"
             "it should sit — the position is saved and the in-game overlay (which is click-through)\n"
-            "appears there. Run `python -m bc250_gui.overlay --demo` in a terminal to see start-up\n"
+            "appears there. Run `python -m bazzite_check.overlay --demo` in a terminal to see start-up\n"
             "errors."))
         test_overlay.clicked.connect(self._test_overlay)
         ov_row.addWidget(test_overlay)
@@ -612,7 +612,7 @@ class InGamePage(QWidget):
         env = dict(os.environ)
         env.setdefault("QT_QPA_PLATFORM", "xcb;wayland")   # same choice as the wrapper
         try:
-            subprocess.Popen([sys.executable, "-m", "bc250_gui.overlay", "--demo"],
+            subprocess.Popen([sys.executable, "-m", "bazzite_check.overlay", "--demo"],
                              env=env, cwd=str(ROOT))
         except OSError:
             pass

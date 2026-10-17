@@ -2,4 +2,4 @@
 .DS_Store
 __pycache__/
 *.pyc
-bc250_gui/_build_info.py
+bazzite_check/_build_info.py

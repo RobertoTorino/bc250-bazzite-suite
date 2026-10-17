@@ -39,10 +39,10 @@ SRC=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 if [ -d "$SRC/bc250_core" ]; then CORE_SRC="$SRC/bc250_core"; else CORE_SRC="$SRC/../core/bc250_core"; fi
 BT_SRC=""
 if [ -d "$SRC/bundled" ]; then
-    BT_SRC=$(find "$SRC/bundled" -mindepth 1 -maxdepth 1 -type d -name 'bazzite-test-v*' | sort -V | tail -1)
+    BT_SRC=$(find "$SRC/bundled" -mindepth 1 -maxdepth 1 -type d -name 'check-v*' | sort -V | tail -1)
 fi
 BT_TAG=$(basename "${BT_SRC:-local}")
-[ -n "$BT_SRC" ] || BT_SRC="$SRC/../apps/bazzite-test"
+[ -n "$BT_SRC" ] || BT_SRC="$SRC/../apps/check"
 
 info() { printf '\033[1;35m==>\033[0m %s\n' "$1"; }
 die()  { printf '\033[1;31mERROR:\033[0m %s\n' "$1" >&2; exit 1; }
@@ -359,7 +359,7 @@ $DESKTOP_SHORTCUT || bt_args+=(--no-desktop-shortcut)
 bash "$BT_SRC/install.sh" "${bt_args[@]}"
 # Tell the portal which Bazzite Test it installed ("local" from a checkout), as it does for apps it installs.
 mkdir -p "$STATE_DIR"
-python3 - "$STATE_DIR/installed.json" "bazzite-test" "$BT_TAG" <<'PY'
+python3 - "$STATE_DIR/installed.json" "check" "$BT_TAG" <<'PY'
 import json, sys
 from pathlib import Path
 path, key, tag = Path(sys.argv[1]), sys.argv[2], sys.argv[3]

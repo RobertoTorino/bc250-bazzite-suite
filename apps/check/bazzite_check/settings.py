@@ -77,7 +77,7 @@ def build_date() -> str:
                 return out
         except (OSError, subprocess.SubprocessError):
             pass
-    newest = max((p.stat().st_mtime for p in (ROOT / "bc250_gui").glob("*.py")), default=0)
+    newest = max((p.stat().st_mtime for p in (ROOT / "bazzite_check").glob("*.py")), default=0)
     return datetime.fromtimestamp(newest).strftime("%Y-%m-%d %H:%M") if newest else "unknown"
 
 

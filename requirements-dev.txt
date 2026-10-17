@@ -3,7 +3,7 @@
 -r core/requirements-dev.txt
 -r portal/requirements-dev.txt
 -r tools/requirements-dev.txt
--r apps/bazzite-test/requirements-dev.txt
+-r apps/check/requirements-dev.txt
 -r apps/governor/requirements-dev.txt
 -r apps/helixsr/requirements-dev.txt
 -r apps/persistent-acpi/requirements-dev.txt

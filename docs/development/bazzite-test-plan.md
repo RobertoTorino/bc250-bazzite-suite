@@ -5,11 +5,11 @@
 ### Start the GUI: 
 With new requirements:
 ```bash
-python3 -m venv python && python/bin/pip install -r requirements.txt && python/bin/python -m bc250_gui  
+python3 -m venv python && python/bin/pip install -r requirements.txt && python/bin/python -m bazzite_check  
 ```    
 Without new requirements:
 ```bash
-python3 -m venv python && python/bin/python -m bc250_gui  
+python3 -m venv python && python/bin/python -m bazzite_check  
 ```       
 
 ---

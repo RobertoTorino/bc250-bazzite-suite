@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Development stand-in for test-bazzite.sh: same options and output format, no system access.
 # Lets the GUI be developed on machines that are not a BC-250 (e.g. macOS).
-#   python -m bc250_gui --script development/tools/fake-test-bazzite.sh --no-sudo
+#   python -m bazzite_check --script development/tools/fake-test-bazzite.sh --no-sudo
 # Replay a real report (/var/log/bc250-bazzite-test/bc250-test-results-*.log) instead of simulated output:
-#   BC250_REPLAY=path/to/report.log python -m bc250_gui --script development/tools/fake-test-bazzite.sh --no-sudo
+#   BC250_REPLAY=path/to/report.log python -m bazzite_check --script development/tools/fake-test-bazzite.sh --no-sudo
 
 ONLY=""
 STRESS_MODE=false

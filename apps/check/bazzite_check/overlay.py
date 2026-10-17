@@ -3,8 +3,8 @@
 
 Run as a child process by gamemon when "Show overlay" is on for the game:
 
-    <python> -m bc250_gui.overlay            # reads samples as JSON lines from stdin
-    <python> -m bc250_gui.overlay --demo     # sample numbers for ~45 s (the GUI's "Test overlay")
+    <python> -m bazzite_check.overlay            # reads samples as JSON lines from stdin
+    <python> -m bazzite_check.overlay --demo     # sample numbers for ~45 s (the GUI's "Test overlay")
 
 It reads one JSON object per line from stdin (the same fields as the session CSV) and shows them in a
 small translucent rounded box with a thin purple border. The window is

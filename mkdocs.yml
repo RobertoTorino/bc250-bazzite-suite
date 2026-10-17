@@ -58,7 +58,7 @@ nav:
   - Portal: portal.md
   - Apps:
       - apps/index.md
-      - BC-250 Bazzite Test: apps/bazzite-test.md
+      - BC-250 Bazzite Test: apps/check.md
       - BC-250 GPU Governor Manager: apps/governor.md
       - HelixSR Manager: apps/helixsr.md
       - BC-250 CU Bisect: apps/cu-bisect.md

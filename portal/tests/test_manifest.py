@@ -17,10 +17,10 @@ uninstall = ["bash b.sh"]
 detect = ["~/.local/bin/x"]
 launch = [["Bisect", "~/.local/bin/x"], ["Unlock", "~/.local/bin/y"]]
 
-[apps.bazzite-test]
+[apps.check]
 name = "BT"
 summary = "s"
-tag = "bazzite-test-v0.1.0"
+tag = "check-v0.1.0"
 required = true
 install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
@@ -30,7 +30,7 @@ detect = ["~/.local/bin/bt"]
 
 def test_required_first_then_file_order():
     entries = parse(MINIMAL)
-    assert [e.key for e in entries] == ["bazzite-test", "cu-bisect"]
+    assert [e.key for e in entries] == ["check", "cu-bisect"]
     cu = entries[1]
     assert (cu.version, cu.asset) == ("1.2.3", "cu-bisect-v1.2.3.tar.gz")
     assert cu.launch == (("Bisect", "~/.local/bin/x"), ("Unlock", "~/.local/bin/y"))
@@ -90,7 +90,7 @@ def test_bad_sha_and_toml():
 
 def test_shipped_manifest_lists_every_app_with_bazzite_test_first():
     entries = load(MANIFEST)
-    assert entries[0].key == "bazzite-test" and entries[0].required
+    assert entries[0].key == "check" and entries[0].required
     assert sum(e.required for e in entries) == 1
     apps = {p.name for p in (SUITE / "apps").iterdir() if p.is_dir() and not (p / ".standalone").is_file()}
     assert {e.key for e in entries} == apps
@@ -107,7 +107,7 @@ def test_shipped_manifest_install_scripts_exist():
 def test_board_changing_apps_are_marked():
     marked = {e.key for e in load(MANIFEST) if e.changes_board}
     assert {"cu-bisect", "cores-bisect", "gpu-oc-bisect", "persistent-acpi", "governor"} <= marked
-    assert "bazzite-test" not in marked
+    assert "check" not in marked
 
 
 CHECKOUT = """
@@ -126,7 +126,7 @@ def test_checkout_tables_are_development_apps_in_a_folder():
     assert gui.folder == "apps/gui"                                         # the default
     (moved,) = parse_checkout(CHECKOUT.replace('summary = "s"', 'summary = "s"\nfolder = "tools/x/gui"'))
     assert moved.folder == "tools/x/gui"
-    assert [e.key for e in parse(MINIMAL + CHECKOUT)] == ["bazzite-test", "cu-bisect"]   # never pinned
+    assert [e.key for e in parse(MINIMAL + CHECKOUT)] == ["check", "cu-bisect"]   # never pinned
 
 
 @pytest.mark.parametrize("extra, message", [

@@ -14,10 +14,10 @@ cm = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(cm)
 
 BASE = """
-[apps.bazzite-test]
+[apps.check]
 name = "BT"
 summary = "s"
-tag = "bazzite-test-v1.2.3"
+tag = "check-v1.2.3"
 required = true
 install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
@@ -65,8 +65,8 @@ def test_portal_bump_at_least_app_bump(app_tag, portal_new, ok):
 
 
 def test_largest_app_bump_counts():
-    new = BASE.replace("governor-v0.4.0", "governor-v0.4.1").replace("bazzite-test-v1.2.3", "bazzite-test-v1.3.0")
-    assert errors(new, "0.1.0", "0.1.1")                    # minor needed because of bazzite-test
+    new = BASE.replace("governor-v0.4.0", "governor-v0.4.1").replace("check-v1.2.3", "check-v1.3.0")
+    assert errors(new, "0.1.0", "0.1.1")                    # minor needed because of check
     assert errors(new, "0.1.0", "0.2.0") == []
 
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Packaging step: record the build date (SOURCE_DATE_EPOCH when set, else now) and the SHA-256 of the test engine
-in bc250_gui/_build_info.py.
+in bazzite_check/_build_info.py.
 
 With that file present the app runs as a release build: before every run it refuses a test engine that
 does not have exactly this checksum, or that is not owned by root and writable by root only.
@@ -18,7 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 ENGINE = ROOT / "test-bazzite.sh"
-TARGET = ROOT / "bc250_gui" / "_build_info.py"
+TARGET = ROOT / "bazzite_check" / "_build_info.py"
 
 
 def main() -> int:

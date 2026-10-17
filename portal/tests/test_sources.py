@@ -118,12 +118,12 @@ def test_safe_extract_refuses_links_out(tmp_path):
 
 def test_checkout_stages_app_with_core(tmp_path):
     sources = Sources(tmp_path / "work", checkout=SUITE)
-    bt = AppEntry(key="bazzite-test", name="BT", summary="s", tag="bazzite-test-v0.1.0", install=("x",),
+    bt = AppEntry(key="check", name="BT", summary="s", tag="check-v0.1.0", install=("x",),
                   uninstall=("y",), detect=("z",))
     folder = sources.prepare(bt)
-    assert folder.name == "local-bazzite-test"
-    assert (folder / "install.sh").is_file() and (folder / "bc250_gui" / "__init__.py").is_file()
-    assert (folder / "bc250_core" / "widgets.py").is_file()                 # bundled: bazzite-test uses core
+    assert folder.name == "local-check"
+    assert (folder / "install.sh").is_file() and (folder / "bazzite_check" / "__init__.py").is_file()
+    assert (folder / "bc250_core" / "widgets.py").is_file()                 # bundled: check uses core
     assert not (folder / "bc250_core" / "__pycache__").exists()
     acpi = AppEntry(key="persistent-acpi", name="A", summary="s", tag="persistent-acpi-v0.1.0", install=("x",),
                     uninstall=("y",), detect=("z",))

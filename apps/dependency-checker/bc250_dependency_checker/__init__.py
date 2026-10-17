@@ -3,7 +3,7 @@
 
 APP_NAME = "Dependency Checker"
 APP_ID = "bc250-portal-dependency-checker"
-__version__ = "0.4.2"
+__version__ = "0.4.3"
 
 from pathlib import Path
 

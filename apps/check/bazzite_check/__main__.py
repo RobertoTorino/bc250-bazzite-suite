@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Entry point: python -m bc250_gui [--script PATH] [--no-sudo]"""
+"""Entry point: python -m bazzite_check [--script PATH] [--no-sudo]"""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ DEFAULT_SCRIPT = ROOT / "test-bazzite.sh"
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(prog="bc250_gui", description=f"{APP_NAME} {__version__}")
+    parser = argparse.ArgumentParser(prog="bazzite_check", description=f"{APP_NAME} {__version__}")
     parser.add_argument("--script", default=str(DEFAULT_SCRIPT), help="path to test-bazzite.sh")
     parser.add_argument("--no-sudo", action="store_true",
                         help="run the script without sudo (development with development/tools/fake-test-bazzite.sh)")

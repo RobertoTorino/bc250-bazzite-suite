@@ -1,3 +1,19 @@
+Changelog: 17-10-2026 09:41:48
+
+Release 0.3.0.
+
+Changelog: 17-10-2026 09:27:13
+
+Fixed. The app's folder in the suite is apps/check (was apps/bazzite-test) and its package is bazzite_check (was
+bc250_gui): the suite's naming convention (owner, 17-10-2026), a short folder name and the package named after
+the app without the BC-250 prefix; the short name is check rather than test, so that no folder is called test.
+With the folder go its key in the portal, its chapter of the wiki (apps/check/), its installer test and its
+release tags: check-v<x.y.z> from the next release on, which is also what the app's update check looks for. The
+installed app keeps its name, its launcher bc250-bazzite-test, its folder under /opt, its settings, its results
+and its logs; the portal moves its record of the installed copy to the new key. The launch option the In-Game page
+hands out for Steam names the new package (-m bazzite_check.gamemon); one copied before this names the old one and
+is to be copied again (nobody runs one yet, owner, 17-10-2026).
+
 Changelog: 17-10-2026 05:35:55
 
 Release 0.3.0.

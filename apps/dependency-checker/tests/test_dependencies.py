@@ -71,7 +71,7 @@ def test_catalog_lists_python_and_external_dependencies():
     assert {dependency.name for dependency in dependencies} == {
         "PyQt6", "PyQt6-Charts", "obsws-python", "dbus-next", "paramiko", "cryptography"}
     pyqt = next(dependency for dependency in dependencies if dependency.name == "PyQt6")
-    assert {source.owner for source in pyqt.sources} >= {"portal", "core", "bazzite-test", "dependency-checker"}
+    assert {source.owner for source in pyqt.sources} >= {"portal", "core", "check", "dependency-checker"}
     assert {tool.name for tool in tools} >= {"flashrom", "pkexec", "umr", "podman"}
     assert next(tool for tool in tools if tool.name == "flashrom").probe == "flashrom-internal"
     assert all(item.description for item in [*dependencies, *tools])
@@ -123,7 +123,7 @@ def test_every_tool_names_its_need_and_root():
     assert {name for name, tool in tools.items() if tool.root} == {
         "flashrom", "umr", "smartctl", "fio", "setpci", "ras-mc-ctl", "grub2-mkconfig"}
     assert tool_need(tools["stress-ng"], {"cores-bisect"}) == "required"
-    assert tool_need(tools["stress-ng"], {"bazzite-test"}) == "optional"
+    assert tool_need(tools["stress-ng"], {"check"}) == "optional"
     assert tool_need(tools["stress-ng"], {"governor"}) == ""
     # Bazzite Test runs Ookla's speedtest, else speedtest-cli: one entry, either one will do.
     assert tools["speedtest"].executables == ("speedtest", "speedtest-cli")
@@ -138,7 +138,7 @@ def test_external_tool_catalog_covers_app_specific_tools():
     assert "internal programmer" in flashrom.sources[0].usage
     assert tools["pkexec"].sources[0].owner == "bios-reader"
     assert tools["cyan-skillfish-governor-smu"].probe == "path"
-    assert "bazzite-test" in {source.owner for source in tools["stress-ng"].sources}
+    assert "check" in {source.owner for source in tools["stress-ng"].sources}
     assert "cores-bisect" in {source.owner for source in tools["stress-ng"].sources}
     assert {"mangohud", "vainfo", "clinfo", "rocminfo", "ujust", "grub2-mkconfig"} <= set(tools)
 
@@ -190,7 +190,7 @@ def test_installed_environments_follow_each_launcher(tmp_path):
     _launcher(tmp_path / "bin" / "bisect", tmp_path / "bisect" / "venv")
     _launcher(tmp_path / "bin" / "unlock", tmp_path / "unlock" / "venv")
     apps = {
-        "bazzite-test": App("bazzite-test", "Test", (str(tmp_path / "bin" / "test"),)),
+        "check": App("check", "Test", (str(tmp_path / "bin" / "test"),)),
         "demo-tool": App("demo-tool", "Demo", (str(tmp_path / "bin" / "demo"),)),
         "cu-bisect": App("cu-bisect", "CU", (str(tmp_path / "bin" / "bisect"), str(tmp_path / "bin" / "unlock"))),
         "governor": App("governor", "Governor", (str(tmp_path / "bin" / "governor"),)),
@@ -198,7 +198,7 @@ def test_installed_environments_follow_each_launcher(tmp_path):
     }
     environments = installed_environments(apps)
     assert environments == {
-        "bazzite-test": (shared,),
+        "check": (shared,),
         "demo-tool": (own,),
         "cu-bisect": (tmp_path / "bisect" / "venv", tmp_path / "unlock" / "venv"),
     }
@@ -215,7 +215,7 @@ def test_packages_are_checked_in_each_app_environment(tmp_path):
     dependencies = {dependency.name: dependency for dependency in load_catalog(CATALOG)}
     shared = _venv(tmp_path / "shared", {"PyQt6": "6.11.0", "PyQt6-Charts": "6.11.0"})
     demo = _venv(tmp_path / "demo", {"PyQt6": "6.11.0", "obsws-python": "1.8.0"})
-    environments = {"portal": (shared,), "bazzite-test": (shared,), "demo-tool": (demo,)}
+    environments = {"portal": (shared,), "check": (shared,), "demo-tool": (demo,)}
 
     results = {result.dependency.name: result for result in check_dependencies(
         list(dependencies.values()), "test-agent", environments, get_latest=lambda name, _agent: {
@@ -225,7 +225,7 @@ def test_packages_are_checked_in_each_app_environment(tmp_path):
 
     pyqt = results["PyQt6"]
     assert [(Path(env.environment), env.owners, env.version) for env in pyqt.environments] == [
-        (shared, ("portal", "bazzite-test"), "6.11.0"), (demo, ("demo-tool",), "6.11.0")]
+        (shared, ("portal", "check"), "6.11.0"), (demo, ("demo-tool",), "6.11.0")]
     assert pyqt.update_available and not pyqt.missing
     assert results["PyQt6-Charts"].needed and not results["PyQt6-Charts"].update_available
     assert results["obsws-python"].environments[0].version == "1.8.0" and not results["obsws-python"].missing
@@ -234,7 +234,7 @@ def test_packages_are_checked_in_each_app_environment(tmp_path):
 
 def test_packages_of_apps_that_are_not_installed_are_not_needed():
     dependency = next(dependency for dependency in load_catalog(CATALOG) if dependency.name == "obsws-python")
-    result = check_dependencies([dependency], "agent", {"bazzite-test": (Path("/x"),)},
+    result = check_dependencies([dependency], "agent", {"check": (Path("/x"),)},
                                 get_versions=lambda _venv: {}, get_latest=lambda *_args: "1.8.0",
                                 get_vulnerabilities=NO_CVES)[0]
     assert not result.needed and not result.missing and not result.update_available

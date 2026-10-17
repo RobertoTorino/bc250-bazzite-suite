@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Manual viewer: renders the app's chapter of the suite manual (and the other .md files it links to) inside the app.
 
-A release ships the chapter as MANUAL.md (tools/stage_app.py copies docs/apps/bazzite-test.md); in the checkout
+A release ships the chapter as MANUAL.md (tools/stage_app.py copies docs/apps/check.md); in the checkout
 the chapter itself is read. Links to other chapters of the manual open the published manual in the browser."""
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QTextBrowser, QVBoxLayout,
 from bc250_core import SUITE_MANUAL_URL
 
 DOCS_DIR = Path(__file__).resolve().parent.parent
-MANUAL_PAGE = "apps/bazzite-test.md"                # the chapter, under the suite's docs/
+MANUAL_PAGE = "apps/check.md"                # the chapter, under the suite's docs/
 _ATTR_LIST = re.compile(r"\{\s*[.#][^}]*\}")         # MkDocs' { .class } after an image
 
 
@@ -32,7 +32,7 @@ def manual_path(app_dir: Path = DOCS_DIR) -> Path:
 def manual_markdown(text: str, app_dir: Path = DOCS_DIR) -> str:
     """The chapter as Qt can show it: no MkDocs attribute lists, and its pictures from the app's images/."""
     text = _ATTR_LIST.sub("", text)
-    return text.replace("](../assets/bazzite-test/", f"]({(app_dir / 'images').as_posix()}/")
+    return text.replace("](../assets/check/", f"]({(app_dir / 'images').as_posix()}/")
 
 
 def online_url(link: str) -> str:

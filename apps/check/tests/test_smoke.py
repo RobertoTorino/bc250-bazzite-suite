@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""bazzite-test on bc250_core: the app starts, its settings stay in the same .ini file, and its widgets are core's.
+"""check on bc250_core: the app starts, its settings stay in the same .ini file, and its widgets are core's.
 
 No test runs: the window is built with the fake engine (development/tools/fake-test-bazzite.sh) and closed."""
 
@@ -14,14 +14,14 @@ ENGINE = Path(__file__).resolve().parents[1] / "development" / "tools" / "fake-t
 
 
 def test_constants_come_from_core():
-    from bc250_gui import INFO, __version__, dashboard, widgets
-    assert (INFO.app_id, INFO.version, INFO.tag_prefix) == ("bc250-bazzite-test", __version__, "bazzite-test-v")
+    from bazzite_check import INFO, __version__, dashboard, widgets
+    assert (INFO.app_id, INFO.version, INFO.tag_prefix) == ("bc250-bazzite-test", __version__, "check-v")
     assert dashboard.ACCENT == theme.ACCENT and dashboard.header_font is theme.header_font
     assert widgets.RoundedToolTip is core_widgets.RoundedToolTip and widgets.ClickableLogo is core_widgets.ClickableLogo
 
 
 def test_settings_file_unchanged(sandbox):
-    from bc250_gui.settings import AppSettings
+    from bazzite_check.settings import AppSettings
     settings = AppSettings()
     assert Path(settings.qsettings.fileName()).name == "bc250-bazzite-test.ini"
     assert settings.get("run/stress_duration") == 120
@@ -35,15 +35,15 @@ def test_main_window_builds(sandbox, qapp):
     from PyQt6.QtCore import QCoreApplication, QEvent
 
     from bc250_core.app import create_app
-    from bc250_gui import INFO
-    from bc250_gui.main_window import MainWindow
-    from bc250_gui.runner import TestRunner
+    from bazzite_check import INFO
+    from bazzite_check.main_window import MainWindow
+    from bazzite_check.runner import TestRunner
     create_app(INFO)
     window = MainWindow(TestRunner(str(ENGINE), use_sudo=False))
     window.show()
     qapp.processEvents()                        # runs the deferred history load
     assert window.windowTitle() == INFO.display_name
-    from bc250_gui.readme import ReadmeView
+    from bazzite_check.readme import ReadmeView
     rows = [window.nav.item(i).text() for i in range(window.nav.count())]
     assert "Help" in rows and "Manual" not in rows                     # the chapter of the manual, as Help
     assert isinstance(window.stack.widget(rows.index("Help")), ReadmeView)
@@ -61,20 +61,20 @@ def test_main_window_builds(sandbox, qapp):
 
 
 def test_manual_is_the_chapter(tmp_path):
-    from bc250_gui import readme
-    assert readme.manual_path() == readme.DOCS_DIR.parents[1] / "docs" / "apps" / "bazzite-test.md"   # checkout
+    from bazzite_check import readme
+    assert readme.manual_path() == readme.DOCS_DIR.parents[1] / "docs" / "apps" / "check.md"   # checkout
     (tmp_path / "MANUAL.md").write_text("# shipped\n")                                               # release
     assert readme.manual_path(tmp_path) == tmp_path / "MANUAL.md"
 
 
 def test_manual_markdown_for_qt(tmp_path):
-    from bc250_gui import readme
-    text = readme.manual_markdown("![logo](../assets/bazzite-test/x.png){ .app-logo }\n", tmp_path)
+    from bazzite_check import readme
+    text = readme.manual_markdown("![logo](../assets/check/x.png){ .app-logo }\n", tmp_path)
     assert text == f"![logo]({(tmp_path / 'images').as_posix()}/x.png)\n"
 
 
 def test_other_chapters_open_online():
-    from bc250_gui import readme
+    from bazzite_check import readme
     base = readme.SUITE_MANUAL_URL
     assert readme.online_url("cu-bisect.md") == base + "apps/cu-bisect/"
     assert readme.online_url("../SECURITY.md#verifying-a-download") == base + "SECURITY/#verifying-a-download"
@@ -83,7 +83,7 @@ def test_other_chapters_open_online():
 
 
 def test_manual_view_shows_the_chapter(qapp):
-    from bc250_gui.readme import ReadmeView
+    from bazzite_check.readme import ReadmeView
     view = ReadmeView()
     assert "Read-only diagnostics" in view.browser.toPlainText() and "{ .app-logo }" not in view.browser.toPlainText()
     view.close()
@@ -92,7 +92,7 @@ def test_manual_view_shows_the_chapter(qapp):
 def test_results_preview_shows_image_and_emits_open_paths(qapp, tmp_path):
     from PyQt6.QtGui import QPixmap
 
-    from bc250_gui.dashboard import ResultsPreview
+    from bazzite_check.dashboard import ResultsPreview
 
     image_path = tmp_path / "results.png"
     pixmap = QPixmap(24, 16)
@@ -119,9 +119,9 @@ def test_print_results_opens_saved_png_and_shows_preview(sandbox, qapp, tmp_path
     from PyQt6.QtWidgets import QFileDialog
 
     from bc250_core.app import create_app
-    from bc250_gui import INFO
-    from bc250_gui.main_window import MainWindow
-    from bc250_gui.runner import TestRunner
+    from bazzite_check import INFO
+    from bazzite_check.main_window import MainWindow
+    from bazzite_check.runner import TestRunner
 
     create_app(INFO)
     window = MainWindow(TestRunner(str(ENGINE), use_sudo=False))

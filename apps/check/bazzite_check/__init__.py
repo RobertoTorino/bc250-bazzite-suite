@@ -18,7 +18,7 @@ DISPLAY_NAME = f"{APP_NAME} {__version__}"
 REPO_URL = SUITE_REPO_URL
 
 # Settings stay where they always were: ~/.config/bc250-bazzite-test/bc250-bazzite-test.ini
-INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="bazzite-test-v",
+INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="check-v",
                settings_ini=True)
 
 __all__ = ["APP_ID", "APP_NAME", "DISPLAY_NAME", "INFO", "LOGO_PATH", "REPO_URL", "ROOT", "WINDOW_ICON_PATH",

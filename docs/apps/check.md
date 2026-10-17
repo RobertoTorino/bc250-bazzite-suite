@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![BC-250 Bazzite Test](../assets/bazzite-test/bc250-bazzite-test.png){ .app-logo }
+![BC-250 Bazzite Test](../assets/check/bc250-bazzite-test.png){ .app-logo }
 
 # BC-250 Bazzite Test
 
@@ -17,7 +17,7 @@ writes one temporary file and removes it.
 
 BC-250 Bazzite Test is part of the [BC250 Bazzite Suite](https://github.com/RobertoTorino/bc250-bazzite-suite) and is always installed with it: install
 the suite's **portal** (see [Install](../install.md)), and this app comes along. It can also be installed on its own from
-its release on the suite's [Releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases) page: `bazzite-test-v<version>.tar.gz` with a
+its release on the suite's [Releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases) page: `check-v<version>.tar.gz` with a
 `SHA256SUMS` file. To be notified of new releases, click **Watch → Custom → Releases** on the suite page.
 
 Nothing is layered with `rpm-ostree` for the app itself: the test engine goes to `/opt`, the GUI's
@@ -33,8 +33,8 @@ sha256sum --check --ignore-missing SHA256SUMS
 only to copy the app to `/opt`):
 
 ```shell
-tar -xzf bazzite-test-v*.tar.gz
-cd bazzite-test-v*/
+tar -xzf check-v*.tar.gz
+cd check-v*/
 ./install.sh
 ```
 
@@ -43,7 +43,7 @@ cd bazzite-test-v*/
 
 What `install.sh` does:
 
-* copies the app, with the `bc250_core` it was released with, to `/opt/bc250-bazzite-test-v<version>`
+* copies the app, with the `bc250_core` it was released with, to `/opt/bc250-check-v<version>`
   (root-owned), points `/opt/bc250-bazzite-test` at it and removes older versions;
 * uses the suite's shared venv `~/.local/share/bc250-bazzite-suite/venv` with PyQt6 (created on first use;
   the wheels bundle Qt, nothing else is needed; ~100 MB download the first time). The venv is removed with
@@ -72,7 +72,7 @@ It replaces the old version; your settings and the history are kept — they liv
 
 ## Reporting problems
 
-Open an [issue](https://github.com/RobertoTorino/bc250-bazzite-suite/issues/new/choose) (app: bazzite-test) and add the
+Open an [issue](https://github.com/RobertoTorino/bc250-bazzite-suite/issues/new/choose) (app: check) and add the
 app version (*Settings → About*) and the full report of the run (*Show Logs*). The report contains details
 about your system: read it before you post it. Security problems: see [SECURITY.md](../SECURITY.md).
 
@@ -950,7 +950,7 @@ BC-250 Bazzite Test is free software: you can redistribute it and/or modify it u
 later version. It is distributed in the hope that it will be useful, but **without any warranty**; without
 even the implied warranty of merchantability or fitness for a particular purpose.
 
-The release tarball `bazzite-test-v<version>.tar.gz` is the complete source of that release (Python and shell,
+The release tarball `check-v<version>.tar.gz` is the complete source of that release (Python and shell,
 nothing is compiled); GitHub also attaches the source of the whole suite at that tag.
 
 Third-party components: Qt 6 (LGPL v3), PyQt6 (GPL v3), the Inter font (SIL Open Font License 1.1).

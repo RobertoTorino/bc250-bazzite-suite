@@ -12,7 +12,7 @@
 #   short           optional: the name on the tile (default: name without its "BC-250 " or "BC250 " prefix)
 #   tag             the pinned release: <name>-v<x.y.z>; asset <tag>.tar.gz with SHA256SUMS on the suite release
 #   sha256          of <tag>.tar.gz; filled in when the tag is released (empty: checked against SHA256SUMS only)
-#   required        installed with the portal and always listed first (only bazzite-test)
+#   required        installed with the portal and always listed first (only check)
 #   changes_board   true: the portal warns before installing or opening it
 #   development     true: listed under "Development only", apart from the apps for using the board
 #   section         optional: "gaming" lists it under "Gaming" (not for the required app nor development apps)
@@ -27,11 +27,11 @@
 # it (its install and uninstall run in apps/<name> of that checkout). Without a checkout its tile is greyed. The same fields as above, without tag, sha256 and
 # required, plus an optional folder (default apps/<name>) for one that lives elsewhere in the checkout.
 
-[apps.bazzite-test]
+[apps.check]
 name = "BC-250 Bazzite Test"
 summary = "Read-only diagnostics, stress test and benchmarks. Always installed."
-tag = "bazzite-test-v0.3.0"
-sha256 = "cf1404beaccaef441d6e0c3b1c0da190d0f511eece9fc1fde111c83633744826"
+tag = "check-v0.3.0"
+sha256 = ""
 required = true
 changes_board = false
 install = ["bash install.sh"]

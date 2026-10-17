@@ -25,7 +25,7 @@ hide:
 <div class="home-card" markdown>
 #### :material-stethoscope: Diagnostics
 
-[Bazzite Test](apps/bazzite-test.md) checks, stress-tests and benchmarks the board,
+[Bazzite Test](apps/check.md) checks, stress-tests and benchmarks the board,
 [BIOS Reader](apps/bios-reader.md) shows every BIOS setting, hidden menus too, and
 [System Overlay](apps/system-overlay.md) keeps CPU, GPU, fan and temperatures on top,
 [Fan Control](apps/fan-control.md) guards the board against overheating, and

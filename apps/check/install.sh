@@ -35,7 +35,7 @@ DESKTOP_ICON="$DESKTOP_DIR/$APP_ID.desktop"
 LINK="$OPT_DIR/$APP_ID"
 
 SRC=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
-# bc250_core: bundled next to bc250_gui in a release; in the suite checkout it lives in core/.
+# bc250_core: bundled next to bazzite_check in a release; in the suite checkout it lives in core/.
 if [ -d "$SRC/bc250_core" ]; then CORE_SRC="$SRC/bc250_core"; else CORE_SRC="$SRC/../../core/bc250_core"; fi
 
 info() { printf '\033[1;35m==>\033[0m %s\n' "$1"; }
@@ -93,15 +93,15 @@ fi
 
 # --- Checks ------------------------------------------------------------------------------------
 [ "$(uname -s)" = Linux ] || die "This app runs on Linux (Bazzite) only."
-for f in test-bazzite.sh requirements.txt bc250_gui/__init__.py "images/$APP_ID.png"; do
+for f in test-bazzite.sh requirements.txt bazzite_check/__init__.py "images/$APP_ID.png"; do
     [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from the extracted release folder."
 done
 [ -f "$CORE_SRC/__init__.py" ] || die "bc250_core is missing: run install.sh from the extracted release folder."
 CORE_SRC=$(cd "$CORE_SRC" && pwd -P)
-VERSION=$(sed -n 's/^__version__ = "\([0-9.]*\)"$/\1/p' "$SRC/bc250_gui/__init__.py")
-[ -n "$VERSION" ] || die "Could not read the version from bc250_gui/__init__.py."
-[ -f "$SRC/bc250_gui/_build_info.py" ] ||
-    info "Note: this is not a release build (no bc250_gui/_build_info.py); the engine is not hash-checked."
+VERSION=$(sed -n 's/^__version__ = "\([0-9.]*\)"$/\1/p' "$SRC/bazzite_check/__init__.py")
+[ -n "$VERSION" ] || die "Could not read the version from bazzite_check/__init__.py."
+[ -f "$SRC/bazzite_check/_build_info.py" ] ||
+    info "Note: this is not a release build (no bazzite_check/_build_info.py); the engine is not hash-checked."
 command -v python3 >/dev/null 2>&1 || die "python3 is not installed."
 python3 -c 'import sys; sys.exit(sys.version_info < (3, 10))' || die "Python 3.10 or newer is needed."
 python3 -c 'import venv, ensurepip' 2>/dev/null || die "python3 has no venv/ensurepip module."
@@ -125,8 +125,8 @@ else
         (cd "$CORE_SRC" && tar --exclude='__pycache__' -cf - .) |
             as_root tar -xf - -C "$STAGE/bc250_core" --no-same-owner
     fi
-    if [ ! -f "$SRC/MANUAL.md" ] && [ -f "$SRC/../../docs/apps/bazzite-test.md" ]; then   # likewise its manual
-        as_root cp "$SRC/../../docs/apps/bazzite-test.md" "$STAGE/MANUAL.md"
+    if [ ! -f "$SRC/MANUAL.md" ] && [ -f "$SRC/../../docs/apps/check.md" ]; then   # likewise its manual
+        as_root cp "$SRC/../../docs/apps/check.md" "$STAGE/MANUAL.md"
     fi
     as_root chown -R root:root "$STAGE"
     as_root find "$STAGE" -type d -exec chmod 755 {} +
@@ -166,9 +166,9 @@ mkdir -p "$(dirname "$LAUNCHER")"
 cat >"$LAUNCHER" <<EOF
 #!/usr/bin/env bash
 # $APP_NAME launcher, written by install.sh. Starts from the root-owned app folder, so python -m
-# never picks up a bc250_gui folder from the current directory, and imports the bc250_core bundled there.
+# never picks up a bazzite_check folder from the current directory, and imports the bc250_core bundled there.
 cd "$LINK" || { echo "$APP_NAME is not installed in $LINK; run install.sh again." >&2; exit 1; }
-exec "$VENV/bin/python" -m bc250_gui "\$@"
+exec "$VENV/bin/python" -m bazzite_check "\$@"
 EOF
 chmod 755 "$LAUNCHER"
 

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The portal window: three sections of tiles, each folding away: BC250 Bazzite tools (bazzite-test fixed in first
+"""The portal window: three sections of tiles, each folding away: BC250 Bazzite tools (check fixed in first
 place, then one tile per optional app; open until closed), Gaming (open until closed) and Development only (opens
 on request).
 
@@ -154,7 +154,7 @@ def still_icon(pixmap: QPixmap) -> QIcon:
 class AppTile(QFrame):
     """One app, compact: its short name, its icon (click: open; hover: what it does; grey: not installed; red dot:
     an update; red circular arrow: a reinstall is needed), "changes the board" under it when so, and beside it the
-    symbol buttons: Install and Uninstall, or only Install (which reinstalls it) for bazzite-test."""
+    symbol buttons: Install and Uninstall, or only Install (which reinstalls it) for check."""
 
     install_clicked = pyqtSignal(object)
     uninstall_clicked = pyqtSignal(object)
@@ -242,7 +242,7 @@ class AppTile(QFrame):
         self.uninstall_button.setIcon(glyphs.uninstall(self._ink()))
         self.uninstall_button.setToolTip(f"Uninstall {entry.name}")
         self.uninstall_button.clicked.connect(lambda: self.uninstall_clicked.emit(self.entry))
-        # bazzite-test is part of the suite: it goes when the portal is uninstalled (packaging/install.sh --uninstall).
+        # check is part of the suite: it goes when the portal is uninstalled (packaging/install.sh --uninstall).
         self.uninstall_button.setVisible(not entry.required)
         buttons.addWidget(self.install_button)
         buttons.addWidget(self.uninstall_button)
@@ -507,7 +507,7 @@ class MainWindow(QMainWindow):
         return max(1, (width + TILE_SPACING) // (TILE_WIDTH + TILE_SPACING))
 
     def reflow(self) -> None:
-        """The tiles in file order (bazzite-test first), left to right and then down, in as many columns as fit;
+        """The tiles in file order (check first), left to right and then down, in as many columns as fit;
         the gaming and the development apps likewise in their own sections."""
         # The scroll area's width less a scroll bar, whether one shows or not: a bar that comes and goes cannot
         # switch the layout back and forth. The sections are the narrower (their frames), so they decide.

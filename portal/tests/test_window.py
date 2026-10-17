@@ -58,8 +58,8 @@ def wait_for(predicate, ms=5000):
 
 def test_bazzite_test_first_without_uninstall(window):
     keys = list(window.cards)
-    assert keys[0] == "bazzite-test"
-    assert window.cards["bazzite-test"].uninstall_button.isHidden()
+    assert keys[0] == "check"
+    assert window.cards["check"].uninstall_button.isHidden()
     assert not window.cards["governor"].uninstall_button.isHidden()
     assert not window.cards["persistent-acpi"].open_button.isHidden()
     assert window.cards["cu-bisect"].open_button.menu() is not None        # Bisect / Unlock
@@ -169,14 +169,14 @@ def _same_icon(button, icon) -> bool:
 
 def test_bazzite_test_has_only_reinstall(window, home):
     """With the arrow into a tray, as every app (owner, 14-10-2026), and the version it reinstalls."""
-    card = window.cards["bazzite-test"]
+    card = window.cards["check"]
     (home / ".local" / "bin" / "bc250-bazzite-test").write_text("#!/bin/sh\n")
-    window.records.set("bazzite-test", card.entry.tag)
+    window.records.set("check", card.entry.tag)
     window.refresh()
     assert card.install_button.toolTip() == f"Reinstall BC-250 Bazzite Test v{card.entry.version}"
     assert card.uninstall_button.isHidden()
     assert _same_icon(card.install_button, mw.glyphs.install(card._ink()))
-    window.records.set("bazzite-test", "")                                      # not installed by the portal
+    window.records.set("check", "")                                      # not installed by the portal
     window.refresh()
     assert _same_icon(card.install_button, mw.glyphs.reinstall(mw.RED))
 
@@ -194,9 +194,9 @@ def test_no_warning_for_bazzite_test(window, launched, monkeypatch):
     window.install(window.entries[0])
     assert wait_for(lambda: launched)
     line, exit_file = launched[0]
-    assert line.endswith("&& bash install.sh") and "local-bazzite-test" not in line
-    assert window.pending is not None and window.cards["bazzite-test"].status == "Installing…"
-    assert not window.cards["bazzite-test"].busy_label.isHidden()
+    assert line.endswith("&& bash install.sh") and "local-check" not in line
+    assert window.pending is not None and window.cards["check"].status == "Installing…"
+    assert not window.cards["check"].busy_label.isHidden()
     assert not window.cards["governor"].install_button.isEnabled()          # one action at a time
 
 
@@ -368,7 +368,7 @@ def test_development_apps_apart_and_closed(window, qapp):
 
 def test_board_tools_in_a_section_open_until_closed(window, qapp):
     assert window.tools_toggle.text() == "BC250 Bazzite tools"
-    assert not window.tools_box.isHidden() and window.grid.indexOf(window.cards["bazzite-test"]) == 0
+    assert not window.tools_box.isHidden() and window.grid.indexOf(window.cards["check"]) == 0
     window.tools_toggle.click()
     assert window.tools_box.isHidden()
     assert not window.settings.value(mw.TOOLS_OPEN_KEY, type=bool)                     # remembered

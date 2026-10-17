@@ -7,7 +7,7 @@ other app is optional.
 
 | App | What it does |
 |---|---|
-| ![](../assets/apps/bazzite-test.png){ .app-icon } [BC-250 Bazzite Test](bazzite-test.md) | Read-only diagnostics, stress test and benchmarks. Always installed. |
+| ![](../assets/apps/check.png){ .app-icon } [BC-250 Bazzite Test](check.md) | Read-only diagnostics, stress test and benchmarks. Always installed. |
 | ![](../assets/apps/governor.png){ .app-icon } [BC-250 GPU Governor Manager](governor.md) | Manage the cyan-skillfish GPU governor: tuning, safe points, profiles, backups. **Changes the board.** |
 | ![](../assets/apps/cu-bisect.png){ .app-icon } [BC-250 CU Bisect](cu-bisect.md) | Tell bad CUs apart from an unstable CU unlock, and apply a tested unlock. **Changes the board.** |
 | ![](../assets/apps/cores-bisect.png){ .app-icon } [BC-250 Cores Bisect](cores-bisect.md) | Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock. **Changes the board.** |

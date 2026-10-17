@@ -373,7 +373,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 After the unlock, `pp_dpm_sclk` and `hwmon` `freq1_input` report nonsense GPU clocks (tens of MHz).
 This is cosmetic — the SMU's own clock getters stay correct — and this script ignores GPU clocks.
 Diagnostics that read those files (e.g. tests 19/40 of
-[bazzite-test](bazzite-test.md)) will
+[Bazzite Test](check.md)) will
 flag it; that's expected while the unlock is active.
 
 ## Credits

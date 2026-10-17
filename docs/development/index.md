@@ -82,7 +82,7 @@ The repo is used from both systems, so it is set up to behave the same on each:
 
 ## Where things are installed
 
-- **Root-owned `/opt`:** the portal (`/opt/bc250-bazzite-suite`), bazzite-test, cores-bisect, gpu-oc-bisect and
+- **Root-owned `/opt`:** the portal (`/opt/bc250-bazzite-suite`), Bazzite Test (`check`), cores-bisect, gpu-oc-bisect and
   persistent-acpi, whose scripts run as root: a normal user cannot change code that sudo runs.
 - **Your home folder:** the shared venv `~/.local/share/bc250-bazzite-suite/venv` (PyQt6, used by all suite
   GUIs and removed with the last of them), plus each app's settings, results and launchers.
@@ -97,7 +97,7 @@ The repo is used from both systems, so it is set up to behave the same on each:
 also written in a script or package (`VERSION="…"`, `__version__ = "…"`, pyproject `version`) must match it, which
 CI checks with `tools/check_versions.py`. Everything started at 0.1.0 with the suite.
 
-Each app is released on its own tag (`bazzite-test-v0.1.0`, `governor-v0.4.0`, …); the release workflow builds
+Each app is released on its own tag (`check-v0.1.0`, `governor-v0.4.0`, …); the release workflow builds
 `<tag>.tar.gz` and `SHA256SUMS`. The portal has `portal-vX.Y.Z` and pins one release of every app in
 `portal/apps.toml`; a change there since the last portal release needs a portal version bump at least as large as the largest app bump.
 The release steps are in [Portal](../portal.md#appstoml-and-releases).

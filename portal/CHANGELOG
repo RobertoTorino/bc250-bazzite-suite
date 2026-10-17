@@ -1,3 +1,16 @@
+Changelog: 17-10-2026 09:41:48
+
+Release 1.15.0. Pins check-v0.3.0.
+
+Changelog: 17-10-2026 09:27:13
+
+Added. BC-250 Bazzite Test, the required app, is listed as [apps.check] (was [apps.bazzite-test]), after the
+app's move to apps/check; its tile icon is images/apps/check.png. The entry pins the first release under its new
+tag prefix (check-v0.3.0) without a checksum until that release exists, which a portal release waits for, as it
+bundles that release. install.sh installs it from apps/check in a checkout and from bundled/check-v* in a
+release, and records it under the key check; the record of a copy installed under the old key moves to the new
+key when the portal starts, as for ace, ncgui and datstation.
+
 Changelog: 17-10-2026 09:12:54
 
 Release 1.14.0. Pins dependency-checker-v0.4.2.

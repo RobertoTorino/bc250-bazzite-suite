@@ -13,7 +13,8 @@ _TAG = re.compile(r"^(?P<app>[a-z0-9-]+)-v(?P<version>\d+\.\d+\.\d+)$")
 _SHA256 = re.compile(r"^([0-9a-f]{64})?$")
 SECTIONS = {"gaming": "Gaming"}                 # section = "<key>": the portal's own section for those apps
 # Apps renamed in the suite (old key: new key), for the record of a copy installed under the old key.
-RENAMED = {"ace-queues": "ace", "bazzite-netcatgui": "ncgui", "bazzite-datstation": "datstation"}
+RENAMED = {"ace-queues": "ace", "bazzite-netcatgui": "ncgui", "bazzite-datstation": "datstation",
+           "bazzite-test": "check"}
 
 
 class ManifestError(ValueError):
@@ -135,7 +136,7 @@ def parse(text: str) -> list[AppEntry]:
         raise ManifestError("apps.toml has no [apps.<name>] tables")
     entries = [_entry(key, raw) for key, raw in apps.items()]
     if not any(e.required for e in entries):
-        raise ManifestError("apps.toml must have a required app (bazzite-test)")
+        raise ManifestError("apps.toml must have a required app (check)")
     return sorted(entries, key=lambda e: not e.required)        # stable: file order within each group
 
 

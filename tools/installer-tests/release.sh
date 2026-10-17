@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# End to end from release tarballs: build the bazzite-test, governor and portal releases with build_release.py,
-# install the portal from its tarball (which installs the bundled bazzite-test release build), and let the
+# End to end from release tarballs: build the check, governor and portal releases with build_release.py,
+# install the portal from its tarball (which installs the bundled check release build), and let the
 # portal's release code fetch and verify the governor release the way it would from GitHub. Last, apps/suite-releases/check-release.sh
 # installs that portal tarball as if downloaded from GitHub, and the portal from the checkout copy.
-# It works on a copy of the checkout in which apps.toml pins bazzite-test and governor to these local builds: the
+# It works on a copy of the checkout in which apps.toml pins check and governor to these local builds: the
 # checksums pinned in the repository are those of the real releases, which a local build never matches.
 # Runs with the shims from shims.sh (CI, or WSL on Windows).
 set -u
@@ -16,7 +16,7 @@ fail=0
 check() { if eval "$2"; then echo "  ok   $1"; else echo "  FAIL $1"; fail=1; fi; }
 D=$XDG_DATA_HOME
 ver() { tr -d '[:space:]' < "$SUITE/$1/VERSION"; }
-BT="bazzite-test-v$(ver apps/bazzite-test)"; GOV="governor-v$(ver apps/governor)"; PORTAL="portal-v$(ver portal)"
+BT="check-v$(ver apps/check)"; GOV="governor-v$(ver apps/governor)"; PORTAL="portal-v$(ver portal)"
 export SOURCE_DATE_EPOCH=1790000000
 
 echo "== 1. build the releases"
@@ -41,10 +41,10 @@ mkdir -p "$T/dl" && tar -xzf "$T/build-portal/$PORTAL.tar.gz" -C "$T/dl"
 check "install.sh executable in the tarball" "[ -x $T/dl/$PORTAL/install.sh ] && [ -x $T/dl/$PORTAL/bundled/$BT/install.sh ]"
 (cd /tmp && "$T/dl/$PORTAL/install.sh" > "$T/install.log" 2>&1); rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
-check "bazzite-test is a release build" "[ -f $T/opt/bc250-bazzite-test/bc250_gui/_build_info.py ]"
-check "its engine hash matches" "grep -q \"\$(sha256sum < $T/opt/bc250-bazzite-test/test-bazzite.sh | cut -d' ' -f1)\" $T/opt/bc250-bazzite-test/bc250_gui/_build_info.py"
+check "check is a release build" "[ -f $T/opt/bc250-bazzite-test/bazzite_check/_build_info.py ]"
+check "its engine hash matches" "grep -q \"\$(sha256sum < $T/opt/bc250-bazzite-test/test-bazzite.sh | cut -d' ' -f1)\" $T/opt/bc250-bazzite-test/bazzite_check/_build_info.py"
 check "no 'not a release build' note" "! grep -q 'not a release build' $T/install.log"
-check "record has the bundled tag" "grep -q \"\\\"bazzite-test\\\": \\\"$BT\\\"\" $D/bc250-bazzite-suite/portal/installed.json"
+check "record has the bundled tag" "grep -q \"\\\"check\\\": \\\"$BT\\\"\" $D/bc250-bazzite-suite/portal/installed.json"
 check "portal from the release" "[ -f $T/opt/bc250-bazzite-suite/bc250_core/__init__.py ] && [ ! -d $T/opt/bc250-bazzite-suite/bundled ]"
 
 echo "== 3. the installed portal fetches and verifies the governor release"
@@ -78,11 +78,11 @@ check "governor installer runs from the fetched folder" "(cd $T/work/$GOV && bas
 echo "== 4. check-release.sh: the local check, then back to the release"
 R=$D/bc250-bazzite-suite/portal/installed.json
 bash "$S/apps/suite-releases/check-release.sh" local --no-start > "$T/check-local.log" 2>&1; rc=$?
-check "local: installs the portal from the checkout" "[ $rc -eq 0 ] && grep -q '\"bazzite-test\": \"local\"' $R"
+check "local: installs the portal from the checkout" "[ $rc -eq 0 ] && grep -q '\"check\": \"local\"' $R"
 mkdir -p "$T/gh/$PORTAL" && cp "$T/build-portal/$PORTAL.tar.gz" "$T/build-portal/SHA256SUMS" "$T/gh/$PORTAL/"
 BC250_RELEASE_URL="file://$T/gh" bash "$S/apps/suite-releases/check-release.sh" release --no-start > "$T/check-release.log" 2>&1; rc=$?
 check "release: downloads and verifies portal/VERSION's tag" "[ $rc -eq 0 ] && grep -q '$PORTAL.tar.gz: OK' $T/check-release.log"
-check "release: installed it, bundled Bazzite Test included" "grep -q \"\\\"bazzite-test\\\": \\\"$BT\\\"\" $R && [ -f $T/opt/bc250-bazzite-suite/bc250_core/__init__.py ]"
+check "release: installed it, bundled Bazzite Test included" "grep -q \"\\\"check\\\": \\\"$BT\\\"\" $R && [ -f $T/opt/bc250-bazzite-suite/bc250_core/__init__.py ]"
 BC250_RELEASE_URL="file://$T/gh" bash "$S/apps/suite-releases/check-release.sh" release portal-v9.9.9 --no-start > "$T/check-missing.log" 2>&1; rc=$?
 check "release: a tag GitHub has not built yet is reported" "[ $rc -ne 0 ] && grep -q 'finished the release workflow' $T/check-missing.log"
 bash "$S/apps/suite-releases/check-release.sh" nonsense > "$T/check-usage.log" 2>&1; rc=$?
