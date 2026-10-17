@@ -15,8 +15,8 @@ body:
         - compute
         - cores
         - oc
-        - persistent-acpi
-        - system-overlay
+        - acpi
+        - overlay
     validations:
       required: true
   - type: textarea

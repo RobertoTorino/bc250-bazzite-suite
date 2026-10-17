@@ -1,3 +1,28 @@
+Changelog: 17-10-2026 14:24:42
+
+Release 0.4.7.
+
+Changelog: 17-10-2026 14:10:30
+
+Fixed. The catalogue lists System Overlay as [app.overlay] (was [app.system-overlay]), its key in the portal after
+the app's move to apps/overlay; its sources name that owner.
+
+Changelog: 17-10-2026 14:05:45
+
+Fixed. The catalogue lists BC-250 USB Wi-Fi as [app.wdriver] (was [app.usb-wifi]), its key in the portal after the
+app's move to apps/wdriver; its sources (the build tools, kmod, eject, udevadm and the Python packages) name that
+owner.
+
+Changelog: 17-10-2026 13:56:22
+
+Fixed. The catalogue lists Bazzite SFTP Tools as [app.sftp] (was [app.sftp-tools]), its key in the portal after the
+app's move to apps/sftp; its sources (paramiko and the other Python packages) name that owner.
+
+Changelog: 17-10-2026 13:46:57
+
+Fixed. The catalogue lists BC-250 Persistent ACPI as [app.acpi] (was [app.persistent-acpi]), its key in the portal
+after the app's move to apps/acpi; its sources name that owner.
+
 Changelog: 17-10-2026 13:24:38
 
 Release 0.4.6.

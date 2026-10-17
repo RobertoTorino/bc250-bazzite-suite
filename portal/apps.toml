@@ -100,11 +100,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-gpu-oc-bisect-gui"]
 launch = [["Open", "~/.local/bin/bc250-gpu-oc-bisect-gui"]]
 
-[apps.persistent-acpi]
+[apps.acpi]
 name = "BC-250 Persistent ACPI"
 summary = "CPU C-states and frequency scaling through a persistent ACPI override (GRUB early initrd)."
-tag = "persistent-acpi-v0.1.6"
-sha256 = "ce4f303f6c0d75e7431e26cc119549dc8e1a66986458cd36302426356d31d788"
+tag = "acpi-v0.1.6"
+sha256 = ""
 required = false
 changes_board = true
 install = ["bash install.sh"]
@@ -112,11 +112,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-persistent-acpi-gui"]
 launch = [["Open", "~/.local/bin/bc250-persistent-acpi-gui"]]
 
-[apps.system-overlay]
+[apps.overlay]
 name = "System Overlay"
 summary = "CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top."
-tag = "system-overlay-v0.2.0"
-sha256 = "bc2c0156761412225ef177b4595269474c14a65a0e07ed1bb914d5a66eb669c9"
+tag = "overlay-v0.2.0"
+sha256 = ""
 required = false
 changes_board = false
 install = ["bash install.sh"]
@@ -186,11 +186,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-fan-control"]
 launch = [["Open", "~/.local/bin/bc250-fan-control"]]
 
-[apps.usb-wifi]
+[apps.wdriver]
 name = "BC-250 USB Wi-Fi"
 summary = "The driver for AIC8800D80 USB Wi-Fi sticks: built for the running kernel, loaded at boot, rebuilt after a kernel update."
-tag = "usb-wifi-v0.1.1"
-sha256 = "bd90ff881fdd6272f8437b1c4d211c3fa744f1719cec9d9d7e439466baadfd5f"
+tag = "wdriver-v0.1.1"
+sha256 = ""
 required = false
 changes_board = true
 install = ["bash install.sh"]
@@ -211,12 +211,12 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-hdmi-cec"]
 launch = [["Open", "~/.local/bin/bc250-hdmi-cec"]]
 
-[apps.sftp-tools]
+[apps.sftp]
 name = "Bazzite SFTP Tools"
 short = "SFTP Tools"
 summary = "Move files between computers over SFTP, and manage the SSH server of a Bazzite host."
-tag = "sftp-tools-v0.2.0"
-sha256 = "ceacc01b005953e21bc0bf587629c58af993bbe3691fbd472451f6a884999be5"
+tag = "sftp-v0.2.0"
+sha256 = ""
 required = false
 changes_board = false
 install = ["bash install.sh"]
@@ -370,7 +370,7 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-vita3k-manager"]
 launch = [["Open", "~/.local/bin/bc250-vita3k-manager"]]
 
-[checkout.suite-releases]
+[checkout.suite]
 name = "BC250 Suite Releases"
 summary = "The release front end: versions, pins and the board checks of a release. Edits the checkout it runs from."
 changes_board = false

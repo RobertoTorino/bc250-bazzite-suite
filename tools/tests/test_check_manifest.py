@@ -140,20 +140,20 @@ def test_shipped_manifest_passes_without_required_tags():
     checkout = cm.manifest.load_checkout(cm.SUITE / cm.MANIFEST)
     assert cm.check_checkout_entries(checkout) == []
     assert [(entry.key, entry.folder) for entry in checkout] == [
-        ("suite-releases", "apps/suite-releases"), ("installer-tests", "tools/installer-tests/gui")]
+        ("suite", "apps/suite"), ("installer-tests", "tools/installer-tests/gui")]
 
 
 def test_checkout_tables_match_the_checkout_only_folders():
     entry = cm.manifest.AppEntry(key="gpu", name="Gov", summary="s", tag="", checkout_only=True)
     errors = cm.check_checkout_entries([entry])
-    assert any("suite-releases has .checkout-only" in e for e in errors)
+    assert any("suite has .checkout-only" in e for e in errors)
     assert any("[checkout.gpu]: apps/gpu has no .checkout-only" in e for e in errors)
     elsewhere = cm.manifest.AppEntry(key="gui", name="G", summary="s", tag="", checkout_only=True, folder="tools")
     assert any("[checkout.gui]: tools has no .checkout-only" in e for e in cm.check_checkout_entries([elsewhere]))
 
 
 def test_checkout_table_change_needs_a_patch_bump():
-    table = ('\n[checkout.suite-releases]\nname = "SR"\nsummary = "s"\ninstall = ["bash install.sh"]\n'
+    table = ('\n[checkout.suite]\nname = "SR"\nsummary = "s"\ninstall = ["bash install.sh"]\n'
              'uninstall = ["bash install.sh --uninstall"]\ndetect = ["~/.local/bin/r"]\n')
     assert errors(BASE + table, "0.1.0", "0.1.0")
     assert errors(BASE + table, "0.1.0", "0.1.1") == []

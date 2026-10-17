@@ -27,15 +27,15 @@ hide:
 
 [Bazzite Test](apps/check.md) checks, stress-tests and benchmarks the board,
 [BIOS Reader](apps/bios.md) shows every BIOS setting, hidden menus too, and
-[System Overlay](apps/system-overlay.md) keeps CPU, GPU, fan and temperatures on top,
+[System Overlay](apps/overlay.md) keeps CPU, GPU, fan and temperatures on top,
 [Fan Control](apps/fan.md) guards the board against overheating, and
-[USB Wi-Fi](apps/usb-wifi.md) brings the driver for AIC8800D80 Wi-Fi sticks.
+[USB Wi-Fi](apps/wdriver.md) brings the driver for AIC8800D80 Wi-Fi sticks.
 </div>
 <div class="home-card" markdown>
 #### :material-speedometer: Tuning
 
 [GPU Governor Manager](apps/gpu.md) tunes the GPU governor, [GPU OC Bisect](apps/oc.md) finds your
-board's safe overclock and undervolt, and [Persistent ACPI](apps/persistent-acpi.md) gives the CPU its C-states and
+board's safe overclock and undervolt, and [Persistent ACPI](apps/acpi.md) gives the CPU its C-states and
 frequency scaling.
 </div>
 <div class="home-card" markdown>
@@ -61,7 +61,7 @@ beside the system Mesa.
 <div class="home-card" markdown>
 #### :material-television: Living room
 
-[HDMI CEC Manager](apps/cec.md) turns the TV on and off with the board, [SFTP Tools](apps/sftp-tools.md) moves files
+[HDMI CEC Manager](apps/cec.md) turns the TV on and off with the board, [SFTP Tools](apps/sftp.md) moves files
 between computers, and [Decky Loader Manager](apps/decky.md) adds plugins to Game Mode.
 </div>
 </div>

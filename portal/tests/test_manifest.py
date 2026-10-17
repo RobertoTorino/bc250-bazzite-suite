@@ -106,7 +106,7 @@ def test_shipped_manifest_install_scripts_exist():
 
 def test_board_changing_apps_are_marked():
     marked = {e.key for e in load(MANIFEST) if e.changes_board}
-    assert {"compute", "cores", "oc", "persistent-acpi", "gpu"} <= marked
+    assert {"compute", "cores", "oc", "acpi", "gpu"} <= marked
     assert "check" not in marked
 
 

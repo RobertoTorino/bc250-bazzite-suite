@@ -857,7 +857,7 @@ ujust regenerate-grub   # then reboot
 ```
 
 Or use the guided installer from
-[persistent-acpi](https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/persistent-acpi) (a suite app, installed from the portal):
+[acpi](https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/acpi) (a suite app, installed from the portal):
 it bundles the tables, checks for a BC-250 and a modded BIOS, installs idempotently and has an
 uninstaller. The fix is persistent — the blscfg GRUB module applies the early initrd to every
 BLS boot entry, so it survives kernel and rpm-ostree image updates.

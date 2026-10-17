@@ -1,3 +1,47 @@
+Changelog: 17-10-2026 14:10:30
+
+The naming convention applied to System Overlay: apps/system-overlay is apps/overlay with the package
+system_overlay (was bc250_overlay). With it the portal key, the wiki chapter (docs/apps/overlay.md), the installer
+test, the portal's tile icon, CI's matrix, steps and shellcheck line, the bug report template, the root
+requirements-dev.txt, the dependency catalogue, the key Simple Demo Tool picks first and its tests, the portal's
+installer test and window tests, the links to the chapter in the wiki, and CLAUDE.md's list and shellcheck line.
+The portal moves the record of an installed copy to the new key. With this every app follows the convention.
+
+Changelog: 17-10-2026 14:05:45
+
+The naming convention applied to BC-250 USB Wi-Fi: apps/usb-wifi is apps/wdriver with the package usb_wifidriver
+(was bc250_usb_wifi). With it the portal key, the wiki chapter (docs/apps/wdriver.md), the installer test, the
+portal's tile icon, CI's matrix, steps and shellcheck line, the dependency catalogue, the links to the chapter in
+the wiki and the app, and CLAUDE.md's list and board-change rule. The portal moves the record of an installed copy
+to the new key.
+
+Changelog: 17-10-2026 14:01:24
+
+The naming convention applied to BC250 Suite Releases: apps/suite-releases is apps/suite with the package
+suite_releases (was bc250_suite_releases). With it the portal key ([checkout.suite]), the installer test, the
+portal's tile icon, CI's matrix, step and shellcheck line, tools/release.sh, the release installer test's path to
+check-release.sh, the wiki's paths in the portal chapter and the development index, the root requirements-dev.txt,
+the tools, portal and Dependency Checker tests that name the key or the path, and CLAUDE.md. The app stays
+checkout-only: no tag, no pin.
+
+Changelog: 17-10-2026 13:56:22
+
+The naming convention applied to Bazzite SFTP Tools: apps/sftp-tools is apps/sftp with the package sftp_tools (was
+bc250_sftp_tools). With it the portal key, the wiki chapter (docs/apps/sftp.md), the installer test, the portal's
+tile icon, CI's matrix, steps, shellcheck line and Windows build, the release workflow's Windows job (it now runs
+for sftp-v tags), tools/build_windows_exe.py and its tests, the dependency catalogue and its tests, the links to
+the chapter in the wiki, and CLAUDE.md's list and shellcheck line. The portal moves the record of an installed copy
+to the new key.
+
+Changelog: 17-10-2026 13:46:57
+
+The naming convention applied to BC-250 Persistent ACPI: apps/persistent-acpi is apps/acpi with the package
+locked_acpi (was bc250_acpi_gui). With it the portal key, the wiki chapter (docs/apps/acpi.md), the installer test,
+the portal's tile icon, CI's matrix, steps and shellcheck line, the bug report template, the root
+requirements-dev.txt, the dependency catalogue, the links to the chapter in the wiki, the portal and tools tests
+that name the key or the package, and CLAUDE.md's list and shellcheck line. The portal moves the record of an
+installed copy to the new key.
+
 Changelog: 17-10-2026 13:21:37
 
 The naming convention applied to the Dependency Checker: apps/dependency-checker is apps/package with the package

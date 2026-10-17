@@ -12,14 +12,14 @@ other app is optional.
 | ![](../assets/apps/compute.png){ .app-icon } [BC-250 CU Bisect](compute.md) | Tell bad CUs apart from an unstable CU unlock, and apply a tested unlock. **Changes the board.** |
 | ![](../assets/apps/cores.png){ .app-icon } [BC-250 Cores Bisect](cores.md) | Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock. **Changes the board.** |
 | ![](../assets/apps/oc.png){ .app-icon } [BC-250 GPU OC Bisect](oc.md) | Find your board's safe GPU overclock and undervolt, one step at a time. **Changes the board.** |
-| ![](../assets/apps/persistent-acpi.png){ .app-icon } [BC-250 Persistent ACPI](persistent-acpi.md) | CPU C-states and frequency scaling through a persistent ACPI override (GRUB early initrd). **Changes the board.** |
-| ![](../assets/apps/system-overlay.png){ .app-icon } [System Overlay](system-overlay.md) | CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top. |
+| ![](../assets/apps/acpi.png){ .app-icon } [BC-250 Persistent ACPI](acpi.md) | CPU C-states and frequency scaling through a persistent ACPI override (GRUB early initrd). **Changes the board.** |
+| ![](../assets/apps/overlay.png){ .app-icon } [System Overlay](overlay.md) | CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top. |
 | ![](../assets/apps/bios.png){ .app-icon } [BC-250 BIOS Reader](bios.md) | The BIOS settings as the setup screen shows them, hidden menus included. Stock or modded BIOS. Read-only. |
 | ![](../assets/apps/vram.png){ .app-icon } [BC-250 Memory Manager](vram.md) | The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it. **Changes the board.** |
 | ![](../assets/apps/fan.png){ .app-icon } [BC-250 Fan Control](fan.md) | A thermal guard that warns, cools and shuts down cleanly at a critical temperature, and the fans. **Changes the board.** |
-| ![](../assets/apps/usb-wifi.png){ .app-icon } [BC-250 USB Wi-Fi](usb-wifi.md) | The driver for AIC8800D80 USB Wi-Fi sticks: built for the running kernel, loaded at boot, rebuilt after a kernel update. **Changes the board.** |
+| ![](../assets/apps/wdriver.png){ .app-icon } [BC-250 USB Wi-Fi](wdriver.md) | The driver for AIC8800D80 USB Wi-Fi sticks: built for the running kernel, loaded at boot, rebuilt after a kernel update. **Changes the board.** |
 | ![](../assets/apps/cec.png){ .app-icon } [HDMI CEC Manager](cec.md) | Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC. |
-| ![](../assets/apps/sftp-tools.png){ .app-icon } [Bazzite SFTP Tools](sftp-tools.md) | Move files between computers over SFTP, and manage the SSH server of a Bazzite host. |
+| ![](../assets/apps/sftp.png){ .app-icon } [Bazzite SFTP Tools](sftp.md) | Move files between computers over SFTP, and manage the SSH server of a Bazzite host. |
 
 **Gaming**: apps for playing, in their own section of the [portal](../portal.md).
 
@@ -45,7 +45,7 @@ need them to use the board.
 | ![](../assets/apps/dtool.png){ .app-icon } [Simple Demo Tool](../other-tools/simple-demo-tool.md) | Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite. |
 | ![](../assets/apps/package.png){ .app-icon } [Dependency Checker](package.md) | The suite's Python packages and external tools, which apps use them, and whether newer ones exist; and whether a Bazzite update waits for a reboot. |
 | ![](../assets/apps/ncgui.png){ .app-icon } [Bazzite NetcatGUI](ncgui.md) | A graphical netcat: connect to a host or listen on a port, TCP, UDP or TLS, one session per tab. |
-| ![](../assets/apps/suite-releases.png){ .app-icon } [BC250 Suite Releases](../portal.md#the-release-front-end) | The release front end: versions, pins and the board checks of a release. Runs from a checkout of this repository. |
+| ![](../assets/apps/suite.png){ .app-icon } [BC250 Suite Releases](../portal.md#the-release-front-end) | The release front end: versions, pins and the board checks of a release. Runs from a checkout of this repository. |
 | ![](../assets/apps/installer-tests.png){ .app-icon } BC-250 Installer Tests | Run the suite's installer tests one at a time, with their output live in the window. Runs from a checkout of this repository. |
 
 Apps that **change the board** (unlocks, the GPU governor, GPU overclocking, the ACPI override, the VRAM split,

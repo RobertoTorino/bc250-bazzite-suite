@@ -61,7 +61,7 @@ def test_bazzite_test_first_without_uninstall(window):
     assert keys[0] == "check"
     assert window.cards["check"].uninstall_button.isHidden()
     assert not window.cards["gpu"].uninstall_button.isHidden()
-    assert not window.cards["persistent-acpi"].open_button.isHidden()
+    assert not window.cards["acpi"].open_button.isHidden()
     assert window.cards["compute"].open_button.menu() is not None        # Bisect / Unlock
 
 
@@ -116,7 +116,7 @@ def test_short_names_drop_the_suite_prefix(window):
 def test_icon_opens_only_an_installed_program(qapp, home, settings_dir, tmp_path, launched, monkeypatch):
     entries = [replace(e, launch=()) if e.key == "gpu" else e for e in load(MANIFEST)]
     w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
-    acpi = w.cards["persistent-acpi"]
+    acpi = w.cards["acpi"]
     assert not acpi.icon.isEnabled() and "Not installed" in acpi.icon.toolTip()
     for name in ("bc250-governor-manager", "bc250-persistent-acpi-gui"):
         (home / ".local" / "bin" / name).write_text("#!/bin/sh\n")
@@ -133,7 +133,7 @@ def test_icon_opens_only_an_installed_program(qapp, home, settings_dir, tmp_path
 
 
 def test_icon_is_greyed_until_installed(window, home):
-    card = window.cards["system-overlay"]
+    card = window.cards["overlay"]
     assert card.icon.icon().cacheKey() == card._icons[1].cacheKey()
     (home / ".local" / "bin" / "bc250-system-overlay").write_text("#!/bin/sh\n")
     window.refresh()
@@ -142,7 +142,7 @@ def test_icon_is_greyed_until_installed(window, home):
 
 def test_board_warning_under_the_icon(window):
     assert not window.cards["gpu"].board.isHidden()
-    assert window.cards["system-overlay"].board.isHidden()
+    assert window.cards["overlay"].board.isHidden()
 
 
 def test_states_follow_detection_and_records(window, home):
@@ -183,7 +183,7 @@ def test_bazzite_test_has_only_reinstall(window, home):
 def test_board_change_needs_confirmation(window, launched, monkeypatch):
     asked = []
     monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: (asked.append(a[2]), CANCEL)[1])
-    window.install(next(e for e in window.entries if e.key == "persistent-acpi"))
+    window.install(next(e for e in window.entries if e.key == "acpi"))
     assert asked and "changes how your BC-250 runs" in asked[0]
     assert window.sources.prepared == [] and launched == []                 # cancelled: nothing happens
 
@@ -300,7 +300,7 @@ def test_not_installed_and_withdrawn_need_no_reinstall(qapp, home, settings_dir,
     (home / ".local" / "bin" / "bc250-governor-manager").write_text("#!/bin/sh\n")
     w.refresh()
     assert w.cards["gpu"].badge.isHidden()                              # the portal removes it instead
-    assert w.cards["system-overlay"].badge.isHidden()                        # not installed
+    assert w.cards["overlay"].badge.isHidden()                               # not installed
     w.close()
 
 
@@ -407,10 +407,10 @@ def test_checkout_only_app_has_no_update(qapp, home, settings_dir, tmp_path, lau
     sources = FakeSources(tmp_path / "work")
     sources.checkout = Path("/checkout")                                    # a portal from a checkout
     w = mw.MainWindow(entries, sources, Records(tmp_path / "installed.json"))
-    card = w.cards["suite-releases"]
+    card = w.cards["suite"]
     assert w.dev_grid.indexOf(card) >= 0
     (home / ".local" / "bin" / "bc250-release").write_text("#!/bin/sh\n")
-    w.records.set("suite-releases", "local")
+    w.records.set("suite", "local")
     w.refresh()
     assert card.status == "Installed" and card.dot.isHidden() and "suite checkout" in card.icon.toolTip()
     w.close()
@@ -442,7 +442,7 @@ def test_a_release_portal_finds_the_checkout_without_asking(qapp, home, settings
     from bc250_portal import remembered_checkout
     monkeypatch.setattr(mw.QFileDialog, "getExistingDirectory", lambda *a: pytest.fail("asked for a folder"))
     monkeypatch.setattr(QMessageBox, "question", lambda *a: pytest.fail("asked a question"))
-    (home / ".local/bin/bc250-release").write_text(f'#!/bin/sh\nexec "{SUITE}/apps/suite-releases/run.sh"\n')
+    (home / ".local/bin/bc250-release").write_text(f'#!/bin/sh\nexec "{SUITE}/apps/suite/run.sh"\n')
     entries = load(MANIFEST) + load_checkout(MANIFEST)
     sources = FakeSources(tmp_path / "work")                                # a release: no checkout of its own
     w = mw.MainWindow(entries, sources, Records(tmp_path / "installed.json"))
@@ -485,7 +485,7 @@ def test_a_folder_that_is_not_the_suite_is_refused(qapp, home, settings_dir, tmp
     entries = load(MANIFEST) + load_checkout(MANIFEST)
     sources = FakeSources(tmp_path / "work")
     w = mw.MainWindow(entries, sources, Records(tmp_path / "installed.json"))
-    w.install(w.cards["suite-releases"].entry)
+    w.install(w.cards["suite"].entry)
     assert "is not a BC250 Bazzite Suite checkout" in warned[0]
     assert sources.apps_checkout is None and sources.prepared == [] and remembered_checkout() is None
     w.close()
@@ -496,7 +496,7 @@ def test_an_installed_checkout_app_still_opens(qapp, home, settings_dir, tmp_pat
     w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
     (home / ".local" / "bin" / "bc250-release").write_text("#!/bin/sh\n")   # installed from a checkout before
     w.refresh()
-    card = w.cards["suite-releases"]
+    card = w.cards["suite"]
     assert card.status == "Reinstall needed" and card.icon.isEnabled() and card.uninstall_button.isEnabled()
     assert w.cards["dtool"].install_button.isEnabled()                  # released development apps as usual
     w.close()

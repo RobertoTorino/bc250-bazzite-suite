@@ -41,7 +41,7 @@ app downloads its Python packages from PyPI.
 - [shadPS4 Manager](apps/shadps4.md#shadnet): shadPS4 signs in to the shadNet server you set, with the
   account you set. shadPS4 keeps the password as it is and shadNet sends it unencrypted: use one you use nowhere
   else.
-- [Bazzite SFTP Tools](apps/sftp-tools.md) connects only to the host you enter.
+- [Bazzite SFTP Tools](apps/sftp.md) connects only to the host you enter.
 - [Bazzite DatStation](apps/datstation.md#privacy) loads the PlayStation Blog's feed on its PS News page.
 - [BC-250 Bazzite Test](apps/check.md): its network test resolves and pings `google.com` and asks
   `www.example.com` for a page header; the optional speed test uses Ookla's servers and about 1 GB of data.

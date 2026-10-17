@@ -125,7 +125,7 @@ def test_checkout_stages_app_with_core(tmp_path):
     assert (folder / "install.sh").is_file() and (folder / "bazzite_check" / "__init__.py").is_file()
     assert (folder / "bc250_core" / "widgets.py").is_file()                 # bundled: check uses core
     assert not (folder / "bc250_core" / "__pycache__").exists()
-    acpi = AppEntry(key="persistent-acpi", name="A", summary="s", tag="persistent-acpi-v0.1.0", install=("x",),
+    acpi = AppEntry(key="acpi", name="A", summary="s", tag="acpi-v0.1.0", install=("x",),
                     uninstall=("y",), detect=("z",))
     acpi_folder = sources.prepare(acpi)
     assert (acpi_folder / "tables" / "acpi_override.cpio").is_file()
@@ -144,12 +144,12 @@ def test_prune_keeps_only_the_installed_release(tmp_path):
 
 
 def test_checkout_only_app_runs_in_its_checkout_folder(tmp_path):
-    entry = AppEntry(key="suite-releases", name="SR", summary="s", tag="", checkout_only=True, install=("x",),
+    entry = AppEntry(key="suite", name="SR", summary="s", tag="", checkout_only=True, install=("x",),
                      uninstall=("y",), detect=("z",))
     sources = Sources(tmp_path / "work", checkout=SUITE)
-    assert sources.prepare(entry) == SUITE / "apps" / "suite-releases"
+    assert sources.prepare(entry) == SUITE / "apps" / "suite"
     sources.forget(entry)
-    assert (SUITE / "apps" / "suite-releases" / "install.sh").is_file()      # never removed
+    assert (SUITE / "apps" / "suite" / "install.sh").is_file()      # never removed
     with pytest.raises(SourceError, match="no"):
         Sources(tmp_path / "work").prepare(entry)                          # a portal from a release has no checkout
     gui = replace(entry, key="installer-tests", folder="tools/installer-tests/gui")
@@ -202,11 +202,11 @@ def test_records_follow_an_app_renamed_in_the_suite(tmp_path):
 
 
 def test_a_release_portal_runs_checkout_apps_from_the_checkout_it_was_shown(tmp_path):
-    entry = AppEntry(key="suite-releases", name="SR", summary="s", tag="", checkout_only=True, install=("x",),
+    entry = AppEntry(key="suite", name="SR", summary="s", tag="", checkout_only=True, install=("x",),
                      uninstall=("y",), detect=("z",))
     sources = Sources(tmp_path / "work", apps_checkout=SUITE)
     assert not sources.local                                                # released apps still from releases
-    assert sources.prepare(entry) == SUITE / "apps" / "suite-releases"
+    assert sources.prepare(entry) == SUITE / "apps" / "suite"
     with pytest.raises(SourceError):
         Sources(tmp_path / "work").folder(entry)
 
@@ -239,5 +239,5 @@ def test_find_checkout(tmp_path):
     found = fake_suite(home / "IdeaProjects/bc250-bazzite-suite")
     assert find_checkout(home) == found
     elsewhere = fake_suite(tmp_path / "mnt/work/suite")                     # outside home: a launcher points there
-    (home / ".local/bin/bc250-release").write_text(f'#!/bin/sh\nexec "{elsewhere}/apps/suite-releases/run.sh"\n')
+    (home / ".local/bin/bc250-release").write_text(f'#!/bin/sh\nexec "{elsewhere}/apps/suite/run.sh"\n')
     assert find_checkout(home) == elsewhere

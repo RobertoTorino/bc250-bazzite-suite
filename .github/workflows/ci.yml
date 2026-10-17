@@ -44,14 +44,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [core, portal, tools, apps/check, apps/gpu, apps/helixsr, apps/persistent-acpi,
+        dir: [core, portal, tools, apps/check, apps/gpu, apps/helixsr, apps/acpi,
               apps/compute, apps/cores, apps/oc,
               apps/dtool, apps/package, apps/ncgui,
-              apps/suite-releases,
-              apps/system-overlay, apps/bios, apps/ace, apps/vram, apps/cec, apps/sftp-tools,
+              apps/suite,
+              apps/overlay, apps/bios, apps/ace, apps/vram, apps/cec, apps/sftp,
               apps/consoles, apps/mesh, apps/shadps4, apps/rpcs3, apps/decky,
               apps/datstation, apps/ppsspp, apps/pcsx2, apps/vita3k, apps/fan,
-              apps/usb-wifi,
+              apps/wdriver,
               tools/installer-tests/gui]   # every folder with tests/
     defaults:
       run:
@@ -147,17 +147,17 @@ jobs:
       # that their own release workflows already held to it.
       - name: shellcheck (errors, all scripts)
         run: find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 shellcheck -x -S error
-      - name: shellcheck (warnings, cores, oc, persistent-acpi, system-overlay, bios, ace, vram, fan, usb-wifi, cec, sftp-tools, consoles, mesh, shadps4, rpcs3, ppsspp, pcsx2, vita3k, decky, netcatgui, datstation and the suite's own scripts)
+      - name: shellcheck (warnings, cores, oc, acpi, overlay, bios, ace, vram, fan, wdriver, cec, sftp, consoles, mesh, shadps4, rpcs3, ppsspp, pcsx2, vita3k, decky, netcatgui, datstation and the suite's own scripts)
         run: |
           shellcheck -x -S warning portal/install.sh apps/check/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \
             tools/hooks/pre-push
           shellcheck -S warning apps/cores/bc250-cores-bisect.sh apps/cores/bc250-cores-unlock.sh \
             apps/cores/install.sh apps/cores/packaging/bazzite/*.sh
           shellcheck -S warning apps/oc/bc250-gpu-oc-bisect.sh apps/oc/install.sh
-          shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh
-          shellcheck -S warning apps/system-overlay/install.sh apps/bios/install.sh apps/vram/install.sh
-          shellcheck -S warning apps/fan/install.sh apps/usb-wifi/install.sh
-          shellcheck -S warning apps/cec/install.sh apps/sftp-tools/install.sh apps/consoles/install.sh
+          shellcheck -S warning apps/acpi/bc250-acpi-override.sh apps/acpi/install.sh
+          shellcheck -S warning apps/overlay/install.sh apps/bios/install.sh apps/vram/install.sh
+          shellcheck -S warning apps/fan/install.sh apps/wdriver/install.sh
+          shellcheck -S warning apps/cec/install.sh apps/sftp/install.sh apps/consoles/install.sh
           shellcheck -S warning apps/ace/bc250-ace-queues.sh apps/ace/bc250-ace-queues-run \
             apps/ace/install.sh apps/ace/mesa/build-in-container.sh
           shellcheck -S warning apps/mesh/bc250-mesh-shaders.sh apps/mesh/bc250-mesh-shaders-run \
@@ -172,7 +172,7 @@ jobs:
           shellcheck -S warning apps/package/install.sh
           shellcheck -S warning apps/ncgui/install.sh
           shellcheck -S warning apps/datstation/install.sh
-          shellcheck -S warning apps/suite-releases/*.sh
+          shellcheck -S warning apps/suite/*.sh
 
       - name: Line endings
         run: |
@@ -227,10 +227,10 @@ jobs:
         run: bash tools/installer-tests/oc.sh
       - name: portal installer
         run: bash tools/installer-tests/portal.sh
-      - name: persistent-acpi installer
-        run: bash tools/installer-tests/persistent-acpi.sh
-      - name: system-overlay installer
-        run: bash tools/installer-tests/system-overlay.sh
+      - name: acpi installer
+        run: bash tools/installer-tests/acpi.sh
+      - name: overlay installer
+        run: bash tools/installer-tests/overlay.sh
       - name: bios installer
         run: bash tools/installer-tests/bios.sh
       - name: ace installer
@@ -253,12 +253,12 @@ jobs:
         run: bash tools/installer-tests/vram.sh
       - name: fan installer
         run: bash tools/installer-tests/fan.sh
-      - name: usb-wifi installer
-        run: bash tools/installer-tests/usb-wifi.sh
+      - name: wdriver installer
+        run: bash tools/installer-tests/wdriver.sh
       - name: cec installer
         run: bash tools/installer-tests/cec.sh
-      - name: sftp-tools installer
-        run: bash tools/installer-tests/sftp-tools.sh
+      - name: sftp installer
+        run: bash tools/installer-tests/sftp.sh
       - name: consoles installer
         run: bash tools/installer-tests/consoles.sh
       - name: Demo Tool installer
@@ -270,7 +270,7 @@ jobs:
       - name: DatStation installer
         run: bash tools/installer-tests/datstation.sh
       - name: Suite Releases installer
-        run: bash tools/installer-tests/suite-releases.sh
+        run: bash tools/installer-tests/suite.sh
       - name: Installer Tests installer
         run: bash tools/installer-tests/installer-tests.sh
       - name: release tarballs, end to end
@@ -296,5 +296,5 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - run: python -m pip install -q -r apps/sftp-tools/requirements.txt pyinstaller pillow
-      - run: python tools/build_windows_exe.py sftp-tools windist
+      - run: python -m pip install -q -r apps/sftp/requirements.txt pyinstaller pillow
+      - run: python tools/build_windows_exe.py sftp windist

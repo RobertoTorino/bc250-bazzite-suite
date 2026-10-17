@@ -1,3 +1,13 @@
+Changelog: 17-10-2026 14:24:42
+
+Release 0.1.11.
+
+Changelog: 17-10-2026 14:10:30
+
+Fixed. The app picks System Overlay first in a portal release by its new key, overlay (was system-overlay), after
+that app's move to apps/overlay. In a portal release from before the move the overlay is not picked first; the
+first app of the release is.
+
 Changelog: 17-10-2026 13:24:38
 
 Release 0.1.10.

@@ -40,7 +40,7 @@ apps/<name>/
 ├── requirements-dev.txt       -r requirements.txt plus pytest
 ├── VERSION                    the version: the single source
 ├── CHANGELOG                  the history, newest first
-├── LICENSE                    GPL-3.0-or-later (persistent-acpi: MIT)
+├── LICENSE                    GPL-3.0-or-later (acpi: MIT)
 ├── .gitignore
 └── README.md                  title, one paragraph, link to the manual, license
 ```
@@ -53,7 +53,7 @@ apps/<name>/
   from before this convention still have a `bc250_<something>` or `bazzite_<something>` package;
   they move to it one at a time.
 - **Data** the package reads ships inside the package (the Dependency Checker's `dependencies.toml`) or next to it
-  in the app folder (persistent-acpi's `tables/`). Never one folder up from where the installer copies the app.
+  in the app folder (acpi's `tables/`). Never one folder up from where the installer copies the app.
 - An app with a shell script as its engine keeps that script in the app folder too
   (`apps/cores-bisect/bc250-cores-bisect.sh`).
 - **No placeholder folders** for future work. Plans and status go in MIGRATION.md, not in the app or the manual.

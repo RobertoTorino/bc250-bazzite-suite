@@ -145,9 +145,9 @@ def test_native_wheel_is_required_and_named(tmp_path, monkeypatch):
 
 
 def test_checkout_only_app_has_no_release(tmp_path):
-    version = (br.SUITE / "apps/suite-releases/VERSION").read_text().strip()
+    version = (br.SUITE / "apps/suite/VERSION").read_text().strip()
     with pytest.raises(SystemExit, match="runs from the checkout"):
-        br.build(f"suite-releases-v{version}", tmp_path)
+        br.build(f"suite-v{version}", tmp_path)
 
 
 def test_portal_needs_and_verifies_bundle(bt_release, pinned, tmp_path):

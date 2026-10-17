@@ -12,7 +12,7 @@ core/bc250_core/   shared Python package, see bc250_core below
 portal/            the portal: app, apps.toml (the pinned app releases) and install.sh
 apps/<name>/       one folder per app, each with its own VERSION and CHANGELOG
 tools/             release and CI tools (build_release, stage_app, pin_app, check_*; release.sh starts the
-                   release front end in apps/suite-releases/), installer tests
+                   release front end in apps/suite/), installer tests
 docs/ mkdocs.yml   the manual (MkDocs Material)
 test.sh            runs every test suite (core, portal, tools and each app with tests/)
 ```
@@ -83,7 +83,7 @@ The repo is used from both systems, so it is set up to behave the same on each:
 ## Where things are installed
 
 - **Root-owned `/opt`:** the portal (`/opt/bc250-bazzite-suite`), Bazzite Test (`check`), cores, oc and
-  persistent-acpi, whose scripts run as root: a normal user cannot change code that sudo runs.
+  acpi, whose scripts run as root: a normal user cannot change code that sudo runs.
 - **Your home folder:** the shared venv `~/.local/share/bc250-bazzite-suite/venv` (PyQt6, used by all suite
   GUIs and removed with the last of them), plus each app's settings, results and launchers.
 - **`bc250_core` per app:** each app's release carries the `bc250_core` it was tested with, next to its own code.

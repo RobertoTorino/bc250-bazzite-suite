@@ -1,3 +1,44 @@
+Changelog: 17-10-2026 14:24:42
+
+Release 1.20.0. Pins acpi-v0.1.6, overlay-v0.2.0, wdriver-v0.1.1, sftp-v0.2.0.
+
+Changelog: 17-10-2026 14:10:30
+
+Added. System Overlay is listed as [apps.overlay] (was [apps.system-overlay]), after the app's move to
+apps/overlay; its tile icon is images/apps/overlay.png. The entry pins the first release under its new tag prefix
+(overlay-v0.2.0) without a checksum until that release exists, which an app release accepts and a portal release
+waits for. The record of a copy installed under the old key moves to the new key when the portal starts, as for the
+apps renamed before it.
+
+Changelog: 17-10-2026 14:05:45
+
+Added. BC-250 USB Wi-Fi is listed as [apps.wdriver] (was [apps.usb-wifi]), after the app's move to apps/wdriver;
+its tile icon is images/apps/wdriver.png. The entry pins the first release under its new tag prefix
+(wdriver-v0.1.1) without a checksum until that release exists, which an app release accepts and a portal release
+waits for. The record of a copy installed under the old key moves to the new key when the portal starts, as for the
+apps renamed before it.
+
+Changelog: 17-10-2026 14:01:24
+
+Added. BC250 Suite Releases is listed as [checkout.suite] (was [checkout.suite-releases]), after the app's move to
+apps/suite; its tile icon is images/apps/suite.png. It stays checkout-only, without a tag or a pin. The record of a
+copy installed under the old key moves to the new key when the portal starts, as for the apps renamed before it.
+
+Changelog: 17-10-2026 13:56:22
+
+Added. Bazzite SFTP Tools is listed as [apps.sftp] (was [apps.sftp-tools]), after the app's move to apps/sftp; its
+tile icon is images/apps/sftp.png. The entry pins the first release under its new tag prefix (sftp-v0.2.0) without
+a checksum until that release exists, which an app release accepts and a portal release waits for. The record of a
+copy installed under the old key moves to the new key when the portal starts, as for the apps renamed before it.
+
+Changelog: 17-10-2026 13:46:57
+
+Added. BC-250 Persistent ACPI is listed as [apps.acpi] (was [apps.persistent-acpi]), after the app's move to
+apps/acpi; its tile icon is images/apps/acpi.png. The entry pins the first release under its new tag prefix
+(acpi-v0.1.6) without a checksum until that release exists, which an app release accepts and a portal release waits
+for. The record of a copy installed under the old key moves to the new key when the portal starts, as for the apps
+renamed before it.
+
 Changelog: 17-10-2026 13:30:55
 
 Release 1.19.0. Pins datstation-v0.2.2.

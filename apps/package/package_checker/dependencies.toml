@@ -44,11 +44,11 @@ launchers = ["~/.local/bin/bc250-cores-bisect-gui", "~/.local/bin/bc250-cores-un
 name = "BC-250 GPU OC Bisect"
 launchers = ["~/.local/bin/bc250-gpu-oc-bisect-gui"]
 
-[app.persistent-acpi]
+[app.acpi]
 name = "BC-250 Persistent ACPI"
 launchers = ["~/.local/bin/bc250-persistent-acpi-gui"]
 
-[app.system-overlay]
+[app.overlay]
 name = "System Overlay"
 launchers = ["~/.local/bin/bc250-system-overlay"]
 
@@ -72,7 +72,7 @@ launchers = ["~/.local/bin/bc250-memory-manager"]
 name = "BC-250 Fan Control"
 launchers = ["~/.local/bin/bc250-fan-control"]
 
-[app.usb-wifi]
+[app.wdriver]
 name = "BC-250 USB Wi-Fi"
 launchers = ["~/.local/bin/bc250-usb-wifi"]
 
@@ -80,7 +80,7 @@ launchers = ["~/.local/bin/bc250-usb-wifi"]
 name = "HDMI CEC Manager"
 launchers = ["~/.local/bin/bc250-hdmi-cec"]
 
-[app.sftp-tools]
+[app.sftp]
 name = "Bazzite SFTP Tools"
 launchers = ["~/.local/bin/bc250-bazzite-sftp-tools"]
 
@@ -164,7 +164,7 @@ need = "required"
 usage = "Password prompt for turning the thermal guard on, changing it and turning it off."
 
 [[tool.source]]
-owner = "usb-wifi"
+owner = "wdriver"
 need = "required"
 usage = "Password prompt for installing, updating and removing the Wi-Fi driver and its service."
 
@@ -555,7 +555,7 @@ usage = "Privilege for governor configuration and kernel log checks."
 anchor = "requirements"
 
 [[tool.source]]
-owner = "persistent-acpi"
+owner = "acpi"
 need = "required"
 usage = "Privilege for installing or removing the ACPI override."
 
@@ -565,7 +565,7 @@ description = "Bazzite's command for its ready-made maintenance tasks (ujust --c
 executables = ["ujust"]
 
 [[tool.source]]
-owner = "persistent-acpi"
+owner = "acpi"
 need = "optional"
 usage = "Regenerate the GRUB configuration (ujust regenerate-grub); else grub2-mkconfig."
 
@@ -581,7 +581,7 @@ executables = ["grub2-mkconfig"]
 root = true
 
 [[tool.source]]
-owner = "persistent-acpi"
+owner = "acpi"
 need = "optional"
 usage = "Regenerate the GRUB configuration when ujust is missing."
 
@@ -622,7 +622,7 @@ need = "required"
 usage = "Install, start and remove the thermal guard's service; the guard powers the board off with it at the shutdown limit."
 
 [[tool.source]]
-owner = "usb-wifi"
+owner = "wdriver"
 need = "required"
 usage = "Install, start and remove the Wi-Fi driver's service, which loads the driver at boot."
 
@@ -632,7 +632,7 @@ description = "Reads the systemd journal: the system, service and kernel logs."
 executables = ["journalctl"]
 
 [[tool.source]]
-owner = "usb-wifi"
+owner = "wdriver"
 need = "required"
 usage = "Read the chip's answer and the loader's messages from the kernel log."
 
@@ -712,7 +712,7 @@ need = "optional"
 usage = "The thermal guard's warnings on the desktop; without it they go only to the journal and the app."
 
 [[tool.source]]
-owner = "usb-wifi"
+owner = "wdriver"
 need = "optional"
 usage = "The driver service's word on the desktop when it rebuilt the driver after a kernel update, or could not."
 
@@ -791,7 +791,7 @@ description = "Plays a sound file through PulseAudio or PipeWire. SFTP Tools pla
 executables = ["paplay"]
 
 [[tool.source]]
-owner = "sftp-tools"
+owner = "sftp"
 need = "optional"
 usage = "The sound when a transfer completes; without it the app uses Qt's beep."
 anchor = "what-it-needs"
@@ -973,11 +973,11 @@ owner = "oc"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "persistent-acpi"
+owner = "acpi"
 specifier = ">=6.5,<7"
 
 [[dependency.source]]
-owner = "system-overlay"
+owner = "overlay"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
@@ -1025,7 +1025,7 @@ owner = "fan"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "usb-wifi"
+owner = "wdriver"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
@@ -1033,7 +1033,7 @@ owner = "cec"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "sftp-tools"
+owner = "sftp"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
@@ -1074,7 +1074,7 @@ description = "The C compiler. BC-250 USB Wi-Fi builds the Wi-Fi driver with it 
 executables = ["gcc"]
 
 [[tool.source]]
-owner = "usb-wifi"
+owner = "wdriver"
 need = "required"
 usage = "Build the Wi-Fi driver for the running kernel, in the app and in its service after a kernel update."
 
@@ -1084,7 +1084,7 @@ description = "Runs the kernel's build system for an out-of-tree module."
 executables = ["make"]
 
 [[tool.source]]
-owner = "usb-wifi"
+owner = "wdriver"
 need = "required"
 usage = "Build the Wi-Fi driver with the kernel's build tree."
 
@@ -1094,7 +1094,7 @@ description = "Fetches the driver's sources at the pinned commit."
 executables = ["git"]
 
 [[tool.source]]
-owner = "usb-wifi"
+owner = "wdriver"
 need = "required"
 usage = "Fetch the Wi-Fi driver's sources, one commit, the first time a branch is built."
 
@@ -1104,7 +1104,7 @@ description = "Loads and unloads kernel modules (insmod, modprobe, rmmod)."
 executables = ["insmod", "modprobe", "rmmod"]
 
 [[tool.source]]
-owner = "usb-wifi"
+owner = "wdriver"
 need = "required"
 usage = "The driver's service loads the Wi-Fi driver's two modules at boot and unloads them when stopped."
 
@@ -1114,7 +1114,7 @@ description = "Ejects a removable disk. An AIC8800 stick leaves its storage mode
 executables = ["eject"]
 
 [[tool.source]]
-owner = "usb-wifi"
+owner = "wdriver"
 need = "required"
 usage = "Switch the stick out of storage mode, from the udev rule and from the driver's service."
 
@@ -1124,7 +1124,7 @@ description = "Controls udev: reloads its rules after a change."
 executables = ["udevadm"]
 
 [[tool.source]]
-owner = "usb-wifi"
+owner = "wdriver"
 need = "required"
 usage = "Reload udev's rules after installing or removing the stick's rule."
 
@@ -1149,7 +1149,7 @@ name = "paramiko"
 description = "An SSH and SFTP library for Python. Bazzite SFTP Tools connects to the host, transfers files and runs the sshd commands of the Server Manager with it."
 
 [[dependency.source]]
-owner = "sftp-tools"
+owner = "sftp"
 specifier = ">=3.4,<5"
 
 [[dependency]]

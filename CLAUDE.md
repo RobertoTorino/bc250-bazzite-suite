@@ -13,15 +13,15 @@ The **BC250 Bazzite Suite** (exactly that name): tools for the AMD BC-250 on Baz
 its manifest. **check** (BC-250 Bazzite Test) is always installed and always listed first; every other listed app is an optional
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
-- `apps/<name>/`: check, gpu, helixsr, compute, cores, oc, persistent-acpi,
-  system-overlay, bios, ace, mesh, vram, fan, usb-wifi, cec, sftp-tools, consoles, shadps4, rpcs3, ppsspp, pcsx2, vita3k, decky, dtool, package, ncgui, datstation, suite-releases. Each has its
-  own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; consoles is AGPL-3.0, its protocol code ported from
+- `apps/<name>/`: check, gpu, helixsr, compute, cores, oc, acpi,
+  overlay, bios, ace, mesh, vram, fan, wdriver, cec, sftp, consoles, shadps4, rpcs3, ppsspp, pcsx2, vita3k, decky, dtool, package, ncgui, datstation, suite. Each has its
+  own VERSION, CHANGELOG, LICENSE (acpi is MIT; consoles is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; ncgui is GPL-2.0-only, a port of NetcatGUI; the rest
   GPL-3.0-or-later), .gitignore. Simple
   Demo Tool, the Dependency Checker and Bazzite NetcatGUI are `development = true` in `portal/apps.toml`: the portal
   lists them under "Development only". HelixSR, ACE Queues, Mesh Shaders, Console Link, the shadPS4 Manager, the Decky Loader Manager, the RPCS3 Manager,
   Bazzite DatStation, the PPSSPP Manager, the PCSX2 Manager and the Vita3K Manager are `section = "gaming"`: listed under "Gaming". Suite Releases (the release front end) has `.standalone` and `.checkout-only`: it runs
-  from the checkout, is never released, and is listed as `[checkout.suite-releases]`, also under "Development only":
+  from the checkout, is never released, and is listed as `[checkout.suite]`, also under "Development only":
   a portal from a release finds the checkout on the machine (it asks only when there is none) and remembers it, the
   released apps still come from their releases. Install every app through the portal, so what is installed stays in step. BC-250 Installer Tests (`tools/installer-tests/gui`) is
   checkout-only the same way: `.checkout-only` and `[checkout.installer-tests]` with `folder`.
@@ -37,7 +37,7 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
   and say what is ready; don't offer to commit.
 - **Releases are the owner's, all of it.** See [Releases](#releases): Claude prepares code, never a release.
 - **Warn before board changes.** Apps that change how the board runs (CU/core unlocks, GPU governor, GPU
-  overclocking, ACPI override, the patched RADV of ace, the DirectMesh RADV of mesh, the VRAM split of vram, the thermal guard of fan, the kernel module of usb-wifi) are marked `changes_board` and the portal asks first. Frame it as standard caution:
+  overclocking, ACPI override, the patched RADV of ace, the DirectMesh RADV of mesh, the VRAM split of vram, the thermal guard of fan, the kernel module of wdriver) are marked `changes_board` and the portal asks first. Frame it as standard caution:
   the apps are software-only and reversible, not "risky".
 - **Advice, not reboots.** No app reboots, powers off or logs out the board; when one is needed, the app says so
   (and which command does it). The exception, by design (owner, 15-10-2026): CU Bisect and Cores Bisect, whose
@@ -141,10 +141,10 @@ shellcheck -x -S warning portal/install.sh apps/check/install.sh tools/*.sh tool
 shellcheck -S warning apps/cores/bc250-cores-bisect.sh apps/cores/bc250-cores-unlock.sh \
   apps/cores/install.sh apps/cores/packaging/bazzite/*.sh
 shellcheck -S warning apps/oc/bc250-gpu-oc-bisect.sh apps/oc/install.sh
-shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh \
-  apps/system-overlay/install.sh apps/bios/install.sh apps/vram/install.sh apps/fan/install.sh \
-  apps/cec/install.sh apps/sftp-tools/install.sh \
-  apps/consoles/install.sh apps/dtool/install.sh apps/suite-releases/*.sh
+shellcheck -S warning apps/acpi/bc250-acpi-override.sh apps/acpi/install.sh \
+  apps/overlay/install.sh apps/bios/install.sh apps/vram/install.sh apps/fan/install.sh \
+  apps/cec/install.sh apps/sftp/install.sh \
+  apps/consoles/install.sh apps/dtool/install.sh apps/suite/*.sh
 shellcheck -S warning apps/ace/bc250-ace-queues.sh apps/ace/bc250-ace-queues-run \
   apps/ace/install.sh apps/ace/mesa/build-in-container.sh
 shellcheck -S warning apps/mesh/bc250-mesh-shaders.sh apps/mesh/bc250-mesh-shaders-run \
@@ -180,7 +180,7 @@ The owner does every step of a release; Claude does none of them, and doesn't of
 - the release entries in the CHANGELOGs.
 
 `tools/release.sh` starts the owner's front end for the file edits of a release, BC250 Suite Releases
-(`apps/suite-releases/`: `main_window.py` on `plan.py`, and `check-release.sh` for the board checks). Claude may
+(`apps/suite/`: `main_window.py` on `plan.py`, and `check-release.sh` for the board checks). Claude may
 change it and its tests, but never uses it on the repository.
 
 Decky Loader is pinned in decky (`loader.py`); `tools/check_upstream.py`, weekly in

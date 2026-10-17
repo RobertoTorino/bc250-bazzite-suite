@@ -34,7 +34,7 @@ import stage_app  # noqa: E402
 SUITE = stage_app.SUITE
 
 # app key -> (package, name of the .exe)
-WINDOWS_APPS = {"sftp-tools": ("bc250_sftp_tools", "BC250-SFTP-Tools")}
+WINDOWS_APPS = {"sftp": ("sftp_tools", "BC250-SFTP-Tools")}
 
 
 def app_id(src: Path, package: str) -> str:

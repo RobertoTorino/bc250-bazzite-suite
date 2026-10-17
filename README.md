@@ -33,14 +33,14 @@ uses. You do not need them.
 - <img src="portal/images/apps/compute.png" width="20" height="20" alt=""/> **[BC-250 CU Bisect](apps/compute)**: Tell bad CUs apart from an unstable CU unlock, and apply a tested unlock.
 - <img src="portal/images/apps/cores.png" width="20" height="20" alt=""/> **[BC-250 Cores Bisect](apps/cores)**: Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock.
 - <img src="portal/images/apps/oc.png" width="20" height="20" alt=""/> **[BC-250 GPU OC Bisect](apps/oc)**: Find your board's safe GPU overclock and undervolt, one step at a time.
-- <img src="portal/images/apps/persistent-acpi.png" width="20" height="20" alt=""/> **[BC-250 Persistent ACPI](apps/persistent-acpi)**: CPU C-states and frequency scaling through a persistent ACPI override (GRUB early initrd).
-- <img src="portal/images/apps/system-overlay.png" width="20" height="20" alt=""/> **[System Overlay](apps/system-overlay)**: CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top.
+- <img src="portal/images/apps/acpi.png" width="20" height="20" alt=""/> **[BC-250 Persistent ACPI](apps/acpi)**: CPU C-states and frequency scaling through a persistent ACPI override (GRUB early initrd).
+- <img src="portal/images/apps/overlay.png" width="20" height="20" alt=""/> **[System Overlay](apps/overlay)**: CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top.
 - <img src="portal/images/apps/bios.png" width="20" height="20" alt=""/> **[BC-250 BIOS Reader](apps/bios)**: The BIOS settings as the setup screen shows them, hidden menus included. Stock or modded BIOS. Read-only.
 - <img src="portal/images/apps/vram.png" width="20" height="20" alt=""/> **[BC-250 Memory Manager](apps/vram)**: The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it.
 - <img src="portal/images/apps/fan.png" width="20" height="20" alt=""/> **[BC-250 Fan Control](apps/fan)**: A thermal guard that warns, cools and shuts down cleanly at a critical temperature, and the fans.
-- <img src="portal/images/apps/usb-wifi.png" width="20" height="20" alt=""/> **[BC-250 USB Wi-Fi](apps/usb-wifi)**: The driver for AIC8800D80 USB Wi-Fi sticks: built for the running kernel, loaded at boot, rebuilt after a kernel update.
+- <img src="portal/images/apps/wdriver.png" width="20" height="20" alt=""/> **[BC-250 USB Wi-Fi](apps/wdriver)**: The driver for AIC8800D80 USB Wi-Fi sticks: built for the running kernel, loaded at boot, rebuilt after a kernel update.
 - <img src="portal/images/apps/cec.png" width="20" height="20" alt=""/> **[HDMI CEC Manager](apps/cec)**: Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC.
-- <img src="portal/images/apps/sftp-tools.png" width="20" height="20" alt=""/> **[Bazzite SFTP Tools](apps/sftp-tools)**: Move files between computers over SFTP, and manage the SSH server of a Bazzite host.
+- <img src="portal/images/apps/sftp.png" width="20" height="20" alt=""/> **[Bazzite SFTP Tools](apps/sftp)**: Move files between computers over SFTP, and manage the SSH server of a Bazzite host.
 
 **Gaming**: apps for playing, in their own section of the portal.
 
@@ -62,7 +62,7 @@ use the board.
 - <img src="portal/images/apps/dtool.png" width="20" height="20" alt=""/> **[Simple Demo Tool](apps/dtool)**: Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite.
 - <img src="portal/images/apps/package.png" width="20" height="20" alt=""/> **[Dependency Checker](apps/package)**: The suite's Python packages and external tools, which apps use them, and whether newer ones exist; and whether a Bazzite update waits for a reboot.
 - <img src="portal/images/apps/ncgui.png" width="20" height="20" alt=""/> **[Bazzite NetcatGUI](apps/ncgui)**: A graphical netcat: connect to a host or listen on a port, TCP, UDP or TLS, one session per tab.
-- <img src="portal/images/apps/suite-releases.png" width="20" height="20" alt=""/> **[BC250 Suite Releases](apps/suite-releases)**: The release front end: versions, pins and the board checks of a release. Runs from a checkout of this repository.
+- <img src="portal/images/apps/suite.png" width="20" height="20" alt=""/> **[BC250 Suite Releases](apps/suite)**: The release front end: versions, pins and the board checks of a release. Runs from a checkout of this repository.
 - <img src="portal/images/apps/installer-tests.png" width="20" height="20" alt=""/> **[BC-250 Installer Tests](tools/installer-tests/gui)**: Run the suite's installer tests one at a time, with their output live in the window. Runs from a checkout of this repository.
 
 How to install and use them: **[the manual](https://robertotorino.github.io/bc250-bazzite-suite/)**.

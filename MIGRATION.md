@@ -7,16 +7,16 @@ describe only what exists.
 
 ## Resume here (13-10-2026, after the break)
 
-**First (17-10-2026): go on with the renaming.** State at the end of the last session, nothing committed by
-Claude:
+**First (17-10-2026): the releases of the last renames, then the icons.** Every app is renamed (item 2). State at
+the end of the last session, nothing committed by Claude:
 
-1. **Releases** (owner). Done, 17-10-2026: every app renamed before ppsspp is released and pinned with a
-   checksum under its new prefix (the last batch: cec, compute, decky, fan, gpu, mesh, oc, pcsx2, vram, with
-   helixsr-v0.3.1), and portal-v1.18.0 is released. Open after the ppsspp, rpcs3, shadps4, vita3k, dtool and package renames below:
-   ppsspp-v0.2.1, rpcs3-v0.2.1, shadps4-v0.2.1, vita3k-v0.1.2, dtool-v0.1.10 and package-v0.4.6 are pinned
-   without a checksum until the first release under each new prefix, then their pins, the portal minor bump
-   check_manifest asks for, and the portal release; the next renamed apps can share that portal release. Done this
-   session besides the renames: DatStation's revised quiz questions (item 2 under Next session below).
+1. **Releases** (owner). Done, 17-10-2026: every app renamed before persistent-acpi is released and pinned with a
+   checksum under its new prefix (the last batch: datstation, dtool, package, ppsspp, rpcs3, shadps4, vita3k), and
+   portal-v1.19.0 is released. Open after the persistent-acpi, sftp-tools, usb-wifi and system-overlay renames
+   below: acpi-v0.1.6, sftp-v0.2.0, wdriver-v0.1.1 and overlay-v0.2.0 are pinned without a checksum until the first
+   release under each new prefix, then their pins, the portal minor bump check_manifest asks for, and the portal
+   release; the dtool release too (it picks System Overlay by its new key). Done this session besides the renames:
+   DatStation's revised quiz questions (item 2 under Next session below).
 2. **The (re)naming convention** (owner, 17-10-2026), one app per step, the owner names each: the folder under
    `apps/` is a short name, the package the app's name without its BC-250 or Bazzite prefix, as a Python
    identifier. Done: `apps/ace/ace_queues/` (was ace-queues/bc250_ace_queues), `apps/ncgui/netcat_gui/` (was
@@ -45,12 +45,15 @@ Claude:
    vita3k-manager/bc250_vita3k_manager, 17-10-2026) and `apps/dtool/demo_tool/` (was demo-tool/simple_demo_tool,
    17-10-2026; its chapter stays docs/other-tools/simple-demo-tool.md) and `apps/package/package_checker/` (was
    dependency-checker/bc250_dependency_checker, 17-10-2026; its tile icon is package.png now, the portal's
-   exception for its old file name gone). The owner picks the next app and both names; do not guess
-   them. Still to rename, with their packages now:
-   persistent-acpi (bc250_acpi_gui),
-   sftp-tools (bc250_sftp_tools),
-   suite-releases (bc250_suite_releases, checkout-only: no pin, no tag), system-overlay (bc250_overlay), usb-wifi
-   (bc250_usb_wifi). The recipe, as done for ace and ncgui:
+   exception for its old file name gone) and `apps/acpi/locked_acpi/` (was persistent-acpi/bc250_acpi_gui, 17-10-2026,
+   both names the owner's) and `apps/sftp/sftp_tools/` (was sftp-tools/bc250_sftp_tools, 17-10-2026; the Windows
+   build follows the tag, sftp-v) and `apps/suite/suite_releases/` (was suite-releases/bc250_suite_releases,
+   17-10-2026; checkout-only, so no tag or pin; a launcher written before needs apps/suite/install.sh again)
+   and `apps/wdriver/usb_wifidriver/` (was usb-wifi/bc250_usb_wifi, 17-10-2026; the boot service runs its own copy
+   of driver.py by path, so the window asks for Update once)
+   and `apps/overlay/system_overlay/` (was system-overlay/bc250_overlay, 17-10-2026; Simple Demo Tool picks it
+   first by its new key). Every app follows the convention now; the recipe stays for a renamed app later. The
+   recipe, as done for ace and ncgui:
    - `git mv` the folder and the package; rename `docs/apps/<old>.md`, `tools/installer-tests/<old>.sh` and
      `portal/images/apps/<old>.png` to the new short name. The tooling ties the folder name to the portal key, the
      tag prefix, the chapter, the installer test and the tile icon, so all of them follow the folder.
@@ -70,7 +73,7 @@ Claude:
      name, on install and uninstall, as helixsr, gpu, compute and dtool do; its installer test plants the old folder.
    - CHANGELOG entries: the app (`Fixed.`), the portal (`Added.`, a key was added), the dependency checker (apps/package)
      (`Fixed.`) and the root; the convention row under Open gets the app.
-   - Checks: the app's tests, its installer test, portal, package, suite-releases and tools tests,
+   - Checks: the app's tests, its installer test, portal, package, suite and tools tests,
      check_versions, check_manifest (it asks for a portal minor bump until the owner releases: expected),
      shellcheck, the strict wiki build, `tools/ci-local.sh` for the touched jobs.
    - Then the owner: release the app under the new prefix (Suite Releases offers the current version first), pin,
@@ -547,7 +550,7 @@ card icon in `portal/images/apps/` is a copy of that (`tools/tests/test_portal_i
 | Step | What | Gate |
 |---|---|---|
 | 3 | Board check | Install, open and uninstall the portal on a clean Bazzite account; a full passive bazzite-test run matches the original |
-| — | **Naming convention** (owner, 17-10-2026): an app's folder under apps/ is a short name, its package the app's name without its BC-250 or Bazzite prefix; with the folder go the portal key, the tag prefix, the wiki chapter, the installer test and the tile icon, while the installed launcher, scripts, settings and state keep their names. Done (17-10-2026): ace-queues → `apps/ace/ace_queues`, bazzite-netcatgui → `apps/ncgui/netcat_gui`, bazzite-datstation → `apps/datstation/datstation`, bazzite-test → `apps/check/bazzite_check`, bios-reader → `apps/bios/bios_reader`, console-link → `apps/consoles/consoles_link`, cores-bisect → `apps/cores/cores_bisect` + `cores_unlock`, cu-bisect → `apps/compute/cu_bisect` + `cu_unlock`, decky-manager → `apps/decky/decky_manager`, fan-control → `apps/fan/fan_control`, governor → `apps/gpu/gpu_governor`, gpu-oc-bisect → `apps/oc/oc_bisect`, hdmi-cec → `apps/cec/hdmi_cec`, helixsr → `apps/helixsr/helixsr_manager`, memory-manager → `apps/vram/vram_manager`, mesh-shaders → `apps/mesh/mesh_shaders`, pcsx2-manager → `apps/pcsx2/pcsx2_manager`, ppsspp-manager → `apps/ppsspp/ppsspp_manager`, rpcs3-manager → `apps/rpcs3/rpcs3_manager`, shadps4-manager → `apps/shadps4/shadps4_manager`, vita3k-manager → `apps/vita3k/vita3k_manager`, demo-tool → `apps/dtool/demo_tool`, dependency-checker → `apps/package/package_checker`; the portal moves an installed copy's record to the new key (`RENAMED` in portal/bc250_portal/manifest.py, used by Records in sources.py: add each renamed app there). Open for each (owner): the first release under the new prefix (`ace-v…`, `ncgui-v…`, `datstation-v…`, `check-v…`, `bios-v…`, `consoles-v…`, `cores-v…`, `compute-v…`, `decky-v…`, `fan-v…`, `gpu-v…`, `oc-v…`, `cec-v…`, `vram-v…`, `mesh-v…`, `pcsx2-v…`, `ppsspp-v…`, `rpcs3-v…`, `shadps4-v…`, `vita3k-v…`, `dtool-v…`, `package-v…`; all are released and pinned up to pcsx2 (portal-v1.18.0), apps.toml pins ppsspp-v0.2.1, rpcs3-v0.2.1, shadps4-v0.2.1, vita3k-v0.1.2, dtool-v0.1.10 and package-v0.4.6 without a checksum until then, which an app release accepts and a portal release waits for), its pin, and the portal minor bump check_manifest asks for (keys were added and removed). The other apps follow one at a time, each the same way. | Its tests, installer test and the suite's checks; the portal lists the app under the new key |
+| — | **Naming convention** (owner, 17-10-2026): an app's folder under apps/ is a short name, its package the app's name without its BC-250 or Bazzite prefix; with the folder go the portal key, the tag prefix, the wiki chapter, the installer test and the tile icon, while the installed launcher, scripts, settings and state keep their names. Done (17-10-2026): ace-queues → `apps/ace/ace_queues`, bazzite-netcatgui → `apps/ncgui/netcat_gui`, bazzite-datstation → `apps/datstation/datstation`, bazzite-test → `apps/check/bazzite_check`, bios-reader → `apps/bios/bios_reader`, console-link → `apps/consoles/consoles_link`, cores-bisect → `apps/cores/cores_bisect` + `cores_unlock`, cu-bisect → `apps/compute/cu_bisect` + `cu_unlock`, decky-manager → `apps/decky/decky_manager`, fan-control → `apps/fan/fan_control`, governor → `apps/gpu/gpu_governor`, gpu-oc-bisect → `apps/oc/oc_bisect`, hdmi-cec → `apps/cec/hdmi_cec`, helixsr → `apps/helixsr/helixsr_manager`, memory-manager → `apps/vram/vram_manager`, mesh-shaders → `apps/mesh/mesh_shaders`, pcsx2-manager → `apps/pcsx2/pcsx2_manager`, ppsspp-manager → `apps/ppsspp/ppsspp_manager`, rpcs3-manager → `apps/rpcs3/rpcs3_manager`, shadps4-manager → `apps/shadps4/shadps4_manager`, vita3k-manager → `apps/vita3k/vita3k_manager`, demo-tool → `apps/dtool/demo_tool`, dependency-checker → `apps/package/package_checker`, persistent-acpi → `apps/acpi/locked_acpi`, sftp-tools → `apps/sftp/sftp_tools`, suite-releases → `apps/suite/suite_releases` (checkout-only: no tag, no pin), usb-wifi → `apps/wdriver/usb_wifidriver`, system-overlay → `apps/overlay/system_overlay`; the portal moves an installed copy's record to the new key (`RENAMED` in portal/bc250_portal/manifest.py, used by Records in sources.py: add each renamed app there). Open for each (owner): the first release under the new prefix (`ace-v…`, `ncgui-v…`, `datstation-v…`, `check-v…`, `bios-v…`, `consoles-v…`, `cores-v…`, `compute-v…`, `decky-v…`, `fan-v…`, `gpu-v…`, `oc-v…`, `cec-v…`, `vram-v…`, `mesh-v…`, `pcsx2-v…`, `ppsspp-v…`, `rpcs3-v…`, `shadps4-v…`, `vita3k-v…`, `dtool-v…`, `package-v…`, `acpi-v…`, `sftp-v…`, `wdriver-v…`, `overlay-v…`; all are released and pinned up to package (portal-v1.19.0), apps.toml pins acpi-v0.1.6, sftp-v0.2.0, wdriver-v0.1.1 and overlay-v0.2.0 without a checksum until then, which an app release accepts and a portal release waits for), its pin, and the portal minor bump check_manifest asks for (keys were added and removed). Every app is renamed (17-10-2026). | Its tests, installer test and the suite's checks; the portal lists the app under the new key |
 | 4 | Headless smoke tests for the five GUIs without tests (cu bisect/unlock, cores bisect/unlock, gpu-oc). Built (12-10-2026): tests/ in cu-bisect, cores-bisect and gpu-oc-bisect (options, the --auto unit, both unlock gates, every window offscreen with a fake script), in CI's pytest matrix | CI green |
 | 5 | governor and helixsr onto core; per-app releases plus a portal release | Their test suites; install from the portal |
 | 6 | Bisect family: `terminal`, `runner`, `dialogs`, `systemd` into core; shared `BisectLauncher` (cu, cores, gpu-oc stay three apps); unlock GUIs onto core; names in strings become placeholders | Their test suites; on the board: one process after starting cu with auto-resume |

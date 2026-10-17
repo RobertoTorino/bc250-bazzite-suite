@@ -67,19 +67,19 @@ check "/opt empty" "[ -z \"\$(ls $T/opt)\" ]"
 
 echo "== 5. uninstall asks about each other app: cancel, then skip one and uninstall the other"
 bash "$SUITE/install.sh" > "$T/log5" 2>&1; logs+=("$T/log5")
-for app in system-overlay bios; do                  # as the portal installs them from the checkout
+for app in overlay bios; do                         # as the portal installs them from the checkout
     /usr/bin/python3 "$SUITE/tools/stage_app.py" "$app" "$D/bc250-bazzite-suite/portal/releases/local-$app" > /dev/null
     (cd "$D/bc250-bazzite-suite/portal/releases/local-$app" && bash install.sh) >> "$T/log5" 2>&1
 done
 /usr/bin/python3 - "$D/bc250-bazzite-suite/portal/installed.json" <<'PY'
 import json, sys
 data = json.load(open(sys.argv[1]))
-data.update({"system-overlay": "local", "bios": "local"})
+data.update({"overlay": "local", "bios": "local"})
 json.dump(data, open(sys.argv[1], "w"))
 PY
 installed() { [ -x "$HOME/.local/bin/$1" ]; }
 check "both apps installed" "installed bc250-system-overlay && installed bc250-bios-reader"
-mkdir -p "$D/bc250-bazzite-suite/portal/releases/system-overlay-v0.0.1"   # an older release it was updated from
+mkdir -p "$D/bc250-bazzite-suite/portal/releases/overlay-v0.0.1"   # an older release it was updated from
 printf 'y\nc\n' | BC250_INTERACTIVE=1 bash "$SUITE/install.sh" --uninstall >> "$T/log5" 2>&1; rc=$?
 check "cancel: exit 1" "[ $rc -eq 1 ]"
 check "cancel: nothing removed" "installed bc250-system-overlay && installed bc250-bios-reader && installed bc250-bazzite-suite && installed bc250-bazzite-test"
@@ -87,14 +87,14 @@ check "cancel: says so" "grep -q 'Cancelled: nothing was uninstalled.' $T/log5"
 printf 'x\ns\ny\n' | BC250_INTERACTIVE=1 bash "$SUITE/install.sh" --uninstall >> "$T/log5" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "asked about both (twice: the cancel run too), again after an unknown answer" "[ \$(grep -o 'Uninstall System Overlay?' $T/log5 | wc -l) -eq 3 ] && [ \$(grep -o 'Uninstall BC-250 BIOS Reader?' $T/log5 | wc -l) -eq 2 ]"
-check "skipped app stays" "installed bc250-system-overlay && [ -d $D/bc250-bazzite-suite/portal/releases/local-system-overlay ]"
+check "skipped app stays" "installed bc250-system-overlay && [ -d $D/bc250-bazzite-suite/portal/releases/local-overlay ]"
 check "chosen app gone" "! installed bc250-bios-reader && [ ! -e $D/bc250-bazzite-suite/portal/releases/local-bios ]"
-check "record drops the chosen app" "! grep -q bios $D/bc250-bazzite-suite/portal/installed.json && grep -q system-overlay $D/bc250-bazzite-suite/portal/installed.json"
+check "record drops the chosen app" "! grep -q bios $D/bc250-bazzite-suite/portal/installed.json && grep -q overlay $D/bc250-bazzite-suite/portal/installed.json"
 check "record and folder of check gone" "! grep -q check $D/bc250-bazzite-suite/portal/installed.json && [ ! -e $D/bc250-bazzite-suite/portal/releases/local-check ]"
-check "older release of the skipped app gone" "[ ! -e $D/bc250-bazzite-suite/portal/releases/system-overlay-v0.0.1 ]"
+check "older release of the skipped app gone" "[ ! -e $D/bc250-bazzite-suite/portal/releases/overlay-v0.0.1 ]"
 check "portal and check gone" "! installed bc250-bazzite-suite && ! installed bc250-bazzite-test"
 check "mentions what is left" "grep -q 'Still installed: bc250-system-overlay' $T/log5"
-(cd "$D/bc250-bazzite-suite/portal/releases/local-system-overlay" && bash install.sh --uninstall) >> "$T/log5" 2>&1
+(cd "$D/bc250-bazzite-suite/portal/releases/local-overlay" && bash install.sh --uninstall) >> "$T/log5" 2>&1
 
 echo "== 6. after an uninstall that kept nothing, no suite folder is left"
 bash "$SUITE/install.sh" > "$T/log6" 2>&1 && bash "$T/opt/bc250-bazzite-suite/install.sh" --uninstall >> "$T/log6" 2>&1

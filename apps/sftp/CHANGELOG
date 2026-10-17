@@ -1,0 +1,78 @@
+Changelog: 17-10-2026 14:24:42
+
+Release 0.2.0.
+
+Changelog: 17-10-2026 13:56:22
+
+Fixed. The app's folder in the suite is apps/sftp (was apps/sftp-tools) and its package is sftp_tools (was
+bc250_sftp_tools): the suite's naming convention (owner, 17-10-2026), a short folder name and the package named
+after the app without the BC-250 or Bazzite prefix; both names are the owner's. With the folder go its key in the
+portal, its chapter of the wiki (apps/sftp/), its installer test and its release tags: sftp-v<x.y.z> from the next
+release on, which the app's update check follows, and the Windows build is made for those tags. The installed app
+keeps its name, its launcher bc250-bazzite-sftp-tools, its folder under ~/.local/share (an install replaces the
+whole app folder there, so no old package folder stays behind), its settings, its connection profiles and the name
+of the Windows zip; the portal moves its record of the installed copy to the new key.
+
+Changelog: 16-10-2026 06:02:49
+
+Release 0.2.0.
+
+Changelog: 16-10-2026 01:19:38
+
+Release 0.1.7.
+
+Changelog: 16-10-2026 00:54:44
+
+Fixed. The app has a new icon, images/bc250-bazzite-sftp-tools.png and its 128 px copy; the portal's tile shows it.
+
+Changelog: 15-10-2026 23:29:43
+
+Release 0.1.6.
+
+Changelog: 15-10-2026 22:51:19
+
+Release 0.1.6.
+
+Changelog: 15-10-2026 05:52:00
+
+Release 0.1.5.
+
+Changelog: 15-10-2026 03:27:57
+
+Release 0.1.4.
+
+Changelog: 15-10-2026 02:31:31
+
+No translations (owner's decision): core's create_app() no longer takes lang, and AppInfo no longer has languages; the app was English only already and stays so.
+
+Changelog: 15-10-2026 02:10:51
+
+Release 0.1.3.
+
+Changelog: 14-10-2026 18:22:56
+
+The app no longer has the BC250 prefix in its name, as it is not tied to the board: Bazzite SFTP Tools (window, menu entry, README, manual). Its app ID, launcher, package and settings are unchanged.
+
+Changelog: 14-10-2026 00:37:33
+
+Release 0.1.2.
+
+Changelog: 13-10-2026 15:53:27
+
+Release 0.1.1.
+
+Changelog: 13-10-2026 15:51:48
+
+The installer installs the Python packages with pip --upgrade (owner's decision, 13-10-2026): installing again brings each package to the newest version its requirements allow, so a security fix within that range arrives with a reinstall from the portal.
+
+Changelog: 12-10-2026 22:00:05
+
+Release 0.1.0.
+
+Changelog: 12-10-2026 21:50:59
+
+A Windows program of the app: the release workflow builds BC250-SFTP-Tools.exe on Windows (PyInstaller, one file, with bc250_core and paramiko inside) and adds it to the app's release as bc250-bazzite-sftp-tools-<version>-windows.zip with a .sha256 file. The portal does not use it. The manual chapter has a section on it.
+
+Changelog: 12-10-2026 21:32:31
+
+New app: BC250 Bazzite SFTP Tools, moved in from its own repository and adapted to the suite. An SFTP client (local and remote folders, transfer queue, speed limit, overwrite choices) and a Server Manager (sshd status, start and stop, sshd_config editor) in one window with the suite's header: the icon at 96 px beside the title with the version, and a second row with the states of this system, the SFTP connection and sshd. The code is the package bc250_sftp_tools on bc250_core (start-up, single instance, tooltips, header, theme). Settings and profiles are in ~/.config/bc250-bazzite-sftp-tools and the log in ~/.local/share/bc250-bazzite-sftp-tools (they were in a folder named after the Qt organisation). The installer takes --uninstall and --uninstall --purge like the other apps' (it had --keep-data), and gives the app its own venv with PyQt6 and paramiko. The settings dialog now hands its changes to the transfer queue and the file lists straight away (they only took effect after a restart, and a failed save was logged without telling you); the password rules' dialog no longer shows the braces doubled; the file lists no longer scramble the Type, Size and Modified cells (sorting was on while the rows were filled); the sound is played without a shell; an error dot's log handler goes with its window. The Windows build files and the PyInstaller icon lookup are not part of the app.

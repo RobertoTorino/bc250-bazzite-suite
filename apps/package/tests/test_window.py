@@ -183,13 +183,13 @@ def test_needs_update_when_an_app_wants_newer_or_a_release_fixes_a_vulnerability
         [DependencyStatus(dependencies["cryptography"],
                           (EnvironmentVersion(link, ("consoles",), "41.0.0", ("consoles",), (),
                                               ("consoles",)),), "46.0.0"),
-         DependencyStatus(dependencies["paramiko"], (EnvironmentVersion(sftp, ("sftp-tools",), "3.4.0", (),
+         DependencyStatus(dependencies["paramiko"], (EnvironmentVersion(sftp, ("sftp",), "3.4.0", (),
                                                                         (fixed,)),), "3.5.0"),
          DependencyStatus(dependencies["obsws-python"], (EnvironmentVersion(DEMO, ("dtool",), "1.8.0", (),
                                                                             (unfixed,)),), "1.8.0"),
          DependencyStatus(dependencies["PyQt6"], (EnvironmentVersion(DEMO, ("dtool",), "7.0.0",
                                                                      ("dtool",)),), "7.0.0")],
-        [], frozenset({"consoles", "sftp-tools", "dtool"}))
+        [], frozenset({"consoles", "sftp", "dtool"}))
     window = _window(result)
     try:
         crypto, paramiko = window.cards["cryptography"], window.cards["paramiko"]

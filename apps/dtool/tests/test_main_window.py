@@ -38,7 +38,7 @@ def test_release_selection_prefers_system_overlay(qapp, monkeypatch, tmp_path):
     (tmp_path / "install.sh").touch()
     (tmp_path / "apps.toml").write_text(
         '[apps.governor]\nname = "Governor"\ndetect = ["~/governor"]\nlaunch = [["Open", "~/governor"]]\n'
-        '[apps.system-overlay]\nname = "Overlay"\ndetect = ["~/overlay"]\nlaunch = [["Open", "~/overlay"]]\n',
+        '[apps.overlay]\nname = "Overlay"\ndetect = ["~/overlay"]\nlaunch = [["Open", "~/overlay"]]\n',
         encoding="utf-8",
     )
     monkeypatch.setattr(main_window, "obs_install_command", lambda: None)
@@ -53,14 +53,14 @@ def test_release_selection_prefers_system_overlay(qapp, monkeypatch, tmp_path):
 
     selected = window._selected_app()
     assert selected is not None
-    assert selected.key == "system-overlay"
+    assert selected.key == "overlay"
     window.close()
 
 
 def test_window_automatically_loads_release_found_in_downloads(qapp, monkeypatch, tmp_path):
     (tmp_path / "install.sh").touch()
     (tmp_path / "apps.toml").write_text(
-        '[apps.system-overlay]\nname = "Overlay"\ndetect = ["~/overlay"]\nlaunch = [["Open", "~/overlay"]]\n',
+        '[apps.overlay]\nname = "Overlay"\ndetect = ["~/overlay"]\nlaunch = [["Open", "~/overlay"]]\n',
         encoding="utf-8",
     )
     monkeypatch.setattr(main_window, "obs_install_command", lambda: None)
@@ -71,7 +71,7 @@ def test_window_automatically_loads_release_found_in_downloads(qapp, monkeypatch
     selected = window._selected_app()
     assert window.release_dir == tmp_path
     assert selected is not None
-    assert selected.key == "system-overlay"
+    assert selected.key == "overlay"
     assert "Found the extracted portal release automatically" in window.release_status.text()
     window.close()
 
@@ -81,7 +81,7 @@ def test_choose_local_tool_folder_loads_parent_suite_checkout(qapp, monkeypatch,
     portal = tmp_path / "portal"
     portal.mkdir()
     (portal / "apps.toml").write_text(
-        '[apps.system-overlay]\nname = "Overlay"\ndetect = ["~/overlay"]\nlaunch = [["Open", "~/overlay"]]\n',
+        '[apps.overlay]\nname = "Overlay"\ndetect = ["~/overlay"]\nlaunch = [["Open", "~/overlay"]]\n',
         encoding="utf-8",
     )
     tool_folder = tmp_path / "apps" / "dtool"
@@ -97,7 +97,7 @@ def test_choose_local_tool_folder_loads_parent_suite_checkout(qapp, monkeypatch,
 
     assert window.release_dir == tool_folder
     assert window._selected_app() is not None
-    assert window._selected_app().key == "system-overlay"
+    assert window._selected_app().key == "overlay"
     assert str(tool_folder) in window.release_status.text()
     window.close()
 
@@ -276,7 +276,7 @@ def test_start_hides_window_and_global_shortcut_stops_recording(qapp, monkeypatc
     release.mkdir()
     (release / "install.sh").touch()
     (release / "apps.toml").write_text(
-        '[apps.system-overlay]\nname = "Overlay"\ndetect = ["~/overlay"]\n'
+        '[apps.overlay]\nname = "Overlay"\ndetect = ["~/overlay"]\n'
         'launch = [["Open", "~/overlay"]]\n',
         encoding="utf-8",
     )
@@ -312,8 +312,8 @@ def test_start_hides_window_and_global_shortcut_stops_recording(qapp, monkeypatc
     )
     window = main_window.MainWindow()
     window.release_dir = release
-    window.apps = (main_window.DemoApp("system-overlay", "Overlay", (tmp_path / "overlay",)),)
-    window.app_choice.addItem("Overlay", "system-overlay")
+    window.apps = (main_window.DemoApp("overlay", "Overlay", (tmp_path / "overlay",)),)
+    window.app_choice.addItem("Overlay", "overlay")
     window.start_button.setEnabled(True)
     window.show()
 

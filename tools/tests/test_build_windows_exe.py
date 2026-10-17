@@ -25,21 +25,21 @@ def test_every_windows_app_has_its_package_and_a_core_to_bundle():
 
 
 def test_asset_names_follow_app_id_and_version():
-    src = SUITE / "apps" / "sftp-tools"
+    src = SUITE / "apps" / "sftp"
     version = (src / "VERSION").read_text(encoding="utf-8").strip()
-    assert bwe.app_id(src, "bc250_sftp_tools") == "bc250-bazzite-sftp-tools"
+    assert bwe.app_id(src, "sftp_tools") == "bc250-bazzite-sftp-tools"
     assert bwe.asset_name("bc250-bazzite-sftp-tools", version) == f"bc250-bazzite-sftp-tools-{version}-windows.zip"
 
 
 def test_launcher_calls_the_packages_main():
-    source = bwe.launcher_source("bc250_sftp_tools")
-    assert "from bc250_sftp_tools.__main__ import main" in source
+    source = bwe.launcher_source("sftp_tools")
+    assert "from sftp_tools.__main__ import main" in source
     assert source.rstrip().endswith("sys.exit(main())")
     compile(source, "launcher.py", "exec")
 
 
 def test_pyinstaller_gets_one_windowed_exe_with_the_logo_and_core_fonts(tmp_path):
-    args = bwe.pyinstaller_args(tmp_path / "stage", tmp_path / "run.py", "bc250_sftp_tools", "BC250-SFTP-Tools",
+    args = bwe.pyinstaller_args(tmp_path / "stage", tmp_path / "run.py", "sftp_tools", "BC250-SFTP-Tools",
                                 tmp_path / "stage" / "images" / "logo.png", tmp_path / "work", tmp_path / "dist", sep=";")
     assert args[0] == str(tmp_path / "run.py")
     assert {"--onefile", "--windowed"} <= set(args)
@@ -48,7 +48,7 @@ def test_pyinstaller_gets_one_windowed_exe_with_the_logo_and_core_fonts(tmp_path
     add_data = [args[i + 1] for i, a in enumerate(args) if a == "--add-data"]
     assert add_data == [f"{tmp_path / 'stage' / 'images'};images", f"{tmp_path / 'stage' / 'bc250_core' / 'fonts'};bc250_core/fonts"]
     collected = [args[i + 1] for i, a in enumerate(args) if a in ("--collect-submodules", "--collect-all")]
-    assert collected == ["bc250_sftp_tools", "bc250_core", "paramiko"]
+    assert collected == ["sftp_tools", "bc250_core", "paramiko"]
 
 
 def test_an_app_without_a_windows_build_is_refused(tmp_path):

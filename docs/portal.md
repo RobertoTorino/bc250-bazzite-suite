@@ -175,16 +175,16 @@ Releasing an app and pinning it in the portal:
    [Testing a portal release before its tag](#testing-a-portal-release-before-its-tag)), commit steps 3 and 4,
    push, and tag with `tools/tag-release.sh portal-v<x.y.z>`. That release bundles the pinned Bazzite Test release (`check-v…`).
 
-![BC250 Suite Releases](assets/suite-releases/bc250-release-128.png){ .app-logo }
+![BC250 Suite Releases](assets/suite/bc250-release-128.png){ .app-logo }
 
 ### The release front end
 
-**BC250 Suite Releases** (`apps/suite-releases/`) is a window that makes these file edits for you. It never commits,
+**BC250 Suite Releases** (`apps/suite/`) is a window that makes these file edits for you. It never commits,
 tags or pushes: after each step it shows the git commands to run. It edits the checkout it lives in, so it is not
 in the portal and has no releases of its own. Start it from the repository root:
 
 ```bash
-tools/release.sh            # or apps/suite-releases/run.sh
+tools/release.sh            # or apps/suite/run.sh
 tools/release.sh --list     # the same overview in the terminal, with the system python3
 ```
 
@@ -192,9 +192,9 @@ To start it from the app menu instead, install it once on Linux. Nothing is copi
 of the checkout you installed it from.
 
 ```bash
-apps/suite-releases/install.sh                         # app menu entry and Desktop icon
-apps/suite-releases/install.sh --no-desktop-shortcut   # app menu entry only
-apps/suite-releases/install.sh --uninstall             # remove them; the checkout stays
+apps/suite/install.sh                         # app menu entry and Desktop icon
+apps/suite/install.sh --no-desktop-shortcut   # app menu entry only
+apps/suite/install.sh --uninstall             # remove them; the checkout stays
 ```
 
 `tools/release.sh --install` and `--uninstall` do the same. It runs with the checkout's `.venv-linux` (see
@@ -224,7 +224,7 @@ apps/suite-releases/install.sh --uninstall             # remove them; the checko
   not tagged yet, Bump portal lists step 1's commands with the bump in them instead (amending the release commit
   when it is already made and not pushed), and the portal release follows once the apps are pinned.
 - **Test updates** and **Test release** run the two board tests below in a terminal, with
-  `apps/suite-releases/check-release.sh`: the portal from the checkout before the push, and the published portal release after
+  `apps/suite/check-release.sh`: the portal from the checkout before the push, and the published portal release after
   GitHub has built it. Linux only.
 - **Run from checkout:** every app window in the checkout, as an icon. A click starts that app from the checkout,
   to try a change before its release: `python -m <package>` with the checkout's venv and its `core`, as `run.sh`
@@ -291,7 +291,7 @@ portal offers those releases as updates. So before the tag, check on a BC-250 th
 install and run:
 
 1. Bump the portal (step 4) and commit. Pushing is not needed for this test.
-2. Click **Test updates** in the release front end, or run `apps/suite-releases/check-release.sh local`. It installs the portal
+2. Click **Test updates** in the release front end, or run `apps/suite/check-release.sh local`. It installs the portal
    from the checkout (`./install.sh` in the repository root: this portal version, with its new pins in
    `apps.toml`) and starts it with the pinned releases instead of the checkout:
 
@@ -316,8 +316,8 @@ it on the board.
 Once GitHub's release workflow has built the portal release, click **Test release**, or run:
 
 ```bash
-apps/suite-releases/check-release.sh release              # the release of portal/VERSION
-apps/suite-releases/check-release.sh release portal-v0.9.2
+apps/suite/check-release.sh release              # the release of portal/VERSION
+apps/suite/check-release.sh release portal-v0.9.2
 ```
 
 It downloads the release tarball and its `SHA256SUMS` from GitHub into `~/.cache/bc250-release-check/`, checks

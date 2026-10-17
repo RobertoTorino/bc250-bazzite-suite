@@ -391,7 +391,7 @@ class MainWindow(QMainWindow):
         self.app_choice.clear()
         for app in apps:
             self.app_choice.addItem(app.name, app.key)
-        preferred = self.app_choice.findData("system-overlay")
+        preferred = self.app_choice.findData("overlay")
         if preferred >= 0:
             self.app_choice.setCurrentIndex(preferred)
         self._update_app_status()
