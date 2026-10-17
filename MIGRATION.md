@@ -7,18 +7,18 @@ describe only what exists.
 
 ## Resume here (13-10-2026, after the break)
 
-**First (17-10-2026, evening): finish portal-v1.13.0, then go on with the renaming.** State at the end of that
-session, everything in the working tree and nothing committed by Claude:
+**First (17-10-2026, night): finish the releases of commit 2c0cd26, then go on with the renaming.** State at
+the end of that session, the working tree clean, nothing committed by Claude:
 
-1. **Portal release 1.13.0** (owner). Done: ace-v0.2.0, ncgui-v0.2.0 and dependency-checker-v0.4.1 are released
-   on GitHub and pinned with their checksums in `portal/apps.toml`; `portal/VERSION` is 1.13.0 and its CHANGELOG
-   has the 1.13.0 entry from the bump before the push. Left: in Suite Releases step 2, Bump portal with 1.13.0 (it
-   adds the release entry naming the three pins and lists the portal commands), then commit, `tools/ci-local.sh`,
-   push, `tools/tag-release.sh portal-v1.13.0`. The commit must carry the working tree's tools change: CI's
-   `tools/check_manifest.py` now counts the portal bump from the last portal release (the newest `portal-v` tag),
-   not from the last push, so pinning the checksums after the bump needs no second bump (it asked for 1.13.1
-   before). Suite Releases' minimum follows the same rule, Apply makes the portal bump itself when the push needs
-   it, and the logs are the tabs Log 1 and Log 2.
+1. **Releases in flight** (owner). Pushed and green in CI: commit 2c0cd26 "Release check-v0.3.0, cores-bisect-v0.1.9,
+   cu-bisect-v0.1.8, dependency-checker-v0.4.3, gpu-oc-bisect-v0.1.8, persistent-acpi-v0.1.6"; `portal/VERSION` is
+   already 1.15.0 with its CHANGELOG entry. Released and pinned with checksums before it: ace-v0.2.0, ncgui-v0.2.0,
+   datstation-v0.2.1, portal-v1.14.0. Left, in order: tag the six releases (`tools/tag-release.sh <tag>`, one per
+   app), pin their checksums in `portal/apps.toml` (check's entry has `sha256 = ""`, the placeholder for the first
+   release under its new prefix; check_manifest asks for the portal bump until then, which 1.15.0 already is), push,
+   tag `portal-v1.15.0` (that release bundles check-v0.3.0, so it needs that tag first). Then the next app of the
+   renaming, which the owner names. Done this session besides the renames: DatStation's revised quiz questions
+   (item 2 under Next session below).
 2. **The (re)naming convention** (owner, 17-10-2026), one app per step, the owner names each: the folder under
    `apps/` is a short name, the package the app's name without its BC-250 or Bazzite prefix, as a Python
    identifier. Done: `apps/ace/ace_queues/` (was ace-queues/bc250_ace_queues), `apps/ncgui/netcat_gui/` (was

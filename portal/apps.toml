@@ -31,7 +31,7 @@
 name = "BC-250 Bazzite Test"
 summary = "Read-only diagnostics, stress test and benchmarks. Always installed."
 tag = "check-v0.3.0"
-sha256 = ""
+sha256 = "ef5e229f79d01ab231ffb720669fd495d76fe950338d9c2d4c48d4fb41320971"
 required = true
 changes_board = false
 install = ["bash install.sh"]
@@ -67,8 +67,8 @@ launch = [["Open", "~/.local/bin/bc250-bazzite-helixsr-gui"]]
 [apps.cu-bisect]
 name = "BC-250 CU Bisect"
 summary = "Tell bad CUs apart from an unstable CU unlock, and apply a tested unlock."
-tag = "cu-bisect-v0.1.7"
-sha256 = "8b159de08cbc96c91b54c5e65508b91a66db1f4342c271e5e71159521a3f8f7b"
+tag = "cu-bisect-v0.1.8"
+sha256 = "2085abd2f6ed5e295046b5f69e84763b43df9b73ad3630b4e0b961a00ae8e04e"
 required = false
 changes_board = true
 install = ["bash packaging/bazzite/install-bisect-gui.sh", "bash packaging/bazzite/install-gui.sh"]
@@ -79,8 +79,8 @@ launch = [["Bisect", "~/.local/bin/bc250-bisect-gui"], ["Unlock", "~/.local/bin/
 [apps.cores-bisect]
 name = "BC-250 Cores Bisect"
 summary = "Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock."
-tag = "cores-bisect-v0.1.8"
-sha256 = "f7fbdfa2f0bebfbded271c3f27fae035e8101d314d89c2052922787cdac13144"
+tag = "cores-bisect-v0.1.9"
+sha256 = "88a8bd68d5a7c502248f3fa865e361f81cec901efbeeddee59cc6e98834b1c80"
 required = false
 changes_board = true
 install = ["bash install.sh"]
@@ -91,8 +91,8 @@ launch = [["Bisect", "~/.local/bin/bc250-cores-bisect-gui"], ["Unlock", "~/.loca
 [apps.gpu-oc-bisect]
 name = "BC-250 GPU OC Bisect"
 summary = "Find your board's safe GPU overclock and undervolt, one step at a time."
-tag = "gpu-oc-bisect-v0.1.7"
-sha256 = "2f4ad8e25e2ea018bb173c6a0386254826f225ebc389316837feef689010fc8d"
+tag = "gpu-oc-bisect-v0.1.8"
+sha256 = "6ae6dcfe158b15e3acbaccfe645c5d3493d3b9d1235a43e3891405e4987babb4"
 required = false
 changes_board = true
 install = ["bash install.sh"]
@@ -103,8 +103,8 @@ launch = [["Open", "~/.local/bin/bc250-gpu-oc-bisect-gui"]]
 [apps.persistent-acpi]
 name = "BC-250 Persistent ACPI"
 summary = "CPU C-states and frequency scaling through a persistent ACPI override (GRUB early initrd)."
-tag = "persistent-acpi-v0.1.5"
-sha256 = "07d5bded2923a4aa74c47a6bfc593ee161f9f6a3553d7efb1eda7e38bc3a34fc"
+tag = "persistent-acpi-v0.1.6"
+sha256 = "ce4f303f6c0d75e7431e26cc119549dc8e1a66986458cd36302426356d31d788"
 required = false
 changes_board = true
 install = ["bash install.sh"]
@@ -240,8 +240,8 @@ launch = [["Open", "~/.local/bin/simple-demo-tool"]]
 [apps.dependency-checker]
 name = "Dependency Checker"
 summary = "The suite's Python packages and external tools, which apps use them, and whether newer ones exist; and whether a Bazzite update waits for a reboot."
-tag = "dependency-checker-v0.4.2"
-sha256 = "cc5efde83f8ae551c3404f77c9dca4b0211771e607d8ade849801233e6987c60"
+tag = "dependency-checker-v0.4.3"
+sha256 = "39ee7ea2bdfe60ef3a28044514781ebe2407a7666d24fdee21e569e21e907861"
 required = false
 changes_board = false
 development = true

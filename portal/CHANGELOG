@@ -1,3 +1,7 @@
+Changelog: 17-10-2026 09:49:31
+
+Release 1.15.0. Pins cu-bisect-v0.1.8, cores-bisect-v0.1.9, gpu-oc-bisect-v0.1.8, persistent-acpi-v0.1.6, dependency-checker-v0.4.3.
+
 Changelog: 17-10-2026 09:41:48
 
 Release 1.15.0. Pins check-v0.3.0.
