@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from pathlib import Path
 
-from bc250_bios_reader import dump
+from bios_reader import dump
 
 
 def test_read_command_only_reads(tmp_path):

@@ -3,7 +3,7 @@ import struct
 
 import fake_bios
 
-from bc250_bios_reader import hii
+from bios_reader import hii
 
 
 def formset() -> hii.FormSet:

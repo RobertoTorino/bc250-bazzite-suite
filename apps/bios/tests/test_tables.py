@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from bc250_bios_reader import bios, table
+from bios_reader import bios, table
 
 
 def test_every_stock_release_has_a_table_with_its_fingerprints():

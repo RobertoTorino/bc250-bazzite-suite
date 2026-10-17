@@ -1,3 +1,15 @@
+Changelog: 17-10-2026 10:10:41
+
+Release 1.16.0. Pins bios-v0.2.0.
+
+Changelog: 17-10-2026 10:05:20
+
+Added. BC-250 BIOS Reader is listed as [apps.bios] (was [apps.bios-reader]), after the app's move to apps/bios;
+its tile icon is images/apps/bios.png. The entry pins the first release under its new tag prefix (bios-v0.2.0)
+without a checksum until that release exists, which an app release accepts and a portal release waits for. The
+record of a copy installed under the old key moves to the new key when the portal starts, as for ace, ncgui,
+datstation and check.
+
 Changelog: 17-10-2026 09:49:31
 
 Release 1.15.0. Pins cu-bisect-v0.1.8, cores-bisect-v0.1.9, gpu-oc-bisect-v0.1.8, persistent-acpi-v0.1.6, dependency-checker-v0.4.3.

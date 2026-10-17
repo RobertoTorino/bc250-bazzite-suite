@@ -52,7 +52,7 @@ launchers = ["~/.local/bin/bc250-persistent-acpi-gui"]
 name = "System Overlay"
 launchers = ["~/.local/bin/bc250-system-overlay"]
 
-[app.bios-reader]
+[app.bios]
 name = "BC-250 BIOS Reader"
 launchers = ["~/.local/bin/bc250-bios-reader"]
 
@@ -137,7 +137,7 @@ probe = "flashrom-internal"
 root = true
 
 [[tool.source]]
-owner = "bios-reader"
+owner = "bios"
 need = "optional"
 usage = "Read the BIOS flash chip; needs the internal programmer."
 anchor = "reading-the-bios-flash-chip-optional"
@@ -148,7 +148,7 @@ description = "Runs one command as root after asking for your password in a desk
 executables = ["pkexec"]
 
 [[tool.source]]
-owner = "bios-reader"
+owner = "bios"
 need = "optional"
 usage = "Runs the flashrom read with a password prompt."
 anchor = "reading-the-bios-flash-chip-optional"
@@ -981,7 +981,7 @@ owner = "system-overlay"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "bios-reader"
+owner = "bios"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]

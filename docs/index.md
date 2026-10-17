@@ -26,7 +26,7 @@ hide:
 #### :material-stethoscope: Diagnostics
 
 [Bazzite Test](apps/check.md) checks, stress-tests and benchmarks the board,
-[BIOS Reader](apps/bios-reader.md) shows every BIOS setting, hidden menus too, and
+[BIOS Reader](apps/bios.md) shows every BIOS setting, hidden menus too, and
 [System Overlay](apps/system-overlay.md) keeps CPU, GPU, fan and temperatures on top,
 [Fan Control](apps/fan-control.md) guards the board against overheating, and
 [USB Wi-Fi](apps/usb-wifi.md) brings the driver for AIC8800D80 Wi-Fi sticks.

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Entry point: python -m bc250_bios_reader [--dump FILE] [--build-table DUMP]"""
+"""Entry point: python -m bios_reader [--dump FILE] [--build-table DUMP]"""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ def build_table(dump: Path, out_dir: Path | None) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(prog="bc250_bios_reader", description=f"{APP_NAME} {__version__}")
+    parser = argparse.ArgumentParser(prog="bios_reader", description=f"{APP_NAME} {__version__}")
     parser.add_argument("--dump", type=Path, metavar="FILE", help="open this BIOS image instead of the running board")
     parser.add_argument("--build-table", type=Path, metavar="DUMP",
                         help="make the built-in table of a stock BIOS release from a dump of it, and exit")

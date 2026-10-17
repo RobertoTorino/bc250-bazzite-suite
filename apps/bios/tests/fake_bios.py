@@ -17,7 +17,7 @@ import lzma
 import struct
 import uuid
 
-from bc250_bios_reader import firmware
+from bios_reader import firmware
 
 SETUP_GUID = uuid.UUID("ec87d643-eba4-4bb5-a1e5-3f3e36b20da9")
 FORMSET = uuid.UUID("7b59104a-c00d-4158-87ff-f04d6396a915")

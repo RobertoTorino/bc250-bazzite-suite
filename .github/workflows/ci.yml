@@ -48,7 +48,7 @@ jobs:
               apps/cu-bisect, apps/cores-bisect, apps/gpu-oc-bisect,
               apps/demo-tool, apps/dependency-checker, apps/ncgui,
               apps/suite-releases,
-              apps/system-overlay, apps/bios-reader, apps/ace, apps/memory-manager, apps/hdmi-cec, apps/sftp-tools,
+              apps/system-overlay, apps/bios, apps/ace, apps/memory-manager, apps/hdmi-cec, apps/sftp-tools,
               apps/console-link, apps/mesh-shaders, apps/shadps4-manager, apps/rpcs3-manager, apps/decky-manager,
               apps/datstation, apps/ppsspp-manager, apps/pcsx2-manager, apps/vita3k-manager, apps/fan-control,
               apps/usb-wifi,
@@ -147,7 +147,7 @@ jobs:
       # that their own release workflows already held to it.
       - name: shellcheck (errors, all scripts)
         run: find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 shellcheck -x -S error
-      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, console-link, mesh-shaders, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, netcatgui, datstation and the suite's own scripts)
+      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios, ace, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, console-link, mesh-shaders, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, netcatgui, datstation and the suite's own scripts)
         run: |
           shellcheck -x -S warning portal/install.sh apps/check/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \
             tools/hooks/pre-push
@@ -155,7 +155,7 @@ jobs:
             apps/cores-bisect/install.sh apps/cores-bisect/packaging/bazzite/*.sh
           shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
           shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh
-          shellcheck -S warning apps/system-overlay/install.sh apps/bios-reader/install.sh apps/memory-manager/install.sh
+          shellcheck -S warning apps/system-overlay/install.sh apps/bios/install.sh apps/memory-manager/install.sh
           shellcheck -S warning apps/fan-control/install.sh apps/usb-wifi/install.sh
           shellcheck -S warning apps/hdmi-cec/install.sh apps/sftp-tools/install.sh apps/console-link/install.sh
           shellcheck -S warning apps/ace/bc250-ace-queues.sh apps/ace/bc250-ace-queues-run \
@@ -231,8 +231,8 @@ jobs:
         run: bash tools/installer-tests/persistent-acpi.sh
       - name: system-overlay installer
         run: bash tools/installer-tests/system-overlay.sh
-      - name: bios-reader installer
-        run: bash tools/installer-tests/bios-reader.sh
+      - name: bios installer
+        run: bash tools/installer-tests/bios.sh
       - name: ace installer
         run: bash tools/installer-tests/ace.sh
       - name: mesh-shaders installer

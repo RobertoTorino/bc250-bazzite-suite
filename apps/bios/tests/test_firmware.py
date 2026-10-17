@@ -4,7 +4,7 @@ import uuid
 import fake_bios
 import pytest
 
-from bc250_bios_reader import firmware
+from bios_reader import firmware
 
 
 def test_volumes_and_nested_files(image):

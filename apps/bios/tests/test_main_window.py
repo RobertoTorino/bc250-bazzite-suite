@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import pytest
 
-from bc250_bios_reader.main_window import MainWindow
+from bios_reader.main_window import MainWindow
 
 
 @pytest.fixture

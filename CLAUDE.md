@@ -14,7 +14,7 @@ its manifest. **check** (BC-250 Bazzite Test) is always installed and always lis
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
 - `apps/<name>/`: check, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
-  system-overlay, bios-reader, ace, mesh-shaders, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, console-link, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, demo-tool, dependency-checker, ncgui, datstation, suite-releases. Each has its
+  system-overlay, bios, ace, mesh-shaders, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, console-link, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, demo-tool, dependency-checker, ncgui, datstation, suite-releases. Each has its
   own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; console-link is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; ncgui is GPL-2.0-only, a port of NetcatGUI; the rest
   GPL-3.0-or-later), .gitignore. Simple
@@ -142,7 +142,7 @@ shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/
   apps/cores-bisect/install.sh apps/cores-bisect/packaging/bazzite/*.sh
 shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
 shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh \
-  apps/system-overlay/install.sh apps/bios-reader/install.sh apps/memory-manager/install.sh apps/fan-control/install.sh \
+  apps/system-overlay/install.sh apps/bios/install.sh apps/memory-manager/install.sh apps/fan-control/install.sh \
   apps/hdmi-cec/install.sh apps/sftp-tools/install.sh \
   apps/console-link/install.sh apps/demo-tool/install.sh apps/suite-releases/*.sh
 shellcheck -S warning apps/ace/bc250-ace-queues.sh apps/ace/bc250-ace-queues-run \

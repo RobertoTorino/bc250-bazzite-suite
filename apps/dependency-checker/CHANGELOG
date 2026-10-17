@@ -1,3 +1,12 @@
+Changelog: 17-10-2026 10:10:41
+
+Release 0.4.4.
+
+Changelog: 17-10-2026 10:05:20
+
+Fixed. The catalogue lists BC-250 BIOS Reader as [app.bios] (was [app.bios-reader]), its key in the portal after
+the app's move to apps/bios; its sources (flashrom, pkexec and the Python packages) name that owner.
+
 Changelog: 17-10-2026 09:41:48
 
 Release 0.4.3.

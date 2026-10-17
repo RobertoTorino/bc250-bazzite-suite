@@ -52,7 +52,7 @@ def test_window_displays_package_and_tool_results(qapp):
          ToolStatus(tools["speedtest"], "/home/test/.local/bin/speedtest"),
          ToolStatus(tools["mprime"]),
          ToolStatus(tools["setpci"])],
-        frozenset({"portal", "check", "demo-tool", "bios-reader", "cores-bisect"}),
+        frozenset({"portal", "check", "demo-tool", "bios", "cores-bisect"}),
     )
     window = _window(result)
     try:
@@ -151,7 +151,7 @@ def test_cve_marks(qapp):
 
 def test_missing_tools_advise_what_they_are_needed_for(qapp):
     dependencies, tools = _catalog()
-    installed = frozenset({"bios-reader", "cores-bisect", "check"})
+    installed = frozenset({"bios", "cores-bisect", "check"})
     advice = tool_advice(tools["stress-ng"], installed, load_apps(CATALOG))
     assert advice.startswith("<b>Advice:</b> Install stress-ng to be able to use:")
     assert "BC-250 Cores Bisect</a>: Verified CPU load during core testing. <b>(required)</b>" in advice

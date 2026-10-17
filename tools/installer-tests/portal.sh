@@ -47,7 +47,7 @@ check "desktop icons removed" "[ ! -e $HOME/Desktop/bc250-bazzite-suite.desktop 
 
 echo "== 3. uninstall keeps the venv for another suite app, drops the state of apps that are gone"
 touch "$D/bc250-bazzite-suite/venv-users/bc250-governor-manager"
-mkdir -p "$D/bc250-bazzite-suite/portal/releases/governor-v0.0.1" "$D/bc250-bazzite-suite/portal/releases/local-bios-reader"
+mkdir -p "$D/bc250-bazzite-suite/portal/releases/governor-v0.0.1" "$D/bc250-bazzite-suite/portal/releases/local-bios"
 bash "$T/opt/bc250-bazzite-suite/install.sh" --uninstall > "$T/log3" 2>&1; rc=$?; logs+=("$T/log3")
 check "exit 0" "[ $rc -eq 0 ]"
 check "portal and check gone from /opt" "[ -z \"\$(ls $T/opt)\" ]"
@@ -67,14 +67,14 @@ check "/opt empty" "[ -z \"\$(ls $T/opt)\" ]"
 
 echo "== 5. uninstall asks about each other app: cancel, then skip one and uninstall the other"
 bash "$SUITE/install.sh" > "$T/log5" 2>&1; logs+=("$T/log5")
-for app in system-overlay bios-reader; do                  # as the portal installs them from the checkout
+for app in system-overlay bios; do                  # as the portal installs them from the checkout
     /usr/bin/python3 "$SUITE/tools/stage_app.py" "$app" "$D/bc250-bazzite-suite/portal/releases/local-$app" > /dev/null
     (cd "$D/bc250-bazzite-suite/portal/releases/local-$app" && bash install.sh) >> "$T/log5" 2>&1
 done
 /usr/bin/python3 - "$D/bc250-bazzite-suite/portal/installed.json" <<'PY'
 import json, sys
 data = json.load(open(sys.argv[1]))
-data.update({"system-overlay": "local", "bios-reader": "local"})
+data.update({"system-overlay": "local", "bios": "local"})
 json.dump(data, open(sys.argv[1], "w"))
 PY
 installed() { [ -x "$HOME/.local/bin/$1" ]; }
@@ -88,8 +88,8 @@ printf 'x\ns\ny\n' | BC250_INTERACTIVE=1 bash "$SUITE/install.sh" --uninstall >>
 check "exit 0" "[ $rc -eq 0 ]"
 check "asked about both (twice: the cancel run too), again after an unknown answer" "[ \$(grep -o 'Uninstall System Overlay?' $T/log5 | wc -l) -eq 3 ] && [ \$(grep -o 'Uninstall BC-250 BIOS Reader?' $T/log5 | wc -l) -eq 2 ]"
 check "skipped app stays" "installed bc250-system-overlay && [ -d $D/bc250-bazzite-suite/portal/releases/local-system-overlay ]"
-check "chosen app gone" "! installed bc250-bios-reader && [ ! -e $D/bc250-bazzite-suite/portal/releases/local-bios-reader ]"
-check "record drops the chosen app" "! grep -q bios-reader $D/bc250-bazzite-suite/portal/installed.json && grep -q system-overlay $D/bc250-bazzite-suite/portal/installed.json"
+check "chosen app gone" "! installed bc250-bios-reader && [ ! -e $D/bc250-bazzite-suite/portal/releases/local-bios ]"
+check "record drops the chosen app" "! grep -q bios $D/bc250-bazzite-suite/portal/installed.json && grep -q system-overlay $D/bc250-bazzite-suite/portal/installed.json"
 check "record and folder of check gone" "! grep -q check $D/bc250-bazzite-suite/portal/installed.json && [ ! -e $D/bc250-bazzite-suite/portal/releases/local-check ]"
 check "older release of the skipped app gone" "[ ! -e $D/bc250-bazzite-suite/portal/releases/system-overlay-v0.0.1 ]"
 check "portal and check gone" "! installed bc250-bazzite-suite && ! installed bc250-bazzite-test"

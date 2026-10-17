@@ -24,7 +24,7 @@ from . import bios as biosmod
 from . import dump, table
 from .screen import BiosScreen
 
-MANUAL_URL = f"{SUITE_MANUAL_URL}apps/bios-reader/#reading-the-bios-flash-chip-optional"
+MANUAL_URL = f"{SUITE_MANUAL_URL}apps/bios/#reading-the-bios-flash-chip-optional"
 VERDICT_COLOURS = {"stock": "ok", "modded": "warn", "unknown": "neutral"}
 
 

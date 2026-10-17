@@ -2,7 +2,7 @@
 import fake_bios
 import pytest
 
-from bc250_bios_reader import bios, table
+from bios_reader import bios, table
 
 
 def screens(dump_file, sys_root) -> tuple[bios.Screens, object]:

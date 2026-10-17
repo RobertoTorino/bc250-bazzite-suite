@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Exercise apps/bios-reader/install.sh: install from the checkout (core bundled, shared venv, no sudo), a staged
+# Exercise apps/bios/install.sh: install from the checkout (core bundled, shared venv, no sudo), a staged
 # release replacing it, uninstall with and without other venv users (BIOS dumps kept), --purge (dumps removed), and
 # the refusal to run as root.
 # Runs with the shims from shims.sh (CI, or WSL on Windows).
@@ -18,23 +18,23 @@ A=$D/$APP/app
 printf '#!/bin/sh\necho "sudo called: $*" >&2\nexit 1\n' > "$T/shims/sudo"
 
 echo "== 1. install from the suite checkout"
-bash "$SUITE/apps/bios-reader/install.sh" > "$T/log1" 2>&1; rc=$?
+bash "$SUITE/apps/bios/install.sh" > "$T/log1" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "no sudo used" "! grep -q 'sudo called' $T/log1 && [ -z \"\$(ls -A $T/opt)\" ]"
-check "app copied" "[ -f $A/bc250_bios_reader/bios.py ] && [ -f $A/images/$APP.png ]"
-check "built-in table copied" "[ -f $A/bc250_bios_reader/tables/P5.00.json.gz ]"
+check "app copied" "[ -f $A/bios_reader/bios.py ] && [ -f $A/images/$APP.png ]"
+check "built-in table copied" "[ -f $A/bios_reader/tables/P5.00.json.gz ]"
 check "core bundled from checkout" "[ -f $A/bc250_core/theme.py ]"
 check "no tests or caches copied" "[ ! -d $A/tests ] && ! find $A -name __pycache__ | grep -q ."
 check "shared venv" "[ -x $D/bc250-bazzite-suite/venv/bin/python ]"
 check "venv user marker" "[ -f $D/bc250-bazzite-suite/venv-users/$APP ]"
-check "launcher uses shared venv" "grep -qF 'bc250-bazzite-suite/venv/bin/python\" -m bc250_bios_reader' $HOME/.local/bin/$APP"
+check "launcher uses shared venv" "grep -qF 'bc250-bazzite-suite/venv/bin/python\" -m bios_reader' $HOME/.local/bin/$APP"
 check "launcher cds into the app" "grep -qF 'cd \"$A\"' $HOME/.local/bin/$APP"
 check "menu entry" "grep -qx 'Exec=$HOME/.local/bin/$APP' $D/applications/$APP.desktop"
 check "desktop icon, executable" "[ -x $HOME/Desktop/$APP.desktop ]"
 check "core imports from the app copy" "(cd $A && /usr/bin/python3 -c 'import importlib.util as u, sys; s=u.find_spec(\"bc250_core\"); sys.exit(0 if s and s.origin.startswith(\"$A\") else 1)')"
 
 echo "== 2. install a staged release (core bundled in the tarball) without the Desktop icon"
-rm -rf "$T/stage"; /usr/bin/python3 "$SUITE/tools/stage_app.py" bios-reader "$T/stage" > /dev/null
+rm -rf "$T/stage"; /usr/bin/python3 "$SUITE/tools/stage_app.py" bios "$T/stage" > /dev/null
 echo "# release marker" >> "$T/stage/bc250_core/__init__.py"
 bash "$T/stage/install.sh" --no-desktop-shortcut > "$T/log2" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"

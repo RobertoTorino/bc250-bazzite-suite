@@ -53,7 +53,7 @@ def dump_file(tmp_path, image) -> Path:
 @pytest.fixture
 def stock(monkeypatch):
     """Makes the synthetic BIOS a known stock release, P9.99."""
-    from bc250_bios_reader import bios
+    from bios_reader import bios
     sha = hashlib.sha256(fake_bios.form_package()).hexdigest()
     monkeypatch.setattr(bios, "STOCK", {"P9.99": {"date": "01/02/2023", "amdsetup_size": 16,
                                                   "formsets": {str(fake_bios.FORMSET).upper(): sha}}})
@@ -80,7 +80,7 @@ def sys_root(tmp_path) -> Path:
 
 @pytest.fixture
 def tables_dir(tmp_path, dump_file) -> Path:
-    from bc250_bios_reader import bios
+    from bios_reader import bios
     folder = tmp_path / "tables"
     folder.mkdir()
     name, data = bios.build_table(dump_file)

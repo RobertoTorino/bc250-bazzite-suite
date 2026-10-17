@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![BC-250 BIOS Reader](../assets/bios-reader/bc250-bios-reader.png){ .app-logo }
+![BC-250 BIOS Reader](../assets/bios/bc250-bios-reader.png){ .app-logo }
 
 # BC-250 BIOS Reader
 
@@ -158,4 +158,4 @@ Install it from the BC250 Bazzite Suite portal, or from a clone or release folde
 
 ## License
 
-GPL-3.0-or-later. See [LICENSE](https://github.com/RobertoTorino/bc250-bazzite-suite/blob/main/apps/bios-reader/LICENSE).
+GPL-3.0-or-later. See [LICENSE](https://github.com/RobertoTorino/bc250-bazzite-suite/blob/main/apps/bios/LICENSE).

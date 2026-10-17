@@ -134,9 +134,9 @@ def test_external_tool_catalog_covers_app_specific_tools():
     tools = {tool.name: tool for tool in load_tools(CATALOG)}
     flashrom = tools["flashrom"]
     assert flashrom.probe == "flashrom-internal"
-    assert [source.owner for source in flashrom.sources] == ["bios-reader"]
+    assert [source.owner for source in flashrom.sources] == ["bios"]
     assert "internal programmer" in flashrom.sources[0].usage
-    assert tools["pkexec"].sources[0].owner == "bios-reader"
+    assert tools["pkexec"].sources[0].owner == "bios"
     assert tools["cyan-skillfish-governor-smu"].probe == "path"
     assert "check" in {source.owner for source in tools["stress-ng"].sources}
     assert "cores-bisect" in {source.owner for source in tools["stress-ng"].sources}
