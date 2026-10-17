@@ -10,16 +10,20 @@
   outside apps/ needs that marker there too.
 * Every pinned tag exists. Without --require-tags a tag that does not exist yet is accepted when its version equals
   the app's VERSION: the release that is about to be tagged. The portal release workflow passes --require-tags.
-* With --base REF (the previous commit, or the PR base): when apps.toml changed since REF, portal/VERSION must have
-  been bumped at least as much as the largest app bump it pins: an app patch release needs at least a portal patch
+* With --base REF (the previous commit, or the PR base): when apps.toml differs from the last portal release (the
+  newest portal-v<x.y.z> tag; REF while there is no portal tag yet), portal/VERSION must have been bumped from that
+  release at least as much as the largest app bump it pins: an app patch release needs at least a portal patch
   release, an app minor release at least a portal minor release, and so on. An added, removed or withdrawn app
   needs at least a minor bump (a withdrawn one is removed from the boards); any other change to apps.toml (a new
-  checksum, other commands) at least a patch bump."""
+  checksum, other commands) at least a patch bump. The comparison is with the release, not the push: a portal
+  version that is not tagged yet may still change what it pins (the apps' checksums come once GitHub has built
+  them), without a bump for every push."""
 
 from __future__ import annotations
 
 import argparse
 import importlib.util
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -29,6 +33,7 @@ MANIFEST = "portal/apps.toml"
 STANDALONE_MARKER = ".standalone"
 CHECKOUT_ONLY_MARKER = ".checkout-only"
 LEVELS = {0: "none", 1: "patch", 2: "minor", 3: "major"}
+_PORTAL_TAG = re.compile(r"^portal-v(\d+\.\d+\.\d+)$")
 
 
 def _manifest_module():
@@ -95,13 +100,28 @@ def check_checkout_entries(entries) -> list[str]:
              for folder, key in sorted(listed.items()) if not (SUITE / folder / CHECKOUT_ONLY_MARKER).is_file()])
 
 
+def latest_portal_tag(tags) -> str:
+    """The newest portal-v<x.y.z> among *tags* by version; "" when there is none."""
+    found = [(manifest.version_tuple(m.group(1)), tag) for tag in tags if (m := _PORTAL_TAG.match(tag))]
+    return max(found)[1] if found else ""
+
+
+def reference(base: str) -> tuple[str, str | None, str]:
+    """What apps.toml and portal/VERSION are compared with: the last portal release (its tag), since a portal
+    version that is not tagged yet may still change what it pins; *base* while there is no portal tag. Returns
+    (ref, that apps.toml or None when the ref has none, that portal version)."""
+    tag = latest_portal_tag((git("tag", "--list", "portal-v*") or "").split())
+    ref = tag or base
+    version = tag[len("portal-v"):] if tag else (git("show", f"{ref}:portal/VERSION") or "0.0.0").strip()
+    return ref, git("show", f"{ref}:{MANIFEST}"), version
+
+
 def check_bump(base: str) -> list[str]:
-    old_text = git("show", f"{base}:{MANIFEST}")
+    ref, old_text, old_portal = reference(base)
     if old_text is None:
         return []                               # new file, or a base this clone does not have
-    return bump_errors(old_text, (SUITE / MANIFEST).read_text(encoding="utf-8"),
-                       (git("show", f"{base}:portal/VERSION") or "0.0.0").strip(),
-                       (SUITE / "portal" / "VERSION").read_text(encoding="utf-8").strip())
+    return bump_errors(old_text, (SUITE / MANIFEST).read_text(encoding="utf-8"), old_portal,
+                       (SUITE / "portal" / "VERSION").read_text(encoding="utf-8").strip(), since=ref)
 
 
 def required_bump(old_text: str, new_text: str) -> tuple[int, str]:
@@ -127,7 +147,7 @@ def required_bump(old_text: str, new_text: str) -> tuple[int, str]:
     return need, why
 
 
-def bump_errors(old_text: str, new_text: str, old_portal: str, new_portal: str) -> list[str]:
+def bump_errors(old_text: str, new_text: str, old_portal: str, new_portal: str, since: str = "") -> list[str]:
     need, why = required_bump(old_text, new_text)
     if need == 0:
         return []
@@ -135,14 +155,15 @@ def bump_errors(old_text: str, new_text: str, old_portal: str, new_portal: str) 
         return [why]
     got = bump_level(old_portal, new_portal)
     if got < need:
-        return [f"{MANIFEST} changed ({why}): portal/VERSION needs at least a {LEVELS[need]} bump, "
-                f"but goes {old_portal} -> {new_portal}"]
+        return [f"{MANIFEST} changed{f' since {since}' if since else ''} ({why}): portal/VERSION needs at least a "
+                f"{LEVELS[need]} bump, but goes {old_portal} -> {new_portal}"]
     return []
 
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--base", help="git ref to compare apps.toml and portal/VERSION with")
+    parser.add_argument("--base", help="git ref to compare apps.toml and portal/VERSION with while there is no "
+                                       "portal tag (the previous commit, or the PR base)")
     parser.add_argument("--require-tags", action="store_true", help="every pinned tag must exist (portal release)")
     args = parser.parse_args(argv)
     try:

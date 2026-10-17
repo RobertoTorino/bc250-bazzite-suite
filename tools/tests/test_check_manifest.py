@@ -95,6 +95,44 @@ def test_app_moving_back_is_refused():
     assert result and "moves back" in result[0]
 
 
+def test_latest_portal_tag():
+    assert cm.latest_portal_tag(["portal-v1.9.0", "ace-v0.2.0", "portal-v1.10.0", "portal-v1.10", "portal-v1.2.9"]) \
+        == "portal-v1.10.0"
+    assert cm.latest_portal_tag([]) == "" and cm.latest_portal_tag(["ace-v0.2.0"]) == ""
+
+
+def test_bump_is_counted_since_the_last_portal_release(tmp_path, monkeypatch):
+    """The owner's case of 17-10-2026: the push with the apps' releases carried the portal bump (1.12.0 -> 1.13.0),
+    and the next push, with their checksums pinned, was asked for 1.13.1 against the last push. A portal version
+    that is not tagged yet may still change what it pins, so the comparison is with the last portal tag; the last
+    push only while there is none."""
+    new_text = BASE.replace('tag = "governor-v0.4.0"', 'tag = "governor-v0.4.1"')
+    (tmp_path / "portal").mkdir()
+    (tmp_path / "portal/apps.toml").write_text(new_text + 'sha256 = ""\n')         # the checksum pinned later
+    (tmp_path / "portal/VERSION").write_text("1.1.0\n")
+    monkeypatch.setattr(cm, "SUITE", tmp_path)
+    refs = {"pushed:portal/apps.toml": new_text, "pushed:portal/VERSION": "1.1.0\n",
+            "portal-v1.0.0:portal/apps.toml": BASE}
+    tags = ["portal-v0.9.0", "portal-v1.0.0"]
+
+    def fake_git(*args):
+        if args[:2] == ("tag", "--list"):
+            return "".join(f"{tag}\n" for tag in tags)
+        if args[0] == "show":
+            return refs.get(args[1])
+        raise AssertionError(args)
+    monkeypatch.setattr(cm, "git", fake_git)
+    assert cm.reference("pushed") == ("portal-v1.0.0", BASE, "1.0.0")
+    assert cm.check_bump("pushed") == []                   # 1.0.0 -> 1.1.0 covers governor's patch and the checksum
+    (tmp_path / "portal/VERSION").write_text("1.0.0\n")
+    assert cm.check_bump("pushed") == ["portal/apps.toml changed since portal-v1.0.0 (apps.toml changed): "
+                                       "portal/VERSION needs at least a patch bump, but goes 1.0.0 -> 1.0.0"]
+    tags.clear()                                           # no portal release yet: the last push is the reference
+    assert cm.reference("pushed") == ("pushed", new_text, "1.1.0")
+    assert cm.check_bump("pushed") == ["portal/apps.toml changed since pushed (apps.toml changed): portal/VERSION "
+                                       "needs at least a patch bump, but goes 1.1.0 -> 1.0.0"]
+
+
 def test_shipped_manifest_passes_without_required_tags():
     entries = cm.manifest.load(cm.SUITE / cm.MANIFEST)
     assert cm.check_entries(entries, require_tags=False) == []

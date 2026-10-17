@@ -1,3 +1,11 @@
+Changelog: 17-10-2026 08:22:18
+
+tools/check_manifest.py counts the portal bump apps.toml needs from the last portal release (the newest portal-v
+tag) instead of from the last push; the last push stays the reference only while there is no portal tag. A
+portal version that is not tagged yet may still change what it pins: the push with the apps' releases carried
+the bump to 1.13.0, and the next push, with their checksums pinned, was then asked for 1.13.1 (owner,
+17-10-2026). The message names what it compared with. Suite Releases' minimum follows the same rule.
+
 Changelog: 17-10-2026 07:30:38
 
 The naming convention for the apps (owner, 17-10-2026), applied to the first two: an app's folder under apps/ is

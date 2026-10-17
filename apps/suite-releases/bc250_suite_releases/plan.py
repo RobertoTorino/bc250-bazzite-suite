@@ -387,9 +387,8 @@ def version_choices(root: Path, unit: Unit) -> tuple[list[str], str]:
 
 def portal_suggestion(root: Path, portal: Unit) -> tuple[str, str]:
     """The portal's next version by semantic versioning since its last tag, and why: its own CHANGELOG entries, and
-    what changed in apps.toml since that tag (an app added or removed: minor; the largest app bump it pins).
-    check_manifest.py compares apps.toml only with the last push, so a change pushed before the portal release
-    would otherwise be missed."""
+    what changed in apps.toml since that tag (an app added or removed: minor; the largest app bump it pins), as
+    tools/check_manifest.py counts it."""
     level, why = suggested_level(new_entries(root, portal))
     reason = f"{level}: {why}" + (f" since {portal.last_tag}" if portal.last_tag else "")
     old = git(root, "show", f"{portal.last_tag}:portal/apps.toml") if portal.last_tag else None
@@ -517,16 +516,20 @@ def changed_pins(root: Path, base: str) -> list[str]:
 
 
 def portal_minimum(root: Path, base: str, portal_version: str) -> tuple[str, str]:
-    """The lowest portal version CI accepts against *base* (the last push), and why: ("", "") when apps.toml is
-    unchanged. The portal VERSION at *base* is the starting point."""
-    old_text = git(root, "show", f"{base}:portal/apps.toml")
+    """The lowest portal version CI accepts (tools/check_manifest.py), and why: apps.toml against the last portal
+    release (its tag; a version not tagged yet may still change what it pins), or against *base* (the last push)
+    while there is no portal tag; ("", "") when apps.toml is unchanged. That release's version is the starting
+    point."""
+    tags = tags_of(root, "portal")
+    ref = tags[-1] if tags else base
+    old_text = git(root, "show", f"{ref}:portal/apps.toml")
     new_text = (root / "portal" / "apps.toml").read_text(encoding="utf-8")
     if old_text is None:
         return "", ""
     need, why = check_manifest.required_bump(old_text, new_text)
     if need <= 0:
         return "", why
-    start = (git(root, "show", f"{base}:portal/VERSION") or portal_version).strip()
+    start = ref[len("portal-v"):] if tags else (git(root, "show", f"{base}:portal/VERSION") or portal_version).strip()
     bumped = next_versions(start)[check_manifest.LEVELS[need]]
     if version_tuple(portal_version) > version_tuple(start) and \
             check_manifest.bump_level(start, portal_version) >= need:
@@ -784,7 +787,7 @@ def push_command(linux: bool | None = None) -> str:
 
 def app_commands(tags: list[str], linux: bool | None = None, portal: str = "", amend: bool = False) -> str:
     """The commands after step 1's Apply. *portal*: the portal version this push also needs (apps.toml changed since
-    the last push), which comes first: committed without it, the push fails CI. *amend*: HEAD is the release commit
+    the last portal release), which comes first: committed without it, the push fails CI. *amend*: HEAD is the release commit
     of these tags and is not pushed yet (the bump came after the commit), so the bump joins it."""
     lines = [f"# First: step 2's Bump portal (portal {portal}), or CI fails on this push; then:"] if portal else []
     lines += ["git add -A && tools/fix-modes.sh"]

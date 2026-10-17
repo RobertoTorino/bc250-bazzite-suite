@@ -74,10 +74,22 @@ def test_a_second_launch_opens_no_window(monkeypatch):
     assert entry.main() == 0 and asked == [entry.INFO.app_id]
 
 
-def test_the_command_line_sits_under_the_steps(window, monkeypatch):
-    """Under the tabs, in a splitter; a finished command reads the checkout again (a commit, a push)."""
+def test_the_logs_sit_under_the_steps_side_by_side(window, monkeypatch):
+    """Under the tabs, in a splitter: the current step's log on the left, the command line on the right, each the
+    full height (owner, 17-10-2026: the two boxes stacked were too flat to read). A finished command reads the
+    checkout again (a commit, a push)."""
+    from PyQt6.QtCore import Qt
     w, _app = window
-    assert w.splitter.widget(0) is w.tabs and w.splitter.widget(1) is w.commands
+    assert w.splitter.widget(0) is w.tabs and w.splitter.widget(1) is w.logs
+    assert w.logs.orientation() == Qt.Orientation.Horizontal
+    assert w.logs.widget(0) is w.outputs and w.logs.widget(1) is w.commands
+    pages = (w.apps_page, w.portal_page, w.withdraw_page, w.run_page)
+    assert [w.outputs.widget(i) for i in range(w.outputs.count())] == [p.output for p in pages]
+    assert not any(p.isAncestorOf(p.output) for p in pages)             # no longer inside the tab
+    for index, page in enumerate(pages):
+        w.tabs.setCurrentIndex(index)
+        assert w.outputs.currentWidget() is page.output
+    w.tabs.setCurrentIndex(0)
     assert w.commands.root == w.root
     refreshed = []
     monkeypatch.setattr(w, "refresh", lambda: refreshed.append(1))

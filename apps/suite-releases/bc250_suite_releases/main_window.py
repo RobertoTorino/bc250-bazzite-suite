@@ -3,7 +3,7 @@
 
 Step 1, Apps: tick the apps to release, enter their versions and notes, Apply. It writes VERSION, the copies
 check_versions.py checks and a "Release x.y.z." CHANGELOG entry, runs check_versions.py and check_manifest.py (an
-apps.toml changed since the last push needs a portal bump in the same push) and shows the git commands.
+apps.toml changed since the last portal release needs a portal bump in the same push) and shows the git commands.
 Step 2, Pin and portal: once GitHub has built the app releases, Pin fills in their tag and sha256 in apps.toml;
 Bump portal writes the portal version (at least what check_manifest.py asks) and its CHANGELOG entry, runs
 check_manifest.py and shows the git commands: the portal release's, or step 1's with the bump in them while step
@@ -31,7 +31,7 @@ from pathlib import Path
 from PyQt6.QtCore import QProcess, QSize, Qt, QTimer, QUrl
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView,
-                             QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPushButton, QSplitter,
+                             QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPushButton, QSplitter, QStackedWidget,
                              QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
 
 from bc250_core.platform import launch_in_terminal
@@ -99,7 +99,7 @@ class AppsPage(QWidget):
         self.tick_button = QPushButton("Tick what needs a release")
         self.tick_button.setToolTip("Tick every app whose shipped files changed since its last tag")
         self.tick_button.clicked.connect(self.tick_needed)
-        self.output = Terminal()
+        self.output = Terminal()                 # the window shows it under the steps, beside the command line
         lay = QVBoxLayout(self)
         lay.addWidget(hint_label(
             "The apps that need a release are ticked; untick what waits and enter their version: a never-tagged "
@@ -115,7 +115,6 @@ class AppsPage(QWidget):
         row.addStretch(1)
         row.addWidget(self.apply_button)
         lay.addLayout(row)
-        lay.addWidget(self.output, 1)
         self.rows: list[tuple[rp.Unit, QCheckBox, QComboBox, QLineEdit]] = []
 
     def fill(self, units: list[rp.Unit]) -> None:
@@ -202,7 +201,7 @@ class AppsPage(QWidget):
         if pins_moved:
             log.append(f"apps.toml: the never-released pins move along ({', '.join(pins_moved)}).")
         # apps.toml may also have changed before this release (an app added, removed or moved, a pin moved): CI
-        # checks it against the last push, with the portal bump it needs. That bump is made here, so the push
+        # checks it against the last portal release, with the portal bump it needs. That bump is made here, so the push
         # passes CI as it is (the owner's release of 17-10-2026 was committed without it and failed ci-local); the
         # portal release itself is step 2, once the apps are pinned.
         base, portal_version = self.release_window.base(), self.release_window.portal_version()
@@ -232,7 +231,8 @@ class PortalPage(QWidget):
         super().__init__()
         self.release_window = window
         self.base_edit = QLineEdit("origin/main")
-        self.base_edit.setToolTip("The last push: CI compares apps.toml and portal/VERSION with it")
+        self.base_edit.setToolTip("The last push: Bump portal lists the pins changed since it, and CI compares "
+                                  "apps.toml with it while there is no portal release yet (else with the last one)")
         self.fetch_button = QPushButton("Fetch tags")
         self.fetch_button.setToolTip("git fetch --tags: see the tags pushed from another machine")
         self.fetch_button.clicked.connect(self.fetch_tags)
@@ -262,7 +262,7 @@ class PortalPage(QWidget):
             for button in (self.local_button, self.release_button):
                 button.setEnabled(False)
                 button.setToolTip("Runs on the board: Linux only")
-        self.output = Terminal()
+        self.output = Terminal()                 # the window shows it under the steps, beside the command line
 
         top = QHBoxLayout()
         top.addWidget(QLabel("Compare with:"))
@@ -302,7 +302,6 @@ class PortalPage(QWidget):
         lay.addWidget(self.portal_needs)
         lay.addLayout(portal_row)
         lay.addLayout(check_row)
-        lay.addWidget(self.output, 1)
         self.candidates: list[tuple[rp.Unit, QCheckBox]] = []
 
     def fill(self, units: list[rp.Unit]) -> None:
@@ -337,7 +336,7 @@ class PortalPage(QWidget):
                                  f"{minimum}.")
         else:
             self.minimum.setText(f"apps.toml is unchanged since {self.release_window.base()}.")
-        # The higher of what CI asks against the last push and what semantic versioning gives since the last tag.
+        # The higher of what CI asks (since the last portal release) and what semantic versioning gives since it.
         suggested, semver = rp.portal_suggestion(self.release_window.root, portal)
         if minimum and rp.version_tuple(minimum) > rp.version_tuple(suggested):
             suggested, semver = minimum, f"CI's minimum: {why}"
@@ -451,7 +450,7 @@ class WithdrawPage(QWidget):
         if not sys.platform.startswith("linux"):
             self.test_button.setEnabled(False)
             self.test_button.setToolTip("Runs on the board: Linux only")
-        self.output = Terminal()
+        self.output = Terminal()                 # the window shows it under the steps, beside the command line
         row = QHBoxLayout()
         row.addWidget(QLabel("App:"))
         row.addWidget(self.app_box)
@@ -471,7 +470,6 @@ class WithdrawPage(QWidget):
             "check offers it), then release the portal in step 2: it removes the app from the boards."))
         lay.addLayout(row)
         lay.addLayout(reason_row)
-        lay.addWidget(self.output, 1)
         self.units: list[rp.Unit] = []
 
     def fill(self, units: list[rp.Unit]) -> None:
@@ -580,7 +578,7 @@ class RunPage(QWidget):
         self.apps.setMovement(QListView.Movement.Static)
         self.apps.setWordWrap(True)
         self.apps.itemClicked.connect(lambda item: self.run(item.data(Qt.ItemDataRole.UserRole)))
-        self.output = Terminal()
+        self.output = Terminal()                 # the window shows it under the steps, beside the command line
         lay = QVBoxLayout(self)
         lay.addWidget(hint_label(
             "Click an app to start it from this checkout, to try it before its release: <code>python -m</code> with "
@@ -590,7 +588,6 @@ class RunPage(QWidget):
             "<b>Manual (local)</b> serves the manual from the checkout with <code>mkdocs serve</code> and opens it in "
             "the browser; it rebuilds on every save."))
         lay.addWidget(self.apps, 2)
-        lay.addWidget(self.output, 1)
         self.running: list[tuple[rp.Launch, subprocess.Popen, Path]] = []
         self.waiting: list[str] = []            # servers started, whose page opens once they answer
         self.timer = QTimer(self, interval=1000)
@@ -829,12 +826,26 @@ class ReleaseWindow(QMainWindow):
         # was typed in it.
         self.tabs.currentChanged.connect(lambda i: i == 1 and self.portal_page.fill(rp.load_units(self.root)))
         self.commands = CommandLine(root, settings, finished=self.refresh)    # a commit or push: read it again
+        # Under the steps, side by side: the current step's log (what Apply, Bump portal, Withdraw or a started app
+        # wrote) on the left, the command line with its output on the right. Two tall boxes read better than the
+        # two flat ones that were stacked (owner, 17-10-2026).
+        self.outputs = QStackedWidget()
+        for page in (self.apps_page, self.portal_page, self.withdraw_page, self.run_page):
+            self.outputs.addWidget(page.output)
+        self.tabs.currentChanged.connect(self.outputs.setCurrentIndex)
+        self.logs = QSplitter(Qt.Orientation.Horizontal)
+        self.logs.addWidget(self.outputs)
+        self.logs.addWidget(self.commands)
+        self.logs.setStretchFactor(0, 1)
+        self.logs.setStretchFactor(1, 1)
         self.splitter = QSplitter(Qt.Orientation.Vertical)
         self.splitter.addWidget(self.tabs)
-        self.splitter.addWidget(self.commands)
+        self.splitter.addWidget(self.logs)
         self.splitter.setCollapsible(0, False)
-        self.splitter.setStretchFactor(0, 3)
+        self.splitter.setStretchFactor(0, 2)
         self.splitter.setStretchFactor(1, 1)
+        self.logs.setSizes([550, 550])                  # half and half; the table's size hint would take it all
+        self.splitter.setSizes([400, 260])
         central = QWidget()
         lay = QVBoxLayout(central)
         lay.addLayout(header)

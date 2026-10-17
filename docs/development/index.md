@@ -99,7 +99,7 @@ CI checks with `tools/check_versions.py`. Everything started at 0.1.0 with the s
 
 Each app is released on its own tag (`bazzite-test-v0.1.0`, `governor-v0.4.0`, …); the release workflow builds
 `<tag>.tar.gz` and `SHA256SUMS`. The portal has `portal-vX.Y.Z` and pins one release of every app in
-`portal/apps.toml`; a change there needs a portal version bump at least as large as the largest app bump.
+`portal/apps.toml`; a change there since the last portal release needs a portal version bump at least as large as the largest app bump.
 The release steps are in [Portal](../portal.md#appstoml-and-releases).
 
 ### Upstream releases an app pins or follows

@@ -1,3 +1,18 @@
+Changelog: 17-10-2026 08:22:18
+
+Fixed. Step 2 offered 1.13.1 for the portal after the bump to 1.13.0 had gone out with the apps' releases: the
+minimum CI accepts was counted from the last push, where pinning the checksums is a change again. It is now
+counted from the last portal release, as tools/check_manifest.py does since this change, so the version bumped
+before the push stays the one offered, and Apply makes no second bump for the pins.
+
+Changelog: 17-10-2026 08:07:25
+
+Fixed. The two log boxes under the steps sit side by side, each the full height of that area: the step's own
+log (what Apply, Bump portal, Withdraw or a started app wrote; it follows the open tab) on the left, the command
+line with its output on the right. Before, the step's log sat inside its tab above the command line, and the two
+flat boxes were hard to read (owner, 17-10-2026). The line between them widens one; the line above gives both
+more room.
+
 Changelog: 17-10-2026 07:44:51
 
 Added. Apply makes the portal bump itself when the push of step 1 needs one (apps.toml changed since the last

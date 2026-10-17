@@ -26,8 +26,8 @@ jobs:
           python-version: "3.12"
       - name: Hard-coded versions match each VERSION file
         run: python tools/check_versions.py
-      # apps.toml: every app listed, pinned tags exist (or are the next release), and a change to it comes with a
-      # big enough portal/VERSION bump (see portal/README.md).
+      # apps.toml: every app listed, pinned tags exist (or are the next release), and a change to it since the last
+      # portal release comes with a big enough portal/VERSION bump (tools/check_manifest.py).
       - name: Portal manifest
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}

@@ -211,13 +211,13 @@ apps/suite-releases/install.sh --uninstall             # remove them; the checko
   `Release x.y.z.` CHANGELOG entry with your notes, which become the release notes on GitHub. The release notes
   of an app that bundles the core also name the core version. When `apps.toml`
   pins a tag of that app that was never released, the pin moves to the new version. When `apps.toml` changed since
-  the last push, for that or another reason (an app added or removed), CI wants a portal bump in the same push:
+  the last portal release, for that or another reason (an app added or removed), CI wants a portal bump in the same push:
   Apply makes it too (the lowest portal version CI accepts, with a CHANGELOG entry that lists the changed pins) and
   says so; the portal release itself stays step 2. It runs `tools/check_manifest.py`. Then commit, push, and push the app tags (steps 1 and 2 above):
   on Linux the push command runs `tools/ci-local.sh` first and pushes only when CI's jobs pass.
 - **2. Pin and portal:** once GitHub has built the app releases, **Pin** reads each release's `SHA256SUMS` and
   pins its tag and checksum in `apps.toml` (step 3). The window shows the lowest portal version CI accepts against
-  the last push (`origin/main`), and offers the higher of that and what semantic versioning gives since the last
+  the last portal release (its tag; the last push, `origin/main`, while there is none), and offers the higher of that and what semantic versioning gives since the last
   portal tag (its CHANGELOG entries, and the apps added, removed or moved in `apps.toml`); **Bump portal** writes it with a CHANGELOG entry that lists the pinned app
   releases, and runs `tools/check_manifest.py` (step 4). Then commit, test on a BC-250 (below), and only then push
   and tag the portal (step 5). The window lists these commands in that order. While step 1's releases are
@@ -235,12 +235,14 @@ apps/suite-releases/install.sh --uninstall             # remove them; the checko
   checkout with `mkdocs serve` (the development venv has MkDocs) and opens it in the browser at
   `http://127.0.0.1:8765/bc250-bazzite-suite/`. It rebuilds on every save; its log is `mkdocs.log` there. When it
   is already running, a click only opens the page again.
-- **The command line** under the steps runs a command in the checkout, so you need no separate terminal for the
-  commands the steps show. Type it and press Enter; its output appears above the line as it runs. **Commands**
+- **The command line**, under the steps on the right (on the left is the step's own log: what Apply, Bump
+  portal, Withdraw or a started app wrote), runs a command in the checkout, so you need no separate terminal for
+  the commands the steps show. Type it and press Enter; its output appears above the line as it runs. **Commands**
   lists the commands the last step showed (Apply, Bump portal or Withdraw), one per line: pick one to put it on
   the line, then check it and press Enter. Up and Down bring back earlier commands, also from earlier sessions.
   **Stop** or Ctrl+C interrupts a command, along with anything it started in the background; `clear` or **Clear**
-  empties the output. Drag the line above it to give it more room.
+  empties the output. Drag the line above the two boxes to give them more room, or the one between them to widen
+  one of them.
   Each command runs with `bash -lc` in the folder the last `cd` left; variables you set do not carry over to the
   next command. A command cannot read input, so nothing can ask you something: git does not prompt for a password,
   opens no editor (commit with `-m`) and pages nothing. For a command that must ask, use a terminal. After each

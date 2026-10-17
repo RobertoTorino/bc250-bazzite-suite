@@ -270,6 +270,22 @@ def test_window_apply_bumps_the_portal_when_the_push_needs_it(window, repo):
     assert (repo / "portal/CHANGELOG").read_text().count("Release 0.2.0.") == 1
 
 
+def test_the_minimum_needs_no_second_bump_for_the_pins(repo):
+    """The owner's case of 17-10-2026: the push with the apps' releases carried the portal bump; the next push, with
+    their checksums pinned, was offered 1.13.1 (a patch over the last push). Against the last portal release the
+    bump already made covers it, so the minimum stays the version in the tree and Apply makes no second bump."""
+    sh(repo, "tag", "portal-v0.1.0")
+    rp.set_version(repo, unit(repo, "beta"), "0.2.0")
+    assert rp.follow_unreleased_pin(repo, unit(repo, "beta"))
+    rp.set_version(repo, unit(repo, "portal"), "0.2.0")
+    sh(repo, "commit", "-qam", "Release beta-v0.2.0")
+    sh(repo, "branch", "-f", "pushed")                                        # pushed with the bump in it
+    text = (repo / "portal/apps.toml").read_text()
+    write(repo / "portal/apps.toml", text.replace('name = "beta"\nsummary = "s"', 'name = "beta"\nsummary = "pinned"'))
+    assert rp.portal_minimum(repo, "pushed", "0.2.0") == ("0.2.0", "beta 0.1.0 -> 0.2.0")
+    assert rp.portal_minimum(repo, "pushed", "0.3.0") == ("0.3.0", "beta 0.1.0 -> 0.2.0")   # bumped further: kept
+
+
 def test_withdrawal(repo):
     now = datetime.datetime(2026, 10, 13, 12, 0, tzinfo=datetime.timezone.utc)
     units = rp.load_units(repo)
@@ -932,13 +948,13 @@ def test_a_first_release_is_offered_as_it_is(repo):
 
 
 def test_the_portal_counts_apps_toml_since_its_last_tag(repo):
-    """An app added to apps.toml and pushed before the portal release: check_manifest no longer sees it against the
-    last push, the suggestion still does."""
+    """An app added to apps.toml and pushed before the portal release: the minimum (as check_manifest) and the
+    suggestion both count it against the last portal tag, not the last push."""
     sh(repo, "tag", "portal-v0.1.0")
     write(repo / "portal/apps.toml", (repo / "portal/apps.toml").read_text() + card("gamma"))
     sh(repo, "commit", "-qam", "gamma")
     sh(repo, "branch", "-f", "pushed")
-    assert rp.portal_minimum(repo, "pushed", "0.1.0") == ("", "")
+    assert rp.portal_minimum(repo, "pushed", "0.1.0") == ("0.2.0", "gamma was added")
     assert rp.portal_suggestion(repo, unit(repo, "portal")) == (
         "0.2.0", "minor: apps.toml changed since portal-v0.1.0 (gamma was added)")
     entry(repo / "portal/CHANGELOG", "Breaking. Reads only apps.toml format 2.")
