@@ -14,7 +14,7 @@ its manifest. **bazzite-test** is always installed and always listed first; ever
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
 - `apps/<name>/`: bazzite-test, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
-  system-overlay, bios-reader, ace-queues, mesh-shaders, memory-manager, hdmi-cec, sftp-tools, console-link, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, demo-tool, dependency-checker, bazzite-netcatgui, bazzite-datstation, suite-releases. Each has its
+  system-overlay, bios-reader, ace-queues, mesh-shaders, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, console-link, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, demo-tool, dependency-checker, bazzite-netcatgui, bazzite-datstation, suite-releases. Each has its
   own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; console-link is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; bazzite-netcatgui is GPL-2.0-only, a port of NetcatGUI; the rest
   GPL-3.0-or-later), .gitignore. Simple
@@ -37,12 +37,14 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
   and say what is ready; don't offer to commit.
 - **Releases are the owner's, all of it.** See [Releases](#releases): Claude prepares code, never a release.
 - **Warn before board changes.** Apps that change how the board runs (CU/core unlocks, GPU governor, GPU
-  overclocking, ACPI override, the patched RADV of ace-queues, the DirectMesh RADV of mesh-shaders, the VRAM split of memory-manager) are marked `changes_board` and the portal asks first. Frame it as standard caution:
+  overclocking, ACPI override, the patched RADV of ace-queues, the DirectMesh RADV of mesh-shaders, the VRAM split of memory-manager, the thermal guard of fan-control, the kernel module of usb-wifi) are marked `changes_board` and the portal asks first. Frame it as standard caution:
   the apps are software-only and reversible, not "risky".
 - **Advice, not reboots.** No app reboots, powers off or logs out the board; when one is needed, the app says so
   (and which command does it). The exception, by design (owner, 15-10-2026): CU Bisect and Cores Bisect, whose
   rounds each need a fresh boot (they ask, or reboot by themselves with `--auto`), and Cores Unlock's boot service,
-  which reboots warm once after a cold boot so the cores come up. A new reboot anywhere else is the owner's decision.
+  which reboots warm once after a cold boot so the cores come up. A second exception (owner, 16-10-2026): the
+  thermal guard shuts the board down cleanly at a critical temperature, to protect the hardware; the limits are
+  the owner's. A new reboot anywhere else is the owner's decision.
 - **The current releases are the baseline.** They were tested extensively on two boards. Moving code must not
   change behaviour; a finding in existing code is "a code path to check", not a known failure. Prove "unchanged"
   (diffs, pixel comparisons, the installer tests) rather than assume it.
@@ -77,6 +79,8 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
     its installer test (see Checks).
   - Window: the first line is the app's icon at 96 px on the left, spanning the title (with the version) and a
     second line below it (status boxes or the app's main controls).
+  - Colour (owner, 17-10-2026): an app's window colour follows its icon, within limits: text stays readable
+    (white on the colour at 4.5:1 or more, a lighter link colour on a dark window) and the colour is easy on the eye.
   A new app copies the structure of an existing one; any deviation is the owner's decision. The manual's
   [Architecture and consistency](docs/development/architecture.md) describes it all, with the steps for a new app.
 - **Scope is the suite, not Bazzite.** We answer for the portal and its apps, not for Bazzite itself. A system-wide
@@ -135,7 +139,8 @@ shellcheck -S warning apps/cores-bisect/bc250-cores-bisect.sh apps/cores-bisect/
   apps/cores-bisect/install.sh apps/cores-bisect/packaging/bazzite/*.sh
 shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
 shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh \
-  apps/system-overlay/install.sh apps/bios-reader/install.sh apps/memory-manager/install.sh apps/hdmi-cec/install.sh apps/sftp-tools/install.sh \
+  apps/system-overlay/install.sh apps/bios-reader/install.sh apps/memory-manager/install.sh apps/fan-control/install.sh \
+  apps/hdmi-cec/install.sh apps/sftp-tools/install.sh \
   apps/console-link/install.sh apps/demo-tool/install.sh apps/suite-releases/*.sh
 shellcheck -S warning apps/ace-queues/bc250-ace-queues.sh apps/ace-queues/bc250-ace-queues-run \
   apps/ace-queues/install.sh apps/ace-queues/mesa/build-in-container.sh

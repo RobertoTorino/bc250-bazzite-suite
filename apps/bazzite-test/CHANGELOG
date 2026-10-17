@@ -1,3 +1,16 @@
+Changelog: 17-10-2026 05:35:55
+
+Release 0.3.0.
+
+Changelog: 17-10-2026 00:48:59
+
+Added. Test 52, HDMI-CEC Services (GPU and graphics): whether the services behind the TV control run. Valve's CEC
+daemon (cecd, a user service) when enabled; HDMI CEC Manager's background service (bc250-hdmi-cec-watch) and boot
+service (bc250-hdmi-cec-boot, with its udev rule) when installed; Bazzite's dGPU CEC services when enabled. A service
+that is installed or enabled but not running, or failed, is a warning with the journalctl command to read why; one
+that is not installed is only reported, and so is a stopped cecd or boot service without a CEC adapter. Without a
+desktop session the user services' state is reported as unknown. In the catalogue and both chapters of the manual.
+
 Changelog: 16-10-2026 06:02:49
 
 Release 0.2.0.

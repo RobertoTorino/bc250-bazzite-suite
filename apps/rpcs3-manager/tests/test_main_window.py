@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The window on folders made in a temp folder: the states before and after installing, the firmware, the games in
 the table, the game folders, the plan for Game Mode, installing through the worker, Steam's shortcuts changed with a
-fake "close Steam", and the indigo look."""
+fake "close Steam", and the blue look."""
 
 from __future__ import annotations
 
@@ -274,13 +274,13 @@ def test_no_steam_game_mode_or_no_wrapper(qapp, folders, monkeypatch):
     window.close()
 
 
-def test_the_indigo_look(qapp, folders):
+def test_the_blue_look(qapp, folders):
     _install(folders["home"])
     window = _window(folders)
-    assert style.INDIGO in window.styleSheet()
+    assert style.BLUE in window.styleSheet()
     assert window.install_button.property("primary") and window.steam_button.property("primary")
-    assert style.INDIGO in window.emulator_box.styleSheet()
-    assert f"color:{style.INDIGO}" in window.emulator_state.text()                 # the release link
+    assert style.BLUE in window.emulator_box.styleSheet()
+    assert f"color:{style.BLUE}" in window.emulator_state.text()                 # the release link
     steps = (window.install_button, window.remove_button, window.firmware_button, window.folder_button,
              window.forget_button)
     assert len({(b.width(), b.height()) for b in steps}) == 1                       # one size, padding included

@@ -16,6 +16,8 @@ other app is optional.
 | ![](../assets/apps/system-overlay.png){ .app-icon } [System Overlay](system-overlay.md) | CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top. |
 | ![](../assets/apps/bios-reader.png){ .app-icon } [BC-250 BIOS Reader](bios-reader.md) | The BIOS settings as the setup screen shows them, hidden menus included. Stock or modded BIOS. Read-only. |
 | ![](../assets/apps/memory-manager.png){ .app-icon } [BC-250 Memory Manager](memory-manager.md) | The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it. **Changes the board.** |
+| ![](../assets/apps/fan-control.png){ .app-icon } [BC-250 Fan Control](fan-control.md) | A thermal guard that warns, cools and shuts down cleanly at a critical temperature, and the fans. **Changes the board.** |
+| ![](../assets/apps/usb-wifi.png){ .app-icon } [BC-250 USB Wi-Fi](usb-wifi.md) | The driver for AIC8800D80 USB Wi-Fi sticks: built for the running kernel, loaded at boot, rebuilt after a kernel update. **Changes the board.** |
 | ![](../assets/apps/hdmi-cec.png){ .app-icon } [HDMI CEC Manager](hdmi-cec.md) | Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC. |
 | ![](../assets/apps/sftp-tools.png){ .app-icon } [Bazzite SFTP Tools](sftp-tools.md) | Move files between computers over SFTP, and manage the SSH server of a Bazzite host. |
 

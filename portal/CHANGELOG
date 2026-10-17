@@ -1,3 +1,30 @@
+Changelog: 17-10-2026 06:15:56
+
+Release 1.11.0. Pins fan-control-v0.1.0, usb-wifi-v0.1.0.
+
+Changelog: 17-10-2026 05:34:01
+
+Added. apps.toml lists BC-250 USB Wi-Fi (usb-wifi, pinned to its first release usb-wifi-v0.1.0, not tagged yet,
+without sha256) with changes_board = true, with the icon images/apps/usb-wifi.png (a copy of the app's 128 px
+image, a placeholder until the owner draws the icon). tools/tests/test_portal_icons.py checks the icon against its
+source.
+
+Changelog: 17-10-2026 02:23:22
+
+Fixed. The cards of the PCSX2, PPSSPP, RPCS3, shadPS4 and Vita3K Managers show the apps' newer icons, with MANAGER
+below the name (images/apps/, copies of each app's 128 px icon).
+
+Changelog: 17-10-2026 01:05:19
+
+Fixed. The cards of the PCSX2, PPSSPP, RPCS3, shadPS4 and Vita3K Managers show the apps' new icons (images/apps/,
+copies of each app's 128 px icon).
+
+Changelog: 16-10-2026 18:43:20
+
+Added. apps.toml lists BC-250 Fan Control (fan-control, pinned to its first release fan-control-v0.1.0, not tagged
+yet, without sha256) with changes_board = true, with the icon images/apps/fan-control.png (a copy of the app's
+128 px image). tools/tests/test_portal_icons.py checks the icon against its source.
+
 Changelog: 16-10-2026 12:57:16
 
 Release 1.10.1. Pins console-link-v1.1.1, vita3k-manager-v0.1.1.

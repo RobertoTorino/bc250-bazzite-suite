@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The main window: RPCS3 itself, the PS3 firmware and the game folders as three steps with their state and
 buttons, then the games found, each with a box for Game Mode. Downloading RPCS3, asking GitHub for a newer one and
-changing Steam's files run off the GUI thread; nothing here needs root. The look is the app's own indigo
+changing Steam's files run off the GUI thread; nothing here needs root. The look is the app's own blue
 (style.py)."""
 
 from __future__ import annotations
@@ -79,10 +79,10 @@ class MainWindow(QMainWindow):
         self.refresh_button.setToolTip("Read the state again and look for games")
         self.refresh_button.clicked.connect(self.refresh)
         header.add_action(self.refresh_button)
-        self.emulator_box = MetricBox("RPCS3", style.INDIGO)
-        self.firmware_box = MetricBox("Firmware", style.INDIGO)
-        self.games_box = MetricBox("Games", style.INDIGO)
-        self.steam_box = MetricBox("In Game Mode", style.INDIGO)
+        self.emulator_box = MetricBox("RPCS3", style.BLUE)
+        self.firmware_box = MetricBox("Firmware", style.BLUE)
+        self.games_box = MetricBox("Games", style.BLUE)
+        self.steam_box = MetricBox("In Game Mode", style.BLUE)
         for box in (self.emulator_box, self.firmware_box, self.games_box, self.steam_box):
             header.add_second(box)
         intro = hint_label(

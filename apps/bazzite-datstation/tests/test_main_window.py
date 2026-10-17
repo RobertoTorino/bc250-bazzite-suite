@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The window: the tiles open their pages and Back or Escape returns, the user guides open the browser, the Steam
-state, the quiz page through a round, the scores page and the news page with a recorded feed."""
+state, the quiz page through a round, the scores page and the news page with a test feed."""
 
 from __future__ import annotations
 
@@ -207,14 +207,14 @@ def test_the_scores_page_shows_the_store(window, tmp_path, monkeypatch):
     assert window.store.best() == 0 and "No scores yet" in window.pages["scores"].view.toPlainText()
 
 
-def test_the_news_page_with_a_recorded_feed(window, opened, monkeypatch):
+def test_the_news_page_with_a_test_feed(window, opened, monkeypatch):
     page = window.pages["news"]
     page.feed_url = (FIXTURES / "feed.xml").resolve().as_uri()
     window.open("news")
     assert page.worker is not None
     page.worker.wait(10000)
     QTest.qWait(50)
-    assert len(page.items) == 10 and "Gran Turismo 7" in page.view.toPlainText()
+    assert len(page.items) == 10 and "Example Racing" in page.view.toPlainText()
     page.on_link(QUrl(page.items[0].link))
     assert opened == [page.items[0].link]
     page.on_link(QUrl("https://example.com/"))

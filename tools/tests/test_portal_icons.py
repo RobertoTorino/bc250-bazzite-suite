@@ -24,6 +24,7 @@ SOURCES = {
     "cu-unlock": "apps/cu-bisect/images/bc250-cu-bisect-unlock-128.png",
     "decky-manager": "apps/decky-manager/images/bc250-decky-manager-128.png",
     "demo-tool": "apps/demo-tool/images/simple-demo-tool-128.png",
+    "fan-control": "apps/fan-control/images/bc250-fan-control-128.png",
     "governor": "apps/governor/images/bc250-governor-manager-128.png",
     "gpu-oc-bisect": "apps/gpu-oc-bisect/images/bc250-gpu-oc-bisect-128.png",
     "hdmi-cec": "apps/hdmi-cec/images/bc250-hdmi-cec-128.png",
@@ -41,6 +42,7 @@ SOURCES = {
     "shadps4-manager": "apps/shadps4-manager/images/bc250-shadps4-manager-128.png",
     "suite-releases": "apps/suite-releases/images/bc250-release-128.png",
     "system-overlay": "apps/system-overlay/images/bc250-system-overlay-128.png",
+    "usb-wifi": "apps/usb-wifi/images/bc250-usb-wifi-128.png",
     "vita3k-manager": "apps/vita3k-manager/images/bc250-vita3k-manager-128.png",
 }
 

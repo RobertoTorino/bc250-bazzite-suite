@@ -15,12 +15,12 @@ from conftest import FIXTURES
 FEED = (FIXTURES / "feed.xml").read_bytes()
 
 
-def test_the_recorded_feed_parses():
+def test_the_feed_parses():
     items = news.parse_rss(FEED)
     assert len(items) == 10
     first = items[0]
-    assert first.title.startswith("(For Southeast Asia) Gran Turismo 7")
-    assert first.link == "https://blog.playstation.com/2026/10/14/20261015-gt7/"
+    assert first.title.startswith("(For Southeast Asia) Example Racing’s autumn update")
+    assert first.link == "https://blog.playstation.com/2026/10/14/example-racing-autumn-update/"
     assert first.published is not None and first.published.tzinfo is not None
     assert all(news.allowed(item.link) for item in items)
     assert "&" not in first.title.replace("&amp;", "") or "&amp;" not in first.title
@@ -82,5 +82,5 @@ def test_errors_are_sentences(monkeypatch):
 def test_the_page_html():
     now = datetime(2026, 10, 15, 12, 0, tzinfo=timezone.utc)
     html = items_html(news.parse_rss(FEED), now)
-    assert html.count("<hr>") == 10 and "href='https://blog.playstation.com/2026/10/14/20261015-gt7/'" in html
+    assert html.count("<hr>") == 10 and "href='https://blog.playstation.com/2026/10/14/example-racing-autumn-update/'" in html
     assert "No announcements" in items_html([])

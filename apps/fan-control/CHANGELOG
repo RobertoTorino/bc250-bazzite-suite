@@ -1,0 +1,15 @@
+Changelog: 17-10-2026 05:35:56
+
+Release 0.1.0.
+
+Changelog: 16-10-2026 18:43:14
+
+Added. BC-250 Fan Control, a new app: the GPU (edge) and CPU (Tctl) temperatures and the fans of the board's
+NCT6686 (through the nct6687 driver Bazzite ships), with CPU_FAN1 and the J4003 channels named on the BC-250, and a
+thermal guard. The guard is a system service (guard.py, standard library only, installed in /etc through pkexec)
+that watches the hotter of the two temperatures every 2 seconds: at the warning (85 °C) a desktop notification, at
+the cooling limit (90 °C) every fan to full speed and the governor's performance mode off, at the shutdown limit
+(95 °C held for 10 s) a clean shutdown. 5 °C below the warning the fans go back to what they were; performance mode
+stays off. A reading outside 1-150 °C counts as none, so a broken sensor never shuts the board down; a fan that turned
+and reads 0 RPM for 10 seconds is reported. The window turns the guard on, changes its limits and turns it off, and
+shows what it did lately. Uninstalling removes the guard (sudo).

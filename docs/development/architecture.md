@@ -139,6 +139,11 @@ Below the header, the rest of the window uses core's widgets: `MetricBox` for fi
 `StatusText` for states (`ok`, `warn`, `bad`, `info`, `neutral`, in the theme's colours), `hint_label()` for
 explanations, `accent_button()` for the page's main action. Secondary windows are titled with `window_title()`.
 
+An app may have its own colour, taken from its icon, in a `style.py` beside its window (the shadPS4 Manager's is
+the pattern): the status boxes, the main buttons, the table headers and the links take it. White text on the colour
+reads at 4.5:1 or more, links on a dark window use a lighter shade of it, and the colour stays easy on the eye.
+Without a `style.py` the app keeps core's purple.
+
 ## Shared code: bc250_core
 
 `core/bc250_core` holds what more than one app needs: theme, widgets, start-up, settings, help, update checks and

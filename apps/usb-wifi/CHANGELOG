@@ -1,0 +1,24 @@
+Changelog: 17-10-2026 05:35:56
+
+Release 0.1.0.
+
+Changelog: 17-10-2026 05:05:00
+
+Added. BC-250 USB Wi-Fi, a new app: the driver for AIC8800D80 USB Wi-Fi sticks (the UGREEN AX900 and others),
+which Bazzite's kernel does not have. The app shows the stick as the board sees it (storage mode, waiting for its
+firmware, Wi-Fi mode), the chip's answer from the kernel log and the driver branch it takes (chip_mcu_id 1 needs
+the legacy-mcu1 branch of shenmintao/aic8800d80 with the SDK 3 firmware; the SDK 5 firmware of main is larger than
+that chip takes, so its upload breaks off at 0x170400), builds the driver as your own user from a pinned commit
+against the running kernel's build tree (gcc, make and kernel-devel are in Bazzite's image; git fetches the one
+commit), and installs it through the password dialog: the modules and the firmware under /var/lib/bc250-usb-wifi
+(Bazzite's /usr is read-only), a udev rule that ejects the stick's virtual disk so it leaves storage mode, and a
+system service (driver.py, standard library only, in /etc) that loads the modules at every boot with the firmware
+folder as a parameter, ejects a stick in storage mode, and after a kernel update builds the driver again at the next
+boot from the kept sources, with a desktop notification either way. The window shows what the service did last.
+Removing the driver unloads it and takes every file away; uninstalling the app removes the driver too (sudo). The
+stick's firmware does WPA2, not WPA3, which the window says. Proven on the owner's board (17-10-2026): 5 GHz at
+200 Mbit/s, and a Console Link stream over it that equals the cable's. Two safeguards for the build (owner,
+17-10-2026): the sources are fetched from a mirror under the suite's account first and from the original repository
+when the mirror does not answer, so a vanished upstream stops no fresh install; and "Newest sources (untested)"
+fetches the branch's head instead of the pin, for the day a new kernel breaks the pinned build before a release
+moves the pin, with the installed driver marked as newest in the window.

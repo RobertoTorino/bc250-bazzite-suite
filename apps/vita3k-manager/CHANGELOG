@@ -1,3 +1,31 @@
+Changelog: 17-10-2026 05:35:56
+
+Release 0.1.2.
+
+Changelog: 17-10-2026 02:23:22
+
+Fixed. The app's icon is replaced by the owner's newer version (owner, 17-10-2026): VITA3K with MANAGER below it, on
+the same dark-blue frame, so the window's blue stays as it is. images/bc250-vita3k-manager.png is the owner's 512 px
+file; images/bc250-vita3k-manager-128.png is scaled from it.
+
+Changelog: 17-10-2026 01:11:56
+
+Fixed. The app's colour follows its new icon (owner, 17-10-2026): the icon's blue, #0A55B0, with links in #5B93DA on a
+dark window, in place of the gold of its old icon (#94721A). White text on it reads at 7:1. The style is the shadPS4
+Manager's, which has the same blue.
+
+Changelog: 17-10-2026 01:05:19
+
+Fixed. The app has a new icon (owner, 17-10-2026): its name, VITA3K, in bold outlined letters on the dark-blue frame.
+images/bc250-vita3k-manager.png is the owner's 512 px file; images/bc250-vita3k-manager-128.png is scaled from it. The
+window, the menu entry, the Desktop icon and the Steam artwork of the games use it.
+
+Changelog: 16-10-2026 13:22:03
+
+Fixed. The app's colour is the gold of its icon (#94721A, links #E6C65A on a dark window) in place of the crimson
+#BD1550: the header boxes, buttons, step numbers and table. The background of the Steam art made for a game is dark
+gold in place of dark red.
+
 Changelog: 16-10-2026 12:51:06
 
 Release 0.1.1.

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The app's look: one blue, #1273C8 (from PPSSPP's own logo), on core's widgets. The style sheet goes on the main
-window, so everything in it takes the blue and the rest of the suite keeps core's purple."""
+"""The app's look: one blue, #0A55B0, the blue of the app's icon (owner, 17-10-2026), on core's widgets. The style
+sheet goes on the main window, so everything in it takes the blue and the rest of the suite keeps core's purple."""
 
 from __future__ import annotations
 
@@ -8,12 +8,12 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QPalette
 from PyQt6.QtWidgets import QLabel, QPushButton, QWidget
 
-BLUE = "#1273C8"
-BLUE_HOVER = "#3A8DD8"
-BLUE_PRESSED = "#0D5A9E"
-BLUE_TINT = "#1A1273C8"                 # #AARRGGBB: 10 % blue, for hover and every other table row
-BLUE_LINE = "#591273C8"                 # 35 % blue, for outlines
-LINK_ON_DARK = "#79B8EE"                # #1273C8 is too dark to read as a link on a dark window
+BLUE = "#0A55B0"
+BLUE_HOVER = "#2A6CC4"
+BLUE_PRESSED = "#08448D"
+BLUE_TINT = "#1A0A55B0"                 # #AARRGGBB: 10 % blue, for hover and every other table row
+BLUE_LINE = "#590A55B0"                 # 35 % blue, for outlines
+LINK_ON_DARK = "#5B93DA"                # #0A55B0 is too dark to read as a link on a dark window
 DISABLED = "#80808080"                  # 50 % grey: a disabled button, readable as such on light and dark
 
 STYLESHEET = f"""

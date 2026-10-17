@@ -37,6 +37,8 @@ uses. You do not need them.
 - <img src="portal/images/apps/system-overlay.png" width="20" height="20" alt=""/> **[System Overlay](apps/system-overlay)**: CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top.
 - <img src="portal/images/apps/bios-reader.png" width="20" height="20" alt=""/> **[BC-250 BIOS Reader](apps/bios-reader)**: The BIOS settings as the setup screen shows them, hidden menus included. Stock or modded BIOS. Read-only.
 - <img src="portal/images/apps/memory-manager.png" width="20" height="20" alt=""/> **[BC-250 Memory Manager](apps/memory-manager)**: The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it.
+- <img src="portal/images/apps/fan-control.png" width="20" height="20" alt=""/> **[BC-250 Fan Control](apps/fan-control)**: A thermal guard that warns, cools and shuts down cleanly at a critical temperature, and the fans.
+- <img src="portal/images/apps/usb-wifi.png" width="20" height="20" alt=""/> **[BC-250 USB Wi-Fi](apps/usb-wifi)**: The driver for AIC8800D80 USB Wi-Fi sticks: built for the running kernel, loaded at boot, rebuilt after a kernel update.
 - <img src="portal/images/apps/hdmi-cec.png" width="20" height="20" alt=""/> **[HDMI CEC Manager](apps/hdmi-cec)**: Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC.
 - <img src="portal/images/apps/sftp-tools.png" width="20" height="20" alt=""/> **[Bazzite SFTP Tools](apps/sftp-tools)**: Move files between computers over SFTP, and manage the SSH server of a Bazzite host.
 
@@ -70,3 +72,10 @@ How to install and use them: **[the manual](https://robertotorino.github.io/bc25
 GPL-3.0-or-later ([LICENSE](LICENSE)), except BC-250 Persistent ACPI, which is MIT, Console Link, which is
 AGPL-3.0 (its protocol code comes from chiaki-ng), and Bazzite NetcatGUI, which is GPL-2.0 (a port of NetcatGUI).
 Each app keeps its own `LICENSE`.
+
+## Disclaimer
+
+The BC250 Bazzite Suite is an independent community project. It is not affiliated with or endorsed by AMD, ASRock,
+the Bazzite / Universal Blue project, Sony, or the makers of the emulators the apps work with. BC-250 is AMD's
+product name, Bazzite is the name of the Universal Blue project, and PlayStation and the names of the emulators
+belong to their owners; the suite uses them only to say what it works with.

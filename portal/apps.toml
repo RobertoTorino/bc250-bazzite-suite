@@ -174,6 +174,28 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-memory-manager"]
 launch = [["Open", "~/.local/bin/bc250-memory-manager"]]
 
+[apps.fan-control]
+name = "BC-250 Fan Control"
+summary = "A thermal guard that warns, cools and shuts down cleanly at a critical temperature, and the fans."
+tag = "fan-control-v0.1.0"
+required = false
+changes_board = true
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-fan-control"]
+launch = [["Open", "~/.local/bin/bc250-fan-control"]]
+
+[apps.usb-wifi]
+name = "BC-250 USB Wi-Fi"
+summary = "The driver for AIC8800D80 USB Wi-Fi sticks: built for the running kernel, loaded at boot, rebuilt after a kernel update."
+tag = "usb-wifi-v0.1.0"
+required = false
+changes_board = true
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-usb-wifi"]
+launch = [["Open", "~/.local/bin/bc250-usb-wifi"]]
+
 [apps.hdmi-cec]
 name = "HDMI CEC Manager"
 short = "HDMI-CEC"

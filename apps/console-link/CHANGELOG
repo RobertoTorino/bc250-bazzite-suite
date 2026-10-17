@@ -1,3 +1,21 @@
+Changelog: 17-10-2026 05:35:56
+
+Release 1.1.2.
+
+Changelog: 17-10-2026 04:45:45
+
+Fixed. The wiki chapter has a section Wi-Fi or cable: ten minutes of the same game streamed once over Ethernet and
+once over a USB Wi-Fi 6 stick, measured on 17-10-2026 with 1.1.1 and a PS4 Pro, side by side (frames lost, the
+gaps between packets, sound, decoding, controller, CPU), and what a player can expect from a good Wi-Fi link: the
+cable's equal, with the occasional hiccup that the recovery holds through. Asked for by the owner as the verified
+test (17-10-2026).
+
+Changelog: 17-10-2026 04:02:03
+
+Fixed. The list of registered consoles is titled "Select a registered console" instead of "Registered consoles":
+the buttons below it (Wake, Test session, Test stream, Stream, Rest mode and the rest) stay greyed out until a
+console is selected, and the old title did not say so (owner, 17-10-2026). The wiki chapter says it too.
+
 Changelog: 16-10-2026 12:51:06
 
 Release 1.1.1.

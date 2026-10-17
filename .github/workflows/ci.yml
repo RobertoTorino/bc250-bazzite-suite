@@ -50,7 +50,8 @@ jobs:
               apps/suite-releases,
               apps/system-overlay, apps/bios-reader, apps/ace-queues, apps/memory-manager, apps/hdmi-cec, apps/sftp-tools,
               apps/console-link, apps/mesh-shaders, apps/shadps4-manager, apps/rpcs3-manager, apps/decky-manager,
-              apps/bazzite-datstation, apps/ppsspp-manager, apps/pcsx2-manager, apps/vita3k-manager,
+              apps/bazzite-datstation, apps/ppsspp-manager, apps/pcsx2-manager, apps/vita3k-manager, apps/fan-control,
+              apps/usb-wifi,
               tools/installer-tests/gui]   # every folder with tests/
     defaults:
       run:
@@ -146,7 +147,7 @@ jobs:
       # that their own release workflows already held to it.
       - name: shellcheck (errors, all scripts)
         run: find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 shellcheck -x -S error
-      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace-queues, memory-manager, hdmi-cec, sftp-tools, console-link, mesh-shaders, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, netcatgui, datstation and the suite's own scripts)
+      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace-queues, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, console-link, mesh-shaders, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, netcatgui, datstation and the suite's own scripts)
         run: |
           shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \
             tools/hooks/pre-push
@@ -155,6 +156,7 @@ jobs:
           shellcheck -S warning apps/gpu-oc-bisect/bc250-gpu-oc-bisect.sh apps/gpu-oc-bisect/install.sh
           shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persistent-acpi/install.sh
           shellcheck -S warning apps/system-overlay/install.sh apps/bios-reader/install.sh apps/memory-manager/install.sh
+          shellcheck -S warning apps/fan-control/install.sh apps/usb-wifi/install.sh
           shellcheck -S warning apps/hdmi-cec/install.sh apps/sftp-tools/install.sh apps/console-link/install.sh
           shellcheck -S warning apps/ace-queues/bc250-ace-queues.sh apps/ace-queues/bc250-ace-queues-run \
             apps/ace-queues/install.sh apps/ace-queues/mesa/build-in-container.sh
@@ -249,6 +251,10 @@ jobs:
         run: bash tools/installer-tests/decky-manager.sh
       - name: memory-manager installer
         run: bash tools/installer-tests/memory-manager.sh
+      - name: fan-control installer
+        run: bash tools/installer-tests/fan-control.sh
+      - name: usb-wifi installer
+        run: bash tools/installer-tests/usb-wifi.sh
       - name: hdmi-cec installer
         run: bash tools/installer-tests/hdmi-cec.sh
       - name: sftp-tools installer

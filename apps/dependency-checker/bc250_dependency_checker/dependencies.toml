@@ -68,6 +68,14 @@ launchers = ["~/.local/bin/bc250-mesh-shaders"]
 name = "BC-250 Memory Manager"
 launchers = ["~/.local/bin/bc250-memory-manager"]
 
+[app.fan-control]
+name = "BC-250 Fan Control"
+launchers = ["~/.local/bin/bc250-fan-control"]
+
+[app.usb-wifi]
+name = "BC-250 USB Wi-Fi"
+launchers = ["~/.local/bin/bc250-usb-wifi"]
+
 [app.hdmi-cec]
 name = "HDMI CEC Manager"
 launchers = ["~/.local/bin/bc250-hdmi-cec"]
@@ -149,6 +157,16 @@ anchor = "reading-the-bios-flash-chip-optional"
 owner = "memory-manager"
 need = "required"
 usage = "Password prompt for reading and writing CMOS."
+
+[[tool.source]]
+owner = "fan-control"
+need = "required"
+usage = "Password prompt for turning the thermal guard on, changing it and turning it off."
+
+[[tool.source]]
+owner = "usb-wifi"
+need = "required"
+usage = "Password prompt for installing, updating and removing the Wi-Fi driver and its service."
 
 [[tool.source]]
 owner = "governor"
@@ -598,10 +616,25 @@ owner = "hdmi-cec"
 need = "required"
 usage = "Read Bazzite's CEC mode and tell Valve's CEC daemon to reload its settings."
 
+[[tool.source]]
+owner = "fan-control"
+need = "required"
+usage = "Install, start and remove the thermal guard's service; the guard powers the board off with it at the shutdown limit."
+
+[[tool.source]]
+owner = "usb-wifi"
+need = "required"
+usage = "Install, start and remove the Wi-Fi driver's service, which loads the driver at boot."
+
 [[tool]]
 name = "journalctl"
 description = "Reads the systemd journal: the system, service and kernel logs."
 executables = ["journalctl"]
+
+[[tool.source]]
+owner = "usb-wifi"
+need = "required"
+usage = "Read the chip's answer and the loader's messages from the kernel log."
 
 [[tool.source]]
 owner = "governor"
@@ -662,6 +695,26 @@ executables = ["busctl"]
 owner = "governor"
 need = "required"
 usage = "Communicate with the governor service over D-Bus."
+
+[[tool.source]]
+owner = "fan-control"
+need = "optional"
+usage = "The thermal guard turns the governor's performance mode off at the cooling limit."
+
+[[tool]]
+name = "notify-send"
+description = "Shows a desktop notification (libnotify)."
+executables = ["notify-send"]
+
+[[tool.source]]
+owner = "fan-control"
+need = "optional"
+usage = "The thermal guard's warnings on the desktop; without it they go only to the journal and the app."
+
+[[tool.source]]
+owner = "usb-wifi"
+need = "optional"
+usage = "The driver service's word on the desktop when it rebuilt the driver after a kernel update, or could not."
 
 [[tool]]
 name = "radeontop"
@@ -968,6 +1021,14 @@ owner = "memory-manager"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
+owner = "fan-control"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
+owner = "usb-wifi"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
 owner = "hdmi-cec"
 specifier = ">=6.11,<7"
 
@@ -1006,6 +1067,66 @@ specifier = ">=6.11,<7"
 [[dependency.source]]
 owner = "governor"
 specifier = ">=6.11,<7"
+
+[[tool]]
+name = "gcc"
+description = "The C compiler. BC-250 USB Wi-Fi builds the Wi-Fi driver with it against the running kernel; Bazzite's image ships it with the kernel's build tree (kernel-devel)."
+executables = ["gcc"]
+
+[[tool.source]]
+owner = "usb-wifi"
+need = "required"
+usage = "Build the Wi-Fi driver for the running kernel, in the app and in its service after a kernel update."
+
+[[tool]]
+name = "make"
+description = "Runs the kernel's build system for an out-of-tree module."
+executables = ["make"]
+
+[[tool.source]]
+owner = "usb-wifi"
+need = "required"
+usage = "Build the Wi-Fi driver with the kernel's build tree."
+
+[[tool]]
+name = "git"
+description = "Fetches the driver's sources at the pinned commit."
+executables = ["git"]
+
+[[tool.source]]
+owner = "usb-wifi"
+need = "required"
+usage = "Fetch the Wi-Fi driver's sources, one commit, the first time a branch is built."
+
+[[tool]]
+name = "kmod"
+description = "Loads and unloads kernel modules (insmod, modprobe, rmmod)."
+executables = ["insmod", "modprobe", "rmmod"]
+
+[[tool.source]]
+owner = "usb-wifi"
+need = "required"
+usage = "The driver's service loads the Wi-Fi driver's two modules at boot and unloads them when stopped."
+
+[[tool]]
+name = "eject"
+description = "Ejects a removable disk. An AIC8800 stick leaves its storage mode when its virtual disk is ejected."
+executables = ["eject"]
+
+[[tool.source]]
+owner = "usb-wifi"
+need = "required"
+usage = "Switch the stick out of storage mode, from the udev rule and from the driver's service."
+
+[[tool]]
+name = "udevadm"
+description = "Controls udev: reloads its rules after a change."
+executables = ["udevadm"]
+
+[[tool.source]]
+owner = "usb-wifi"
+need = "required"
+usage = "Reload udev's rules after installing or removing the stick's rule."
 
 [[dependency]]
 name = "obsws-python"

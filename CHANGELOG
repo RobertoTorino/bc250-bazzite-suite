@@ -1,3 +1,76 @@
+Changelog: 17-10-2026 05:12:58
+
+A new app, BC-250 USB Wi-Fi (apps/usb-wifi, changes_board): the driver for AIC8800D80 USB Wi-Fi sticks, which
+Bazzite's kernel lacks, built on the board for the running kernel from pinned sources (shenmintao/aic8800d80, the
+branch chosen from the chip's answer in the kernel log) and installed as a system service that loads it at every
+boot, switches the stick out of storage mode and rebuilds it after a kernel update. CI runs its tests, its
+shellcheck and its installer test (tools/installer-tests/usb-wifi.sh); the Dependency Checker (its launcher and
+PyQt6, and the tools gcc, make, git, kmod, eject and udevadm, new in the catalogue), the portal (apps.toml), the
+wiki (its chapter, the apps overview and the Home page), the README and CLAUDE.md list it; the portal's tile icon
+is a placeholder in the suite's purple until the owner draws it. Decided by the owner on 17-10-2026 after the
+driver was proven by hand on the board: the modules live under /var and load with insmod, so no reboot is ever
+needed. Open: the board test of the app, the portal/VERSION minor bump for the new card and the first release
+(owner). MIGRATION.md says what the next session starts with: the owner's new app icons, then the new quiz
+questions for Bazzite DatStation.
+
+Changelog: 17-10-2026 03:18:11
+
+MIGRATION.md: the USB Wi-Fi item (the AIC8800 driver for the UGREEN AX900) is started, with the groundwork of
+17-10-2026: Secure Boot is unsupported on the board, Bazzite ships the matching kernel-devel and gcc, and the
+radxa-pkg/aic8800 USB driver builds against kernel 7.2.9 without errors; the first load test showed the owner's stick
+is the older MCU revision (chip_mcu_id 1), for which shenmintao/aic8800d80's legacy-mcu1 branch carries the matched
+firmware; built from that branch, the stick comes up as wlan0, scans both bands and connects on 5 GHz with WPA2 (the
+firmware does no WPA3) at 200 Mbit/s. The build kit and the test commands for the owner are in the item. Console
+Link's open Wi-Fi test is done with it: 17 minutes of 1080p/60 streams over Wi-Fi, equal to the cable on every
+network measure, with one real Wi-Fi hiccup of 3 lost frames that the recovery handled as built (a held picture
+for a moment, no smearing), under the Console Link item. No code in the suite changes.
+
+Changelog: 17-10-2026 01:38:16
+
+From a copyright scan of the repository. The Windows zip of an app (tools/build_windows_exe.py) carries
+THIRD-PARTY-NOTICES.txt: the exe holds Python, Qt and the app's Python packages, whose licenses ask for their notices
+to go with it; the file has Python's license, each package the app's requirements pull in with its license files from
+the package metadata, and the fonts' license; tests in tools/tests/test_build_windows_exe.py. .gitignore leaves out
+/.cache/, the fonts MkDocs' privacy plugin downloads at build time, which had been committed with a release.
+MIGRATION.md lists the pictures still to replace.
+
+Changelog: 17-10-2026 01:21:15
+
+The README and the wiki's Home page end with a Disclaimer: the suite is an independent community project, not
+affiliated with or endorsed by AMD, ASRock, the Bazzite / Universal Blue project, Sony or the makers of the emulators,
+whose names it uses only to say what it works with.
+
+Changelog: 17-10-2026 01:05:19
+
+The app icons get a new design (owner, 17-10-2026): the frame art with the app's name, or what it does, in bold
+outlined letters, drawn by the owner from Photoshop templates. The five emulator managers have theirs: the owner's 512
+px files, a 128 px copy scaled from each and the portal's card copies. The proof of concept that drew symbols into the
+frames is removed: tools/icons/ (make_icons.py and the frames) and tools/tests/test_icon_family.py. MIGRATION.md
+describes the new design.
+
+Changelog: 16-10-2026 18:43:20
+
+A new app, apps/fan-control (BC-250 Fan Control, see its CHANGELOG): the temperatures and fans, and a thermal guard
+that runs as a system service. CI runs its tests, its shellcheck and its installer test
+(tools/installer-tests/fan-control.sh); the Dependency Checker, the portal (apps.toml), the wiki (its chapter, the
+apps overview and the Home page), the README and CLAUDE.md list it. tools/icons/make_icons.py has its symbol, a case
+fan in the orange frame, from which its icons are drawn. MIGRATION.md has the sensor check and the fan write test on
+the owner's board (16-10-2026), the limits the owner chose and the plan for the fan curve.
+
+Changelog: 16-10-2026 18:14:15
+
+CLAUDE.md has a second exception to Advice, not reboots (owner, 16-10-2026): the thermal guard may shut the board
+down cleanly at a critical temperature, to protect the hardware; the limits are the owner's.
+
+Changelog: 16-10-2026 17:13:29
+
+tools/icons/ draws the suite's icon family: one frame per class in tools/icons/frames (the owner's art, 512 px, the
+same dark centre in each), per app a glowing symbol in the class colour in that centre. make_icons.py lists each of
+the 29 apps with its frame, colour, symbol and outputs (none yet: `--sheet PATH` draws them all on one review picture
+first). The emulators' labels (PS3, PSP, VITA) are drawn as strokes, not from a font, so they come out the same on
+every machine. The portal keeps its purple board icon, which the wiki shows too. tools/tests/test_icon_family.py
+checks that every frame has the same centre and that each icon is its frame with only the centre filled.
+
 Changelog: 16-10-2026 12:10:30
 
 tools/tag-release.sh refuses a portal tag until every app release that HEAD's apps.toml pins is tagged on origin

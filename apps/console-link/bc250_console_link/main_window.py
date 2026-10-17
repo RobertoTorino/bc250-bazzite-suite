@@ -546,7 +546,7 @@ class MainWindow(QMainWindow):
         self.registered_table.itemSelectionChanged.connect(self._update_buttons)
         self.registered_table.itemSelectionChanged.connect(self._show_console_box)
         mine = QVBoxLayout()
-        mine.addWidget(_title("Registered consoles"))
+        mine.addWidget(_title("Select a registered console"))
         mine.addWidget(self.registered_table, 1)
         consoles = QHBoxLayout()
         consoles.setSpacing(24)

@@ -63,3 +63,41 @@ def test_release_workflow_builds_and_uploads_each_windows_app():
         assert re.search(rf"startsWith\(github\.ref_name, '{re.escape(app)}-v'\)", workflow), app
     assert "tools/build_windows_exe.py" in workflow
     assert "gh release upload" in workflow
+
+
+def _names(dists):
+    return {bwe._key(d.metadata["Name"]) for d in dists}
+
+
+def test_bundled_distributions_follow_the_requirements_as_installed(tmp_path):
+    requirements = tmp_path / "requirements.txt"
+    requirements.write_text("# SPDX-License-Identifier: GPL-3.0-or-later\npytest>=8   # a comment\n"
+                            'no-such-package-here\npyyaml; python_version < "3"\n', encoding="utf-8")
+    names = _names(bwe.bundled_distributions(requirements))
+    assert {"pytest", "pluggy", "iniconfig", "packaging"} <= names       # pytest and what it requires
+    assert "no-such-package-here" not in names                          # not installed here: not bundled
+    assert "pyyaml" not in names                                        # its marker is false
+    assert "hypothesis" not in names                                    # pytest's extra "dev" only
+
+
+def test_notices_hold_the_others_then_each_package_with_its_license(tmp_path):
+    requirements = tmp_path / "requirements.txt"
+    requirements.write_text("pytest\n", encoding="utf-8")
+    font = tmp_path / "Inter-LICENSE.txt"
+    font.write_text("SIL Open Font License 1.1\n", encoding="utf-8")
+    dists = bwe.bundled_distributions(requirements)
+    text = bwe.notices_text("BC250-Test", dists, [("Font: Inter", font)])
+    assert text.startswith("BC250-Test carries the third-party software below.")
+    assert text.index("Font: Inter") < text.index("SIL Open Font License 1.1") < text.index("pytest ")
+    pytest_dist = next(d for d in dists if bwe._key(d.metadata["Name"]) == "pytest")
+    assert f"pytest {pytest_dist.version} (MIT)" in text
+    assert "Permission is hereby granted, free of charge" in text      # pytest's MIT license text
+
+
+def test_python_license_is_found_or_the_build_stops():
+    try:
+        path = bwe.python_license()
+    except SystemExit as error:
+        assert "LICENSE.txt" in str(error)
+    else:
+        assert "PYTHON SOFTWARE FOUNDATION" in path.read_text(encoding="utf-8", errors="replace").upper()

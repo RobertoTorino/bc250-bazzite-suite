@@ -77,12 +77,12 @@ again.
 2. In the app, select the console under **Consoles on the network**, enter your account ID and the PIN, and press
    **Register the board with a console**.
 
-The console hands the board its keys, and the console appears under **Registered consoles**, as a card with its
-name, model, address, Remote Play version and whether a login passcode is set. Click a card to select the console;
-the buttons below act on it. A wrong PIN or a
-wrong account ID is reported in the log at the bottom.
+The console hands the board its keys, and the console appears under **Select a registered console**, as a card
+with its name, model, address, Remote Play version and whether a login passcode is set. Click a card to select the
+console; the buttons below stay greyed out until one is selected, then act on it. A wrong PIN or a wrong account ID
+is reported in the log at the bottom.
 
-**Registered consoles:**
+**The buttons for the selected console:**
 
 - **Wake:** turns the console on from rest mode. It takes about 20 seconds; **Search** then shows it as On.
 - **Test session:** starts a Remote Play session, keeps it for 3 seconds and closes it. When it works, the board's
@@ -161,6 +161,38 @@ wrong account ID is reported in the log at the bottom.
 
 When a console gets another address from the router, the next search finds it, and the app updates the address of
 the registered console.
+
+## Wi-Fi or cable
+
+The stream does not need a cable. Measured on 17-10-2026 with Console Link 1.1.1 on a BC-250 and a PS4 Pro on the
+same home network: ten minutes of the same game (Lumines Remastered, intensive play) at 1080p, 60 frames per
+second and 15 Mbit/s asked for, once over Ethernet and once over a USB Wi-Fi 6 stick (AIC8800D80 on 5 GHz, 80
+MHz, a strong signal of -44 dBm), the controller on Bluetooth with the board both times:
+
+| | Cable | Wi-Fi |
+|---|---|---|
+| Length | 634 s | 613 s |
+| Video received | 10.5 Mbit/s, 37973 frames | 10.7 Mbit/s, 36685 frames |
+| Frames lost beyond repair | 0 | 3, in one moment |
+| Frames rebuilt with FEC | 0 | 1 |
+| Key frames asked for | 0 | 3 |
+| Longest gap between packets per second, median | 21 ms | 21 ms |
+| Same, 95th percentile | 46 ms | 49 ms |
+| Same, worst second | 73 ms | 181 ms |
+| Sound lost | 0 of 63597 frames | 0 of 61480 frames |
+| Silence from an empty sound buffer | 20 ms in total | 50 ms in total |
+| Window late, worst | 6 ms | 4 ms |
+| Decoding per 1080p frame | 7.0 ms | 7.0 ms |
+| Controller, longest pause between reads | 6 ms | 6 ms |
+| CPU, all cores | 7.2 % | 7.1 % |
+
+On a good Wi-Fi link the stream is the cable's equal: the same picture, the same sound, the same controller
+timing, the same load on the board. The one difference in ten minutes was a single Wi-Fi hiccup: two pauses of
+about 180 ms two seconds apart, with three frames lost beyond repair. The recovery asked the console for a key
+frame and held the last good picture until it came, about a quarter of a second, felt as a tiny lag, with no
+smearing; the cable had no such moment. A weaker or busier Wi-Fi (2.4 GHz, far from the router, many networks
+around) brings more of these; the statistics file of each stream shows them, see
+[When it does not work](#when-it-does-not-work).
 
 ## Where it keeps what
 

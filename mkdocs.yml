@@ -68,6 +68,8 @@ nav:
       - System Overlay: apps/system-overlay.md
       - BC-250 BIOS Reader: apps/bios-reader.md
       - BC-250 Memory Manager: apps/memory-manager.md
+      - BC-250 Fan Control: apps/fan-control.md
+      - BC-250 USB Wi-Fi: apps/usb-wifi.md
       - BC-250 ACE Queues: apps/ace-queues.md
       - BC-250 Mesh Shaders: apps/mesh-shaders.md
       - HDMI CEC Manager: apps/hdmi-cec.md

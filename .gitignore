@@ -13,8 +13,9 @@ _python/
 /.venv/
 /.venv-*/
 
-# MkDocs output
+# MkDocs output, and the cache of its privacy plugin (the fonts it downloads at build time)
 /site/
+/.cache/
 
 # Planning notes, kept local
 /bc250-suite-proposal.md

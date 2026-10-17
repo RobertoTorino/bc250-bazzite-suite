@@ -108,8 +108,8 @@ def draw_art(game: Game, logo: Path) -> dict[str, bytes]:
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
         gradient = QLinearGradient(0, 0, 0, height)
-        gradient.setColorAt(0, QColor("#3a0d22"))
-        gradient.setColorAt(1, QColor("#0f0309"))
+        gradient.setColorAt(0, QColor("#3a2c0d"))
+        gradient.setColorAt(1, QColor("#0f0b03"))
         painter.fillRect(0, 0, width, height, gradient)
         if suffix != "p" and not background.isNull():
             _cover(painter, background, width, height)

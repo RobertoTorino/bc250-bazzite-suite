@@ -3612,6 +3612,105 @@ else
 fi
 echo
 fi  # TEST 51
+if want 52; then
+log_result "[TEST 52] HDMI-CEC Services Test"
+log_result "Whether the services behind the TV control run: Valve's CEC daemon and those of HDMI CEC Manager"
+CEC_HOME=$(getent passwd "$GAME_USER" 2>/dev/null | cut -d: -f6)
+CEC_ADAPTER=$(ls /dev/cec* 2>/dev/null | head -1)
+# The user services' state comes from the desktop user's systemd; without a session the answer is empty.
+cec_user_state() { run_as_user systemctl --user is-active "$1"; }
+cec_no_session() {
+    log_result "INFO: $1: state unknown, $GAME_USER has no desktop session to ask."
+    log_result "HINT: Run the test again while $GAME_USER is logged in to the desktop."
+}
+
+# Valve's CEC daemon: Bazzite's native CEC mode, a user service.
+if ! command -v cecd >/dev/null 2>&1; then
+    log_result "INFO: Valve's CEC daemon (cecd) is not part of this image."
+else
+    CEC_STATE=$(cec_user_state cecd.service)
+    if [ -n "$CEC_HOME" ] && [ -e "$CEC_HOME/.config/systemd/user/graphical-session.target.wants/cecd.service" ] ||
+       [ "$(run_as_user systemctl --user is-enabled cecd.service)" = enabled ]; then
+        CEC_ENABLED=true
+    else
+        CEC_ENABLED=false
+    fi
+    if [ "$CEC_STATE" = active ]; then
+        log_result "SUCCESS: cecd.service runs for $GAME_USER: TV on and off with sleep and wake, and the remote as a keyboard, as its settings say."
+    elif [ "$CEC_ENABLED" = false ]; then
+        log_result "INFO: cecd.service is not enabled (Bazzite's CEC mode is not native): nothing turns the TV on and off with the board."
+        log_result "HINT: ujust cec-mode native, or Use Valve's CEC daemon... in HDMI CEC Manager."
+    elif [ -z "$CEC_STATE" ]; then
+        cec_no_session cecd.service
+    elif [ -z "$CEC_ADAPTER" ]; then
+        log_result "NOTE: cecd.service is enabled but '$CEC_STATE': there is no CEC adapter (/dev/cec*) for it to use."
+    else
+        log_result "WARNING: cecd.service is enabled but '$CEC_STATE' for $GAME_USER: the TV does not follow the board and the remote does nothing."
+        log_result "HINT: Read why with: journalctl --user -b -u cecd; start it again with: systemctl --user restart cecd"
+        WARN_FOUND=true
+    fi
+fi
+
+# HDMI CEC Manager's background service: only installed while "Restart the picture" or "Pause videos and music" is on.
+CEC_WATCH="bc250-hdmi-cec-watch.service"
+CEC_WATCH_FILE="$CEC_HOME/.config/systemd/user/$CEC_WATCH"
+if [ -z "$CEC_HOME" ] || [ ! -f "$CEC_WATCH_FILE" ]; then
+    log_result "INFO: $CEC_WATCH is not installed: HDMI CEC Manager adds it for Restart the picture or Pause videos and music."
+else
+    CEC_JOBS_TEXT=""
+    grep -q -- '--restart-picture' "$CEC_WATCH_FILE" && CEC_JOBS_TEXT="restart the picture"
+    grep -q -- '--pause-media' "$CEC_WATCH_FILE" && CEC_JOBS_TEXT="${CEC_JOBS_TEXT:+$CEC_JOBS_TEXT and }pause videos and music"
+    CEC_JOBS_TEXT=${CEC_JOBS_TEXT:-do nothing}
+    CEC_STATE=$(cec_user_state "$CEC_WATCH")
+    if [ "$CEC_STATE" = active ]; then
+        log_result "SUCCESS: $CEC_WATCH runs for $GAME_USER: when the TV turns off and on, it will $CEC_JOBS_TEXT."
+    elif [ -z "$CEC_STATE" ]; then
+        cec_no_session "$CEC_WATCH"
+    else
+        log_result "WARNING: $CEC_WATCH is installed but '$CEC_STATE': nothing happens when the TV turns off and on."
+        log_result "HINT: Read why with: journalctl --user -b -u bc250-hdmi-cec-watch; start it again with: systemctl --user restart bc250-hdmi-cec-watch"
+        WARN_FOUND=true
+    fi
+fi
+
+# HDMI CEC Manager's boot service: a system service that udev starts once per boot when a CEC adapter appears.
+CEC_BOOT="bc250-hdmi-cec-boot.service"
+if [ ! -f "/etc/systemd/system/$CEC_BOOT" ]; then
+    log_result "INFO: $CEC_BOOT is not installed: HDMI CEC Manager adds it for At boot (the board's name, and the TV on, before login)."
+else
+    CEC_STATE=$(systemctl is-active "$CEC_BOOT" 2>/dev/null)
+    if [ ! -f /etc/udev/rules.d/99-bc250-hdmi-cec-boot.rules ]; then
+        log_result "WARNING: $CEC_BOOT is installed without its udev rule (99-bc250-hdmi-cec-boot.rules), so nothing starts it."
+        log_result "HINT: In HDMI CEC Manager, switch At boot off and on again (or press Update there)."
+        WARN_FOUND=true
+    elif [ "$CEC_STATE" = active ]; then
+        log_result "SUCCESS: $CEC_BOOT ran at this boot. What it did: journalctl -b -u bc250-hdmi-cec-boot"
+    elif [ "$CEC_STATE" = activating ]; then
+        log_result "NOTE: $CEC_BOOT is still running: it waits until the adapter sees the TV."
+    elif [ "$CEC_STATE" = failed ]; then
+        log_result "WARNING: $CEC_BOOT failed at this boot: the TV did not get the board's name."
+        log_result "HINT: Read why with: journalctl -b -u bc250-hdmi-cec-boot"
+        WARN_FOUND=true
+    elif [ -z "$CEC_ADAPTER" ]; then
+        log_result "INFO: $CEC_BOOT has not run: it starts when a CEC adapter appears, and there is none (/dev/cec*)."
+    else
+        log_result "NOTE: $CEC_BOOT is '${CEC_STATE:-unknown}' although $CEC_ADAPTER is there. What happened: journalctl -b -u bc250-hdmi-cec-boot"
+    fi
+fi
+
+# Bazzite's dGPU CEC mode: the cec-control services (boot, sleep, power-off), for USB adapters.
+for CEC_UNIT in cec-onboot.service cec-onsleep.service cec-onpoweroff.service; do
+    [ -n "$(systemctl list-unit-files --no-legend "$CEC_UNIT" 2>/dev/null)" ] || continue
+    CEC_STATE=$(systemctl is-active "$CEC_UNIT" 2>/dev/null)
+    if [ "$CEC_STATE" = failed ]; then
+        log_result "WARNING: $CEC_UNIT (Bazzite's dGPU CEC mode) failed. Read why with: journalctl -b -u ${CEC_UNIT%.service}"
+        WARN_FOUND=true
+    elif systemctl is-enabled --quiet "$CEC_UNIT" 2>/dev/null; then
+        log_result "INFO: $CEC_UNIT (Bazzite's dGPU CEC mode) is enabled / ${CEC_STATE:-unknown}."
+    fi
+done
+echo
+fi  # TEST 52
 log_result "All tests completed. Review results in $LOG_FILE."
 echo
 

@@ -1,3 +1,19 @@
+Changelog: 17-10-2026 05:35:56
+
+Release 0.4.0.
+
+Changelog: 17-10-2026 05:34:01
+
+Added. The catalogue lists BC-250 USB Wi-Fi: its launcher, its PyQt6, and its use of pkexec, systemctl, journalctl
+and notify-send, plus six tools new to the catalogue, which the app and its service run: gcc, make, git (building
+and fetching the Wi-Fi driver), kmod (insmod, modprobe, rmmod: loading it), eject (switching the stick out of
+storage mode) and udevadm (reloading the stick's rule).
+
+Changelog: 16-10-2026 18:43:14
+
+Added. The catalogue lists BC-250 Fan Control: its launcher, its PyQt6, and its use of pkexec and systemctl (the
+thermal guard's service), busctl (performance mode off) and notify-send (the guard's warnings on the desktop).
+
 Changelog: 16-10-2026 11:41:27
 
 Release 0.3.0.

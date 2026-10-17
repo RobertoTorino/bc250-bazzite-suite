@@ -2,7 +2,7 @@
 """The main window: Vita3K itself, the PS Vita firmware and the games as three steps with their state and buttons,
 then the games Vita3K has installed, each with a box for Game Mode. Downloading Vita3K, asking GitHub for a newer
 one, installing the firmware or a package through Vita3K and changing Steam's files run off the GUI thread; nothing
-here needs root. The look is the app's own crimson (style.py)."""
+here needs root. The look is the app's own blue (style.py)."""
 
 from __future__ import annotations
 
@@ -78,10 +78,10 @@ class MainWindow(QMainWindow):
         self.refresh_button.setToolTip("Read the state again and look for games")
         self.refresh_button.clicked.connect(self.refresh)
         header.add_action(self.refresh_button)
-        self.emulator_box = MetricBox("Vita3K", style.CRIMSON)
-        self.firmware_box = MetricBox("Firmware", style.CRIMSON)
-        self.games_box = MetricBox("Games", style.CRIMSON)
-        self.steam_box = MetricBox("In Game Mode", style.CRIMSON)
+        self.emulator_box = MetricBox("Vita3K", style.BLUE)
+        self.firmware_box = MetricBox("Firmware", style.BLUE)
+        self.games_box = MetricBox("Games", style.BLUE)
+        self.steam_box = MetricBox("In Game Mode", style.BLUE)
         for box in (self.emulator_box, self.firmware_box, self.games_box, self.steam_box):
             header.add_second(box)
         intro = hint_label(

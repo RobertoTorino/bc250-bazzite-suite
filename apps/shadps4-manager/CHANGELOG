@@ -1,3 +1,19 @@
+Changelog: 17-10-2026 05:35:56
+
+Release 0.2.1.
+
+Changelog: 17-10-2026 02:23:22
+
+Fixed. The app's icon is replaced by the owner's newer version (owner, 17-10-2026): SHADPS4 with MANAGER below it, on
+the same dark-blue frame, so the window's blue stays as it is. images/bc250-shadps4-manager.png is the owner's 512 px
+file; images/bc250-shadps4-manager-128.png is scaled from it.
+
+Changelog: 17-10-2026 01:05:19
+
+Fixed. The app has a new icon (owner, 17-10-2026): its name, SHADPS4, in bold outlined letters on the dark-blue frame.
+images/bc250-shadps4-manager.png is the owner's 512 px file; images/bc250-shadps4-manager-128.png is scaled from it.
+The window, the menu entry, the Desktop icon and the Steam artwork of the games use it.
+
 Changelog: 16-10-2026 06:02:49
 
 Release 0.2.0.

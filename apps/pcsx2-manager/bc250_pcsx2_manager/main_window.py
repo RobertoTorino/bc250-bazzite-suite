@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The main window: PCSX2 itself, the PS2 BIOS and the game folders as three steps with their state and buttons,
 then the games found, each with a box for Game Mode. Downloading PCSX2, asking GitHub for a newer one and changing
-Steam's files run off the GUI thread; nothing here needs root. The look is the app's own teal (style.py)."""
+Steam's files run off the GUI thread; nothing here needs root. The look is the app's own blue (style.py)."""
 
 from __future__ import annotations
 
@@ -79,10 +79,10 @@ class MainWindow(QMainWindow):
         self.refresh_button.setToolTip("Read the state again and look for games")
         self.refresh_button.clicked.connect(self.refresh)
         header.add_action(self.refresh_button)
-        self.emulator_box = MetricBox("PCSX2", style.TEAL)
-        self.bios_box = MetricBox("BIOS", style.TEAL)
-        self.games_box = MetricBox("Games", style.TEAL)
-        self.steam_box = MetricBox("In Game Mode", style.TEAL)
+        self.emulator_box = MetricBox("PCSX2", style.BLUE)
+        self.bios_box = MetricBox("BIOS", style.BLUE)
+        self.games_box = MetricBox("Games", style.BLUE)
+        self.steam_box = MetricBox("In Game Mode", style.BLUE)
         for box in (self.emulator_box, self.bios_box, self.games_box, self.steam_box):
             header.add_second(box)
         intro = hint_label(
