@@ -48,7 +48,7 @@ unstable unlock, and [Memory Manager](apps/memory-manager.md) sets the VRAM spli
 #### :material-gamepad-variant: Gaming
 
 [HelixSR Manager](apps/helixsr.md) deploys an FSR 3.1 drop-in upscaler into games, and
-[ACE Queues](apps/ace-queues.md) and [Mesh Shaders](apps/mesh-shaders.md) bring async compute and mesh shaders,
+[ACE Queues](apps/ace.md) and [Mesh Shaders](apps/mesh-shaders.md) bring async compute and mesh shaders,
 beside the system Mesa.
 </div>
 <div class="home-card" markdown>

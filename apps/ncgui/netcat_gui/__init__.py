@@ -17,6 +17,6 @@ ICONS_DIR = ROOT / "images" / "icons"     # the Silk icons the C++ tool used (CC
 
 # Settings in ~/.config/bazzite-netcatgui/bazzite-netcatgui.ini, as before the move to core.
 INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH,
-               tag_prefix="bazzite-netcatgui-v", settings_ini=True)
+               tag_prefix="ncgui-v", settings_ini=True)
 
 __all__ = ["APP_ID", "APP_NAME", "ICONS_DIR", "INFO", "LOGO_PATH", "ROOT", "__version__"]

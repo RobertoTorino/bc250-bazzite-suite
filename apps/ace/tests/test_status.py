@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-from bc250_ace_queues.status import Status, parse, verdict
+from ace_queues.status import Status, parse, verdict
 
 FRESH = """Board: BC-250 (1002:13fe)
 Kernel: 7.2.8-ogc5.1.fc44.x86_64

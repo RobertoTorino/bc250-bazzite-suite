@@ -1,3 +1,16 @@
+Changelog: 17-10-2026 07:36:38
+
+Release 0.2.0.
+
+Changelog: 17-10-2026 07:30:38
+
+Fixed. The app's folder in the suite is apps/ace (was apps/ace-queues) and its package is ace_queues (was
+bc250_ace_queues): the suite's naming convention (owner, 17-10-2026), a short folder name and the package named
+after the app without the BC-250 prefix. With the folder go its key in the portal, its chapter of the wiki
+(apps/ace/), its installer test and its release tags: ace-v<x.y.z> from the next release on, which is also what
+the app's update check looks for. The installed app keeps its name, its launcher bc250-ace-queues, its script,
+its settings and its state folders; the portal moves its record of the installed copy to the new key.
+
 Changelog: 16-10-2026 06:02:49
 
 Release 0.2.0.

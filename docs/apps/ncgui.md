@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-2.0-only -->
 
-![Bazzite NetcatGUI](../assets/bazzite-netcatgui/bazzite-netcatgui.png){ .app-logo }
+![Bazzite NetcatGUI](../assets/ncgui/bazzite-netcatgui.png){ .app-logo }
 
 # Bazzite NetcatGUI
 
@@ -24,7 +24,7 @@ nothing is installed system-wide and nothing is layered with `rpm-ostree`.
 
 In the [portal](../portal.md), open **Development only** and click the Install button beside its icon. Or by hand:
 from the suite's [Releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases) page, download the
-`bazzite-netcatgui-v<version>.tar.gz` release and extract it. Run `install.sh` as your own user, without `sudo`:
+`ncgui-v<version>.tar.gz` release and extract it. Run `install.sh` as your own user, without `sudo`:
 
 ```shell
 ./install.sh

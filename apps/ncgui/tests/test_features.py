@@ -17,8 +17,8 @@ from PyQt6.QtNetwork import QSslSocket
 from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QFileDialog, QInputDialog, QMessageBox
 
-from bazzite_netcatgui.main_window import TAB_COLORS, TEMPLATES, MainWindow, recording_from_json, recording_to_json
-from bazzite_netcatgui.session import (ConnectSessionWidget, History, LineEnding, ListenSessionWidget, MessageInput,
+from netcat_gui.main_window import TAB_COLORS, TEMPLATES, MainWindow, recording_from_json, recording_to_json
+from netcat_gui.session import (ConnectSessionWidget, History, LineEnding, ListenSessionWidget, MessageInput,
                                        Protocol, hexdump, parse_hex)
 
 
@@ -148,7 +148,7 @@ def test_window_file_pipes_and_pipe_menu(qapp, dialogs, free_port, pump, tmp_pat
 # -- automatic reconnect and TLS ----------------------------------------------------------------------
 
 def test_auto_reconnect(qapp, dialogs, free_port, pump, monkeypatch):
-    from bazzite_netcatgui import session as session_module
+    from netcat_gui import session as session_module
     monkeypatch.setattr(session_module, "RECONNECT_SECONDS", 1)
     listen, connect, _ = loopback_pair(free_port)
     connect.auto_reconnect = True

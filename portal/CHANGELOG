@@ -1,3 +1,16 @@
+Changelog: 17-10-2026 08:00:21
+
+Release 1.13.0. Pins ace-v0.2.0, ncgui-v0.2.0.
+
+Changelog: 17-10-2026 07:30:38
+
+Added. BC-250 ACE Queues is listed as [apps.ace] (was [apps.ace-queues]) and Bazzite NetcatGUI as [apps.ncgui]
+(was [apps.bazzite-netcatgui]), after the apps' moves to apps/ace and apps/ncgui; their tile icons are
+images/apps/ace.png and ncgui.png. Each entry pins the first release under its new tag prefix (ace-v0.2.0,
+ncgui-v0.2.0) without a checksum until that release exists. The record of a copy installed under the old key
+moves to the new key when the portal starts (installed.json; the tag's prefix with it), so the app shows
+neither Reinstall needed nor an update to the version it has.
+
 Changelog: 17-10-2026 06:32:52
 
 Release 1.12.0. Pins bazzite-test-v0.3.0, mesh-shaders-v0.2.1, dependency-checker-v0.4.0, rpcs3-manager-v0.2.1, console-link-v1.1.2, shadps4-manager-v0.2.1, bazzite-datstation-v0.2.1, ppsspp-manager-v0.2.1, pcsx2-manager-v0.3.1, vita3k-manager-v0.1.2.

@@ -1,3 +1,12 @@
+Changelog: 17-10-2026 07:30:38
+
+The naming convention for the apps (owner, 17-10-2026), applied to the first two: an app's folder under apps/ is
+a short name and its package is the app's name without its BC-250 or Bazzite prefix. apps/ace-queues is apps/ace
+with the package ace_queues, apps/bazzite-netcatgui is apps/ncgui with the package netcat_gui; with them the
+portal keys, the wiki chapters (docs/apps/ace.md, ncgui.md), the installer tests, the portal's tile icons, CI's
+steps, the dependency catalogue, CLAUDE.md's lists and the wiki's Architecture page. The portal moves the record
+of an installed copy to the new key. The other apps follow one at a time.
+
 Changelog: 17-10-2026 06:29:57
 
 tools/pin_app.py pins an app whose [apps.<name>] table has no sha256 line yet, as a new app is listed until its

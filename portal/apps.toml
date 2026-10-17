@@ -136,11 +136,11 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-bios-reader"]
 launch = [["Open", "~/.local/bin/bc250-bios-reader"]]
 
-[apps.ace-queues]
+[apps.ace]
 name = "BC-250 ACE Queues"
 summary = "Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use."
-tag = "ace-queues-v0.2.0"
-sha256 = "82a1c2d56b629931bc7cd37ef45f021f5af80d22e8fcc4c9707e8a49eb8f3d42"
+tag = "ace-v0.2.0"
+sha256 = ""
 required = false
 changes_board = true
 section = "gaming"
@@ -250,12 +250,12 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-portal-dependency-checker"]
 launch = [["Open", "~/.local/bin/bc250-portal-dependency-checker"]]
 
-[apps.bazzite-netcatgui]
+[apps.ncgui]
 name = "Bazzite NetcatGUI"
 short = "NetcatGUI"
 summary = "A graphical netcat: connect to a host or listen on a port, TCP, UDP or TLS, one session per tab."
-tag = "bazzite-netcatgui-v0.2.0"
-sha256 = "92494f8a17dbe8f210c082907da8f453af29d2fc46e4e21b58acff058c4ecd0d"
+tag = "ncgui-v0.2.0"
+sha256 = ""
 required = false
 changes_board = false
 development = true

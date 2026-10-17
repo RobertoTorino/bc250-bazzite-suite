@@ -6,7 +6,8 @@ check_versions.py checks and a "Release x.y.z." CHANGELOG entry, runs check_vers
 apps.toml changed since the last push needs a portal bump in the same push) and shows the git commands.
 Step 2, Pin and portal: once GitHub has built the app releases, Pin fills in their tag and sha256 in apps.toml;
 Bump portal writes the portal version (at least what check_manifest.py asks) and its CHANGELOG entry, runs
-check_manifest.py and shows the git commands. Test updates and Test release run check-release.sh in a
+check_manifest.py and shows the git commands: the portal release's, or step 1's with the bump in them while step
+1's releases are not tagged yet (an app added to apps.toml needs the bump in the push that adds it). Test updates and Test release run check-release.sh in a
 terminal: the portal from the checkout before the push, the published portal release after it. Committing, tagging
 and pushing stay with you; the push command runs tools/ci-local.sh first (Linux) and pushes only when CI's jobs pass.
 The header shows whether GitHub built the last push (CI, Release, Manual) and notifies when a build it saw
@@ -200,18 +201,24 @@ class AppsPage(QWidget):
                     pins_moved.append(unit.tag)
         if pins_moved:
             log.append(f"apps.toml: the never-released pins move along ({', '.join(pins_moved)}).")
-        # apps.toml may also have changed before this release (an app added, removed or moved): CI checks it against
-        # the last push, with the portal bump it needs.
+        # apps.toml may also have changed before this release (an app added, removed or moved, a pin moved): CI
+        # checks it against the last push, with the portal bump it needs. That bump is made here, so the push
+        # passes CI as it is (the owner's release of 17-10-2026 was committed without it and failed ci-local); the
+        # portal release itself is step 2, once the apps are pinned.
         base, portal_version = self.release_window.base(), self.release_window.portal_version()
         minimum, why = rp.portal_minimum(root, base, portal_version)
-        needs_portal = minimum if minimum and minimum != portal_version else ""
-        if needs_portal:
-            log.append(f"apps.toml changed since {base} ({why}), so this push also needs portal {minimum}: do step "
-                       "2's Bump portal before you commit, or CI fails.")
+        if minimum and minimum != portal_version:
+            portal = next(u for u in rp.load_units(root) if u.kind == "portal")
+            changed = rp.set_version(root, portal, minimum)
+            text = rp.portal_text(minimum, rp.changed_pins(root, base), "", rp.changed_withdrawals(root, base))
+            rp.add_changelog_entry(root, portal, text)
+            log.append(f"portal: {minimum} in " + ", ".join(str(p.relative_to(root)) for p in changed)
+                       + f" and CHANGELOG entry \"{text}\": apps.toml changed since {base} ({why}), so CI needs this "
+                       "bump in the same push. The portal release follows in step 2, once the apps are pinned.")
         log += ["", run_check(root, "tools/check_versions.py"),
                 run_check(root, "tools/check_manifest.py", "--base", base)]
         if tags:
-            commands = rp.app_commands(tags, portal=needs_portal)
+            commands = rp.app_commands(tags)
             log += ["Then:", commands]
             self.release_window.commands.offer(commands)
         self.output.set_text("\n".join(log))
@@ -283,7 +290,8 @@ class PortalPage(QWidget):
             "<b>3.</b> Commit, then <b>Test updates</b> on a BC-250: it installs the portal from the checkout and "
             "starts it with <code>--source release</code>, so the changed apps install from GitHub and must work.<br>"
             "<b>4.</b> Only then push and tag the portal: the tag is what reaches the users. The commands appear "
-            "below after Bump portal.<br>"
+            "below after Bump portal (done before step 1's push, for an added app, they are step 1's commands "
+            "with the bump in them).<br>"
             "<b>5.</b> Once GitHub's release workflow has built the portal: <b>Test release</b> downloads and installs "
             "that published release and starts it, so the board runs the official release again."))
         lay.addLayout(top)
@@ -400,9 +408,19 @@ class PortalPage(QWidget):
         rp.add_changelog_entry(root, portal, text)
         log += [f"portal: CHANGELOG entry \"{text}\"", "",
                 run_check(root, "tools/check_versions.py"),
-                run_check(root, "tools/check_manifest.py", "--base", self.release_window.base()),
-                "Then:", rp.portal_commands(f"portal-v{new}")]
-        self.release_window.commands.offer(rp.portal_commands(f"portal-v{new}"))
+                run_check(root, "tools/check_manifest.py", "--base", self.release_window.base())]
+        # Bumped before step 1's push (an app added, a pin moved): the bump goes into that push, with the app tags
+        # after it; the portal release comes after Pin. Otherwise commit, test on a board, push and tag the portal.
+        pending = rp.untagged_releases(units)
+        if pending:
+            amend = bool(rp.unpushed_release_commit(root, self.release_window.base()))
+            commands = rp.app_commands(pending, amend=amend)
+            log += [f"Then (step 1's releases are not tagged yet: {', '.join(pending)}; the bump goes into their "
+                    "push, and the portal release follows once they are pinned):", commands]
+        else:
+            commands = rp.portal_commands(f"portal-v{new}")
+            log += ["Then:", commands]
+        self.release_window.commands.offer(commands)
         self.output.set_text("\n".join(log))
         self.release_window.reload()
 

@@ -1,3 +1,16 @@
+Changelog: 17-10-2026 07:36:38
+
+Release 0.2.0.
+
+Changelog: 17-10-2026 07:30:38
+
+Fixed. The app's folder in the suite is apps/ncgui (was apps/bazzite-netcatgui) and its package is netcat_gui
+(was bazzite_netcatgui): the suite's naming convention (owner, 17-10-2026), a short folder name and the package
+named after the app without the Bazzite prefix. With the folder go its key in the portal, its chapter of the
+wiki (apps/ncgui/), its installer test and its release tags: ncgui-v<x.y.z> from the next release on, which is
+also what the app's update check looks for. The installed app keeps its name, its launcher bazzite-netcatgui,
+its settings and its folders; the portal moves its record of the installed copy to the new key.
+
 Changelog: 16-10-2026 06:02:49
 
 Release 0.2.0.
@@ -65,7 +78,7 @@ The C++ tool's TODO, the owner's shortlist, is implemented (UDP, remembered host
 
 Changelog: 14-10-2026 16:44:00
 
-Renamed without the BC250 prefix (owner's decision): the app is "Bazzite NetcatGUI", app id bazzite-netcatgui, package bazzite_netcatgui, installed to ~/.local/share/bazzite-netcatgui with the launcher bazzite-netcatgui and its settings in ~/.config/bazzite-netcatgui/bazzite-netcatgui.ini; the logo files are images/bazzite-netcatgui.png and -128.png. The repository folder is bazzite-netcatgui.
+Renamed without the BC250 prefix (owner's decision): the app is "Bazzite NetcatGUI", app id bazzite-netcatgui, package netcat_gui, installed to ~/.local/share/bazzite-netcatgui with the launcher bazzite-netcatgui and its settings in ~/.config/bazzite-netcatgui/bazzite-netcatgui.ini; the logo files are images/bazzite-netcatgui.png and -128.png. The repository folder is bazzite-netcatgui.
 
 Changelog: 14-10-2026 15:50:18
 

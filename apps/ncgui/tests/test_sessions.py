@@ -8,7 +8,7 @@ import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtTest import QTest
 
-from bazzite_netcatgui.session import (ConnectSessionWidget, Encoding, History, LineEnding, ListenSessionWidget,
+from netcat_gui.session import (ConnectSessionWidget, Encoding, History, LineEnding, ListenSessionWidget,
                                      MessageInput, Protocol, local_addresses)
 
 

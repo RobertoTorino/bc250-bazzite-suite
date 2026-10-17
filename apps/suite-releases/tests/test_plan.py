@@ -196,6 +196,80 @@ def test_app_commands_put_the_portal_bump_first_when_the_push_needs_it():
     assert not rp.app_commands(["alpha-v0.2.0"]).startswith("#")
 
 
+def test_app_commands_amend_the_unpushed_release_commit():
+    text = rp.app_commands(["alpha-v0.2.0"], linux=True, amend=True)
+    assert "git commit --amend --no-edit" in text and "git commit -m" not in text
+    assert text.index("git add -A") < text.index("--amend") < text.index("ci-local.sh && git push") \
+        < text.index("tag-release.sh alpha-v0.2.0")
+    assert not text.startswith("#")
+
+
+def test_untagged_releases_and_the_unpushed_release_commit(repo):
+    assert rp.untagged_releases(rp.load_units(repo)) == ["beta-v0.1.0"]          # never tagged; alpha-v0.1.0 is
+    rp.set_version(repo, unit(repo, "alpha"), "0.1.1")
+    assert rp.untagged_releases(rp.load_units(repo)) == ["alpha-v0.1.1", "beta-v0.1.0"]
+    sh(repo, "tag", "alpha-v0.1.1")
+    sh(repo, "tag", "beta-v0.1.0")
+    assert rp.untagged_releases(rp.load_units(repo)) == []
+    assert rp.unpushed_release_commit(repo, "pushed") == ""                      # HEAD "work": not a release
+    sh(repo, "add", "-A")
+    sh(repo, "commit", "-q", "-m", "Release alpha-v0.1.1")
+    assert rp.unpushed_release_commit(repo, "pushed") == "Release alpha-v0.1.1"
+    sh(repo, "branch", "-f", "pushed", "HEAD")                                   # pushed: nothing to amend
+    assert rp.unpushed_release_commit(repo, "pushed") == ""
+
+
+def test_window_bump_before_the_push_gives_step_ones_commands(window, repo):
+    """The owner's case of 17-10-2026: step 1 said the push needs a portal bump (apps.toml gained an app), but the
+    release was committed first. Bump portal then shows step 1's commands with the bump amended in, not the portal
+    release's; the plain commit when the release is not committed yet."""
+    _, tick, combo, notes = row(window, "alpha")
+    tick.setChecked(True)
+    window.apps_page.apply()                                  # alpha 0.1.1, beta 0.1.0 wait for their tags
+    page = window.portal_page
+    page.portal_version.setEditText("0.2.0")
+    page.bump()
+    out = page.output.toPlainText()
+    assert "step 1's releases are not tagged yet: alpha-v0.1.1, beta-v0.1.0" in out
+    assert 'git commit -m "Release alpha-v0.1.1, beta-v0.1.0"' in out and "--amend" not in out
+    assert "tools/tag-release.sh alpha-v0.1.1 beta-v0.1.0" in out and "portal-v0.2.0" not in out
+    assert window.commands.offered == command_lines(
+        rp.app_commands(["alpha-v0.1.1", "beta-v0.1.0"]))
+
+    sh(repo, "add", "-A")
+    sh(repo, "commit", "-q", "-m", "Release alpha-v0.1.1, beta-v0.1.0")
+    (repo / "portal/VERSION").write_text("0.1.0\n")             # as if the bump had not been made before the commit
+    window.reload()
+    page.portal_version.setEditText("0.2.0")
+    page.bump()
+    out = page.output.toPlainText()
+    assert "git commit --amend --no-edit" in out and "tools/tag-release.sh alpha-v0.1.1 beta-v0.1.0" in out
+    assert "portal-v0.2.0" not in out
+
+
+def test_window_apply_bumps_the_portal_when_the_push_needs_it(window, repo):
+    """The owner's case of 17-10-2026, second time: step 1 only said that the push needs a portal bump, the release
+    was committed without it and ci-local failed. Apply now makes that bump itself (the lowest version CI accepts,
+    with the portal's CHANGELOG entry), so the commands it lists pass CI; the portal release stays step 2."""
+    row(window, "alpha")[1].setChecked(False)                 # ticked by default: it needs a release
+    _, tick, combo, _ = row(window, "beta")
+    tick.setChecked(True)
+    combo.setEditText("0.2.0")                                # beta's never-released pin moves: apps.toml changes
+    window.apps_page.apply()
+    out = window.apps_page.output.toPlainText()
+    assert (repo / "portal/VERSION").read_text() == "0.2.0\n"
+    assert (repo / "portal/bc250_portal/__init__.py").read_text() == '__version__ = "0.2.0"\n'
+    assert (repo / "portal/CHANGELOG").read_text().split("\n\n")[1] == "Release 0.2.0. Pins beta-v0.2.0."
+    assert "portal: 0.2.0 in portal/VERSION, portal/bc250_portal/__init__.py and CHANGELOG entry" in out
+    assert "apps.toml changed since pushed (beta 0.1.0 -> 0.2.0)" in out and "step 2" in out
+    assert "needs at least a minor bump" not in out           # check_manifest passes against the last push
+    assert window.commands.offered == command_lines(rp.app_commands(["beta-v0.2.0"]))
+    assert not window.commands.offered[0].startswith("#")
+    window.apps_page.apply()                                  # again: the bump is there, nothing more to do
+    assert "portal: 0.2.0 in" not in window.apps_page.output.toPlainText()
+    assert (repo / "portal/CHANGELOG").read_text().count("Release 0.2.0.") == 1
+
+
 def test_withdrawal(repo):
     now = datetime.datetime(2026, 10, 13, 12, 0, tzinfo=datetime.timezone.utc)
     units = rp.load_units(repo)
@@ -275,6 +349,7 @@ def test_window_release_then_portal(window, repo):
     page.pin()
     assert f'sha256 = "{SHA}"' in (repo / "portal/apps.toml").read_text()
     assert "at least 0.1.1" in page.minimum.text() and page.portal_version.currentText() == "0.1.1"
+    sh(repo, "tag", "beta-v0.1.0")                            # every pinned tag exists: a portal release can follow
     page.bump()
     assert (repo / "portal/VERSION").read_text() == "0.1.1\n"
     assert '__version__ = "0.1.1"' in (repo / "portal/bc250_portal/__init__.py").read_text()

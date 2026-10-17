@@ -56,7 +56,7 @@ launchers = ["~/.local/bin/bc250-system-overlay"]
 name = "BC-250 BIOS Reader"
 launchers = ["~/.local/bin/bc250-bios-reader"]
 
-[app.ace-queues]
+[app.ace]
 name = "BC-250 ACE Queues"
 launchers = ["~/.local/bin/bc250-ace-queues"]
 
@@ -120,7 +120,7 @@ launchers = ["~/.local/bin/simple-demo-tool"]
 name = "Dependency Checker"
 launchers = ["~/.local/bin/bc250-portal-dependency-checker"]
 
-[app.bazzite-netcatgui]
+[app.ncgui]
 name = "Bazzite NetcatGUI"
 launchers = ["~/.local/bin/bazzite-netcatgui"]
 
@@ -174,7 +174,7 @@ need = "required"
 usage = "Password prompt for privileged configuration, service actions and safe-point tests."
 
 [[tool.source]]
-owner = "ace-queues"
+owner = "ace"
 need = "required"
 usage = "Password prompt for installing and removing the patched driver."
 
@@ -607,7 +607,7 @@ usage = "Install, start, restart and inspect Decky Loader's service, plugin_load
 anchor = "using-it"
 
 [[tool.source]]
-owner = "ace-queues"
+owner = "ace"
 need = "required"
 usage = "Manage the driver guard service."
 
@@ -732,7 +732,7 @@ description = "Downloads files over HTTP and HTTPS."
 executables = ["curl"]
 
 [[tool.source]]
-owner = "ace-queues"
+owner = "ace"
 need = "required"
 usage = "Download Mesa source and signatures for the driver build."
 anchor = "before-you-start"
@@ -749,7 +749,7 @@ description = "Runs containers without a daemon. ACE Queues and Mesh Shaders bui
 executables = ["podman"]
 
 [[tool.source]]
-owner = "ace-queues"
+owner = "ace"
 need = "required"
 usage = "Build the patched driver in a Fedora container."
 anchor = "before-you-start"
@@ -985,7 +985,7 @@ owner = "bios-reader"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "ace-queues"
+owner = "ace"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
@@ -1049,7 +1049,7 @@ owner = "dependency-checker"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "bazzite-netcatgui"
+owner = "ncgui"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]

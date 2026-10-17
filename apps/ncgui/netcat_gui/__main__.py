@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-only
-"""Entry point: python -m bazzite_netcatgui [-u] [host port | -l port]"""
+"""Entry point: python -m netcat_gui [-u] [host port | -l port]"""
 
 from __future__ import annotations
 

@@ -782,14 +782,33 @@ def push_command(linux: bool | None = None) -> str:
     return f"{CI_LOCAL} && git push" if linux else "git push"
 
 
-def app_commands(tags: list[str], linux: bool | None = None, portal: str = "") -> str:
+def app_commands(tags: list[str], linux: bool | None = None, portal: str = "", amend: bool = False) -> str:
     """The commands after step 1's Apply. *portal*: the portal version this push also needs (apps.toml changed since
-    the last push), which comes first: committed without it, the push fails CI."""
+    the last push), which comes first: committed without it, the push fails CI. *amend*: HEAD is the release commit
+    of these tags and is not pushed yet (the bump came after the commit), so the bump joins it."""
     lines = [f"# First: step 2's Bump portal (portal {portal}), or CI fails on this push; then:"] if portal else []
-    lines += ["git add -A && tools/fix-modes.sh", f'git commit -m "Release {", ".join(tags)}"', push_command(linux)]
+    lines += ["git add -A && tools/fix-modes.sh"]
+    lines += ["git commit --amend --no-edit     # HEAD is the release commit, not pushed yet: the bump joins it"] \
+        if amend else [f'git commit -m "Release {", ".join(tags)}"']
+    lines += [push_command(linux)]
     lines += [f"{TAG_SCRIPT} {' '.join(tags)}     # refuses until the bump is committed and pushed"]
     lines += ["# when GitHub has built the releases: step 2 (pin and portal)"]
     return "\n".join(lines)
+
+
+def untagged_releases(units: list[Unit]) -> list[str]:
+    """The tags step 1 still has to push: every portal app whose VERSION has no tag. While there is one, the portal
+    cannot be released (release.yml checks every pinned tag), so a portal bump made now goes into step 1's push."""
+    return [u.tag for u in units if u.kind == "app" and not u.standalone and not u.released]
+
+
+def unpushed_release_commit(root: Path, base: str) -> str:
+    """HEAD's subject when it is a release commit ("Release ...") that *base* does not have yet: the commit step 1's
+    bump can still be amended into. "" otherwise."""
+    if git(root, "merge-base", "--is-ancestor", "HEAD", base) is not None:
+        return ""
+    subject = (git(root, "log", "-1", "--format=%s") or "").strip()
+    return subject if subject.startswith("Release ") else ""
 
 
 def portal_commands(tag: str, linux: bool | None = None) -> str:

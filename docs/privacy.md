@@ -45,7 +45,7 @@ app downloads its Python packages from PyPI.
 - [Bazzite DatStation](apps/bazzite-datstation.md#privacy) loads the PlayStation Blog's feed on its PS News page.
 - [BC-250 Bazzite Test](apps/bazzite-test.md): its network test resolves and pings `google.com` and asks
   `www.example.com` for a page header; the optional speed test uses Ookla's servers and about 1 GB of data.
-- [BC-250 ACE Queues](apps/ace-queues.md) and [BC-250 Mesh Shaders](apps/mesh-shaders.md) download Mesa's source
+- [BC-250 ACE Queues](apps/ace.md) and [BC-250 Mesh Shaders](apps/mesh-shaders.md) download Mesa's source
   from `archive.mesa3d.org` when they build their driver.
 
 Links you click (a release page, the wiki, a PlayStation page) open in your browser, under that site's own privacy

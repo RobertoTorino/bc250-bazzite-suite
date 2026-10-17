@@ -1,3 +1,19 @@
+Changelog: 17-10-2026 07:44:51
+
+Added. Apply makes the portal bump itself when the push of step 1 needs one (apps.toml changed since the last
+push: an app added, removed or moved, or a never-released pin moved along): portal/VERSION and its copies go to
+the lowest version CI accepts, with the portal's CHANGELOG entry listing the changed pins, and the log says so.
+Before, Apply only said that step 2's Bump portal had to come first, and the owner's release of 17-10-2026 was
+committed without it and failed ci-local on check_manifest. The portal release itself stays step 2.
+
+Changelog: 17-10-2026 06:41:05
+
+Added. Bump portal done before step 1's push (an app added to apps.toml needs the bump in the push that adds it)
+shows step 1's commands with the bump in them: git add, the release commit (amended when it is already made and
+not pushed, as on 17-10-2026), ci-local and push, then the app tags; the portal release's commands come once every
+app's version is tagged (plan.py: untagged_releases, unpushed_release_commit, app_commands with amend). Before,
+Bump portal always showed the portal release's commands, also while the portal could not be released yet.
+
 Changelog: 17-10-2026 06:29:57
 
 Fixed. Pin no longer closes the window when tools/pin_app.py refuses an entry: it says so in the log ("not

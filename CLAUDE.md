@@ -14,9 +14,9 @@ its manifest. **bazzite-test** is always installed and always listed first; ever
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
 - `apps/<name>/`: bazzite-test, governor, helixsr, cu-bisect, cores-bisect, gpu-oc-bisect, persistent-acpi,
-  system-overlay, bios-reader, ace-queues, mesh-shaders, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, console-link, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, demo-tool, dependency-checker, bazzite-netcatgui, bazzite-datstation, suite-releases. Each has its
+  system-overlay, bios-reader, ace, mesh-shaders, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, console-link, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, demo-tool, dependency-checker, ncgui, bazzite-datstation, suite-releases. Each has its
   own VERSION, CHANGELOG, LICENSE (persistent-acpi is MIT; console-link is AGPL-3.0, its protocol code ported from
-  chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; bazzite-netcatgui is GPL-2.0-only, a port of NetcatGUI; the rest
+  chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; ncgui is GPL-2.0-only, a port of NetcatGUI; the rest
   GPL-3.0-or-later), .gitignore. Simple
   Demo Tool, the Dependency Checker and Bazzite NetcatGUI are `development = true` in `portal/apps.toml`: the portal
   lists them under "Development only". HelixSR, ACE Queues, Mesh Shaders, Console Link, the shadPS4 Manager, the Decky Loader Manager, the RPCS3 Manager,
@@ -37,7 +37,7 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
   and say what is ready; don't offer to commit.
 - **Releases are the owner's, all of it.** See [Releases](#releases): Claude prepares code, never a release.
 - **Warn before board changes.** Apps that change how the board runs (CU/core unlocks, GPU governor, GPU
-  overclocking, ACPI override, the patched RADV of ace-queues, the DirectMesh RADV of mesh-shaders, the VRAM split of memory-manager, the thermal guard of fan-control, the kernel module of usb-wifi) are marked `changes_board` and the portal asks first. Frame it as standard caution:
+  overclocking, ACPI override, the patched RADV of ace, the DirectMesh RADV of mesh-shaders, the VRAM split of memory-manager, the thermal guard of fan-control, the kernel module of usb-wifi) are marked `changes_board` and the portal asks first. Frame it as standard caution:
   the apps are software-only and reversible, not "risky".
 - **Advice, not reboots.** No app reboots, powers off or logs out the board; when one is needed, the app says so
   (and which command does it). The exception, by design (owner, 15-10-2026): CU Bisect and Cores Bisect, whose
@@ -72,6 +72,9 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
   lacks. Recorded data from the owner's board makes good test fixtures; tests also cover other setups.
 - **Consistent architecture.** Every app is built the same way, so one that works is the pattern for the next:
   - Layout: `apps/<name>/` holds its Python package(s) directly (`<package>/__main__.py`, no wrapper folder),
+    `<name>` a short name and `<package>` the app's name without its BC-250 or Bazzite prefix
+    (`apps/ace/ace_queues/`, `apps/ncgui/netcat_gui/`; owner, 17-10-2026, the apps move to it one at a time,
+    MIGRATION.md says which did; a renamed app's old key goes in `RENAMED` in the portal's manifest.py),
     `images/`, `tests/`, `install.sh` and the four files; data the package reads (a catalogue, tables) sits in
     the package or beside it in the app folder. `tools/tests/test_layout.py` checks the layout.
   - Code: shared code comes from `bc250_core` (bundled per app); the installer writes a launcher in
@@ -142,8 +145,8 @@ shellcheck -S warning apps/persistent-acpi/bc250-acpi-override.sh apps/persisten
   apps/system-overlay/install.sh apps/bios-reader/install.sh apps/memory-manager/install.sh apps/fan-control/install.sh \
   apps/hdmi-cec/install.sh apps/sftp-tools/install.sh \
   apps/console-link/install.sh apps/demo-tool/install.sh apps/suite-releases/*.sh
-shellcheck -S warning apps/ace-queues/bc250-ace-queues.sh apps/ace-queues/bc250-ace-queues-run \
-  apps/ace-queues/install.sh apps/ace-queues/mesa/build-in-container.sh
+shellcheck -S warning apps/ace/bc250-ace-queues.sh apps/ace/bc250-ace-queues-run \
+  apps/ace/install.sh apps/ace/mesa/build-in-container.sh
 shellcheck -S warning apps/mesh-shaders/bc250-mesh-shaders.sh apps/mesh-shaders/bc250-mesh-shaders-run \
   apps/mesh-shaders/install.sh apps/mesh-shaders/mesa/build-in-container.sh
 shellcheck -S warning apps/shadps4-manager/install.sh apps/shadps4-manager/bc250-shadps4-run
@@ -151,7 +154,7 @@ shellcheck -S warning apps/rpcs3-manager/install.sh apps/rpcs3-manager/bc250-rpc
 shellcheck -S warning apps/ppsspp-manager/install.sh apps/ppsspp-manager/bc250-ppsspp-run \
   apps/pcsx2-manager/install.sh apps/pcsx2-manager/bc250-pcsx2-run apps/vita3k-manager/install.sh \
   apps/vita3k-manager/bc250-vita3k-run
-shellcheck -S warning apps/decky-manager/install.sh apps/bazzite-netcatgui/install.sh \
+shellcheck -S warning apps/decky-manager/install.sh apps/ncgui/install.sh \
   apps/bazzite-datstation/install.sh
 for t in tools/installer-tests/*.sh; do [ "${t##*/}" = shims.sh ] || bash "$t"; done   # every installer test
 mkdocs build --strict                               # from the venv

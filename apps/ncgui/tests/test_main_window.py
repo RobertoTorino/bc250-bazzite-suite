@@ -11,10 +11,10 @@ from pathlib import Path
 import pytest
 from PyQt6.QtWidgets import QFileDialog
 
-import bazzite_netcatgui
-from bazzite_netcatgui import __main__ as entry
-from bazzite_netcatgui.main_window import MainWindow
-from bazzite_netcatgui.session import Encoding, LineEnding, ListenSessionWidget, Protocol
+import netcat_gui
+from netcat_gui import __main__ as entry
+from netcat_gui.main_window import MainWindow
+from netcat_gui.session import Encoding, LineEnding, ListenSessionWidget, Protocol
 
 
 @pytest.fixture
@@ -154,7 +154,7 @@ def test_save_log(window, dialogs, tmp_path, monkeypatch):
 
     when = datetime(2026, 10, 14, 15, 0, 0)
     assert MainWindow.log_text("a:1", "x", when) == \
-        f"--\n[2026-10-14 15:00:00]\n{bazzite_netcatgui.APP_NAME} log session for a:1\n---\nx\n-----\n"
+        f"--\n[2026-10-14 15:00:00]\n{netcat_gui.APP_NAME} log session for a:1\n---\nx\n-----\n"
 
 
 def test_actions_without_a_session_warn(window, dialogs):
@@ -168,7 +168,7 @@ def test_actions_without_a_session_warn(window, dialogs):
     assert session.session_log() == ""
     window.show_about()
     window.show_shortcuts()
-    assert dialogs.titles()[-2:] == [f"About {bazzite_netcatgui.APP_NAME}", "Keyboard Shortcuts"]
+    assert dialogs.titles()[-2:] == [f"About {netcat_gui.APP_NAME}", "Keyboard Shortcuts"]
 
 
 def test_new_tabs_from_the_command_line(window, free_port, pump):
@@ -216,9 +216,9 @@ def test_forwarded_arguments_open_their_tab(window, free_port, pump):
 
 
 def test_version_file_matches_package() -> None:
-    assert (bazzite_netcatgui.ROOT / "VERSION").read_text().strip() == bazzite_netcatgui.__version__
-    assert bazzite_netcatgui.LOGO_PATH.is_file()
-    assert (bazzite_netcatgui.ROOT / "images" / f"{bazzite_netcatgui.APP_ID}-128.png").is_file()
+    assert (netcat_gui.ROOT / "VERSION").read_text().strip() == netcat_gui.__version__
+    assert netcat_gui.LOGO_PATH.is_file()
+    assert (netcat_gui.ROOT / "images" / f"{netcat_gui.APP_ID}-128.png").is_file()
     for name in ("connect", "listen", "save"):
-        assert (bazzite_netcatgui.ICONS_DIR / f"{name}.png").is_file()
-    assert Path(bazzite_netcatgui.ROOT / "LICENSE").is_file()
+        assert (netcat_gui.ICONS_DIR / f"{name}.png").is_file()
+    assert Path(netcat_gui.ROOT / "LICENSE").is_file()

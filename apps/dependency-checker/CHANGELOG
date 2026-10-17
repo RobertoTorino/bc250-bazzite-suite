@@ -1,3 +1,13 @@
+Changelog: 17-10-2026 07:36:38
+
+Release 0.4.1.
+
+Changelog: 17-10-2026 07:30:38
+
+Fixed. The catalogue lists BC-250 ACE Queues as [app.ace] (was [app.ace-queues]) and Bazzite NetcatGUI as
+[app.ncgui] (was [app.bazzite-netcatgui]), their keys in the portal after the apps' moves to apps/ace and
+apps/ncgui; their sources name those owners, and their wiki links go to apps/ace/ and apps/ncgui/.
+
 Changelog: 17-10-2026 05:35:56
 
 Release 0.4.0.

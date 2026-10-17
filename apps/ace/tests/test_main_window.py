@@ -7,8 +7,8 @@ from __future__ import annotations
 import pytest
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
-from bc250_ace_queues import main_window
-from bc250_ace_queues.main_window import MainWindow
+from ace_queues import main_window
+from ace_queues.main_window import MainWindow
 from conftest import SCRIPT, needs_bash
 
 pytestmark = needs_bash

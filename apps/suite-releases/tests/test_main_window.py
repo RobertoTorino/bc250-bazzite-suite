@@ -50,7 +50,7 @@ def test_selection_is_a_purple_outline(window):
     app.processEvents()
     rect = table.visualRect(table.model().index(1, 1))
     image = table.viewport().grab().toImage()
-    blank = rect.right() - 8                                        # right of "ace-queues": background only
+    blank = rect.right() - 8                                        # right of "ace": background only
     inside = QColor(image.pixel(blank, rect.center().y()))
     other = QColor(image.pixel(blank, table.visualRect(table.model().index(0, 1)).center().y()))   # "core"
     edge = QColor(image.pixel(rect.center().x(), rect.top() + 1))

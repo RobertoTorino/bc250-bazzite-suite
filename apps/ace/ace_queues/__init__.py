@@ -15,7 +15,7 @@ LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
 SCRIPT = ROOT / "bc250-ace-queues.sh"
 
 # Settings in ~/.config/bc250-ace-queues/bc250-ace-queues.ini
-INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="ace-queues-v",
+INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="ace-v",
                settings_ini=True)
 
 __all__ = ["APP_ID", "APP_NAME", "INFO", "LOGO_PATH", "ROOT", "SCRIPT", "__version__"]

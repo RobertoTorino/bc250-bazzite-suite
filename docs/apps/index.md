@@ -26,7 +26,7 @@ other app is optional.
 | App | What it does |
 |---|---|
 | ![](../assets/apps/helixsr.png){ .app-icon } [HelixSR Manager](helixsr.md) | Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games. |
-| ![](../assets/apps/ace-queues.png){ .app-icon } [BC-250 ACE Queues](ace-queues.md) | Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use. **Changes the board.** |
+| ![](../assets/apps/ace.png){ .app-icon } [BC-250 ACE Queues](ace.md) | Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use. **Changes the board.** |
 | ![](../assets/apps/mesh-shaders.png){ .app-icon } [BC-250 Mesh Shaders](mesh-shaders.md) | Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use. **Changes the board.** |
 | ![](../assets/apps/console-link.png){ .app-icon } [Console Link](console-link.md) | Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session. |
 | ![](../assets/apps/shadps4-manager.png){ .app-icon } [shadPS4 Manager](shadps4-manager.md) | PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found (or unpacked from .pkg files) and added to Game Mode. |
@@ -44,7 +44,7 @@ need them to use the board.
 |---|---|
 | ![](../assets/apps/demo-tool.png){ .app-icon } [Simple Demo Tool](../other-tools/simple-demo-tool.md) | Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite. |
 | ![](../assets/apps/portal-dependency-checker.png){ .app-icon } [Dependency Checker](dependency-checker.md) | The suite's Python packages and external tools, which apps use them, and whether newer ones exist; and whether a Bazzite update waits for a reboot. |
-| ![](../assets/apps/bazzite-netcatgui.png){ .app-icon } [Bazzite NetcatGUI](bazzite-netcatgui.md) | A graphical netcat: connect to a host or listen on a port, TCP, UDP or TLS, one session per tab. |
+| ![](../assets/apps/ncgui.png){ .app-icon } [Bazzite NetcatGUI](ncgui.md) | A graphical netcat: connect to a host or listen on a port, TCP, UDP or TLS, one session per tab. |
 | ![](../assets/apps/suite-releases.png){ .app-icon } [BC250 Suite Releases](../portal.md#the-release-front-end) | The release front end: versions, pins and the board checks of a release. Runs from a checkout of this repository. |
 | ![](../assets/apps/installer-tests.png){ .app-icon } BC-250 Installer Tests | Run the suite's installer tests one at a time, with their output live in the window. Runs from a checkout of this repository. |
 

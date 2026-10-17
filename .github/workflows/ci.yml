@@ -46,9 +46,9 @@ jobs:
       matrix:
         dir: [core, portal, tools, apps/bazzite-test, apps/governor, apps/helixsr, apps/persistent-acpi,
               apps/cu-bisect, apps/cores-bisect, apps/gpu-oc-bisect,
-              apps/demo-tool, apps/dependency-checker, apps/bazzite-netcatgui,
+              apps/demo-tool, apps/dependency-checker, apps/ncgui,
               apps/suite-releases,
-              apps/system-overlay, apps/bios-reader, apps/ace-queues, apps/memory-manager, apps/hdmi-cec, apps/sftp-tools,
+              apps/system-overlay, apps/bios-reader, apps/ace, apps/memory-manager, apps/hdmi-cec, apps/sftp-tools,
               apps/console-link, apps/mesh-shaders, apps/shadps4-manager, apps/rpcs3-manager, apps/decky-manager,
               apps/bazzite-datstation, apps/ppsspp-manager, apps/pcsx2-manager, apps/vita3k-manager, apps/fan-control,
               apps/usb-wifi,
@@ -147,7 +147,7 @@ jobs:
       # that their own release workflows already held to it.
       - name: shellcheck (errors, all scripts)
         run: find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 shellcheck -x -S error
-      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace-queues, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, console-link, mesh-shaders, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, netcatgui, datstation and the suite's own scripts)
+      - name: shellcheck (warnings, cores-bisect, gpu-oc-bisect, persistent-acpi, system-overlay, bios-reader, ace, memory-manager, fan-control, usb-wifi, hdmi-cec, sftp-tools, console-link, mesh-shaders, shadps4-manager, rpcs3-manager, ppsspp-manager, pcsx2-manager, vita3k-manager, decky-manager, netcatgui, datstation and the suite's own scripts)
         run: |
           shellcheck -x -S warning portal/install.sh apps/bazzite-test/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \
             tools/hooks/pre-push
@@ -158,8 +158,8 @@ jobs:
           shellcheck -S warning apps/system-overlay/install.sh apps/bios-reader/install.sh apps/memory-manager/install.sh
           shellcheck -S warning apps/fan-control/install.sh apps/usb-wifi/install.sh
           shellcheck -S warning apps/hdmi-cec/install.sh apps/sftp-tools/install.sh apps/console-link/install.sh
-          shellcheck -S warning apps/ace-queues/bc250-ace-queues.sh apps/ace-queues/bc250-ace-queues-run \
-            apps/ace-queues/install.sh apps/ace-queues/mesa/build-in-container.sh
+          shellcheck -S warning apps/ace/bc250-ace-queues.sh apps/ace/bc250-ace-queues-run \
+            apps/ace/install.sh apps/ace/mesa/build-in-container.sh
           shellcheck -S warning apps/mesh-shaders/bc250-mesh-shaders.sh apps/mesh-shaders/bc250-mesh-shaders-run \
             apps/mesh-shaders/install.sh apps/mesh-shaders/mesa/build-in-container.sh
           shellcheck -S warning apps/shadps4-manager/install.sh apps/shadps4-manager/bc250-shadps4-run
@@ -170,7 +170,7 @@ jobs:
           shellcheck -S warning apps/decky-manager/install.sh
           shellcheck -S warning apps/demo-tool/install.sh
           shellcheck -S warning apps/dependency-checker/install.sh
-          shellcheck -S warning apps/bazzite-netcatgui/install.sh
+          shellcheck -S warning apps/ncgui/install.sh
           shellcheck -S warning apps/bazzite-datstation/install.sh
           shellcheck -S warning apps/suite-releases/*.sh
 
@@ -233,8 +233,8 @@ jobs:
         run: bash tools/installer-tests/system-overlay.sh
       - name: bios-reader installer
         run: bash tools/installer-tests/bios-reader.sh
-      - name: ace-queues installer
-        run: bash tools/installer-tests/ace-queues.sh
+      - name: ace installer
+        run: bash tools/installer-tests/ace.sh
       - name: mesh-shaders installer
         run: bash tools/installer-tests/mesh-shaders.sh
       - name: shadps4-manager installer
@@ -266,7 +266,7 @@ jobs:
       - name: Dependency checker installer
         run: bash tools/installer-tests/dependency-checker.sh
       - name: NetcatGUI installer
-        run: bash tools/installer-tests/bazzite-netcatgui.sh
+        run: bash tools/installer-tests/ncgui.sh
       - name: DatStation installer
         run: bash tools/installer-tests/bazzite-datstation.sh
       - name: Suite Releases installer

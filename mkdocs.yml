@@ -70,12 +70,12 @@ nav:
       - BC-250 Memory Manager: apps/memory-manager.md
       - BC-250 Fan Control: apps/fan-control.md
       - BC-250 USB Wi-Fi: apps/usb-wifi.md
-      - BC-250 ACE Queues: apps/ace-queues.md
+      - BC-250 ACE Queues: apps/ace.md
       - BC-250 Mesh Shaders: apps/mesh-shaders.md
       - HDMI CEC Manager: apps/hdmi-cec.md
       - Bazzite SFTP Tools: apps/sftp-tools.md
       - Dependency Checker: apps/dependency-checker.md
-      - Bazzite NetcatGUI: apps/bazzite-netcatgui.md
+      - Bazzite NetcatGUI: apps/ncgui.md
       - Console Link: apps/console-link.md
       - shadPS4 Manager: apps/shadps4-manager.md
       - RPCS3 Manager: apps/rpcs3-manager.md

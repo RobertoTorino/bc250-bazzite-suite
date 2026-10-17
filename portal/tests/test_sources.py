@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
+import json
+
 import hashlib
 import io
 import shutil
@@ -185,6 +187,18 @@ def test_records_round_trip(tmp_path):
     assert Records(path).get("cu-bisect") == ""
     path.write_text("not json")
     assert Records(path).get("governor") == ""
+
+
+def test_records_follow_an_app_renamed_in_the_suite(tmp_path):
+    """A copy installed under an app's old key (ace-queues) is recorded under its new key (ace) with its tag's
+    prefix renamed, so the portal neither asks for a reinstall nor offers the version it has as an update."""
+    path = tmp_path / "installed.json"
+    path.write_text('{"ace-queues": "ace-queues-v0.2.0", "bazzite-netcatgui": "local", "governor": "governor-v0.4.0"}')
+    records = Records(path)
+    assert (records.get("ace"), records.get("ncgui"), records.get("ace-queues")) == ("ace-v0.2.0", "local", "")
+    assert json.loads(path.read_text()) == {"ace": "ace-v0.2.0", "ncgui": "local", "governor": "governor-v0.4.0"}
+    path.write_text('{"ace-queues": "ace-queues-v0.1.9", "ace": "ace-v0.2.1"}')
+    assert Records(path).get("ace") == "ace-v0.2.1"                  # a record under the new key stays
 
 
 def test_a_release_portal_runs_checkout_apps_from_the_checkout_it_was_shown(tmp_path):

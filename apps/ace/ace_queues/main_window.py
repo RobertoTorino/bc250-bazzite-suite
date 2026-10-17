@@ -21,7 +21,7 @@ from bc250_core.widgets import AppHeader, StatusText, Terminal, accent_button, h
 from . import APP_NAME, INFO, LOGO_PATH, SCRIPT, __version__
 from .status import Status, parse, verdict
 
-MANUAL_URL = f"{SUITE_MANUAL_URL}apps/ace-queues/"
+MANUAL_URL = f"{SUITE_MANUAL_URL}apps/ace/"
 NOT_AUTHORISED = (126, 127)             # pkexec: the password dialog was cancelled or refused
 
 # What runs, by action: (arguments, needs root, text while it runs)

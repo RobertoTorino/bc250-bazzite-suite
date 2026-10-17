@@ -46,7 +46,10 @@ apps/<name>/
 ```
 
 - The **package** sits directly in `apps/<name>/`, never in a wrapper folder such as `apps/<name>/<name>/<package>`.
-  Its name is a Python identifier taken from the app, mostly `bc250_<something>`.
+  `<name>` is a short name for the app and the package is the app's name without its BC-250 or Bazzite prefix, as
+  a Python identifier: `apps/ace/ace_queues/` for BC-250 ACE Queues, `apps/ncgui/netcat_gui/` for Bazzite
+  NetcatGUI. Apps from before this convention still have a `bc250_<something>` or `bazzite_<something>` package;
+  they move to it one at a time.
 - **Data** the package reads ships inside the package (the Dependency Checker's `dependencies.toml`) or next to it
   in the app folder (persistent-acpi's `tables/`). Never one folder up from where the installer copies the app.
 - An app with a shell script as its engine keeps that script in the app folder too

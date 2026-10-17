@@ -29,17 +29,17 @@ def test_webp_copy_keeps_the_picture(tmp_path):
 
 
 def test_pages_point_at_the_copies_only(monkeypatch):
-    monkeypatch.setattr(hooks, "_webp", {"assets/apps/governor.png", "assets/ace-queues/bc250-ace-queues.png"})
-    text = ("![](../assets/apps/governor.png) ![](../assets/ace-queues/bc250-ace-queues.png){ .app-logo } "
+    monkeypatch.setattr(hooks, "_webp", {"assets/apps/governor.png", "assets/ace/bc250-ace-queues.png"})
+    text = ("![](../assets/apps/governor.png) ![](../assets/ace/bc250-ace-queues.png){ .app-logo } "
             "![](../assets/apps/portal.png) ![](../images/home/portal.webp)")
     assert hooks.on_page_markdown(text, None, None, None) == (
-        "![](../assets/apps/governor.webp) ![](../assets/ace-queues/bc250-ace-queues.webp){ .app-logo } "
+        "![](../assets/apps/governor.webp) ![](../assets/ace/bc250-ace-queues.webp){ .app-logo } "
         "![](../assets/apps/portal.png) ![](../images/home/portal.webp)")
 
 
 def test_only_pictures_a_page_names_are_converted():
     wanted = hooks.shown(str(SUITE / "docs"))
-    assert "assets/ace-queues/bc250-ace-queues.png" in wanted
+    assert "assets/ace/bc250-ace-queues.png" in wanted
     assert not any("/steam/" in uri for uri in wanted)      # Console Link's Steam artwork is not on any page
 
 

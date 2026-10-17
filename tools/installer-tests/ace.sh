@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Exercise apps/ace-queues/install.sh: install from the checkout (root-owned /opt copy with core bundled, shared
+# Exercise apps/ace/install.sh: install from the checkout (root-owned /opt copy with core bundled, shared
 # venv), a staged release replacing it, uninstall with another venv user (build removed, test results kept),
 # --purge, the note about a driver that stays, and the refusal to run as root.
-# Runs with the shims from shims.sh (CI, or WSL on Windows). The script itself is tested in apps/ace-queues/tests.
+# Runs with the shims from shims.sh (CI, or WSL on Windows). The script itself is tested in apps/ace/tests.
 set -u
 SUITE=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 T=/tmp/bc250-ace-queues-test
@@ -12,12 +12,12 @@ source "$(dirname "${BASH_SOURCE[0]}")/shims.sh" "$T"; set +e
 fail=0
 check() { if eval "$2"; then echo "  ok   $1"; else echo "  FAIL $1"; fail=1; fi; }
 D=$XDG_DATA_HOME
-V=$(tr -d '[:space:]' < "$SUITE/apps/ace-queues/VERSION")
+V=$(tr -d '[:space:]' < "$SUITE/apps/ace/VERSION")
 APP=bc250-ace-queues
 O=$T/opt/$APP
 
 echo "== 1. install from the suite checkout"
-bash "$SUITE/apps/ace-queues/install.sh" > "$T/log1" 2>&1; rc=$?
+bash "$SUITE/apps/ace/install.sh" > "$T/log1" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "versioned /opt copy" "[ -f $T/opt/$APP-v$V/bc250-ace-queues.sh ]"
 check "symlink" "[ \"\$(readlink $O)\" = $APP-v$V ]"
@@ -26,7 +26,7 @@ check "build files copied" "[ -f $O/mesa/gfx1013-ace-queue.patch ] && [ -f $O/me
 check "core bundled from checkout" "[ -f $O/bc250_core/theme.py ]"
 check "no tests or caches copied" "[ ! -d $O/tests ] && ! find $O/ -name __pycache__ | grep -q ."
 check "shared venv" "[ -x $D/bc250-bazzite-suite/venv/bin/python ] && [ -f $D/bc250-bazzite-suite/venv-users/$APP ]"
-check "launcher uses shared venv" "grep -qF 'bc250-bazzite-suite/venv/bin/python\" -m bc250_ace_queues' $HOME/.local/bin/$APP"
+check "launcher uses shared venv" "grep -qF 'bc250-bazzite-suite/venv/bin/python\" -m ace_queues' $HOME/.local/bin/$APP"
 check "launcher cds into /opt link" "grep -qF 'cd \"$O\"' $HOME/.local/bin/$APP"
 check "menu entry" "grep -qx 'Exec=$HOME/.local/bin/$APP' $D/applications/$APP.desktop"
 check "desktop icon, executable" "[ -x $HOME/Desktop/$APP.desktop ]"
@@ -34,7 +34,7 @@ check "board untouched message" "grep -q 'changed nothing on the board' $T/log1"
 check "core imports from the app copy" "(cd $O && /usr/bin/python3 -c 'import importlib.util as u, sys; s=u.find_spec(\"bc250_core\"); sys.exit(0 if s and s.origin.startswith(\"$O\") else 1)')"
 
 echo "== 2. install a staged release with a new version, without the Desktop icon"
-rm -rf "$T/stage"; /usr/bin/python3 "$SUITE/tools/stage_app.py" ace-queues "$T/stage" > /dev/null
+rm -rf "$T/stage"; /usr/bin/python3 "$SUITE/tools/stage_app.py" ace "$T/stage" > /dev/null
 echo 9.9.9 > "$T/stage/VERSION"
 echo "# release marker" >> "$T/stage/bc250_core/__init__.py"
 bash "$T/stage/install.sh" --no-desktop-shortcut > "$T/log2" 2>&1; rc=$?

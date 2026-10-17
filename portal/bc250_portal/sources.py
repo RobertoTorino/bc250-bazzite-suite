@@ -29,7 +29,7 @@ from pathlib import Path
 from bc250_core.appinfo import SUITE_REPO_URL
 from bc250_core.platform import expand
 
-from .manifest import AppEntry
+from .manifest import AppEntry, RENAMED
 
 Download = Callable[[str, Path], None]          # url, destination file
 _RELEASE_FOLDER = re.compile(r"^(?P<key>[a-z0-9-]+)-v\d+\.\d+\.\d+$")
@@ -211,6 +211,18 @@ class Records:
             self._data = {str(k): str(v) for k, v in data.items()} if isinstance(data, dict) else {}
         except (OSError, ValueError):
             self._data = {}
+        # An app renamed in the suite: its record moves to the new key, the tag's prefix with it (ace-queues-v0.2.0
+        # under "ace-queues" is ace-v0.2.0 under "ace"), so the copy needs no reinstall and gets no update it has.
+        moved = False
+        for old, new in RENAMED.items():
+            tag = self._data.pop(old, None)
+            if tag is None:
+                continue
+            moved = True
+            if new not in self._data:
+                self._data[new] = f"{new}-v{tag[len(old) + 2:]}" if tag.startswith(f"{old}-v") else tag
+        if moved:
+            self._save()
 
     def get(self, key: str) -> str:
         return self._data.get(key, "")

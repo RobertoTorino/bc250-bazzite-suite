@@ -12,6 +12,8 @@ from pathlib import Path
 _TAG = re.compile(r"^(?P<app>[a-z0-9-]+)-v(?P<version>\d+\.\d+\.\d+)$")
 _SHA256 = re.compile(r"^([0-9a-f]{64})?$")
 SECTIONS = {"gaming": "Gaming"}                 # section = "<key>": the portal's own section for those apps
+# Apps renamed in the suite (old key: new key), for the record of a copy installed under the old key.
+RENAMED = {"ace-queues": "ace", "bazzite-netcatgui": "ncgui"}
 
 
 class ManifestError(ValueError):

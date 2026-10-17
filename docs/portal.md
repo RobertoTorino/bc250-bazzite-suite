@@ -29,7 +29,7 @@ tile, left to right in the order of `apps.toml` and as many to a row as the wind
 away when you click its name; it is open until you close it, and the portal remembers whether it was open.
 
 **Gaming**, below the apps, holds the apps for playing: [HelixSR Manager](apps/helixsr.md),
-[BC-250 ACE Queues](apps/ace-queues.md), [BC-250 Mesh Shaders](apps/mesh-shaders.md),
+[BC-250 ACE Queues](apps/ace.md), [BC-250 Mesh Shaders](apps/mesh-shaders.md),
 [Console Link](apps/console-link.md), [shadPS4 Manager](apps/shadps4-manager.md),
 [Decky Loader Manager](apps/decky-manager.md), [RPCS3 Manager](apps/rpcs3-manager.md),
 [Bazzite DatStation](apps/bazzite-datstation.md), [PPSSPP Manager](apps/ppsspp-manager.md),
@@ -38,7 +38,7 @@ and the portal remembers whether it was open.
 
 **Development only**, below that, opens a separate section with tools for working on the suite:
 [Simple Demo Tool](other-tools/simple-demo-tool.md), [Dependency Checker](apps/dependency-checker.md),
-[Bazzite NetcatGUI](apps/bazzite-netcatgui.md), the
+[Bazzite NetcatGUI](apps/ncgui.md), the
 release front end
 [BC250 Suite Releases](#the-release-front-end) and BC-250 Installer Tests (`tools/installer-tests/gui`), a window
 that runs the installer tests one at a time. You do not need them to use
@@ -211,15 +211,18 @@ apps/suite-releases/install.sh --uninstall             # remove them; the checko
   `Release x.y.z.` CHANGELOG entry with your notes, which become the release notes on GitHub. The release notes
   of an app that bundles the core also name the core version. When `apps.toml`
   pins a tag of that app that was never released, the pin moves to the new version. When `apps.toml` changed since
-  the last push, for that or another reason (an app added or removed), the window says that this push also needs a
-  portal bump, and runs `tools/check_manifest.py`. Then commit, push, and push the app tags (steps 1 and 2 above):
+  the last push, for that or another reason (an app added or removed), CI wants a portal bump in the same push:
+  Apply makes it too (the lowest portal version CI accepts, with a CHANGELOG entry that lists the changed pins) and
+  says so; the portal release itself stays step 2. It runs `tools/check_manifest.py`. Then commit, push, and push the app tags (steps 1 and 2 above):
   on Linux the push command runs `tools/ci-local.sh` first and pushes only when CI's jobs pass.
 - **2. Pin and portal:** once GitHub has built the app releases, **Pin** reads each release's `SHA256SUMS` and
   pins its tag and checksum in `apps.toml` (step 3). The window shows the lowest portal version CI accepts against
   the last push (`origin/main`), and offers the higher of that and what semantic versioning gives since the last
   portal tag (its CHANGELOG entries, and the apps added, removed or moved in `apps.toml`); **Bump portal** writes it with a CHANGELOG entry that lists the pinned app
   releases, and runs `tools/check_manifest.py` (step 4). Then commit, test on a BC-250 (below), and only then push
-  and tag the portal (step 5). The window lists these commands in that order.
+  and tag the portal (step 5). The window lists these commands in that order. While step 1's releases are
+  not tagged yet, Bump portal lists step 1's commands with the bump in them instead (amending the release commit
+  when it is already made and not pushed), and the portal release follows once the apps are pinned.
 - **Test updates** and **Test release** run the two board tests below in a terminal, with
   `apps/suite-releases/check-release.sh`: the portal from the checkout before the push, and the published portal release after
   GitHub has built it. Linux only.
