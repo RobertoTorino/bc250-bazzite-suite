@@ -60,6 +60,31 @@ So, when the chip is unknown: install `main`; if the log then shows the failed u
 proposes `legacy-mcu1`; build and install that, and plug the stick in again. The app reads the chip's answer from
 every boot the journal keeps, so after the first time it knows.
 
+## Compatibility
+
+The driver is for the AIC8800 chip family, not for one stick. Its match tables claim AICSemi's two USB vendor IDs
+(`a69c` and `368b`) with the 8800, 8801, D80, D81, D40 and D41 product IDs, the DC, DE, DW, DLN and DWN siblings,
+the D80N and D40N parts, the M80 and FC customer IDs, and the branded IDs of Tenda (U2, U11, U11 Pro, TX1U Nano)
+and UGREEN (`8d88`). A stick with one of these IDs is claimed by the modules the app builds, whatever name it is
+sold under. Wi-Fi-only sticks and Wi-Fi/Bluetooth combo sticks both work: the Bluetooth side goes to the kernel's
+own `btusb`.
+
+The firmware is what narrows it. The driver's sources carry firmware for six variants (8800, D80, D80N, D80X2, DC
+and DLN); the app installs the **AIC8800D80** set only, in the two MCU revisions described above. A stick with a
+D80N, DC or DLN chip binds to the driver but needs a firmware set the app does not install, so it gets no
+`wlan0`; its chip line in the kernel log says which chip it is.
+
+What the window recognises is narrower than the driver: the stick box knows the storage-mode IDs `a69c:5721`
+to `a69c:572c`, the loader ID `a69c:8d80` and the Wi-Fi ID `a69c:8d81`, and shows any other ID as unknown mode.
+The udev rule that ejects the virtual disk is written for vendor `a69c`, so a `368b` stick in storage mode is not
+switched by the rule; `eject` on its disk does it by hand. Both vendor IDs count as a stick for the rest of the
+window.
+
+The modules are built on the board against the running kernel, so they follow Bazzite's kernel rather than one
+version; the pinned sources build on kernels up to 7.3, and the service builds them again after a kernel update.
+The driver's own tests, upstream, were on 6.1 and 6.16. Tested in the suite: the UGREEN AX900 (`a69c`, MCU 1,
+`legacy-mcu1`) on the BC-250.
+
 ## The service
 
 `bc250-usb-wifi.service` runs `driver.py load` at every boot:

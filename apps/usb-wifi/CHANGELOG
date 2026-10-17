@@ -1,3 +1,10 @@
+Changelog: 17-10-2026 10:24:01
+
+Fixed. The wiki chapter has a section Compatibility: the driver is for the AIC8800 family (the USB IDs its match
+tables claim, under both of AICSemi's vendor IDs and Tenda's and UGREEN's), the app installs the AIC8800D80
+firmware only, the window recognises the a69c storage, loader and Wi-Fi IDs and the eject rule covers vendor a69c,
+the modules follow the running kernel, and what was tested (the UGREEN AX900 on the BC-250).
+
 Changelog: 17-10-2026 05:35:56
 
 Release 0.1.0.

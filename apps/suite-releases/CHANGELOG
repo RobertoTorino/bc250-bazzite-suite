@@ -1,3 +1,15 @@
+Changelog: 17-10-2026 10:34:20
+
+Added. Step 2 follows the releases it waits for on GitHub, from the runs the header's indicator already reads. The
+pin table has a GitHub column (no run seen, building, ready, failed) and Pin waits for a release that is still
+building, or says that its workflow failed, instead of failing on the checksum that is not there yet (owner,
+17-10-2026: Pin errored a few times because the packaging was not finished). A desktop notification says when
+the release of an app to pin is ready, whether the run was seen running or not (one that starts and ends between
+two looks, or before the window opened, is told at the next look; each once), and when the portal's release is
+built. A line under the portal version says where the portal's own release stands: not tagged yet after Bump
+portal and the commit, with the tag command, then building, released or failed (17-10-2026: portal-v1.16.0 was
+committed and pushed but never tagged, and nothing in the window said so).
+
 Changelog: 17-10-2026 08:22:18
 
 Fixed. Step 2 offered 1.13.1 for the portal after the bump to 1.13.0 had gone out with the apps' releases: the

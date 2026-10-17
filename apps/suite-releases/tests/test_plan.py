@@ -713,6 +713,22 @@ def test_build_state_of_the_latest_push():
     assert rp.just_finished({}, done) == []                                   # finished before the first look
 
 
+def test_release_runs_of_the_tags_waited_for():
+    runs = rp.parse_runs({"workflow_runs": [run("Release", "alpha-v0.1.1", "in_progress", n=4),
+                                            run("Release", "alpha-v0.1.1", conclusion="failure", n=3),
+                                            run("Release", "beta-v0.1.0", n=2), run(n=1)]})
+    assert rp.release_run(runs, "alpha-v0.1.1").url.endswith("/4")           # the newest run on the tag
+    assert rp.release_run(runs, "gamma-v0.1.0") is None
+    assert rp.release_state(runs, "alpha-v0.1.1") == "running"
+    assert rp.release_state(runs, "beta-v0.1.0") == "passed" and rp.release_state(runs, "gamma-v0.1.0") == ""
+    announced: set[str] = set()
+    ready = rp.finished_releases(announced, runs, ["alpha-v0.1.1", "beta-v0.1.0", "gamma-v0.1.0"])
+    assert [r.ref for r in ready] == ["beta-v0.1.0"]                           # finished, whenever that was
+    announced.update(r.url for r in ready)
+    assert rp.finished_releases(announced, runs, ["beta-v0.1.0"]) == []        # told once
+    assert rp.finished_releases(announced, runs, []) == []
+
+
 def test_fetch_runs_sends_the_etag(monkeypatch):
     import io
     import urllib.error
@@ -860,6 +876,75 @@ def test_window_build_indicator_notifies_when_a_run_ends(repo, tmp_path):
     assert "gh auth login" not in build.toolTip() and build.timer.interval() == main_window.BUILD_IDLE_MS
     w.close()
     assert main_window.ReleaseWindow(repo, runs_source=None).build.isHidden()
+
+
+def test_window_tells_when_a_release_is_ready_to_pin(repo, tmp_path):
+    pytest.importorskip("PyQt6.QtWidgets")
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PyQt6.QtCore import QSettings
+    from PyQt6.QtWidgets import QApplication
+    QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(tmp_path / "settings"))
+    app = QApplication.instance() or QApplication([])          # noqa: F841 (kept alive for the window)
+    from bc250_suite_releases import main_window
+    notes, asked = [], []
+
+    def sha256(tag):
+        asked.append(tag)
+        return SHA
+
+    w = main_window.ReleaseWindow(repo, sha256_source=sha256, launch=launched.append,
+                                  runs_source=lambda etag: (None, etag), notify=lambda *a: notes.append(a))
+    w.portal_page.base_edit.setText("pushed")
+    page, build = w.portal_page, w.build
+    assert page.waiting_tags() == ["alpha-v0.1.0"]                            # tagged, no checksum yet
+    assert page.pins.horizontalHeaderItem(3).text() == "GitHub" and page.pins.item(0, 3).text() == "no run seen"
+    assert "portal-v0.1.0 is not tagged yet" in page.portal_state.text()      # bumped and committed, no tag
+    assert f"{rp.TAG_SCRIPT} portal-v0.1.0" in page.portal_state.text()
+    # The release workflow runs: Pin waits for it instead of failing on the checksum that is not there yet.
+    build.checked((rp.parse_runs({"workflow_runs": [run(n=2), run("Release", "alpha-v0.1.0", "in_progress")]}),
+                   "e1"))
+    assert page.pins.item(0, 3).text() == "building\u2026" and notes == []
+    page.pin()
+    assert asked == [] and "still building" in page.output.toPlainText()
+    assert 'tag = "alpha-v0.1.0"\nsha256 = ""' in (repo / "portal/apps.toml").read_text()
+    build.checked((None, "e1"))                                               # unchanged: nothing new
+    assert notes == []
+    # It finishes: one notification that the release is ready to pin, not the general "build passed" one.
+    build.checked((rp.parse_runs({"workflow_runs": [run(n=2), run("Release", "alpha-v0.1.0")]}), "e2"))
+    assert notes == [("alpha-v0.1.0 is ready to pin", "GitHub published it. Pin reads its checksum (step 2).")]
+    assert page.pins.item(0, 3).text() == "ready" and build.state == "passed"
+    build.checked((rp.parse_runs({"workflow_runs": [run(n=2), run("Release", "alpha-v0.1.0")]}), "e3"))
+    assert len(notes) == 1                                                    # told once
+    page.pin()
+    assert asked == ["alpha-v0.1.0"] and page.waiting_tags() == []
+    # The portal's tag exists: its release is followed too, and announced when it is built.
+    sh(repo, "tag", "portal-v0.1.0")
+    w.reload()
+    assert "GitHub shows no release run" in page.portal_state.text()
+    build.checked((rp.parse_runs({"workflow_runs": [run("Release", "portal-v0.1.0", "in_progress", n=3),
+                                                    run(n=2)]}), "e4"))
+    assert "building its release" in page.portal_state.text()
+    build.checked((rp.parse_runs({"workflow_runs": [run("Release", "portal-v0.1.0", n=3), run(n=2)]}), "e5"))
+    assert notes[-1] == ("portal-v0.1.0 is ready", "GitHub published it. Test release installs it on this board "
+                                                   "(step 2).")
+    assert "portal-v0.1.0 is released" in page.portal_state.text()
+    w.close()
+    # Finished before the first look (the window opened after GitHub was done): still told, and a failed release
+    # is told too, with Pin saying so.
+    notes.clear()
+    rp.pin(repo, unit(repo, "alpha"), "")
+    w = main_window.ReleaseWindow(repo, sha256_source=sha256, launch=launched.append,
+                                  runs_source=lambda etag: (None, etag), notify=lambda *a: notes.append(a))
+    w.build.checked((rp.parse_runs({"workflow_runs": [run("Release", "alpha-v0.1.0", n=5)]}), "f1"))
+    assert [n[0] for n in notes] == ["alpha-v0.1.0 is ready to pin"]
+    w.build.checked((rp.parse_runs({"workflow_runs": [run("Release", "alpha-v0.1.0", conclusion="failure", n=6)]}),
+                     "f2"))
+    assert notes[-1][0] == "alpha-v0.1.0: release failed" and "failure" in notes[-1][1]
+    assert w.portal_page.pins.item(0, 3).text() == "failed"
+    asked.clear()
+    w.portal_page.pin()
+    assert asked == [] and "nothing to pin" in w.portal_page.output.toPlainText()
+    w.close()
 
 
 def test_title_names_the_checkouts_commit_and_date(window, repo, tmp_path):

@@ -256,6 +256,16 @@ every 5 minutes otherwise, and **Refresh** looks at once. When a run it saw runn
 notification says whether it passed. It needs no GitHub token: answers that did not change do not count against
 GitHub's limit of 60 requests an hour.
 
+The releases step 2 waits for are followed from the same runs. The **GitHub** column of the pin table says where
+each release to pin stands: *no run seen* (is the tag pushed?), *building…*, *ready* or *failed*; **Pin** waits
+for a release that is still building, or says that its workflow failed, instead of failing on a checksum that is
+not there yet. When the release of an app to pin is ready, a desktop notification says so (*ready to pin*), also
+when the run started and ended between two looks, or before the window opened; each release is told once. Under
+the portal version, a line says where the portal's own release stands: *not tagged yet* after Bump portal and the
+commit (nothing reaches the users until `tools/tag-release.sh portal-v<x.y.z>` is run, after the test on a
+board), then *building*, *released* (Test release installs it) or *failed*; its notification says *ready* when
+GitHub built it.
+
 Only portal releases are marked **Latest** on GitHub (`release.yml` passes `--latest=false` for app releases), so
 `/releases/latest`, which the README and the manual link to, always opens the newest portal. App release notes
 start by pointing to it.

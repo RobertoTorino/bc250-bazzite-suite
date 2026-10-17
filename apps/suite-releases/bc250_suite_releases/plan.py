@@ -776,6 +776,31 @@ def just_finished(before: dict[str, BuildRun], runs: list[BuildRun]) -> list[Bui
     return [r for r in runs if r.done and r.url in before and not before[r.url].done]
 
 
+def release_run(runs: list[BuildRun], tag: str) -> BuildRun | None:
+    """The newest Release run on *tag* (release.yml, which builds and publishes its tarball); None while GitHub
+    shows none: the tag is not pushed yet, or the run is not among the newest ones any more."""
+    return next((r for r in runs if r.workflow == "Release" and r.ref == tag), None)
+
+
+def release_state(runs: list[BuildRun], tag: str) -> str:
+    """"running" while release.yml builds *tag*, "passed" once its tarball is published, "failed" when it did not
+    build it, "" while GitHub shows no run on the tag."""
+    run = release_run(runs, tag)
+    return build_state([run]) if run else ""
+
+
+def finished_releases(announced: set[str], runs: list[BuildRun], tags: list[str]) -> list[BuildRun]:
+    """The Release runs of *tags* (the releases the window waits for) that have finished and were not announced
+    yet (*announced*: their urls). Seen running before or not: a run that starts and ends between two looks, or
+    before the first, counts too, so a release that is ready to pin is announced once, whenever it is seen."""
+    found = []
+    for tag in tags:
+        run = release_run(runs, tag)
+        if run and run.done and run.url not in announced:
+            found.append(run)
+    return found
+
+
 # --- The commands for the owner --------------------------------------------------------------------------------
 
 def push_command(linux: bool | None = None) -> str:

@@ -236,8 +236,8 @@ class PortalPage(QWidget):
         self.fetch_button = QPushButton("Fetch tags")
         self.fetch_button.setToolTip("git fetch --tags: see the tags pushed from another machine")
         self.fetch_button.clicked.connect(self.fetch_tags)
-        self.pins = QTableWidget(0, 3)
-        self.pins.setHorizontalHeaderLabels(("Pin", "Release", "Pinned now"))
+        self.pins = QTableWidget(0, 4)
+        self.pins.setHorizontalHeaderLabels(("Pin", "Release", "Pinned now", "GitHub"))
         self.pins.verticalHeader().setVisible(False)
         self.pins.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.pin_button = QPushButton("Pin")
@@ -252,6 +252,9 @@ class PortalPage(QWidget):
         self.portal_notes.setPlaceholderText("What this portal release brings (optional)")
         self.bump_button = accent_button("Bump portal", "Write portal/VERSION, its copies and the CHANGELOG entry")
         self.bump_button.clicked.connect(self.bump)
+        self.portal_state = QLabel()             # the portal's own release: not tagged yet, building, built
+        self.portal_state.setWordWrap(True)
+        self.portal_state.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.local_button = QPushButton("Test updates")
         self.local_button.setToolTip("Before the push: install the portal from this checkout and start it with the "
                                      "apps from the pinned GitHub releases (check-release.sh local)")
@@ -284,7 +287,8 @@ class PortalPage(QWidget):
         check_row.addStretch(1)
         lay = QVBoxLayout(self)
         lay.addWidget(hint_label(
-            "After step 1 is pushed and tagged, and GitHub has built those releases:<br>"
+            "After step 1 is pushed and tagged, and GitHub has built those releases (the GitHub column says where "
+            "each one stands; a desktop notification comes when one is ready to pin):<br>"
             "<b>1.</b> Pin: the new tags and their checksums go into apps.toml.<br>"
             "<b>2.</b> Bump portal: the portal version and a CHANGELOG entry that lists the pinned releases.<br>"
             "<b>3.</b> Commit, then <b>Test updates</b> on a BC-250: it installs the portal from the checkout and "
@@ -301,8 +305,10 @@ class PortalPage(QWidget):
         lay.addWidget(self.minimum)
         lay.addWidget(self.portal_needs)
         lay.addLayout(portal_row)
+        lay.addWidget(self.portal_state)
         lay.addLayout(check_row)
         self.candidates: list[tuple[rp.Unit, QCheckBox]] = []
+        self.portal_unit: rp.Unit | None = None
 
     def fill(self, units: list[rp.Unit]) -> None:
         cands = rp.pin_candidates(units)
@@ -322,6 +328,7 @@ class PortalPage(QWidget):
                                 "app tags first.")
         self.empty_note.setVisible(not cands)
         portal = next(u for u in units if u.kind == "portal")
+        self.portal_unit = portal
         if portal.needs_release:
             self.portal_needs.setText(f"The portal needs a release: {portal.release_reason}"
                                       + (f" since {portal.last_tag}." if portal.last_tag else "."))
@@ -351,6 +358,41 @@ class PortalPage(QWidget):
             self.release_button.setToolTip(
                 f"After GitHub built portal-v{portal.version}: download it, check it against its SHA256SUMS, install "
                 "it and start it (check-release.sh release)")
+        self.show_builds()
+
+    def waiting_tags(self) -> list[str]:
+        """The app releases step 2 waits for: tagged, not pinned with their checksum yet."""
+        return [unit.tag for unit, _tick in self.candidates]
+
+    def show_builds(self) -> None:
+        """What GitHub shows for each release to pin and for the portal's own release (the header's indicator
+        reads the runs; this is read from them, so it costs no request)."""
+        runs = self.release_window.build.runs
+        for i, (unit, _tick) in enumerate(self.candidates):
+            state = rp.release_state(runs, unit.tag)
+            item = QTableWidgetItem(RELEASE_TEXT[state])
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            item.setToolTip(RELEASE_TIP[state].format(tag=unit.tag))
+            self.pins.setItem(i, 3, item)
+        portal = self.portal_unit
+        if portal is None:
+            return
+        if not portal.released:
+            text = (f"{portal.tag} is not tagged yet: nothing reaches the users until it is. After the test on a "
+                    f"board, push and tag it ({rp.TAG_SCRIPT} {portal.tag}); GitHub then builds the release.")
+            color = ORANGE
+        else:
+            state = rp.release_state(runs, portal.tag)
+            text = {"": f"{portal.tag} is tagged; GitHub shows no release run on it among its newest runs (is the "
+                        "tag pushed?).",
+                    "running": f"{portal.tag} is tagged and GitHub is building its release; a notification comes "
+                               "when it is ready for Test release.",
+                    "passed": f"{portal.tag} is released: GitHub built it. Test release installs it on this board.",
+                    "failed": f"{portal.tag} is tagged but GitHub's release workflow failed on it: click GitHub in "
+                              "the header to open the run."}[state]
+            color = {"": ORANGE, "running": BLUE, "passed": GREEN, "failed": RED}[state]
+        self.portal_state.setText(text)
+        self.portal_state.setStyleSheet(f"color:{color}; font-weight:600;")
 
     def check(self, mode: str) -> None:
         """Run check-release.sh in a terminal: it installs a portal and keeps it running there."""
@@ -373,6 +415,15 @@ class PortalPage(QWidget):
         log = []
         for unit, tick in self.candidates:
             if not tick.isChecked():
+                continue
+            state = rp.release_state(self.release_window.build.runs, unit.tag)
+            if state == "running":
+                log.append(f"{unit.tag}: GitHub is still building that release; a notification comes when it is "
+                           "ready. Not pinned.")
+                continue
+            if state == "failed":
+                log.append(f"{unit.tag}: GitHub's release workflow failed on it, so there is nothing to pin: click "
+                           "GitHub in the header to open the run. Not pinned.")
                 continue
             try:
                 sha = self.release_window.sha256_source(unit.tag)
@@ -665,13 +716,21 @@ BUILD_BUSY_MS = 30_000                  # how often to look while a build runs
 BUILD_IDLE_MS = 300_000                 # and otherwise (unchanged answers do not count against GitHub's limit)
 BUILD_LOOK = {"running": (BLUE, "\u25cf GitHub: building"), "passed": (GREEN, "\u2714 GitHub: passed"),
               "failed": (RED, "\u2716 GitHub: failed"), "": (GREY, "GitHub: no builds")}
+RELEASE_TEXT = {"": "no run seen", "running": "building\u2026", "passed": "ready", "failed": "failed"}
+RELEASE_TIP = {"": "GitHub shows no release run on {tag} among its newest runs: is the tag pushed?",
+               "running": "GitHub's release workflow is building {tag}; Pin waits for it, and a notification "
+                          "comes when it is ready",
+               "passed": "GitHub published {tag}: Pin reads its checksum",
+               "failed": "GitHub's release workflow failed on {tag}: click GitHub in the header to open the run"}
 
 
 class BuildIndicator(QPushButton):
     """Whether GitHub built the newest push: CI, Release and Manual on its commit. Looks every 30 s while a build
-    runs and every 5 minutes otherwise; a run seen running that finishes gives a desktop notification. A click opens
-    the run that failed (or still runs), else the Actions page. When GitHub's hourly limit is used up it says until
-    when and waits till then. Requests carry the token of a gh login when there is one (plan.github_token)."""
+    runs and every 5 minutes otherwise; a run seen running that finishes gives a desktop notification, and so does
+    the release of an app waiting to be pinned, seen running or not (each once), and the portal's release. A
+    click opens the run that failed (or still runs), else the Actions page. When GitHub's hourly limit is used up
+    it says until when and waits till then. Requests carry the token of a gh login when there is one
+    (plan.github_token)."""
 
     def __init__(self, window: "ReleaseWindow", source, notify):
         super().__init__()
@@ -681,6 +740,7 @@ class BuildIndicator(QPushButton):
         self.etag = ""
         self.runs: list[rp.BuildRun] = []
         self.seen: dict[str, rp.BuildRun] = {}
+        self.announced: set[str] = set()        # the Release runs told about, by url
         self.setFlat(True)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.clicked.connect(self.open)
@@ -723,11 +783,25 @@ class BuildIndicator(QPushButton):
         runs, self.etag, *rate = result         # the limit as a third value (rp.fetch_runs); tests may leave it out
         if rate:
             self.show_rate(rate[0])
+        finished: list[rp.BuildRun] = []
         if runs is not None:
             finished = rp.just_finished(self.seen, runs)
             self.runs, self.seen = runs, {r.url: r for r in runs}
-            if finished:
-                self.announce(finished)
+        # The releases waited for (apps to pin, the portal) are told once each, seen running or not; a portal
+        # release counts when it was seen running, as every older portal tag has a finished run too.
+        page = self.release_window.portal_page
+        waiting = page.waiting_tags()
+        portal = page.portal_unit
+        if portal is not None and portal.released and any(r.ref == portal.tag for r in finished):
+            waiting.append(portal.tag)
+        releases = rp.finished_releases(self.announced, self.runs, waiting)
+        self.announced.update(r.url for r in releases)
+        others = [r for r in finished if r not in releases]
+        if others:
+            self.announce(others)
+        for release in releases:
+            self.announce_release(release, pin=release.ref != (portal.tag if portal else ""))
+        page.show_builds()
         latest = rp.latest_push(self.runs)
         state = rp.build_state(latest)
         self.show_state(state, self.details(latest))
@@ -770,6 +844,18 @@ class BuildIndicator(QPushButton):
         failed = [r for r in finished if not r.passed]
         summary = f"GitHub build {'failed' if failed else 'passed'}"
         body = "\n".join(f"{r.label}: {r.outcome}" for r in (failed or finished))
+        self.notify(summary, body)
+        QApplication.alert(self.release_window)
+
+    def announce_release(self, release: rp.BuildRun, pin: bool) -> None:
+        """A release step 2 waits for has finished: an app's, ready to pin, or the portal's, ready to test."""
+        if release.passed:
+            summary = f"{release.ref} is ready" + (" to pin" if pin else "")
+            body = "GitHub published it. " + ("Pin reads its checksum (step 2)." if pin else
+                                              "Test release installs it on this board (step 2).")
+        else:
+            summary = f"{release.ref}: release failed"
+            body = f"GitHub's release workflow ended with {release.outcome}: click GitHub in the header to open it."
         self.notify(summary, body)
         QApplication.alert(self.release_window)
 
