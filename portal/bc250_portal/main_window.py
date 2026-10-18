@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The portal window: three sections of tiles, each folding away: BC250 Bazzite tools (check fixed in first
-place, then one tile per optional app; open until closed), Gaming (open until closed) and Development only (opens
-on request).
+"""The portal window: check and the notice of updates above the tabs, on every tab; then a tab per category (the
+category of the apps' icons, apps.toml), each with the tiles of its apps. The portal opens on the tab used last.
 
 Install, update and uninstall run the app's own installer in a terminal window (they may ask for the sudo
 password and print what they do); the portal watches for the exit file the terminal writes and then refreshes.
@@ -9,7 +8,9 @@ An app that changes the board (unlocks, governor, ACPI) gets a warning before it
 
 Updates: a red dot marks every tile whose installed app differs from the version this portal pins, a red circular
 arrow every installed app the portal has no record of (installed by hand, or under an earlier name of the app: its
-version is unknown, so it needs a reinstall), the header counts both, and at start the portal looks for a newer portal release on GitHub (which is how newer app versions arrive).
+version is unknown, so it needs a reinstall). The notice beside check names each of them, with a link to its tile,
+and a tab's name counts those on it, so none goes unseen on a tab that is not open. At start the portal looks for a
+newer portal release on GitHub (which is how newer app versions arrive).
 
 Desktop icons: the portal's own icon is enough to reach every app, so the apps' icons on the Desktop are the user's
 choice ("App icons on the Desktop", desktop_icons.py). The first start asks when app icons are there; off, the portal
@@ -30,7 +31,7 @@ from PyQt6.QtCore import QCoreApplication, QEvent, QProcess, QSize, QTimer, Qt, 
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPalette, QPixmap
 from PyQt6.QtWidgets import (
     QCheckBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea,
-    QToolButton, QVBoxLayout, QWidget,
+    QTabWidget, QToolButton, QVBoxLayout, QWidget,
 )
 
 from bc250_core import SUITE_MANUAL_URL, __version__ as CORE_VERSION
@@ -42,7 +43,7 @@ from bc250_core.widgets import ClickableLogo, hint_label
 
 from . import desktop_icons, glyphs
 from . import APP_ICONS, APP_ID, APP_NAME, INFO, LOGO_PATH, __version__, find_checkout, is_suite, remember_checkout
-from .manifest import AppEntry
+from .manifest import CATEGORIES, AppEntry
 from .portal_update import PortalUpdate
 from .sources import Records, SourceError, Sources, is_installed
 
@@ -53,12 +54,20 @@ DOT_PX = 16                     # the red update dot inside the icon
 BADGE_PX = 24                   # the red circular arrow inside the icon: a reinstall is needed
 TILE_WIDTH = 216                # the tiles flow left to right, as many to a row as fit
 TILE_SPACING = 12
-DEV_FRAME_MARGIN = 24           # a section's frame and margins take this much of the width
-DEV_OPEN_KEY = "portal/development_open"
-GAMING_OPEN_KEY = "portal/gaming_open"
-TOOLS_OPEN_KEY = "portal/tools_open"
+PAGE_MARGIN = 24                # a tab's margins take this much of its width
+TAB_KEY = "portal/tab"          # the category of the tab used last
 DESKTOP_ICONS_KEY = "portal/desktop_icons"
 LAUNCH_ICON_FILES = {("compute", "Unlock"): "cu-unlock", ("cores", "Unlock"): "cores-unlock"}  # else the app's
+# What each tab holds, at its top (docs/apps/categories.md says the same).
+CATEGORY_HINTS = {
+    "sustainable": "The board itself: test it, tune it, unlock it, cool it, and keep it running well for a long time.",
+    "graphics": "Graphics features for games: upscaling, async compute and mesh shaders on the board's GPU.",
+    "gaming": "Playing: emulators, Remote Play with your console, plugins in Game Mode, and PlayStation trivia.",
+    "utilities": "Handy tools around the board: an overlay, the BIOS settings, Wi-Fi, the TV over HDMI-CEC, and file "
+                 "transfer.",
+    "development": "For working on the BC250 Bazzite Suite: recording demos, checking its dependencies, making "
+                   "releases, running the installer tests. You do not need these to use the board.",
+}
 
 BOARD_WARNING = (
     "<p><b>{name} changes how your BC-250 runs</b> (clocks, voltages, unlocked units or firmware tables).</p>"
@@ -373,10 +382,6 @@ class MainWindow(QMainWindow):
         title.setStyleSheet(header_font() + "font-size:32px; font-weight:800;")
         title.setToolTip(f"{APP_NAME} {__version__} · core {CORE_VERSION}")
         header.addWidget(title, 1)
-        self.updates_label = QLabel()
-        self.updates_label.setStyleSheet(f"color:{RED}; font-weight:700;")
-        self.updates_label.hide()
-        header.addWidget(self.updates_label)
         self.portal_button = QPushButton()
         self.portal_button.setStyleSheet(f"color:{RED}; font-weight:700;")
         self.portal_button.clicked.connect(self._open_portal_release)
@@ -405,13 +410,6 @@ class MainWindow(QMainWindow):
         self.source_label = hint_label(source)
         root.addWidget(self.source_label)
 
-        content = QWidget()
-        column = QVBoxLayout(content)
-        column.setContentsMargins(0, 0, 0, 0)
-        # BC250 Bazzite tools: the apps for the board, Bazzite Test first, open until closed (owner, 13-10-2026).
-        self.tools_toggle, self.tools_box, self.grid = self._section(
-            column, "BC250 Bazzite tools", "The apps for the BC-250 board, Bazzite Test first.", None,
-            "QFrame#tools { border:1px solid palette(mid); border-radius:8px; }", "tools")
         self.columns = 0
         self.cards: dict[str, AppTile] = {}
         for entry in entries:
@@ -421,38 +419,47 @@ class MainWindow(QMainWindow):
             card.open_clicked.connect(self.open_app)
             self.cards[entry.key] = card
 
-        # Gaming: the apps for playing, open until closed. Development only: tools for working on the suite, not
-        # for using the board, closed until asked for and set apart by a dashed frame.
-        self.gaming_toggle, self.gaming_box, self.gaming_grid = self._section(
-            column, "Gaming", "Apps for playing on the board.", None,
-            "QFrame#gaming { border:1px solid palette(mid); border-radius:8px; }", "gaming")
-        self.dev_toggle, self.dev_box, self.dev_grid = self._section(
-            column, "Development only", "Tools for working on the suite itself. Not needed to use the board.",
-            "For working on the BC250 Bazzite Suite: recording demos, checking its dependencies, making releases, "
-            "running the installer tests. You do not need these to use the board.",
-            "QFrame#dev { border:1px dashed palette(mid); border-radius:8px; }", "dev")
-        column.addStretch(1)
-        self.has_gaming = any(e.section == "gaming" for e in entries)
-        self.has_development = any(e.development for e in entries)
-        self.tools_toggle.toggled.connect(self._show_tools)
-        self.tools_toggle.setChecked(self.settings.value(TOOLS_OPEN_KEY, True, type=bool))
-        self._show_tools(self.tools_toggle.isChecked())
-        self.gaming_toggle.toggled.connect(self._show_gaming)
-        self.dev_toggle.toggled.connect(self._show_development)
-        self.gaming_toggle.setVisible(self.has_gaming)
-        self.dev_toggle.setVisible(self.has_development)
-        self.gaming_toggle.setChecked(self.settings.value(GAMING_OPEN_KEY, True, type=bool))
-        self.dev_toggle.setChecked(self.settings.value(DEV_OPEN_KEY, False, type=bool))
-        self._show_gaming(self.gaming_toggle.isChecked())
-        self._show_development(self.dev_toggle.isChecked())
+        # Bazzite Test and the notice of updates, above the tabs: on every tab (owner, 18-10-2026).
+        top = QHBoxLayout()
+        for card in self.cards.values():
+            if card.entry.required:
+                top.addWidget(card, 0, Qt.AlignmentFlag.AlignTop)
+        self.notice = QLabel()
+        self.notice.setWordWrap(True)
+        self.notice.setTextFormat(Qt.TextFormat.RichText)
+        self.notice.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.notice.linkActivated.connect(self.show_app)
+        top.addWidget(self.notice, 1)
+        root.addLayout(top)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setWidget(content)
-        self.scroll = scroll
-        scroll.installEventFilter(self)                 # reflow when the scroll area itself gets its new width
-        root.addWidget(scroll, 1)
+        # A tab per category with apps on it, in the order of CATEGORIES (development last).
+        self.tabs = QTabWidget()
+        self.tabs.setDocumentMode(True)
+        self.pages: dict[str, QScrollArea] = {}
+        self.grids: dict[str, QGridLayout] = {}
+        for category, label in CATEGORIES.items():
+            if not any(e.category == category and not e.required for e in entries):
+                continue
+            content = QWidget()
+            column = QVBoxLayout(content)
+            column.setContentsMargins(PAGE_MARGIN // 2, PAGE_MARGIN // 2, PAGE_MARGIN // 2, PAGE_MARGIN // 2)
+            column.addWidget(hint_label(CATEGORY_HINTS[category]))
+            grid = self._tile_grid()
+            column.addLayout(grid)
+            column.addStretch(1)
+            page = QScrollArea()
+            page.setWidgetResizable(True)
+            page.setFrameShape(QFrame.Shape.NoFrame)
+            page.setWidget(content)
+            page.installEventFilter(self)               # reflow when the page itself gets its new width
+            self.pages[category], self.grids[category] = page, grid
+            self.tabs.addTab(page, label)
+            self.tabs.setTabToolTip(self.tabs.count() - 1, CATEGORY_HINTS[category])
+        saved = self.settings.value(TAB_KEY, "", type=str)
+        if saved in self.pages:
+            self.tabs.setCurrentWidget(self.pages[saved])
+        self.tabs.currentChanged.connect(self._tab_changed)
+        root.addWidget(self.tabs, 1)
         self.reflow()
         self.setCentralWidget(central)
 
@@ -478,69 +485,47 @@ class MainWindow(QMainWindow):
         grid.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         return grid
 
-    @staticmethod
-    def _section(column: QVBoxLayout, title: str, tooltip: str, hint: str | None, style: str,
-                 name: str) -> tuple[QToolButton, QFrame, QGridLayout]:
-        """A section of tiles under the apps: its toggle (title and arrow) and its framed box with the grid."""
-        toggle = QToolButton()
-        toggle.setText(title)
-        toggle.setCheckable(True)
-        toggle.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        toggle.setAutoRaise(True)
-        toggle.setStyleSheet("color:palette(placeholder-text); font-weight:700;")
-        toggle.setToolTip(tooltip)
-        column.addSpacing(10)
-        column.addWidget(toggle, 0, Qt.AlignmentFlag.AlignLeft)
-        box = QFrame()
-        box.setObjectName(name)
-        box.setStyleSheet(style)
-        box_column = QVBoxLayout(box)
-        if hint:
-            box_column.addWidget(hint_label(hint))
-        grid = MainWindow._tile_grid()
-        box_column.addLayout(grid)
-        column.addWidget(box)
-        return toggle, box, grid
-
     def column_count(self, width: int) -> int:
         return max(1, (width + TILE_SPACING) // (TILE_WIDTH + TILE_SPACING))
 
+    def tab_of(self, entry: AppEntry) -> str:
+        """The category of the tab that shows the app; "" for check, above the tabs."""
+        return "" if entry.required else entry.category
+
     def reflow(self) -> None:
-        """The tiles in file order (check first), left to right and then down, in as many columns as fit;
-        the gaming and the development apps likewise in their own sections."""
-        # The scroll area's width less a scroll bar, whether one shows or not: a bar that comes and goes cannot
-        # switch the layout back and forth. The sections are the narrower (their frames), so they decide.
-        width = self.scroll.width() - self.scroll.verticalScrollBar().sizeHint().width() - DEV_FRAME_MARGIN
+        """Each tab's tiles in file order, left to right and then down, in as many columns as fit."""
+        # The page's width less a scroll bar, whether one shows or not: a bar that comes and goes cannot switch the
+        # layout back and forth. Every page has the width of the open one once it is shown.
+        page = self.tabs.currentWidget()
+        if page is None:
+            return
+        width = page.width() - page.verticalScrollBar().sizeHint().width() - PAGE_MARGIN
         columns = self.column_count(width)
         if columns == self.columns:
             return
         self.columns = columns
-        cards = self.cards.values()
-        for grid, tiles in ((self.grid, [c for c in cards if not c.entry.development and not c.entry.section]),
-                            (self.gaming_grid, [c for c in cards if c.entry.section == "gaming"]),
-                            (self.dev_grid, [c for c in cards if c.entry.development])):
+        for category, grid in self.grids.items():
             while grid.count():
                 grid.takeAt(0)
+            tiles = [c for c in self.cards.values() if self.tab_of(c.entry) == category]
             for i, tile in enumerate(tiles):
                 grid.addWidget(tile, i // columns, i % columns)
 
-    def _show_tools(self, show: bool) -> None:
-        self.tools_toggle.setArrowType(Qt.ArrowType.DownArrow if show else Qt.ArrowType.RightArrow)
-        self.tools_box.setVisible(show)
-        self.settings.setValue(TOOLS_OPEN_KEY, show)
+    def _tab_changed(self) -> None:
+        page = self.tabs.currentWidget()
+        self.settings.setValue(TAB_KEY, next((c for c, p in self.pages.items() if p is page), ""))
+        self.reflow()
 
-    def _show_gaming(self, show: bool) -> None:
-        self.gaming_toggle.setArrowType(Qt.ArrowType.DownArrow if show else Qt.ArrowType.RightArrow)
-        self.gaming_box.setVisible(show and self.has_gaming)
-        self.settings.setValue(GAMING_OPEN_KEY, show)
-
-    def _show_development(self, show: bool) -> None:
-        self.dev_toggle.setArrowType(Qt.ArrowType.DownArrow if show else Qt.ArrowType.RightArrow)
-        self.dev_box.setVisible(show and self.has_development)
-        self.settings.setValue(DEV_OPEN_KEY, show)
+    def show_app(self, key: str) -> None:
+        """Open the tab of the app and scroll to its tile: a link in the notice."""
+        card = self.cards.get(key)
+        page = self.pages.get(self.tab_of(card.entry)) if card else None
+        if page is not None:
+            self.tabs.setCurrentWidget(page)
+            page.ensureWidgetVisible(card)
 
     def eventFilter(self, watched, event) -> bool:
-        if watched is self.scroll and event.type() == QEvent.Type.Resize:
+        if watched in self.pages.values() and event.type() == QEvent.Type.Resize:
             self.reflow()
         return super().eventFilter(watched, event)
 
@@ -549,7 +534,7 @@ class MainWindow(QMainWindow):
         return self.pending is not None or self._job is not None
 
     def refresh(self) -> None:
-        counts = {"update": 0, "reinstall": 0}
+        marked: list[tuple[AppEntry, str]] = []
         for entry in self.entries:
             busy = ""
             if self._job and self._job[0] is entry:
@@ -560,21 +545,44 @@ class MainWindow(QMainWindow):
             available = not entry.checkout_only or self.sources.checkout_for_apps is not None
             state = card.show_state(is_installed(entry), self.records.get(entry.key), busy, available)
             if state:
-                counts[state] += 1
+                marked.append((entry, state))
             if self.busy() and not busy:
                 card.install_button.setEnabled(False)
                 card.uninstall_button.setEnabled(False)
-        updates, reinstalls = counts["update"], counts["reinstall"]
-        self.updates_label.setText("\u25cf " + ", ".join(
-            [f"{updates} update{'s' if updates != 1 else ''}"] * bool(updates)
-            + [f"{reinstalls} reinstall{'s' if reinstalls != 1 else ''}"] * bool(reinstalls)))
-        self.updates_label.setToolTip(
-            "Updates: apps whose installed version differs from the one this portal pins; each has a red dot in its "
-            "icon, and its Install button updates it. Reinstalls: apps the portal did not install (by hand, or under "
-            "an earlier name of the app), so their version is unknown; each has a red circular arrow in its icon, and "
-            "its red button reinstalls it.")
-        self.updates_label.setVisible(updates + reinstalls > 0)
+        self.show_notice(marked)
         self.check_installed()
+
+    def show_notice(self, marked: list[tuple[AppEntry, str]]) -> None:
+        """The notice beside check: each app with an update or a reinstall, linked to its tile; and on each tab's name
+        the number of them on it."""
+        updates = sum(state == "update" for _, state in marked)
+        reinstalls = len(marked) - updates
+        if not marked:
+            self.notice.setText("<span style='color:gray;'>No updates: every installed app is the version this "
+                                "portal pins.</span>")
+            self.notice.setToolTip("")
+        else:
+            count = ", ".join([f"{updates} update{'s' if updates != 1 else ''}"] * bool(updates)
+                              + [f"{reinstalls} reinstall{'s' if reinstalls != 1 else ''}"] * bool(reinstalls))
+            lines = []
+            for entry, state in marked:
+                tab = self.tab_of(entry)
+                where = f" ({CATEGORIES[tab]})" if tab else ""
+                what = (f"update to v{entry.version}, installed {self.records.get(entry.key)}" if state == "update"
+                        else "reinstall needed, its version is unknown")
+                lines.append(f"<a href='{escape(entry.key)}'>{escape(entry.short or short_name(entry.name))}</a>"
+                             f"{escape(where)}: {escape(what)}")
+            self.notice.setText(f"<b style='color:{RED};'>\u25cf {count}</b><br>" + "<br>".join(lines))
+            self.notice.setToolTip(
+                "Updates: apps whose installed version differs from the one this portal pins; each has a red dot in "
+                "its icon, and its Install button updates it. Reinstalls: apps the portal did not install (by hand, "
+                "or under an earlier name of the app), so their version is unknown; each has a red circular arrow in "
+                "its icon, and its red button reinstalls it. Click a name to go to its tile.")
+        for category, page in self.pages.items():
+            n = sum(self.tab_of(entry) == category for entry, _ in marked)
+            index = self.tabs.indexOf(page)
+            self.tabs.setTabText(index, f"{CATEGORIES[category]}  \u25cf {n}" if n else CATEGORIES[category])
+            self.tabs.tabBar().setTabTextColor(index, QColor(RED) if n else QColor())
 
     def _portal_checked(self, result: object) -> None:
         """A newer portal release brings newer pinned app versions; name them and offer its release page."""

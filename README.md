@@ -28,25 +28,27 @@ uses. You do not need them.
 
 ## The apps
 
+By category, as the portal's tabs list them.
+
+**Sustainable**: the board itself: test it, tune it, unlock it, cool it, and keep it running well.
+
 - <img src="portal/images/apps/check.webp" width="20" height="20" alt=""/> **[BC-250 Bazzite Test](apps/check)**: Read-only diagnostics, stress test and benchmarks. Always installed.
 - <img src="portal/images/apps/gpu.webp" width="20" height="20" alt=""/> **[BC-250 GPU Governor Manager](apps/gpu)**: Manage the cyan-skillfish GPU governor: tuning, safe points, profiles, backups.
 - <img src="portal/images/apps/compute.webp" width="20" height="20" alt=""/> **[BC-250 CU Bisect](apps/compute)**: Tell bad CUs apart from an unstable CU unlock, and apply a tested unlock.
 - <img src="portal/images/apps/cores.webp" width="20" height="20" alt=""/> **[BC-250 Cores Bisect](apps/cores)**: Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock.
 - <img src="portal/images/apps/oc.webp" width="20" height="20" alt=""/> **[BC-250 GPU OC Bisect](apps/oc)**: Find your board's safe GPU overclock and undervolt, one step at a time.
 - <img src="portal/images/apps/acpi.webp" width="20" height="20" alt=""/> **[BC-250 Persistent ACPI](apps/acpi)**: CPU C-states and frequency scaling through a persistent ACPI override (GRUB early initrd).
-- <img src="portal/images/apps/overlay.webp" width="20" height="20" alt=""/> **[System Overlay](apps/overlay)**: CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top.
-- <img src="portal/images/apps/bios.webp" width="20" height="20" alt=""/> **[BC-250 BIOS Reader](apps/bios)**: The BIOS settings as the setup screen shows them, hidden menus included. Stock or modded BIOS. Read-only.
 - <img src="portal/images/apps/vram.webp" width="20" height="20" alt=""/> **[BC-250 Memory Manager](apps/vram)**: The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it.
 - <img src="portal/images/apps/fan.webp" width="20" height="20" alt=""/> **[BC-250 Fan Control](apps/fan)**: A thermal guard that warns, cools and shuts down cleanly at a critical temperature, and the fans.
-- <img src="portal/images/apps/wdriver.webp" width="20" height="20" alt=""/> **[BC-250 USB Wi-Fi](apps/wdriver)**: The driver for AIC8800D80 USB Wi-Fi sticks: built for the running kernel, loaded at boot, rebuilt after a kernel update.
-- <img src="portal/images/apps/cec.webp" width="20" height="20" alt=""/> **[HDMI CEC Manager](apps/cec)**: Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC.
-- <img src="portal/images/apps/sftp.webp" width="20" height="20" alt=""/> **[Bazzite SFTP Tools](apps/sftp)**: Move files between computers over SFTP, and manage the SSH server of a Bazzite host.
 
-**Gaming**: apps for playing, in their own section of the portal.
+**Graphics**: graphics features for games.
 
 - <img src="portal/images/apps/helixsr.webp" width="20" height="20" alt=""/> **[HelixSR Manager](apps/helixsr)**: Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games.
 - <img src="portal/images/apps/ace.webp" width="20" height="20" alt=""/> **[BC-250 ACE Queues](apps/ace)**: Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use.
 - <img src="portal/images/apps/mesh.webp" width="20" height="20" alt=""/> **[BC-250 Mesh Shaders](apps/mesh)**: Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use.
+
+**Gaming**: apps for playing.
+
 - <img src="portal/images/apps/consoles.webp" width="20" height="20" alt=""/> **[Console Link](apps/consoles)**: Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session.
 - <img src="portal/images/apps/shadps4.webp" width="20" height="20" alt=""/> **[shadPS4 Manager](apps/shadps4)**: PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found (or unpacked from .pkg files) and added to Game Mode.
 - <img src="portal/images/apps/decky.webp" width="20" height="20" alt=""/> **[Decky Loader Manager](apps/decky)**: Plugins in Game Mode with Decky Loader: a tested Decky release as a system service, its state and its plugins.
@@ -56,8 +58,15 @@ uses. You do not need them.
 - <img src="portal/images/apps/pcsx2.webp" width="20" height="20" alt=""/> **[PCSX2 Manager](apps/pcsx2)**: PS2 games with the PCSX2 emulator: a tested PCSX2 release, your PS2 BIOS, your games found and added to Game Mode.
 - <img src="portal/images/apps/vita3k.webp" width="20" height="20" alt=""/> **[Vita3K Manager](apps/vita3k)**: PS Vita games with the Vita3K emulator: a tested Vita3K build, the firmware and your games installed through it, added to Game Mode.
 
-**Development only**: tools for working on the suite, in their own section of the portal. You do not need them to
-use the board.
+**Utilities**: handy tools around the board.
+
+- <img src="portal/images/apps/overlay.webp" width="20" height="20" alt=""/> **[System Overlay](apps/overlay)**: CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top.
+- <img src="portal/images/apps/bios.webp" width="20" height="20" alt=""/> **[BC-250 BIOS Reader](apps/bios)**: The BIOS settings as the setup screen shows them, hidden menus included. Stock or modded BIOS. Read-only.
+- <img src="portal/images/apps/wdriver.webp" width="20" height="20" alt=""/> **[BC-250 USB Wi-Fi](apps/wdriver)**: The driver for AIC8800D80 USB Wi-Fi sticks: built for the running kernel, loaded at boot, rebuilt after a kernel update.
+- <img src="portal/images/apps/cec.webp" width="20" height="20" alt=""/> **[HDMI CEC Manager](apps/cec)**: Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC.
+- <img src="portal/images/apps/sftp.webp" width="20" height="20" alt=""/> **[Bazzite SFTP Tools](apps/sftp)**: Move files between computers over SFTP, and manage the SSH server of a Bazzite host.
+
+**Development**: tools for working on the suite. You do not need them to use the board.
 
 - <img src="portal/images/apps/dtool.webp" width="20" height="20" alt=""/> **[Simple Demo Tool](apps/dtool)**: Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite.
 - <img src="portal/images/apps/package.webp" width="20" height="20" alt=""/> **[Dependency Checker](apps/package)**: The suite's Python packages and external tools, which apps use them, and whether newer ones exist; and whether a Bazzite update waits for a reboot.

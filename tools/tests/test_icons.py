@@ -48,3 +48,15 @@ def test_every_app_icon_comes_from_a_category():
     icons = {*SUITE.glob("apps/*/images/*.png"), *SUITE.glob("tools/installer-tests/gui/images/*.png"),
              *(p for p in SUITE.glob("portal/images/apps/*.*") if p.name != "portal.webp")}   # the suite's own
     assert sorted(p.relative_to(SUITE).as_posix() for p in icons - set(sync_icons.copies())) == []
+
+
+def test_portal_tabs_follow_the_icon_categories():
+    """An app's tab in the portal (category in portal/apps.toml) is the category of its icon, and the portal knows
+    every category of icons/."""
+    import tomllib
+    import check_manifest
+    table = tomllib.loads((SUITE / "icons" / "categories.toml").read_text(encoding="utf-8"))
+    path = SUITE / check_manifest.MANIFEST
+    entries = check_manifest.manifest.load(path) + check_manifest.manifest.load_checkout(path)
+    assert {e.key: e.category for e in entries} == {e.key: table[e.key]["category"] for e in entries}
+    assert set(check_manifest.manifest.CATEGORIES) == {p.name for p in (SUITE / "icons").iterdir() if p.is_dir()}

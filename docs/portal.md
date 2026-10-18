@@ -5,8 +5,10 @@
 # Portal
 
 The BC250 Bazzite Suite's front door: one window that installs, opens, updates and removes the suite's apps.
-**Bazzite Test** is always installed with the portal and listed first; every other app is optional. Each app is a
-tile, left to right in the order of `apps.toml` and as many to a row as the window fits:
+**Bazzite Test** is always installed with the portal; every other app is optional. Bazzite Test and the notice of
+updates are at the top, on every tab. Below them is a tab for each [category](apps/categories.md): Sustainable,
+Graphics, Gaming, Utilities and Development. Each app is a tile on its category's tab, left to right in the order of
+`apps.toml` and as many to a row as the window fits:
 
 - **The name**, without the suite's "BC-250" prefix.
 - **The icon.** Click it to open the app; an app with two windows (CU Bisect, Cores Bisect) asks which one. The
@@ -25,18 +27,10 @@ tile, left to right in the order of `apps.toml` and as many to a row as the wind
   Install reinstalls it, or updates it when the arrow is red; hover over it to see the version it installs. Bazzite
   Test has only Install, which reinstalls it: it is removed together with the portal.
 
-**BC250 Bazzite tools** holds the apps for the board, Bazzite Test first. Like the sections below it, it folds
-away when you click its name; it is open until you close it, and the portal remembers whether it was open.
+**The tabs.** Each tab says at its top what its apps are for; [The apps](apps/index.md) lists them by tab. The portal
+opens on the tab you used last.
 
-**Gaming**, below the apps, holds the apps for playing: [HelixSR Manager](apps/helixsr.md),
-[BC-250 ACE Queues](apps/ace.md), [BC-250 Mesh Shaders](apps/mesh.md),
-[Console Link](apps/consoles.md), [shadPS4 Manager](apps/shadps4.md),
-[Decky Loader Manager](apps/decky.md), [RPCS3 Manager](apps/rpcs3.md),
-[Bazzite DatStation](apps/datstation.md), [PPSSPP Manager](apps/ppsspp.md),
-[PCSX2 Manager](apps/pcsx2.md) and [Vita3K Manager](apps/vita3k.md). It is open until you close it,
-and the portal remembers whether it was open.
-
-**Development only**, below that, opens a separate section with tools for working on the suite:
+**Development**, the last tab, holds the tools for working on the suite:
 [Simple Demo Tool](other-tools/simple-demo-tool.md), [Dependency Checker](apps/package.md),
 [Bazzite NetcatGUI](apps/ncgui.md), the
 release front end
@@ -46,8 +40,7 @@ the board. The last two run from a checkout of the repository and have no releas
 release installs them too, from the checkout it finds on this machine: the one an installed tool of the checkout
 runs from, or the first in your home folder, up to three folders deep (`~/IdeaProjects/bc250-bazzite-suite`, for
 example). Only when it finds none does it ask for the folder. It remembers the checkout. The other apps still install from their releases. A portal installed from the
-checkout uses its own checkout. The section is closed until you open it, and the portal remembers whether it was
-open.
+checkout uses its own checkout.
 
 - `apps/` may also contain standalone tools (with a `.standalone` marker) that do not appear in `apps.toml`
   and that the portal does not install or open.
@@ -59,8 +52,10 @@ open.
   exactly those tarballs from the suite's GitHub releases and checks each against the SHA-256 pinned there, or
   against the release's `SHA256SUMS` until one is pinned. Then it unpacks the tarball without ever writing
   outside its folder.
-- **Updates:** a red dot marks every app whose installed version differs from the one this portal pins, and the
-  header counts them (and the apps that need a reinstall); its red Install button installs the pinned version. Newer app versions come with a newer portal
+- **Updates:** a red dot marks every app whose installed version differs from the one this portal pins; its red
+  Install button installs the pinned version. The notice beside Bazzite Test counts them and the apps that need a
+  reinstall, and names each one with its tab and versions. Click a name to go to its tile. A tab with such an app
+  shows their number in red after its name, so none goes unseen on a tab that is not open. Newer app versions come with a newer portal
   release: at start the portal looks for one on GitHub and, when there is one, shows a red button that opens its
   release page. The button names what that release brings, for example **Portal 0.9.1: updates ACE Queues and
   Memory Manager**, and its tooltip lists each app with its old and new version. After the portal update, the
@@ -368,12 +363,12 @@ tests pin their own local builds instead of the published ones.
 Create apps/<name>/ with VERSION 0.1.0, a CHANGELOG, a LICENSE and a .gitignore. For an app that stays outside the
 portal, add `.standalone` instead of adding it to `portal/apps.toml`. An app that runs from the checkout and is
 never released also gets `.checkout-only`, and a `[checkout.<name>]` table in `apps.toml` (no tag) when the portal
-should list it under "Development only". Such a tool outside `apps/` (like
+should list it on its Development tab. Such a tool outside `apps/` (like
 `tools/installer-tests/gui`) names its folder with `folder = "..."` and has the marker there.
 Add an install.sh that supports --uninstall and puts a launcher in ~/.local/bin/, plus tests under tests/.        
 Add the app to ./test.sh, the CI shellcheck list and an installer test in tools/installer-tests/.       
-Add its [apps.<name>] card to portal/apps.toml: name, summary, changes_board (and development = true for a tool
-that belongs under "Development only", or section = "gaming" for an app for playing), install/uninstall/detect/launch,          
+Add its [apps.<name>] card to portal/apps.toml: name, summary, changes_board, category (the same as its icon's in
+icons/categories.toml: it is the app's tab in the portal), install/uninstall/detect/launch,          
 and tag = "<name>-v<VERSION>" with sha256 left empty. CI accepts a tag that doesn't exist yet as long as it matches the app's VERSION.        
 Run all the checks and hand over.
 

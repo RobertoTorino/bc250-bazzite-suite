@@ -266,10 +266,16 @@ def test_red_dot_and_count_for_updates(window, home):
     assert not window.cards["gpu"].dot.isHidden()
     assert window.cards["helixsr"].dot.isHidden()
     assert "gpu-v0.0.9" in window.cards["gpu"].dot.toolTip()
-    assert not window.updates_label.isHidden() and window.updates_label.text().endswith("1 update")
+    notice = window.notice.text()
+    assert "\u25cf 1 update</b>" in notice and "<a href='gpu'>GPU Governor Manager</a> (Sustainable): update to v" in notice
+    assert "installed gpu-v0.0.9" in notice and "HelixSR" not in notice
+    sustainable = window.tabs.indexOf(window.pages["sustainable"])
+    assert window.tabs.tabText(sustainable) == "Sustainable  \u25cf 1"                # the count on its tab
+    assert window.tabs.tabText(window.tabs.indexOf(window.pages["graphics"])) == "Graphics"
     window.records.set("gpu", next(e.tag for e in window.entries if e.key == "gpu"))
     window.refresh()
-    assert window.cards["gpu"].dot.isHidden() and window.updates_label.isHidden()
+    assert window.cards["gpu"].dot.isHidden() and window.notice.text().startswith("<span style='color:gray;'>No updates")
+    assert window.tabs.tabText(sustainable) == "Sustainable"
 
 
 def test_circular_arrow_and_count_for_reinstalls(window, home):
@@ -284,14 +290,15 @@ def test_circular_arrow_and_count_for_reinstalls(window, home):
     assert "Reinstall needed" in card.icon.toolTip() and "version is unknown" in card.badge.toolTip()
     assert card.install_button.toolTip().startswith("Reinstall ")
     assert window.cards["helixsr"].badge.isHidden() and not window.cards["helixsr"].dot.isHidden()
-    assert window.updates_label.text().endswith("1 update, 1 reinstall")
+    assert "\u25cf 1 update, 1 reinstall</b>" in window.notice.text()
+    assert "<a href='gpu'>GPU Governor Manager</a> (Sustainable): reinstall needed" in window.notice.text()
     window.records.remove("helixsr")
     (home / ".local" / "bin" / "bc250-bazzite-helixsr-gui").unlink()
     window.refresh()
-    assert window.updates_label.text().endswith("\u25cf 1 reinstall")
+    assert "\u25cf 1 reinstall</b>" in window.notice.text()
     window.records.set("gpu", next(e.tag for e in window.entries if e.key == "gpu"))
     window.refresh()
-    assert card.badge.isHidden() and card.status == "Installed" and window.updates_label.isHidden()
+    assert card.badge.isHidden() and card.status == "Installed" and "No updates" in window.notice.text()
 
 
 def test_not_installed_and_withdrawn_need_no_reinstall(qapp, home, settings_dir, tmp_path, launched):
@@ -341,64 +348,71 @@ def test_no_portal_offer_when_not_newer_or_offline(qapp, home, settings_dir, tmp
 
 def test_tiles_flow_in_file_order(window, qapp):
     window.show()
-    regular = [card for card in window.cards.values() if not card.entry.development and not card.entry.section]
-    for width in (1400, 700, 300, 1400):
-        window.resize(width, 720)
-        qapp.processEvents()
-        columns = window.columns
-        assert columns == window.column_count(window.scroll.width() - window.scroll.verticalScrollBar().sizeHint()
-                                              .width() - mw.DEV_FRAME_MARGIN), width
-        places = [window.grid.getItemPosition(window.grid.indexOf(card))[:2] for card in regular]
-        assert places == [(i // columns, i % columns) for i in range(len(regular))]   # file order, by rows
+    for category in ("sustainable", "gaming"):
+        window.tabs.setCurrentWidget(window.pages[category])
+        tiles = [card for card in window.cards.values() if card.entry.category == category and not card.entry.required]
+        for width in (1400, 700, 300, 1400):
+            window.resize(width, 720)
+            qapp.processEvents()
+            page = window.pages[category]
+            columns = window.columns
+            assert columns == window.column_count(page.width() - page.verticalScrollBar().sizeHint().width()
+                                                  - mw.PAGE_MARGIN), width
+            grid = window.grids[category]
+            places = [grid.getItemPosition(grid.indexOf(card))[:2] for card in tiles]
+            assert places == [(i // columns, i % columns) for i in range(len(tiles))]   # file order, by rows
     step = mw.TILE_WIDTH + mw.TILE_SPACING
     assert window.column_count(0) == 1
     assert window.column_count(3 * step - mw.TILE_SPACING) == 3 and window.column_count(3 * step - 13) == 2
 
 
-def test_development_apps_apart_and_closed(window, qapp):
-    dev = {key for key, card in window.cards.items() if card.entry.development}
-    assert dev == {"dtool", "package", "ncgui"}
-    assert all(window.dev_grid.indexOf(window.cards[key]) >= 0 for key in dev)
-    assert all(window.grid.indexOf(window.cards[key]) < 0 for key in dev)
-    assert not window.dev_toggle.isHidden() and window.dev_box.isHidden()   # closed until asked for
-    window.dev_toggle.click()
-    assert not window.dev_box.isHidden()
-    assert window.settings.value(mw.DEV_OPEN_KEY, type=bool)                 # remembered
+def test_a_tab_per_category_in_order(window):
+    assert [window.tabs.tabText(i) for i in range(window.tabs.count())] == [
+        "Sustainable", "Graphics", "Gaming", "Utilities", "Development"]
+    for key, card in window.cards.items():
+        inside = [c for c, grid in window.grids.items() if grid.indexOf(card) >= 0]
+        assert inside == ([] if key == "check" else [card.entry.category]), key
+    assert {k for k, c in window.cards.items() if c.entry.category == "graphics"} == {"helixsr", "ace", "mesh"}
+    assert window.tabs.currentWidget() is window.pages["sustainable"]           # the first tab, the first time
 
 
-def test_board_tools_in_a_section_open_until_closed(window, qapp):
-    assert window.tools_toggle.text() == "BC250 Bazzite tools"
-    assert not window.tools_box.isHidden() and window.grid.indexOf(window.cards["check"]) == 0
-    window.tools_toggle.click()
-    assert window.tools_box.isHidden()
-    assert not window.settings.value(mw.TOOLS_OPEN_KEY, type=bool)                     # remembered
+def test_bazzite_test_above_the_tabs(window):
+    check = window.cards["check"]
+    assert not window.tabs.isAncestorOf(check) and check.parentWidget() is window.notice.parentWidget()
+    assert "Sustainable" not in window.notice.text()
 
 
-def test_gaming_apps_apart_and_open(window, qapp):
-    gaming = {key for key, card in window.cards.items() if card.entry.section == "gaming"}
-    assert gaming == {"helixsr", "ace", "mesh", "consoles", "shadps4",
-                      "decky", "rpcs3", "datstation", "ppsspp", "pcsx2",
-                      "vita3k"}
-    assert all(window.gaming_grid.indexOf(window.cards[key]) >= 0 for key in gaming)
-    assert all(window.grid.indexOf(window.cards[key]) < 0 and window.dev_grid.indexOf(window.cards[key]) < 0
-               for key in gaming)
-    assert not window.gaming_toggle.isHidden() and not window.gaming_box.isHidden()     # open until closed
-    window.gaming_toggle.click()
-    assert window.gaming_box.isHidden()
-    assert not window.settings.value(mw.GAMING_OPEN_KEY, type=bool)                    # remembered
-
-
-def test_no_gaming_section_without_gaming_apps(qapp, home, settings_dir, tmp_path, launched):
-    entries = [e for e in load(MANIFEST) if not e.section]
-    w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
-    assert w.gaming_toggle.isHidden() and w.gaming_box.isHidden()
+def test_the_tab_used_last_is_remembered(qapp, home, settings_dir, tmp_path, launched):
+    w = mw.MainWindow(load(MANIFEST), FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
+    w.tabs.setCurrentWidget(w.pages["gaming"])
+    assert w.settings.value(mw.TAB_KEY) == "gaming"
     w.close()
+    again = mw.MainWindow(load(MANIFEST), FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
+    assert again.tabs.currentWidget() is again.pages["gaming"]
+    again.close()
 
 
-def test_no_development_section_without_development_apps(qapp, home, settings_dir, tmp_path, launched):
-    entries = [e for e in load(MANIFEST) if not e.development]
+def test_a_link_in_the_notice_opens_the_tab_of_its_app(window, home):
+    (home / ".local" / "bin" / "bc250-rpcs3-manager").write_text("#!/bin/sh\n")
+    window.records.set("rpcs3", "rpcs3-v0.0.1")
+    window.refresh()
+    assert "<a href='rpcs3'>RPCS3 Manager</a> (Gaming)" in window.notice.text()
+    window.notice.linkActivated.emit("rpcs3")
+    assert window.tabs.currentWidget() is window.pages["gaming"]
+    window.notice.linkActivated.emit("check")                                   # above the tabs: stays put
+    assert window.tabs.currentWidget() is window.pages["gaming"]
+
+
+def test_development_tab_says_it_is_not_needed(window):
+    page = window.pages["development"].widget()
+    assert "You do not need these to use the board." in page.findChild(mw.QLabel).text()
+    assert {k for k, c in window.cards.items() if c.entry.development} == {"dtool", "package", "ncgui"}
+
+
+def test_no_tab_without_its_apps(qapp, home, settings_dir, tmp_path, launched):
+    entries = [e for e in load(MANIFEST) if e.category not in ("gaming", "development")]
     w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
-    assert w.dev_toggle.isHidden() and w.dev_box.isHidden()
+    assert list(w.pages) == ["sustainable", "graphics", "utilities"]
     w.close()
 
 
@@ -408,7 +422,7 @@ def test_checkout_only_app_has_no_update(qapp, home, settings_dir, tmp_path, lau
     sources.checkout = Path("/checkout")                                    # a portal from a checkout
     w = mw.MainWindow(entries, sources, Records(tmp_path / "installed.json"))
     card = w.cards["suite"]
-    assert w.dev_grid.indexOf(card) >= 0
+    assert w.grids["development"].indexOf(card) >= 0
     (home / ".local" / "bin" / "bc250-release").write_text("#!/bin/sh\n")
     w.records.set("suite", "local")
     w.refresh()

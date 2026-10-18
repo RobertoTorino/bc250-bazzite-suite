@@ -7,7 +7,8 @@
 * The manifest parses and lists exactly the portal apps under apps/. An app folder with a ``.standalone`` marker
   is not a portal app and must not be listed. The [checkout.<name>] tables list exactly the app folders with a
   ``.checkout-only`` marker (they run from the checkout and are never released); a table whose ``folder`` lies
-  outside apps/ needs that marker there too.
+  outside apps/ needs that marker there too. Every app has a category (its tab in the portal); the parser accepts
+  none only to read the manifests of earlier portal releases.
 * Every pinned tag exists. Without --require-tags a tag that does not exist yet is accepted when its version equals
   the app's VERSION: the release that is about to be tagged. The portal release workflow passes --require-tags.
 * With --base REF (the previous commit, or the PR base): when apps.toml differs from the last portal release (the
@@ -78,6 +79,8 @@ def check_entries(entries, require_tags: bool) -> list[str]:
     listed = {e.key for e in entries}
     errors += [f"apps/{name} is not in {MANIFEST}" for name in sorted(apps - listed)]
     errors += [f"{MANIFEST} lists {name}, which has no apps/{name}" for name in sorted(listed - apps)]
+    errors += [f"[apps.{e.key}] needs a category: one of {', '.join(manifest.CATEGORIES)}"
+               for e in entries if not e.category]
     for entry in entries:
         if entry.key not in apps or tag_exists(entry.tag):
             continue

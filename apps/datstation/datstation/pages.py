@@ -5,9 +5,8 @@ the versions, the region codes, the news and the scores: text that scrolls, with
 
 from __future__ import annotations
 
-from PyQt6.QtCore import QUrl, Qt, pyqtSignal
-from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QDialog, QHBoxLayout, QLabel, QTextBrowser, QVBoxLayout, QWidget
+from PyQt6.QtCore import QUrl, pyqtSignal
+from PyQt6.QtWidgets import QHBoxLayout, QTextBrowser, QVBoxLayout, QWidget
 
 from .style import html_page, label, quiet_button
 
@@ -64,27 +63,3 @@ class HtmlPage(Page):
     def first_focus(self) -> QWidget:
         return self.view
 
-
-class ImageDialog(QDialog):
-    """A picture, large, on its own: a click or Escape closes it."""
-
-    def __init__(self, pixmap: QPixmap, title: str, parent: QWidget | None = None):
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setModal(True)
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        screen = self.screen().availableGeometry() if self.screen() else None
-        width = int(screen.width() * 0.8) if screen else 1200
-        height = int(screen.height() * 0.8) if screen else 800
-        picture = QLabel()
-        picture.setPixmap(pixmap.scaled(width, height, Qt.AspectRatioMode.KeepAspectRatio,
-                                        Qt.TransformationMode.SmoothTransformation))
-        picture.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        picture.setCursor(Qt.CursorShape.PointingHandCursor)
-        layout.addWidget(picture)
-        layout.addWidget(label(title, muted=True, align=Qt.AlignmentFlag.AlignCenter))
-
-    def mouseReleaseEvent(self, event) -> None:  # noqa: N802  (Qt's name)
-        self.accept()
-        super().mouseReleaseEvent(event)

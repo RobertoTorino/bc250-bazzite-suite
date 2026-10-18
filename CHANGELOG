@@ -1,3 +1,29 @@
+Changelog: 19-10-2026 00:38:24
+
+The controller beside the board on the wiki's home page changes with every portal release. The pictures are in
+docs/images/home/controllers/ (the DualShock 4 moved there, as ds4.webp), their order and alt texts in its
+controllers.toml; the wiki's hook counts the "Release" entries in portal/CHANGELOG and shows the next controller at
+each release, from the first again after the last. tools/tests/test_mkdocs_hooks.py checks the turns and that every
+picture is listed, WebP with transparency, 1295 x 1600. Eight more controllers take turns with it: black, white,
+green, titanium, brushed titanium, and see-through red, blue and green.
+
+Changelog: 19-10-2026 00:13:22
+
+The portal's picture on the wiki's home page follows the portal: tools/portal_screenshot.py opens the portal's window
+offscreen on the checkout's apps.toml and icons, in a home folder of its own, with a fixed demo state (every app
+installed but two, one update, the Sustainable tab open, Breeze Dark's colours), and saves it as
+docs/images/home/portal.webp. The wiki's workflow (docs.yml) runs it before every build, with Noto Sans as on
+Bazzite; CI's docs job runs it too, so a broken script shows before main. portal/tests/test_wiki_picture.py tests it.
+The committed picture is taken with it.
+
+Changelog: 19-10-2026 00:00:41
+
+The portal lists the apps on a tab per category, the categories of the icons. tools/check_manifest.py requires a
+category for every app in portal/apps.toml, and tools/tests/test_icons.py checks that it is the category of the
+app's icon in icons/categories.toml. The README and the wiki (The apps, App categories, Portal, Architecture and
+consistency, and the chapters that said where the portal lists an app, Simple Demo Tool's README too) list the
+apps by category and describe the tabs and the notice of updates.
+
 Changelog: 18-10-2026 23:17:58
 
 The wiki has a page App categories (docs/apps/categories.md): why every app in a category shares one icon, what

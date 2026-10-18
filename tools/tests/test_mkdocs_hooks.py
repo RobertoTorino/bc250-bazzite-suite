@@ -49,3 +49,35 @@ def test_every_app_chapter_shows_its_icon():
     chapters = [p for folder in ("apps", "other-tools") for p in (docs / folder).glob("*.md") if p.name not in ("index.md", "categories.md")]
     missing = [p.relative_to(docs).as_posix() for p in sorted(chapters) if "{ .app-logo }" not in p.read_text("utf-8")]
     assert not missing, f"no icon beside the heading: {', '.join(missing)}"
+
+
+def test_the_next_controller_at_each_portal_release(tmp_path):
+    (tmp_path / "controllers.toml").write_text(
+        '[[controller]]\nfile = "a.webp"\nalt = "A"\n\n[[controller]]\nfile = "b.webp"\nalt = "B"\n')
+    changelog = tmp_path / "CHANGELOG"
+    chosen = []
+    for release in range(4):
+        changelog.write_text("".join(f"Changelog: x\n\nRelease 1.{n}.0. Pins a.\n\n" for n in range(release))
+                             + "Changelog: x\n\nAdded. Not a release.\n")
+        chosen.append(hooks.controller(tmp_path, changelog)[0])
+    assert chosen == ["a.webp", "b.webp", "a.webp", "b.webp"]
+
+
+def test_the_home_page_gets_the_controller_of_this_release(monkeypatch):
+    monkeypatch.setattr(hooks, "controller", lambda: ("b.webp", "A DualSense controller"))
+    text = "![A DualShock 4 controller](images/home/controllers/ds4.webp){ .home-hero__controller }"
+    assert hooks.on_page_markdown(text, None, None, None) == (
+        "![A DualSense controller](images/home/controllers/b.webp){ .home-hero__controller }")
+    assert "images/home/controllers/" in (SUITE / "docs" / "index.md").read_text(encoding="utf-8")
+
+
+def test_every_controller_picture_fits_beside_the_board():
+    """Listed once each, every picture in the folder listed, WebP with transparency at the size of the first."""
+    image = pytest.importorskip("PIL.Image")
+    listed = hooks.controllers()
+    files = [file for file, _ in listed]
+    assert len(files) == len(set(files)) and all(alt.strip() for _, alt in listed)
+    assert sorted(files) == sorted(p.name for p in hooks.CONTROLLERS.iterdir() if p.name != "controllers.toml")
+    for file in files:
+        with image.open(hooks.CONTROLLERS / file) as picture:
+            assert (picture.format, picture.mode, picture.size) == ("WEBP", "RGBA", (1295, 1600)), file

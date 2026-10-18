@@ -3,7 +3,10 @@
 # The apps
 
 The portal installs, opens, updates and removes these apps. BC-250 Bazzite Test is always installed, every
-other app is optional. What the icons stand for is in [App categories](categories.md).
+other app is optional. They are listed by category, as the portal's tabs list them; what the icons stand for is in
+[App categories](categories.md).
+
+**Sustainable**: the board itself: test it, tune it, unlock it, cool it, and keep it running well.
 
 | App | What it does |
 |---|---|
@@ -13,21 +16,21 @@ other app is optional. What the icons stand for is in [App categories](categorie
 | ![](../assets/apps/cores.webp){ .app-icon } [BC-250 Cores Bisect](cores.md) | Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock. **Changes the board.** |
 | ![](../assets/apps/oc.webp){ .app-icon } [BC-250 GPU OC Bisect](oc.md) | Find your board's safe GPU overclock and undervolt, one step at a time. **Changes the board.** |
 | ![](../assets/apps/acpi.webp){ .app-icon } [BC-250 Persistent ACPI](acpi.md) | CPU C-states and frequency scaling through a persistent ACPI override (GRUB early initrd). **Changes the board.** |
-| ![](../assets/apps/overlay.webp){ .app-icon } [System Overlay](overlay.md) | CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top. |
-| ![](../assets/apps/bios.webp){ .app-icon } [BC-250 BIOS Reader](bios.md) | The BIOS settings as the setup screen shows them, hidden menus included. Stock or modded BIOS. Read-only. |
 | ![](../assets/apps/vram.webp){ .app-icon } [BC-250 Memory Manager](vram.md) | The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it. **Changes the board.** |
 | ![](../assets/apps/fan.webp){ .app-icon } [BC-250 Fan Control](fan.md) | A thermal guard that warns, cools and shuts down cleanly at a critical temperature, and the fans. **Changes the board.** |
-| ![](../assets/apps/wdriver.webp){ .app-icon } [BC-250 USB Wi-Fi](wdriver.md) | The driver for AIC8800D80 USB Wi-Fi sticks: built for the running kernel, loaded at boot, rebuilt after a kernel update. **Changes the board.** |
-| ![](../assets/apps/cec.webp){ .app-icon } [HDMI CEC Manager](cec.md) | Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC. |
-| ![](../assets/apps/sftp.webp){ .app-icon } [Bazzite SFTP Tools](sftp.md) | Move files between computers over SFTP, and manage the SSH server of a Bazzite host. |
 
-**Gaming**: apps for playing, in their own section of the [portal](../portal.md).
+**Graphics**: graphics features for games.
 
 | App | What it does |
 |---|---|
 | ![](../assets/apps/helixsr.webp){ .app-icon } [HelixSR Manager](helixsr.md) | Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games. |
 | ![](../assets/apps/ace.webp){ .app-icon } [BC-250 ACE Queues](ace.md) | Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use. **Changes the board.** |
 | ![](../assets/apps/mesh.webp){ .app-icon } [BC-250 Mesh Shaders](mesh.md) | Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use. **Changes the board.** |
+
+**Gaming**: apps for playing.
+
+| App | What it does |
+|---|---|
 | ![](../assets/apps/consoles.webp){ .app-icon } [Console Link](consoles.md) | Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session. |
 | ![](../assets/apps/shadps4.webp){ .app-icon } [shadPS4 Manager](shadps4.md) | PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found (or unpacked from .pkg files) and added to Game Mode. |
 | ![](../assets/apps/decky.webp){ .app-icon } [Decky Loader Manager](decky.md) | Plugins in Game Mode with Decky Loader: a tested Decky release as a system service, its state and its plugins. |
@@ -37,8 +40,17 @@ other app is optional. What the icons stand for is in [App categories](categorie
 | ![](../assets/apps/vita3k.webp){ .app-icon } [Vita3K Manager](vita3k.md) | PS Vita games with the Vita3K emulator: a tested Vita3K build, the firmware and your games installed through it, added to Game Mode. |
 | ![](../assets/apps/datstation.webp){ .app-icon } [Bazzite DatStation](datstation.md) | PlayStation quiz, console history, system versions, region codes, user guides and news, with your scores. |
 
-**Development only**: tools for working on the suite, in their own section of the [portal](../portal.md). You do not
-need them to use the board.
+**Utilities**: handy tools around the board.
+
+| App | What it does |
+|---|---|
+| ![](../assets/apps/overlay.webp){ .app-icon } [System Overlay](overlay.md) | CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top. |
+| ![](../assets/apps/bios.webp){ .app-icon } [BC-250 BIOS Reader](bios.md) | The BIOS settings as the setup screen shows them, hidden menus included. Stock or modded BIOS. Read-only. |
+| ![](../assets/apps/wdriver.webp){ .app-icon } [BC-250 USB Wi-Fi](wdriver.md) | The driver for AIC8800D80 USB Wi-Fi sticks: built for the running kernel, loaded at boot, rebuilt after a kernel update. **Changes the board.** |
+| ![](../assets/apps/cec.webp){ .app-icon } [HDMI CEC Manager](cec.md) | Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC. |
+| ![](../assets/apps/sftp.webp){ .app-icon } [Bazzite SFTP Tools](sftp.md) | Move files between computers over SFTP, and manage the SSH server of a Bazzite host. |
+
+**Development**: tools for working on the suite. You do not need them to use the board.
 
 | App | What it does |
 |---|---|

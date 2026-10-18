@@ -38,7 +38,7 @@ FEATURES = (
             f"{len(load_questions()):,} questions in {len(DATA_CATEGORIES)} categories, against the clock. "
             "Perfect rounds earn trophies."),
     Feature("history", "○", CIRCLE, "PlayStation History",
-            "Every console since 1994: what it sold, how many titles, and pictures of each model."),
+            "Every console since 1994: what it sold, how many titles, and its legacy."),
     Feature("versions", "×", CROSS, "System Version History",
             "Every system software release, from the PS1 to the PS5 and the Portal."),
     Feature("regions", "□", SQUARE, "Region Codes Explained",

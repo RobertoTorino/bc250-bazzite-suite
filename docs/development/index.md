@@ -63,6 +63,20 @@ git push --no-verify                    # without the checks
 To preview the manual locally, run `mkdocs serve` from the repository root with the development venv active,
 then open <http://127.0.0.1:8000/bc250-bazzite-suite/>. Stop the server with Ctrl+C.
 
+The picture of the portal on the home page (`docs/images/home/portal.webp`) is taken from the portal itself:
+`tools/portal_screenshot.py` opens its window offscreen on this checkout's `apps.toml` and icons, in a home folder
+of its own, with a fixed demo state (one update, the Sustainable tab open), and saves it. The wiki's workflow runs it
+before every build, so the published picture always shows the portal as it is on main. Run it yourself to see the
+same picture in `mkdocs serve`:
+
+```bash
+python tools/portal_screenshot.py          # from the venv; --out FILE to save it elsewhere
+```
+
+The controller beside the board on the home page changes with every portal release, in the order of
+`docs/images/home/controllers/controllers.toml`. To add one, put its picture in that folder (WebP, 1295 × 1600, with
+a transparent background, like the others) and add it at the end of the list with its alt text.
+
 ### Working from both Linux and Windows
 
 The repo is used from both systems, so it is set up to behave the same on each:

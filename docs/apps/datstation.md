@@ -80,10 +80,10 @@ is kept.
 
 ### PlayStation History
 
-Every console since 1994 with its launch year, what it sold, how many titles it had and pictures of each model:
-the PlayStation, PlayStation 2, Sony PSX, PlayStation Portable, PlayStation 3, PlayStation Vita, PlayStation 4,
-PlayStation 5 and the PlayStation Portal. Click a picture to see it large (a click or Escape closes it). Under the
-totals, a brief overview of each console's legacy; click a name for pictures of it on the web, in your browser.
+Every console since 1994 with its launch year, what it sold and how many titles it had: the PlayStation,
+PlayStation 2, Sony PSX, PlayStation Portable, PlayStation 3, PlayStation Vita, PlayStation 4, PlayStation 5 and the
+PlayStation Portal. Under the totals, a brief overview of each console's legacy. Click a console's name, in either
+list, for pictures of it on the web, in your browser.
 
 ### System Version History
 
@@ -157,7 +157,7 @@ stay in the files above, in your home folder, and go with `--uninstall --purge`.
 ## Development
 
 The app follows the suite's [architecture](../development/architecture.md): the package `datstation/` at
-the app root (its data in `data/`, the music in `sounds/`), `images/` (the icon and the console pictures),
+the app root (its data in `data/`, the music in `sounds/`), `images/` (the icon),
 `tests/`, `install.sh`, `VERSION`, `CHANGELOG`, `LICENSE` and `.gitignore`, on `bc250_core` (the header, the
 settings, the Steam shortcuts, the one-instance socket). The quiz engine (`quiz.py`) and the feed reader
 (`news.py`) have no Qt in them, so their tests run without a display; the pages are tested offscreen.
@@ -170,8 +170,8 @@ settings, the Steam shortcuts, the one-instance socket). The quiz engine (`quiz.
 **How the data got here.** The questions are the Android app's `questions.dat`, decrypted once and shipped as
 plain JSON (`data/questions.json`): the key was in the Android repository, so the encryption protected nothing.
 True/false questions whose answer carried its explanation after a colon were split into the answer and an
-`explanation` field. The system software versions are the Android app's JSON files, unchanged; the console
-pictures its WebP images; the music its `sea_breeze.ogg`.
+`explanation` field. The system software versions are the Android app's JSON files, unchanged; the music its
+`sea_breeze.ogg`.
 
 **Security around the build.**
 

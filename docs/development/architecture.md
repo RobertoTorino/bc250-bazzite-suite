@@ -324,7 +324,8 @@ not run one.
 4. Write `install.sh` from the copied one, with the same options and launcher.
 5. Write `tests/` and `requirements-dev.txt`, and add the app folder to the pytest matrix in
    `.github/workflows/ci.yml`. Write `tools/installer-tests/<name>.sh` and add its step to the same file.
-6. Add the app to `portal/apps.toml` (name, summary, `changes_board`, install, uninstall, detect, launch).
+6. Add the app to `portal/apps.toml` (name, summary, `changes_board`, `category` (its icon's: the portal's tab for
+   it), install, uninstall, detect, launch).
 7. Add the app to the Dependency Checker's catalogue (`[app.<name>]` with its launchers), its Python packages and
    the external tools it runs (`apps/package/package_checker/dependencies.toml`).
 8. Write its manual chapter, `docs/apps/<name>.md`, add it to `mkdocs.yml`, and give it a row in the apps overview,

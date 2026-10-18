@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 from bc250_portal import MANIFEST
-from bc250_portal.manifest import ManifestError, load, parse, parse_checkout
+from bc250_portal.manifest import CATEGORIES, ManifestError, load, load_checkout, parse, parse_checkout
 from conftest import SUITE
 
 MINIMAL = """
@@ -61,17 +61,24 @@ def test_a_withdrawn_release():
         parse(MINIMAL.replace('name = "BT"', 'name = "BT"\nwithdrawn = "broken"', 1))
 
 
-def test_a_section_of_its_own():
-    assert parse(MINIMAL)[1].section == ""
-    assert parse(MINIMAL.replace('name = "CU"', 'name = "CU"\nsection = "gaming"', 1))[1].section == "gaming"
-    with pytest.raises(ManifestError, match="section must be one of gaming"):
-        parse(MINIMAL.replace('name = "CU"', 'name = "CU"\nsection = "games"', 1))
-    with pytest.raises(ManifestError, match="not for the required app nor for development apps"):
-        parse(MINIMAL.replace('name = "CU"', 'name = "CU"\nsection = "gaming"\ndevelopment = true', 1))
-    with pytest.raises(ManifestError, match="not for the required app"):
-        parse(MINIMAL.replace('name = "BT"', 'name = "BT"\nsection = "gaming"', 1))
-    with pytest.raises(ManifestError, match="not for the required app nor for development apps"):
-        parse_checkout(CHECKOUT.replace('summary = "s"', 'summary = "s"\nsection = "gaming"'))
+def test_a_category_for_its_tab():
+    assert parse(MINIMAL)[1].category == ""                                # a manifest from before categories
+    cu = parse(MINIMAL.replace('name = "CU"', 'name = "CU"\ncategory = "gaming"', 1))[1]
+    assert cu.category == "gaming" and not cu.development
+    assert parse(MINIMAL.replace('name = "CU"', 'name = "CU"\ncategory = "development"', 1))[1].development
+    with pytest.raises(ManifestError, match="category must be one of sustainable, graphics, gaming"):
+        parse(MINIMAL.replace('name = "CU"', 'name = "CU"\ncategory = "games"', 1))
+    with pytest.raises(ManifestError, match="required app cannot be a development app"):
+        parse(MINIMAL.replace('name = "BT"', 'name = "BT"\ncategory = "development"', 1))
+    assert parse_checkout(CHECKOUT)[0].category == "development"           # the default for a checkout app
+    with pytest.raises(ManifestError, match="its category is development"):
+        parse_checkout(CHECKOUT.replace('summary = "s"', 'summary = "s"\ncategory = "gaming"'))
+
+
+def test_shipped_manifest_has_a_category_for_every_app():
+    entries = load(MANIFEST) + load_checkout(MANIFEST)
+    assert all(e.category in CATEGORIES for e in entries)
+    assert {e.key for e in entries if e.development} == {"dtool", "package", "ncgui", "suite", "installer-tests"}
 
 
 def test_short_name_for_the_tile():

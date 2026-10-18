@@ -17,11 +17,12 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
   overlay, bios, ace, mesh, vram, fan, wdriver, cec, sftp, consoles, shadps4, rpcs3, ppsspp, pcsx2, vita3k, decky, dtool, package, ncgui, datstation, suite. Each has its
   own VERSION, CHANGELOG, LICENSE (acpi is MIT; consoles is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; ncgui is GPL-2.0-only, a port of NetcatGUI; the rest
-  GPL-3.0-or-later), .gitignore. Simple
-  Demo Tool, the Dependency Checker and Bazzite NetcatGUI are `development = true` in `portal/apps.toml`: the portal
-  lists them under "Development only". HelixSR, ACE Queues, Mesh Shaders, Console Link, the shadPS4 Manager, the Decky Loader Manager, the RPCS3 Manager,
-  Bazzite DatStation, the PPSSPP Manager, the PCSX2 Manager and the Vita3K Manager are `section = "gaming"`: listed under "Gaming". Suite Releases (the release front end) has `.standalone` and `.checkout-only`: it runs
-  from the checkout, is never released, and is listed as `[checkout.suite]`, also under "Development only":
+  GPL-3.0-or-later), .gitignore. Every app
+  has a `category` in `portal/apps.toml`, the same as its icon's in `icons/categories.toml` (sustainable, graphics,
+  gaming, utilities, development): the portal shows a tab per category, with check and the notice of updates above
+  the tabs (owner, 18-10-2026). Simple Demo Tool, the Dependency Checker and Bazzite NetcatGUI are development apps.
+  Suite Releases (the release front end) has `.standalone` and `.checkout-only`: it runs
+  from the checkout, is never released, and is listed as `[checkout.suite]`, also on the Development tab:
   a portal from a release finds the checkout on the machine (it asks only when there is none) and remembers it, the
   released apps still come from their releases. Install every app through the portal, so what is installed stays in step. BC-250 Installer Tests (`tools/installer-tests/gui`) is
   checkout-only the same way: `.checkout-only` and `[checkout.installer-tests]` with `folder`.

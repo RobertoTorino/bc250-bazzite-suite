@@ -1,3 +1,18 @@
+Changelog: 19-10-2026 01:16:07
+
+Release 2.1.1.
+
+Changelog: 19-10-2026 00:00:41
+
+Added. A tab per category: Sustainable, Graphics, Gaming, Utilities and Development, the categories of the apps'
+icons, in place of the three folding sections. Each tab says at its top what its apps are for, and the portal opens
+on the tab used last. Bazzite Test stays at the top, above the tabs, beside a notice of updates: it counts the
+updates and reinstalls and names each app with its tab and versions, with a link that opens the app's tab at its
+tile. A tab with an app to update or reinstall shows their number in red after its name. The notice takes the place
+of the count in the header. apps.toml gives every app a category (the same as its icon's in icons/categories.toml),
+which replaces development and section; the parser still reads a manifest without categories, for the manifests
+of earlier portal releases.
+
 Changelog: 18-10-2026 23:41:09
 
 Release 2.1.0. Pins check-v0.4.0, gpu-v0.1.10, helixsr-v0.3.2, compute-v0.1.10, cores-v0.1.11, oc-v0.1.10, acpi-v0.1.7, overlay-v0.3.0, bios-v0.3.0, ace-v0.3.0, mesh-v0.3.0, vram-v0.3.0, fan-v0.2.0, wdriver-v0.2.0, cec-v0.3.0, sftp-v0.3.1, dtool-v0.1.12, package-v0.5.0, ncgui-v0.3.0, rpcs3-v0.3.0, consoles-v1.2.0, shadps4-v0.3.0, decky-v0.3.0, datstation-v0.3.0, ppsspp-v0.3.0, pcsx2-v0.4.0, vita3k-v0.2.0.

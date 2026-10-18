@@ -143,6 +143,14 @@ def test_shipped_manifest_passes_without_required_tags():
         ("suite", "apps/suite"), ("installer-tests", "tools/installer-tests/gui")]
 
 
+def test_every_app_needs_a_category():
+    entries = [e for e in cm.manifest.load(cm.SUITE / cm.MANIFEST) if e.key != "gpu"]
+    gpu = cm.manifest.AppEntry(key="gpu", name="Gov", summary="s", tag="gpu-v0.0.1")       # an older manifest's
+    errors = cm.check_entries([*entries, gpu], require_tags=False)
+    assert [e for e in errors if "category" in e] == [
+        "[apps.gpu] needs a category: one of sustainable, graphics, gaming, utilities, development"]
+
+
 def test_checkout_tables_match_the_checkout_only_folders():
     entry = cm.manifest.AppEntry(key="gpu", name="Gov", summary="s", tag="", checkout_only=True)
     errors = cm.check_checkout_entries([entry])

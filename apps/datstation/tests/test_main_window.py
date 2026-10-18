@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import QMessageBox
 
 from bc250_core import steam
 
-from datstation import history_page, news
+from datstation import news
 from datstation.front_page import COLUMNS, FEATURES, KEYS, ROWS
 from datstation.main_window import GUIDES_URL, MainWindow
 from datstation.news import NewsItem
@@ -225,25 +225,13 @@ def test_the_news_page_with_a_test_feed(window, opened, monkeypatch):
     assert "Could not load announcements" in page.view.toPlainText() and page.items == []
 
 
-def test_the_history_page_links(window, opened, monkeypatch):
+def test_the_history_page_links(window, opened):
     page = window.pages["history"]
     window.open("history")
     assert "Lifetime totals" in page.view.toPlainText()
     page.on_link(QUrl("search:PlayStation 2 (2000)"))
     assert opened and opened[-1].startswith("https://www.google.com/search?q=PlayStation%202")
-    shown = []
-
-    class FakeDialog:
-        def __init__(self, pixmap, title, parent=None):
-            shown.append((pixmap.width() > 0, title))
-
-        def exec(self):
-            return 0
-    monkeypatch.setattr(history_page, "ImageDialog", FakeDialog)
-    page.view.anchorClicked.emit(QUrl("image:ps1"))
-    assert shown == [(True, "ps1")]
-    page.on_link(QUrl("image:nothing"))
-    assert shown == [(True, "ps1")] and "No picture" in window.statusBar().currentMessage()
+    assert "Searching the web for pictures of PlayStation 2 (2000)." in window.statusBar().currentMessage()
 
 
 def test_the_versions_page_switches_systems(window):

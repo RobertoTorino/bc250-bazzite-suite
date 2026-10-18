@@ -1,3 +1,15 @@
+Changelog: 19-10-2026 01:16:07
+
+Release 1.0.0.
+
+Changelog: 19-10-2026 00:49:02
+
+Breaking. The PlayStation History page has no console pictures any more: the 28 pictures in images/consoles/ were
+Sony's press and retail photos, which the suite has no rights to ship, and there are no replacements. The
+thumbnails and the large view of a picture are gone; each console's name, in the totals as well as in the legacy, is
+a link to pictures of it on the web. An update removes the pictures from the board (the installer replaces the
+app's folder). The front page's tile no longer promises pictures.
+
 Changelog: 18-10-2026 22:45:26
 
 Release 0.3.0.

@@ -11,7 +11,9 @@ from pathlib import Path
 
 _TAG = re.compile(r"^(?P<app>[a-z0-9-]+)-v(?P<version>\d+\.\d+\.\d+)$")
 _SHA256 = re.compile(r"^([0-9a-f]{64})?$")
-SECTIONS = {"gaming": "Gaming"}                 # section = "<key>": the portal's own section for those apps
+# category = "<key>": the app's category (its icon, icons/categories.toml) and the portal's tab for it, in this order.
+CATEGORIES = {"sustainable": "Sustainable", "graphics": "Graphics", "gaming": "Gaming", "utilities": "Utilities",
+              "development": "Development"}
 # Apps renamed in the suite (old key: new key), for the record of a copy installed under the old key.
 RENAMED = {"ace-queues": "ace", "bazzite-netcatgui": "ncgui", "bazzite-datstation": "datstation",
            "bazzite-test": "check", "bios-reader": "bios",
@@ -41,8 +43,7 @@ class AppEntry:
     sha256: str = ""
     required: bool = False
     changes_board: bool = False
-    development: bool = False                   # listed under "Development only" in the portal
-    section: str = ""                           # a key of SECTIONS: listed in that section; "": with the apps
+    category: str = ""                          # a key of CATEGORIES; "" only in a manifest from before categories
     checkout_only: bool = False                 # [checkout.<key>]: installs from its folder in the suite checkout
     folder: str = ""                            # checkout-only: that folder, relative to the checkout (apps/<key>)
     install: tuple[str, ...] = ()
@@ -55,6 +56,11 @@ class AppEntry:
     # release stays, marked withdrawn (a pre-release named "Withdrawn: ...", which no update check offers). Not for
     # the required app, nor for [checkout.*] apps. "": not withdrawn.
     withdrawn: str = ""
+
+    @property
+    def development(self) -> bool:
+        """A tool for working on the suite, not for using the board."""
+        return self.category == "development"
 
     @property
     def version(self) -> str:
@@ -106,28 +112,27 @@ def _entry(key: str, raw: dict, table: str = "apps") -> AppEntry:
         raise ManifestError(f"[{table}.{key}] withdrawn must say why the release was withdrawn")
     if withdrawn and checkout_only:
         raise ManifestError(f"[{table}.{key}] is never released, so it cannot be withdrawn")
-    section = raw.get("section", "")
-    if section not in ("", *SECTIONS):
-        raise ManifestError(f"[{table}.{key}] section must be one of {', '.join(SECTIONS)}")
+    category = raw.get("category", "development" if checkout_only else "")
+    if category not in ("", *CATEGORIES):
+        raise ManifestError(f"[{table}.{key}] category must be one of {', '.join(CATEGORIES)}")
+    if checkout_only and category != "development":
+        raise ManifestError(f"[{table}.{key}] runs from the checkout: its category is development")
     launch = raw.get("launch", [])
     if not isinstance(launch, list) or not all(isinstance(item, list) and len(item) == 2 and
                                                all(isinstance(s, str) and s for s in item) for item in launch):
         raise ManifestError(f"[{table}.{key}] launch must be a list of [label, command] pairs")
     entry = AppEntry(key=key, name=raw["name"], summary=raw["summary"], tag=raw.get("tag", ""), sha256=sha,
                      required=bool(raw.get("required", False)), changes_board=bool(raw.get("changes_board", False)),
-                     development=checkout_only or bool(raw.get("development", False)), checkout_only=checkout_only,
-                     folder=folder,
+                     category=category, checkout_only=checkout_only, folder=folder,
                      install=_strings(key, "install", raw.get("install")),
                      uninstall=_strings(key, "uninstall", raw.get("uninstall")),
                      detect=_strings(key, "detect", raw.get("detect")),
                      launch=tuple((label, command) for label, command in launch), short=short.strip(),
-                     withdrawn=withdrawn.strip(), section=section)
+                     withdrawn=withdrawn.strip())
     if not entry.install or not entry.uninstall or not entry.detect:
         raise ManifestError(f"[{table}.{key}] install, uninstall and detect must not be empty")
     if entry.required and entry.development:
         raise ManifestError(f"[{table}.{key}] the required app cannot be a development app")
-    if section and (entry.required or entry.development):
-        raise ManifestError(f"[{table}.{key}] section is not for the required app nor for development apps")
     if entry.required and entry.withdrawn:
         raise ManifestError(f"[{table}.{key}] the required app cannot be withdrawn: pin a release that works")
     return entry

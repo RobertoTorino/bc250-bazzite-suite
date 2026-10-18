@@ -34,7 +34,7 @@ bash "$SUITE/apps/datstation/install.sh" > "$T/log1" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "no sudo used" "! grep -q 'sudo called' $T/log1 && [ -z \"\$(ls -A $T/opt)\" ]"
 check "app copied" "[ -f $A/datstation/main_window.py ] && [ -f $A/images/$APP.webp ] && [ -f $A/images/$APP-128.png ]"
-check "data, music and pictures copied" "[ -f $A/datstation/data/questions.json ] && [ -f $A/datstation/sounds/sea_breeze.ogg ] && [ -f $A/images/consoles/ps1.webp ]"
+check "data and music copied" "[ -f $A/datstation/data/questions.json ] && [ -f $A/datstation/sounds/sea_breeze.ogg ]"
 check "core bundled from checkout" "[ -f $A/bc250_core/widgets.py ] && [ ! -d $A/bc250_core/__pycache__ ]"
 check "no tests or caches copied" "[ ! -d $A/tests ] && ! find $A -name __pycache__ | grep -q ."
 check "own venv, not the suite's" "[ -x $D/$APP/venv/bin/python ] && [ ! -e $D/bc250-bazzite-suite/venv ]"
