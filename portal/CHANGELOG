@@ -1,3 +1,7 @@
+Changelog: 18-10-2026 23:41:09
+
+Release 2.1.0. Pins check-v0.4.0, gpu-v0.1.10, helixsr-v0.3.2, compute-v0.1.10, cores-v0.1.11, oc-v0.1.10, acpi-v0.1.7, overlay-v0.3.0, bios-v0.3.0, ace-v0.3.0, mesh-v0.3.0, vram-v0.3.0, fan-v0.2.0, wdriver-v0.2.0, cec-v0.3.0, sftp-v0.3.1, dtool-v0.1.12, package-v0.5.0, ncgui-v0.3.0, rpcs3-v0.3.0, consoles-v1.2.0, shadps4-v0.3.0, decky-v0.3.0, datstation-v0.3.0, ppsspp-v0.3.0, pcsx2-v0.4.0, vita3k-v0.2.0.
+
 Changelog: 18-10-2026 22:55:02
 
 Release 2.0.0. restyling
