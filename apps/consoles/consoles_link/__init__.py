@@ -9,14 +9,14 @@ steam_env.settle()                      # before Qt loads: started by Steam, the
 
 APP_NAME = "Console Link"
 APP_ID = "bc250-console-link"
-__version__ = "1.1.2"
+__version__ = "1.2.0"
 
 from pathlib import Path
 
 from bc250_core import AppInfo
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
+LOGO_PATH = ROOT / "images" / f"{APP_ID}.webp"
 
 # Settings in ~/.config/bc250-console-link/bc250-console-link.ini
 INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="consoles-v",

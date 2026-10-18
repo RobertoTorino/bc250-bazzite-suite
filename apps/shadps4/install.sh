@@ -100,7 +100,8 @@ fi
 
 # --- Checks ------------------------------------------------------------------------------------
 [ "$(uname -s)" = Linux ] || die "This app runs on Linux (Bazzite) only."
-for f in requirements.txt VERSION "$PACKAGE/__main__.py" "$PACKAGE/pkgxtractor/cli.py" "$RUN_NAME" "images/$APP_ID.png"; do
+for f in requirements.txt VERSION "$PACKAGE/__main__.py" "$PACKAGE/pkgxtractor/cli.py" "$RUN_NAME" \
+         "images/$APP_ID.webp" "images/$APP_ID-128.png"; do
     [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from a clone or the extracted release folder."
 done
 [ -f "$CORE_SRC/__init__.py" ] || die "bc250_core is missing: run install.sh from a clone or the extracted release folder."
@@ -179,7 +180,7 @@ Name=$APP_NAME
 GenericName=PS4 emulator manager
 Comment=Install shadPS4, find your PS4 games and add them to Steam for Game Mode
 Exec=$LAUNCHER %f
-Icon=$APP_DIR/images/$APP_ID.png
+Icon=$APP_DIR/images/$APP_ID-128.png
 Terminal=false
 Categories=Game;Emulator;
 Keywords=BC-250;Bazzite;shadPS4;PS4;emulator;Game Mode;pkg;extract;

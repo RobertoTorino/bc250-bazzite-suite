@@ -5,14 +5,14 @@ NetcatGUI by Shinnok (Teodor Mircea Ionita), GPL-2.0."""
 
 APP_NAME = "Bazzite NetcatGUI"
 APP_ID = "bazzite-netcatgui"
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 from pathlib import Path  # noqa: E402  (constants first, as the suite's apps do)
 
 from bc250_core import AppInfo  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
+LOGO_PATH = ROOT / "images" / f"{APP_ID}.webp"
 ICONS_DIR = ROOT / "images" / "icons"     # the Silk icons the C++ tool used (CC-BY 2.5, Mark James)
 
 # Settings in ~/.config/bazzite-netcatgui/bazzite-netcatgui.ini, as before the move to core.

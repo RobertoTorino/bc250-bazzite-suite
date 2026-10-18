@@ -59,7 +59,7 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Simple Demo Tool")
-        self.setWindowIcon(QIcon(str(IMAGE_DIR / "simple-demo-tool.png")))
+        self.setWindowIcon(QIcon(str(IMAGE_DIR / "simple-demo-tool.webp")))
         self.setMinimumSize(620, 520)
         self.client = None
         self.recording = False

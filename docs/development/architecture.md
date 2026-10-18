@@ -32,7 +32,7 @@ apps/<name>/
 │   ├── __main__.py            start-up: python -m <package>
 │   ├── main_window.py         the window
 │   └── ...                    the app's own modules, and data it reads (a catalogue, tables)
-├── images/                    <app-id>.png (512 px) and, for the portal, a 128 px version
+├── images/                    <app-id>.webp (512 px) and <app-id>-128.png for the menu entry
 ├── native/                    only an app with a native core (consoles): a Rust crate, see below
 ├── tests/                     conftest.py and test_*.py
 ├── install.sh                 install, update and uninstall for your own user
@@ -84,7 +84,7 @@ from pathlib import Path
 from bc250_core import AppInfo
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
+LOGO_PATH = ROOT / "images" / f"{APP_ID}.webp"
 INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="example-v",
                settings_ini=True)
 ```
@@ -148,6 +148,21 @@ An app may have its own colour, taken from its icon, in a `style.py` beside its 
 the pattern): the status boxes, the main buttons, the table headers and the links take it. White text on the colour
 reads at 4.5:1 or more, links on a dark window use a lighter shade of it, and the colour stays easy on the eye.
 Without a `style.py` the app keeps core's purple.
+
+### Icons
+
+Every app in a category has the same icon. Each category's icon is kept once, in `icons/<category>/`, at 1024, 512,
+256 and 128 px. `icons/categories.toml` gives each app its category and names its copies: `images/<app-id>.webp`
+(512 px) and `images/<app-id>-128.png` in the app, and its tile in `portal/images/apps/<name>.webp` (256 px). The
+copies stay in the repository, so the installers, the portal and the wiki find them where they always did.
+
+The icons are WebP, a fraction of the size of PNG, which the apps (through Qt) and the wiki show. Only the 128 px one
+is PNG: the menu entry, the Desktop icon, a Steam shortcut and a notification use it, because a desktop or Steam may
+not read WebP. In code, `LOGO_PATH` is the WebP icon; `steam.shortcut_icon()` gives the PNG beside it.
+
+To give a category a new icon, replace its four files (three WebP, the 128 px one PNG) and run
+`python3 tools/sync_icons.py`.
+`tools/tests/test_icons.py` fails when a copy is out of date or an app icon has no category.
 
 ## Shared code: bc250_core
 
@@ -303,7 +318,8 @@ not run one.
 
 1. Copy the folder of the app closest to yours, rename the package, and set `APP_NAME`, `APP_ID`, `VERSION`
    (0.1.0) and `__version__`. Clear its `CHANGELOG` and start it with one entry.
-2. Put the icon in `images/` as `<app-id>.png`, and a 128 px version in `portal/images/apps/<name>.png`.
+2. Add the app to `icons/categories.toml` with its category and run `python3 tools/sync_icons.py`: it writes the
+   icons in `images/` and the portal's tile ([Icons](#icons)).
 3. Build the window on `AppHeader` and core's widgets.
 4. Write `install.sh` from the copied one, with the same options and launcher.
 5. Write `tests/` and `requirements-dev.txt`, and add the app folder to the pytest matrix in

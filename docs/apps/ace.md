@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![BC-250 ACE Queues](../assets/ace/bc250-ace-queues.png){ .app-logo }
+![BC-250 ACE Queues](../assets/ace/bc250-ace-queues.webp){ .app-logo }
 
 # BC-250 ACE Queues
 

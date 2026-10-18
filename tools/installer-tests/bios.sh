@@ -21,7 +21,7 @@ echo "== 1. install from the suite checkout"
 bash "$SUITE/apps/bios/install.sh" > "$T/log1" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "no sudo used" "! grep -q 'sudo called' $T/log1 && [ -z \"\$(ls -A $T/opt)\" ]"
-check "app copied" "[ -f $A/bios_reader/bios.py ] && [ -f $A/images/$APP.png ]"
+check "app copied" "[ -f $A/bios_reader/bios.py ] && [ -f $A/images/$APP.webp ] && [ -f $A/images/$APP-128.png ]"
 check "built-in table copied" "[ -f $A/bios_reader/tables/P5.00.json.gz ]"
 check "core bundled from checkout" "[ -f $A/bc250_core/theme.py ]"
 check "no tests or caches copied" "[ ! -d $A/tests ] && ! find $A -name __pycache__ | grep -q ."

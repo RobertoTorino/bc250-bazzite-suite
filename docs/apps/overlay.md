@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![System Overlay](../assets/overlay/bc250-system-overlay.png){ .app-logo }
+![System Overlay](../assets/overlay/bc250-system-overlay.webp){ .app-logo }
 
 # System Overlay
 

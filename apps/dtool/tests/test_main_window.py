@@ -11,8 +11,8 @@ from demo_tool.workflow import WorkflowError
 def test_bundled_icons_have_expected_dimensions():
     images = Path(main_window.__file__).resolve().parents[1] / "images"
 
-    assert QImage(str(images / "simple-demo-tool.png")).size().width() == 512
-    assert QImage(str(images / "simple-demo-tool.png")).size().height() == 512
+    assert QImage(str(images / "simple-demo-tool.webp")).size().width() == 512
+    assert QImage(str(images / "simple-demo-tool.webp")).size().height() == 512
     assert QImage(str(images / "simple-demo-tool-128.png")).size().width() == 128
     assert QImage(str(images / "simple-demo-tool-128.png")).size().height() == 128
 

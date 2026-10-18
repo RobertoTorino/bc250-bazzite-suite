@@ -11,10 +11,11 @@ BIN_HOME="${XDG_BIN_HOME:-$HOME/.local/bin}"
 APP_DIR="$DATA_HOME/bc250-cores-bisect-gui"
 LAUNCHER="$BIN_HOME/bc250-cores-bisect-gui"
 DESKTOP_FILE="$DATA_HOME/applications/bc250-cores-bisect.desktop"
-ICON_FILE="$DATA_HOME/icons/hicolor/512x512/apps/bc250-cores-bisect.png"
+ICON_FILE="$DATA_HOME/icons/hicolor/128x128/apps/bc250-cores-bisect.png"
+OLD_ICON="$DATA_HOME/icons/hicolor/512x512/apps/bc250-cores-bisect.png"   # the 512 px icon of before
 
 rm -rf "$APP_DIR"
-rm -f "$LAUNCHER" "$DESKTOP_FILE" "$ICON_FILE"
+rm -f "$LAUNCHER" "$DESKTOP_FILE" "$ICON_FILE" "$OLD_ICON"
 
 command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$DATA_HOME/applications" >/dev/null 2>&1 || true
 command -v gtk-update-icon-cache >/dev/null 2>&1 && gtk-update-icon-cache -f -t "$DATA_HOME/icons/hicolor" >/dev/null 2>&1 || true

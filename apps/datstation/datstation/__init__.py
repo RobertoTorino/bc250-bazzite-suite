@@ -6,7 +6,7 @@ BC250 Bazzite Suite builds its apps (bc250_core, the same installer and launcher
 
 APP_NAME = "Bazzite DatStation"
 APP_ID = "bazzite-datstation"
-__version__ = "0.2.2"
+__version__ = "0.3.0"
 
 from pathlib import Path  # noqa: E402  (constants first, as the suite's apps do)
 
@@ -14,7 +14,7 @@ from bc250_core import AppInfo  # noqa: E402
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 ROOT = PACKAGE_DIR.parent
-LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
+LOGO_PATH = ROOT / "images" / f"{APP_ID}.webp"
 DATA_DIR = PACKAGE_DIR / "data"                 # the questions and the system software versions, as JSON
 SOUNDS_DIR = PACKAGE_DIR / "sounds"             # the quiz music
 CONSOLES_DIR = ROOT / "images" / "consoles"     # the console pictures of the history page

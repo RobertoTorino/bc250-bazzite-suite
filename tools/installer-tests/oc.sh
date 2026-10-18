@@ -27,7 +27,7 @@ check "own venv" "[ -x $D/$APP-app/venv/bin/python ]"
 check "launcher" "grep -qF 'exec \"$D/$APP-app/venv/bin/python\" -m oc_bisect --script \"$L/bc250-gpu-oc-bisect.sh\"' $HOME/.local/bin/$APP-gui"
 check "launcher cds into the /opt link" "grep -q \"cd \\\"$L\\\"\" $HOME/.local/bin/$APP-gui"
 check "menu entry" "grep -qx 'Exec=$HOME/.local/bin/$APP-gui' $D/applications/$APP-gui.desktop"
-check "icon from /opt" "grep -qx 'Icon=$L/images/$APP.png' $D/applications/$APP-gui.desktop && [ -f $L/images/$APP.png ]"
+check "icon from /opt" "grep -qx 'Icon=$L/images/$APP-128.png' $D/applications/$APP-gui.desktop && [ -f $L/images/$APP.webp ] && [ -f $L/images/$APP-128.png ]"
 check "desktop icon, executable" "[ -x $HOME/Desktop/$APP-gui.desktop ]"
 
 echo "== 2. reinstall without the Desktop icon"

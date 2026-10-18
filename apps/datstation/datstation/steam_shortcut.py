@@ -31,7 +31,8 @@ def ours(item: dict) -> bool:
 
 
 def entry(launcher: Path, logo: Path) -> dict:
-    return steam.shortcut_entry(f'"{launcher}"', APP_NAME, f'"{launcher.parent}/"', str(logo), "", TAGS)
+    return steam.shortcut_entry(f'"{launcher}"', APP_NAME, f'"{launcher.parent}/"', str(steam.shortcut_icon(logo)),
+                                "", TAGS)
 
 
 def in_steam(folder: Path) -> bool:

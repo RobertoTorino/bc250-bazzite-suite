@@ -84,7 +84,8 @@ fi
 
 # --- Checks ------------------------------------------------------------------------------------
 [ "$(uname -s)" = Linux ] || die "This app runs on Linux (Bazzite) only."
-for f in requirements.txt VERSION decky_manager/__main__.py decky_manager/loader.py "images/$APP_ID.png"; do
+for f in requirements.txt VERSION decky_manager/__main__.py decky_manager/loader.py \
+         "images/$APP_ID.webp" "images/$APP_ID-128.png"; do
     [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from a clone or the extracted release folder."
 done
 [ -f "$CORE_SRC/__init__.py" ] || die "bc250_core is missing: run install.sh from a clone or the extracted release folder."
@@ -140,7 +141,7 @@ Name=$APP_NAME
 GenericName=Decky Loader manager
 Comment=Install Decky Loader for Game Mode plugins, and see its service and plugins
 Exec=$LAUNCHER
-Icon=$APP_DIR/images/$APP_ID.png
+Icon=$APP_DIR/images/$APP_ID-128.png
 Terminal=false
 Categories=Game;Utility;
 Keywords=BC-250;Bazzite;Decky;Decky Loader;plugins;Game Mode;Steam;

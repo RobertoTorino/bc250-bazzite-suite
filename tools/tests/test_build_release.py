@@ -121,7 +121,7 @@ def test_demo_tool_release_has_the_standard_layout_and_omits_suite_marker(tmp_pa
 
     assert f"{DEMO_TOOL_TAG}/install.sh" in names
     assert f"{DEMO_TOOL_TAG}/demo_tool/__main__.py" in names
-    assert f"{DEMO_TOOL_TAG}/images/simple-demo-tool.png" in names
+    assert f"{DEMO_TOOL_TAG}/images/simple-demo-tool.webp" in names
     assert f"{DEMO_TOOL_TAG}/install" not in names
     assert f"{DEMO_TOOL_TAG}/.standalone" not in names
     assert not any("/tests/" in name for name in names)

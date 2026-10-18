@@ -66,7 +66,7 @@ def names(games: Iterable[Game]) -> dict[str, str]:
 
 
 def entry(game: Game, name: str, run: Path, logo: Path) -> dict:
-    icon = game.picture("icon0.png") or logo
+    icon = game.picture("icon0.png") or steam.shortcut_icon(logo)
     return steam.shortcut_entry(f'"{run}"', name, f'"{run.parent}/"', str(icon), launch_options(game), TAGS)
 
 

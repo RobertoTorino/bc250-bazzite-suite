@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![Decky Loader Manager](../assets/decky/bc250-decky-manager.png){ .app-logo }
+![Decky Loader Manager](../assets/decky/bc250-decky-manager.webp){ .app-logo }
 
 # Decky Loader Manager
 

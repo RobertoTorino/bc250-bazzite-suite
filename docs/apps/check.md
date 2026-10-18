@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![BC-250 Bazzite Test](../assets/check/bc250-bazzite-test.png){ .app-logo }
+![BC-250 Bazzite Test](../assets/check/bc250-bazzite-test.webp){ .app-logo }
 
 # BC-250 Bazzite Test
 

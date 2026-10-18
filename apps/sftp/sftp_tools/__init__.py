@@ -4,14 +4,14 @@ Bazzite host from another computer."""
 
 APP_NAME = "Bazzite SFTP Tools"
 APP_ID = "bc250-bazzite-sftp-tools"
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 from pathlib import Path
 
 from bc250_core import AppInfo
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
+LOGO_PATH = ROOT / "images" / f"{APP_ID}.webp"
 
 # Settings, profiles in ~/.config/bc250-bazzite-sftp-tools/, the log in ~/.local/share/bc250-bazzite-sftp-tools/
 INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="sftp-v",

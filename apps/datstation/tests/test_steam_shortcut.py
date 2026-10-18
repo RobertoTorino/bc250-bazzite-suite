@@ -35,7 +35,8 @@ def test_the_entry_and_recognising_it(tmp_path):
     launcher = _launcher(tmp_path)
     entry = steam_shortcut.entry(launcher, LOGO_PATH)
     assert entry["AppName"] == APP_NAME and entry["Exe"] == f'"{launcher}"' and entry["LaunchOptions"] == ""
-    assert entry["StartDir"] == f'"{launcher.parent}/"' and entry["icon"] == str(LOGO_PATH)
+    assert entry["StartDir"] == f'"{launcher.parent}/"'
+    assert entry["icon"] == str(LOGO_PATH.with_name(f"{LOGO_PATH.stem}-128.png"))   # the PNG beside the WebP icon
     assert list(entry["tags"].values()) == ["PlayStation", APP_NAME]
     assert steam_shortcut.ours(entry) and not steam_shortcut.ours(OTHER)
     assert steam_shortcut.ours({"Exe": f"/x/{APP_ID}"}) and not steam_shortcut.ours({"Exe": f"/x/{APP_ID}-other"})
@@ -76,7 +77,7 @@ def test_the_artwork_has_steams_sizes(qapp):
     for suffix in ("p", "", "_hero"):
         image = QImage.fromData(art[suffix], "PNG")
         assert (image.width(), image.height()) == steam.ART[suffix], suffix
-    assert art["_logo"] == LOGO_PATH.read_bytes()
+    assert QImage.fromData(art["_logo"], "PNG").size() == QImage(str(LOGO_PATH)).size()   # the icon, as PNG
 
 
 def test_refusals(tmp_path):

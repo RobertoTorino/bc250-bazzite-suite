@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![BC-250 GPU OC Bisect](../assets/oc/bc250-gpu-oc-bisect.png){ .app-logo }
+![BC-250 GPU OC Bisect](../assets/oc/bc250-gpu-oc-bisect.webp){ .app-logo }
 
 # BC-250 GPU OC Bisect
 

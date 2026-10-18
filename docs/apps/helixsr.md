@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![HelixSR Manager](../assets/helixsr/bc250-bazzite-helixsr-gui.png){ .app-logo }
+![HelixSR Manager](../assets/helixsr/bc250-bazzite-helixsr-gui.webp){ .app-logo }
 
 # HelixSR Manager
 

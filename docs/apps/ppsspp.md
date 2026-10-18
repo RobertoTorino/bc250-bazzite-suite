@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![PPSSPP Manager](../assets/ppsspp/bc250-ppsspp-manager.png){ .app-logo }
+![PPSSPP Manager](../assets/ppsspp/bc250-ppsspp-manager.webp){ .app-logo }
 
 # PPSSPP Manager
 

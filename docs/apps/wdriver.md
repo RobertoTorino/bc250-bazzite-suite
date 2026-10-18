@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![BC-250 USB Wi-Fi](../assets/wdriver/bc250-usb-wifi.png){ .app-logo }
+![BC-250 USB Wi-Fi](../assets/wdriver/bc250-usb-wifi.webp){ .app-logo }
 
 # BC-250 USB Wi-Fi
 

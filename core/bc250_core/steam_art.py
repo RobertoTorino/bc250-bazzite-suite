@@ -3,8 +3,8 @@
 the four images of steam.ART as PNG bytes. The background is near black in the icon's own colour (the mean of its
 bright, saturated pixels), lighter towards the middle, with a glow of that colour; the portrait and the wide picture
 have the icon with a title and a line under it, the banner the title and its own line centred, as a game's banner has
-its title; the logo Steam lays over the banner (bottom left) is the icon file itself. So the artwork follows the icon
-when the icon changes. Without the icon: a dark blue background and the title as the logo.
+its title; the logo Steam lays over the banner (bottom left) is the icon file itself (as PNG). So the artwork follows
+the icon when the icon changes. Without the icon: a dark blue background and the title as the logo.
 
 Moved here from BC250 Console Link (16-10-2026), which drew it first."""
 
@@ -28,7 +28,8 @@ def draw_icon_art(icon: Path, title: str, subtitle: str = "", hero_subtitle: str
     images = {}
     for suffix, (width, height) in ART.items():
         if suffix == "_logo":
-            images[suffix] = icon.read_bytes() if not source.isNull() else _png(_text_logo(title, width, height))
+            images[suffix] = (_png(_text_logo(title, width, height)) if source.isNull()
+                              else icon.read_bytes() if icon.suffix.lower() == ".png" else _png(source))
             continue
         image = QImage(width, height, QImage.Format.Format_ARGB32)
         painter = QPainter(image)

@@ -13,6 +13,7 @@ from bc250_core import steam
 from ppsspp_manager import LOGO_PATH, shortcuts
 from ppsspp_manager.games import Game, read_disc, read_pbp
 
+PNG_ICON = LOGO_PATH.with_name(f"{LOGO_PATH.stem}-128.png")      # Steam gets the PNG beside the WebP icon
 RUN = Path("/home/u/.local/bin/bc250-ppsspp-run")
 OTHER = {"appid": -1234, "AppName": "RetroArch", "Exe": '"/usr/bin/retroarch"', "LaunchOptions": "--fullscreen x"}
 
@@ -32,7 +33,7 @@ def test_the_launch_line_and_whose_shortcut_it_is():
     odd = Game(Path('/games/A "B" $C.iso'), "Odd")
     assert shlex.split(shortcuts.launch_options(odd))[-1] == str(odd.file)        # single quotes then
     item = shortcuts.entry(game, "My Game", RUN, LOGO_PATH)
-    assert item["Exe"] == f'"{RUN}"' and item["StartDir"] == f'"{RUN.parent}/"' and item["icon"] == str(LOGO_PATH)
+    assert item["Exe"] == f'"{RUN}"' and item["StartDir"] == f'"{RUN.parent}/"' and item["icon"] == str(PNG_ICON)
     assert item["tags"] == {"0": "PSP", "1": "PPSSPP Manager"}
     assert shortcuts.ours(item) and shortcuts.for_game(game)(item)
     assert not shortcuts.for_game(Game(Path("/games/Other.iso"), "Other"))(item)

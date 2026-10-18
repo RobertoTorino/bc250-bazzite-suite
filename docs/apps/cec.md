@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![HDMI CEC Manager](../assets/cec/bc250-hdmi-cec.png){ .app-logo }
+![HDMI CEC Manager](../assets/cec/bc250-hdmi-cec.webp){ .app-logo }
 
 # HDMI CEC Manager
 

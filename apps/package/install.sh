@@ -83,7 +83,8 @@ fi
 [ "$(uname -s)" = Linux ] || die "This app runs on Linux (Bazzite) only."
 [ -f "$SRC/requirements.txt" ] || die "requirements.txt is missing: run install.sh from a clone or the extracted release folder."
 [ -f "$SRC/VERSION" ] || die "VERSION is missing: run install.sh from a clone or the extracted release folder."
-for f in package_checker/__main__.py package_checker/dependencies.toml images/bc250-dependency-checker.png; do
+for f in package_checker/__main__.py package_checker/dependencies.toml \
+         images/bc250-dependency-checker.webp images/bc250-dependency-checker-128.png; do
     [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from a clone or the extracted release folder."
 done
 [ -f "$CORE_SRC/__init__.py" ] || die "bc250_core is missing: run install.sh from a clone or the extracted release folder."
@@ -134,7 +135,7 @@ Name=$APP_NAME
 GenericName=BC-250 dependency checker
 Comment=Check suite Python package updates and external tool availability
 Exec=$LAUNCHER
-Icon=$APP_DIR/images/bc250-dependency-checker.png
+Icon=$APP_DIR/images/bc250-dependency-checker-128.png
 Terminal=false
 Categories=System;Utility;
 Keywords=BC-250;Bazzite;dependencies;updates;PyPI;

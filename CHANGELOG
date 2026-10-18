@@ -1,3 +1,27 @@
+Changelog: 18-10-2026 22:28:23
+
+The icons are WebP now: the category icons in icons/ at 1024, 512 and 256 px, every app's images/<app-id>.webp,
+the portal's tiles and its own icon. Only the 128 px icon stays PNG, for what a desktop or Steam may not read as
+WebP: the menu entries and Desktop icons point at images/<app-id>-128.png, the installers that put an icon in the
+hicolor theme put that one in 128x128/apps (and take the old 512 px one out), Steam shortcuts get it through core's
+steam.shortcut_icon() and Bazzite Test's notifications use it. The apps (through Qt), the wiki, the release
+planner and the Windows build read the WebP icons. The category icons take 1.5 MB instead of 9.9 MB, the copies in
+the apps and the portal 4.4 MB instead of 18.3 MB. The owner's new sustainable and utilities icons replace the ones
+of 21:14:04.
+
+Changelog: 18-10-2026 21:14:04
+
+The owner's sustainable, utilities and development icons replace the placeholders in icons/; tools/sync_icons.py
+wrote the copies of every app in those categories and their portal tiles.
+
+Changelog: 18-10-2026 19:08:16
+
+App icons come per category now, kept once in icons/<category>/ at 1024, 512, 256 and 128 px. icons/categories.toml
+gives each app its category and names its copies (the app's images/<app-id>.png and -128.png, the portal's tile);
+tools/sync_icons.py writes them and tools/tests/test_icons.py fails on a copy that is out of date or an app icon
+with no category. tools/tests/test_portal_icons.py checks only the portal's own tile now. Gaming and graphics have
+the new icons; sustainable, utilities and development have placeholders.
+
 Changelog: 17-10-2026 14:10:30
 
 The naming convention applied to System Overlay: apps/system-overlay is apps/overlay with the package

@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![Bazzite SFTP Tools](../assets/sftp/bc250-bazzite-sftp-tools.png){ .app-logo }
+![Bazzite SFTP Tools](../assets/sftp/bc250-bazzite-sftp-tools.webp){ .app-logo }
 
 # Bazzite SFTP Tools
 

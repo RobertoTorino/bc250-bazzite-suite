@@ -1,3 +1,9 @@
+Changelog: 18-10-2026 22:28:23
+
+Added. steam.shortcut_icon(): the icon file for a Steam shortcut, the PNG beside an app's WebP icon
+(images/<app-id>-128.png), as Steam may not read WebP. steam_art.draw_icon_art() writes the logo over the banner as
+PNG when the icon is not one, since Steam's grid files are PNG.
+
 Changelog: 16-10-2026 04:52:58
 
 Added. steam_art.draw_icon_art(): the four pictures of a Steam shortcut drawn from an app's icon, for apps with no

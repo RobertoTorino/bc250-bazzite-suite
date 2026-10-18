@@ -76,7 +76,7 @@ fi
 
 # --- Checks ------------------------------------------------------------------------------------
 [ "$(uname -s)" = Linux ] || die "This app runs on Linux (Bazzite) only."
-for f in requirements.txt VERSION system_overlay/__main__.py "images/$APP_ID.png"; do
+for f in requirements.txt VERSION system_overlay/__main__.py "images/$APP_ID.webp" "images/$APP_ID-128.png"; do
     [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from a clone or the extracted release folder."
 done
 [ -f "$CORE_SRC/__init__.py" ] || die "bc250_core is missing: run install.sh from a clone or the extracted release folder."
@@ -132,7 +132,7 @@ Name=$APP_NAME
 GenericName=BC-250 system overlay
 Comment=CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top
 Exec=$LAUNCHER
-Icon=$APP_DIR/images/$APP_ID.png
+Icon=$APP_DIR/images/$APP_ID-128.png
 Terminal=false
 Categories=System;Monitor;
 Keywords=BC-250;Bazzite;overlay;monitor;temperature;fan;CPU;GPU;

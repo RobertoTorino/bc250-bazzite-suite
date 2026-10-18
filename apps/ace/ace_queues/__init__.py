@@ -4,14 +4,14 @@ it beside the system Mesa, tests the queues and lets chosen games (or every app)
 
 APP_NAME = "BC-250 ACE Queues"
 APP_ID = "bc250-ace-queues"
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 from pathlib import Path
 
 from bc250_core import AppInfo
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
+LOGO_PATH = ROOT / "images" / f"{APP_ID}.webp"
 SCRIPT = ROOT / "bc250-ace-queues.sh"
 
 # Settings in ~/.config/bc250-ace-queues/bc250-ace-queues.ini

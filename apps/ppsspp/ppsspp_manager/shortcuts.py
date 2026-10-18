@@ -68,7 +68,8 @@ def names(games: Iterable[Game]) -> dict[Path, str]:
 
 
 def entry(game: Game, name: str, run: Path, logo: Path) -> dict:
-    return steam.shortcut_entry(f'"{run}"', name, f'"{run.parent}/"', str(logo), launch_options(game), TAGS)
+    return steam.shortcut_entry(f'"{run}"', name, f'"{run.parent}/"', str(steam.shortcut_icon(logo)),
+                                launch_options(game), TAGS)
 
 
 def in_steam(folder: Path) -> dict[str, str]:

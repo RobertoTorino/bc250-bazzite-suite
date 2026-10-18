@@ -216,7 +216,7 @@ def test_installer_creates_desktop_entries_and_uninstalls_only_them(tmp_path: Pa
     assert launcher.stat().st_mode & 0o777 == 0o755
     assert f'exec "{APP_DIR}/run.sh" "$@"' in launcher.read_text(encoding="utf-8")
     assert f'Exec="{launcher}"' in menu_entry.read_text(encoding="utf-8")
-    assert f"Icon={APP_DIR}/images/bc250-installer-test-gui.png" in desktop_entry.read_text(encoding="utf-8")
+    assert f"Icon={APP_DIR}/images/bc250-installer-test-gui-128.png" in desktop_entry.read_text(encoding="utf-8")
     assert desktop_entry.stat().st_mode & 0o111
 
     without_desktop = subprocess.run(

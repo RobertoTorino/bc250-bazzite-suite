@@ -72,7 +72,7 @@ fi
 
 # --- Checks ------------------------------------------------------------------------------------
 [ "$(uname -s)" = Linux ] || die "This installer is for Linux (Bazzite); elsewhere run: python -m $PACKAGE from the checkout."
-for f in requirements.txt VERSION "$PACKAGE/__main__.py" "images/$APP_ID.png"; do
+for f in requirements.txt VERSION "$PACKAGE/__main__.py" "images/$APP_ID.webp" "images/$APP_ID-128.png"; do
     [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from a clone or the extracted release folder."
 done
 [ -f "$CORE_SRC/__init__.py" ] || die "bc250_core is missing: run install.sh from a clone or the extracted release folder."
@@ -130,7 +130,7 @@ Name=$APP_NAME
 GenericName=PlayStation Quiz and Reference
 Comment=PlayStation quiz, history, system versions, region codes, user guides and news
 Exec=$LAUNCHER
-Icon=$APP_DIR/images/$APP_ID.png
+Icon=$APP_DIR/images/$APP_ID-128.png
 Terminal=false
 Categories=Game;Education;
 Keywords=PlayStation;PS1;PS2;PS3;PS4;PS5;PSP;Vita;quiz;Bazzite;

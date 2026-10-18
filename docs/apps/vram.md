@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![BC-250 Memory Manager](../assets/vram/bc250-memory-manager.png){ .app-logo }
+![BC-250 Memory Manager](../assets/vram/bc250-memory-manager.webp){ .app-logo }
 
 # BC-250 Memory Manager
 

@@ -19,7 +19,7 @@ echo "== 1. install"
 bash "$SUITE/apps/dtool/install.sh" > "$T/install.log" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "launcher and menu entry" "[ -x $L ] && grep -qx 'Exec=$L' $M"
-check "package and icons installed" "[ -f $XDG_DATA_HOME/$APP/demo_tool/__main__.py ] && [ -f $XDG_DATA_HOME/$APP/images/simple-demo-tool.png ]"
+check "package and icons installed" "[ -f $XDG_DATA_HOME/$APP/demo_tool/__main__.py ] && [ -f $XDG_DATA_HOME/$APP/images/simple-demo-tool.webp ] && [ -f $XDG_DATA_HOME/$APP/images/simple-demo-tool-128.png ]"
 check "desktop shortcut" "[ -x $I ]"
 check "recordings folder created" "[ -d $R ]"
 printf 'keep this recording\n' > "$R/keep.mkv"

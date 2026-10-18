@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![shadPS4 Manager](../assets/shadps4/bc250-shadps4-manager.png){ .app-logo }
+![shadPS4 Manager](../assets/shadps4/bc250-shadps4-manager.webp){ .app-logo }
 
 # shadPS4 Manager
 

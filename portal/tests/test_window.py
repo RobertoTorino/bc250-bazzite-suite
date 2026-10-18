@@ -69,7 +69,7 @@ def test_every_card_has_its_icon(qapp, home, settings_dir, tmp_path, launched):
     entries = load(MANIFEST) + load_checkout(MANIFEST)
     w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
     for key, card in w.cards.items():
-        assert (mw.APP_ICONS / f"{key}.png").is_file(), key
+        assert (mw.APP_ICONS / f"{key}.webp").is_file(), key
         assert card.has_icon and card.icon.iconSize().width() == mw.ICON_PX, key
     w.close()
 
@@ -79,7 +79,7 @@ def test_open_menu_shows_each_window_icon(window):
         actions = window.cards[key].icon.menu().actions()
         assert [a.text() for a in actions] == ["Bisect", "Unlock"]
         assert all(not a.icon().isNull() for a in actions), key
-        assert (mw.APP_ICONS / f"{mw.LAUNCH_ICON_FILES[(key, 'Unlock')]}.png").is_file()
+        assert (mw.APP_ICONS / f"{mw.LAUNCH_ICON_FILES[(key, 'Unlock')]}.webp").is_file()
 
 
 def test_card_without_icon_file_shows_its_initial(qapp, home, settings_dir, tmp_path, launched, monkeypatch):

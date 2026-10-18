@@ -20,8 +20,8 @@ echo "== 1. install"
 bash "$G/install.sh" > "$T/log1" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "launcher runs this checkout's run.sh" "[ -x $L ] && grep -qF 'exec \"$G/run.sh\"' $L"
-check "menu entry" "grep -qx 'Exec=\"$L\"' $M && grep -qx 'Icon=$G/images/$APP.png' $M && grep -qx 'StartupWMClass=$APP' $M"
-check "the icon exists" "[ -f $G/images/$APP.png ]"
+check "menu entry" "grep -qx 'Exec=\"$L\"' $M && grep -qx 'Icon=$G/images/$APP-128.png' $M && grep -qx 'StartupWMClass=$APP' $M"
+check "the icon exists" "[ -f $G/images/$APP.webp ] && [ -f $G/images/$APP-128.png ]"
 check "desktop icon, executable" "[ -x $I ]"
 
 echo "== 2. again without the Desktop icon"

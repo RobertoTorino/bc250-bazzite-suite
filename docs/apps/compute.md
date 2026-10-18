@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![BC-250 CU Bisect](../assets/compute/bc250-cu-bisect.png){ .app-logo }
+![BC-250 CU Bisect](../assets/compute/bc250-cu-bisect.webp){ .app-logo }
 
 # BC-250 CU Bisect
 

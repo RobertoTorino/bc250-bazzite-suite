@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![RPCS3 Manager](../assets/rpcs3/bc250-rpcs3-manager.png){ .app-logo }
+![RPCS3 Manager](../assets/rpcs3/bc250-rpcs3-manager.webp){ .app-logo }
 
 # RPCS3 Manager
 

@@ -178,7 +178,7 @@ class AppTile(QFrame):
         under.setSpacing(2)
         row.addLayout(under)
 
-        file = APP_ICONS / f"{entry.key}.png"
+        file = APP_ICONS / f"{entry.key}.webp"
         loaded = QPixmap(str(file)) if file.is_file() else QPixmap()
         self.has_icon = not loaded.isNull()
         pixmap = loaded.scaled(ICON_PX, ICON_PX, Qt.AspectRatioMode.KeepAspectRatio,
@@ -202,7 +202,7 @@ class AppTile(QFrame):
             menu = QMenu(self.icon)
             for label, command in entry.launch:
                 action = menu.addAction(label, lambda c=command: self.open_clicked.emit(self.entry, c))
-                own = APP_ICONS / f"{LAUNCH_ICON_FILES.get((entry.key, label), '')}.png"
+                own = APP_ICONS / f"{LAUNCH_ICON_FILES.get((entry.key, label), '')}.webp"
                 action.setIcon(QIcon(str(own)) if (entry.key, label) in LAUNCH_ICON_FILES and own.is_file()
                                else QIcon(pixmap))
             self.icon.setMenu(menu)

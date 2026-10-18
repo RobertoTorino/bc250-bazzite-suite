@@ -4,14 +4,14 @@ games through it, finds the games Vita3K has installed and adds them to Steam fo
 
 APP_NAME = "Vita3K Manager"
 APP_ID = "bc250-vita3k-manager"
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 
 from pathlib import Path
 
 from bc250_core import AppInfo
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
+LOGO_PATH = ROOT / "images" / f"{APP_ID}.webp"
 
 # Settings in ~/.config/bc250-vita3k-manager/bc250-vita3k-manager.ini
 INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="vita3k-v",

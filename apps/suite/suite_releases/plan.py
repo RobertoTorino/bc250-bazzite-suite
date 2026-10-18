@@ -581,9 +581,10 @@ def launch_targets(root: Path = SUITE) -> list[Launch]:
             except OSError:
                 init = ""
             consts = dict(_CONSTANT.findall(init))
-            # The icon: the .png its __init__ names (its LOGO_PATH), else the one named after APP_ID, else the first
-            # that is not a numbered screenshot.
-            images = sorted((app / "images").glob("*.png")) + sorted((package.parent / "images").glob("*.png"))
+            # The icon: the picture its __init__ names (its LOGO_PATH), else the one named after APP_ID, else the
+            # first that is not a numbered screenshot.
+            images = [p for folder in (app / "images", package.parent / "images")
+                      for p in sorted(folder.glob("*.*")) if p.suffix in (".webp", ".png")]
             named = [p for p in images if f'"{p.name}"' in init] + [p for p in images if p.stem == consts.get("APP_ID")]
             icon = (named or [p for p in images if not p.stem[:1].isdigit()] or [None])[0]
             found.append(Launch(app.name, package.name, consts.get("APP_NAME", package.name), package.parent, version,
@@ -605,7 +606,7 @@ def docs_target(root: Path = SUITE) -> Launch | None:
     site = re.search(r"^site_url:\s*(\S+)", text, re.M)
     path = urlparse(site[1]).path.strip("/") if site else ""
     path = f"/{path}/" if path else "/"
-    icon = root / "portal" / "images" / "bc250-bazzite-suite.png"
+    icon = root / "portal" / "images" / "bc250-bazzite-suite.webp"
     return Launch("docs", "mkdocs", "Manual (local)", root, "", False, icon if icon.is_file() else None,
                   ("serve", "--dev-addr", DOCS_ADDRESS), f"http://{DOCS_ADDRESS}{path}")
 

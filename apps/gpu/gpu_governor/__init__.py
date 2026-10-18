@@ -3,12 +3,12 @@
 
 APP_NAME = "BC-250 GPU Governor Manager"
 APP_ID = "bc250-governor-manager"
-__version__ = "0.1.9"
+__version__ = "0.1.10"
 
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
+LOGO_PATH = ROOT / "images" / f"{APP_ID}.webp"
 WINDOW_ICON_PATH = LOGO_PATH
 FONT_DIR = Path(__file__).resolve().parent / "fonts"
 DISPLAY_NAME = f"{APP_NAME} {__version__}"

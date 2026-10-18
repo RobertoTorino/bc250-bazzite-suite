@@ -165,7 +165,7 @@ def build(app: str, out: Path) -> tuple[Path, Path]:
         launcher = work / f"{exe_name}.py"
         launcher.write_text(launcher_source(package), encoding="utf-8")
         import PyInstaller.__main__ as pyinstaller      # only the build needs it
-        pyinstaller.run(pyinstaller_args(stage, launcher, package, exe_name, stage / "images" / f"{name}.png",
+        pyinstaller.run(pyinstaller_args(stage, launcher, package, exe_name, stage / "images" / f"{name}.webp",
                                          work / "build", work / "dist"))
         exe = next((work / "dist").glob(f"{exe_name}*"), None)
         if exe is None:

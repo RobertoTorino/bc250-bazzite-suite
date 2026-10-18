@@ -4,14 +4,14 @@ switch it to the board, and the automatic behaviour of Valve's CEC daemon (cecd)
 
 APP_NAME = "HDMI CEC Manager"
 APP_ID = "bc250-hdmi-cec"
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 from pathlib import Path
 
 from bc250_core import AppInfo
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
+LOGO_PATH = ROOT / "images" / f"{APP_ID}.webp"
 
 # Settings in ~/.config/bc250-hdmi-cec/bc250-hdmi-cec.ini
 INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="cec-v",

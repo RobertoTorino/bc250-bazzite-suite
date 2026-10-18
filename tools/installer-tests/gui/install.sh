@@ -16,7 +16,7 @@ LAUNCHER="$HOME/.local/bin/$APP_ID"
 MENU_ENTRY="$DATA_DIR/applications/$APP_ID.desktop"
 DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
 DESKTOP_ENTRY="$DESKTOP_DIR/$APP_ID.desktop"
-ICON="$APP/images/$APP_ID.png"
+ICON="$APP/images/$APP_ID-128.png"
 shortcut=true
 uninstall=false
 purge=false
@@ -46,7 +46,7 @@ if $uninstall; then
 fi
 
 [ "$(uname -s)" = Linux ] || die "This installer creates Linux desktop entries."
-[ -f "$APP/run.sh" ] && [ -f "$APP/images/$APP_ID.png" ] &&
+[ -f "$APP/run.sh" ] && [ -f "$APP/images/$APP_ID.webp" ] && [ -f "$ICON" ] &&
     [ -f "$APP/installer_test_gui/__main__.py" ] ||
     die "Run install.sh from the complete installer test GUI folder."
 

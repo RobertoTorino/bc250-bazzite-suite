@@ -27,6 +27,15 @@ def test_steams_sizes_and_the_icon_as_logo(qapp, tmp_path):
         assert (image.width(), image.height()) == ART[suffix], suffix
 
 
+def test_a_webp_icon_is_the_logo_as_png(qapp, tmp_path):
+    """Steam's grid files are PNG: an app's WebP icon goes in as PNG, the same picture."""
+    from PyQt6.QtGui import QImage
+    icon = tmp_path / "icon.webp"
+    QImage(str(_icon(tmp_path, "#d4a017"))).save(str(icon), "WEBP")
+    logo = steam_art.draw_icon_art(icon, "Title")["_logo"]
+    assert logo.startswith(b"\x89PNG") and QImage.fromData(logo, "PNG").size() == QImage(str(icon)).size()
+
+
 def test_the_background_takes_the_icons_colour(qapp, tmp_path):
     from PyQt6.QtGui import QColor, QImage
     for colour, warm in (("#d4a017", True), ("#1e64c8", False)):

@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![BC-250 Cores Bisect](../assets/cores/bc250-cores-bisect.png){ .app-logo }
+![BC-250 Cores Bisect](../assets/cores/bc250-cores-bisect.webp){ .app-logo }
 
 # BC-250 Cores Bisect
 
@@ -276,7 +276,7 @@ scope here: this project stays software-only and reversible.
 
 ## GUI
 
-![BC-250 Cores Unlock](../assets/cores/bc250-cores-unlock.png){ width="96" }
+![BC-250 Cores Unlock](../assets/cores/bc250-cores-unlock.webp){ width="96" }
 
 Two separate PyQt6 front-ends ship with the project: a **setup GUI** that
 starts a bisect run, and an **unlock GUI** for the persistence step afterwards. Both are optional —

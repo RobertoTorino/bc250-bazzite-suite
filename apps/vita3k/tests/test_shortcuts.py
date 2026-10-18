@@ -13,6 +13,7 @@ from bc250_core import steam
 from vita3k_manager import LOGO_PATH, shortcuts
 from vita3k_manager.games import Game, read_game
 
+PNG_ICON = LOGO_PATH.with_name(f"{LOGO_PATH.stem}-128.png")      # Steam gets the PNG beside the WebP icon
 RUN = Path("/home/u/.local/bin/bc250-vita3k-run")
 OTHER = {"appid": -1234, "AppName": "RetroArch", "Exe": '"/usr/bin/retroarch"', "LaunchOptions": "-r PCSB00245"}
 
@@ -31,7 +32,7 @@ def test_the_launch_line_and_whose_shortcut_it_is():
     odd = Game(Path("/vita/ux0/app/my homebrew"), "Odd")
     assert shlex.split(shortcuts.launch_options(odd)) == ["--frontend", "sdl", "-r", "my homebrew"]
     item = shortcuts.entry(game, "[PS Vita] Persona 4 Golden", RUN, LOGO_PATH)
-    assert item["Exe"] == f'"{RUN}"' and item["StartDir"] == f'"{RUN.parent}/"' and item["icon"] == str(LOGO_PATH)
+    assert item["Exe"] == f'"{RUN}"' and item["StartDir"] == f'"{RUN.parent}/"' and item["icon"] == str(PNG_ICON)
     assert item["tags"] == {"0": "PS Vita", "1": "Vita3K Manager"}
     assert shortcuts.ours(item) and shortcuts.for_game(game)(item)
     assert not shortcuts.for_game(Game(Path("/vita/ux0/app/PCSE00001"), "Other"))(item)

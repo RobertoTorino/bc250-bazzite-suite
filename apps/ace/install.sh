@@ -94,7 +94,7 @@ fi
 [ "$(uname -s)" = Linux ] || die "This app runs on Linux (Bazzite) only."
 for f in bc250-ace-queues.sh bc250-ace-queues-run mesa/build-in-container.sh mesa/gfx1013-ace-queue.patch \
          mesa/release-maintainers-keys.asc acetest/ace-test.c requirements.txt VERSION \
-         ace_queues/__main__.py "images/$APP_ID.png"; do
+         ace_queues/__main__.py "images/$APP_ID.webp" "images/$APP_ID-128.png"; do
     [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from a clone or the extracted release folder."
 done
 [ -f "$CORE_SRC/__init__.py" ] || die "bc250_core is missing: run install.sh from a clone or the extracted release folder."
@@ -172,7 +172,7 @@ Name=$APP_NAME
 GenericName=BC-250 async compute
 Comment=Async compute for games on the BC-250: a patched RADV beside the system Mesa, tested before use
 Exec=$LAUNCHER
-Icon=$LINK/images/$APP_ID.png
+Icon=$LINK/images/$APP_ID-128.png
 Terminal=false
 Categories=System;Settings;
 Keywords=BC-250;Bazzite;async;compute;ACE;RADV;Mesa;Vulkan;

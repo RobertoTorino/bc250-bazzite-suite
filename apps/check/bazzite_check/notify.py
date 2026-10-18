@@ -7,7 +7,7 @@ import shutil
 
 from PyQt6.QtCore import QProcess
 
-from . import DISPLAY_NAME, LOGO_PATH
+from . import DISPLAY_NAME, ICON_PATH
 
 
 def notify(summary: str, body: str) -> bool:
@@ -15,6 +15,6 @@ def notify(summary: str, body: str) -> bool:
     exe = shutil.which("notify-send")
     if not exe:
         return False
-    args = ["--app-name", DISPLAY_NAME, "--icon", str(LOGO_PATH), summary, body]
+    args = ["--app-name", DISPLAY_NAME, "--icon", str(ICON_PATH), summary, body]
     ok, _pid = QProcess.startDetached(exe, args)
     return ok

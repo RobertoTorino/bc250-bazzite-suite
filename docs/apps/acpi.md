@@ -1,4 +1,4 @@
-![BC-250 Persistent ACPI](../assets/acpi/bc250-persistent-acpi.png){ .app-logo }
+![BC-250 Persistent ACPI](../assets/acpi/bc250-persistent-acpi.webp){ .app-logo }
 
 # BC-250 Persistent ACPI
 

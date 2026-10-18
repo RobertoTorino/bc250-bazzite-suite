@@ -52,6 +52,15 @@ def test_the_entry_and_its_appid():
     assert entry["tags"] == {"0": "A", "1": "B"} and entry["LastPlayTime"] == 0
 
 
+def test_the_shortcut_icon_is_the_png_beside_a_webp_icon(tmp_path):
+    logo, png = tmp_path / "app.webp", tmp_path / "app-128.png"
+    logo.write_bytes(b"W")
+    assert steam.shortcut_icon(logo) == logo                                  # no PNG beside it: the logo itself
+    png.write_bytes(b"P")
+    assert steam.shortcut_icon(logo) == png
+    assert steam.shortcut_icon(tmp_path / "icon0.png") == tmp_path / "icon0.png"     # a PNG as it is
+
+
 def test_several_shortcuts_in_one_write(tmp_path):
     folder = _steam(tmp_path, users=2)
     first, second = _game("Game one", "-g /a"), _game("Game two", "-g /b")

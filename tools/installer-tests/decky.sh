@@ -21,7 +21,7 @@ echo "== 1. install from the suite checkout"
 bash "$SUITE/apps/decky/install.sh" > "$T/log1" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "no sudo used" "! grep -q 'sudo called' $T/log1 && [ -z \"\$(ls -A $T/opt)\" ]"
-check "app copied, with the root part" "[ -f $A/decky_manager/main_window.py ] && [ -f $A/decky_manager/loader.py ] && [ -f $A/images/$APP.png ]"
+check "app copied, with the root part" "[ -f $A/decky_manager/main_window.py ] && [ -f $A/decky_manager/loader.py ] && [ -f $A/images/$APP.webp ] && [ -f $A/images/$APP-128.png ]"
 check "core bundled from checkout" "[ -f $A/bc250_core/updates.py ]"
 check "no tests or caches copied" "[ ! -d $A/tests ] && ! find $A -name __pycache__ | grep -q ."
 check "shared venv and its user marker" "[ -x $D/bc250-bazzite-suite/venv/bin/python ] && [ -f $D/bc250-bazzite-suite/venv-users/$APP ]"

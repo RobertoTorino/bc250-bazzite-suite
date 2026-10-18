@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![BC-250 Mesh Shaders](../assets/mesh/bc250-mesh-shaders.png){ .app-logo }
+![BC-250 Mesh Shaders](../assets/mesh/bc250-mesh-shaders.webp){ .app-logo }
 
 # BC-250 Mesh Shaders
 

@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![BC250 Bazzite Suite](assets/portal/bc250-bazzite-suite.png){ .app-logo }
+![BC250 Bazzite Suite](assets/portal/bc250-bazzite-suite.webp){ .app-logo }
 
 # Portal
 

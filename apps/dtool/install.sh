@@ -53,7 +53,7 @@ fi
 [ "$(uname -s)" = Linux ] || die "Simple Demo Tool runs on Linux (Bazzite) only."
 [ -f "$SRC/VERSION" ] && [ -f "$SRC/requirements.txt" ] &&
     [ -f "$SRC/demo_tool/__main__.py" ] &&
-    [ -f "$SRC/images/simple-demo-tool.png" ] &&
+    [ -f "$SRC/images/simple-demo-tool.webp" ] &&
     [ -f "$SRC/images/simple-demo-tool-128.png" ] ||
     die "Run install.sh from the complete Simple Demo Tool folder."
 command -v python3 >/dev/null 2>&1 || die "python3 is not installed."
@@ -91,7 +91,7 @@ Name=Simple Demo Tool
 GenericName=Screen recording helper
 Comment=Prepare and record a portal installation demo
 Exec=$LAUNCHER
-Icon=$APP_DIR/images/simple-demo-tool.png
+Icon=$APP_DIR/images/simple-demo-tool-128.png
 Terminal=false
 Categories=Utility;AudioVideo;
 Keywords=OBS;recording;Bazzite;demo;

@@ -22,7 +22,7 @@ echo "== 1. install from the suite checkout"
 bash "$SUITE/apps/package/install.sh" > "$T/log1" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "no sudo used" "! grep -q 'sudo called' $T/log1 && [ -z \"\$(ls -A $T/opt)\" ]"
-check "app copied" "[ -f $A/package_checker/__main__.py ] && [ -f $A/package_checker/dependencies.toml ] && [ -f $A/images/bc250-dependency-checker.png ] && [ -f $A/requirements.txt ]"
+check "app copied" "[ -f $A/package_checker/__main__.py ] && [ -f $A/package_checker/dependencies.toml ] && [ -f $A/images/bc250-dependency-checker.webp ] && [ -f $A/images/bc250-dependency-checker-128.png ] && [ -f $A/requirements.txt ]"
 check "core bundled from checkout" "[ -f $A/bc250_core/theme.py ]"
 check "no tests or caches copied" "[ ! -d $A/tests ] && [ ! -d $A/.pytest_cache ] && ! find $A -name __pycache__ | grep -q ."
 check "shared venv marker" "[ -f $D/bc250-bazzite-suite/venv-users/$APP ]"

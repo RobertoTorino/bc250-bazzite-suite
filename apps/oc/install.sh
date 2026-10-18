@@ -24,7 +24,7 @@ LINK="$OPT_DIR/$APP_ID"
 
 LAUNCHER="$BIN_DIR/$APP_ID-gui"
 DESKTOP_FILE="$APP_ID-gui.desktop"
-ICON_FILE="images/$APP_ID.png"
+ICON_FILE="images/$APP_ID-128.png"
 
 SRC=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 
@@ -82,7 +82,8 @@ fi
 
 # --- Checks ------------------------------------------------------------------------------------
 [ "$(uname -s)" = Linux ] || die "This app runs on Linux (Bazzite) only."
-for f in bc250-gpu-oc-bisect.sh requirements.txt VERSION oc_bisect/__main__.py "$ICON_FILE"; do
+for f in bc250-gpu-oc-bisect.sh requirements.txt VERSION oc_bisect/__main__.py \
+         "images/$APP_ID.webp" "$ICON_FILE"; do
     [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from a clone or the extracted release folder."
 done
 VERSION=$(tr -d '[:space:]' <"$SRC/VERSION")

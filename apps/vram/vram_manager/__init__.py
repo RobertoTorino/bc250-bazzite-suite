@@ -4,14 +4,14 @@ layout that go with it. The board changes only when you apply a split, and only 
 
 APP_NAME = "BC-250 Memory Manager"
 APP_ID = "bc250-memory-manager"
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 from pathlib import Path
 
 from bc250_core import AppInfo
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
+LOGO_PATH = ROOT / "images" / f"{APP_ID}.webp"
 
 # Settings in ~/.config/bc250-memory-manager/bc250-memory-manager.ini
 INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="vram-v",

@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![Simple Demo Tool](../assets/dtool/simple-demo-tool.png){ .app-logo }
+![Simple Demo Tool](../assets/dtool/simple-demo-tool.webp){ .app-logo }
 
 # Simple Demo Tool
 

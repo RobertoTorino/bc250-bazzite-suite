@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![Vita3K Manager](../assets/vita3k/bc250-vita3k-manager.png){ .app-logo }
+![Vita3K Manager](../assets/vita3k/bc250-vita3k-manager.webp){ .app-logo }
 
 # Vita3K Manager
 

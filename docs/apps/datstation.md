@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![Bazzite DatStation](../assets/datstation/bazzite-datstation.png){ .app-logo }
+![Bazzite DatStation](../assets/datstation/bazzite-datstation.webp){ .app-logo }
 
 # Bazzite DatStation
 

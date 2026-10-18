@@ -95,7 +95,7 @@ fi
 for f in bc250-mesh-shaders.sh bc250-mesh-shaders-run mesa/build-in-container.sh \
          mesa/bc250-directmesh-mesa-26.2.1.patch mesa/release-maintainers-keys.asc meshtest/mesh-test.c \
          meshtest/mesh-test.comp requirements.txt VERSION \
-         mesh_shaders/__main__.py "images/$APP_ID.png"; do
+         mesh_shaders/__main__.py "images/$APP_ID.webp" "images/$APP_ID-128.png"; do
     [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from a clone or the extracted release folder."
 done
 [ -f "$CORE_SRC/__init__.py" ] || die "bc250_core is missing: run install.sh from a clone or the extracted release folder."
@@ -173,7 +173,7 @@ Name=$APP_NAME
 GenericName=BC-250 mesh shaders
 Comment=Mesh shaders for games on the BC-250: RADV with DirectMesh beside the system Mesa, tested before use
 Exec=$LAUNCHER
-Icon=$LINK/images/$APP_ID.png
+Icon=$LINK/images/$APP_ID-128.png
 Terminal=false
 Categories=System;Settings;
 Keywords=BC-250;Bazzite;mesh;shaders;DirectMesh;RADV;Mesa;Vulkan;

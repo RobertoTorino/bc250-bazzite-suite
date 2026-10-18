@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 
-![Console Link](../assets/consoles/bc250-console-link.png){ .app-logo }
+![Console Link](../assets/consoles/bc250-console-link.webp){ .app-logo }
 
 # Console Link
 

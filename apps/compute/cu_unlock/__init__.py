@@ -4,12 +4,12 @@
 
 APP_NAME = "BC-250 CU Unlock"
 APP_ID = "bc250-cu-unlock"
-__version__ = "0.1.9"
+__version__ = "0.1.10"
 
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGO_PATH = ROOT / "images" / "bc250-cu-bisect-unlock.png"
+LOGO_PATH = ROOT / "images" / "bc250-cu-bisect-unlock.webp"
 WINDOW_ICON_PATH = LOGO_PATH
 REPO_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/compute"
 

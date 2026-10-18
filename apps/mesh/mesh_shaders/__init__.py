@@ -4,14 +4,14 @@ Mesa, tests it and lets chosen games use it."""
 
 APP_NAME = "BC-250 Mesh Shaders"
 APP_ID = "bc250-mesh-shaders"
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 
 from pathlib import Path
 
 from bc250_core import AppInfo
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
+LOGO_PATH = ROOT / "images" / f"{APP_ID}.webp"
 SCRIPT = ROOT / "bc250-mesh-shaders.sh"
 
 # Settings in ~/.config/bc250-mesh-shaders/bc250-mesh-shaders.ini

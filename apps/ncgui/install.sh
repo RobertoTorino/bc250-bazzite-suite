@@ -72,7 +72,7 @@ fi
 
 # --- Checks ------------------------------------------------------------------------------------
 [ "$(uname -s)" = Linux ] || die "This installer is for Linux (Bazzite); on Windows run: python -m $PACKAGE"
-for f in requirements.txt VERSION "$PACKAGE/__main__.py" "images/$APP_ID.png"; do
+for f in requirements.txt VERSION "$PACKAGE/__main__.py" "images/$APP_ID.webp" "images/$APP_ID-128.png"; do
     [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from a clone or the extracted release folder."
 done
 [ -f "$CORE_SRC/__init__.py" ] || die "bc250_core is missing: run install.sh from a clone or the extracted release folder."
@@ -126,7 +126,7 @@ Name=$APP_NAME
 GenericName=Graphical netcat
 Comment=Connect to a host or listen on a port, TCP or UDP, one session per tab
 Exec=$LAUNCHER
-Icon=$APP_DIR/images/$APP_ID.png
+Icon=$APP_DIR/images/$APP_ID-128.png
 Terminal=false
 Categories=Network;Utility;
 Keywords=netcat;nc;tcp;udp;socket;BC-250;Bazzite;

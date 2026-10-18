@@ -80,9 +80,8 @@ the end of the last session, nothing committed by Claude:
      bump the portal, release the portal. Several renamed apps can share one portal release.
 
 Next session (owner, 17-10-2026, releasing everything that stands at that point), in this order:
-1. **The new app icons.** The owner is preparing the next batch of frame-art icons (see App icons below): put each
-   512 px PNG in as it is, scale the 128 px copy and the portal's card copy from it, replace the placeholder of
-   BC-250 USB Wi-Fi among them, and check the wiki and the Steam cards that draw from an icon.
+1. **The new app icons.** One icon per category now (see App icons below): all five of the owner's series are in
+   (18-10-2026), local, waiting for the owner's approval.
 2. **Bazzite DatStation's quiz questions.** Done (17-10-2026): the owner's revised `questions.json` is in
    (same shape; 1,436 questions, 25 dropped, 110 reworded, 43 answers corrected), the count test and the quiz
    tile follow the file, DatStation has its CHANGELOG entry (Fixed). The commit that carried the file had the
@@ -517,12 +516,30 @@ Open, in this order:
 Ideas not asked for and not built: a Help page inside the app (core's `HelpView`), a controller glyph on the tiles, a
 per-category best score on the results page.
 
-## App icons: the app's name in outlined letters (owner, 17-10-2026)
+## App icons: one icon per category (owner, 18-10-2026)
 
-The owner draws each icon from Photoshop templates (outside the repo): the frame art with the app's name, or what the
-app does, in bold, transparent outlined letters. The owner hands over the 512 px PNG; it goes in as it is
-(`images/<name>.png`), the 128 px copy is scaled from it with Lanczos (`images/<name>-128.png`), and the portal's
-card icon in `portal/images/apps/` is a copy of that (`tools/tests/test_portal_icons.py` checks it).
+The owner draws one icon per category, at 1024, 512, 256 and 128 px; every app in the category gets
+it. Each category's icons are kept once in `icons/<category>/`; `icons/categories.toml` assigns each app its category,
+`tools/sync_icons.py` writes the copies (the app's `images/<app-id>.webp` at 512 px and `-128.png`, the portal's tile
+at 256 px), and `tools/tests/test_icons.py` fails on a stale copy or an icon outside the table. The copies stay in git,
+so installers, portal, wiki and releases find them where they did.
+
+- WebP (owner, 18-10-2026): the icons are WebP, except the 128 px one, which stays PNG for the menu entries, Desktop
+  icons, the hicolor theme (128x128 now, the old 512 px file taken out), Steam shortcuts (`steam.shortcut_icon()`)
+  and notifications, as a desktop or Steam may not read WebP. Every app's installer and `LOGO_PATH` changed with it,
+  and core (`shortcut_icon`, the banner logo as PNG): each app's release carries it, with its icon entry.
+
+- In place (18-10-2026, local, no release yet), all as the owner made them: gaming (the blue controller), graphics
+  (the titanium chip), sustainable (the metal globe and tree on green, replaced later that day), utilities (the
+  graphics board with hammer and screwdriver, replaced later that day) and development (the steel pipeline board).
+- Confirmed by the owner (18-10-2026): HDMI-CEC and System Overlay are utilities, Bazzite NetcatGUI is development,
+  the CU and Cores unlock icons follow their bisects (sustainable), BC-250 Bazzite Test is sustainable; the copies
+  stay in git; the Steam cards drawn from an icon (Console Link, PCSX2 Manager, DatStation) show the category's
+  icon. The portal keeps its own icon (below).
+- Next (owner): approve the icons. When they are final, every app gets a CHANGELOG entry (its icon, WebP) and a release (owner); the Steam cards drawn from an icon (`steam_art`) and the
+  wiki follow the new icons by themselves.
+
+Earlier, 17-10-2026: icons per app with the app's name in outlined letters.
 
 - In place (17-10-2026): the five emulator managers, PCSX2, PPSSPP, RPCS3, SHADPS4 and VITA3K, on the dark-blue
   frame. The earlier proof of concept that drew symbols into the frames (`tools/icons/`, `make_icons.py`,
@@ -532,8 +549,8 @@ card icon in `portal/images/apps/` is a copy of that (`tools/tests/test_portal_i
   Pillow on 17-10-2026), released as such.
 - When the five work out, every other app follows, from the same templates (owner). A new icon means a release of
   that app (owner).
-- An app's window colour follows its icon (owner, 17-10-2026), as long as text stays readable and the colour is
-  easy on the eye: the five emulator managers share the icon's blue, #0A55B0 (the shadPS4 Manager's style).
+- Dropped (owner, 18-10-2026): the rule that an app's window colour follows its icon (17-10-2026). The window
+  colours stay as they are; the five emulator managers keep the blue #0A55B0 (the shadPS4 Manager's style).
 - The portal keeps its purple board icon (owner, 16-10-2026): it fits the wiki's design and is its logo and
   favicon too.
 

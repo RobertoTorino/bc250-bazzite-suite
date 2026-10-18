@@ -20,7 +20,7 @@ LAUNCHER="$HOME/.local/bin/$APP_ID"
 MENU_ENTRY="$DATA_DIR/applications/$APP_ID.desktop"
 DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
 DESKTOP_ICON="$DESKTOP_DIR/$APP_ID.desktop"
-ICON="$APP/images/$APP_ID.png"
+ICON="$APP/images/$APP_ID-128.png"
 
 info() { printf '\033[1;35m==>\033[0m %s\n' "$1"; }
 die()  { printf '\033[1;31mERROR:\033[0m %s\n' "$1" >&2; exit 1; }

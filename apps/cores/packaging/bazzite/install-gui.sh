@@ -15,7 +15,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-for f in cores_unlock/__main__.py bc250-cores-unlock.sh images/bc250-cores-unlock.png requirements.txt VERSION; do
+for f in cores_unlock/__main__.py bc250-cores-unlock.sh \
+         images/bc250-cores-unlock.webp images/bc250-cores-unlock-128.png requirements.txt VERSION; do
   if [ ! -e "$REPO_ROOT/$f" ]; then
     echo "error: $f not found under $REPO_ROOT - run this from a clone of bc250-cores-bisect" >&2
     exit 1
@@ -29,7 +30,7 @@ APP_SRC="$APP_DIR/app"
 VENV_DIR="$APP_DIR/venv"
 LAUNCHER="$BIN_HOME/bc250-cores-unlock-gui"
 DESKTOP_FILE="$DATA_HOME/applications/bc250-cores-unlock.desktop"
-ICON_DIR="$DATA_HOME/icons/hicolor/512x512/apps"
+ICON_DIR="$DATA_HOME/icons/hicolor/128x128/apps"
 ICON_FILE="$ICON_DIR/bc250-cores-unlock.png"
 
 echo "==> Copying app files to $APP_SRC"
@@ -40,7 +41,7 @@ rm -rf "$APP_SRC/cores_unlock/__pycache__"
 cp "$REPO_ROOT/bc250-cores-unlock.sh" "$APP_SRC/bc250-cores-unlock.sh"
 chmod +x "$APP_SRC/bc250-cores-unlock.sh"
 cp "$REPO_ROOT/requirements.txt" "$REPO_ROOT/VERSION" "$APP_SRC/"
-cp "$REPO_ROOT/images/bc250-cores-unlock.png" "$APP_SRC/images/"
+cp "$REPO_ROOT/images/bc250-cores-unlock.webp" "$REPO_ROOT/images/bc250-cores-unlock-128.png" "$APP_SRC/images/"
 
 echo "==> Creating venv in $VENV_DIR"
 python3 -m venv "$VENV_DIR"
@@ -57,7 +58,8 @@ chmod +x "$LAUNCHER"
 
 echo "==> Installing desktop entry and icon"
 mkdir -p "$(dirname "$DESKTOP_FILE")" "$ICON_DIR"
-cp "$REPO_ROOT/images/bc250-cores-unlock.png" "$ICON_FILE"
+cp "$REPO_ROOT/images/bc250-cores-unlock-128.png" "$ICON_FILE"
+rm -f "$DATA_HOME/icons/hicolor/512x512/apps/bc250-cores-unlock.png"   # the 512 px icon of before
 # Use the icon's absolute path rather than the bare theme name: Bazzite's gamescope/Big Picture
 # session (and some freshly-logged-in desktop sessions) look up app icons before the hicolor
 # icon cache is rebuilt, which otherwise leaves a blank placeholder in the launcher.

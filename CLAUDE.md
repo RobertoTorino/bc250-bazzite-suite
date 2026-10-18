@@ -76,14 +76,13 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
     (`apps/ace/ace_queues/`, `apps/ncgui/netcat_gui/`; owner, 17-10-2026, the apps move to it one at a time,
     MIGRATION.md says which did; a renamed app's old key goes in `RENAMED` in the portal's manifest.py),
     `images/`, `tests/`, `install.sh` and the four files; data the package reads (a catalogue, tables) sits in
-    the package or beside it in the app folder. `tools/tests/test_layout.py` checks the layout.
+    the package or beside it in the app folder. `tools/tests/test_layout.py` checks the layout. An app's icons are
+    copies of its category's icon: `icons/categories.toml` assigns them, `tools/sync_icons.py` writes them.
   - Code: shared code comes from `bc250_core` (bundled per app); the installer writes a launcher in
     `~/.local/bin` whose exec line names the app's python, a menu entry and an optional Desktop icon; every app has
     its installer test (see Checks).
   - Window: the first line is the app's icon at 96 px on the left, spanning the title (with the version) and a
     second line below it (status boxes or the app's main controls).
-  - Colour (owner, 17-10-2026): an app's window colour follows its icon, within limits: text stays readable
-    (white on the colour at 4.5:1 or more, a lighter link colour on a dark window) and the colour is easy on the eye.
   A new app copies the structure of an existing one; any deviation is the owner's decision. The manual's
   [Architecture and consistency](docs/development/architecture.md) describes it all, with the steps for a new app.
 - **Scope is the suite, not Bazzite.** We answer for the portal and its apps, not for Bazzite itself. A system-wide

@@ -86,7 +86,7 @@ fi
 # --- Checks ------------------------------------------------------------------------------------
 [ "$(uname -s)" = Linux ] || die "This app runs on Linux (Bazzite) only."
 for f in bc250-acpi-override.sh tables/acpi_override.cpio requirements.txt VERSION \
-         locked_acpi/__main__.py "images/$APP_ID.png"; do
+         locked_acpi/__main__.py "images/$APP_ID.webp" "images/$APP_ID-128.png"; do
     [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from a clone or the extracted release folder."
 done
 VERSION=$(tr -d '[:space:]' <"$SRC/VERSION")
@@ -155,7 +155,7 @@ Name=$APP_NAME
 GenericName=BC-250 ACPI override
 Comment=Install or remove the persistent ACPI fix for CPU idle states and frequency scaling
 Exec=$LAUNCHER
-Icon=$LINK/images/$APP_ID.png
+Icon=$LINK/images/$APP_ID-128.png
 Terminal=false
 Categories=System;Settings;
 Keywords=BC-250;Bazzite;ACPI;C-states;frequency;CPU;

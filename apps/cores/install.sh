@@ -77,7 +77,9 @@ remove_legacy_install() {
     rm -rf "$DATA_DIR/bc250-cores-bisect-gui" "$DATA_DIR/bc250-cores-unlock-gui"
     rm -f "$DATA_DIR/applications/bc250-cores-bisect.desktop" \
           "$DATA_DIR/icons/hicolor/512x512/apps/bc250-cores-bisect.png" \
-          "$DATA_DIR/icons/hicolor/512x512/apps/bc250-cores-unlock.png"
+          "$DATA_DIR/icons/hicolor/512x512/apps/bc250-cores-unlock.png" \
+          "$DATA_DIR/icons/hicolor/128x128/apps/bc250-cores-bisect.png" \
+          "$DATA_DIR/icons/hicolor/128x128/apps/bc250-cores-unlock.png"
 }
 
 remove_menu_entries() {
@@ -113,8 +115,8 @@ fi
 # --- Checks ------------------------------------------------------------------------------------
 [ "$(uname -s)" = Linux ] || die "These apps run on Linux (Bazzite) only."
 for f in bc250-cores-bisect.sh bc250-cores-unlock.sh requirements.txt VERSION \
-         cores_bisect/__main__.py cores_unlock/__main__.py "images/$APP_ID.png" \
-         images/bc250-cores-unlock.png; do
+         cores_bisect/__main__.py cores_unlock/__main__.py "images/$APP_ID.webp" \
+         "images/$APP_ID-128.png" images/bc250-cores-unlock.webp images/bc250-cores-unlock-128.png; do
     [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from a clone or the extracted release folder."
 done
 VERSION=$(tr -d '[:space:]' <"$SRC/VERSION")
@@ -189,7 +191,7 @@ Name=$3
 GenericName=BC-250 core tools
 Comment=$4
 Exec=$5
-Icon=$LINK/images/$6.png
+Icon=$LINK/images/$6-128.png
 Terminal=false
 Categories=System;Settings;
 Keywords=BC-250;Bazzite;cores;bisect;unlock;CPU;

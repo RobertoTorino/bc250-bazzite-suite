@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """MkDocs hook: serve the pictures the manual shows from where they live, without copies in docs/.
 
-* assets/apps/<key>.png    the small app icons the portal shows on its cards (portal/images/apps/)
+* assets/apps/<key>.webp   the small app icons the portal shows on its cards (portal/images/apps/)
 * assets/<app>/<file>      an app's own images (apps/<app>/images/): its icon and its screenshots
 * assets/portal/<file>     the portal's own images (portal/images/): its icon
 
-The apps, their installers and the portal load these as PNG, so they stay PNG in the repository. The wiki gets a
-WebP copy of each PNG and JPG instead, made while it is built (a tenth of the size for the apps' icons), and its
-pages point at those copies; the chapters themselves keep naming the PNG, which Bazzite Test also shows from its
-own images/ folder. Without Pillow the wiki simply shows the PNGs.
+The icons are WebP in the repository already and are served as they are. For a PNG or JPG a page names (a
+screenshot), the wiki gets a WebP copy made while it is built, and its pages point at that copy; the chapters
+themselves keep naming the PNG, which Bazzite Test also shows from its own images/ folder. Without Pillow the wiki
+simply shows the PNGs.
 
 The wiki's own icon is a real file in docs/: images/wiki-icon.webp in the header and footer, images/wiki-icon.png as
 the favicon (a PNG favicon works everywhere)."""

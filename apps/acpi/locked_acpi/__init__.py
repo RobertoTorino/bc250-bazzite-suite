@@ -7,7 +7,7 @@ from pathlib import Path
 APP_NAME = "BC-250 Persistent ACPI"
 APP_ID = "bc250-persistent-acpi"
 ROOT = Path(__file__).resolve().parent.parent
-LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
+LOGO_PATH = ROOT / "images" / f"{APP_ID}.webp"
 REPO_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite"
 
 

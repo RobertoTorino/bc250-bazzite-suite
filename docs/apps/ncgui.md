@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-2.0-only -->
 
-![Bazzite NetcatGUI](../assets/ncgui/bazzite-netcatgui.png){ .app-logo }
+![Bazzite NetcatGUI](../assets/ncgui/bazzite-netcatgui.webp){ .app-logo }
 
 # Bazzite NetcatGUI
 

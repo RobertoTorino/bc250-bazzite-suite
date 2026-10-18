@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![PCSX2 Manager](../assets/pcsx2/bc250-pcsx2-manager.png){ .app-logo }
+![PCSX2 Manager](../assets/pcsx2/bc250-pcsx2-manager.webp){ .app-logo }
 
 # PCSX2 Manager
 

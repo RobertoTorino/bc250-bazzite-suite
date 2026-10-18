@@ -3,4 +3,4 @@
 
 APP_NAME = "Simple Demo Tool"
 APP_ID = "simple-demo-tool"
-__version__ = "0.1.11"
+__version__ = "0.1.12"

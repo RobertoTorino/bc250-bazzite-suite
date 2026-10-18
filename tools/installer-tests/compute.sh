@@ -23,15 +23,15 @@ echo "== 1. install both GUIs from the suite checkout"
 install_both "$SUITE/apps/compute" > "$T/log1" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "no sudo used" "! grep -q 'sudo called' $T/log1"
-check "bisect app copied" "[ -f $B/app/cu_bisect/__main__.py ] && [ -x $B/app/bc250-cu-bisect.sh ] && [ -f $B/app/images/bc250-cu-bisect.png ]"
-check "unlock app copied" "[ -f $U/app/cu_unlock/__main__.py ] && [ -x $U/app/bc250-cu-unlock.sh ] && [ -f $U/app/images/bc250-cu-bisect-unlock.png ]"
+check "bisect app copied" "[ -f $B/app/cu_bisect/__main__.py ] && [ -x $B/app/bc250-cu-bisect.sh ] && [ -f $B/app/images/bc250-cu-bisect.webp ]"
+check "unlock app copied" "[ -f $U/app/cu_unlock/__main__.py ] && [ -x $U/app/bc250-cu-unlock.sh ] && [ -f $U/app/images/bc250-cu-bisect-unlock.webp ]"
 check "no caches copied" "! find $B $U -name __pycache__ | grep -q ."
 check "two venvs" "[ -x $B/venv/bin/python ] && [ -x $U/venv/bin/python ]"
 check "bisect launcher" "grep -qF 'cd \"$B/app\" && exec \"$B/venv/bin/python\" -m cu_bisect --script \"$B/app/bc250-cu-bisect.sh\"' $HOME/.local/bin/bc250-bisect-gui"
 check "unlock launcher" "grep -qF 'cd \"$U/app\" && exec \"$U/venv/bin/python\" -m cu_unlock --script \"$U/app/bc250-cu-unlock.sh\"' $HOME/.local/bin/bc250-unlock-cu-gui"
 check "launchers executable" "[ -x $HOME/.local/bin/bc250-bisect-gui ] && [ -x $HOME/.local/bin/bc250-unlock-cu-gui ]"
 check "menu entries" "grep -qx 'Exec=$HOME/.local/bin/bc250-bisect-gui' $D/applications/bc250-cu-bisect.desktop && grep -qx 'Exec=$HOME/.local/bin/bc250-unlock-cu-gui' $D/applications/bc250-cu-unlock.desktop"
-check "icons by path" "grep -qx 'Icon=$D/icons/hicolor/512x512/apps/bc250-cu-bisect.png' $D/applications/bc250-cu-bisect.desktop && [ -f $D/icons/hicolor/512x512/apps/bc250-cu-bisect-unlock.png ]"
+check "icons by path" "grep -qx 'Icon=$D/icons/hicolor/128x128/apps/bc250-cu-bisect.png' $D/applications/bc250-cu-bisect.desktop && [ -f $D/icons/hicolor/128x128/apps/bc250-cu-bisect-unlock.png ]"
 check "desktop icons, executable" "[ -x $HOME/Desktop/bc250-cu-bisect.desktop ] && [ -x $HOME/Desktop/bc250-cu-unlock.desktop ]"
 
 echo "== 2. reinstall without the Desktop icons"
@@ -61,7 +61,7 @@ bash "$T/stage/packaging/bazzite/uninstall-bisect-gui.sh" > "$T/log5" 2>&1 &&
     bash "$T/stage/packaging/bazzite/uninstall-gui.sh" >> "$T/log5" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "apps and venvs gone" "[ ! -e $B ] && [ ! -e $U ]"
-check "launchers, menu entries, icons gone" "! ls $HOME/.local/bin/bc250-bisect-gui $HOME/.local/bin/bc250-unlock-cu-gui $D/applications/bc250-cu-*.desktop $D/icons/hicolor/512x512/apps/bc250-cu-* $HOME/Desktop/bc250-cu-*.desktop 2>/dev/null | grep -q ."
+check "launchers, menu entries, icons gone" "! ls $HOME/.local/bin/bc250-bisect-gui $HOME/.local/bin/bc250-unlock-cu-gui $D/applications/bc250-cu-*.desktop $D/icons/hicolor/*/apps/bc250-cu-* $HOME/Desktop/bc250-cu-*.desktop 2>/dev/null | grep -q ."
 check "bisect results kept" "[ -f $D/bc250-cu-bisect/state ]"
 
 echo "== 6. the app's install.sh: both GUIs, one of them, refusals, --purge"

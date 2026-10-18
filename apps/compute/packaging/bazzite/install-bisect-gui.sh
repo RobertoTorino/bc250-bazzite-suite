@@ -27,7 +27,8 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-for f in cu_bisect/__main__.py bc250-cu-bisect.sh images/bc250-cu-bisect.png requirements.txt; do
+for f in cu_bisect/__main__.py bc250-cu-bisect.sh \
+         images/bc250-cu-bisect.webp images/bc250-cu-bisect-128.png requirements.txt; do
   if [ ! -e "$REPO_ROOT/$f" ]; then
     echo "error: $f not found under $REPO_ROOT - run this from a clone of bc250-cu-bisect" >&2
     exit 1
@@ -43,7 +44,7 @@ LAUNCHER="$BIN_HOME/bc250-bisect-gui"
 DESKTOP_FILE="$DATA_HOME/applications/bc250-cu-bisect.desktop"
 DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
 DESKTOP_ICON="$DESKTOP_DIR/bc250-cu-bisect.desktop"
-ICON_DIR="$DATA_HOME/icons/hicolor/512x512/apps"
+ICON_DIR="$DATA_HOME/icons/hicolor/128x128/apps"
 ICON_FILE="$ICON_DIR/bc250-cu-bisect.png"
 
 echo "==> Copying app files to $APP_SRC"
@@ -56,7 +57,7 @@ cp "$REPO_ROOT/bc250-cu-bisect.sh" "$APP_SRC/bc250-cu-bisect.sh"
 chmod +x "$APP_SRC/bc250-cu-bisect.sh"
 cp "$REPO_ROOT/requirements.txt" "$APP_SRC/requirements.txt"
 mkdir -p "$APP_SRC/images"
-cp "$REPO_ROOT/images/bc250-cu-bisect.png" "$APP_SRC/images/bc250-cu-bisect.png"
+cp "$REPO_ROOT/images/bc250-cu-bisect.webp" "$REPO_ROOT/images/bc250-cu-bisect-128.png" "$APP_SRC/images/"
 
 echo "==> Creating venv in $VENV_DIR"
 python3 -m venv "$VENV_DIR"
@@ -87,7 +88,8 @@ chmod +x "$LAUNCHER"
 
 echo "==> Installing desktop entry, icon and Desktop icon"
 mkdir -p "$(dirname "$DESKTOP_FILE")" "$ICON_DIR"
-cp "$REPO_ROOT/images/bc250-cu-bisect.png" "$ICON_FILE"
+cp "$REPO_ROOT/images/bc250-cu-bisect-128.png" "$ICON_FILE"
+rm -f "$DATA_HOME/icons/hicolor/512x512/apps/bc250-cu-bisect.png"   # the 512 px icon of before
 # Use the icon's absolute path rather than the bare theme name: Bazzite's gamescope/Big Picture
 # session (and some freshly-logged-in desktop sessions) look up app icons before the hicolor
 # icon cache is rebuilt, which otherwise leaves a blank placeholder in the launcher.

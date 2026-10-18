@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![BC-250 Fan Control](../assets/fan/bc250-fan-control.png){ .app-logo }
+![BC-250 Fan Control](../assets/fan/bc250-fan-control.webp){ .app-logo }
 
 # BC-250 Fan Control
 

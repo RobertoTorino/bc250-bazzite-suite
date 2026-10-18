@@ -3,7 +3,7 @@
 
 APP_NAME = "Dependency Checker"
 APP_ID = "bc250-portal-dependency-checker"
-__version__ = "0.4.7"
+__version__ = "0.5.0"
 
 from pathlib import Path
 
@@ -12,7 +12,7 @@ from bc250_core import AppInfo
 PACKAGE = Path(__file__).resolve().parent
 ROOT = PACKAGE.parent
 CATALOG = PACKAGE / "dependencies.toml"
-LOGO_PATH = ROOT / "images" / "bc250-dependency-checker.png"
+LOGO_PATH = ROOT / "images" / "bc250-dependency-checker.webp"
 INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH,
                tag_prefix="package-v", settings_app=APP_ID, settings_ini=True)
 

@@ -13,6 +13,7 @@ from bc250_core import steam
 from pcsx2_manager import LOGO_PATH, shortcuts
 from pcsx2_manager.games import Game, read_disc
 
+PNG_ICON = LOGO_PATH.with_name(f"{LOGO_PATH.stem}-128.png")      # Steam gets the PNG beside the WebP icon
 RUN = Path("/home/u/.local/bin/bc250-pcsx2-run")
 OTHER = {"appid": -1234, "AppName": "RetroArch", "Exe": '"/usr/bin/retroarch"', "LaunchOptions": "-nogui x"}
 
@@ -32,7 +33,7 @@ def test_the_launch_line_and_whose_shortcut_it_is():
     odd = Game(Path('/games/A "B" $C.iso'), "Odd")
     assert shlex.split(shortcuts.launch_options(odd))[-1] == str(odd.file)        # single quotes then
     item = shortcuts.entry(game, "My Game", RUN, LOGO_PATH)
-    assert item["Exe"] == f'"{RUN}"' and item["StartDir"] == f'"{RUN.parent}/"' and item["icon"] == str(LOGO_PATH)
+    assert item["Exe"] == f'"{RUN}"' and item["StartDir"] == f'"{RUN.parent}/"' and item["icon"] == str(PNG_ICON)
     assert item["tags"] == {"0": "PS2", "1": "PCSX2 Manager"}
     assert shortcuts.ours(item) and shortcuts.for_game(game)(item)
     assert not shortcuts.for_game(Game(Path("/games/Other.iso"), "Other"))(item)
@@ -83,7 +84,7 @@ def test_the_drawn_artwork(tmp_path, qapp):
     game = Game(Path("/games/Okami.iso"), "Okami", "SLUS-21115")
     art = shortcuts.draw_art(game, LOGO_PATH)
     assert set(art) == {"p", "", "_hero", "_logo"}                               # a PS2 disc gives no pictures
-    assert art["_logo"] == LOGO_PATH.read_bytes()                                # the app's icon instead
+    assert QImage.fromData(art["_logo"], "PNG").size() == QImage(str(LOGO_PATH)).size()   # the app's icon instead
     for suffix in ("p", "", "_hero"):
         image = QImage.fromData(art[suffix], "PNG")
         assert (image.width(), image.height()) == steam.ART[suffix], suffix

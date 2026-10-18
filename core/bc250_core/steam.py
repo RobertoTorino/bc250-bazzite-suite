@@ -190,6 +190,13 @@ def as_int32(value: int) -> int:
     return value - (1 << 32) if value >= 1 << 31 else value
 
 
+def shortcut_icon(logo: Path) -> Path:
+    """The icon file for a shortcut: for an app's WebP icon the PNG beside it (images/<id>-128.png), as Steam may not
+    read WebP; any other picture as it is."""
+    png = logo.with_name(f"{logo.stem}-128.png")
+    return png if logo.suffix.lower() == ".webp" and png.is_file() else logo
+
+
 def shortcut_entry(exe: str, name: str, start_dir: str, icon: str, launch_options: str, tags: Sequence[str]) -> dict:
     """A shortcut's fields, in the order Steam writes them. *exe* and *start_dir* as Steam keeps them, in quotes."""
     return {

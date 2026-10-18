@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![Dependency Checker](../assets/package/bc250-dependency-checker.png){ .app-logo }
+![Dependency Checker](../assets/package/bc250-dependency-checker.webp){ .app-logo }
 
 # Dependency Checker
 

@@ -28,7 +28,7 @@ check "bisect launcher" "grep -qF 'exec \"$D/$APP-app/venv/bin/python\" -m cores
 check "unlock launcher" "grep -qF 'exec \"$D/$APP-app/venv/bin/python\" -m cores_unlock' $HOME/.local/bin/bc250-cores-unlock-gui"
 check "launchers cd into the /opt link" "grep -q \"cd \\\"$L\\\"\" $HOME/.local/bin/bc250-cores-bisect-gui && grep -q \"cd \\\"$L\\\"\" $HOME/.local/bin/bc250-cores-unlock-gui"
 check "menu entries" "grep -qx 'Exec=$HOME/.local/bin/bc250-cores-bisect-gui' $D/applications/bc250-cores-bisect-gui.desktop && grep -qx 'Exec=$HOME/.local/bin/bc250-cores-unlock-gui' $D/applications/bc250-cores-unlock.desktop"
-check "icons from /opt" "grep -qx 'Icon=$L/images/bc250-cores-unlock.png' $D/applications/bc250-cores-unlock.desktop && [ -f $L/images/$APP.png ]"
+check "icons from /opt" "grep -qx 'Icon=$L/images/bc250-cores-unlock-128.png' $D/applications/bc250-cores-unlock.desktop && [ -f $L/images/$APP.webp ] && [ -f $L/images/$APP-128.png ]"
 check "desktop icons, executable" "[ -x $HOME/Desktop/bc250-cores-bisect-gui.desktop ] && [ -x $HOME/Desktop/bc250-cores-unlock.desktop ]"
 
 echo "== 2. bisect GUI only, without the Desktop icon"

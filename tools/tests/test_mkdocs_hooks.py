@@ -39,7 +39,7 @@ def test_pages_point_at_the_copies_only(monkeypatch):
 
 def test_only_pictures_a_page_names_are_converted():
     wanted = hooks.shown(str(SUITE / "docs"))
-    assert "assets/ace/bc250-ace-queues.png" in wanted
+    assert "assets/suite/bc250-release-128.png" in wanted
     assert not any("/steam/" in uri for uri in wanted)      # Console Link's Steam artwork is not on any page
 
 

@@ -32,8 +32,8 @@ def shortcut_name(console: RegisteredConsole) -> str:
 
 def entry(console: RegisteredConsole, launcher: Path, icon: Path) -> dict:
     """The shortcut's fields, in the order Steam writes them."""
-    return core_steam.shortcut_entry(f'"{launcher}"', shortcut_name(console), f'"{launcher.parent}/"', str(icon),
-                                     f"--stream {console.key}", [TAG])
+    return core_steam.shortcut_entry(f'"{launcher}"', shortcut_name(console), f'"{launcher.parent}/"',
+                                     str(core_steam.shortcut_icon(icon)), f"--stream {console.key}", [TAG])
 
 
 def ours(item: dict, console: RegisteredConsole) -> bool:

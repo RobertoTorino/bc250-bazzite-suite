@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![BC-250 GPU Governor Manager](../assets/gpu/bc250-governor-manager.png){ .app-logo }
+![BC-250 GPU Governor Manager](../assets/gpu/bc250-governor-manager.webp){ .app-logo }
 
 # BC-250 GPU Governor Manager
 

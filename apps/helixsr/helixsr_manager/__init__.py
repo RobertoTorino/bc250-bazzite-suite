@@ -3,13 +3,13 @@
 
 APP_NAME = "HelixSR Manager"
 APP_ID = "bc250-bazzite-helixsr-gui"
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
+LOGO_PATH = ROOT / "images" / f"{APP_ID}.webp"
 WINDOW_ICON_PATH = LOGO_PATH
 FONT_DIR = Path(__file__).resolve().parent / "fonts"
 DISPLAY_NAME = f"{APP_NAME} {__version__}"

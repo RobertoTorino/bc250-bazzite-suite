@@ -32,7 +32,7 @@ echo "== 1. install from the suite checkout"
 bash "$SUITE/apps/consoles/install.sh" > "$T/log1" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "no sudo used" "! grep -q 'sudo called' $T/log1"
-check "app copied" "[ -f $A/consoles_link/main_window.py ] && [ -f $A/consoles_link/keys.py ] && [ -f $A/images/$APP.png ]"
+check "app copied" "[ -f $A/consoles_link/main_window.py ] && [ -f $A/consoles_link/keys.py ] && [ -f $A/images/$APP.webp ] && [ -f $A/images/$APP-128.png ]"
 check "core bundled from checkout" "[ -f $A/bc250_core/theme.py ]"
 check "no tests or caches copied" "[ ! -d $A/tests ] && ! find $A -name __pycache__ | grep -q ."
 check "native core source copied, no build output" "[ -f $A/native/src/takion.rs ] && [ ! -e $A/native/target ]"

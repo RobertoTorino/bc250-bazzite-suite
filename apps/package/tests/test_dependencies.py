@@ -75,7 +75,7 @@ def test_catalog_lists_python_and_external_dependencies():
     assert {tool.name for tool in tools} >= {"flashrom", "pkexec", "umr", "podman"}
     assert next(tool for tool in tools if tool.name == "flashrom").probe == "flashrom-internal"
     assert all(item.description for item in [*dependencies, *tools])
-    assert LOGO_PATH.name == "bc250-dependency-checker.png"
+    assert LOGO_PATH.name == "bc250-dependency-checker.webp"
     assert LOGO_PATH.is_file()
 
 

@@ -13,7 +13,7 @@ from bc250_core import AppInfo
 
 ROOT = Path(__file__).resolve().parent.parent
 SUITE = ROOT.parent.parent                  # the checkout it edits
-LOGO_PATH = ROOT / "images" / f"{APP_ID}.png"
+LOGO_PATH = ROOT / "images" / f"{APP_ID}.webp"
 
 # Settings in ~/.config/bc250-release/bc250-release.ini
 INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, settings_ini=True)

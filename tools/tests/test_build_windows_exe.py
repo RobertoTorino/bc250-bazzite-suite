@@ -21,7 +21,7 @@ def test_every_windows_app_has_its_package_and_a_core_to_bundle():
         src = SUITE / "apps" / app
         assert (src / package / "__main__.py").is_file()
         assert bwe.stage_app.uses_core(src)
-        assert exe_name and (src / "images" / f"{bwe.app_id(src, package)}.png").is_file()
+        assert exe_name and (src / "images" / f"{bwe.app_id(src, package)}.webp").is_file()
 
 
 def test_asset_names_follow_app_id_and_version():

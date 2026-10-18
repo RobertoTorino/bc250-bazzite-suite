@@ -23,7 +23,7 @@ BIN_DIR="$HOME/.local/bin"
 APP_DIR="$DATA_HOME/$APP_ID"
 VENV_DIR="$APP_DIR/venv"
 APPS_DIR="$DATA_HOME/applications"
-ICON_DIR="$DATA_HOME/icons/hicolor/512x512/apps"
+ICON_DIR="$DATA_HOME/icons/hicolor/128x128/apps"
 DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 
@@ -33,7 +33,8 @@ fail() { printf '\033[1;31merror:\033[0m %s\n' "$*" >&2; exit 1; }
 uninstall() {
     say "Removing $APP_ID"
     rm -rf "$APP_DIR"
-    rm -f "$BIN_DIR/$APP_ID" "$APPS_DIR/$APP_ID.desktop" "$ICON_DIR/$APP_ID.png" "$DESKTOP_DIR/$APP_ID.desktop"
+    rm -f "$BIN_DIR/$APP_ID" "$APPS_DIR/$APP_ID.desktop" "$ICON_DIR/$APP_ID.png" "$DESKTOP_DIR/$APP_ID.desktop" \
+          "$DATA_HOME/icons/hicolor/512x512/apps/$APP_ID.png"
     command -v update-desktop-database >/dev/null && update-desktop-database -q "$APPS_DIR" || true
     command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$DATA_HOME/icons/hicolor" 2>/dev/null || true
     if $PURGE; then
@@ -102,7 +103,8 @@ if $DESKTOP_SHORTCUT && [[ -d "$DESKTOP_DIR" ]]; then
 else
     rm -f "$DESKTOP_DIR/$APP_ID.desktop"
 fi
-cp "$SRC_DIR/images/$APP_ID.png" "$ICON_DIR/$APP_ID.png"
+cp "$SRC_DIR/images/$APP_ID-128.png" "$ICON_DIR/$APP_ID.png"
+rm -f "$DATA_HOME/icons/hicolor/512x512/apps/$APP_ID.png"   # the 512 px icon of before
 command -v update-desktop-database >/dev/null && update-desktop-database -q "$APPS_DIR" || true
 command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$DATA_HOME/icons/hicolor" 2>/dev/null || true
 

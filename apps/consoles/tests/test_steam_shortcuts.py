@@ -87,7 +87,8 @@ def test_a_first_shortcut_and_no_users(tmp_path):
 def test_artwork(qapp):
     from PyQt6.QtGui import QImage
     art = ss.draw_art(PS4, LOGO_PATH)
-    assert art["_logo"] == LOGO_PATH.read_bytes()                             # the icon itself, laid over the banner
+    # the icon, as PNG, over the banner
+    assert QImage.fromData(art["_logo"], "PNG").size() == QImage(str(LOGO_PATH)).size()
     for suffix, (width, height) in ss.ART.items():
         if suffix != "_logo":
             image = QImage.fromData(art[suffix], "PNG")
