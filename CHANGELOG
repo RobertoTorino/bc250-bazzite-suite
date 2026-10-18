@@ -1,3 +1,9 @@
+Changelog: 18-10-2026 23:17:58
+
+The wiki has a page App categories (docs/apps/categories.md): why every app in a category shares one icon, what
+the five categories stand for, a legend with each category's icon and a table of every app with its icon and
+category. The wiki's build hook serves the category icons as assets/categories/<category>.webp, from icons/.
+
 Changelog: 18-10-2026 22:28:23
 
 The icons are WebP now: the category icons in icons/ at 1024, 512 and 256 px, every app's images/<app-id>.webp,

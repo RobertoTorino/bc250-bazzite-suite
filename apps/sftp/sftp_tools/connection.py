@@ -102,8 +102,6 @@ def connect_ssh(
                 auth_timeout=timeout,
                 compress=compression,
             )
-            if compression:
-                client.get_transport().get_security_options().compression = 'zlib'
             if keepalive_interval > 0:
                 client.get_transport().set_keepalive(keepalive_interval)
             return client

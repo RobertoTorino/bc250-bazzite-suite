@@ -3,7 +3,7 @@
 # The apps
 
 The portal installs, opens, updates and removes these apps. BC-250 Bazzite Test is always installed, every
-other app is optional.
+other app is optional. What the icons stand for is in [App categories](categories.md).
 
 | App | What it does |
 |---|---|

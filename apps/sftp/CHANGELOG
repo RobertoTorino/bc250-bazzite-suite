@@ -1,3 +1,13 @@
+Changelog: 18-10-2026 23:25:25
+
+Release 0.3.1.
+
+Changelog: 18-10-2026 23:08:55
+
+Fixed. Connecting with SFTP compression on (the default) failed with "expected tuple or list": after connecting,
+the app set the connection's compression a second time, in a form the SSH library does not accept. Compression is
+now set only when connecting, which was already enough.
+
 Changelog: 18-10-2026 22:45:26
 
 Release 0.3.0.

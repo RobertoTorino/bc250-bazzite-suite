@@ -41,6 +41,17 @@ def test_connect_ssh_uses_strict_host_key_checking() -> None:
     client.get_transport().set_keepalive.assert_called_once_with(15)
 
 
+def test_connect_ssh_compression_is_negotiated_by_connect_only() -> None:
+    # paramiko negotiates zlib from connect(compress=True); the transport's security options take only a tuple
+    # or list, and changing them after the handshake has no effect.
+    client = Mock()
+    client.get_transport.return_value.get_security_options.return_value = paramiko.SecurityOptions(Mock())
+    with patch("sftp_tools.connection.paramiko.SSHClient", return_value=client):
+        assert connect_ssh("example.test", 22, "user", compression=True) is client
+
+    assert client.connect.call_args.kwargs["compress"] is True
+
+
 @pytest.mark.parametrize(
     ("host", "port", "known_hosts_name"),
     [

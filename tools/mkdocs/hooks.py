@@ -4,6 +4,7 @@
 * assets/apps/<key>.webp   the small app icons the portal shows on its cards (portal/images/apps/)
 * assets/<app>/<file>      an app's own images (apps/<app>/images/): its icon and its screenshots
 * assets/portal/<file>     the portal's own images (portal/images/): its icon
+* assets/categories/<category>.webp   each category's icon (icons/<category>/, the 256 px one)
 
 The icons are WebP in the repository already and are served as they are. For a PNG or JPG a page names (a
 screenshot), the wiki gets a WebP copy made while it is built, and its pages point at that copy; the chapters
@@ -35,6 +36,8 @@ def pictures() -> dict[str, Path]:
     found = {f"assets/apps/{p.name}": p for p in (SUITE / "portal" / "images" / "apps").iterdir()}
     portal = SUITE / "portal" / "images"
     found.update({f"assets/portal/{p.name}": p for p in sorted(portal.glob("*")) if p.is_file()})
+    for category in sorted(p for p in (SUITE / "icons").iterdir() if p.is_dir()):
+        found[f"assets/categories/{category.name}.webp"] = category / f"{category.name}-256.webp"
     for app in sorted((SUITE / "apps").iterdir()):
         for p in sorted((app / "images").glob("*")) if (app / "images").is_dir() else []:
             found[f"assets/{app.name}/{p.name}"] = p
