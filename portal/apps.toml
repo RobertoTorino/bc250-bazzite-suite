@@ -30,8 +30,8 @@
 [apps.check]
 name = "BC-250 Bazzite Test"
 summary = "Read-only diagnostics, stress test and benchmarks. Always installed."
-tag = "check-v0.5.0"
-sha256 = "63fc877d0ed3b4c18dd5c68aaed545ec5826f8f96c5bcd29ae5c7015890a8609"
+tag = "check-v0.5.1"
+sha256 = "26f77231ef8963129c469ab1d6ea18365ad7b7137d76fa595ebc8af39411dd88"
 required = true
 changes_board = false
 category = "sustainable"
@@ -43,8 +43,8 @@ launch = [["Open", "~/.local/bin/bc250-bazzite-test"]]
 [apps.gpu]
 name = "BC-250 GPU Governor Manager"
 summary = "Manage the cyan-skillfish GPU governor: tuning, safe points, profiles, backups."
-tag = "gpu-v0.1.10"
-sha256 = "f41b32b566a683ed4ef626443ba7fcdc683fa03213606d3eff0fb3d68f538084"
+tag = "gpu-v0.1.11"
+sha256 = "daf3eb2ad92cbc59f46d01b62e2a650300feee5db091a183a11a36ef0701107e"
 required = false
 changes_board = true
 category = "sustainable"
@@ -69,8 +69,8 @@ launch = [["Open", "~/.local/bin/bc250-bazzite-helixsr-gui"]]
 [apps.compute]
 name = "BC-250 CU Bisect"
 summary = "Tell bad CUs apart from an unstable CU unlock, and apply a tested unlock."
-tag = "compute-v0.1.10"
-sha256 = "f2839b923a2d153a904f9a9b90622f5cb8ec608d303e34584dba8b6ab58ea642"
+tag = "compute-v0.1.11"
+sha256 = "6972d65334b503dfa568e4d8f58eb9fed1e404e956ed8f188ce9c51b2c115e8c"
 required = false
 changes_board = true
 category = "sustainable"
@@ -82,8 +82,8 @@ launch = [["Bisect", "~/.local/bin/bc250-bisect-gui"], ["Unlock", "~/.local/bin/
 [apps.cores]
 name = "BC-250 Cores Bisect"
 summary = "Tell bad CPU cores apart from an unstable core unlock, before you persist the 8C/16T unlock."
-tag = "cores-v0.1.11"
-sha256 = "56f575d815087aade074255de0284d0557ddadeb3cddb8c72f0d6bf9f83fa29a"
+tag = "cores-v0.1.12"
+sha256 = "af1523909a4a03b52a66fd07ba2d66b74daa83e87578e841a77f88875dfc0011"
 required = false
 changes_board = true
 category = "sustainable"
@@ -95,8 +95,8 @@ launch = [["Bisect", "~/.local/bin/bc250-cores-bisect-gui"], ["Unlock", "~/.loca
 [apps.oc]
 name = "BC-250 GPU OC Bisect"
 summary = "Find your board's safe GPU overclock and undervolt, one step at a time."
-tag = "oc-v0.1.10"
-sha256 = "9eb6fda39bc0e386e64e9fde89e2c8a986eeb5a3d5f2c96652bac8ef7f3279be"
+tag = "oc-v0.1.11"
+sha256 = "d561d26fb4ac596f332df13ff68bcdce3b136d9e5ee90aa67e74dcc3f4c35041"
 required = false
 changes_board = true
 category = "sustainable"
@@ -108,8 +108,8 @@ launch = [["Open", "~/.local/bin/bc250-gpu-oc-bisect-gui"]]
 [apps.acpi]
 name = "BC-250 Persistent ACPI"
 summary = "CPU C-states and frequency scaling through a persistent ACPI override (GRUB early initrd)."
-tag = "acpi-v0.1.7"
-sha256 = "75daa94274ce154e3faa3a7c69b0d388223a79305f548682dc6115cf76440248"
+tag = "acpi-v0.1.8"
+sha256 = "63565baa342ac5ed46be254a83d92eed2cd7d953754b8591c5654dc11988af4c"
 required = false
 changes_board = true
 category = "sustainable"
@@ -173,8 +173,8 @@ launch = [["Open", "~/.local/bin/bc250-mesh-shaders"]]
 [apps.vram]
 name = "BC-250 Memory Manager"
 summary = "The VRAM split in CMOS, with the GTT, TTM limit and swap layout that go with it."
-tag = "vram-v0.4.0"
-sha256 = "4e54964470e4a4f79db863c6f0936f45c037b67fb4cb259a5d277e046c4cdbb9"
+tag = "vram-v0.4.1"
+sha256 = "cd47694a1b11bbdfb840177d60c38f4d3e2ab085f45133939347427f0df7d1b5"
 required = false
 changes_board = true
 category = "sustainable"
@@ -186,8 +186,8 @@ launch = [["Open", "~/.local/bin/bc250-memory-manager"]]
 [apps.fan]
 name = "BC-250 Fan Control"
 summary = "A thermal guard that warns, cools and shuts down cleanly at a critical temperature, and the fans."
-tag = "fan-v0.3.0"
-sha256 = "6d96a22fec3ec15b933a4bed6abe45ab35146b415d42c6433e37e13602e4c082"
+tag = "fan-v0.3.1"
+sha256 = "f0aecd95ef27648d37c802ea588230f30ef7f97ad0ae4f27017c89081f712d55"
 required = false
 changes_board = true
 category = "sustainable"
@@ -241,7 +241,7 @@ launch = [["Open", "~/.local/bin/bc250-bazzite-sftp-tools"]]
 name = "Media Tool"
 summary = "Record a BC250 Bazzite Suite installation demo with OBS, and convert the suite's icons."
 tag = "mtool-v0.1.13"
-sha256 = ""
+sha256 = "cea9a61fb6c89eb173f0f76a5e4989dfa25d46c163068d7e5d028da34c2b4f85"
 required = false
 changes_board = false
 category = "development"
@@ -253,8 +253,8 @@ launch = [["Open", "~/.local/bin/media-tool"]]
 [apps.package]
 name = "Dependency Checker"
 summary = "The suite's Python packages and external tools, which apps use them, and whether newer ones exist; and whether a Bazzite update waits for a reboot."
-tag = "package-v0.6.0"
-sha256 = "fbd0cb5c1e140cc98d7417c900288d07deae55efc50c507da71b872ccb66e03c"
+tag = "package-v0.7.0"
+sha256 = "1ebc766cf4efb2f12567dabfc2f64eecc8c56fd0f77b3f6156a4ec86161cd62f"
 required = false
 changes_board = false
 category = "development"
