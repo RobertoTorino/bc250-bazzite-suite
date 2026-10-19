@@ -11,13 +11,14 @@ from PyQt6.QtWidgets import (
 
 from . import APP_NAME, __version__
 from .runner import ScriptRunner
+from .theme import surface_style
 from .widgets import AboutDialog, SudoDialog
 
 NEEDS_CONFIRMATION = 3      # bc250-acpi-override.sh: a warning needs "Continue anyway?" (--yes)
 
 _BANNERS = {
     "installed": ("✔ INSTALLED", "#2e7d32"),
-    "not installed": ("NOT INSTALLED", "#424242"),
+    "not installed": ("NOT INSTALLED", None),
     "incomplete": ("⚠ INCOMPLETE", "#ef6c00"),
 }
 
@@ -34,7 +35,11 @@ def override_state(line: str) -> str | None:
 
 
 class MainWindow(QWidget):
-    _BANNER_BASE = "font-weight:700; font-size:14px; padding:8px; border-radius:4px;"
+    @staticmethod
+    def _banner_style(colour: str | None = None) -> str:
+        """The theme's surface, the state as its left edge; padding 8px inside the border."""
+        return (surface_style(colour, "QLabel", 4)
+                + "QLabel { font-weight:700; font-size:14px; padding:7px 7px 7px 4px; }")
 
     def __init__(self, script: str, parent: QWidget | None = None):
         super().__init__(parent)
@@ -68,7 +73,7 @@ class MainWindow(QWidget):
         root.addWidget(sub)
 
         self.banner = QLabel()
-        self.banner.setStyleSheet(self._BANNER_BASE)
+        self.banner.setStyleSheet(self._banner_style())
         root.addWidget(self.banner)
         self._set_banner(None)
 
@@ -120,9 +125,9 @@ class MainWindow(QWidget):
         AboutDialog(self).exec()
 
     def _set_banner(self, state: str | None) -> None:
-        text, color = _BANNERS.get(state or "", ("Checking…", "#424242"))
+        text, color = _BANNERS.get(state or "", ("Checking…", None))
         self.banner.setText(text)
-        self.banner.setStyleSheet(self._BANNER_BASE + f"background-color:{color}; color:white;")
+        self.banner.setStyleSheet(self._banner_style(color))
 
     # ---------------------------------------------------------------- output
     def _append_line(self, text: str) -> None:

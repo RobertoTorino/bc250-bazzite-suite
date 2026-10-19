@@ -217,12 +217,10 @@ class MainWindow(QMainWindow):
 
         self.box_payload.set_value(status.version or ("Imported" if status.dll else "Missing"),
                                    plain_tooltip(str(self.payload_dir)))
-        self.box_payload.setStyleSheet(f"QFrame {{ background:{COPPER if status.dll else RED}; border-radius:8px; }}"
-                                       " QLabel { color:white; }")
+        self.box_payload.set_colour(COPPER if status.dll else RED)
         self.box_network.set_value("Ready" if status.network_ready else "Missing",
                                    "helixsr_weights.bin and helixsr_kernels.pak from helixsr-setup.sh")
-        self.box_network.setStyleSheet(f"QFrame {{ background:{TEAL if status.network_ready else ORANGE}; "
-                                       "border-radius:8px; } QLabel { color:white; }")
+        self.box_network.set_colour(TEAL if status.network_ready else ORANGE)
         states = [backend.deployment_state(d, self.payload_dir)[0] for d in self.store.items]
         in_place = states.count("ok")
         self.box_deployed.set_value(f"{in_place} / {len(states)}" if states else "0",

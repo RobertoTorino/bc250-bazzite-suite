@@ -1,3 +1,7 @@
+Changelog: 19-10-2026 23:41:01
+
+Added. The suite's theme (a copy of core's theme.py), chosen in the portal, on Fusion.
+
 Changelog: 15-10-2026 21:03:51
 
 images/bc250-installer-test-gui-128.png is the 128 px copy of the new icon (images/bc250-installer-test-gui.png),

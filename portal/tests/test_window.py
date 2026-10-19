@@ -718,3 +718,14 @@ def test_restart_that_cannot_start(qapp, home, settings_dir, tmp_path, launched,
 def test_no_restart_from_a_checkout(window):
     from bc250_portal import installed_copy
     assert installed_copy() is None and window.installed is None and window.restart_button.isHidden()
+
+
+def test_one_theme_for_every_app(window, home):
+    """The theme box shows the chosen theme and keeps a new choice for every app; the portal says when it shows."""
+    from bc250_core import theme
+    assert window.theme_box.currentData() == theme.theme_name() == "gunmetal"
+    assert [window.theme_box.itemText(i) for i in range(window.theme_box.count())] == ["Gunmetal", "Silver", "Warm"]
+    assert window.theme_note.isHidden()
+    window.theme_box.setCurrentIndex(window.theme_box.findData("silver"))
+    assert theme.theme_name() == "silver" and theme.theme_file().is_relative_to(home)
+    assert not window.theme_note.isHidden()

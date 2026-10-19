@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
 from . import APP_NAME, LOGO_PATH, __version__
 from .gate import GateResult, check
 from .runner import UnlockRunner
+from .theme import GREEN, RED, surface_style
 from .widgets import AboutDialog, SudoDialog
 
 # Stock BC-250 layout (mask 0x77): core 3 of each 4-core CCX is fused off.
@@ -72,7 +73,11 @@ class CoreMapWidget(QWidget):
 
 
 class MainWindow(QWidget):
-    _BANNER_BASE = "font-weight:700; font-size:14px; padding:8px; border-radius:4px;"
+    @staticmethod
+    def _banner_style(colour: str | None = None) -> str:
+        """The theme's surface, the state as its left edge; padding 8px inside the border."""
+        return (surface_style(colour, "QLabel", 4)
+                + "QLabel { font-weight:700; font-size:14px; padding:7px 7px 7px 4px; }")
 
     def __init__(self, script: str, parent: QWidget | None = None):
         super().__init__(parent)
@@ -118,7 +123,7 @@ class MainWindow(QWidget):
         gate_frame.setFrameShape(QFrame.Shape.StyledPanel)
         gate_layout = QVBoxLayout(gate_frame)
         self.gate_title = QLabel()
-        self.gate_title.setStyleSheet(self._BANNER_BASE)
+        self.gate_title.setStyleSheet(self._banner_style())
         gate_layout.addWidget(self.gate_title)
         self.gate_reasons = QLabel()
         self.gate_reasons.setWordWrap(True)
@@ -187,10 +192,10 @@ class MainWindow(QWidget):
         self._gate_result = result
         if result.accepted:
             self.gate_title.setText("\u2714 ACCEPTED")
-            self.gate_title.setStyleSheet(self._BANNER_BASE + "background-color:#2e7d32; color:white;")
+            self.gate_title.setStyleSheet(self._banner_style(GREEN))
         else:
             self.gate_title.setText("\u2718 NOT ACCEPTED YET!")
-            self.gate_title.setStyleSheet(self._BANNER_BASE + "background-color:#c62828; color:white;")
+            self.gate_title.setStyleSheet(self._banner_style(RED))
         self.gate_reasons.setText("\n".join(result.reasons))
         base = result.base_cores or DEFAULT_BASE
         new = result.new_cores or [c for c in range(8) if c not in base] or DEFAULT_NEW

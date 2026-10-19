@@ -17,11 +17,8 @@ from PyQt6.QtWidgets import (
 
 from . import FONT_DIR, plain_tooltip, window_title
 
-# Same palette as bc250-governor-manager: result colours, purple accent.
-GREEN, ORANGE, RED, BLUE, GREY = "#2e7d32", "#ef6c00", "#c62828", "#1565c0", "#3a3f4b"
-PURPLE = "#6a1b9a"
-ACCENT = "#8b4fd8"
-STATE_COLORS = {"ok": GREEN, "warn": ORANGE, "bad": RED, "info": BLUE, "neutral": GREY}
+# The suite's theme and colours (a copy of core's theme.py): result colours, the logo's purple, the theme's accent.
+from .theme import ACCENT, BLUE, GREEN, GREY, ORANGE, PURPLE, RED, STATE_COLORS, surface_style
 
 
 @lru_cache(maxsize=1)
@@ -39,7 +36,8 @@ def header_font() -> str:
 
 
 class StatusPill(QLabel):
-    """A short coloured state word: Active, Not mounted, Unavailable, ..."""
+    """A short state word on the theme's surface, its state as a coloured left edge: Active, Not mounted, ...
+    Neutral has no colour."""
 
     def __init__(self, text: str = "", parent: QWidget | None = None):
         text = text or "Unknown"
@@ -51,9 +49,9 @@ class StatusPill(QLabel):
     def set_status(self, text: str, kind: str, tooltip: str = "") -> None:
         self.setText(text)
         self.setToolTip(tooltip)
-        colour = STATE_COLORS.get(kind, GREY)
-        self.setStyleSheet(f"QLabel {{ background:{colour}; color:white; font-weight:600; "
-                           "border-radius:6px; padding:3px 10px; }")
+        colour = STATE_COLORS.get(kind) if kind != "neutral" else None
+        self.setStyleSheet(surface_style(colour, "QLabel", 6)      # padding 3px 10px inside the border
+                           + "QLabel { font-weight:600; padding:2px 9px 2px 6px; }")
 
 
 class MetricBox(QFrame):
@@ -61,10 +59,10 @@ class MetricBox(QFrame):
 
     def __init__(self, caption: str, colour: str = GREY, parent: QWidget | None = None, centred: bool = True):
         super().__init__(parent)
-        self.setStyleSheet(f"QFrame {{ background:{colour}; border-radius:8px; }} QLabel {{ color:white; }}")
+        self.set_colour(colour)
         self.setMinimumWidth(120)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 8, 12, 8)
+        layout.setContentsMargins(8, 7, 11, 7)         # 12, 8, 12, 8 inside the border
         layout.setSpacing(0)
         self.value = QLabel("—")
         self.value.setStyleSheet(header_font() + "font-size:22px; font-weight:800;")
@@ -78,6 +76,11 @@ class MetricBox(QFrame):
     def set_value(self, text: str, tooltip: str = "") -> None:
         self.value.setText(text)
         self.setToolTip(tooltip)
+
+    def set_colour(self, colour: str) -> None:
+        """The box's state or category colour, its left edge; GREY (neutral) has none."""
+        self.setStyleSheet(surface_style(None if colour == GREY else colour)
+                           + "QLabel { background:transparent; border:none; }")
 
 
 class ClickableLogo(QLabel):
@@ -162,7 +165,7 @@ def accent_button(text: str, tooltip: str = "") -> QPushButton:
 
 
 class RoundedToolTip(QObject):
-    """Every tooltip of the app with rounded corners and a thin purple border.
+    """Every tooltip of the app with rounded corners and a thin border in the accent.
 
     Qt's own tooltip window cannot have transparent corners, so this shows a translucent frameless label
     instead. RoundedToolTip.install(app) filters the tooltip events of all widgets and item views."""

@@ -16,6 +16,7 @@ from . import APP_ID, APP_NAME, DEPLOYMENTS_FILE, DISPLAY_NAME, PAYLOAD_DIR, WIN
 from .acquire import WORK_DIR
 from .main_window import MainWindow
 from .style import set_link_colour
+from .theme import apply_theme
 from .widgets import RoundedToolTip
 from . import instance
 
@@ -39,6 +40,7 @@ def main() -> int:
     app.setApplicationVersion(__version__)
     app.setDesktopFileName(APP_ID)
     app.setStyle("Fusion")
+    apply_theme(app)                # the suite's theme
     set_link_colour(app)
     RoundedToolTip.install(app)
     if WINDOW_ICON_PATH.is_file():

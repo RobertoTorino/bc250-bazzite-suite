@@ -17,7 +17,7 @@ from PyQt6.QtGui import QKeyEvent, QShowEvent
 from PyQt6.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
 
 from .quiz import DATA_CATEGORIES, load_questions
-from .style import label
+from .style import TEXT, label
 
 COLUMNS, ROWS = 4, 4
 TILE_MIN_WIDTH, TILE_HEIGHT = 200, 118          # the tiles share the width of the row
@@ -43,7 +43,7 @@ FEATURES = (
             "Every system software release, from the PS1 to the PS5 and the Portal."),
     Feature("regions", "□", SQUARE, "Region Codes Explained",
             "What the prefix of a title ID and the last digit of a model number say about the region."),
-    Feature("guides", "◇", "#FFFFFF", "PlayStation User Guides",
+    Feature("guides", "◇", TEXT, "PlayStation User Guides",
             "Sony's online manuals for every PlayStation product, in your browser."),
     Feature("news", "◆", "#FFD166", "PS News",
             "The latest announcements from the PlayStation Blog, upcoming games and new releases."),
@@ -72,7 +72,7 @@ class Tile(QPushButton):
         symbol = QLabel(feature.symbol)
         symbol.setStyleSheet(f"color:{feature.colour}; font-size:24px; font-weight:900;")
         name = QLabel(feature.name)
-        name.setStyleSheet("color:white; font-size:15px; font-weight:800;")
+        name.setStyleSheet(f"color:{TEXT}; font-size:15px; font-weight:800;")
         text = label(feature.text, muted=True, wrap=True)
         text.setStyleSheet("font-size:12px;")
         for widget in (symbol, name, text):

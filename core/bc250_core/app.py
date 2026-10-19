@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""App bootstrap shared by every GUI: QApplication names, Fusion style, tooltip, icon, signals. The apps are in
+"""App bootstrap shared by every GUI: QApplication names, Fusion style with the suite's theme, tooltip, icon, signals. The apps are in
 English only, Qt's own dialog buttons included: nothing loads a translation.
 
     def main() -> int:
@@ -22,11 +22,13 @@ from PyQt6.QtWidgets import QApplication, QWidget
 
 from . import appinfo
 from .appinfo import AppInfo
+from .theme import apply_theme
 from .widgets import RoundedToolTip
 
 
 def create_app(info: AppInfo, qt_args: Sequence[str] = (), stylesheet: str = "") -> QApplication:
-    """The QApplication with the app's names, style, rounded tooltips and window icon. Also makes
+    """The QApplication with the app's names, style and theme (*stylesheet* after the theme's), rounded tooltips
+    and window icon. Also makes
     *info* the current AppInfo. The org/app names match open_settings(), so bare QSettings() find the same file.
     The organisation is only set when the app declares one (the bisect/unlock GUIs), as before the move to core."""
     appinfo.set_current(info)
@@ -38,9 +40,8 @@ def create_app(info: AppInfo, qt_args: Sequence[str] = (), stylesheet: str = "")
     app.setApplicationVersion(info.version)
     app.setDesktopFileName(info.app_id)
     app.setStyle("Fusion")
-    RoundedToolTip.install(app)     # every tooltip: rounded corners, thin purple border
-    if stylesheet:
-        app.setStyleSheet(stylesheet)
+    apply_theme(app, stylesheet)
+    RoundedToolTip.install(app)     # every tooltip: rounded corners, a thin border in the accent
     if info.logo is not None and info.logo.is_file():
         app.setWindowIcon(QIcon(str(info.logo)))
     return app

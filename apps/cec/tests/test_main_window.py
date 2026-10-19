@@ -538,9 +538,8 @@ def test_the_boot_note_shows_quotes_as_quotes(make):
 
 
 def test_the_four_boxes_have_four_colours(make):
-    """Left to right: dark blue, orange, black, purple; white text on each."""
+    """Left to right: dark blue, orange, black, purple, as each box's left edge on the theme's surface."""
     w = make(FakeBoard())
     boxes = (w.adapter_box, w.address_box, w.display_box, w.power_box)
-    colours = [box.styleSheet().split("background:")[1].split(";")[0] for box in boxes]
+    colours = [box.styleSheet().split("border-left:4px solid ")[1].split(";")[0] for box in boxes]
     assert colours == [main_window.DARK_BLUE, main_window.ORANGE, main_window.BLACK, main_window.PURPLE]
-    assert all("QLabel { color:white; }" in box.styleSheet() for box in boxes)

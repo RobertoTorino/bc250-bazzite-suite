@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayou
 
 # The suite palette and the bundled Inter font (header_font) come from bc250_core; ACCENT is the brighter purple
 # of the logo's circuit lines, PURPLE the logo's own.
-from bc250_core.theme import ACCENT, BLUE, GREEN, GREY, ORANGE, PURPLE, RED, header_font
+from bc250_core.theme import ACCENT, BLUE, GREEN, GREY, ORANGE, PURPLE, RED, THEME, header_font, surface_style
 
 from . import plain_tooltip
 from .runner import ERROR, INFO, SUCCESS, WARNING
@@ -76,16 +76,17 @@ class StatBox(QFrame):
             tooltip += "\nClick to see the details."
         self.setToolTip(tooltip)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 6, 10, 6)
+        layout.setContentsMargins(8, 7, 11, 7)         # 12, 8, 12, 8 inside the border, as before
         layout.setSpacing(0)
+        # On screen in the theme's text colour; text_color is the results card's (results_card()).
         self.value = QLabel("0")
         self.value.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.value.setStyleSheet(header_font() + f"font-size:24px; font-weight:800; color:{text_color}; "
-                                 "background:transparent;")
+        self.value.setStyleSheet(header_font() + f"font-size:24px; font-weight:800; color:{THEME.text}; "
+                                 "background:transparent; border:none;")
         self.title = QLabel(title)
         self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.title.setStyleSheet(header_font() + f"font-size:11px; font-weight:600; color:{text_color}; "
-                                 "background:transparent;")
+        self.title.setStyleSheet(header_font() + f"font-size:11px; font-weight:600; color:{THEME.text}; "
+                                 "background:transparent; border:none;")
         layout.addWidget(self.value)
         layout.addWidget(self.title)
         # Narrow boxes, but never narrower than their title.
@@ -93,9 +94,10 @@ class StatBox(QFrame):
         self.set_color(color)
 
     def set_color(self, color: str) -> None:
+        """The theme's surface, *color* its left edge (GREY: none); outlined in the accent on hover."""
         self.color = color
-        hover = f"StatBox:hover {{ border:2px solid {ACCENT}; }}" if self.clickable else ""
-        self.setStyleSheet(f"StatBox {{ background:{color}; border-radius:8px; border:2px solid {color}; }}{hover}")
+        hover = f"StatBox:hover {{ border-color:{ACCENT}; }}" if self.clickable else ""
+        self.setStyleSheet(surface_style(None if color == GREY else color, "StatBox") + hover)
 
     def mouseReleaseEvent(self, event) -> None:
         if (self.clickable and event.button() == Qt.MouseButton.LeftButton

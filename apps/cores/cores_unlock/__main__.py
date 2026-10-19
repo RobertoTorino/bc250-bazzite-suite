@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 from . import APP_ID, APP_NAME, ROOT, WINDOW_ICON_PATH, __version__
 from .main_window import MainWindow
 from . import instance
+from .theme import apply_theme
 
 DEFAULT_SCRIPT = ROOT / "bc250-cores-unlock.sh"
 
@@ -31,6 +32,7 @@ def main() -> int:
     app.setApplicationVersion(__version__)
     app.setDesktopFileName(APP_ID)
     app.setStyle("Fusion")
+    apply_theme(app)                        # the suite's theme
     if WINDOW_ICON_PATH.is_file():
         app.setWindowIcon(QIcon(str(WINDOW_ICON_PATH)))
 

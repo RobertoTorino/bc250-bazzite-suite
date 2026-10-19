@@ -19,6 +19,7 @@ from .backends import BACKENDS, detect_backend
 from . import instance
 from .main_window import MainWindow
 from .profiles import ProfileStore
+from .theme import apply_theme
 from .tray import TRAY_FLAG
 from .widgets import RoundedToolTip
 
@@ -54,7 +55,8 @@ def main() -> int:
     app.setApplicationVersion(__version__)
     app.setDesktopFileName(APP_ID)
     app.setStyle("Fusion")
-    RoundedToolTip.install(app)     # every tooltip: rounded corners, thin purple border
+    apply_theme(app)                # the suite's theme
+    RoundedToolTip.install(app)     # every tooltip: rounded corners, a thin border in the accent
     if WINDOW_ICON_PATH.is_file():
         app.setWindowIcon(QIcon(str(WINDOW_ICON_PATH)))
 

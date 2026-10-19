@@ -6,7 +6,7 @@ still happens in bc250-cu-bisect.sh itself, exactly as if typed by hand."""
 
 APP_NAME = "BC-250 CU Bisect"
 APP_ID = "bc250-cu-bisect-gui"
-__version__ = "0.1.11"
+__version__ = "0.2.0"
 
 from pathlib import Path
 
@@ -14,17 +14,6 @@ ROOT = Path(__file__).resolve().parent.parent
 LOGO_PATH = ROOT / "images" / "bc250-cu-bisect.webp"
 WINDOW_ICON_PATH = LOGO_PATH
 REPO_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/compute"
-
-# Bazzite purple, the accent used across the project's GUIs. Applied app-wide (see __main__.py)
-# so every window gets it, including popups/dialogs (About, Help, confirmation message boxes),
-# not just the main window.
-BAZZITE_PURPLE = "#8b4fd8"
-HOVER_STYLESHEET = (
-    "QPushButton:hover, QCheckBox:hover, QComboBox:hover, QSpinBox:hover, QLineEdit:hover {"
-    f"  border: 1px solid {BAZZITE_PURPLE};"
-    "   border-radius: 6px;"
-    "}"
-)
 
 
 def window_title(part: str) -> str:

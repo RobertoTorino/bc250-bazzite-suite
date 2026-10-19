@@ -11,9 +11,10 @@ from pathlib import Path
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
-from . import APP_ID, APP_NAME, HOVER_STYLESHEET, ROOT, WINDOW_ICON_PATH, __version__
+from . import APP_ID, APP_NAME, ROOT, WINDOW_ICON_PATH, __version__
 from .main_window import MainWindow
 from . import instance
+from .theme import HOVER_STYLESHEET, apply_theme
 
 DEFAULT_SCRIPT = ROOT / "bc250-gpu-oc-bisect.sh"
 
@@ -31,7 +32,7 @@ def main() -> int:
     app.setApplicationVersion(__version__)
     app.setDesktopFileName(APP_ID)
     app.setStyle("Fusion")
-    app.setStyleSheet(HOVER_STYLESHEET)
+    apply_theme(app, HOVER_STYLESHEET)     # the suite's theme, the accent outline on hover
     if WINDOW_ICON_PATH.is_file():
         app.setWindowIcon(QIcon(str(WINDOW_ICON_PATH)))
 

@@ -1,3 +1,11 @@
+Changelog: 20-10-2026 00:48:10
+
+Release 0.2.0.
+
+Changelog: 19-10-2026 23:41:01
+
+Added. The suite's theme (a copy of core's theme.py), chosen in the portal; the hover outline is the theme's accent.
+
 Changelog: 19-10-2026 16:58:45
 
 Release 0.1.11.

@@ -1,3 +1,16 @@
+Changelog: 19-10-2026 23:41:01
+
+The suite has a theme, one choice for every app: gunmetal (dark, cool blue-grey, the default), silver (light) or
+warm (dark warm grey with a bronze accent), made in the portal and kept in ~/.config/bc250-bazzite-suite/theme.
+core's theme.py holds the three (it replaces the titanium variants tried locally); the apps not on core carry a copy
+of it, which tools/tests/test_instance_copies.py keeps equal. Status boxes, pills and banners are the theme's
+surface with their state as a coloured left edge, instead of a filled box with white text. The emulator managers
+and DatStation keep their blue as the accent over the theme; BIOS Reader's screen keeps its BIOS colours. Wiki:
+the Portal page, the architecture and core pages.
+
+The portal has the owner's new icon (portal/images, the portal's tile and the wiki's logo and favicon), WebP with
+the 128 px one PNG, as the category icons.
+
 Changelog: 19-10-2026 20:28:50
 
 tools/check_upstream.py reads SUPPORTED_MAJOR from the HelixSR Manager's acquire.py: a HelixSR release of a later

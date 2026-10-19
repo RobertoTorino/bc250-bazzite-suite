@@ -1,3 +1,15 @@
+Changelog: 19-10-2026 23:41:01
+
+Added. theme: the suite's theme, gunmetal (the default), silver or warm, one choice for every app in
+~/.config/bc250-bazzite-suite/theme (theme_name(), save_theme_name()). apply_theme() puts its palette and style sheet
+on the application (buttons and tabs with a sheen, thin borders, the accent on focus and selection); create_app()
+calls it, with the app's own sheet after the theme's. ACCENT is the theme's accent, surface_style() and muted() give
+an app the theme's surfaces and secondary text. Self-contained, so an app not on core carries a copy.
+
+Added. widgets: StatusPill, MetricBox and AppHeader follow the theme: a pill or box is the theme's surface with its
+state or colour as a thick left edge, the text in the theme's colour; MetricBox.set_colour() changes it. The room
+inside stays as it was. The tooltip's border is the theme's accent.
+
 Changelog: 19-10-2026 03:24:21
 
 Added. upstream: publish() and read_all(), the updates outside the suite an app can install now (a newer

@@ -30,14 +30,14 @@ from pathlib import Path, PurePath
 from PyQt6.QtCore import QCoreApplication, QEvent, QProcess, QSize, QTimer, Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPalette, QPixmap
 from PyQt6.QtWidgets import (
-    QCheckBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea,
+    QCheckBox, QComboBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea,
     QTabWidget, QToolButton, QVBoxLayout, QWidget,
 )
 
 from bc250_core import SUITE_MANUAL_URL, __version__ as CORE_VERSION, upstream
 from bc250_core.platform import bin_home, expand, launch_in_terminal
 from bc250_core.settings import open_settings, restore_geometry, save_geometry
-from bc250_core.theme import ACCENT, BLUE, GREY, ORANGE, RED, header_font
+from bc250_core.theme import ACCENT, BLUE, GREY, ORANGE, RED, THEMES, header_font, muted, save_theme_name, theme_name
 from bc250_core.updates import ReleaseInfo, UpdateChecker, version_tuple
 from bc250_core.widgets import ClickableLogo, hint_label
 
@@ -379,7 +379,7 @@ class MainWindow(QMainWindow):
             self.logo.clicked.connect(self.open_wiki)
             header.addWidget(self.logo)
             header.addSpacing(14)
-        title = QLabel(f"{APP_NAME}  <span style='color:#9aa0a6; font-size:16px;'>v{__version__}</span>")
+        title = QLabel(f"{APP_NAME}  <span style='color:{muted()}; font-size:16px;'>v{__version__}</span>")
         title.setStyleSheet(header_font() + "font-size:32px; font-weight:800;")
         title.setToolTip(f"{APP_NAME} {__version__} · core {CORE_VERSION}")
         header.addWidget(title)
@@ -409,6 +409,13 @@ class MainWindow(QMainWindow):
         self.icons_box.setChecked(self.settings.value(DESKTOP_ICONS_KEY, False, type=bool))
         self.icons_box.toggled.connect(self._show_icons)
         header.addWidget(self.icons_box)
+        self.theme_box = QComboBox()
+        for name, look in THEMES.items():
+            self.theme_box.addItem(look.label, name)
+        self.theme_box.setCurrentIndex(self.theme_box.findData(theme_name()))
+        self.theme_box.setToolTip("The look of every app in the suite. An app takes it the next time it starts.")
+        self.theme_box.currentIndexChanged.connect(self._choose_theme)
+        header.addWidget(self.theme_box)
         refresh = QPushButton("Refresh")
         refresh.setToolTip("Look again at which apps are installed.")
         refresh.clicked.connect(self._on_refresh)
@@ -418,6 +425,9 @@ class MainWindow(QMainWindow):
                   else "Apps install from the releases this portal version pins, verified by checksum.")
         self.source_label = hint_label(source)
         root.addWidget(self.source_label)
+        self.theme_note = hint_label("The theme changes in each app the next time it starts, the portal too.")
+        self.theme_note.hide()
+        root.addWidget(self.theme_note)
 
         self.columns = 0
         self.cards: dict[str, AppTile] = {}
@@ -720,6 +730,10 @@ class MainWindow(QMainWindow):
             self.icons_box.blockSignals(False)
         if not self.icons_box.isChecked():
             desktop_icons.remove(self.desktop, self.menu)
+
+    def _choose_theme(self, index: int) -> None:
+        save_theme_name(self.theme_box.itemData(index))
+        self.theme_note.show()
 
     def _show_icons(self, show: bool) -> None:
         self.settings.setValue(DESKTOP_ICONS_KEY, show)

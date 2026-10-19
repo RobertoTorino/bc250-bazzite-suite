@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
-from bc250_core import appinfo
+from bc250_core import appinfo, theme
 from bc250_core.app import create_app
 from bc250_core.appinfo import AppInfo
 from bc250_core.help import HelpView
@@ -15,6 +15,9 @@ def test_create_app_sets_names_and_current(qapp, info):
     assert app.applicationDisplayName() == "BC-250 Test App 1.2.3"
     assert app.applicationVersion() == "1.2.3"
     assert app.desktopFileName() == info.app_id
+    assert app.palette().window().color().name() == theme.THEME.window      # the suite's theme
+    assert app.styleSheet().startswith(theme.stylesheet())
+    app.setStyleSheet("")                       # a style sheet wraps the style; without it, Fusion shows
     assert app.style().name().lower() == "fusion"
     assert appinfo.current() is info
 

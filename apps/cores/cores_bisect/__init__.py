@@ -13,16 +13,6 @@ LOGO_PATH = ROOT / "images" / "bc250-cores-bisect.webp"
 WINDOW_ICON_PATH = LOGO_PATH
 REPO_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite/tree/main/apps/cores"
 
-# Bazzite purple, the accent used across the project's GUIs. Applied app-wide (see __main__.py)
-# so every window gets it, including popups/dialogs, not just the main window.
-BAZZITE_PURPLE = "#8b4fd8"
-HOVER_STYLESHEET = (
-    "QPushButton:hover, QCheckBox:hover, QComboBox:hover, QSpinBox:hover, QLineEdit:hover {"
-    f"  border: 1px solid {BAZZITE_PURPLE};"
-    "   border-radius: 6px;"
-    "}"
-)
-
 
 def _read_version() -> str:
     try:

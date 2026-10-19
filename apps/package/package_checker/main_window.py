@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
 )
 
 from bc250_core.text import window_title
-from bc250_core.theme import BLUE, GREEN, GREY, ORANGE, PURPLE, RED, header_font
+from bc250_core.theme import BLUE, GREEN, GREY, ORANGE, PURPLE, RED, THEME, header_font, surface_style
 from bc250_core.updates import UpdateChecker
 from bc250_core.widgets import AppHeader, MetricBox, StatusPill, hint_label
 
@@ -361,15 +361,15 @@ class BazziteCard(QFrame):
 
 
 def _set_box_colour(box: MetricBox, colour: str) -> None:
-    box.setStyleSheet(f"QFrame {{ background:{colour}; border-radius:8px; }} QLabel {{ color:white; }}")
+    box.set_colour(colour)
 
 
-def _white_icon(icon: QIcon, size: int) -> QIcon:
-    """The icon in white, like the text of the boxes, whatever the desktop theme."""
+def _text_icon(icon: QIcon, size: int) -> QIcon:
+    """The icon in the theme's text colour, like the text of the boxes, whatever the desktop theme."""
     pixmap = icon.pixmap(size, size)
     painter = QPainter(pixmap)
     painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
-    painter.fillRect(pixmap.rect(), QColor("white"))
+    painter.fillRect(pixmap.rect(), QColor(THEME.text))
     painter.end()
     return QIcon(pixmap)
 
@@ -428,7 +428,7 @@ class DependencyWindow(QMainWindow):
             header.add_second(box, 1)
         # An icon-only button the size of the boxes beside it
         self.check_button = QPushButton()
-        self.check_button.setIcon(_white_icon(QIcon.fromTheme(
+        self.check_button.setIcon(_text_icon(QIcon.fromTheme(
             "view-refresh", self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload)), 32))
         self.check_button.setIconSize(QSize(32, 32))
         self.check_button.setAccessibleName("Check again")
@@ -436,12 +436,8 @@ class DependencyWindow(QMainWindow):
                                      "ask PyPI")
         self.check_button.setMinimumWidth(120)
         self.check_button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
-        self.check_button.setStyleSheet(
-            f"QPushButton {{ background:{GREY}; border:none; border-radius:8px; }}"
-            "QPushButton:hover { background:#4a5060; }"
-            "QPushButton:pressed { background:#2c3039; }"
-            "QPushButton:disabled { background:#30343d; }"
-        )
+        self.check_button.setStyleSheet(surface_style(selector="QPushButton")      # a box like those beside it
+                                        + f"QPushButton:hover {{ border-color:{THEME.accent}; }}")
         self.check_button.clicked.connect(self.check_updates)
         header.add_second(self.check_button, 1)
         root.addLayout(header)

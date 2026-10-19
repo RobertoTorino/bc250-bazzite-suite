@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 from . import APP_ID, APP_NAME, LOGO_PATH, ROOT, __version__
 from .main_window import MainWindow
 from . import instance
+from .theme import apply_theme
 
 DEFAULT_SCRIPT = ROOT / "bc250-acpi-override.sh"
 
@@ -30,6 +31,7 @@ def main() -> int:
     app.setApplicationVersion(__version__)
     app.setDesktopFileName(APP_ID)
     app.setStyle("Fusion")
+    apply_theme(app)                        # the suite's theme
     if LOGO_PATH.is_file():
         app.setWindowIcon(QIcon(str(LOGO_PATH)))
 

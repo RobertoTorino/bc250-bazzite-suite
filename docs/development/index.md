@@ -181,10 +181,10 @@ Code shared by the suite's apps. Nothing in it imports an app: each app passes i
 | Module | What it holds | Merged from |
 |---|---|---|
 | `appinfo` | `AppInfo` (id, name, version, logo, tag prefix, settings names) | new |
-| `theme` | Palette, `STATE_COLORS`, bundled Inter font, `header_font()`, `HOVER_STYLESHEET` | all six GUIs |
+| `theme` | The suite's theme (`THEMES`, `theme_name()`, `save_theme_name()`, `apply_theme()`, `surface_style()`, `muted()`), `STATE_COLORS`, bundled Inter font, `header_font()`, `HOVER_STYLESHEET`; self-contained, so an app not on core carries a copy | all six GUIs |
 | `text` | `fmt()` (`%1` placeholders), `fill()` (`{name}` placeholders), `plain_tooltip()`, `window_title()` | governor, helixsr |
 | `widgets` | `AppHeader` (the window header), `StatusPill`, `MetricBox`, `ClickableLogo`, `Terminal`, `TextDialog`, `RoundedToolTip`, `show_tooltip()`, `page_header()`, `hint_label()`, `accent_button()`, `set_button_active()` | governor + helixsr's Wayland tooltip + bazzite-test's manual tooltips |
-| `app` | `create_app()` / `run_app()` / `exec_app()`: names, Fusion, tooltip, icon, SIGTERM | the apps' `__main__` |
+| `app` | `create_app()` / `run_app()` / `exec_app()`: names, Fusion with the theme, tooltip, icon, SIGTERM | the apps' `__main__` |
 | `settings` | `open_settings(info)` at each app's existing file, geometry helpers, `SettingsStore` (typed defaults) | bazzite-test's `AppSettings` |
 | `help` | `HelpView` (the content stays in the app) | helixsr |
 | `updates` | `latest_release()` (with a tag prefix for the suite's per-app tags), `UpdateStatus`, `UpdateChecker` (any job, off the GUI thread) | helixsr + governor |

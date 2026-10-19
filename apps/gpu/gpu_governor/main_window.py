@@ -905,4 +905,4 @@ def _short(line: str, limit: int = 110) -> str:
 
 
 def _paint(box: MetricBox, colour: str) -> None:
-    box.setStyleSheet(f"QFrame {{ background:{colour}; border-radius:8px; }} QLabel {{ color:white; }}")
+    box.set_colour(colour)

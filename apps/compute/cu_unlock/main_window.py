@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 from . import APP_NAME, LOGO_PATH, __version__
 from .gate import GateResult, MASK_RE, check, cu_count, even_level
 from .runner import UnlockRunner
+from .theme import GREEN, RED, surface_style
 from .widgets import AboutDialog, SudoDialog
 
 ROWS = ("SE0.SH0", "SE0.SH1", "SE1.SH0", "SE1.SH1")
@@ -61,7 +62,11 @@ class CuMapWidget(QWidget):
 
 
 class MainWindow(QWidget):
-    _BANNER_BASE = "font-weight:700; font-size:14px; padding:8px; border-radius:4px;"
+    @staticmethod
+    def _banner_style(colour: str | None = None) -> str:
+        """The theme's surface, the state as its left edge; padding 8px inside the border."""
+        return (surface_style(colour, "QLabel", 4)
+                + "QLabel { font-weight:700; font-size:14px; padding:7px 7px 7px 4px; }")
 
     def __init__(self, script: str, parent: QWidget | None = None):
         super().__init__(parent)
@@ -108,7 +113,7 @@ class MainWindow(QWidget):
         gate_layout = QVBoxLayout(gate_frame)
         self.gate_title = QLabel()
         self.gate_title.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        self.gate_title.setStyleSheet(self._BANNER_BASE)
+        self.gate_title.setStyleSheet(self._banner_style())
         gate_layout.addWidget(self.gate_title)
         self.gate_reasons = QLabel()
         self.gate_reasons.setWordWrap(True)
@@ -188,10 +193,10 @@ class MainWindow(QWidget):
         self._gate_result = result
         if result.accepted:
             self.gate_title.setText("\u2714 ACCEPTED")
-            self.gate_title.setStyleSheet(self._BANNER_BASE + "background-color:#2e7d32; color:white;")
+            self.gate_title.setStyleSheet(self._banner_style(GREEN))
         else:
             self.gate_title.setText("\u2718 NOT ACCEPTED YET!")
-            self.gate_title.setStyleSheet(self._BANNER_BASE + "background-color:#c62828; color:white;")
+            self.gate_title.setStyleSheet(self._banner_style(RED))
         self.gate_reasons.setText("\n".join(result.reasons))
         self.install_btn.setEnabled(result.accepted and not self.runner.busy)
         # Don't stomp on a mask the user is currently previewing (see _on_mask_preview_changed).

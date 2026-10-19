@@ -17,7 +17,7 @@ from . import SOUNDS_DIR
 from .pages import Page
 from .quiz import CATEGORIES, QUICK, START_TIME, Question, Quiz, Result, State, load_questions, review
 from .scores import ScoreStore, Trophy
-from .style import BRONZE, GOLD, GREEN, RED, SILVER, card, flag, label, link_button, primary_button, quiet_button
+from .style import BRONZE, GOLD, GREEN, MUTED, RED, SILVER, TEXT, card, flag, label, link_button, primary_button, quiet_button
 
 MUSIC_FILE = SOUNDS_DIR / "sea_breeze.ogg"
 MUSIC_VOLUME = 0.35
@@ -142,7 +142,7 @@ class QuizPage(Page):
         for text, size in (("QUICK QUIZ", 18), ("(NO SAVE - NO TROPHIES)", 10)):
             line = QLabel(text)
             line.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            line.setStyleSheet(f"color:white; font-size:{size}px; font-weight:800;")
+            line.setStyleSheet(f"color:{TEXT}; font-size:{size}px; font-weight:800;")
             line.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
             quick.addWidget(line)
         self.quick_button.clicked.connect(lambda: self.start(QUICK))
@@ -383,7 +383,7 @@ class QuizPage(Page):
         self.question_value.setText(f"{min(quiz.answered + 1, quiz.in_round)}/{quiz.in_round}")
         self.time_value.setText(f"{quiz.time_left}s")
         low = quiz.time_left < 10
-        self.time_value.setStyleSheet(f"color:{RED if low else 'white'}; font-size:22px; font-weight:900;")
+        self.time_value.setStyleSheet(f"color:{RED if low else TEXT}; font-size:22px; font-weight:900;")
         self.time_bar.setValue(min(quiz.time_left, START_TIME))
         flag(self.time_bar, "low", low)
 
@@ -409,7 +409,7 @@ class QuizPage(Page):
             elif n == index:
                 flag(button, "result", "wrong")
         self.skip_button.setEnabled(False)
-        self.feedback_label.setStyleSheet(f"color:{GREEN if right else 'white'}; font-size:16px; font-weight:700;")
+        self.feedback_label.setStyleSheet(f"color:{GREEN if right else TEXT}; font-size:16px; font-weight:700;")
         self.feedback_label.setText(self._feedback(question, option, right))
         self._refresh_stats()
         self.feedback_timer.start(self.quiz.delay_ms)
@@ -476,9 +476,9 @@ class QuizPage(Page):
         self.correct_value.setText(str(result.correct))
         self.wrong_value.setText(str(result.wrong))
         self.left_value.setText(f"{result.time_left}s")
-        self.left_value.setStyleSheet(f"color:{'white' if result.time_left else RED}; font-size:22px; "
+        self.left_value.setStyleSheet(f"color:{TEXT if result.time_left else RED}; font-size:22px; "
                                       "font-weight:900;")
-        self.total_label.setText(f"{result.score}  <span style='font-size:22px; color:#9DB4D8;'>"
+        self.total_label.setText(f"{result.score}  <span style='font-size:22px; color:{MUTED};'>"
                                  f"({quiz.percentage}%)</span>")
         reviewed = result.category != QUICK and result.completed
         text, star = review(quiz.percentage) if reviewed else ("", "")

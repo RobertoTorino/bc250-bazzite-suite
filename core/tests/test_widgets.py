@@ -13,14 +13,16 @@ from bc250_core.widgets import (
 
 
 def test_status_pill_colours(qapp):
+    """The theme's surface; the state a coloured left edge, the edge's colour for neutral."""
     pill = StatusPill()
     assert pill.text() == "Unknown"
-    assert theme.GREY in pill.styleSheet()
+    assert f"border-left:4px solid {theme.THEME.edge}" in pill.styleSheet()
     pill.set_status("Active", "ok", "tip")
     assert (pill.text(), pill.toolTip()) == ("Active", "tip")
-    assert theme.GREEN in pill.styleSheet()
+    assert f"border-left:4px solid {theme.GREEN}" in pill.styleSheet()
+    assert "white" not in pill.styleSheet()                                     # the theme's text colour
     pill.set_status("?", "no-such-kind")
-    assert theme.GREY in pill.styleSheet()
+    assert f"border-left:4px solid {theme.THEME.edge}" in pill.styleSheet()
 
 
 def test_status_text_colours(qapp):
@@ -44,6 +46,10 @@ def test_metric_box(qapp):
     assert box.value.alignment() & centre and box.caption.alignment() & centre        # centred by default
     left = MetricBox("GPU clock", theme.PURPLE, centred=False)
     assert not left.value.alignment() & centre
+    assert f"border-left:4px solid {theme.PURPLE}" in box.styleSheet()
+    box.set_colour(theme.RED)
+    assert f"border-left:4px solid {theme.RED}" in box.styleSheet() and theme.PURPLE not in box.styleSheet()
+    assert f"border-left:4px solid {theme.THEME.edge}" in MetricBox("Neutral").styleSheet()   # GREY: no colour
 
 
 def test_set_button_active_keeps_height(qapp):

@@ -39,7 +39,7 @@ def celsius_text(value: float | None) -> str:
 
 
 def set_box_colour(box: MetricBox, colour: str) -> None:
-    box.setStyleSheet(f"QFrame {{ background:{colour}; border-radius:8px; }} QLabel {{ color:white; }}")
+    box.set_colour(colour)
 
 
 class MainWindow(QMainWindow):

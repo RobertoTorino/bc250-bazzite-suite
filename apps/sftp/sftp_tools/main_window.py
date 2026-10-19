@@ -24,7 +24,7 @@ TONE_COLOURS = {"neutral": GREY, "info": BLUE, "success": GREEN, "warning": ORAN
 
 def set_state(box: MetricBox, value: str, tone: str) -> None:
     box.set_value(value, value)
-    box.setStyleSheet(f"QFrame {{ background:{TONE_COLOURS[tone]}; border-radius:8px; }} QLabel {{ color:white; }}")
+    box.set_colour(TONE_COLOURS[tone])
 
 
 class MainWindow(QMainWindow):

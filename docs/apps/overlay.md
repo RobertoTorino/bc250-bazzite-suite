@@ -41,7 +41,7 @@ from 90 °C. The values update every second.
   - **Always on top:** on by default.
   - **Quit.**
 
-The window is frameless and see-through, with rounded corners and a thin purple border.
+The window is frameless and see-through, with rounded corners and a thin border in the theme's accent.
 
 ### Where it shows
 

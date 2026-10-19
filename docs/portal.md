@@ -79,6 +79,9 @@ checkout uses its own checkout.
   the Desktop, it asks whether to keep them. While the switch is off, the portal removes the icons the apps'
   installers put there, at start and after each install. It only touches the icons of the suite's apps, never its
   own or anything else on the Desktop.
+- **Theme**, at the top: the look of every app in the suite. **Gunmetal** (dark, cool blue-grey, the default),
+  **Silver** (light) or **Warm** (dark warm grey with a bronze accent). It is one choice for all the apps, kept in
+  `~/.config/bc250-bazzite-suite/theme`; each app takes it the next time it starts, the portal too.
 - The **Dependency Checker** is a separate app in `apps/`. It lists declared runtime Python packages and
   app-specific external tools, plus the apps and features that use them. It compares Python package versions with
   PyPI and checks whether external tools are available; tool links open the relevant app guide. Some apps use
