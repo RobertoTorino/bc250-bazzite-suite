@@ -124,13 +124,21 @@ itself (`unit_text()`). `tools/check_upstream.py` compares both with Decky's rep
 SHA-256 GitHub publishes for the pinned binary, and Decky's `plugin_loader-release.service` at the pinned tag and on
 `main` (Decky's own updater installs `main`'s). It exits with 0 when they match, 1 when Decky moved and 2 when it
 could not check. The Upstream workflow (`.github/workflows/upstream.yml`) runs it every Monday and can be started by
-hand; a failed run means a new version of the app is due, with the new pin tried on the board first.
+hand. What moved goes into the open **Upstream review** issue (a new one when none is open, else its list is
+updated with a comment), which notifies everyone who watches the repository; close it once handled. The run fails
+only when an upstream could not be checked. A moved pin means a new version of the app is due, with the new pin
+tried on the board first.
 
 The shadPS4 Manager installs one shadPS4 release, pinned in `apps/shadps4/shadps4_manager/emulator.py`
 (`VERSION`, `TAG`, `ASSET`, `SHA256`). The same tool checks it: a newer stable release, with the Linux zip and the
 SHA-256 GitHub publishes for it that a new pin needs, and the SHA-256 of the pinned zip. A new shadPS4 can change
 what the app relies on (its `config.json`, the shadNet protocol), so a new pin also needs a look at what changed.
-The workflow runs each check as a job of its own.
+
+The PPSSPP, PCSX2 (its stable channel) and RPCS3 Managers and Mesh Shaders each pin one release: `VERSION` or
+`LANDMARK` in the app's `emulator.py`, and `DIRECTMESH` in `apps/mesh/bc250-mesh-shaders.sh`.
+The same tool reports a newer stable release than the pin (for DirectMesh the newest `directmesh-v*` tag); the apps
+check the checksum of what they download themselves. The governor has no pin in the repository (its version is the
+one COPR built); the GPU Governor Manager compares the installed package with filippor's latest release.
 
 The HelixSR Manager pins no HelixSR release: it gets the latest, or the fallback HelixSR's developer names. Its
 `apps/helixsr/helixsr_manager/acquire.py` holds `KNOWN_VERSION`, the newest release the app was checked
@@ -182,6 +190,8 @@ Code shared by the suite's apps. Nothing in it imports an app: each app passes i
 | `platform` | XDG folders, `xdg_open()`, `launch_in_terminal()` (with an exit file the caller can watch) | the bisect GUIs' `terminal.py` |
 | `steam` | Steam's folders and users, `with_steam_closed()`, `shortcuts.vdf` and the shortcuts' artwork in `grid/` (standard library only) | consoles |
 | `steam_art` | `draw_icon_art()`: a shortcut's four pictures drawn from an app's icon, in the icon's colour | consoles |
+| `upstream` | `publish()` / `read_all()`: the updates outside the suite an app can install now, for the portal's notice (standard library only; HelixSR carries a copy) | new: helixsr, pcsx2, portal |
+| `wifi` | The Wi-Fi adapters and whether the running kernel has a driver and firmware for them, `report()` (standard library only; `python3 -m bc250_core.wifi`) | new: check's test 53, wdriver |
 
 Core is **bundled per app**: `tools/stage_app.py` copies `bc250_core/` next to the package of every app that
 imports it, so each release runs on the core it was tested with.

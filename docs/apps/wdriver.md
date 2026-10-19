@@ -48,6 +48,10 @@ the **Wi-Fi** interface the driver created.
 version). **Remove…** unloads the driver and removes it, its service and its rule; the build in your home folder
 stays. **What the service did** shows the service's last run: what it built, loaded and ejected, and any error.
 
+**Wi-Fi adapters** lists every Wi-Fi adapter on the board, of any chip, and whether the running kernel has a
+driver and firmware for it: plug a stick in and press **Refresh** to see whether it works on Bazzite, before or
+instead of this app's driver. It is the same check as [BC-250 Bazzite Test](check.md)'s test 53, and only reads.
+
 ## The chip and its two firmware sets
 
 The AIC8800D80 exists in two MCU revisions, and the loader prints which one it found before it uploads anything:

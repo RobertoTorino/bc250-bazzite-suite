@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (QAbstractItemView, QCheckBox, QFileDialog, QGridLay
                              QInputDialog, QLabel, QMainWindow, QMessageBox, QPushButton, QTableWidget,
                              QTableWidgetItem, QVBoxLayout, QWidget)
 
-from bc250_core import SUITE_MANUAL_URL, steam, window_title
+from bc250_core import SUITE_MANUAL_URL, steam, upstream, window_title
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import bin_home, xdg_open
 from bc250_core.settings import SettingsStore
@@ -296,6 +296,19 @@ class MainWindow(QMainWindow):
             self.pill.set_status("No games", "neutral", "Add the folder with your games.")
         else:
             self.pill.set_status("Ready", "ok", "PCSX2 and a BIOS are installed and games were found.")
+        self._publish_update()
+
+    def _publish_update(self) -> None:
+        """For the portal's notice: on the nightly channel, a newer nightly build that Install brings. The stable
+        channel is pinned (a newer stable comes with a new version of the app), so it has none; nothing is written
+        while the nightly channel's check has not answered yet."""
+        if not self.nightly_check.isChecked():
+            upstream.publish("pcsx2", [])
+        elif self.latest is not None:
+            newer = bool(self.version) and self.latest.version != self.version
+            upstream.publish("pcsx2", [upstream.Outside(
+                "PCSX2 nightly", self.version, self.latest.version, self.latest.published, self.latest.page,
+                "Install brings it (the nightly channel).")] if newer else [])
 
     def _show_nightly_state(self) -> None:
         """The first step on the nightly channel: what is installed, the newest build GitHub lists, and that a

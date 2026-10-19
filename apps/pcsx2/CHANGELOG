@@ -1,3 +1,12 @@
+Changelog: 19-10-2026 03:41:49
+
+Release 0.5.0.
+
+Changelog: 19-10-2026 03:24:21
+
+Added. On the nightly channel, a newer nightly build than the installed one is recorded for the portal's notice
+(Outside the suite); on the stable channel nothing, as the stable release is pinned.
+
 Changelog: 18-10-2026 22:45:26
 
 Release 0.4.0.

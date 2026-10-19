@@ -385,6 +385,7 @@ reports the overall verdict. In the app these become the button colours, the cou
 | 07 | Open Ports             | Lists listening TCP/UDP sockets.                                          |
 | 08 | NTP Synchronization    | Confirms the clock is synchronised.                                       |
 | 30 | SSH Service            | Reports `sshd.service` / `sshd.socket` state (off by default on Bazzite). |
+| 53 | Wi-Fi Adapter          | Every Wi-Fi adapter and whether the kernel has a driver for it. See below. |
 | 44 | Internet Speed         | **Opt-in**: run it from its button on the Network page. See below.       |
 
 **How test 44 measures the connection** (Ookla's `speedtest`, or `speedtest-cli` as a fallback; about 30 s):
@@ -400,6 +401,25 @@ reports the overall verdict. In the app these become the button colours, the cou
 * Every run is appended to `bc250-speedtest-history.csv`; **Show graph** compares all runs.
 * Install Ookla's CLI: download the Linux x86_64 `.tgz` from <https://www.speedtest.net/apps/cli> and put the
   `speedtest` binary in `~/.local/bin`. Running it accepts Ookla's licence and GDPR terms.
+
+**What test 53 says about Wi-Fi.** The BC-250 has no Wi-Fi of its own; a USB stick (or a PCIe card) adds it. The
+test lists every Wi-Fi adapter it finds, with its USB or PCI ID and its driver, and says for each one:
+
+* **connected** (a success): the band, the signal in dBm and the link speed. The network's name stays out of the
+  report;
+* **works, not connected**: connect it in the network settings;
+* **switched off** by rfkill, in software or by a hardware switch (a warning);
+* **the driver is there but not loaded**: the running kernel has a module for the stick's ID that is not loaded;
+  the test gives the `modprobe` command;
+* **firmware missing**: the driver took the adapter but did not get its firmware file at this boot;
+* **no driver**: the running kernel has no driver for the stick's ID, so it does not work on Bazzite as it is;
+* **storage mode**: the stick shows up as a small disk with the Windows driver. An AIC8800D80 stick (the UGREEN
+  AX900 and others) needs [BC-250 USB Wi-Fi](wdriver.md), which builds its driver; another stick switches when
+  its disk is ejected.
+
+With BC-250 USB Wi-Fi's driver installed, the test also checks its service: enabled, its last run without an
+error, the driver built for the running kernel and loaded. The test only reads: it loads no module and switches no
+stick. No adapter at all is reported, not a warning: the network cable needs nothing.
 
 ### Storage and memory
 

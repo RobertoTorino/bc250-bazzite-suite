@@ -1,3 +1,16 @@
+Changelog: 19-10-2026 03:41:48
+
+Release 0.5.0.
+
+Changelog: 19-10-2026 03:05:03
+
+Added. Test 53, Wi-Fi Adapter (Network): every Wi-Fi adapter, whether the running kernel has a driver and
+firmware for it, rfkill, and the band and signal of its connection; a stick with no driver, a driver not loaded, a
+missing firmware file or rfkill is a warning, no adapter only information. An AIC8800D80 stick is pointed to BC-250
+USB Wi-Fi, and with its driver installed the test checks the service, the build for the running kernel and the
+loaded modules. It runs bc250_core.wifi with the system python3 -I -B and only reads: no module is loaded, no stick
+switched.
+
 Changelog: 18-10-2026 22:45:25
 
 Release 0.4.0.

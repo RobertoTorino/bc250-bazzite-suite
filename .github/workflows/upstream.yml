@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 name: Upstream
 
-# Weekly: are the apps that pin an upstream release still in step with it (tools/check_upstream.py)? A failed job
-# means that upstream moved: for Decky Loader a newer release, a replaced asset or a changed service unit, for shadPS4
-# a newer release (the summary gives its zip and SHA-256) or a replaced zip, for HelixSR a release newer than the one
-# the HelixSR Manager was checked against, or another fallback in its notes. It only reads from GitHub; nothing is
-# changed or published.
+# Weekly: are the apps that pin or follow an upstream release still in step with it (tools/check_upstream.py)? What
+# moved goes into the open "Upstream review" issue, so the owner sees it: for Decky Loader a newer release, a replaced
+# asset or a changed service unit, for shadPS4 a newer release (with its zip and SHA-256) or a replaced zip, for
+# HelixSR a release newer than the one the HelixSR Manager was checked against or another fallback in its notes, for
+# PPSSPP, PCSX2, RPCS3 and DirectMesh a release newer than the pin. A new issue, or a comment on the open one,
+# notifies everyone who watches the repository; close it once handled. The job fails only when an upstream could not
+# be checked (network, GitHub's rate limit). It only reads from GitHub; only that issue changes.
 
 on:
   schedule:
@@ -14,31 +16,36 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
-  decky-loader:
+  review:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Decky Loader against the pin in apps/decky
-        run: python3 tools/check_upstream.py decky
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  shadps4:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: shadPS4 against the pin in apps/shadps4
-        run: python3 tools/check_upstream.py shadps4
+      - name: Every upstream against what the apps pin or know
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          code=0
+          python3 tools/check_upstream.py --report "$RUNNER_TEMP/upstream.md" || code=$?
+          [ "$code" -le 1 ]
 
-  helixsr:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: HelixSR against what apps/helixsr knows
-        run: python3 tools/check_upstream.py helixsr
+      - name: Open or update the Upstream review issue
+        if: always()
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TITLE: Upstream review
+        run: |
+          body="$RUNNER_TEMP/upstream.md"
+          if [ ! -s "$body" ]; then echo "Every upstream is in step."; exit 0; fi
+          number=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number,title \
+            --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
+          if [ -n "$number" ]; then
+            gh issue edit "$number" --body-file "$body"
+            gh issue comment "$number" --body "Weekly upstream check: the list above is updated."
+          else
+            gh issue create --title "$TITLE" --body-file "$body"
+          fi

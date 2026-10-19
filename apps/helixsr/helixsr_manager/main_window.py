@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
 )
 
 from . import APP_ID, APP_NAME, DEPLOYMENTS_FILE, DISPLAY_NAME, LOGO_PATH, PAYLOAD_DIR, __version__, plain_tooltip
-from . import backend
+from . import backend, upstream
 from .acquire import (
     DLSS_DLL, FALLBACK_VERSION, HELIXSR_DATA_DIR, WORK_DIR, DlssFinder, SetupOutcome, SetupRequest, SetupWorker,
     UpdateChecker, UpdateStatus, latest_work_release, pinned_dlss_sha, version_tuple,
@@ -426,6 +426,7 @@ class MainWindow(QMainWindow):
         helix = statuses.get("helixsr")
         if helix is None:
             return
+        self._publish_update(helix)
         if helix.latest.error:
             self.overview.show_update("", "neutral")
             self.statusBar().showMessage("Update check: {0}".format(helix.latest.error), 8000)
@@ -445,6 +446,17 @@ class MainWindow(QMainWindow):
                 version=helix.latest.version, published=helix.latest.published), "info")
         else:
             self.overview.show_update("", "ok")
+
+    def _publish_update(self, helix: UpdateStatus) -> None:
+        """For the portal's notice: a newer HelixSR that Get HelixSR… installs, or none. Not when the check failed
+        (the last answer stands), nor when the payload is the fallback picked on the Setup page."""
+        if helix.latest.error or not helix.latest.version:
+            return
+        on_fallback = self.setup_page.fallback() and version_tuple(helix.installed) == version_tuple(FALLBACK_VERSION)
+        updates = [upstream.Outside("HelixSR", helix.installed, helix.latest.version, helix.latest.published,
+                                    helix.latest.url, "Get HelixSR… on the Setup page updates it.")] \
+            if helix.update_available and not on_fallback else []
+        upstream.publish("helixsr", updates)
 
     # ------------------------------------------------------------ setup (download + build)
     def _start_setup(self, dlss_file: Path | None) -> None:

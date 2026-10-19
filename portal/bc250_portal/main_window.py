@@ -34,7 +34,7 @@ from PyQt6.QtWidgets import (
     QTabWidget, QToolButton, QVBoxLayout, QWidget,
 )
 
-from bc250_core import SUITE_MANUAL_URL, __version__ as CORE_VERSION
+from bc250_core import SUITE_MANUAL_URL, __version__ as CORE_VERSION, upstream
 from bc250_core.platform import bin_home, expand, launch_in_terminal
 from bc250_core.settings import open_settings, restore_geometry, save_geometry
 from bc250_core.theme import ACCENT, BLUE, GREY, ORANGE, RED, header_font
@@ -467,6 +467,7 @@ class MainWindow(QMainWindow):
         self.poll.setInterval(POLL_MS)
         self.poll.timeout.connect(self._check_pending)
         restore_geometry(self, self.settings)
+        self.marked: list[tuple[AppEntry, str]] = []
         self.refresh()
         self.portal_checker = UpdateChecker(self)
         self.portal_checker.finished.connect(self._portal_checked)
@@ -549,15 +550,27 @@ class MainWindow(QMainWindow):
             if self.busy() and not busy:
                 card.install_button.setEnabled(False)
                 card.uninstall_button.setEnabled(False)
+        self.marked = marked
         self.show_notice(marked)
         self.check_installed()
 
+    def outside_updates(self) -> list[tuple[AppEntry, upstream.Outside]]:
+        """Updates outside the suite that an installed app can install now, as the apps last recorded them
+        (bc250_core.upstream), in the order of the tiles."""
+        recorded = upstream.read_all()
+        return [(entry, outside) for entry in self.entries if entry.key in recorded and is_installed(entry)
+                for outside in recorded[entry.key]]
+
     def show_notice(self, marked: list[tuple[AppEntry, str]]) -> None:
         """The notice beside check: each app with an update or a reinstall, linked to its tile; and on each tab's name
-        the number of them on it."""
+        the number of them on it. Below them the updates outside the suite an installed app can install now."""
         updates = sum(state == "update" for _, state in marked)
         reinstalls = len(marked) - updates
-        if not marked:
+        outside = self.outside_updates()
+        if not marked and outside:
+            self.notice.setText("")
+            self.notice.setToolTip("")
+        elif not marked:
             self.notice.setText("<span style='color:gray;'>No updates: every installed app is the version this "
                                 "portal pins.</span>")
             self.notice.setToolTip("")
@@ -578,6 +591,24 @@ class MainWindow(QMainWindow):
                 "its icon, and its Install button updates it. Reinstalls: apps the portal did not install (by hand, "
                 "or under an earlier name of the app), so their version is unknown; each has a red circular arrow in "
                 "its icon, and its red button reinstalls it. Click a name to go to its tile.")
+        if outside:
+            lines = []
+            for entry, update in outside:
+                when = f" ({update.published})" if update.published else ""
+                had = f", installed {update.installed}" if update.installed else ""
+                tab = self.tab_of(entry)
+                where = f" ({CATEGORIES[tab]})" if tab else ""
+                lines.append(f"<a href='{escape(entry.key)}'>{escape(entry.short or short_name(entry.name))}</a>"
+                             f"{escape(where)}: "
+                             f"{escape(update.name)} {escape(update.latest)} is out{escape(when)}{escape(had)}. "
+                             f"{escape(update.action)}")
+            text = self.notice.text()
+            self.notice.setText((text + "<br>" if text else "")
+                                + f"<b style='color:{ORANGE};'>● Outside the suite</b><br>" + "<br>".join(lines))
+            self.notice.setToolTip(((self.notice.toolTip() + "\n\n") if self.notice.toolTip() else "")
+                                   + "Outside the suite: a newer release of a program an app installs in its newest "
+                                   "version (not one it pins), as the app found when it last checked. The app "
+                                   "installs it; click a name to go to its tile and open the app there.")
         for category, page in self.pages.items():
             n = sum(self.tab_of(entry) == category for entry, _ in marked)
             index = self.tabs.indexOf(page)
@@ -643,6 +674,7 @@ class MainWindow(QMainWindow):
     def changeEvent(self, event) -> None:  # noqa: N802 (Qt override)
         if event.type() == QEvent.Type.ActivationChange and self.isActiveWindow():
             self.check_installed()                      # back from the terminal that installed a new portal
+            self.show_notice(self.marked)               # back from an app that checked its program's newest
         super().changeEvent(event)
 
     def _open_portal_release(self) -> None:

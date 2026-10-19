@@ -3,7 +3,7 @@
 
 APP_NAME = "HelixSR Manager"
 APP_ID = "bc250-bazzite-helixsr-gui"
-__version__ = "0.3.2"
+__version__ = "0.4.0"
 
 import os
 from pathlib import Path

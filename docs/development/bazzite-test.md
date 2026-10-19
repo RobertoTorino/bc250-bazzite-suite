@@ -112,6 +112,7 @@ reports the overall verdict.
 | 07 | Open Ports             | Lists listening TCP/UDP sockets.                                          |
 | 08 | NTP Synchronization    | Confirms the clock is synchronised.                                       |
 | 30 | SSH Service            | Reports `sshd.service` / `sshd.socket` state (off by default on Bazzite). |
+| 53 | Wi-Fi Adapter          | Every Wi-Fi adapter, its driver and firmware, rfkill and its connection; BC-250 USB Wi-Fi's service. |
 | 44 | Internet Speed         | **Opt-in** (`--speedtest`). See below.                                    |
 
 **How test 44 measures the connection** (Ookla's `speedtest`, or `speedtest-cli` as a fallback; about 30 s):
@@ -127,6 +128,13 @@ reports the overall verdict.
 * Every run is appended to `bc250-speedtest-history.csv`; the GUI's **Show graph** compares all runs.
 * Install Ookla's CLI: download the Linux x86_64 `.tgz` from <https://www.speedtest.net/apps/cli> and put the
   `speedtest` binary in `~/.local/bin`. Running it accepts Ookla's licence and GDPR terms.
+
+Test 53 runs `bc250_core.wifi` with the system `python3 -I -B` (standard library only, no bytecode written as
+root): from the `bc250_core` bundled next to the script, or `core/` in the suite checkout. It reads `/sys`, the
+running kernel's `modules.dep` and `modules.alias`, this boot's kernel log and `iw dev <interface> link`, and prints
+its findings as `LEVEL: text` lines, which the script logs; a `WARNING` line counts as a warning. BC-250 USB
+Wi-Fi's part reads `/etc/bc250-usb-wifi/driver.json`, `/run/bc250-usb-wifi/state.json`, the built modules under
+`/var/lib/bc250-usb-wifi/modules/<kernel>` and `lsmod`.
 
 ### Storage and memory
 

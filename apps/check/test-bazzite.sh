@@ -3711,6 +3711,54 @@ for CEC_UNIT in cec-onboot.service cec-onsleep.service cec-onpoweroff.service; d
 done
 echo
 fi  # TEST 52
+if want 53; then
+log_result "[TEST 53] Wi-Fi Adapter Test"
+log_result "Every Wi-Fi adapter, whether the running kernel has a driver and firmware for it, and its connection"
+# bc250_core's wifi reader (bundled next to the script in a release, core/ in the suite checkout), with the system
+# python in isolated mode and without bytecode, so nothing is written as root into the app's folders. It only reads.
+if [ -d "$SCRIPT_DIR/bc250_core" ]; then WIFI_CORE="$SCRIPT_DIR"; else WIFI_CORE="$SCRIPT_DIR/../../core"; fi
+if ! command -v python3 >/dev/null 2>&1; then
+    log_result "INFO: python3 is not installed, so the Wi-Fi adapters cannot be read."
+elif [ ! -f "$WIFI_CORE/bc250_core/wifi.py" ]; then
+    log_result "INFO: The Wi-Fi reader (bc250_core) is not next to this script, so the Wi-Fi adapters cannot be read."
+else
+    while IFS= read -r WIFI_LINE; do
+        [ -n "$WIFI_LINE" ] || continue
+        log_result "$WIFI_LINE"
+        [[ "$WIFI_LINE" == WARNING:* ]] && WARN_FOUND=true
+    done < <(python3 -I -B -c 'import sys; sys.path.insert(0, sys.argv[1]); from bc250_core import wifi; sys.exit(wifi.main())' \
+        "$WIFI_CORE" 2>&1)
+fi
+
+# BC-250 USB Wi-Fi's driver (AIC8800D80 sticks): a system service that builds and loads it at every boot.
+WIFI_UNIT="bc250-usb-wifi.service"
+if [ -f "/etc/systemd/system/$WIFI_UNIT" ]; then
+    WIFI_KERNEL=$(uname -r)
+    wifi_json() { python3 -I -B -c 'import json, sys; print(json.load(open(sys.argv[1])).get(sys.argv[2], ""))' "$1" "$2" 2>/dev/null; }
+    WIFI_BRANCH=$(wifi_json /etc/bc250-usb-wifi/driver.json branch)
+    WIFI_STATE=$(systemctl is-active "$WIFI_UNIT" 2>/dev/null)
+    WIFI_ERROR=$(wifi_json /run/bc250-usb-wifi/state.json error)
+    log_result "INFO: BC-250 USB Wi-Fi's driver is installed (branch ${WIFI_BRANCH:-unknown}), $WIFI_UNIT is ${WIFI_STATE:-unknown}."
+    if ! systemctl is-enabled --quiet "$WIFI_UNIT" 2>/dev/null; then
+        log_result "WARNING: $WIFI_UNIT is not enabled: the driver is not loaded at boot."
+        log_result "HINT: In BC-250 USB Wi-Fi, press Update to install the service again."
+        WARN_FOUND=true
+    elif [ -n "$WIFI_ERROR" ]; then
+        log_result "WARNING: The service's last run at this boot failed: $WIFI_ERROR"
+        log_result "HINT: Read why with: journalctl -b -u bc250-usb-wifi; BC-250 USB Wi-Fi shows it too."
+        WARN_FOUND=true
+    elif [ ! -f "/var/lib/bc250-usb-wifi/modules/$WIFI_KERNEL/aic8800_fdrv.ko" ]; then
+        log_result "NOTE: No driver built for kernel $WIFI_KERNEL yet: the service builds it at the next boot, or press Install in BC-250 USB Wi-Fi."
+    elif lsmod | grep -q '^aic_load_fw ' && lsmod | grep -q '^aic8800_fdrv '; then
+        log_result "SUCCESS: The driver is built for kernel $WIFI_KERNEL and loaded (aic_load_fw, aic8800_fdrv)."
+    else
+        log_result "WARNING: The driver is built for kernel $WIFI_KERNEL but not loaded."
+        log_result "HINT: Read why with: journalctl -b -u bc250-usb-wifi"
+        WARN_FOUND=true
+    fi
+fi
+echo
+fi  # TEST 53
 log_result "All tests completed. Review results in $LOG_FILE."
 echo
 

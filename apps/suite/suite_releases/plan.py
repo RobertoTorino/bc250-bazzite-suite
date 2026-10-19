@@ -811,6 +811,42 @@ def push_command(linux: bool | None = None) -> str:
     return f"{CI_LOCAL} && git push" if linux else "git push"
 
 
+def add_command() -> str:
+    """The git add button: everything, the exec bits CI checks, and what is staged now."""
+    return "git add -A && tools/fix-modes.sh && git status --short"
+
+
+def commit_command(message: str, base: str, amend: bool = False, python: str = "python3") -> str:
+    """The git commit button: the version and manifest checks first (CI's quick ones), the commit only when they
+    pass. *amend*: the staged changes join HEAD, with its message."""
+    checks = f"{python} tools/check_versions.py && {python} tools/check_manifest.py --base {shlex.quote(base)}"
+    commit = "git commit --amend --no-edit" if amend else f"git commit -m {shlex.quote(message)}"
+    return f"{checks} && {commit}"
+
+
+def commit_message(text: str) -> tuple[str, bool]:
+    """The commit a step's commands make: its message, or ("", True) when they amend HEAD; ("", False) for none."""
+    for line in text.splitlines():
+        line = line.strip()
+        if line.startswith("git commit --amend"):
+            return "", True
+        if line.startswith("git commit -m "):
+            words = shlex.split(line, comments=True)
+            return words[3] if len(words) > 3 else "", False
+    return "", False
+
+
+def git_state(root: Path, base: str) -> tuple[bool, bool, int]:
+    """For the git buttons: whether something is not staged (changed or new), whether something is staged, and how
+    many commits HEAD has that *base* (the last push) does not."""
+    status = git(root, "status", "--porcelain") or ""
+    lines = [line for line in status.splitlines() if len(line) > 2]
+    unstaged = any(line[1] != " " for line in lines)
+    staged = any(line[0] not in " ?" for line in lines)
+    ahead = (git(root, "rev-list", "--count", f"{base}..HEAD") or "0").strip()
+    return unstaged, staged, int(ahead) if ahead.isdigit() else 0
+
+
 def app_commands(tags: list[str], linux: bool | None = None, portal: str = "", amend: bool = False) -> str:
     """The commands after step 1's Apply. *portal*: the portal version this push also needs (apps.toml changed since
     the last portal release), which comes first: committed without it, the push fails CI. *amend*: HEAD is the release commit

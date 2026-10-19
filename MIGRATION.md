@@ -879,7 +879,14 @@ Bazzite's).
   started, and after a reboot; a stick plugged in while in storage mode switched by the rule; Remove), and the
   rebuild at the next kernel update; the portal/VERSION minor bump for the new card and the first release (owner).
   The alternative stays for other users: a stick whose driver is in the kernel (MediaTek MT7921AU, MT7612U,
-  Realtek RTL8821CU/8822BU), which also does WPA3.
+  Realtek RTL8821CU/8822BU), which also does WPA3. Wi-Fi checks (owner, 19-10-2026: a test in check and the same
+  check in the app's window; check only reads): `core/bc250_core/wifi.py` lists every Wi-Fi adapter (USB or PCIe)
+  and whether the running kernel has a driver and firmware for it (modules.dep, modules.alias, this boot's kernel
+  log), rfkill and the connection; check's test 53 (Wi-Fi Adapter, Network) runs it with the system python and adds
+  the USB Wi-Fi service's state, the USB Wi-Fi window shows it as Wi-Fi adapters. Tried on the owner's board
+  (19-10-2026, the stick in storage mode, the driver not installed): both report the AIC8800D80 in storage mode.
+  Open: test 53 on the board as root with the driver installed and `wlan0` connected; the check, wdriver and core
+  releases (owner).
 - **PS1 emulator manager with DuckStation (`stenzek/duckstation`): investigated, not built (owner, 16-10-2026:
   the licence rules it out).** Technically it fits the PCSX2 Manager's pattern: an x86-64 AppImage with a SHA-256
   per asset on numbered releases (`v0.1-11894`, 12-09-2026; `latest` and `preview` are moving tags), Vulkan, a PS1

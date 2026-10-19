@@ -61,6 +61,13 @@ checkout uses its own checkout.
   Memory Manager**, and its tooltip lists each app with its old and new version. After the portal update, the
   installed apps among them show the red dot. When the new pins cannot be read (offline, for example), the button
   says **Portal x.y.z available**.
+- **Outside the suite**, in orange below the updates: a newer release of a program that an installed app installs
+  in its newest version, so the app can install it now, for example **HelixSR Manager (Graphics): HelixSR 1.9.3
+  is out**, with what to do in the app. Today these are HelixSR (the HelixSR Manager) and PCSX2's nightly builds
+  (the PCSX2 Manager on its nightly channel). The portal shows what the app found the last time it looked, so open
+  the app now and then; when you come back to the portal, the notice follows. Programs an app pins (Decky Loader,
+  shadPS4, PPSSPP, RPCS3, Vita3K, PCSX2's stable release, DirectMesh) are not listed: a newer one comes with a new
+  version of the app, as an update above.
 - **Restart: portal x.y.z is installed:** a portal window that is open while you install a newer portal keeps
   running the old one, with its old app versions, and starting the portal again only brings that window to the
   front. When you come back to the window, it sees the newer portal and shows this red button: click it to restart
@@ -97,6 +104,7 @@ What it installs:
 | BC-250 Bazzite Test (bundled in the portal release) | `/opt/bc250-bazzite-test`, through its own installer | Its test engine runs as root and must be root-owned |
 | The suite's shared venv with PyQt6 | `~/.local/share/bc250-bazzite-suite/venv` | One copy of the ~100 MB of Qt for all suite apps; removed with the last app that uses it (`venv-users/`) |
 | What the portal installed, and the release each app was installed from | `~/.local/share/bc250-bazzite-suite/portal/` | So each app's matching uninstaller is at hand; an update removes the previous release |
+| What the apps found outside the suite, one file per app | `~/.local/share/bc250-bazzite-suite/upstream/` | For **Outside the suite** in the notice; written by the apps, read by the portal |
 | Launcher, menu entry, Desktop icon | `~/.local/bin/bc250-bazzite-suite`, `~/.local/share/applications/`, the Desktop | The portal's icon is the one way in; the apps' own icons are optional (**App icons on the Desktop**) |
 
 Uninstall: `/opt/bc250-bazzite-suite/install.sh --uninstall`. This removes the portal and Bazzite Test and
@@ -218,10 +226,10 @@ apps/suite/install.sh --uninstall             # remove them; the checkout stays
   and tag the portal (step 5). The window lists these commands in that order. While step 1's releases are
   not tagged yet, Bump portal lists step 1's commands with the bump in them instead (amending the release commit
   when it is already made and not pushed), and the portal release follows once the apps are pinned.
-- **Test updates** and **Test release** run the two board tests below in a terminal, with
+- **Test app updates** and **Test Portal release** run the two board tests below in a terminal, with
   `apps/suite/check-release.sh`: the portal from the checkout before the push, and the published portal release after
   GitHub has built it. Linux only.
-- **Run from checkout:** every app window in the checkout, as an icon. A click starts that app from the checkout,
+- **Local app test:** every app window in the checkout, as an icon. A click starts that app from the checkout,
   to try a change before its release: `python -m <package>` with the checkout's venv and its `core`, as `run.sh`
   starts Suite Releases. An app that changes how the board runs asks first, as in the portal; started from the
   checkout it uses the scripts in the checkout. Each app writes its output to
@@ -230,11 +238,18 @@ apps/suite/install.sh --uninstall             # remove them; the checkout stays
   checkout with `mkdocs serve` (the development venv has MkDocs) and opens it in the browser at
   `http://127.0.0.1:8765/bc250-bazzite-suite/`. It rebuilds on every save; its log is `mkdocs.log` there. When it
   is already running, a click only opens the page again.
-- **Log 1** shows the log of the step last open, the whole window wide: what Apply, Pin, Bump portal, Withdraw
-  or an app started from the checkout wrote. A step that writes its log opens Log 1; open the step again to go on.
-- **The command line** in **Log 2** runs a command in the checkout, so you need no separate terminal for the
+- **Logs** shows the log of the step last open, the whole window wide: what Apply, Pin, Bump portal, Retract
+  or an app started from the checkout wrote. A step that writes its log opens Logs; open the step again to go on.
+- **git add**, **git commit** and **git push**, under the tabs, commit and push without typing a command, with
+  the checks in between. **git add** stages every change and new file and runs `tools/fix-modes.sh`, which sets
+  the exec bits CI checks. **git commit** runs `tools/check_versions.py` and `tools/check_manifest.py` first and
+  commits only when they pass; Apply and Bump portal fill in its message, and tick **Amend** when their commands
+  add to the last commit (only a commit that is not pushed yet). **git push** runs `tools/ci-local.sh` first on
+  Linux and pushes only when CI's jobs pass. Each button works only when it has something to do, and none while a
+  command runs; their output appears in **Commands**. Tag with the command the step shows.
+- **The command line** in **Commands** runs a command in the checkout, so you need no separate terminal for the
   commands the steps show. Type it and press Enter; its output appears above the line as it runs. **Commands**
-  lists the commands the last step showed (Apply, Bump portal or Withdraw), one per line: pick one to put it on
+  lists the commands the last step showed (Apply, Bump portal or Retract), one per line: pick one to put it on
   the line, then check it and press Enter. Up and Down bring back earlier commands, also from earlier sessions.
   **Stop** or Ctrl+C interrupts a command, along with anything it started in the background; `clear` or **Clear**
   empties the output.
@@ -286,7 +301,7 @@ portal offers those releases as updates. So before the tag, check on a BC-250 th
 install and run:
 
 1. Bump the portal (step 4) and commit. Pushing is not needed for this test.
-2. Click **Test updates** in the release front end, or run `apps/suite/check-release.sh local`. It installs the portal
+2. Click **Test app updates** in the release front end, or run `apps/suite/check-release.sh local`. It installs the portal
    from the checkout (`./install.sh` in the repository root: this portal version, with its new pins in
    `apps.toml`) and starts it with the pinned releases instead of the checkout:
 
@@ -308,7 +323,7 @@ it on the board.
 
 ### Testing a portal release after its tag
 
-Once GitHub's release workflow has built the portal release, click **Test release**, or run:
+Once GitHub's release workflow has built the portal release, click **Test Portal release**, or run:
 
 ```bash
 apps/suite/check-release.sh release              # the release of portal/VERSION
@@ -318,7 +333,7 @@ apps/suite/check-release.sh release portal-v0.9.2
 It downloads the release tarball and its `SHA256SUMS` from GitHub into `~/.cache/bc250-release-check/`, checks
 the checksum, installs it and starts it. The board then runs the official release, as a user's board does: check
 that the portal starts, that its version is the new one, and that the apps install. To go back to the checkout,
-run `./install.sh` in the repository root (or Test updates). A portal from the checkout shows an orange
+run `./install.sh` in the repository root (or Test app updates). A portal from the checkout shows an orange
 banner at the top, "Local build"; the published release has none.
 
 ### Withdrawing a release
@@ -326,8 +341,8 @@ banner at the top, "Local build"; the published release has none.
 A release that must not be used any more, because of a privacy, security or any other problem, is withdrawn.
 The release stays on GitHub, so its history is kept, but nothing installs it any more:
 
-1. In BC250 Suite Releases, tab **3. Withdraw**: choose the app's pinned release, write why, and press
-   **Withdraw**. This adds `withdrawn = "<reason>"` to its entry in `apps.toml` and a CHANGELOG entry to the app.
+1. In BC250 Suite Releases, tab **3. Retract**: choose the app's pinned release, write why, and press
+   **Retract**. This adds `withdrawn = "<reason>"` to its entry in `apps.toml` and a CHANGELOG entry to the app.
    **Take back** removes it again.
 2. **Test withdrawal** on a BC-250 with the app installed: it installs the portal from the checkout and starts it
    (`check-release.sh local`). The portal must say the app is not available any more, remove it, and then show

@@ -1,3 +1,11 @@
+Changelog: 19-10-2026 03:24:21
+
+The weekly upstream check covers every program the apps pin or follow: besides Decky Loader, shadPS4 and HelixSR
+also PPSSPP, PCSX2's stable release, RPCS3 and DirectMesh, each against a newer release than the pin
+(tools/check_upstream.py). What moved goes into the open Upstream review issue, as the Backlog review does, instead
+of only failing the run; the run fails only when an upstream could not be checked. Vita3K stays unchecked (a build
+almost daily), and the governor has no pin in the repository.
+
 Changelog: 19-10-2026 00:38:24
 
 The controller beside the board on the wiki's home page changes with every portal release. The pictures are in

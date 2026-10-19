@@ -1,3 +1,15 @@
+Changelog: 19-10-2026 02:46:23
+
+Added. git add, git commit and git push are buttons under the tabs, with the checks in between, so no command has
+to be typed or copied (owner, 19-10-2026). git add stages everything and sets the exec bits (tools/fix-modes.sh);
+git commit runs check_versions.py and check_manifest.py first and commits only when they pass, with the message
+Apply or Bump portal filled in (or Amend, when their commands add to the unpushed release commit); git push runs
+tools/ci-local.sh first on Linux and pushes only when CI's jobs pass. Each button works only when it has something
+to do, and none while a command runs; the output shows in the Commands tab. Tagging stays a command. Renamed (owner,
+19-10-2026): the tabs Log 1 and Log 2 are Logs and Commands, Run from checkout is Local app test and 3. Withdraw is
+3. Retract, with its Withdraw button Retract; Test updates is Test app updates and Test release is Test Portal
+release.
+
 Changelog: 17-10-2026 14:01:24
 
 Fixed. The app's folder in the suite is apps/suite (was apps/suite-releases) and its package is suite_releases (was

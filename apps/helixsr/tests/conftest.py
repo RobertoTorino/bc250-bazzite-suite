@@ -36,6 +36,7 @@ def settings_dir(tmp_path, monkeypatch):
     """QSettings files go to tmp_path, never into the user's own settings. On Windows the native format is the
     registry, which setPath() cannot redirect, so there QSettings(org, app) becomes the same call with IniFormat."""
     from PyQt6.QtCore import QSettings
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))     # the portal's notice files (bc250_core.upstream)
     for fmt in (QSettings.Format.NativeFormat, QSettings.Format.IniFormat):
         QSettings.setPath(fmt, QSettings.Scope.UserScope, str(tmp_path / "settings"))
     if sys.platform == "win32":

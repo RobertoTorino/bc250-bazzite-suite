@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Upstream check: are the apps that pin an upstream release still in step with it?
 
-    python3 tools/check_upstream.py [decky] [shadps4] [helixsr]     # all when none is named
+    python3 tools/check_upstream.py [--report FILE] [decky] [shadps4] [helixsr] [ppsspp] [pcsx2] [rpcs3]
+                                    [directmesh]                     # all when none is named
 
 Decky Loader Manager pins one Decky release (apps/decky/decky_manager/loader.py: VERSION, TAG, SHA256)
 and writes Decky's release unit itself (loader.unit_text()). This compares them with Decky's GitHub repository:
@@ -24,8 +25,17 @@ The HelixSR Manager gets the latest HelixSR release, or the fallback its develop
  * the fallback the latest release's notes name ("If 1.9.0 does not work for you, use HelixSR 1.8.1") must be
    FALLBACK_VERSION, and that release must still have its zip.
 
+The PPSSPP, PCSX2 and RPCS3 Managers and Mesh Shaders pin one release each (PPSSPP and PCSX2's stable VERSION and
+RPCS3's LANDMARK in their emulator.py, DIRECTMESH in bc250-mesh-shaders.sh), read here without importing the app:
+ * the latest stable release (DirectMesh: the newest directmesh-v* tag): newer than the pin means a new version of the
+   app, tried on the board first. Their checksums are checked by the apps themselves when they download.
+The governor's version is whatever COPR built, nothing in the repository pins it: the GPU Governor Manager says when
+filippor's release is newer than the installed package. Vita3K is not checked: it publishes a build almost daily,
+and the Vita3K Manager says when a newer one is out.
+
 Exit code 0: all in step; 1: an upstream moved (the report says what); 2: one could not be checked (network, GitHub's
 rate limit).
+--report FILE writes what moved as Markdown, for the "Upstream review" issue (empty when all are in step).
 The weekly workflow .github/workflows/upstream.yml runs it; with GITHUB_TOKEN set it asks GitHub's API as that token.
 Nothing is changed or published."""
 
@@ -48,6 +58,12 @@ SUITE = Path(__file__).resolve().parent.parent
 LOADER = SUITE / "apps" / "decky" / "decky_manager" / "loader.py"
 EMULATOR = SUITE / "apps" / "shadps4" / "shadps4_manager" / "emulator.py"
 ACQUIRE = SUITE / "apps" / "helixsr" / "helixsr_manager" / "acquire.py"
+PPSSPP = SUITE / "apps" / "ppsspp" / "ppsspp_manager" / "emulator.py"
+PCSX2 = SUITE / "apps" / "pcsx2" / "pcsx2_manager" / "emulator.py"
+RPCS3 = SUITE / "apps" / "rpcs3" / "rpcs3_manager" / "emulator.py"
+MESH = SUITE / "apps" / "mesh" / "bc250-mesh-shaders.sh"
+DIRECTMESH_REPO = "lonewolf0622/bc250meshtaskwork"
+DIRECTMESH_PREFIX = "directmesh-"
 HELIXSR_REPO = "lonewolf0622/HelixSR"
 # How the release notes name the fallback: "use [HelixSR 1.8.1](...)", earlier "use HelixSR 1.4.3".
 FALLBACK_RE = re.compile(r"use \[?HelixSR v?(\d+\.\d+\.\d+)")
@@ -257,26 +273,105 @@ def check_helixsr(pin: HelixPin, get: Fetch = fetch) -> Report:
     return report
 
 
+@dataclass
+class Release:
+    """A pinned release that only a newer one can move: what an app brings, read from its files."""
+    name: str                                   # "PPSSPP"
+    app: str                                    # "the PPSSPP Manager"
+    repo: str                                   # where its releases are
+    pinned: str                                 # "1.20.4", "v1.3.1"
+    where: str                                  # the constant to move: "VERSION in apps/ppsspp/.../emulator.py"
+    prefix: str = ""                            # DirectMesh: only the tags that start with it, newest by number
+
+
+def load_release(name: str) -> Release:
+    if name == "directmesh":
+        found = re.search(r"^DIRECTMESH=(\S+)$", MESH.read_text(encoding="utf-8"), re.MULTILINE)
+        if found is None:
+            raise ValueError(f"no DIRECTMESH= line in {MESH.relative_to(SUITE)}")
+        return Release("DirectMesh", "Mesh Shaders", DIRECTMESH_REPO, found.group(1),
+                       f"DIRECTMESH in {MESH.relative_to(SUITE)}", DIRECTMESH_PREFIX)
+    path, constant, app = {"ppsspp": (PPSSPP, "VERSION", "the PPSSPP Manager"),
+                           "pcsx2": (PCSX2, "VERSION", "the PCSX2 Manager (its stable channel)"),
+                           "rpcs3": (RPCS3, "LANDMARK", "the RPCS3 Manager")}[name]
+    values = _string_constants(path)
+    title = {"ppsspp": "PPSSPP", "pcsx2": "PCSX2", "rpcs3": "RPCS3"}[name]
+    return Release(title, app, values["REPO"], values[constant], f"{constant} in {path.relative_to(SUITE)}")
+
+
+def check_release(pin: Release, get: Fetch = fetch) -> Report:
+    report = Report(pin.pinned, name=pin.name, short=pin.name)
+    api = API.format(repo=pin.repo)
+    if pin.prefix:
+        releases = json.loads(get(f"{api}/releases?per_page=100"))
+        candidates = [r for r in releases if not r.get("draft") and not r.get("prerelease")
+                      and str(r.get("tag_name", "")).startswith(pin.prefix)]
+        latest = max(candidates, key=lambda r: _version(str(r["tag_name"])[len(pin.prefix):]), default={})
+        tag = str(latest.get("tag_name", ""))[len(pin.prefix):]
+    else:
+        latest = json.loads(get(f"{api}/releases/latest"))
+        tag = str(latest.get("tag_name", ""))
+    report.latest = tag
+    if tag and _version(tag) > _version(pin.pinned):
+        report.drift.append(f"{tag} is out ({str(latest.get('published_at', ''))[:10]}): a new version of {pin.app} "
+                            f"brings it, after it is tried on the board ({pin.where}). {latest.get('html_url', '')}")
+    else:
+        report.fine.append(f"no stable release newer than {pin.pinned}")
+    return report
+
+
 CHECKS = {"decky": ("Decky Loader", lambda: check(load_loader())),
           "shadps4": ("shadPS4", lambda: check_shadps4(load_shadps4_pin())),
-          "helixsr": ("HelixSR", lambda: check_helixsr(load_helixsr_pin()))}
+          "helixsr": ("HelixSR", lambda: check_helixsr(load_helixsr_pin())),
+          "ppsspp": ("PPSSPP", lambda: check_release(load_release("ppsspp"))),
+          "pcsx2": ("PCSX2", lambda: check_release(load_release("pcsx2"))),
+          "rpcs3": ("RPCS3", lambda: check_release(load_release("rpcs3"))),
+          "directmesh": ("DirectMesh", lambda: check_release(load_release("directmesh")))}
 
 
-def main(names: list[str] | None = None) -> int:
-    names = names or list(CHECKS)
+def markdown(reports: list[Report], failed: list[str]) -> str:
+    """The issue's body: each upstream that moved with what to do, and those that could not be checked."""
+    parts = []
+    for report in reports:
+        if report.drift:
+            parts.append(f"### {report.name}\n\n{report.held.capitalize()} {report.pinned}, latest stable "
+                         f"{report.latest or 'unknown'}.\n\n" + "\n".join(f"- {line}" for line in report.drift))
+    if parts and failed:
+        parts.append("Not checked this week: " + "; ".join(failed))
+    if parts:
+        parts.insert(0, "The weekly upstream check (tools/check_upstream.py) found upstreams that moved since the "
+                        "repository last followed them. Close this issue once they are handled; next week opens a "
+                        "new one when something moved again.")
+    return "\n\n".join(parts) + ("\n" if parts else "")
+
+
+def main(argv: list[str] | None = None) -> int:
+    argv = list(argv or [])
+    report_file = None
+    if "--report" in argv:
+        at = argv.index("--report")
+        if at + 1 >= len(argv):
+            print("--report needs a file", file=sys.stderr)
+            return 2
+        report_file = Path(argv[at + 1])
+        del argv[at:at + 2]
+    names = argv or list(CHECKS)
     unknown = [n for n in names if n not in CHECKS]
     if unknown:
         print(f"Unknown: {', '.join(unknown)}; known: {', '.join(CHECKS)}", file=sys.stderr)
         return 2
     code = 0
+    reports, failed = [], []
     for name in names:
         title, run = CHECKS[name]
         try:
             report = run()
         except (CheckError, ValueError) as error:
             print(f"{title} could not be checked: {error}", file=sys.stderr)
+            failed.append(f"{title} ({error})")
             code = 2
             continue
+        reports.append(report)
         text = report.text()
         print(text)
         summary = os.environ.get("GITHUB_STEP_SUMMARY")
@@ -285,6 +380,8 @@ def main(names: list[str] | None = None) -> int:
                 out.write("```\n" + text + "\n```\n")
         if report.drift and code == 0:
             code = 1
+    if report_file is not None:
+        report_file.write_text(markdown(reports, failed), encoding="utf-8")
     return code
 
 

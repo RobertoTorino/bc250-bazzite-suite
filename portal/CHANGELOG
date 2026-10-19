@@ -1,3 +1,11 @@
+Changelog: 19-10-2026 03:24:21
+
+Added. Outside the suite, in the notice below the updates: a newer release of a program an installed app
+installs in its newest version (HelixSR in the HelixSR Manager, PCSX2's nightly builds in the PCSX2 Manager), with
+its tab and what to do in the app, linked to its tile. It shows what the apps recorded when they last checked
+(bc250_core.upstream), and follows when the window is active again. Programs an app pins are not listed: a newer one
+comes as an update of the app.
+
 Changelog: 19-10-2026 01:53:59
 
 Release 3.0.0. Pins dtool-v0.1.13, package-v0.5.1, ncgui-v0.3.1, datstation-v1.0.0.

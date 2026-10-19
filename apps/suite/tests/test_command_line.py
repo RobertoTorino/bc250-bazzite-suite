@@ -177,3 +177,19 @@ def test_history_with_up_and_down_kept_in_the_settings(app, tmp_path):
     again = CommandLine(tmp_path, QSettings(str(tmp_path / "s.ini"), QSettings.Format.IniFormat), bash="")
     assert again.history == ["git push", "git status"]
     assert settings.value(HISTORY_KEY) == ["git push", "git status"]
+
+
+@needs_bash
+def test_run_now_runs_a_button_command(app, tmp_path):
+    """The window's git buttons: their command runs as if typed (in the history too), not while another runs; how it
+    ended is kept, so a commit's message goes only when it passed."""
+    pane = CommandLine(tmp_path)
+    assert pane.run_now("echo one; exit 3")
+    assert not pane.run_now("echo two")                     # one at a time
+    finish(pane)
+    assert pane.last_code == 3 and "one" in pane.output.toPlainText() and "two" not in pane.output.toPlainText()
+    assert pane.history == ["echo one; exit 3"]
+    assert pane.run_now("true")
+    finish(pane)
+    assert pane.last_code == 0
+    pane.shutdown()

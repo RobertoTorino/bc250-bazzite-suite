@@ -204,6 +204,32 @@ def test_app_commands_amend_the_unpushed_release_commit():
     assert not text.startswith("#")
 
 
+def test_git_button_commands():
+    assert rp.add_command() == "git add -A && tools/fix-modes.sh && git status --short"
+    assert rp.commit_command("Release alpha-v0.2.0", "origin/main") == (
+        "python3 tools/check_versions.py && python3 tools/check_manifest.py --base origin/main && "
+        "git commit -m 'Release alpha-v0.2.0'")                       # the checks first, the commit only after
+    assert rp.commit_command("it's", "pushed", python="/v/python").endswith("git commit -m 'it'\"'\"'s'")
+    assert rp.commit_command("", "pushed", amend=True).endswith(" && git commit --amend --no-edit")
+    assert rp.commit_message(rp.app_commands(["alpha-v0.2.0", "beta-v0.1.0"])) == \
+        ("Release alpha-v0.2.0, beta-v0.1.0", False)
+    assert rp.commit_message(rp.app_commands(["alpha-v0.2.0"], amend=True)) == ("", True)
+    assert rp.commit_message(rp.portal_commands("portal-v0.2.0")) == ("Release portal-v0.2.0", False)
+    assert rp.commit_message(rp.withdraw_commands("beta-v0.1.0", "Privacy.")) == ("", False)
+
+
+def test_git_state(repo):
+    assert rp.git_state(repo, "pushed") == (False, False, 1)         # clean, one commit ("work") not pushed
+    write(repo / "apps/alpha/alpha/extra.py", "x = 2\n")
+    write(repo / "apps/alpha/new.py", "y = 1\n")
+    assert rp.git_state(repo, "pushed") == (True, False, 1)
+    sh(repo, "add", "apps/alpha/alpha/extra.py")
+    assert rp.git_state(repo, "pushed") == (True, True, 1)           # the new file is not staged yet
+    sh(repo, "add", "-A")
+    assert rp.git_state(repo, "pushed") == (False, True, 1)
+    assert rp.git_state(repo, "main")[2] == 0
+
+
 def test_untagged_releases_and_the_unpushed_release_commit(repo):
     assert rp.untagged_releases(rp.load_units(repo)) == ["beta-v0.1.0"]          # never tagged; alpha-v0.1.0 is
     rp.set_version(repo, unit(repo, "alpha"), "0.1.1")
@@ -245,6 +271,43 @@ def test_window_bump_before_the_push_gives_step_ones_commands(window, repo):
     out = page.output.toPlainText()
     assert "git commit --amend --no-edit" in out and "tools/tag-release.sh alpha-v0.1.1 beta-v0.1.0" in out
     assert "portal-v0.2.0" not in out
+
+
+def test_window_git_buttons(window, repo, monkeypatch):
+    """git add, git commit and git push as buttons (owner, 19-10-2026): each only when it has something to do, with
+    the message of the commit the last step showed, and run in the command line, whose tab opens."""
+    ran = []
+    monkeypatch.setattr(window.commands, "run_now", lambda command: ran.append(command) or True)
+    add, commit, push = window.add_button, window.commit_button, window.push_button
+    assert (add.isEnabled(), commit.isEnabled(), push.isEnabled()) == (False, False, True)   # "work" not pushed
+    _, tick, _, _ = row(window, "alpha")
+    tick.setChecked(True)
+    window.apps_page.apply()
+    assert window.commit_message.text() == "Release alpha-v0.1.1, beta-v0.1.0" and not window.amend_box.isChecked()
+    assert add.isEnabled() and not commit.isEnabled()                # nothing staged yet
+    add.click()
+    assert ran[-1] == rp.add_command() and window.tabs.currentIndex() == window.commands_tab
+    sh(repo, "add", "-A")
+    window.reload()
+    assert not add.isEnabled() and commit.isEnabled()
+    window.commit_message.clear()
+    assert not commit.isEnabled() and "Type a commit message first." in commit.toolTip()
+    window.commit_message.setText("Release alpha-v0.1.1, beta-v0.1.0")
+    commit.click()
+    assert ran[-1].endswith(" tools/check_manifest.py --base pushed && git commit -m 'Release alpha-v0.1.1, beta-v0.1.0'")
+    window.commands.last_code, window.committing = 1, True           # the checks failed: the message stays
+    window.refresh()
+    assert window.commit_message.text() == "Release alpha-v0.1.1, beta-v0.1.0"
+    window.commands.last_code, window.committing = 0, True
+    window.refresh()
+    assert window.commit_message.text() == ""
+    push.click()
+    assert ran[-1] == rp.push_command()
+    window.amend_box.setChecked(True)                                # HEAD is not pushed: it may be amended
+    assert commit.isEnabled()
+    window.portal_page.base_edit.setText("main")
+    window.reload()
+    assert not commit.isEnabled() and not push.isEnabled() and "pushed already" in commit.toolTip()
 
 
 def test_window_apply_bumps_the_portal_when_the_push_needs_it(window, repo):
@@ -925,7 +988,7 @@ def test_window_tells_when_a_release_is_ready_to_pin(repo, tmp_path):
                                                     run(n=2)]}), "e4"))
     assert "building its release" in page.portal_state.text()
     build.checked((rp.parse_runs({"workflow_runs": [run("Release", "portal-v0.1.0", n=3), run(n=2)]}), "e5"))
-    assert notes[-1] == ("portal-v0.1.0 is ready", "GitHub published it. Test release installs it on this board "
+    assert notes[-1] == ("portal-v0.1.0 is ready", "GitHub published it. Test Portal release installs it on this board "
                                                    "(step 2).")
     assert "portal-v0.1.0 is released" in page.portal_state.text()
     w.close()

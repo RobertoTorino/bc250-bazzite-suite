@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """tools/check_upstream.py on a fake GitHub: in step, a newer Decky release, a replaced asset, a changed service unit
 (at the pinned tag or only on main), no network; the same for shadPS4's pin, read from emulator.py; and HelixSR
-against what acquire.py knows (a newer release, another fallback in the notes, a fallback without its zip)."""
+against what acquire.py knows (a newer release, another fallback in the notes, a fallback without its zip); the pins
+of PPSSPP, PCSX2, RPCS3 and DirectMesh against a newer release; and the report for the Upstream review issue."""
 
 from __future__ import annotations
 
@@ -194,3 +195,66 @@ def test_the_fallback_the_notes_name(body, moved):
 def test_a_fallback_without_its_zip():
     assert "has no zip any more" in check_upstream.check_helixsr(HELIX, helix_github(fallback_zip=False)).drift[0]
     assert "is gone from GitHub" in check_upstream.check_helixsr(HELIX, helix_github(fallback_gone=True)).drift[0]
+
+
+# --- PPSSPP, PCSX2, RPCS3 and DirectMesh: a pin a newer release moves ---------------------------------------------
+
+@pytest.mark.parametrize("name, constant", [("ppsspp", "VERSION"), ("pcsx2", "VERSION"), ("rpcs3", "LANDMARK"),
+                                            ("directmesh", "DIRECTMESH")])
+def test_the_pins_are_read_from_the_apps(name, constant):
+    pin = check_upstream.load_release(name)
+    assert pin.pinned and pin.repo.count("/") == 1 and pin.where.startswith(constant)
+    assert bool(pin.prefix) == (name == "directmesh")
+
+
+def latest_github(pin, tag: str):
+    answer = {"tag_name": tag, "published_at": "2026-11-20T10:00:00Z", "html_url": f"https://github.com/x/{tag}"}
+    return {f"{check_upstream.API.format(repo=pin.repo)}/releases/latest": answer}
+
+
+@pytest.mark.parametrize("name", ["ppsspp", "pcsx2", "rpcs3"])
+def test_a_newer_release_moves_a_pin(name):
+    pin = check_upstream.load_release(name)
+    answers = latest_github(pin, f"v{pin.pinned}")
+    report = check_upstream.check_release(pin, lambda url: json.dumps(answers[url]).encode())
+    assert report.drift == [] and "In step." in report.text()
+    newer = ".".join(pin.pinned.split(".")[:-1] + [str(int(pin.pinned.split(".")[-1]) + 1)])
+    answers = latest_github(pin, f"v{newer}")
+    report = check_upstream.check_release(pin, lambda url: json.dumps(answers[url]).encode())
+    assert report.drift[0].startswith(f"v{newer} is out (2026-11-20): a new version of the")
+    assert pin.where in report.drift[0]
+
+
+def test_directmesh_takes_its_own_tags_only():
+    pin = check_upstream.load_release("directmesh")
+    url = f"{check_upstream.API.format(repo=pin.repo)}/releases?per_page=100"
+
+    def get(releases):
+        return lambda asked: json.dumps({url: releases}[asked]).encode()
+    same = {"tag_name": f"directmesh-{pin.pinned}", "published_at": "2026-10-01T00:00:00Z"}
+    other = [{"tag_name": "v99.0", "published_at": ""},                                   # not DirectMesh's tag
+             {"tag_name": "directmesh-v9.0", "prerelease": True, "published_at": ""}]
+    assert check_upstream.check_release(pin, get([same, *other])).drift == []
+    newer = {"tag_name": "directmesh-v9.1", "published_at": "2026-11-01T00:00:00Z", "html_url": "u"}
+    report = check_upstream.check_release(pin, get([same, newer, *other]))
+    assert report.latest == "v9.1" and report.drift[0].startswith("v9.1 is out (2026-11-01)")
+    assert check_upstream.check_release(pin, get([])).latest == ""
+
+
+def test_the_report_for_the_issue(monkeypatch, tmp_path):
+    moved = check_upstream.Report("v1.0", name="PPSSPP", short="PPSSPP", latest="v1.1", drift=["v1.1 is out"])
+    fine = check_upstream.Report("v2.0", name="RPCS3", short="RPCS3", latest="v2.0", fine=["in step"])
+    calls = {"ppsspp": lambda: moved, "rpcs3": lambda: fine}
+
+    def offline():
+        raise check_upstream.CheckError("GitHub answered 403")
+    calls["pcsx2"] = offline
+    monkeypatch.setattr(check_upstream, "CHECKS", {k: (k.upper(), v) for k, v in calls.items()})
+    report = tmp_path / "upstream.md"
+    assert check_upstream.main(["--report", str(report), "ppsspp", "rpcs3"]) == 1
+    text = report.read_text()
+    assert "### PPSSPP\n\nPinned v1.0, latest stable v1.1.\n\n- v1.1 is out" in text and "RPCS3" not in text
+    assert check_upstream.main(["--report", str(report), "rpcs3"]) == 0 and report.read_text() == ""
+    assert check_upstream.main(["--report", str(report), "ppsspp", "pcsx2"]) == 2
+    assert "Not checked this week: PCSX2 (GitHub answered 403)" in report.read_text()
+    assert check_upstream.main(["--report"]) == 2

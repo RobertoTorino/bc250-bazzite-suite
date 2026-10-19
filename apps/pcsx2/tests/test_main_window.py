@@ -303,6 +303,8 @@ def test_the_nightly_channel(qapp, folders, monkeypatch):
     assert "PCSX2 nightly 2.9.127 is installed" in window.emulator_state.text()
     assert "releases/tag/v2.9.127" in window.emulator_state.text()
     assert not window.install_button.isEnabled()                                # already the newest nightly
+    from bc250_core import upstream
+    assert upstream.read_all() == {}
     window.close()
     window = _window(folders, latest_nightly=lambda: nightly)                   # the channel is remembered
     assert window.nightly_check.isChecked()
@@ -324,6 +326,9 @@ def test_the_nightly_channel_says_when_a_newer_build_is_out(qapp, folders):
     assert "PCSX2 2.8.2 (the stable release) is installed" in text
     assert "The newest nightly build is 2.9.128 (2026-10-14)" in text
     assert window.install_button.isEnabled()
+    from bc250_core import upstream
+    (outside,) = upstream.read_all()["pcsx2"]                                  # the portal's notice
+    assert (outside.name, outside.installed, outside.latest) == ("PCSX2 nightly", "2.8.2", "2.9.128")
     # The newer-stable notice belongs to the stable channel only.
     from bc250_core.updates import ReleaseInfo
     window.newer = ReleaseInfo("2.9.0", "v2.9.0", "https://github.com/PCSX2/pcsx2/releases/tag/v2.9.0", "2026-11-30")
@@ -331,6 +336,7 @@ def test_the_nightly_channel_says_when_a_newer_build_is_out(qapp, folders):
     assert "is out" not in window.emulator_state.text()
     window.nightly_check.setChecked(False)
     assert "PCSX2 2.9.0 is out" in window.emulator_state.text()
+    assert upstream.read_all() == {}                    # stable is pinned: a newer one comes with the app
     window.close()
 
 

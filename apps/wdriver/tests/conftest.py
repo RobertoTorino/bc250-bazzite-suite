@@ -97,10 +97,9 @@ def set_stick(sys_root: Path, mode: str | None) -> None:
         wlan = sys_root / "class/net/wlan0"
         write(wlan / "operstate", "up")
         write(wlan / "carrier", "1")
-        (wlan / "device").mkdir(parents=True, exist_ok=True)
-        driver = sys_root / "bus/usb/drivers/aic8800_fdrv"
-        driver.mkdir(parents=True, exist_ok=True)
-        (wlan / "device/driver").symlink_to(os.path.relpath(driver, wlan / "device"))
+        (wlan / "wireless").mkdir()
+        part = sys_root / "bus/usb/devices/2-5:1.2"                    # as in /sys: the device is the interface
+        (wlan / "device").symlink_to(os.path.relpath(part, wlan))
 
 
 @pytest.fixture

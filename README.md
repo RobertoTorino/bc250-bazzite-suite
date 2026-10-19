@@ -7,6 +7,8 @@
 Tools for the AMD BC-250 running Bazzite, in one repository. The **[portal](portal)** installs, opens, updates
 and removes them: BC-250 Bazzite Test is always installed, every other app is optional.
 
+![wiki.png](portal/images/wiki.png)
+
 ## Install
 
 **Install the portal, not the apps one by one.** It installs, updates and removes every app below for you, and

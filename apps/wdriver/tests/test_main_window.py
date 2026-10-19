@@ -5,7 +5,7 @@ build steps handed to the runner, and the helper calls behind Install, Update an
 from __future__ import annotations
 
 import pytest
-from conftest import KERNEL, LOG_FAILED, LOG_WORKED, fake_build, fake_source, set_stick, write  # noqa: F401
+from conftest import KERNEL, LOG_FAILED, LOG_WORKED, fake_build, fake_source, set_stick, usb_device, write  # noqa: F401
 from PyQt6.QtWidgets import QMessageBox
 
 from usb_wifidriver import __version__, builder, driver
@@ -44,11 +44,16 @@ def yes(monkeypatch):
     return warnings
 
 
+IW_LINK = "Connected to 00:00:00:00:00:00 (on wlan0)\n\tfreq: 5180\n\tsignal: -44 dBm\n\ttx bitrate: 540.4 MBit/s\n"
+
+
 def window(qapp, sys_root, proc_root, usr_root, paths, tmp_path, helper=None, log=LOG_WORKED,
-           kernel=KERNEL, which=None) -> MainWindow:
+           kernel=KERNEL, which=None, boot_log="") -> MainWindow:
     return MainWindow(sys_root=sys_root, proc_root=proc_root, usr_root=usr_root, paths=paths,
                       data_dir=tmp_path / "home/data", runner=helper or Helper(paths), log_reader=lambda: log,
-                      kernel=kernel, which=which or (lambda tool: "/usr/bin/" + tool), clock=lambda: 1000.0)
+                      kernel=kernel, which=which or (lambda tool: "/usr/bin/" + tool), clock=lambda: 1000.0,
+                      lib_root=tmp_path / "lib/modules", boot_log_reader=lambda: boot_log,
+                      link_runner=lambda _argv: IW_LINK)
 
 
 def test_shows_the_owners_stick_without_the_driver_installed(qapp, sys_root, proc_root, usr_root, paths, tmp_path):
@@ -79,6 +84,32 @@ def test_stick_modes_and_no_stick(qapp, sys_root, proc_root, usr_root, paths, tm
     set_stick(sys_root, None)
     w.refresh()
     assert w.stick_box.value.text() == "None" and w.badge.text() == "Not installed"
+
+
+def test_the_wifi_adapters(qapp, sys_root, proc_root, usr_root, paths, tmp_path):
+    w = window(qapp, sys_root, proc_root, usr_root, paths, tmp_path)
+    (adapter,) = w.adapters
+    assert adapter.verdict == "connected"
+    assert "AIC 8800D80 (a69c:8d81, USB 2-5)" in w.adapters_label.text()
+    assert "5 GHz (5180 MHz), signal -44 dBm, 540.4 Mbit/s" in w.adapters_label.text()
+    set_stick(sys_root, "storage")
+    w.refresh(read_log=True)
+    assert "build and install the driver here" in w.adapters_label.text()
+    # A stick of another chip, which the running kernel has a driver for, not loaded.
+    write(tmp_path / "lib/modules" / KERNEL / "modules.dep", "kernel/drivers/net/wireless/mediatek/mt76/mt7921u.ko:")
+    write(tmp_path / "lib/modules" / KERNEL / "modules.alias", "alias usb:v0E8Dp7961d*dc*dsc*dp*ic*isc*ip*in* mt7921u")
+    set_stick(sys_root, None)
+    usb_device(sys_root, "1-3", "0e8d", "7961", "Wireless_Device", {"3.0": None})
+    write(sys_root / "bus/usb/devices/1-3:3.0/modalias", "usb:v0E8Dp7961d0100dc00dsc00dp00icFFiscFFipFFin00")
+    w = window(qapp, sys_root, proc_root, usr_root, paths, tmp_path)
+    assert "has a driver for it (mt7921u), but it is not loaded" in w.adapters_label.text()
+    set_stick(sys_root, None)
+    import shutil
+    shutil.rmtree(sys_root / "bus/usb/devices/1-3")
+    w.refresh()                                 # the adapters are read with the kernel log, not at every refresh
+    assert "mt7921u" in w.adapters_label.text()
+    w.refresh(read_log=True)
+    assert "No Wi-Fi adapter" in w.adapters_label.text() and "from this app." in w.adapters_label.text()
 
 
 def test_a_failed_upload_points_at_the_legacy_branch(qapp, sys_root, proc_root, usr_root, paths, tmp_path):

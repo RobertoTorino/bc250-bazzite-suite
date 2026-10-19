@@ -1,3 +1,17 @@
+Changelog: 19-10-2026 03:24:21
+
+Added. upstream: publish() and read_all(), the updates outside the suite an app can install now (a newer
+HelixSR, a newer PCSX2 nightly build), one file per app in ~/.local/share/bc250-bazzite-suite/upstream/, for the
+portal's notice. Standard library only and self-contained, so an app not on core yet carries a copy
+(tools/tests/test_instance_copies.py keeps them equal).
+
+Changelog: 19-10-2026 03:05:03
+
+Added. wifi: every Wi-Fi adapter on the board (USB or PCIe) and whether the running kernel has a driver and
+firmware for it, read from /sys, modules.dep and modules.alias, this boot's kernel log and iw, with rfkill and the
+connection's band, signal and speed (the network's name left out); report() says what it means as BC-250 Bazzite
+Test's levels. Standard library only, so the system python3 runs it (python3 -m bc250_core.wifi). It only reads.
+
 Changelog: 18-10-2026 22:28:23
 
 Added. steam.shortcut_icon(): the icon file for a Steam shortcut, the PNG beside an app's WebP icon

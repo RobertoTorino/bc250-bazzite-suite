@@ -97,11 +97,19 @@ def test_setup_page_builds_and_imports(qapp, tmp_path):
 def test_update_hint_on_overview(window):
     from helixsr_manager.acquire import ReleaseInfo, UpdateStatus
     newer = ReleaseInfo("9.0.0", "v9.0.0", "u", "2030-01-01", "HelixSR-9.0.0.zip", "https://x/z.zip", 10)
+    from helixsr_manager import upstream
     window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.2.0", newer)})
     assert "9.0.0" in window.overview.update_hint.text() and window.setup_page.helix_pill.text() == "Update"
     assert not hasattr(window.setup_page, "app_pill")                  # the portal updates this app
+    # The portal's notice gets it too, and loses it once the payload is the newest.
+    (outside,) = upstream.read_all()["helixsr"]
+    assert (outside.installed, outside.latest, outside.url) == ("1.2.0", "9.0.0", "u")
+    assert "Get HelixSR" in outside.action
+    window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.2.0", ReleaseInfo(error="offline"))})
+    assert "helixsr" in upstream.read_all()                                # a failed check changes nothing
     window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.2.0", ReleaseInfo("1.2.0", "v1.2.0", "u", "d"))})
     assert window.overview.update_hint.text() == "" and window.setup_page.helix_pill.text() == "Up to date"
+    assert upstream.read_all() == {}
 
 
 def test_scan_keeps_steam_selection(window, tmp_path):
@@ -155,6 +163,8 @@ def test_setup_page_fallback_choice(window):
     assert window.setup_page.fallback() and window.settings.value("setup/fallback", type=bool)
     window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.8.1", latest)})
     assert "fallback" in window.overview.update_hint.text()
+    from helixsr_manager import upstream
+    assert upstream.read_all() == {}                                    # the fallback was chosen: nothing to do
     with mock.patch("helixsr_manager.main_window.SetupWorker") as worker:
         window.setup_page.start_requested.emit(None)
     request = worker.call_args.args[0]

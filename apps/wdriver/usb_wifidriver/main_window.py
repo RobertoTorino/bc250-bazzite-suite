@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The main window: the stick as the board sees it, the chip's answer and the driver branch it takes, the build
 (as your own user, with its output shown), and the driver installed as a system service (through the password
-dialog), with what that service did last.
+dialog), with what that service did last. Below it every Wi-Fi adapter on the board and whether the kernel has a
+driver for it (bc250_core.wifi, the same reader as BC-250 Bazzite Test's Wi-Fi Adapter test), so a stick of
+another chip can be checked here too.
 
 The window reads the board itself; the driver is a system service (driver.py) and runs without the window."""
 
 from __future__ import annotations
 
+import html
 import time
 from pathlib import Path
 from typing import Callable
@@ -16,7 +19,7 @@ from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import (QCheckBox, QComboBox, QGroupBox, QHBoxLayout, QLabel, QMainWindow, QMessageBox,
                              QPushButton, QVBoxLayout, QWidget)
 
-from bc250_core import SUITE_MANUAL_URL, window_title
+from bc250_core import SUITE_MANUAL_URL, wifi, window_title
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import data_home
 from bc250_core.settings import SettingsStore
@@ -28,7 +31,8 @@ from . import builder, driver, privileged, stick
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/wdriver/"
 REFRESH_MS = 2000
-LOG_EVERY = 5                                   # refreshes between two reads of the kernel log
+LOG_EVERY = 5                                   # refreshes between two reads of the kernel log and the adapters
+LEVEL_COLOURS = {"SUCCESS": GREEN, "WARNING": ORANGE}
 
 
 class WifiSettings(SettingsStore):
@@ -92,7 +96,9 @@ class MainWindow(QMainWindow):
                  runner: Callable[[list[str]], str] = privileged.run,
                  log_reader: Callable[[], str] = stick.read_kernel_log,
                  kernel: str | None = None, which: Callable[[str], str | None] | None = None,
-                 clock: Callable[[], float] = time.time):
+                 clock: Callable[[], float] = time.time, lib_root: Path = Path("/lib/modules"),
+                 boot_log_reader: Callable[[], str] = wifi.read_boot_log,
+                 link_runner: Callable[[list[str]], str] = wifi.run_text):
         super().__init__()
         self.resize(940, 800)
         self.sys_root, self.proc_root, self.usr_root = sys_root, proc_root, usr_root
@@ -103,6 +109,9 @@ class MainWindow(QMainWindow):
         self.kernel = kernel or stick.kernel_release()
         self.which = which
         self.clock = clock
+        self.boot_log_reader = boot_log_reader
+        self.link_runner = link_runner
+        self.kernel_modules = wifi.read_modules(self.kernel, lib_root)
         self.settings = WifiSettings(INFO, self)
         self.busy = False
         self.refreshes = 0
@@ -168,6 +177,17 @@ class MainWindow(QMainWindow):
         self.terminal.setMinimumHeight(160)
         QVBoxLayout(output).addWidget(self.terminal)
 
+        adapters = QGroupBox("Wi-Fi adapters")
+        self.adapters_label = QLabel()
+        self.adapters_label.setTextFormat(Qt.TextFormat.RichText)
+        self.adapters_label.setWordWrap(True)
+        self.adapters_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        lay = QVBoxLayout(adapters)
+        lay.addWidget(self.adapters_label)
+        lay.addWidget(hint_label("Every Wi-Fi adapter on the board, of any chip, and whether the running kernel has "
+                                 "a driver and firmware for it: plug a stick in and press Refresh to see whether it "
+                                 "works on Bazzite. Only read: nothing is loaded or switched."))
+
         events = QGroupBox("What the service did")
         self.events_label = QLabel()
         self.events_label.setTextFormat(Qt.TextFormat.RichText)
@@ -181,6 +201,7 @@ class MainWindow(QMainWindow):
         lay.addWidget(group)
         lay.addWidget(output, 1)
         lay.addWidget(events)
+        lay.addWidget(adapters)
         version = QLabel(f"{APP_NAME} {__version__} · core {CORE_VERSION} · the board changes only while the driver "
                          "is installed")
         version.setStyleSheet("color:palette(placeholder-text);")
@@ -227,6 +248,9 @@ class MainWindow(QMainWindow):
         if read_log or self.refreshes % LOG_EVERY == 0:
             self.chip = stick.chip_from_log(self.log_reader())
             self.choose_branch()
+            self.adapters = wifi.find_adapters(self.sys_root, self.kernel_modules, self.boot_log_reader(),
+                                               wifi.loaded_modules(self.proc_root), self.link_runner)
+            self.show_adapters()
         self.refreshes += 1
         self.sticks = stick.find_sticks(self.sys_root)
         self.interfaces = stick.wifi_interfaces(self.sys_root)
@@ -284,6 +308,20 @@ class MainWindow(QMainWindow):
         first = self.interfaces[0]
         self.wifi_box.set_value(first.name, f"{first.operstate}, {'carrier' if first.carrier else 'no carrier'}")
         set_box_colour(self.wifi_box, GREEN if first.carrier else ORANGE)
+
+    def show_adapters(self) -> None:
+        rows = []
+        for level, text in wifi.report(self.adapters, self.kernel_modules, in_wifi_app=True):
+            text = html.escape(text)
+            if level == "INFO" and rows:
+                rows.append("")
+            if level == "HINT":
+                rows.append(f"<span style='color:{GREY}'>{text}</span>")
+            elif level in LEVEL_COLOURS:
+                rows.append(f"<span style='color:{LEVEL_COLOURS[level]}'>{text}</span>")
+            else:
+                rows.append(f"<b>{text}</b>" if level == "INFO" else text)
+        self.adapters_label.setText("<br>".join(rows))
 
     def show_events(self) -> None:
         if self.installed is None:

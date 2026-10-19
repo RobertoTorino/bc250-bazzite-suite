@@ -1,3 +1,13 @@
+Changelog: 19-10-2026 03:41:49
+
+Release 0.4.0.
+
+Changelog: 19-10-2026 03:24:21
+
+Added. The update check records a newer HelixSR for the portal's notice (Outside the suite), and that there is
+none once the payload is the newest; nothing while the fallback is picked on the Setup page, nor when the check
+fails. A copy of bc250_core's upstream.py, as the app is not on core yet.
+
 Changelog: 18-10-2026 22:45:26
 
 Release 0.3.2.

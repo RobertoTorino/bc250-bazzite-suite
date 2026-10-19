@@ -278,6 +278,36 @@ def test_red_dot_and_count_for_updates(window, home):
     assert window.tabs.tabText(sustainable) == "Sustainable"
 
 
+def test_updates_outside_the_suite(window, home):
+    from bc250_core import upstream
+    helix = upstream.Outside("HelixSR", "1.8.1", "1.9.3", "2026-10-16", "https://x/v1.9.3",
+                             "Get HelixSR… on the Setup page updates it.")
+    upstream.publish("helixsr", [helix])
+    upstream.publish("pcsx2", [upstream.Outside("PCSX2 nightly", "2.9.127", "2.9.128")])
+    window.refresh()
+    assert "Outside" not in window.notice.text()                        # neither app is installed
+    (home / ".local" / "bin" / "bc250-bazzite-helixsr-gui").write_text("#!/bin/sh\n")
+    window.records.set("helixsr", next(e.tag for e in window.entries if e.key == "helixsr"))
+    window.refresh()
+    notice = window.notice.text()
+    assert "No updates" not in notice and "\u25cf Outside the suite</b>" in notice
+    assert ("<a href='helixsr'>HelixSR Manager</a> (Graphics): HelixSR 1.9.3 is out (2026-10-16), installed 1.8.1. "
+            "Get HelixSR… on the Setup page updates it.") in notice
+    assert "PCSX2" not in notice and "Outside the suite" in window.notice.toolTip()
+    sustainable_tabs = [window.tabs.tabText(i) for i in range(window.tabs.count())]
+    assert not any("\u25cf" in t for t in sustainable_tabs)              # the tab dots are the suite's updates
+    # Beside an update of the suite's own:
+    (home / ".local" / "bin" / "bc250-governor-manager").write_text("#!/bin/sh\n")
+    window.records.set("gpu", "gpu-v0.0.9")
+    window.refresh()
+    notice = window.notice.text()
+    assert notice.index("\u25cf 1 update</b>") < notice.index("Outside the suite")
+    # The app found nothing more to install; the portal sees it when its window is active again.
+    upstream.publish("helixsr", [])
+    window.show_notice(window.marked)
+    assert "Outside the suite" not in window.notice.text() and "Outside" not in window.notice.toolTip()
+
+
 def test_circular_arrow_and_count_for_reinstalls(window, home):
     # Installed but not recorded: by hand, or under an earlier key that RENAMED does not know (shadps4 became
     # shadps4-manager before RENAMED existed).

@@ -4,8 +4,9 @@
 Each command is its own `bash -lc`, started in the folder the last `cd` left; only that folder carries over, not
 variables. Nothing can be typed into a running command (its input is closed), so a command that asks something gets
 no answer and stops: git is told not to prompt, opens no editor (commit with -m) and pages nothing. Stop (or
-Ctrl+C) interrupts the command and everything it started. The commands a step shows (Apply, Bump portal, Withdraw)
-are offered under Commands, one per line, to put on the line, not to run straight away."""
+Ctrl+C) interrupts the command and everything it started. The commands a step shows (Apply, Bump portal, Retract)
+are offered under Commands, one per line, to put on the line, not to run straight away. The window's git buttons
+run theirs here too (run_now)."""
 
 from __future__ import annotations
 
@@ -90,6 +91,7 @@ class CommandLine(QWidget):
         self.grouped = False                    # the running command has its own process group
         self.pid = 0
         self.stopping = False
+        self.last_code: int | None = None       # how the last command ended: its exit code, None when stopped
 
         self.output = Terminal()
         self.output.setMaximumBlockCount(OUTPUT_MAX_LINES)
@@ -144,7 +146,7 @@ class CommandLine(QWidget):
         self.commands_button.setEnabled(bool(self.offered))
         self.commands_button.setToolTip(
             "The commands the last step showed: pick one to put it on the line" if self.offered else
-            "Apply, Bump portal and Withdraw show the commands to run next; they are offered here then")
+            "Apply, Bump portal and Retract show the commands to run next; they are offered here then")
 
     def _fill_menu(self) -> None:
         menu = self.commands_button.menu()
@@ -177,6 +179,14 @@ class CommandLine(QWidget):
             self.output.clear()
             return
         self.run(command)
+
+    def run_now(self, command: str) -> bool:
+        """Run *command* as if typed (the git buttons); False while another runs or without bash."""
+        if self.is_running() or not self.bash:
+            return False
+        self._remember(command)
+        self.run(command)
+        return True
 
     def run(self, command: str) -> None:
         self._append(f"{self._prompt_text()} {command}\n")
@@ -252,6 +262,7 @@ class CommandLine(QWidget):
                 self.cwd = folder
         except OSError:
             pass
+        self.last_code = None if status == QProcess.ExitStatus.CrashExit else code
         if status == QProcess.ExitStatus.CrashExit or code == 130:
             self._end_line("stopped")
         elif code != 0:
