@@ -140,10 +140,11 @@ The same tool reports a newer stable release than the pin (for DirectMesh the ne
 check the checksum of what they download themselves. The governor has no pin in the repository (its version is the
 one COPR built); the GPU Governor Manager compares the installed package with filippor's latest release.
 
-The HelixSR Manager pins no HelixSR release: it gets the latest, or the fallback HelixSR's developer names. Its
-`apps/helixsr/helixsr_manager/acquire.py` holds `KNOWN_VERSION`, the newest release the app was checked
-against, and `FALLBACK_VERSION`. The same tool reports a newer stable release (users get it at once, so what changed
-in its setup, its zip and `helixsr.ini` needs a look and a try on the board; then `KNOWN_VERSION` moves), a fallback
+The HelixSR Manager pins no HelixSR release: it gets the latest of one major version (`SUPPORTED_MAJOR`), or the
+fallback HelixSR's developer names. Its `apps/helixsr/helixsr_manager/acquire.py` holds `SUPPORTED_MAJOR`,
+`KNOWN_VERSION`, the newest release the app was checked against, and `FALLBACK_VERSION`. The same tool reports a newer
+stable release (users get it at once, so what changed in its setup, its zip and `helixsr.ini` needs a look and a try
+on the board; then `KNOWN_VERSION` moves), a newer major version (users do not get it until the app is moved to it), a fallback
 named in the latest release's notes that is not `FALLBACK_VERSION`, and a fallback release without its zip.
 
 The Vita3K Manager installs one Vita3K build, pinned in `apps/vita3k/vita3k_manager/emulator.py`

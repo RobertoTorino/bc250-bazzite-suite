@@ -16,8 +16,8 @@ from PyQt6.QtWidgets import (
 
 from . import plain_tooltip
 from .backend import (
-    HELIXSR_DLL, INI, KERNELS, MODE_FOLDER, MODE_REPLACE, NETWORKS, SECOND_UPSCALER_DLL, SHARPENERS, SHARPENING_MODES,
-    WEIGHTS, Deployment,
+    HELIXSR_DLL, INI, KERNELS, MODE_FOLDER, MODE_REPLACE, NETWORKS, OLDER, RESTORED, SECOND_UPSCALER_DLL, SHARPENERS,
+    SHARPENING_MODES, WEIGHTS, Deployment,
     GameDll, HelixIni, PayloadStatus, deployment_state, ini_ignored_fields, optiscaler_snippet, render_ini,
     validate_ini,
 )
@@ -63,6 +63,7 @@ class OverviewPage(QWidget):
     remove_requested = pyqtSignal(object)           # Deployment
     forget_requested = pyqtSignal(object)           # Deployment
     setup_requested = pyqtSignal()                  # go to the Setup page
+    update_requested = pyqtSignal()                 # every deployment with an older build or the game's DLL back
 
     def __init__(self, payload_dir: Path, parent: QWidget | None = None):
         super().__init__(parent)
@@ -147,6 +148,11 @@ class OverviewPage(QWidget):
         self.forget.clicked.connect(lambda: self._emit(self.forget_requested))
         row.addWidget(self.forget)
         row.addStretch(1)
+        self.update_older = QPushButton("Update older games")
+        self.update_older.setToolTip(("Put the payload's HelixSR into every game marked {0} or {1}; the helixsr.ini "
+                                      "there is kept.").format(OLDER, RESTORED))
+        self.update_older.clicked.connect(self.update_requested)
+        row.addWidget(self.update_older)
         self.remove = QPushButton("Remove HelixSR from game")
         self.remove.setToolTip("Delete HelixSR's files there and put the game's original DLL back.")
         self.remove.clicked.connect(lambda: self._emit(self.remove_requested))
@@ -189,8 +195,10 @@ class OverviewPage(QWidget):
         selected = self.selected()
         self.deployments = deployments
         self.table.setRowCount(len(deployments))
+        older = 0
         for row, dep in enumerate(deployments):
             kind, state = deployment_state(dep, payload_dir)
+            older += state in (OLDER, RESTORED)
             mode = "Replaced DLL" if dep.mode == MODE_REPLACE else "OptiScaler folder"
             when = dep.deployed_at.replace("T", " ") if dep.deployed_at else "—"
             self.table.setItem(row, 0, _item(dep.game))
@@ -205,6 +213,8 @@ class OverviewPage(QWidget):
                 self.table.selectRow(row)
         self.table.setVisible(bool(deployments))
         self.empty.setVisible(not deployments)
+        self.update_older.setText("Update older games ({0})".format(older) if older else "Update older games")
+        self.update_older.setEnabled(bool(older))
         self._selection_changed()
 
     def selected(self) -> Deployment | None:

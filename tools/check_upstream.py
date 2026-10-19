@@ -18,10 +18,12 @@ ASSET, SHA256), read here without importing the app:
    Linux zip and the SHA-256 GitHub publishes for it, for the pin;
  * the pinned release's zip: the SHA-256 GitHub publishes for it must still be the pinned one.
 
-The HelixSR Manager gets the latest HelixSR release, or the fallback its developer names
-(apps/helixsr/helixsr_manager/acquire.py: KNOWN_VERSION, FALLBACK_VERSION), read here without importing the app:
+The HelixSR Manager gets the latest HelixSR release of one major version, or the fallback its developer names
+(apps/helixsr/helixsr_manager/acquire.py: SUPPORTED_MAJOR, KNOWN_VERSION, FALLBACK_VERSION), read here without
+importing the app:
  * the latest stable release: newer than KNOWN_VERSION means the app gets it without having been checked against it;
-   what changed (setup options, the files in the zip, helixsr.ini) needs a look, and a try on the board;
+   what changed (setup options, the files in the zip, helixsr.ini) needs a look, and a try on the board. A later major
+   than SUPPORTED_MAJOR the app does not offer: moving the app to it is the work to do;
  * the fallback the latest release's notes name ("If 1.9.0 does not work for you, use HelixSR 1.8.1") must be
    FALLBACK_VERSION, and that release must still have its zip.
 
@@ -112,12 +114,12 @@ class Pin:
     SHA256: str
 
 
-def _string_constants(path: Path) -> dict[str, str]:
-    """A module's top-level string constants, without importing it (the apps import PyQt6 and core)."""
+def _string_constants(path: Path, kinds: type | tuple[type, ...] = str) -> dict[str, str]:
+    """A module's top-level string constants (or of *kinds*), without importing it (the apps import PyQt6 and core)."""
     values = {}
     for node in ast.parse(path.read_text(encoding="utf-8")).body:
         if (isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name)
-                and isinstance(node.value, ast.Constant) and isinstance(node.value.value, str)):
+                and isinstance(node.value, ast.Constant) and isinstance(node.value.value, kinds)):
             values[node.targets[0].id] = node.value.value
     return values
 
@@ -133,11 +135,12 @@ class HelixPin:
     """What the HelixSR Manager knows of HelixSR: the constants of acquire.py."""
     KNOWN_VERSION: str
     FALLBACK_VERSION: str
+    SUPPORTED_MAJOR: int
 
 
 def load_helixsr_pin(path: Path = ACQUIRE) -> HelixPin:
-    values = _string_constants(path)
-    return HelixPin(values["KNOWN_VERSION"], values["FALLBACK_VERSION"])
+    values = _string_constants(path, (str, int))
+    return HelixPin(values["KNOWN_VERSION"], values["FALLBACK_VERSION"], values["SUPPORTED_MAJOR"])
 
 
 def _version(tag: str) -> tuple[int, ...]:
@@ -239,7 +242,12 @@ def check_helixsr(pin: HelixPin, get: Fetch = fetch) -> Report:
     latest = json.loads(get(f"{api}/releases/latest"))
     report.latest = str(latest.get("tag_name", ""))
     version = report.latest.lstrip("v")
-    if _version(report.latest) > _version(pin.KNOWN_VERSION):
+    if _version(report.latest)[:1] > (pin.SUPPORTED_MAJOR,):
+        report.drift.append(f"{report.latest} is out ({str(latest.get('published_at', ''))[:10]}), a new major "
+                            f"version: the HelixSR Manager stays on {pin.SUPPORTED_MAJOR}.x (SUPPORTED_MAJOR) and does "
+                            f"not offer it. Look at what changed (setup options, the files in the zip, helixsr.ini), "
+                            f"move the app to it and try it on the board. {latest.get('html_url', '')}")
+    elif _version(report.latest) > _version(pin.KNOWN_VERSION):
         zips = [str(a.get("name")) for a in latest.get("assets", []) if str(a.get("name", "")).endswith(".zip")]
         zip_line = (f"its HelixSR-{version}.zip is there" if f"HelixSR-{version}.zip" in zips
                     else f"it has no HelixSR-{version}.zip (zips: {', '.join(zips) or 'none'}): the app needs one")

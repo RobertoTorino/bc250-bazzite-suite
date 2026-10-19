@@ -286,11 +286,74 @@ def test_setup_worker_release_error(qapp, tmp_path):
     assert not outcome.ok and "no connection" in outcome.message
 
 
+def gh_release(version: str, prerelease: bool = False, zip_name: str | None = None) -> dict:
+    name = f"HelixSR-{version}.zip" if zip_name is None else zip_name
+    return {"tag_name": f"v{version}", "prerelease": prerelease, "draft": False, "published_at": "2026-10-16T08:00:00Z",
+            "assets": [{"name": "HelixSR-Scaler-1.1.0.zip", "browser_download_url": "https://x/s.zip", "size": 1},
+                       {"name": name, "browser_download_url": f"https://x/{name}", "size": 3,
+                        "digest": "sha256:" + "AB" * 32}]}
+
+
+# GitHub's list as it was on 19-10-2026, newest first: 2.0.0 changed its setup, 1.9.2 was a pre-release.
+RELEASES = [gh_release("2.0.0"), gh_release("1.9.3"), gh_release("1.9.2", prerelease=True), gh_release("1.9.0"),
+            gh_release("1.8.1")]
+
+
 def test_update_check_covers_only_helixsr():
-    with mock.patch.object(acquire, "latest_release", return_value=ReleaseInfo("1.8.0", "v1.8.0")) as lookup:
+    with mock.patch.object(acquire, "_get_json", return_value=RELEASES) as lookup:
         statuses = acquire.check_updates("1.7.0")
     assert list(statuses) == ["helixsr"] and statuses["helixsr"].update_available       # the portal updates this app
     assert lookup.call_args.args[0] == acquire.HELIXSR_API
+
+
+def test_the_newest_release_of_the_supported_major():
+    """HelixSR 2's setup installs into every game when run with --yes: the app keeps to 1.x and says 2.0 is out."""
+    with mock.patch.object(acquire, "_get_json", return_value=RELEASES):
+        latest, unsupported = acquire.supported_release()
+    assert (latest.version, latest.asset_name, unsupported) == ("1.9.3", "HelixSR-1.9.3.zip", "2.0.0")
+    assert latest.asset_sha256 == "ab" * 32
+    status = UpdateStatus("HelixSR", "1.9.3", latest, unsupported)
+    assert not status.update_available and status.kind == "ok"
+    assert status.summary.endswith("; HelixSR 2.0.0 is out, this app does not support it yet")
+    assert UpdateStatus("HelixSR", "1.8.1", latest, unsupported).summary == \
+        "1.8.1 → 1.9.3 available (2026-10-16); HelixSR 2.0.0 is out, this app does not support it yet"
+    with mock.patch.object(acquire, "_get_json", return_value=RELEASES[1:]):
+        assert acquire.supported_release()[1] == ""
+    no_zip = [gh_release("2.0.0"), gh_release("1.9.3", zip_name="x.zip")]
+    with mock.patch.object(acquire, "_get_json", return_value=no_zip):
+        latest, unsupported = acquire.supported_release()
+    assert "no HelixSR 1.x release" in latest.error and unsupported == "2.0.0"
+    with mock.patch.object(acquire, "_get_json", side_effect=OSError("no route")):
+        assert "no connection" in acquire.supported_release()[0].error
+    with mock.patch.object(acquire, "_get_json", return_value={"message": "rate limit"}):
+        assert "unexpected answer" in acquire.supported_release()[0].error
+
+
+def test_setup_worker_refuses_another_major(qapp, tmp_path):
+    release = ReleaseInfo("2.0.0", "v2.0.0", "u", "2026-10-19", "HelixSR-2.0.0.zip", "file:///nowhere.zip", 1)
+    with mock.patch.object(acquire, "download") as dl:
+        outcome, _ = run_worker(qapp, SetupRequest(release, tmp_path / "work", tmp_path / "data"))
+    assert not outcome.ok and "HelixSR 2.0.0 is not supported yet" in outcome.message and not dl.called
+
+
+def test_setup_worker_needs_free_space(qapp, tmp_path):
+    release, _ = prepared(tmp_path)
+    with mock.patch.object(acquire, "free_mb", return_value=100), mock.patch.object(acquire, "download") as dl:
+        outcome, _ = run_worker(qapp, SetupRequest(release, tmp_path / "work", tmp_path / "data"))
+    assert not outcome.ok and "Only 100 MB free" in outcome.message and not dl.called
+    assert acquire.free_mb(tmp_path / "not" / "there" / "yet") > 0
+
+
+def test_setup_worker_checks_the_release_zip(qapp, tmp_path):
+    release, _ = prepared(tmp_path)
+    release.asset_sha256 = "0" * 64
+    with mock.patch.object(acquire, "is_immutable_system", return_value=True):
+        outcome, _ = run_worker(qapp, SetupRequest(release, tmp_path / "work", tmp_path / "data" / "HelixSR"))
+    assert not outcome.ok and "checksum" in outcome.message and not (tmp_path / "work" / release.asset_name).exists()
+    release.asset_sha256 = backend.file_digest(Path(release.asset_url[len("file://"):]))
+    with mock.patch.object(acquire, "is_immutable_system", return_value=True):
+        outcome, _ = run_worker(qapp, SetupRequest(release, tmp_path / "work", tmp_path / "data" / "HelixSR"))
+    assert outcome.ok, outcome.message
 
 
 # HelixSR 1.7's script ends with its game installer, which asks per Steam game and writes manual-install/.
@@ -320,7 +383,7 @@ def test_setup_worker_gives_the_script_no_input(qapp, tmp_path, installer_line):
     assert (outcome.release_dir / backend.WEIGHTS).is_file()
 
 
-@pytest.mark.parametrize("version, no_fg", [("1.2.0", False), ("1.8.1", False), ("1.9.0", True), ("2.0.0", True)])
+@pytest.mark.parametrize("version, no_fg", [("1.2.0", False), ("1.8.1", False), ("1.9.0", True), ("1.9.3", True)])
 def test_setup_worker_skips_frame_generation_from_1_9(qapp, tmp_path, version, no_fg):
     release, _ = prepared(tmp_path)
     with mock.patch.object(acquire, "is_immutable_system", return_value=True):

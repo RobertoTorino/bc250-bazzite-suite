@@ -20,7 +20,8 @@ from .acquire import (
     DLSS_DLL, FALLBACK_VERSION, HELIXSR_DATA_DIR, WORK_DIR, DlssFinder, SetupOutcome, SetupRequest, SetupWorker,
     UpdateChecker, UpdateStatus, latest_work_release, pinned_dlss_sha, version_tuple,
 )
-from .backend import MODE_FOLDER, MODE_REPLACE, Deployment, DeploymentStore, GameDll, HelixError
+from .backend import MODE_FOLDER, MODE_REPLACE, Deployment, DeploymentStore, GameDll, GameScan, HelixError
+from .games_page import GamesPage, GameScanner
 from .help import HelpView
 from .pages import POLL_MS, DeployPage, IniPage, OverviewPage
 from .setup_page import SetupPage
@@ -38,6 +39,9 @@ class MainWindow(QMainWindow):
         self.store = DeploymentStore(deployments_file)
         self.settings = QSettings(APP_ID, APP_ID)
         self.libraries: list[Path] = []
+        self.app_ids: dict[Path, str] = {}              # Steam game folder -> AppID
+        self._game_scanner: GameScanner | None = None
+        self._scan_pending: list[Path] = []
         self.updates: dict[str, UpdateStatus] = {}
         self._setup_worker: SetupWorker | None = None
         self._dlss_finder: DlssFinder | None = None
@@ -93,7 +97,7 @@ class MainWindow(QMainWindow):
         self.overview.refresh_requested.connect(self.refresh)
         self.overview.remove_requested.connect(self._remove_deployment)
         self.overview.forget_requested.connect(self._forget)
-        self.overview.setup_requested.connect(lambda: self.nav.setCurrentRow(1))
+        self.overview.setup_requested.connect(lambda: self.nav.setCurrentRow(self.page_rows[self.setup_page]))
         self.setup_page = SetupPage()
         self.setup_page.check_requested.connect(self.check_for_updates)
         self.setup_page.start_requested.connect(self._start_setup)
@@ -105,6 +109,11 @@ class MainWindow(QMainWindow):
         self.setup_page.auto_check_changed.connect(lambda on: self.settings.setValue("updates/check_on_start", on))
         self.setup_page.set_fallback(self.settings.value("setup/fallback", False, type=bool))
         self.setup_page.fallback_changed.connect(lambda on: self.settings.setValue("setup/fallback", on))
+        self.games_page = GamesPage()
+        self.games_page.rescan_requested.connect(self._scan_steam)
+        self.games_page.run_requested.connect(self._run_game)
+        self.games_page.deploy_page_requested.connect(self._open_on_deploy_page)
+        self.overview.update_requested.connect(self._update_older)
         self.deploy_page = DeployPage()
         self.deploy_page.browse_requested.connect(self._browse_game)
         self.deploy_page.browse_folder_requested.connect(self._browse_folder)
@@ -118,10 +127,12 @@ class MainWindow(QMainWindow):
         self.ini_page.save_default_requested.connect(self._save_ini_default)
         self.ini_page.apply_requested.connect(self._write_ini_to)
         self.help_page = HelpView(str(payload_dir), str(self.store.path), str(work_dir))
+        self.page_rows: dict[QWidget, int] = {}
         for name, page in (("Overview", self.overview), ("Setup", self.setup_page),
-                           ("Deploy", self.deploy_page), ("helixsr.ini", self.ini_page),
+                           ("Games", self.games_page), ("Deploy", self.deploy_page), ("helixsr.ini", self.ini_page),
                            ("Help", self.help_page)):
             self.nav.addItem(name)
+            self.page_rows[page] = self.nav.count() - 1
             if page in (self.deploy_page, self.ini_page):
                 # Taller than a small window: scroll instead of squeezing the hints and boxes to one line.
                 scroll = QScrollArea()
@@ -183,6 +194,10 @@ class MainWindow(QMainWindow):
         if self._dlss_finder is not None:
             self._dlss_finder.cancel()
             self._dlss_finder.wait(5000)
+        if self._game_scanner is not None:
+            self._scan_pending = []
+            self._game_scanner.cancel()
+            self._game_scanner.wait(5000)
         self.update_checker.stop()
         self.settings.setValue("window/geometry", self.saveGeometry())
         self.settings.setValue("window/page", self.nav.currentRow())
@@ -196,6 +211,7 @@ class MainWindow(QMainWindow):
         self.overview.show_payload(status)
         self.overview.show_deployments(self.store.items, self.payload_dir)
         self.deploy_page.set_payload_ready(status.ready, status.optiscaler)
+        self.games_page.set_payload_ready(status.ready)
         self.ini_page.set_deployments(self.store.items)
         self.ini_page.set_helixsr_version(status.version)
 
@@ -216,7 +232,121 @@ class MainWindow(QMainWindow):
 
     def _scan_steam(self) -> None:
         self.libraries = backend.steam_libraries()
-        self.deploy_page.set_games(backend.steam_games(self.libraries))
+        games = backend.steam_games(self.libraries)
+        self.app_ids = backend.steam_app_ids(self.libraries)
+        self.deploy_page.set_games(games)
+        self.games_page.set_games(games)
+        self._scan_games(games)
+
+    # ------------------------------------------------------------ games page
+    def _scan_games(self, games: list[Path]) -> None:
+        """Look through *games* in the background; while a scan runs, they wait for the next one."""
+        games = [g for g in games if g in self.games_page.scans]
+        if not games:
+            return
+        self.games_page.set_checking(games)
+        if self._game_scanner is not None:
+            self._scan_pending += [g for g in games if g not in self._scan_pending]
+            return
+        scanner = GameScanner([(g, self.app_ids.get(g, "")) for g in games], self.payload_dir, self)
+        scanner.scanned.connect(self.games_page.show_scan)
+        scanner.finished.connect(self._games_scanned)
+        self._game_scanner = scanner
+        scanner.start()
+
+    def _games_scanned(self) -> None:
+        scanner, self._game_scanner = self._game_scanner, None
+        if scanner is not None:
+            scanner.wait()
+            scanner.deleteLater()
+        pending, self._scan_pending = self._scan_pending, []
+        self._scan_games(pending)
+
+    def _game_of(self, location: Path) -> Path | None:
+        """The Steam game folder *location* is in, if any."""
+        return next((g for g in self.games_page.scans if location == g or g in location.parents), None)
+
+    def _rescan_game_of(self, location: Path) -> None:
+        game = self._game_of(location)
+        if game is not None:
+            self._scan_games([game])
+
+    def _open_on_deploy_page(self, game: Path) -> None:
+        self.nav.setCurrentRow(self.page_rows[self.deploy_page])
+        self.deploy_page.set_game_path(game)
+
+    def _run_game(self, scan: GameScan) -> None:
+        """Run with HelixSR: HelixSR goes in where it is missing, older or replaced by the game's own DLL, then
+        Steam starts the game. Nothing changes while the game runs."""
+        name = self._game_name(scan.folder)
+        if backend.game_running(scan.app_id):
+            QMessageBox.information(self, "Run with HelixSR", ("{0} is running. Close it first: HelixSR goes in "
+                                                              "before the game starts.").format(name))
+            return
+        targets = [d for d in scan.targets() if not d.matches_payload]
+        fresh = [d for d in targets if not d.deployed]
+        if fresh and QMessageBox.question(
+                self, "Run with HelixSR",
+                "Put HelixSR in place of\n{paths}\n\nThe game's file is kept as .original.dll; Remove puts it "
+                "back.".format(paths="\n".join(str(d.path) for d in fresh))) != QMessageBox.StandardButton.Yes:
+            return
+        version = backend.payload_status(self.payload_dir).version
+        try:
+            for dll in targets:
+                dep = Deployment(str(dll.path), MODE_REPLACE, name)
+                backend.update_deployment(dep, self.payload_dir)
+                self.store.record(dll.path, MODE_REPLACE, name, version)
+        except (HelixError, OSError) as exc:
+            QMessageBox.critical(self, "Deploy failed", str(exc))
+            self.refresh()
+            self._scan_games([scan.folder])
+            return
+        self.refresh()
+        self._scan_games([scan.folder])
+        try:
+            subprocess.Popen(["xdg-open", f"steam://rungameid/{scan.app_id}"], stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL)
+        except OSError as exc:
+            QMessageBox.warning(self, "Could not start the game", "steam://rungameid/{0}\n{1}".format(scan.app_id, exc))
+            return
+        self.statusBar().showMessage(("HelixSR put into {0} DLL(s); starting {1} through Steam. Choose AMD FSR in the "
+                                      "game.").format(len(targets), name) if targets else
+                                     "Starting {0} through Steam with HelixSR.".format(name), 10000)
+
+    # ------------------------------------------------------------ update older deployments
+    def _update_older(self, ask: bool = False) -> None:
+        """Update older games: the payload's HelixSR into every deployment with an older build or with the game's own
+        DLL back. *ask*: after a build, only when there are such deployments, and the user agrees."""
+        deps = [d for d in self.store.items if backend.needs_update(d, self.payload_dir)]
+        if not deps or not backend.payload_status(self.payload_dir).ready:
+            return
+        if ask and QMessageBox.question(
+                self, "Update older games",
+                "{0} game(s) still have an older HelixSR or the game's own DLL:\n{1}\n\nPut the new build in now? "
+                "Their helixsr.ini is kept.".format(len(deps), "\n".join(d.game for d in deps))) \
+                != QMessageBox.StandardButton.Yes:
+            return
+        version = backend.payload_status(self.payload_dir).version
+        done, skipped = [], []
+        for dep in deps:
+            game = self._game_of(dep.location)
+            if game is not None and self.app_ids.get(game) and backend.game_running(self.app_ids[game]):
+                skipped.append("{0}: running, close it first".format(dep.game))
+                continue
+            try:
+                backend.update_deployment(dep, self.payload_dir)
+            except (HelixError, OSError) as exc:
+                skipped.append("{0}: {1}".format(dep.game, exc))
+                continue
+            self.store.record(dep.location, dep.mode, dep.game, version)
+            done.append(dep)
+        self.refresh()
+        self._scan_games([g for g in (self._game_of(d.location) for d in done) if g is not None])
+        if skipped:
+            QMessageBox.warning(self, "Update older games", "Updated {0} of {1}. Not updated:\n{2}".format(
+                len(done), len(deps), "\n".join(skipped)))
+        else:
+            self.statusBar().showMessage("HelixSR {0} put into {1} game(s).".format(version, len(done)), 8000)
 
     def _load_ini_page(self) -> None:
         template = backend.ini_template(self.payload_dir)
@@ -351,6 +481,7 @@ class MainWindow(QMainWindow):
         self.refresh()
         if game_dir:
             self._scan(game_dir)
+        self._rescan_game_of(location)
         self.statusBar().showMessage("HelixSR deployed: {0} file(s) written to {1}".format(
             len(written), location.parent if mode == MODE_REPLACE else location), 8000)
         if mode == MODE_FOLDER:
@@ -394,6 +525,7 @@ class MainWindow(QMainWindow):
         game_dir = self.deploy_page.game_dir()
         if game_dir:
             self._scan(game_dir)
+        self._rescan_game_of(location)
         self.statusBar().showMessage("Removed {0} file(s); HelixSR is gone from {1}".format(
             len(removed), location.parent if mode == MODE_REPLACE else location), 8000)
 
@@ -444,6 +576,10 @@ class MainWindow(QMainWindow):
         elif not helix.installed and helix.latest.version:
             self.overview.show_update("Latest HelixSR release: {version} ({published}).".format(
                 version=helix.latest.version, published=helix.latest.published), "info")
+        elif helix.unsupported:
+            self.overview.show_update(("HelixSR {version} is out; this app does not support it yet and stays on "
+                                       "{installed}.").format(version=helix.unsupported,
+                                                              installed=helix.installed), "info")
         else:
             self.overview.show_update("", "ok")
 
@@ -513,6 +649,8 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("{message} ({seconds:.0f} s)".format(
             message=outcome.message, seconds=outcome.seconds), 10000)
         self._import(outcome.release_dir)
+        self._scan_games(list(self.games_page.scans))
+        self._update_older(ask=True)
         self.check_for_updates()
 
     def _browse_dlss(self) -> None:

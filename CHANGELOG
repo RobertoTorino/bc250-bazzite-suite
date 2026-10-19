@@ -1,3 +1,8 @@
+Changelog: 19-10-2026 20:28:50
+
+tools/check_upstream.py reads SUPPORTED_MAJOR from the HelixSR Manager's acquire.py: a HelixSR release of a later
+major version is reported as one the app does not offer until it is moved to it, instead of one it already offers.
+
 Changelog: 19-10-2026 16:45:13
 
 The suite says it is in Beta (the owner, 19-10-2026), as a label beside the version rather than in it, so tags,

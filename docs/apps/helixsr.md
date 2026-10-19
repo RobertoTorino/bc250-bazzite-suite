@@ -18,7 +18,8 @@ app does exactly that, reversibly, and nothing else on the system is touched. No
 
 ## What it manages
 
-- **Setup in one click** – *Download and build* fetches the latest HelixSR release from GitHub, reads the exact
+- **Setup in one click** – *Download and build* fetches the latest HelixSR 1.x release from GitHub (checked against
+  the SHA-256 GitHub publishes for it), reads the exact
   URLs and SHA-256 sums its setup scripts pin, downloads what the PC still needs **in parallel** and verified
   (NVIDIA's DLSS 310.7.0 DLL, 59 MB; Microsoft's DirectX Shader Compiler, 25 MB; on Bazzite a portable Python,
   67 MB), runs `helixsr-setup.sh --yes` with live output and imports the result as the payload. The DLSS DLL is
@@ -29,7 +30,9 @@ app does exactly that, reversibly, and nothing else on the system is touched. No
   game; the app gives it no input, so it stops there and only the network files are built. From HelixSR 1.8.0
   on, the network is built into HelixSR's DLL instead of two separate files. From HelixSR 1.9.0 on, the script
   can also build frame generation for HelixSR Scaler (about 400 MB from NVIDIA); the app does not deploy that, so
-  it skips this step (`--no-fg`).
+  it skips this step (`--no-fg`). The app sets up HelixSR 1.x only: HelixSR 2.0's setup, run as the app runs it,
+  installs HelixSR Scaler into every game it finds. Until the app supports 2.x, the Setup page says when it is out
+  and the app keeps getting the newest 1.x release.
 - **Version choice** – *Version* on the Setup page picks the latest HelixSR release (the default) or HelixSR
   1.8.1, the version HelixSR's developer recommends when the latest one does not work for you (please then open
   an issue at [HelixSR](https://github.com/lonewolf0622/HelixSR/issues) with the game's `helixsr.log`).
@@ -37,15 +40,21 @@ app does exactly that, reversibly, and nothing else on the system is touched. No
   afterwards.
 - **Update checks** – at start (can be turned off) or on demand: the payload against the latest HelixSR release
   on GitHub. The app itself is updated through the BC250 Bazzite Suite portal. A newer HelixSR is flagged on the Overview; building again
-  updates the payload and deployed games show *Older build* until redeployed (*Newer build* after switching
-  back to 1.8.1).
+  updates the payload and deployed games show *Older build* (*Newer build* after switching back to 1.8.1). After
+  a build the app offers to update them; *Update older games* on the Overview does the same, for older builds and
+  for games whose own DLL is back, keeping their `helixsr.ini`. *Download and build* needs about 1.5 GB free.
+- **Games** – every Steam game, each looked through in the background for an AMD FSR 3.1 DLL: the games that have
+  one first, with HelixSR's state in each; the others greyed out (*Open on Deploy page* still takes them to
+  OptiScaler). *Run with HelixSR* (or a double-click) puts HelixSR in when it is missing, older, or replaced by
+  the game's own DLL after an update, then starts the game through Steam (`steam://rungameid/<AppID>`). It
+  asks before the first install into a game and does nothing while the game runs.
 - **Payload** – one imported HelixSR release, kept under `~/.local/share/bc250-bazzite-helixsr-gui/payload`.
   Filled by the Setup page, or by hand: run the release's `helixsr-setup.sh` yourself and import the folder or
   the zip. It builds `helixsr_weights.bin` and `helixsr_kernels.pak` from NVIDIA's DLSS DLL – those files are
   NVIDIA's property, so this app never ships them. Only the known HelixSR files are copied; the payload survives
   updates and `./install.sh --uninstall`.
 - **Deployments** – every place HelixSR was put, with a live status (in place, older or newer build, network
-  files missing, original restored, folder gone), in `~/.config/bc250-bazzite-helixsr-gui/deployments.json`.
+  files missing, original restored when a game update or Steam put the game's own DLL back, folder gone), in `~/.config/bc250-bazzite-helixsr-gui/deployments.json`.
 - **Two deploy modes**
   - *Replace the game's DLL* – for games with native FSR 3.1: pick the game folder (Steam libraries are
     scanned, including `libraryfolders.vdf` and the Flatpak Steam), the app finds every upscaler DLL (Unreal
@@ -123,10 +132,12 @@ lookup at start. `--version` prints the version.
 
 - **Overview** – payload status (version from the release's README, DLL, weights, kernels, ini) with
   *Import folder* / *Import zip* / *Open payload folder*, and the deployment table with *Open folder*,
-  *Remove* (restores the original or deletes the stand-alone folder) and *Forget*.
+  *Remove* (restores the original or deletes the stand-alone folder), *Forget* and *Update older games*.
 - **Setup** – release status for HelixSR with *Check now*; the version to get (latest or 1.8.1);
   *Download and build* with progress, the script's output, *Cancel*, *Import built release* and *Open work
   folder*; optional local `nvngx_dlss.dll`.
+- **Games** – every Steam game with its FSR 3.1 DLL and HelixSR state; *Run with HelixSR*, *Open on Deploy page*,
+  *Rescan*.
 - **Deploy** – choose a Steam game or browse to any folder, scan for upscaler DLLs, pick the mode, decide
   whether to write the current `helixsr.ini`, deploy or remove. In folder mode the OptiScaler snippet is
   shown with a *Copy* button.

@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Getting HelixSR onto this PC and keeping it current.
 
-* latest_release(): the newest GitHub release of HelixSR, for the update check (this app is updated by the portal).
+* supported_release(): the newest GitHub release of HelixSR that this app sets up (SUPPORTED_MAJOR), and a newer major
+  one it does not, for the update check (this app is updated by the portal).
 * parse_pins(): the exact URLs and SHA-256 sums that a HelixSR release's setup scripts pin for NVIDIA's DLSS DLL,
   Microsoft's DXC and the portable Python, so the app downloads what the script would download, in parallel.
 * SetupWorker: downloads the release zip, the prerequisites it still needs, then runs helixsr-setup.sh --yes with
@@ -33,7 +34,11 @@ from PyQt6.QtCore import QObject, QThread, pyqtSignal
 from . import APP_ID, DATA_HOME, HELIXSR_RELEASES_URL, __version__
 from .backend import HELIXSR_DLL, HelixError, file_digest, payload_status, version_key
 
-HELIXSR_API = "https://api.github.com/repos/lonewolf0622/HelixSR/releases/latest"
+HELIXSR_API = "https://api.github.com/repos/lonewolf0622/HelixSR/releases?per_page=30"
+# The HelixSR major version this app sets up. HelixSR 2's helixsr-setup.sh hands --yes on to its game installer, which
+# then puts HelixSR Scaler (with frame generation) into every game it finds, and its package keeps the DLL in
+# HelixSR-fsrfg/; so 2.x is not offered until the app is moved to it. tools/check_upstream.py reports a newer major.
+SUPPORTED_MAJOR = 1
 # The newest HelixSR release this app was checked against. tools/check_upstream.py reports a newer one every week.
 KNOWN_VERSION = "1.8.1"
 # The release HelixSR's developer points to when the latest one does not work ("If 1.9.0 does not work for you, use
@@ -54,6 +59,9 @@ INSTALLER_START = "looking for games with"
 # the app does not deploy: --no-fg skips it. Older setups do not know the option.
 NO_FG_FROM = (1, 9, 0)
 DLSS_DLL = "nvngx_dlss.dll"
+# What a setup takes while it runs: the release, NVIDIA's DLL, the shader compiler, a portable Python with numpy and
+# the build's temporary files. Download and build does not start with less free space.
+REQUIRED_DISK_MB = 1500
 TIMEOUT = 15
 CHUNK = 1 << 18
 _VERSION_RE = re.compile(r"(\d+)\.(\d+)\.(\d+)")
@@ -73,6 +81,7 @@ class ReleaseInfo:
     asset_name: str = ""            # the release's HelixSR-x.y.z.zip, else its first zip
     asset_url: str = ""
     asset_size: int = 0
+    asset_sha256: str = ""          # from GitHub's digest of the zip, "" when it gives none
     error: str = ""
 
 
@@ -82,15 +91,46 @@ def _get_json(url: str, timeout: int = TIMEOUT) -> dict:
         return json.load(response)
 
 
-def latest_release(api_url: str, page_url: str) -> ReleaseInfo:
-    """The release *api_url* answers with (GitHub's latest, or one by tag); never raises, errors land in .error."""
+def _fetch(api_url: str, page_url: str) -> tuple[object, ReleaseInfo | None]:
+    """GitHub's answer for *api_url*, or a ReleaseInfo that carries the error."""
     try:
-        data = _get_json(api_url)
+        return _get_json(api_url), None
     except urllib.error.HTTPError as exc:
-        return ReleaseInfo(url=page_url, error="GitHub answered {0}".format(exc.code))
+        return None, ReleaseInfo(url=page_url, error="GitHub answered {0}".format(exc.code))
     except (urllib.error.URLError, OSError, ValueError) as exc:
         reason = str(getattr(exc, "reason", exc)).split(":")[0].strip() or exc.__class__.__name__
-        return ReleaseInfo(url=page_url, error="no connection ({0})".format(reason[:60]))
+        return None, ReleaseInfo(url=page_url, error="no connection ({0})".format(reason[:60]))
+
+
+def latest_release(api_url: str, page_url: str) -> ReleaseInfo:
+    """The release *api_url* answers with (one by tag); never raises, errors land in .error."""
+    data, failed = _fetch(api_url, page_url)
+    return failed or release_info(data, page_url)
+
+
+def supported_release(api_url: str = HELIXSR_API, page_url: str = HELIXSR_RELEASES_URL) -> tuple[ReleaseInfo, str]:
+    """From GitHub's list of releases: the newest stable one of SUPPORTED_MAJOR with its HelixSR-x.y.z.zip, and the
+    version of a newer stable release of a later major ("" when there is none). Never raises, errors land in .error."""
+    data, failed = _fetch(api_url, page_url)
+    if failed:
+        return failed, ""
+    if not isinstance(data, list):
+        return ReleaseInfo(url=page_url, error="unexpected answer from GitHub"), ""
+    stable = [release_info(r, page_url) for r in data
+              if isinstance(r, dict) and not r.get("draft") and not r.get("prerelease")]
+    stable = [r for r in stable if not r.error]
+    newest = max(stable, key=lambda r: version_tuple(r.version), default=None)
+    supported = [r for r in stable if version_tuple(r.version)[0] == SUPPORTED_MAJOR
+                 and r.asset_name.lower() == f"helixsr-{r.version}.zip"]
+    best = max(supported, key=lambda r: version_tuple(r.version), default=None)
+    if best is None:
+        best = ReleaseInfo(url=page_url, error="no HelixSR {0}.x release found".format(SUPPORTED_MAJOR))
+    newer = newest.version if newest and version_tuple(newest.version)[0] > SUPPORTED_MAJOR else ""
+    return best, newer
+
+
+def release_info(data: dict, page_url: str) -> ReleaseInfo:
+    """One release of GitHub's answer; errors land in .error."""
     tag = str(data.get("tag_name", ""))
     match = _VERSION_RE.search(tag)
     if not match:
@@ -103,6 +143,8 @@ def latest_release(api_url: str, page_url: str) -> ReleaseInfo:
     if zips:
         info.asset_name, info.asset_url = str(zips[0]["name"]), str(zips[0]["browser_download_url"])
         info.asset_size = int(zips[0].get("size") or 0)
+        digest = str(zips[0].get("digest") or "")
+        info.asset_sha256 = digest[len("sha256:"):].lower() if digest.startswith("sha256:") else ""
     return info
 
 
@@ -112,7 +154,8 @@ class UpdateStatus:
 
     name: str
     installed: str                  # "" when nothing is installed
-    latest: ReleaseInfo
+    latest: ReleaseInfo             # the newest release of SUPPORTED_MAJOR
+    unsupported: str = ""           # a newer major release this app does not set up yet, "" when there is none
 
     @property
     def update_available(self) -> bool:
@@ -136,10 +179,14 @@ class UpdateStatus:
         if not latest.version:
             return "{0} (latest: unknown)".format(installed)
         if self.update_available:
-            return "{0} → {1} available ({2})".format(installed, latest.version, latest.published)
-        if self.installed:
-            return "{0} (up to date, released {1})".format(installed, latest.published)
-        return "{0}; latest release {1} ({2})".format(installed, latest.version, latest.published)
+            text = "{0} → {1} available ({2})".format(installed, latest.version, latest.published)
+        elif self.installed:
+            text = "{0} (up to date, released {1})".format(installed, latest.published)
+        else:
+            text = "{0}; latest release {1} ({2})".format(installed, latest.version, latest.published)
+        if self.unsupported:
+            text += "; HelixSR {0} is out, this app does not support it yet".format(self.unsupported)
+        return text
 
 
 def fallback_release() -> ReleaseInfo:
@@ -149,7 +196,8 @@ def fallback_release() -> ReleaseInfo:
 
 def check_updates(payload_version: str) -> dict[str, UpdateStatus]:
     # This app itself is updated through the BC250 Bazzite Suite portal.
-    return {"helixsr": UpdateStatus("HelixSR", payload_version, latest_release(HELIXSR_API, HELIXSR_RELEASES_URL))}
+    latest, unsupported = supported_release()
+    return {"helixsr": UpdateStatus("HelixSR", payload_version, latest, unsupported)}
 
 
 # ---------------------------------------------------------------------------------------- downloads
@@ -331,6 +379,17 @@ def needed_pins(pins: dict[str, Pin], helix_data: Path, dlss_file: Path | None, 
     return needed
 
 
+def free_mb(path: Path) -> int:
+    """Free space in MB where *path* is (or would be created); -1 when it cannot be read."""
+    for folder in (path, *path.parents):
+        if folder.exists():
+            try:
+                return shutil.disk_usage(folder).free // (1 << 20)
+            except OSError:
+                return -1
+    return -1
+
+
 def is_immutable_system() -> bool:
     if Path("/run/ostree-booted").exists():
         return True
@@ -426,23 +485,33 @@ class SetupWorker(QThread):
 
     def _run(self) -> tuple[Path, str]:
         req = self.request
-        release = req.release or (fallback_release() if req.fallback else latest_release(HELIXSR_API, HELIXSR_RELEASES_URL))
+        release = req.release or (fallback_release() if req.fallback else supported_release()[0])
         if release.error:
             raise HelixError("Could not look up the latest HelixSR release: {0}".format(release.error)
                              if not req.fallback else
                              "Could not look up HelixSR {0}: {1}".format(FALLBACK_VERSION, release.error))
         if not release.asset_url:
             raise HelixError("HelixSR {0} has no zip to download; see {1}".format(release.version, release.url))
+        if version_tuple(release.version)[:1] != (SUPPORTED_MAJOR,):
+            raise HelixError("HelixSR {0} is not supported yet: this app sets up HelixSR {1}.x.".format(
+                release.version, SUPPORTED_MAJOR))
+        for folder in (req.work_dir, req.helix_data):
+            free = free_mb(folder)
+            if 0 <= free < REQUIRED_DISK_MB:
+                raise HelixError(("Only {free} MB free for {folder}: the setup needs about {need:.1f} GB while it "
+                                  "runs. Free some space and start again.").format(
+                                      free=free, folder=folder, need=REQUIRED_DISK_MB / 1000))
         req.work_dir.mkdir(parents=True, exist_ok=True)
 
         self.stage.emit("Downloading HelixSR {0}".format(release.version))
         archive = req.work_dir / release.asset_name
-        if archive.is_file() and (not release.asset_size or archive.stat().st_size == release.asset_size):
+        if archive.is_file() and (not release.asset_size or archive.stat().st_size == release.asset_size) and \
+                (not release.asset_sha256 or file_digest(archive) == release.asset_sha256):
             self._say("Using the already downloaded {0}".format(archive.name))
         else:
             self._say("Downloading {0}".format(release.asset_url))
-            download(release.asset_url, archive, progress=self.progress.emit, cancelled=self._cancelled,
-                     name=release.asset_name)
+            download(release.asset_url, archive, release.asset_sha256, progress=self.progress.emit,
+                     cancelled=self._cancelled, name=release.asset_name)
         extracted = req.work_dir / f"HelixSR-{release.version}"
         if extracted.exists():
             shutil.rmtree(extracted)

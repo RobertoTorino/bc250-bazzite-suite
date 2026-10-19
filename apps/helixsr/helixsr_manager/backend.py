@@ -20,6 +20,7 @@ import zipfile
 from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime
 from pathlib import Path
+from typing import Callable
 
 
 HELIXSR_DLL = "amd_fidelityfx_dx12.dll"
@@ -125,6 +126,19 @@ def network_embedded(dll: Path) -> bool:
             return handle.read(8) == EMBED_MAGIC
     except OSError:
         return False
+
+
+_DLL_VERSION_RE = re.compile(rb"HelixSR (\d+\.\d+\.\d+)")
+
+
+def dll_version(dll: Path) -> str:
+    """The version a HelixSR DLL names in its first 4 MB ("HelixSR 1.9.3", from 1.4.3 on); "" for any other DLL."""
+    try:
+        with open(dll, "rb") as handle:
+            match = _DLL_VERSION_RE.search(handle.read(4 << 20))
+    except OSError:
+        return ""
+    return match.group(1).decode() if match else ""
 
 
 def original_path(dll: Path) -> Path:
@@ -300,6 +314,7 @@ class GameDll:
     matches_payload: bool       # the file is byte-identical to the payload's DLL
     network_files: bool         # weights and kernels next to it, or the network inside the DLL
     ini: bool
+    restored: bool = False      # a backup is there, but the DLL is the game's again (a game update or a Steam check)
 
     @property
     def original(self) -> Path:
@@ -313,6 +328,8 @@ class GameDll:
     def state(self) -> str:
         if self.has_backup and self.matches_payload:
             return "HelixSR deployed"
+        if self.restored:
+            return "Game's own DLL again"
         if self.has_backup:
             return "HelixSR deployed (other build)"
         if self.matches_payload:
@@ -323,19 +340,25 @@ class GameDll:
 def inspect_dll(path: Path, payload_dir: Path) -> GameDll:
     folder = path.parent
     payload_dll = payload_dir / HELIXSR_DLL
-    return GameDll(path, original_path(path).is_file(),
-                   payload_dll.is_file() and same_file(path, payload_dll),
-                   all((folder / name).is_file() for name in NETWORK_FILES) or network_embedded(path),
-                   (folder / INI).is_file())
+    has_backup = original_path(path).is_file()
+    matches = payload_dll.is_file() and same_file(path, payload_dll)
+    embedded = network_embedded(path)
+    return GameDll(path, has_backup, matches,
+                   all((folder / name).is_file() for name in NETWORK_FILES) or embedded,
+                   (folder / INI).is_file(), has_backup and not matches and not embedded and not dll_version(path))
 
 
-def find_game_dlls(game_dir: Path, payload_dir: Path, max_depth: int = MAX_SCAN_DEPTH) -> list[GameDll]:
+def find_game_dlls(game_dir: Path, payload_dir: Path, max_depth: int = MAX_SCAN_DEPTH,
+                   cancelled: Callable[[], bool] | None = None) -> list[GameDll]:
     """Every amd_fidelityfx_upscaler_dx12.dll / amd_fidelityfx_dx12.dll under the game folder (Unreal games keep
-    it under Engine/Plugins/.../ThirdParty/Win64), shallowest first. *.original.dll backups are not listed."""
+    it under Engine/Plugins/.../ThirdParty/Win64), shallowest first. *.original.dll backups are not listed.
+    *cancelled* stops the walk early (what was found so far is returned)."""
     names = {name.lower() for name in GAME_DLLS}
     found: list[Path] = []
     base_depth = len(game_dir.parts)
     for root, dirs, files in os.walk(game_dir):
+        if cancelled is not None and cancelled():
+            break
         depth = len(Path(root).parts) - base_depth
         if depth >= max_depth:
             dirs[:] = []
@@ -849,13 +872,16 @@ class Deployment:
         return self.location if self.mode == MODE_FOLDER else self.location.parent
 
 
+OLDER, RESTORED = "Older build", "Original restored"     # the states Update older games puts right
+
+
 def _other_build(dep: Deployment, payload_dir: Path) -> tuple[str, str]:
     """A deployment whose DLL is not the payload's: newer when the payload went back to an older release (the
     fallback on the Setup page), older otherwise."""
     deployed, payload = version_key(dep.helixsr_version), version_key(payload_version(payload_dir))
     if deployed and payload and deployed > payload:
         return "warn", "Newer build"
-    return "warn", "Older build"
+    return "warn", OLDER
 
 
 def deployment_state(dep: Deployment, payload_dir: Path) -> tuple[str, str]:
@@ -877,11 +903,32 @@ def deployment_state(dep: Deployment, payload_dir: Path) -> tuple[str, str]:
     if info is None:
         return (("bad", "DLL missing") if not original_path(dep.location).exists()
                 else ("warn", "Only the backup is left"))
-    if not info.deployed:
-        return "bad", "Original restored"
+    if not info.deployed or info.restored:
+        return "bad", RESTORED
     if not info.network_files:
         return "warn", "Network files missing"
     return ("ok", "In place") if info.matches_payload else _other_build(dep, payload_dir)
+
+
+def needs_update(dep: Deployment, payload_dir: Path) -> bool:
+    """A deployment Update older games brings to the payload: an older build, or the game's DLL back in place."""
+    return deployment_state(dep, payload_dir)[1] in (OLDER, RESTORED) and \
+        (dep.mode == MODE_FOLDER or dep.location.is_file())
+
+
+def update_deployment(dep: Deployment, payload_dir: Path) -> list[Path]:
+    """Put the payload's HelixSR where *dep* is, as Deploy did, keeping the helixsr.ini there byte for byte and, in a
+    stand-alone folder, its second upscaler. A game's backup is never overwritten (deploy())."""
+    ini = dep.folder / INI
+    kept = ini.read_bytes() if ini.is_file() else None
+    if dep.mode == MODE_FOLDER:
+        second = dep.folder / SECOND_UPSCALER_DLL
+        written = deploy_folder(dep.folder, payload_dir, None, second if second.is_file() else None)
+    else:
+        written = deploy(dep.location, payload_dir)
+    if kept is not None:
+        ini.write_bytes(kept)
+    return written
 
 
 class DeploymentStore:
@@ -1002,3 +1049,101 @@ def steam_games(libraries: list[Path]) -> list[Path]:
         except OSError:
             continue
     return sorted(games, key=lambda p: p.name.lower())
+
+
+_STEAM_TOOL_RE = re.compile(r"^(Proton\b.*|SteamLinuxRuntime.*|Steamworks Shared|Steam Controller Configs)$",
+                            re.IGNORECASE)
+_ACF_RE = {"appid": re.compile(r'"appid"\s+"(\d+)"'), "installdir": re.compile(r'"installdir"\s+"([^"]+)"')}
+
+
+def is_steam_tool(folder: Path) -> bool:
+    """Steam's own folders in steamapps/common (Proton, the Steam Linux Runtime, the redistributables), not games."""
+    return bool(_STEAM_TOOL_RE.match(folder.name))
+
+
+def steam_app_ids(libraries: list[Path]) -> dict[Path, str]:
+    """The Steam AppID of each installed game folder, from the libraries' appmanifest_<id>.acf files."""
+    ids: dict[Path, str] = {}
+    for library in libraries:
+        try:
+            manifests = sorted(library.glob("appmanifest_*.acf"))
+        except OSError:
+            continue
+        for manifest in manifests:
+            try:
+                text = manifest.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            app_id = _ACF_RE["appid"].search(text)
+            folder = _ACF_RE["installdir"].search(text)
+            if app_id and folder:
+                ids[library / "common" / folder.group(1)] = app_id.group(1)
+    return ids
+
+
+def game_running(app_id: str, proc: Path = Path("/proc")) -> bool:
+    """True when a process was started by Steam for *app_id*: Steam's launcher runs every game as
+    "reaper SteamLaunch AppId=<id> -- ...", Proton games included."""
+    token = f"AppId={app_id}".encode()
+    try:
+        entries = list(proc.iterdir())
+    except OSError:
+        return False
+    for entry in entries:
+        if not entry.name.isdigit():
+            continue
+        try:
+            if token in (entry / "cmdline").read_bytes().split(b"\0"):
+                return True
+        except OSError:
+            continue
+    return False
+
+
+# ------------------------------------------------------------------------------------------ games list
+@dataclass
+class GameScan:
+    """What HelixSR could do for one game, from the FSR 3.1 DLLs in its folder."""
+
+    folder: Path
+    dlls: list[GameDll]
+    app_id: str = ""            # Steam's AppID, "" outside Steam
+    payload_version: str = ""
+
+    @property
+    def usable(self) -> bool:
+        return bool(self.dlls)
+
+    def targets(self) -> list[GameDll]:
+        """Where Run with HelixSR puts HelixSR: the DLLs HelixSR is in (or was, before the game put its own back);
+        else in each folder with FSR 3.1 its upscaler DLL, or amd_fidelityfx_dx12.dll where that is the only one."""
+        deployed = [d for d in self.dlls if d.deployed]
+        if deployed:
+            return deployed
+        per_folder: dict[Path, GameDll] = {}
+        for dll in self.dlls:
+            best = per_folder.get(dll.path.parent)
+            if best is None or dll.path.name.lower() == UPSCALER_DLL:
+                per_folder[dll.path.parent] = dll
+        return list(per_folder.values())
+
+    def state(self) -> tuple[str, str]:
+        """(kind, text) for the games list."""
+        if not self.dlls:
+            return "neutral", "No AMD FSR 3.1 DLL: HelixSR cannot be used"
+        targets = self.targets()
+        if any(d.restored for d in targets):
+            return "bad", "The game put its own DLL back"
+        if not any(d.deployed for d in targets):
+            return "info", "Not installed"
+        if all(d.matches_payload for d in targets):
+            return "ok", " ".join(filter(None, ("HelixSR", self.payload_version, "installed")))
+        versions = sorted({dll_version(d.path) for d in targets} - {""})
+        installed = "HelixSR {0}".format(", ".join(versions)) if versions else "Another HelixSR build"
+        return "warn", "{0} installed; {1} is available".format(installed, self.payload_version or "the payload's")
+
+
+def scan_game(folder: Path, payload_dir: Path, app_id: str = "",
+              cancelled: Callable[[], bool] | None = None) -> GameScan:
+    return GameScan(folder, find_game_dlls(folder, payload_dir, cancelled=cancelled), app_id,
+                    payload_version(payload_dir))

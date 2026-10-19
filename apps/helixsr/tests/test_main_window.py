@@ -15,6 +15,13 @@ from helixsr_manager.main_window import MainWindow
 from tests.conftest import FAKE_DLL
 
 
+@pytest.fixture(autouse=True)
+def no_steam():
+    """The window reads the Steam libraries of this PC; tests that want some patch them themselves."""
+    with mock.patch.object(backend, "steam_libraries", return_value=[]):
+        yield
+
+
 @pytest.fixture
 def window(qapp, payload, tmp_path):
     w = MainWindow(payload, tmp_path / "deployments.json", tmp_path / "work", tmp_path / "HelixSR", check_updates=False)
@@ -193,3 +200,85 @@ def test_optiscaler_through_deploy_page(window, payload, tmp_path):
     with mock.patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes):
         window.overview.remove_requested.emit(dep)
     assert (exe_dir / "dxgi.dll").read_bytes() == b"MZ-the-games-dxgi" and not (exe_dir / "OptiScaler.ini").exists()
+
+
+# ------------------------------------------------------------------------------------------ games page
+def wait_for_scan(qapp, window, seconds: float = 10) -> None:
+    import time
+    deadline = time.monotonic() + seconds
+    while window._game_scanner is not None and time.monotonic() < deadline:
+        qapp.processEvents()
+        time.sleep(0.01)
+    assert window._game_scanner is None, "the game scan did not finish"
+
+
+def test_games_page_runs_a_game_with_helixsr(qapp, payload, game, tmp_path):
+    from tests.test_games import dll_of
+    from tests.conftest import FAKE_GAME_DLL
+    library = tmp_path / "steamapps"
+    plain = library / "common" / "Plain"
+    plain.mkdir()
+    (library / "common" / "Proton - Experimental").mkdir()                # Steam's own, not a game
+    (library / "appmanifest_42.acf").write_text('"appid" "42"\n"installdir" "SomeGame"\n', encoding="utf-8")
+    with mock.patch.object(backend, "steam_libraries", return_value=[library]):
+        w = MainWindow(payload, tmp_path / "deployments.json", tmp_path / "work", tmp_path / "HelixSR",
+                       check_updates=False)
+    try:
+        wait_for_scan(qapp, w)
+        page, target = w.games_page, dll_of(game)
+        assert page.rows == [game, plain]                                  # games with FSR 3.1 first
+        assert page.table.item(1, 1).text() == "No AMD FSR 3.1 DLL: HelixSR cannot be used"
+        page.table.selectRow(1)                                            # greyed out: only the Deploy page
+        assert not page.run.isEnabled() and page.open_deploy.isEnabled()
+        assert page.table.item(0, 1).text() == "Not installed"
+        page.table.selectRow(0)
+        assert page.run.isEnabled()
+        with mock.patch.object(backend, "game_running", return_value=False), \
+                mock.patch("helixsr_manager.main_window.subprocess.Popen") as popen, \
+                mock.patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes) as asked:
+            page.run.click()
+        assert asked.called and target.read_bytes() == FAKE_DLL and w.store.find(target) is not None
+        assert popen.call_args.args[0] == ["xdg-open", "steam://rungameid/42"]
+        wait_for_scan(qapp, w)
+        assert page.table.item(0, 1).text() == "HelixSR 1.2.0 installed"
+
+        target.write_bytes(FAKE_GAME_DLL)                                  # a game update put its own DLL back
+        w._scan_games([game])
+        wait_for_scan(qapp, w)
+        assert page.scans[game].state()[1] == "The game put its own DLL back"
+        page.table.selectRow(0)
+        with mock.patch.object(backend, "game_running", return_value=True), \
+                mock.patch("helixsr_manager.main_window.subprocess.Popen") as popen, \
+                mock.patch.object(QMessageBox, "information") as info:
+            page.run.click()                                               # running: nothing changes
+        assert info.called and not popen.called and target.read_bytes() == FAKE_GAME_DLL
+        with mock.patch.object(backend, "game_running", return_value=False), \
+                mock.patch("helixsr_manager.main_window.subprocess.Popen") as popen, \
+                mock.patch.object(QMessageBox, "question") as asked:
+            page.run.click()                                               # put back without asking
+        assert not asked.called and popen.called and target.read_bytes() == FAKE_DLL
+        assert backend.original_path(target).read_bytes() == FAKE_GAME_DLL
+
+        page.table.selectRow(0)
+        page.open_deploy.click()
+        assert w.nav.currentRow() == w.page_rows[w.deploy_page] and w.deploy_page.game_dir() == game
+    finally:
+        w.close()
+
+
+def test_update_older_games_from_the_overview(window, game, payload):
+    from tests.test_games import NEWER_DLL, dll_of, newer_payload
+    target = dll_of(game)
+    with mock.patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes):
+        window.deploy_page.deploy_requested.emit(backend.find_game_dlls(game, payload)[0], backend.MODE_REPLACE,
+                                                 None, False, None, None)
+    assert target.read_bytes() == FAKE_DLL and not window.overview.update_older.isEnabled()
+    newer_payload(payload)
+    window.refresh()
+    assert window.overview.update_older.isEnabled() and window.overview.update_older.text().endswith("(1)")
+    with mock.patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.No):
+        window._update_older(ask=True)                                     # after a build: only when agreed
+    assert target.read_bytes() == FAKE_DLL
+    window.overview.update_older.click()
+    assert target.read_bytes() == NEWER_DLL and window.store.find(target).helixsr_version == "1.9.3"
+    assert not window.overview.update_older.isEnabled()

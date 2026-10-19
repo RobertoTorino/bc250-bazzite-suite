@@ -40,9 +40,9 @@ def help_html(payload_dir: str, deployments_file: str,
         ("<p><b>Remove</b> undoes it: HelixSR's files are deleted and the <code>.original.dll</code> gets its "
          'name back.</p>'),
         '<h2>Setup</h2>',
-        ("<p><b>Download and build</b> does the HelixSR README's setup for you: it fetches the latest release "
-         'zip from <a href="{releases_url}">GitHub</a> (2 MB), reads the exact sources and SHA-256 sums the '
-         "release's own setup scripts pin, downloads what this PC still needs <i>in parallel</i> and verifies "
+        ("<p><b>Download and build</b> does the HelixSR README's setup for you: it fetches the latest HelixSR 1.x "
+         'release zip from <a href="{releases_url}">GitHub</a> (2 MB) and checks its SHA-256, reads the exact '
+         "sources and SHA-256 sums the release's own setup scripts pin, downloads what this PC still needs <i>in parallel</i> and verifies "
          "each file: NVIDIA's DLSS 310.7.0 DLL (59 MB, from NVIDIA's GitHub under NVIDIA's license), "
          "Microsoft's DirectX Shader Compiler (25 MB) and, on read-only systems such as Bazzite, a portable "
          'Python (67 MB, numpy is added by the script). Then it runs <code>helixsr-setup.sh --yes</code> with '
@@ -55,8 +55,14 @@ def help_html(payload_dir: str, deployments_file: str,
          "is offered): that skips NVIDIA's download. The downloads are not what takes time; the build is.</p>"),
         ('<p><b>Releases</b> compares the payload with the latest HelixSR release on GitHub, at start (one small '
          'request, can be turned off) or with <b>Check now</b>. A newer HelixSR shows on the Overview too; '
-         '<b>Download and build</b> again updates the payload, then deploy again per game (the Overview marks '
-         'them <i>Older build</i>). This app itself is updated through the BC250 Bazzite Suite portal.</p>'),
+         '<b>Download and build</b> again updates the payload; afterwards the app offers to put the new build into '
+         'the games that have an older one (<b>Update older games</b> on the Overview does the same). This app '
+         'itself is updated through the BC250 Bazzite Suite portal.</p>'),
+        ('<p><b>Download and build</b> does not start with less than about 1.5 GB free where it downloads and '
+         'builds.</p>'),
+        ('<p>The app sets up HelixSR 1.x. HelixSR 2.0 changed its setup: run as the app runs it, it installs '
+         'HelixSR Scaler into every game it finds. Until the app supports 2.x, <b>Releases</b> says when it is out '
+         'and the app keeps getting the newest 1.x release.</p>'),
         ('<p><b>Version</b> picks what <b>Download and build</b> gets: the latest HelixSR release, or HelixSR '
          "{fallback}, the version HelixSR's developer recommends when the latest one does not work for you (please"
          ' then open an issue at <a href="{helixsr_url}/issues">HelixSR</a> with the <code>helixsr.log</code> from '
@@ -75,8 +81,21 @@ def help_html(payload_dir: str, deployments_file: str,
          'missing until the setup has run and the folder is imported.</p>'),
         ('<p><b>Deployments</b> lists every place the app put HelixSR, with its live state: <i>In place</i>, '
          '<i>Older build</i> (the payload has been updated since; deploy again to update the game), <i>Network'
-         ' files missing</i>, <i>Original restored</i> or <i>Removed</i>. The list is kept in '
-         '<code>{deployments_file}</code>; <b>Forget entry</b> drops a line without touching the game.</p>'),
+         ' files missing</i>, <i>Original restored</i> (a game update or Steam put the game\'s own DLL back) or '
+         '<i>Removed</i>. The list is kept in <code>{deployments_file}</code>; <b>Forget entry</b> drops a line '
+         'without touching the game.</p>'),
+        ('<p><b>Update older games</b> puts the payload\'s HelixSR into every deployment marked <i>Older build</i> '
+         'or <i>Original restored</i>. The <code>{ini}</code> there is kept, and so is the game\'s backup. A game '
+         'that is running is left alone. Deployments of a newer build (the fallback) are not touched.</p>'),
+        '<h2>Games</h2>',
+        ('<p>Every Steam game on this PC, each looked through in the background for an AMD FSR 3.1 DLL. The games '
+         'that have one come first: <i>Not installed</i>, <i>HelixSR x.y.z installed</i>, an older build with '
+         '<i>is available</i>, or <i>The game put its own DLL back</i>. The others are greyed out; games that only '
+         'offer DLSS, XeSS or FSR 2 can still use HelixSR through OptiScaler: <b>Open on Deploy page</b>.</p>'),
+        ('<p><b>Run with HelixSR</b> (or a double-click) puts HelixSR into the game when it is not there, again '
+         "after a game update put the game's own DLL back, or when the payload has a newer build, then starts the "
+         'game through Steam. It asks before the first install into a game, and does nothing while the game runs: '
+         'HelixSR goes in before the game starts. Choose <b>AMD FSR</b> in the game.</p>'),
         '<h2>Deploy</h2>',
         ('<p>Pick a game from the Steam libraries found on this PC (<code>steamapps/common</code> of every '
          'library in <code>libraryfolders.vdf</code>) or <b>Browse…</b> to any folder (Heroic, Lutris, '
@@ -145,7 +164,8 @@ def help_html(payload_dir: str, deployments_file: str,
         ('<li>HelixSR is Direct3D 12 only and for RDNA 1 and newer; it is developed and tested on the BC-250 '
          '(gfx1013, Mesa RADV, Proton). Vulkan games are not supported.</li>'),
         ("<li>Steam verifies game files on updates and may put the game's own DLL back. The Overview then "
-         'shows <i>Original restored</i> and the backup stays; deploy again.</li>'),
+         'shows <i>Original restored</i> and the backup stays; <b>Run with HelixSR</b> or <b>Update older '
+         'games</b> puts HelixSR back.</li>'),
         ('<li>Per-stage GPU timings: launch option <code>HELIXSR_PROFILE=1 %command%</code> writes them to '
          '<code>helixsr.log</code>.</li>'),
         ('<li>Payload: <code>{payload_dir}</code>. Deployments: <code>{deployments_file}</code>. Window size '

@@ -590,6 +590,20 @@ Earlier, 17-10-2026: icons per app with the app's name in outlined letters.
 
 ## Known issues to fix
 
+- **HelixSR 2.0 is not supported (on hold, owner 19-10-2026): find a solution.** HelixSR 2.0.0 (19-10-2026) changed
+  its setup. Its `helixsr-setup.sh` hands `--yes` on to its game installer, which then puts HelixSR Scaler with frame
+  generation into every game it finds. Its package keeps the DLL in `HelixSR-fsrfg/`, and frame generation is built
+  by default (NVIDIA's DLSS Frame Generation DLLs and NGX core). The HelixSR Manager therefore sets up 1.x only
+  (`SUPPORTED_MAJOR` in `apps/helixsr/helixsr_manager/acquire.py`) and says when a newer major is out;
+  `tools/check_upstream.py` reports it weekly. While 2.x is GitHub's latest, that check does not report new 1.x
+  releases. To try: skip the setup script and run what it does before the games
+  (`python setup/helixsr_setup.py <release>/HelixSR-fsrfg --dxc <dxc> --yes --no-fg`, then `--status` must say
+  `network=1`). The DLL and its network come from `HelixSR-fsrfg/`, with 1.x payloads still read from the release root.
+  `setup/helixsr_bridge.py` (JSON per command: `status`, `games`, `install --way fsr`, `remove`) is a possible way
+  to install and check games. The owner asked HelixSR's developer for a build-only switch (`--build-only` or
+  `--no-games`) in [HelixSR issue #90](https://github.com/lonewolf0622/HelixSR/issues/90) (19-10-2026); with one, the app keeps running the setup script. Try it on the board
+  with a game before `SUPPORTED_MAJOR` moves to 2. WindowManager has the same notes (`docs/HELIXSR_2.md`).
+
 - **Withdrawing a release (owner, 13-10-2026), every app and the portal:** a way to take back a release when it turns
   out to have a privacy, security or any other problem that makes that necessary. Decided by the owner (13-10-2026): on GitHub the
   release stays and is marked withdrawn; in `portal/apps.toml` the app's entry is marked withdrawn too; a new

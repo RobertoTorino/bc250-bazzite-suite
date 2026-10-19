@@ -1,3 +1,37 @@
+Changelog: 19-10-2026 21:45:21
+
+Release 0.5.0.
+
+Changelog: 19-10-2026 20:53:49
+
+Added. A Games page: every Steam game on this PC (Steam's own Proton, runtime and redistributable folders left out),
+each looked through in the background for an AMD FSR 3.1 DLL; the games that have one come first with HelixSR's
+state (not installed, installed, an older build, or the game's own DLL back), the others are greyed out and Open on
+Deploy page takes them to OptiScaler. Run with HelixSR (or a double-click) puts HelixSR in where it is missing,
+older or replaced by the game's own DLL, keeping the game's helixsr.ini and backup, then starts the game through
+Steam (steam://rungameid/<AppID>, the AppID from the library's appmanifest); it asks before the first install into a
+game and changes nothing while the game runs (Steam's AppId=<id> on a running process). Update older games on the
+Overview puts the payload's HelixSR into every deployment with an older build or the game's own DLL back, keeping
+helixsr.ini, a stand-alone folder's second upscaler and the game's backup; after a build the app offers it. Download
+and build does not start with less than about 1.5 GB free.
+
+Changelog: 19-10-2026 20:53:49
+
+Fixed. A game whose own DLL came back (a game update or Steam's file check, which leave HelixSR's .original.dll)
+showed Older build on the Overview, and Deploy listed its DLL as HelixSR of another build; it is Original restored,
+as the help says, and Game's own DLL again. A DLL is HelixSR when it is the payload's, carries the network, or names
+its HelixSR version (1.4.3 and newer do).
+
+Changelog: 19-10-2026 20:28:50
+
+Fixed. HelixSR 2.0.0 is not set up: its helixsr-setup.sh hands --yes on to its game installer, which then puts
+HelixSR Scaler with frame generation into every game it finds, and its package keeps the DLL in HelixSR-fsrfg/. The
+app sets up HelixSR 1.x only (SUPPORTED_MAJOR in acquire.py): the update check reads GitHub's list of releases and
+takes the newest stable 1.x release with its HelixSR-x.y.z.zip (1.9.3), and the Setup page and the Overview say when
+a newer major version is out that the app does not support yet. The portal's notice offers only what Get HelixSR…
+installs. Download and build refuses a release of another major version. The release zip is checked against the
+SHA-256 GitHub publishes for it (a cached zip too); a zip that does not match is deleted.
+
 Changelog: 19-10-2026 03:41:49
 
 Release 0.4.0.

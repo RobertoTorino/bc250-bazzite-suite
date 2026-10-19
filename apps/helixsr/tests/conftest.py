@@ -12,7 +12,7 @@ import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-FAKE_DLL = b"MZ-helixsr-fake-dll"
+FAKE_DLL = b"MZ-HelixSR 1.2.0-fake-dll"
 FAKE_GAME_DLL = b"MZ-amd-original-dll"
 FAKE_README = "# HelixSR\n\n**Version 1.2.0** - test build\n"
 

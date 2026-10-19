@@ -164,6 +164,7 @@ def helix_github(latest: str = f"v{HELIX.KNOWN_VERSION}", body: str | None = Non
 
 def test_the_helixsr_constants_are_read_from_acquire_py():
     assert HELIX.KNOWN_VERSION.count(".") == 2 and HELIX.FALLBACK_VERSION.count(".") == 2
+    assert HELIX.SUPPORTED_MAJOR == int(HELIX.KNOWN_VERSION.split(".")[0])
     assert f"repos/{check_upstream.HELIXSR_REPO}/" in check_upstream.ACQUIRE.read_text(encoding="utf-8")
 
 
@@ -175,11 +176,18 @@ def test_helixsr_in_step():
 
 
 def test_a_newer_helixsr():
-    report = check_upstream.check_helixsr(HELIX, helix_github("v9.0.0"))
+    newer = f"v{HELIX.SUPPORTED_MAJOR}.99.0"
+    report = check_upstream.check_helixsr(HELIX, helix_github(newer))
     assert len(report.drift) == 1 and "HelixSR moved:" in report.text()
-    assert report.drift[0].startswith("v9.0.0 is out (2026-10-15)") and "HelixSR-9.0.0.zip is there" in report.drift[0]
-    assert "set KNOWN_VERSION to 9.0.0" in report.drift[0]
+    assert report.drift[0].startswith(f"{newer} is out (2026-10-15)")
+    assert f"HelixSR-{newer[1:]}.zip is there" in report.drift[0] and f"set KNOWN_VERSION to {newer[1:]}" in report.drift[0]
     assert check_upstream.check_helixsr(HELIX, helix_github("v1.0.0")).drift == []
+
+
+def test_a_new_helixsr_major_is_not_offered():
+    report = check_upstream.check_helixsr(HELIX, helix_github(f"v{HELIX.SUPPORTED_MAJOR + 1}.0.0"))
+    assert len(report.drift) == 1 and "a new major version" in report.drift[0]
+    assert f"stays on {HELIX.SUPPORTED_MAJOR}.x" in report.drift[0] and "KNOWN_VERSION" not in report.drift[0]
 
 
 @pytest.mark.parametrize("body, moved", [("If it does not work for you, use HelixSR 1.4.3.", True),
