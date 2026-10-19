@@ -30,8 +30,8 @@
 [apps.check]
 name = "BC-250 Bazzite Test"
 summary = "Read-only diagnostics, stress test and benchmarks. Always installed."
-tag = "check-v0.5.1"
-sha256 = "26f77231ef8963129c469ab1d6ea18365ad7b7137d76fa595ebc8af39411dd88"
+tag = "check-v0.6.0"
+sha256 = "dab6733d0adb0ef915d88cffe021c99aebaa5b6816cd94d4c65625d26da59c6c"
 required = true
 changes_board = false
 category = "sustainable"
