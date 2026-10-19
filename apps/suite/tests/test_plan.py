@@ -394,7 +394,8 @@ def window(repo, tmp_path):
     QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(tmp_path / "settings"))
     app = QApplication.instance() or QApplication([])          # noqa: F841 (kept alive for the window)
     from suite_releases import main_window
-    w = main_window.ReleaseWindow(repo, sha256_source=lambda tag: SHA, launch=launched.append, runs_source=None)
+    w = main_window.ReleaseWindow(repo, sha256_source=lambda tag: SHA, launch=launched.append, runs_source=None,
+                                  status_source=None)
     w.portal_page.base_edit.setText("pushed")
     w.reload()
     yield w
@@ -905,7 +906,7 @@ def test_window_build_indicator_notifies_when_a_run_ends(repo, tmp_path):
     app = QApplication.instance() or QApplication([])          # noqa: F841 (kept alive for the window)
     from suite_releases import main_window
     notes = []
-    w = main_window.ReleaseWindow(repo, sha256_source=lambda tag: SHA, launch=launched.append,
+    w = main_window.ReleaseWindow(repo, status_source=None, sha256_source=lambda tag: SHA, launch=launched.append,
                                   runs_source=lambda etag: (None, etag), notify=lambda *a: notes.append(a))
     build = w.build
     assert not build.isHidden()
@@ -938,7 +939,7 @@ def test_window_build_indicator_notifies_when_a_run_ends(repo, tmp_path):
     build.checked(rp.RateLimited(time.time() + 60, signed_in=True))
     assert "gh auth login" not in build.toolTip() and build.timer.interval() == main_window.BUILD_IDLE_MS
     w.close()
-    assert main_window.ReleaseWindow(repo, runs_source=None).build.isHidden()
+    assert main_window.ReleaseWindow(repo, status_source=None, runs_source=None).build.isHidden()
 
 
 def test_window_tells_when_a_release_is_ready_to_pin(repo, tmp_path):
@@ -955,7 +956,7 @@ def test_window_tells_when_a_release_is_ready_to_pin(repo, tmp_path):
         asked.append(tag)
         return SHA
 
-    w = main_window.ReleaseWindow(repo, sha256_source=sha256, launch=launched.append,
+    w = main_window.ReleaseWindow(repo, status_source=None, sha256_source=sha256, launch=launched.append,
                                   runs_source=lambda etag: (None, etag), notify=lambda *a: notes.append(a))
     w.portal_page.base_edit.setText("pushed")
     page, build = w.portal_page, w.build
@@ -996,7 +997,7 @@ def test_window_tells_when_a_release_is_ready_to_pin(repo, tmp_path):
     # is told too, with Pin saying so.
     notes.clear()
     rp.pin(repo, unit(repo, "alpha"), "")
-    w = main_window.ReleaseWindow(repo, sha256_source=sha256, launch=launched.append,
+    w = main_window.ReleaseWindow(repo, status_source=None, sha256_source=sha256, launch=launched.append,
                                   runs_source=lambda etag: (None, etag), notify=lambda *a: notes.append(a))
     w.build.checked((rp.parse_runs({"workflow_runs": [run("Release", "alpha-v0.1.0", n=5)]}), "f1"))
     assert [n[0] for n in notes] == ["alpha-v0.1.0 is ready to pin"]

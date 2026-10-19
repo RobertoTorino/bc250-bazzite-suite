@@ -115,7 +115,11 @@ about your system: read it before you post it. Security problems: see [SECURITY.
   out, whether the board was power-capped or lost clocks to heat, and any amdgpu errors the kernel
   logged while the game ran. Per game you can turn recording on or off and set the sample interval; a
   screenshot of the game is taken once during the first recorded session and shown on the page. FPS and
-  the frametime checks need MangoHud with logging on (see [A game's FPS](#a-games-fps)).
+  the frametime checks need MangoHud with logging on (see [A game's FPS](#a-games-fps)). The page also
+  reads the launch options in Steam: a game whose line starts the game monitor from a folder or python
+  that is gone would not start at all, so it is listed with the line to put in its place. Copy the
+  launch line from the installed app, not from a checkout: a line from a checkout stops working when
+  that folder moves.
 * **In-game overlay:** the app has its own overlay in its own style (*Show overlay* / *Test overlay* on
   the Game details page). With *Test overlay* it can be dragged anywhere on the screen; the position is
   saved and the in-game overlay (click-through, so it never steals a click from the game) appears

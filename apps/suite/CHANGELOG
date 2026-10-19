@@ -1,3 +1,10 @@
+Changelog: 19-10-2026 17:58:49
+
+Added. GitHub status in the header, beside the build indicator (owner, 19-10-2026): a green dot while
+githubstatus.com reports every part of GitHub up, a red dot while it reports a problem (an incident, or a part such
+as Actions or Pages degraded or down), grey while it is not known. Hover for the incident and the parts affected;
+a click opens https://www.githubstatus.com/. It looks every 5 minutes, and Refresh looks at once.
+
 Changelog: 19-10-2026 02:46:23
 
 Added. git add, git commit and git push are buttons under the tabs, with the checks in between, so no command has

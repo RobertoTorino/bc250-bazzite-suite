@@ -802,6 +802,41 @@ def finished_releases(announced: set[str], runs: list[BuildRun], tags: list[str]
     return found
 
 
+# --- GitHub's own status: is GitHub up? ------------------------------------------------------------------------
+
+STATUS_PAGE = "https://www.githubstatus.com/"
+STATUS_URL = STATUS_PAGE + "api/v2/summary.json"
+
+
+@dataclass(frozen=True)
+class GitHubStatus:
+    """What githubstatus.com reports: up when every part of GitHub works as it should."""
+    indicator: str                      # "none", "minor", "major", "critical" (Statuspage's)
+    description: str                    # "All Systems Operational", "Partially Degraded Service"
+    affected: tuple[str, ...] = ()      # "Actions: degraded performance"
+    incidents: tuple[str, ...] = ()     # the names of the open incidents
+
+    @property
+    def up(self) -> bool:
+        return self.indicator == "none"
+
+
+def parse_github_status(data: object) -> GitHubStatus:
+    data = data if isinstance(data, dict) else {}
+    status = data.get("status") if isinstance(data.get("status"), dict) else {}
+    affected = tuple(f"{c.get('name')}: {str(c.get('status')).replace('_', ' ')}" for c in data.get("components") or []
+                     if isinstance(c, dict) and c.get("status") not in (None, "operational"))
+    incidents = tuple(str(i.get("name")) for i in data.get("incidents") or [] if isinstance(i, dict) and i.get("name"))
+    return GitHubStatus(str(status.get("indicator") or ""), str(status.get("description") or ""), affected, incidents)
+
+
+def fetch_github_status() -> GitHubStatus:
+    """githubstatus.com's summary (a public page: no token, no limit to count). Raises OSError offline."""
+    request = urllib.request.Request(STATUS_URL, headers={"User-Agent": "bc250-release"})
+    with urllib.request.urlopen(request, timeout=15) as response:
+        return parse_github_status(json.load(response))
+
+
 # --- The commands for the owner --------------------------------------------------------------------------------
 
 def push_command(linux: bool | None = None) -> str:

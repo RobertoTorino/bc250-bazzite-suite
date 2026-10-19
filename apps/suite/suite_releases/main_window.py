@@ -13,7 +13,8 @@ published portal release after it. Under the tabs, git add, git commit and git p
 between: add sets the exec bits (fix-modes.sh), commit runs check_versions.py and check_manifest.py first, push runs
 tools/ci-local.sh first (Linux) and pushes only when CI's jobs pass. Tagging stays a command.
 The header shows whether GitHub built the last push (CI, Release, Manual) and notifies when a build it saw
-running passes or fails.
+running passes or fails, and GitHub status: a green dot while githubstatus.com reports GitHub up, red while it
+reports a problem; a click opens that page.
 Local app test: click an app's icon to start it from this checkout, to try it before its release; the Manual icon
 serves the manual from the checkout (mkdocs serve) and opens it in the browser.
 The Commands tab is a command line in the checkout (command_line.py), where the git buttons run too; its Commands
@@ -31,7 +32,7 @@ import time
 from pathlib import Path
 
 from PyQt6.QtCore import QProcess, QSize, Qt, QTimer, QUrl
-from PyQt6.QtGui import QColor, QDesktopServices, QIcon
+from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QPainter, QPixmap
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView,
                              QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPushButton, QStackedWidget,
                              QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
@@ -875,11 +876,72 @@ class BuildIndicator(QPushButton):
         self.checker.stop(2000)
 
 
+def dot(color: str) -> QIcon:
+    pixmap = QPixmap(12, 12)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    painter.setPen(Qt.PenStyle.NoPen)
+    painter.setBrush(QColor(color))
+    painter.drawEllipse(1, 1, 10, 10)
+    painter.end()
+    return QIcon(pixmap)
+
+
+class GitHubStatusIndicator(QPushButton):
+    """GitHub status with a dot: green while githubstatus.com reports every part of GitHub working, red while it
+    reports a problem (a build that waits in "queued" may be GitHub's), grey while it is not known. Looks every 5
+    minutes; a click opens the status page."""
+
+    def __init__(self, source):
+        super().__init__("GitHub status")
+        self.source = source            # rp.fetch_github_status
+        self.setFlat(True)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(rp.STATUS_PAGE)))
+        self.checker = UpdateChecker(self)
+        self.checker.finished.connect(self.checked)
+        self.timer = QTimer(self, singleShot=True)
+        self.timer.timeout.connect(self.check)
+        self.show_state("", "Not looked yet.")
+        self.setVisible(source is not None)
+
+    def check(self) -> None:
+        if self.source is not None:
+            self.checker.start(self._fetch)
+
+    def _fetch(self) -> object:
+        """Worker thread: the status, or the error to show."""
+        try:
+            return self.source()
+        except (OSError, ValueError) as exc:
+            return exc
+
+    def checked(self, result: object) -> None:
+        self.timer.start(BUILD_IDLE_MS)
+        if isinstance(result, Exception):
+            self.show_state("", f"githubstatus.com could not be reached: {result}")
+            return
+        lines = [result.description or "No status given.", *result.incidents, *result.affected]
+        self.show_state("up" if result.up else "down", "\n".join(lines))
+
+    def show_state(self, state: str, details: str) -> None:
+        self.state = state
+        self.setIcon(dot({"up": GREEN, "down": RED}.get(state, GREY)))
+        self.setToolTip(f"{details}\n\nClick to open {rp.STATUS_PAGE}")
+
+    def stop(self) -> None:
+        self.timer.stop()
+        self.checker.stop(2000)
+
+
 class ReleaseWindow(QMainWindow):
     def __init__(self, root: Path = SUITE, sha256_source=rp.fetch_sha256, launch=launch_in_terminal,
-                 start=start_app, runs_source=rp.fetch_runs, notify=desktop_notify, settings=None):
+                 start=start_app, runs_source=rp.fetch_runs, notify=desktop_notify, settings=None,
+                 status_source=rp.fetch_github_status):
         """*runs_source* reads the GitHub Actions runs (None: no build indicator); *notify* shows a desktop
-        notification; *settings* keeps the command line's history (None: this session only)."""
+        notification; *settings* keeps the command line's history (None: this session only); *status_source*
+        reads githubstatus.com (None: no GitHub status)."""
         super().__init__()
         self.root = root
         self.sha256_source = sha256_source
@@ -895,6 +957,8 @@ class ReleaseWindow(QMainWindow):
         self.build = BuildIndicator(self, runs_source, notify)
         header.add_second(self.build)
         header.add_second(self.build.rate)
+        self.github_status = GitHubStatusIndicator(status_source)
+        header.add_second(self.github_status)
         header.second_row.addStretch(1)
         self.refresh_button = QPushButton("Refresh")
         self.refresh_button.setToolTip("Read the checkout and its tags again, for changes made in a terminal; "
@@ -946,6 +1010,7 @@ class ReleaseWindow(QMainWindow):
         self.setCentralWidget(central)
         self.reload()
         self.build.check()
+        self.github_status.check()
 
     def _git_row(self) -> QHBoxLayout:
         """git add, git commit and git push as buttons, each with its checks (owner, 19-10-2026: no commands to
@@ -1055,6 +1120,7 @@ class ReleaseWindow(QMainWindow):
                 self.commit_message.clear()
                 self.amend_box.setChecked(False)
         self.build.check()                      # a push from a terminal: its build
+        self.github_status.check()
 
     def reload(self) -> None:
         units = rp.load_units(self.root)
@@ -1077,5 +1143,6 @@ class ReleaseWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         self.build.stop()
+        self.github_status.stop()
         self.commands.shutdown()
         super().closeEvent(event)

@@ -266,6 +266,12 @@ every 5 minutes otherwise, and **Refresh** looks at once. When a run it saw runn
 notification says whether it passed. It needs no GitHub token: answers that did not change do not count against
 GitHub's limit of 60 requests an hour.
 
+**GitHub status** beside it says whether GitHub itself works, as [githubstatus.com](https://www.githubstatus.com/)
+reports it: a green dot while every part of GitHub is up, a red dot while the page reports a problem (an incident,
+or a part such as Actions or Pages degraded or down). A build that waits in *queued* for long is often such a
+problem. Hover for the incident and the parts affected; click to open the status page. It looks every 5 minutes,
+and **Refresh** looks at once.
+
 The releases step 2 waits for are followed from the same runs. The **GitHub** column of the pin table says where
 each release to pin stands: *no run seen* (is the tag pushed?), *building…*, *ready* or *failed*; **Pin** waits
 for a release that is still building, or says that its workflow failed, instead of failing on a checksum that is

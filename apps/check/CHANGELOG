@@ -1,3 +1,14 @@
+Changelog: 19-10-2026 19:29:03
+
+Release 0.6.0.
+
+Changelog: 19-10-2026 19:21:48
+
+Added. The Game details page reads the launch options in Steam (every user's localconfig.vdf, only read) and lists
+each game whose line starts the game monitor from a python, folder or package that is gone, so the game would not
+start, with the current line in its place to copy; what else the line holds (mangohud, other options) stays. When
+the app runs from a checkout the page says the lines name the checkout and stop working when it moves.
+
 Changelog: 19-10-2026 16:58:45
 
 Release 0.5.1.

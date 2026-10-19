@@ -12,7 +12,8 @@ from PyQt6.QtWidgets import QApplication, QWidget
 def window():
     app = QApplication.instance() or QApplication([])
     from suite_releases.main_window import ReleaseWindow
-    w = ReleaseWindow(runs_source=lambda etag: ([], ""), launch=lambda line: None, notify=lambda s, b: True)
+    w = ReleaseWindow(runs_source=lambda etag: ([], ""), launch=lambda line: None, notify=lambda s, b: True,
+                      status_source=None)
     w.build.checker.stop(2000)
     yield w, app
     w.build.stop()
@@ -115,3 +116,73 @@ def test_a_step_offers_its_commands(window):
     w, _app = window
     w.commands.offer(rp.app_commands(["alpha-v0.1.1"]))
     assert w.commands.offered[-1] == f"{rp.TAG_SCRIPT} alpha-v0.1.1" and w.commands.commands_button.isEnabled()
+
+
+SUMMARY_DOWN = {   # githubstatus.com's summary.json during the incident of 19-10-2026, shortened
+    "status": {"indicator": "minor", "description": "Partially Degraded Service"},
+    "components": [{"name": "Git Operations", "status": "operational"},
+                   {"name": "Actions", "status": "degraded_performance"},
+                   {"name": "Pages", "status": "major_outage"}],
+    "incidents": [{"name": "Degraded availability for GitHub Actions, GitHub Pages and Webhooks"}],
+}
+SUMMARY_UP = {"status": {"indicator": "none", "description": "All Systems Operational"},
+              "components": [{"name": "Actions", "status": "operational"}], "incidents": []}
+
+
+def test_github_status_is_read_from_the_status_page(monkeypatch):
+    import io
+    import json
+    from suite_releases import plan as rp
+    down = rp.parse_github_status(SUMMARY_DOWN)
+    assert not down.up and down.description == "Partially Degraded Service"
+    assert down.affected == ("Actions: degraded performance", "Pages: major outage")
+    assert down.incidents == ("Degraded availability for GitHub Actions, GitHub Pages and Webhooks",)
+    assert rp.parse_github_status(SUMMARY_UP).up
+    assert not rp.parse_github_status("not json").up                 # an odd answer is never "up"
+    asked = []
+
+    class Response(io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    def urlopen(request, timeout):
+        asked.append(request.full_url)
+        return Response(json.dumps(SUMMARY_UP).encode())
+
+    monkeypatch.setattr(rp.urllib.request, "urlopen", urlopen)
+    assert rp.fetch_github_status().up and asked == ["https://www.githubstatus.com/api/v2/summary.json"]
+
+
+def test_github_status_is_a_dot_that_opens_the_status_page(window, monkeypatch):
+    """A green dot while GitHub is up, red while githubstatus.com reports a problem, grey while not known; a click
+    opens https://www.githubstatus.com/ (owner, 19-10-2026)."""
+    from PyQt6.QtGui import QColor, QDesktopServices
+    from bc250_core.theme import GREEN, GREY, RED
+    from suite_releases import main_window
+    from suite_releases import plan as rp
+    w, _app = window
+    status = main_window.GitHubStatusIndicator(lambda: rp.parse_github_status(SUMMARY_DOWN))
+    assert not status.isHidden() and status.text() == "GitHub status" and status.state == ""
+
+    def color() -> str:
+        image = status.icon().pixmap(12, 12).toImage()
+        return QColor(image.pixel(6, 6)).name()
+
+    assert color() == QColor(GREY).name()
+    status.checked(status._fetch())
+    assert status.state == "down" and color() == QColor(RED).name()
+    assert "Actions: degraded performance" in status.toolTip() and "Partially Degraded Service" in status.toolTip()
+    assert status.timer.interval() == main_window.BUILD_IDLE_MS
+    status.checked(rp.parse_github_status(SUMMARY_UP))
+    assert status.state == "up" and color() == QColor(GREEN).name()
+    status.checked(OSError("offline"))
+    assert status.state == "" and color() == QColor(GREY).name() and "offline" in status.toolTip()
+    opened = []
+    monkeypatch.setattr(QDesktopServices, "openUrl", lambda url: opened.append(url.toString()))
+    status.click()
+    assert opened == ["https://www.githubstatus.com/"]
+    status.stop()
+    assert w.github_status.isHidden() and main_window.GitHubStatusIndicator(None).isHidden()

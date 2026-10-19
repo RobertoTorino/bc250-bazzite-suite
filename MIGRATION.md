@@ -24,7 +24,9 @@ the end of the last session, nothing committed by Claude:
    the owner's choice, 17-10-2026: the package takes the folder's name where the name without its prefix is that
    word, nothing in the tooling minds) and `apps/check/bazzite_check/` (was bazzite-test/bc250_gui; the owner,
    17-10-2026: check rather than test, so that no folder is called test; the Steam launch option the In-Game page hands
-   out names the package, and one copied before is to be copied again: no shim, nobody runs one yet) and
+   out names the package, and one copied before is to be copied again: no shim. Three games on the owner's
+   board still had a line from the old checkout and no longer started, 19-10-2026; the Game details page now
+   lists such lines with the current one, and says when it runs from a checkout) and
    `apps/bios/bios_reader/` (was bios-reader/bc250_bios_reader, 17-10-2026) and `apps/consoles/consoles_link/`
    (was console-link/bc250_console_link, 17-10-2026, both names the owner's; the native core keeps its name
    bc250_console_link_core, the wheel in the installed environment) and `apps/cores/cores_bisect/` with

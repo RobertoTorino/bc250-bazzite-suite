@@ -24,8 +24,10 @@ from PyQt6.QtWidgets import (
     QListWidgetItem, QPushButton, QSplitter, QVBoxLayout, QWidget,
 )
 
+from bc250_core.steam import find_steam
+
 from . import ROOT, plain_tooltip
-from . import gamecfg, gamecheck
+from . import gamecfg, gamecheck, steamlines
 from .graph import show_graph
 
 MUTED = "#9aa0a6"
@@ -87,12 +89,15 @@ def session_duration(path: Path) -> float | None:
     return None
 
 
-def launch_line(with_mangohud: bool = False) -> str:
+def gamemon_prefix() -> str:
     # Steam runs the launch options through /bin/sh with the game's folder as working directory,
     # so the package location must be on PYTHONPATH for `-m bazzite_check.gamemon` to be found.
+    return f"PYTHONPATH={shlex.quote(str(ROOT))} {shlex.quote(sys.executable)} -m bazzite_check.gamemon"
+
+
+def launch_line(with_mangohud: bool = False) -> str:
     game = "mangohud %command%" if with_mangohud else "%command%"
-    return (f"PYTHONPATH={shlex.quote(str(ROOT))} "
-            f"{shlex.quote(sys.executable)} -m bazzite_check.gamemon {game}")
+    return f"{gamemon_prefix()} {game}"
 
 
 def session_files(key: str) -> list[Path]:
@@ -305,6 +310,20 @@ class InGamePage(QWidget):
         self.fps_note.setWordWrap(True)
         self.fps_note.setStyleSheet(f"color:{MUTED}; background:transparent;")
         sv.addWidget(self.fps_note)
+
+        if steamlines.from_checkout(ROOT):
+            checkout = QLabel(
+                f"<span style='color:{CHECK_COLORS['warn']}'>{CHECK_MARKS['warn']}</span> This app runs from a "
+                "checkout, so these lines name the checkout and its python. They stop working when that folder "
+                "moves or its python goes; copy them from the installed app instead.")
+            checkout.setWordWrap(True)
+            checkout.setStyleSheet("background:transparent;")
+            sv.addWidget(checkout)
+
+        # Launch lines already in Steam whose gamemon can no longer start: the game then never starts.
+        self.stale_box = QVBoxLayout()
+        self.stale_box.setSpacing(4)
+        sv.addLayout(self.stale_box)
         layout.addWidget(setup)
         self._update_fps_state()
 
@@ -457,6 +476,7 @@ class InGamePage(QWidget):
 
     # ------------------------------------------------------------------ data
     def reload(self) -> None:
+        self._show_stale()
         current = self.games.currentItem().data(Qt.ItemDataRole.UserRole) if self.games.currentItem() else None
         self.games.clear()
         for cfg in sorted(gamecfg.load_all(), key=lambda c: (c.title or c.key).lower()):
@@ -580,6 +600,42 @@ class InGamePage(QWidget):
         self.shot.setPixmap(pix.scaled(self.shot.size(), Qt.AspectRatioMode.KeepAspectRatio,
                                        Qt.TransformationMode.SmoothTransformation))
         self.shot.setToolTip(plain_tooltip(str(path)))
+
+    def _show_stale(self) -> None:
+        while self.stale_box.count():
+            item = self.stale_box.takeAt(0)
+            if (widget := item.widget()) is not None:
+                widget.deleteLater()
+            elif (row := item.layout()) is not None:
+                while row.count():
+                    if (w := row.takeAt(0).widget()) is not None:
+                        w.deleteLater()
+                row.deleteLater()
+        stale = steamlines.stale_lines(find_steam(), gamemon_prefix())
+        if not stale:
+            return
+        head = QLabel(
+            f"<span style='color:{CHECK_COLORS['error']}'>{CHECK_MARKS['error']}</span> <b>"
+            f"{len(stale)} game{'s' if len(stale) != 1 else ''} in Steam will not start</b>: "
+            "their launch options start the game monitor from a place that is gone. Put the line below in the "
+            "game's <i>Properties → Launch options</i> instead, or clear them; Refresh checks again.")
+        head.setWordWrap(True)
+        head.setStyleSheet("background:transparent;")
+        self.stale_box.addWidget(head)
+        for s in stale:
+            label = QLabel(f"<b>{html.escape(s.name)}</b> — {html.escape(s.reason)}")
+            label.setWordWrap(True)
+            label.setStyleSheet("background:transparent;")
+            label.setToolTip(plain_tooltip(f"Now in Steam:\n{s.line}"))
+            self.stale_box.addWidget(label)
+            row = QHBoxLayout()
+            field = QLineEdit(s.fixed)
+            field.setReadOnly(True)
+            copy = QPushButton("Copy")
+            copy.clicked.connect(lambda _c=False, f=field: self._copy(f))
+            row.addWidget(field, 1)
+            row.addWidget(copy)
+            self.stale_box.addLayout(row)
 
     # --------------------------------------------------------------- actions
     def _copy(self, field: QLineEdit) -> None:
