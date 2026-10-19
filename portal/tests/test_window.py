@@ -98,6 +98,14 @@ def test_the_logo_opens_the_wiki(window, monkeypatch):
     assert "wiki" in window.logo.toolTip()
 
 
+def test_the_header_shows_the_suite_stage(window):
+    """Beside the version, with what it means on hover; hidden once STAGE is ""."""
+    import bc250_portal
+    assert window.stage.text() == bc250_portal.STAGE
+    assert window.stage.toolTip() == bc250_portal.STAGE_NOTE
+    assert window.stage.isVisibleTo(window) == bool(bc250_portal.STAGE)
+
+
 def test_the_tiles_icon_hover_and_press(window):
     style = window.cards["gpu"].icon.styleSheet()
     assert "hover:enabled { border-color:#D9D1C4E9; }" in style             # a thin light purple border, visible on dark
@@ -107,7 +115,7 @@ def test_the_tiles_icon_hover_and_press(window):
 def test_short_names_drop_the_suite_prefix(window):
     assert mw.short_name("BC-250 Bazzite Test") == "Bazzite Test"
     assert mw.short_name("BC250 Suite Releases") == "Suite Releases"
-    assert mw.short_name("Simple Demo Tool") == "Simple Demo Tool"
+    assert mw.short_name("Media Tool") == "Media Tool"
     assert window.cards["gpu"].title.text() == "GPU Governor Manager"
     assert "BC-250 GPU Governor Manager" in window.cards["gpu"].icon.toolTip()     # the full name on hover
     assert window.cards["cec"].title.text() == "HDMI-CEC"                          # apps.toml's short
@@ -436,7 +444,7 @@ def test_a_link_in_the_notice_opens_the_tab_of_its_app(window, home):
 def test_development_tab_says_it_is_not_needed(window):
     page = window.pages["development"].widget()
     assert "You do not need these to use the board." in page.findChild(mw.QLabel).text()
-    assert {k for k, c in window.cards.items() if c.entry.development} == {"dtool", "package", "ncgui"}
+    assert {k for k, c in window.cards.items() if c.entry.development} == {"mtool", "package", "ncgui"}
 
 
 def test_no_tab_without_its_apps(qapp, home, settings_dir, tmp_path, launched):
@@ -542,7 +550,7 @@ def test_an_installed_checkout_app_still_opens(qapp, home, settings_dir, tmp_pat
     w.refresh()
     card = w.cards["suite"]
     assert card.status == "Reinstall needed" and card.icon.isEnabled() and card.uninstall_button.isEnabled()
-    assert w.cards["dtool"].install_button.isEnabled()                  # released development apps as usual
+    assert w.cards["mtool"].install_button.isEnabled()                  # released development apps as usual
     w.close()
 
 

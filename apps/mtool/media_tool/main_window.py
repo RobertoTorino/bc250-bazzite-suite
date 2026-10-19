@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The Simple Demo Tool's setup and recording window."""
+"""The Media Tool's setup and recording window."""
 
 from __future__ import annotations
 
@@ -32,6 +32,7 @@ from PyQt6.QtWidgets import (
 
 from . import APP_NAME, __version__
 from .global_shortcut import GlobalShortcutManager
+from .icons import IconsDialog, find_checkout
 from .workflow import (
     PORTAL_LAUNCHER,
     DemoApp,
@@ -58,8 +59,8 @@ IMAGE_DIR = Path(__file__).resolve().parent.parent / "images"
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("Simple Demo Tool")
-        self.setWindowIcon(QIcon(str(IMAGE_DIR / "simple-demo-tool.webp")))
+        self.setWindowTitle("Media Tool")
+        self.setWindowIcon(QIcon(str(IMAGE_DIR / "media-tool.webp")))
         self.setMinimumSize(620, 520)
         self.client = None
         self.recording = False
@@ -87,7 +88,7 @@ class MainWindow(QMainWindow):
         header.setSpacing(14)
         logo = QLabel()
         logo.setObjectName("app_logo")
-        logo.setPixmap(QPixmap(str(IMAGE_DIR / "simple-demo-tool-128.png")).scaled(
+        logo.setPixmap(QPixmap(str(IMAGE_DIR / "media-tool-128.png")).scaled(
             96, 96, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
         header.addWidget(logo)
         header_right = QVBoxLayout()
@@ -134,7 +135,7 @@ class MainWindow(QMainWindow):
         self.release_path = QLineEdit()
         self.release_path.setReadOnly(True)
         self.release_path.setPlaceholderText(
-            "Choose an extracted portal release, suite checkout, or apps/dtool folder"
+            "Choose an extracted portal release, suite checkout, or apps/mtool folder"
         )
         choose_row.addWidget(self.release_path, 1)
         choose_button = QPushButton("Choose folder…")
@@ -164,7 +165,7 @@ class MainWindow(QMainWindow):
         action_layout = QVBoxLayout(action_box)
         self.instructions = QLabel(
             "The installer runs in a terminal so you can see its output and answer password prompts. "
-            "Simple Demo Tool then hides and opens the portal automatically. Use the displayed global shortcut to stop "
+            "Media Tool then hides and opens the portal automatically. Use the displayed global shortcut to stop "
             "recording and bring this window back."
         )
         self.instructions.setWordWrap(True)
@@ -188,6 +189,16 @@ class MainWindow(QMainWindow):
         recording_buttons.addWidget(self.recent_recordings_button)
         action_layout.addLayout(recording_buttons)
         layout.addWidget(action_box)
+
+        icons_box = QGroupBox("Suite icons")
+        icons_layout = QHBoxLayout(icons_box)
+        icons_text = QLabel("Make a category's icons from new images in a suite checkout.")
+        icons_text.setWordWrap(True)
+        icons_layout.addWidget(icons_text, 1)
+        self.icons_button = QPushButton("Convert icons…")
+        self.icons_button.clicked.connect(self._show_icons)
+        icons_layout.addWidget(self.icons_button)
+        layout.addWidget(icons_box)
         layout.addStretch(1)
         self.setCentralWidget(central)
 
@@ -218,7 +229,7 @@ class MainWindow(QMainWindow):
             "2. On Wayland, choose Screen Capture (PipeWire) and approve the sharing prompt.\n"
             "3. Open Tools → WebSocket Server Settings and enable the server.\n"
             "4. Note the server port (usually 4455) and password, then test the connection here.\n\n"
-            "Simple Demo Tool does not change OBS settings or select a capture source for you.",
+            "Media Tool does not change OBS settings or select a capture source for you.",
         )
 
     def _check_obs(self) -> bool:
@@ -291,6 +302,9 @@ class MainWindow(QMainWindow):
         recordings_list.itemDoubleClicked.connect(lambda _item: open_selected())
         refresh()
         dialog.exec()
+
+    def _show_icons(self) -> None:
+        IconsDialog(find_checkout(self.release_dir, Path(__file__).resolve().parent), self).exec()
 
     def _open_recording(self, recording: Path) -> bool:
         if not recording.is_file():
@@ -459,7 +473,7 @@ class MainWindow(QMainWindow):
             self.start_button.setEnabled(False)
             self.install_exit_file = launch_installer(installer)
             self.instructions.setText(
-                f"Recording is active. Finish installing the portal in its terminal. Simple Demo Tool will "
+                f"Recording is active. Finish installing the portal in its terminal. Media Tool will "
                 f"open it automatically, then stay hidden until you press {self.stop_shortcut} to stop recording."
             )
             self.poller.start()
@@ -578,7 +592,7 @@ class MainWindow(QMainWindow):
             answer = QMessageBox.question(
                 self,
                 "Recording in progress",
-                "Stop the OBS recording before closing Simple Demo Tool?",
+                "Stop the OBS recording before closing Media Tool?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No,
             )

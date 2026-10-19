@@ -136,7 +136,7 @@ def test_bump_is_counted_since_the_last_portal_release(tmp_path, monkeypatch):
 def test_shipped_manifest_passes_without_required_tags():
     entries = cm.manifest.load(cm.SUITE / cm.MANIFEST)
     assert cm.check_entries(entries, require_tags=False) == []
-    assert {"dtool", "package"} <= {entry.key for entry in entries if entry.development}
+    assert {"mtool", "package"} <= {entry.key for entry in entries if entry.development}
     checkout = cm.manifest.load_checkout(cm.SUITE / cm.MANIFEST)
     assert cm.check_checkout_entries(checkout) == []
     assert [(entry.key, entry.folder) for entry in checkout] == [

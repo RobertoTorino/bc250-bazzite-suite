@@ -237,18 +237,18 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-bazzite-sftp-tools"]
 launch = [["Open", "~/.local/bin/bc250-bazzite-sftp-tools"]]
 
-[apps.dtool]
-name = "Simple Demo Tool"
-summary = "Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite."
-tag = "dtool-v0.1.13"
-sha256 = "e132666ab97f1b92f5aba753b5d012e57b958570525394bc5aea42af83a6b02d"
+[apps.mtool]
+name = "Media Tool"
+summary = "Record a BC250 Bazzite Suite installation demo with OBS, and convert the suite's icons."
+tag = "mtool-v0.1.13"
+sha256 = ""
 required = false
 changes_board = false
 category = "development"
 install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
-detect = ["~/.local/bin/simple-demo-tool"]
-launch = [["Open", "~/.local/bin/simple-demo-tool"]]
+detect = ["~/.local/bin/media-tool"]
+launch = [["Open", "~/.local/bin/media-tool"]]
 
 [apps.package]
 name = "Dependency Checker"

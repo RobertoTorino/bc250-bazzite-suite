@@ -14,7 +14,7 @@ from package_checker.dependencies import (
 from package_checker.main_window import DependencyWindow, about_text, tool_advice
 
 SHARED = "/home/test/.local/share/bc250-bazzite-suite/venv"
-DEMO = "/home/test/.local/share/simple-demo-tool/venv"
+DEMO = "/home/test/.local/share/media-tool/venv"
 
 
 def _wait_for(predicate, ms=3000):
@@ -44,22 +44,22 @@ def test_window_displays_package_and_tool_results(qapp):
     dependencies, tools = _catalog()
     result = CheckResult(
         [DependencyStatus(dependencies["PyQt6"], (EnvironmentVersion(SHARED, ("portal", "check"), "6.11.0"),
-                                                  EnvironmentVersion(DEMO, ("dtool",), "6.11.0")), "6.12.0"),
-         DependencyStatus(dependencies["obsws-python"], (EnvironmentVersion(DEMO, ("dtool",), "1.8.0"),),
+                                                  EnvironmentVersion(DEMO, ("mtool",), "6.11.0")), "6.12.0"),
+         DependencyStatus(dependencies["obsws-python"], (EnvironmentVersion(DEMO, ("mtool",), "1.8.0"),),
                           "1.8.0"),
          DependencyStatus(dependencies["dbus-next"], (), "0.2.3")],
         [ToolStatus(tools["flashrom"], "/home/test/flashrom/usr/bin/flashrom"),
          ToolStatus(tools["speedtest"], "/home/test/.local/bin/speedtest"),
          ToolStatus(tools["mprime"]),
          ToolStatus(tools["setpci"])],
-        frozenset({"portal", "check", "dtool", "bios", "cores"}),
+        frozenset({"portal", "check", "mtool", "bios", "cores"}),
     )
     window = _window(result)
     try:
         pyqt = window.cards["PyQt6"]
         assert pyqt.status.text() == "Update available"
         assert pyqt.latest.text() == "Latest on PyPI: 6.12.0"
-        assert "BC-250 Bazzite Test" in pyqt.installed.text() and "Simple Demo Tool" in pyqt.installed.text()
+        assert "BC-250 Bazzite Test" in pyqt.installed.text() and "Media Tool" in pyqt.installed.text()
         assert window.cards["obsws-python"].status.text() == "Up to date"
         assert window.cards["dbus-next"].status.text() == "Not needed"
         assert window.tool_cards["flashrom"].status.text() == "Available"
@@ -79,8 +79,8 @@ def test_window_displays_package_and_tool_results(qapp):
 def test_missing_package_in_an_app_environment_is_reported(qapp):
     dependencies, _tools = _catalog()
     result = CheckResult(
-        [DependencyStatus(dependencies["dbus-next"], (EnvironmentVersion(DEMO, ("dtool",), ""),), "0.2.3")],
-        [], frozenset({"dtool"}))
+        [DependencyStatus(dependencies["dbus-next"], (EnvironmentVersion(DEMO, ("mtool",), ""),), "0.2.3")],
+        [], frozenset({"mtool"}))
     window = _window(result)
     try:
         assert window.cards["dbus-next"].status.text() == "Missing"
@@ -114,7 +114,7 @@ def test_about_popup_describes_the_purpose(qapp):
         card = window.cards["obsws-python"]
         card.about_button.click()
         assert card.about_box is not None and card.about_box.isVisible()
-        assert "OBS" in card.about_box.text() and "Simple Demo Tool" in card.about_box.text()
+        assert "OBS" in card.about_box.text() and "Media Tool" in card.about_box.text()
         card.about_box.close()
     finally:
         window.close()
@@ -127,10 +127,10 @@ def test_cve_marks(qapp):
     result = CheckResult(
         [DependencyStatus(dependencies["PyQt6"], (EnvironmentVersion(SHARED, ("portal",), "6.11.0", (), (cve,)),),
                           "6.12.1"),
-         DependencyStatus(dependencies["obsws-python"], (EnvironmentVersion(DEMO, ("dtool",), "1.8.0"),), "1.8.0"),
-         DependencyStatus(dependencies["dbus-next"], (EnvironmentVersion(DEMO, ("dtool",), "0.2.3"),), "0.2.3",
+         DependencyStatus(dependencies["obsws-python"], (EnvironmentVersion(DEMO, ("mtool",), "1.8.0"),), "1.8.0"),
+         DependencyStatus(dependencies["dbus-next"], (EnvironmentVersion(DEMO, ("mtool",), "0.2.3"),), "0.2.3",
                           cve_error="offline")],
-        [], frozenset({"portal", "dtool"}))
+        [], frozenset({"portal", "mtool"}))
     window = _window(result)
     try:
         pyqt = window.cards["PyQt6"]
@@ -161,13 +161,13 @@ def test_missing_tools_advise_what_they_are_needed_for(qapp):
                                                            "No internal programmer found.")
     assert tool_advice(tools["radeontop"], installed, load_apps(CATALOG)) == ""   # the governor is not installed
     window = _window(CheckResult(
-        [DependencyStatus(dependencies["dbus-next"], (EnvironmentVersion(DEMO, ("dtool",), ""),), "0.2.3")],
-        [ToolStatus(tools["mprime"]), ToolStatus(tools["umr"], "/usr/bin/umr")], installed | {"dtool"}))
+        [DependencyStatus(dependencies["dbus-next"], (EnvironmentVersion(DEMO, ("mtool",), ""),), "0.2.3")],
+        [ToolStatus(tools["mprime"]), ToolStatus(tools["umr"], "/usr/bin/umr")], installed | {"mtool"}))
     try:
         assert "Install mprime to be able to use <a href=" in window.tool_cards["mprime"].advice.text()
         assert "Prime95 torture test for a longer burn-in." in window.tool_cards["mprime"].advice.text()
         assert window.tool_cards["umr"].advice.isHidden()
-        assert "Install Simple Demo Tool again from the portal to be able to use it" in \
+        assert "Install Media Tool again from the portal to be able to use it" in \
             window.cards["dbus-next"].advice.text()
     finally:
         window.close()
@@ -185,11 +185,11 @@ def test_needs_update_when_an_app_wants_newer_or_a_release_fixes_a_vulnerability
                                               ("consoles",)),), "46.0.0"),
          DependencyStatus(dependencies["paramiko"], (EnvironmentVersion(sftp, ("sftp",), "3.4.0", (),
                                                                         (fixed,)),), "3.5.0"),
-         DependencyStatus(dependencies["obsws-python"], (EnvironmentVersion(DEMO, ("dtool",), "1.8.0", (),
+         DependencyStatus(dependencies["obsws-python"], (EnvironmentVersion(DEMO, ("mtool",), "1.8.0", (),
                                                                             (unfixed,)),), "1.8.0"),
-         DependencyStatus(dependencies["PyQt6"], (EnvironmentVersion(DEMO, ("dtool",), "7.0.0",
-                                                                     ("dtool",)),), "7.0.0")],
-        [], frozenset({"consoles", "sftp", "dtool"}))
+         DependencyStatus(dependencies["PyQt6"], (EnvironmentVersion(DEMO, ("mtool",), "7.0.0",
+                                                                     ("mtool",)),), "7.0.0")],
+        [], frozenset({"consoles", "sftp", "mtool"}))
     window = _window(result)
     try:
         crypto, paramiko = window.cards["cryptography"], window.cards["paramiko"]

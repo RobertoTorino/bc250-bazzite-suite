@@ -31,7 +31,7 @@ Graphics, Gaming, Utilities and Development. Each app is a tile on its category'
 opens on the tab you used last.
 
 **Development**, the last tab, holds the tools for working on the suite:
-[Simple Demo Tool](other-tools/simple-demo-tool.md), [Dependency Checker](apps/package.md),
+[Media Tool](other-tools/media-tool.md), [Dependency Checker](apps/package.md),
 [Bazzite NetcatGUI](apps/ncgui.md), the
 release front end
 [BC250 Suite Releases](#the-release-front-end) and BC-250 Installer Tests (`tools/installer-tests/gui`), a window

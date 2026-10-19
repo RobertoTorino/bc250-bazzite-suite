@@ -1,3 +1,27 @@
+Changelog: 19-10-2026 16:58:45
+
+Release 0.1.13.
+
+Changelog: 19-10-2026 16:36:08
+
+Breaking. Simple Demo Tool is Media Tool (the owner's names, 19-10-2026). Its folder in the suite is apps/mtool
+(was apps/dtool) and its package media_tool (was demo_tool); with the folder go its key in the portal, its
+installer test and its release tags: mtool-v<x.y.z> from the next release on. The installed tool is renamed too:
+the launcher ~/.local/bin/media-tool (was simple-demo-tool), its folder ~/.local/share/media-tool, its menu entry
+and Desktop icon media-tool.desktop, its icons images/media-tool.webp and media-tool-128.png. New recordings go to
+~/MediaToolRecordings (was ~/SimpleVideoToolRecordings), the folder the tool sets in OBS. Installing or
+uninstalling removes a copy installed under the old name, its launcher, menu entry, Desktop icon and folder; the
+recordings in ~/SimpleVideoToolRecordings stay. Its wiki chapter is other-tools/media-tool.md.
+
+Changelog: 19-10-2026 16:16:14
+
+Added. Convert icons… makes a category's icons in a suite checkout from your own images: one image for every
+size, an image for a single size, or both. It scales each to its size, saves it as WebP (the 128 px icon as PNG)
+under the category's names and copies it to every app of the category, by running the checkout's
+tools/sync_icons.py with the tool's own Python. The checkout is found from the chosen portal release or the tool's
+own folder, or chosen. The app's environment gets Pillow (requirements.txt, checked by install.sh). Tests:
+tests/test_icons.py.
+
 Changelog: 19-10-2026 01:16:07
 
 Release 0.1.13.

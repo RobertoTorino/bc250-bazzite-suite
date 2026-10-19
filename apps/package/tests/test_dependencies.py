@@ -69,7 +69,7 @@ def test_catalog_lists_python_and_external_dependencies():
     tools = load_tools(CATALOG)
 
     assert {dependency.name for dependency in dependencies} == {
-        "PyQt6", "PyQt6-Charts", "obsws-python", "dbus-next", "paramiko", "cryptography"}
+        "PyQt6", "PyQt6-Charts", "obsws-python", "dbus-next", "pillow", "paramiko", "cryptography"}
     pyqt = next(dependency for dependency in dependencies if dependency.name == "PyQt6")
     assert {source.owner for source in pyqt.sources} >= {"portal", "core", "check", "package"}
     assert {tool.name for tool in tools} >= {"flashrom", "pkexec", "umr", "podman"}
@@ -191,7 +191,7 @@ def test_installed_environments_follow_each_launcher(tmp_path):
     _launcher(tmp_path / "bin" / "unlock", tmp_path / "unlock" / "venv")
     apps = {
         "check": App("check", "Test", (str(tmp_path / "bin" / "test"),)),
-        "dtool": App("dtool", "Demo", (str(tmp_path / "bin" / "demo"),)),
+        "mtool": App("mtool", "Demo", (str(tmp_path / "bin" / "demo"),)),
         "compute": App("compute", "CU", (str(tmp_path / "bin" / "bisect"), str(tmp_path / "bin" / "unlock"))),
         "gpu": App("gpu", "Governor", (str(tmp_path / "bin" / "gpu"),)),
         "core": App("core", "Shared core"),
@@ -199,7 +199,7 @@ def test_installed_environments_follow_each_launcher(tmp_path):
     environments = installed_environments(apps)
     assert environments == {
         "check": (shared,),
-        "dtool": (own,),
+        "mtool": (own,),
         "compute": (tmp_path / "bisect" / "venv", tmp_path / "unlock" / "venv"),
     }
 
@@ -215,21 +215,21 @@ def test_packages_are_checked_in_each_app_environment(tmp_path):
     dependencies = {dependency.name: dependency for dependency in load_catalog(CATALOG)}
     shared = _venv(tmp_path / "shared", {"PyQt6": "6.11.0", "PyQt6-Charts": "6.11.0"})
     demo = _venv(tmp_path / "demo", {"PyQt6": "6.11.0", "obsws-python": "1.8.0"})
-    environments = {"portal": (shared,), "check": (shared,), "dtool": (demo,)}
+    environments = {"portal": (shared,), "check": (shared,), "mtool": (demo,)}
 
     results = {result.dependency.name: result for result in check_dependencies(
         list(dependencies.values()), "test-agent", environments, get_latest=lambda name, _agent: {
             "PyQt6": "6.12.0", "PyQt6-Charts": "6.11.0", "obsws-python": "1.8.0", "dbus-next": "0.2.3",
-            "paramiko": "4.0.0", "cryptography": "46.0.0"}[name],
+            "pillow": "12.3.0", "paramiko": "4.0.0", "cryptography": "46.0.0"}[name],
         get_vulnerabilities=NO_CVES)}
 
     pyqt = results["PyQt6"]
     assert [(Path(env.environment), env.owners, env.version) for env in pyqt.environments] == [
-        (shared, ("portal", "check"), "6.11.0"), (demo, ("dtool",), "6.11.0")]
+        (shared, ("portal", "check"), "6.11.0"), (demo, ("mtool",), "6.11.0")]
     assert pyqt.update_available and not pyqt.missing
     assert results["PyQt6-Charts"].needed and not results["PyQt6-Charts"].update_available
     assert results["obsws-python"].environments[0].version == "1.8.0" and not results["obsws-python"].missing
-    assert [env.owners for env in results["dbus-next"].missing] == [("dtool",)]
+    assert [env.owners for env in results["dbus-next"].missing] == [("mtool",)]
 
 
 def test_packages_of_apps_that_are_not_installed_are_not_needed():
@@ -263,7 +263,7 @@ def test_package_checks_preserve_independent_results(tmp_path):
     results = check_dependencies(dependencies, "test-agent", {"portal": (venv,)}, get_latest=latest,
                                  get_vulnerabilities=NO_CVES)
 
-    assert len(results) == 6
+    assert len(results) == 7
     assert results[0].update_available
     assert isinstance(results[0], DependencyStatus)
     assert all(result.error == "offline" for result in results[1:])

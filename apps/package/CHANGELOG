@@ -1,3 +1,18 @@
+Changelog: 19-10-2026 16:58:45
+
+Release 0.7.0.
+
+Changelog: 19-10-2026 16:36:08
+
+Fixed. The catalogue lists Media Tool (was Simple Demo Tool) as [app.mtool] (was [app.dtool]) with its launcher
+~/.local/bin/media-tool, after the tool's rename and move to apps/mtool; its sources (OBS and the Python packages)
+name that owner.
+
+Changelog: 19-10-2026 16:16:56
+
+Added. The catalogue lists pillow, which Simple Demo Tool now installs in its own environment to convert the
+suite's icons.
+
 Changelog: 19-10-2026 03:41:49
 
 Release 0.6.0.

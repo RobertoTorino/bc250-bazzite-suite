@@ -201,6 +201,15 @@ def test_records_follow_an_app_renamed_in_the_suite(tmp_path):
     assert Records(path).get("ace") == "ace-v0.2.1"                  # a record under the new key stays
 
 
+def test_records_follow_an_app_renamed_twice(tmp_path):
+    """demo-tool became dtool, then mtool: a record under either earlier key moves to mtool."""
+    path = tmp_path / "installed.json"
+    path.write_text('{"dtool": "dtool-v0.1.13"}')
+    assert Records(path).get("mtool") == "mtool-v0.1.13"
+    path.write_text('{"demo-tool": "demo-tool-v0.1.9"}')
+    assert Records(path).get("mtool") == "mtool-v0.1.9"
+
+
 def test_a_release_portal_runs_checkout_apps_from_the_checkout_it_was_shown(tmp_path):
     entry = AppEntry(key="suite", name="SR", summary="s", tag="", checkout_only=True, install=("x",),
                      uninstall=("y",), detect=("z",))

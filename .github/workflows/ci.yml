@@ -46,7 +46,7 @@ jobs:
       matrix:
         dir: [core, portal, tools, apps/check, apps/gpu, apps/helixsr, apps/acpi,
               apps/compute, apps/cores, apps/oc,
-              apps/dtool, apps/package, apps/ncgui,
+              apps/mtool, apps/package, apps/ncgui,
               apps/suite,
               apps/overlay, apps/bios, apps/ace, apps/vram, apps/cec, apps/sftp,
               apps/consoles, apps/mesh, apps/shadps4, apps/rpcs3, apps/decky,
@@ -168,7 +168,7 @@ jobs:
           shellcheck -S warning apps/pcsx2/install.sh apps/pcsx2/bc250-pcsx2-run
           shellcheck -S warning apps/vita3k/install.sh apps/vita3k/bc250-vita3k-run
           shellcheck -S warning apps/decky/install.sh
-          shellcheck -S warning apps/dtool/install.sh
+          shellcheck -S warning apps/mtool/install.sh
           shellcheck -S warning apps/package/install.sh
           shellcheck -S warning apps/ncgui/install.sh
           shellcheck -S warning apps/datstation/install.sh
@@ -261,8 +261,8 @@ jobs:
         run: bash tools/installer-tests/sftp.sh
       - name: consoles installer
         run: bash tools/installer-tests/consoles.sh
-      - name: Demo Tool installer
-        run: bash tools/installer-tests/dtool.sh
+      - name: Media Tool installer
+        run: bash tools/installer-tests/mtool.sh
       - name: Dependency checker installer
         run: bash tools/installer-tests/package.sh
       - name: NetcatGUI installer

@@ -1,3 +1,23 @@
+Changelog: 19-10-2026 16:58:45
+
+Release 3.2.0. Pins mtool-v0.1.13.
+
+Changelog: 19-10-2026 16:45:13
+
+Added. The header shows the suite's stage beside the version, a Beta pill whose tooltip says what it means: the
+suite is in active development, and features and layout may still change between releases. STAGE and STAGE_NOTE
+in bc250_portal/__init__.py set it (the owner, 19-10-2026); STAGE = "" hides the pill. The version numbers stay
+plain x.y.z. Tests: tests/test_window.py.
+
+Changelog: 19-10-2026 16:36:08
+
+Added. Media Tool (was Simple Demo Tool) is listed as [apps.mtool] (was [apps.dtool]), after the tool's move to
+apps/mtool; its tile icon is images/apps/mtool.webp, its launcher ~/.local/bin/media-tool. The entry pins the first
+release under its new tag prefix (mtool-v0.1.13) without a checksum until that release exists, which an app release
+accepts and a portal release waits for. The record of a copy installed under dtool or demo-tool moves to the new
+key when the portal starts. The Desktop icons setting counts media-tool.desktop as the suite's (was
+simple-demo-tool.desktop).
+
 Changelog: 19-10-2026 04:02:15
 
 Release 3.1.0. Pins check-v0.5.0, helixsr-v0.4.0, overlay-v0.4.0, bios-v0.4.0, ace-v0.4.0, mesh-v0.4.0, vram-v0.4.0, fan-v0.3.0, wdriver-v0.3.0, cec-v0.4.0, sftp-v0.4.0, package-v0.6.0, ncgui-v0.4.0, rpcs3-v0.4.0, consoles-v1.3.0, shadps4-v0.4.0, decky-v0.4.0, datstation-v1.1.0, ppsspp-v0.4.0, pcsx2-v0.5.0, vita3k-v0.3.0.

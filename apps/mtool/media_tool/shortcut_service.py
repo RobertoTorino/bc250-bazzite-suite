@@ -106,8 +106,8 @@ async def _run() -> None:
         "a{sv}",
         [
             {
-                "handle_token": Variant("s", f"simple_demo_tool_{token}"),
-                "session_handle_token": Variant("s", f"simple_demo_tool_session_{token}"),
+                "handle_token": Variant("s", f"simple_media_tool_{token}"),
+                "session_handle_token": Variant("s", f"simple_media_tool_session_{token}"),
             }
         ],
         responses,
@@ -127,13 +127,13 @@ async def _run() -> None:
                 [
                     SHORTCUT_ID,
                     {
-                        "description": Variant("s", "Stop OBS recording and show Simple Demo Tool"),
+                        "description": Variant("s", "Stop OBS recording and show Media Tool"),
                         "preferred_trigger": Variant("s", TRIGGER),
                     },
                 ]
             ],
             "",
-            {"handle_token": Variant("s", f"simple_demo_tool_bind_{token}")},
+            {"handle_token": Variant("s", f"simple_media_tool_bind_{token}")},
         ],
         responses,
         response_waiters,

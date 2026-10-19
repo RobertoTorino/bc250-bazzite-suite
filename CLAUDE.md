@@ -14,13 +14,13 @@ its manifest. **check** (BC-250 Bazzite Test) is always installed and always lis
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
 - `apps/<name>/`: check, gpu, helixsr, compute, cores, oc, acpi,
-  overlay, bios, ace, mesh, vram, fan, wdriver, cec, sftp, consoles, shadps4, rpcs3, ppsspp, pcsx2, vita3k, decky, dtool, package, ncgui, datstation, suite. Each has its
+  overlay, bios, ace, mesh, vram, fan, wdriver, cec, sftp, consoles, shadps4, rpcs3, ppsspp, pcsx2, vita3k, decky, mtool, package, ncgui, datstation, suite. Each has its
   own VERSION, CHANGELOG, LICENSE (acpi is MIT; consoles is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; ncgui is GPL-2.0-only, a port of NetcatGUI; the rest
   GPL-3.0-or-later), .gitignore. Every app
   has a `category` in `portal/apps.toml`, the same as its icon's in `icons/categories.toml` (sustainable, graphics,
   gaming, utilities, development): the portal shows a tab per category, with check and the notice of updates above
-  the tabs (owner, 18-10-2026). Simple Demo Tool, the Dependency Checker and Bazzite NetcatGUI are development apps.
+  the tabs (owner, 18-10-2026). Media Tool, the Dependency Checker and Bazzite NetcatGUI are development apps.
   Suite Releases (the release front end) has `.standalone` and `.checkout-only`: it runs
   from the checkout, is never released, and is listed as `[checkout.suite]`, also on the Development tab:
   a portal from a release finds the checkout on the machine (it asks only when there is none) and remembers it, the
@@ -144,7 +144,7 @@ shellcheck -S warning apps/oc/bc250-gpu-oc-bisect.sh apps/oc/install.sh
 shellcheck -S warning apps/acpi/bc250-acpi-override.sh apps/acpi/install.sh \
   apps/overlay/install.sh apps/bios/install.sh apps/vram/install.sh apps/fan/install.sh \
   apps/cec/install.sh apps/sftp/install.sh \
-  apps/consoles/install.sh apps/dtool/install.sh apps/suite/*.sh
+  apps/consoles/install.sh apps/mtool/install.sh apps/suite/*.sh
 shellcheck -S warning apps/ace/bc250-ace-queues.sh apps/ace/bc250-ace-queues-run \
   apps/ace/install.sh apps/ace/mesa/build-in-container.sh
 shellcheck -S warning apps/mesh/bc250-mesh-shaders.sh apps/mesh/bc250-mesh-shaders-run \

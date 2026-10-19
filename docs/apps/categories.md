@@ -58,7 +58,7 @@ Every app with its icon and its category.
 | ![](../assets/apps/wdriver.webp){ .app-icon } [BC-250 USB Wi-Fi](wdriver.md) | Utilities |
 | ![](../assets/apps/cec.webp){ .app-icon } [HDMI CEC Manager](cec.md) | Utilities |
 | ![](../assets/apps/sftp.webp){ .app-icon } [Bazzite SFTP Tools](sftp.md) | Utilities |
-| ![](../assets/apps/dtool.webp){ .app-icon } [Simple Demo Tool](../other-tools/simple-demo-tool.md) | Development |
+| ![](../assets/apps/mtool.webp){ .app-icon } [Media Tool](../other-tools/media-tool.md) | Development |
 | ![](../assets/apps/package.webp){ .app-icon } [Dependency Checker](package.md) | Development |
 | ![](../assets/apps/ncgui.webp){ .app-icon } [Bazzite NetcatGUI](ncgui.md) | Development |
 | ![](../assets/apps/suite.webp){ .app-icon } [BC250 Suite Releases](../portal.md#the-release-front-end) | Development |

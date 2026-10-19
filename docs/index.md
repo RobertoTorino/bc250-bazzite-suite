@@ -14,6 +14,7 @@ hide:
 <div class="home-hero__text" markdown>
 # Tools for every part of the board. { .home-hero__lead }
 <p class="home-hero__claim">Get the most out of your BC-250.</p>
+<p class="home-hero__stage"><strong>Beta</strong> The suite is in active development: features and layout may still change between releases.</p>
 </div>
 </section>
 

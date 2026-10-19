@@ -331,6 +331,20 @@
   margin: 0;
 }
 
+/* The suite's stage (the portal's STAGE): a pill and its note under the claim. */
+.md-typeset .home-hero__stage {
+  margin: 1rem 0 0;
+  font-size: 0.8rem;
+}
+
+.md-typeset .home-hero__stage strong {
+  background: #8b4fd8;
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 0.1rem 0.5rem;
+  margin-right: 0.5rem;
+}
+
 /* Lots in the suite: a dark section with a grid of cards, the app names in white. */
 .home-section--dark {
   background: var(--suite-ink);

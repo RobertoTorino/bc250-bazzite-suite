@@ -38,7 +38,7 @@ class GlobalShortcutManager(QWidget):
         self._failed = False
         self._stopping = False
         self.trigger_description = ""
-        self.process.start(sys.executable, ["-m", "demo_tool.shortcut_service"])
+        self.process.start(sys.executable, ["-m", "media_tool.shortcut_service"])
 
     def stop(self) -> None:
         self._request_pending = False

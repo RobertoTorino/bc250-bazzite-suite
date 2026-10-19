@@ -1,3 +1,32 @@
+Changelog: 19-10-2026 16:45:13
+
+The suite says it is in Beta (the owner, 19-10-2026), as a label beside the version rather than in it, so tags,
+pins and update checks keep their x.y.z: the portal's header shows a Beta pill, a portal release's notes start with
+the Beta note (tools/build_release.py reads STAGE and STAGE_NOTE from the portal), the README has a status badge
+and the note, and the wiki's home page the note under its claim. tools/tests/test_stage.py fails when the README or
+the wiki does not follow the portal's STAGE, so clearing it there is the one change that ends the Beta, with those
+two texts.
+
+Changelog: 19-10-2026 16:36:08
+
+Simple Demo Tool is Media Tool, in apps/mtool with the package media_tool (was apps/dtool, demo_tool), and its
+installed name media-tool (was simple-demo-tool), the owner's names. With it the portal key and tile icon, the
+installer test (which now checks that an install and an uninstall remove a copy under the old name and keep its
+recordings), the wiki chapter other-tools/media-tool.md and its nav entry, CI's matrix, step and shellcheck line,
+icons/categories.toml, the dependency catalogue and its tests, the release, manifest and portal tests that use the
+tool as their example, a test in Suite Releases, and CLAUDE.md's list and shellcheck line. The portal moves the
+record of an installed copy to the new key; its summary mentions the icon converter.
+
+Changelog: 19-10-2026 16:16:14
+
+tools/sync_icons.py converts new category icons. An image dropped in icons/<category>/ named <category>-<size>
+(any extension) becomes that size's icon, one by another name all four; each is scaled, saved as WebP (the 128 px
+one as PNG) under the category's names and the dropped file removed, before the copies are written. --category with
+--from converts an image from elsewhere, --size only the sizes named. --check also lists dropped images not yet
+converted, and a category icon that is missing stops it. Simple Demo Tool's Convert icons… is a window for it.
+The sustainable category has the owner's new icon, converted this way and copied to its apps and portal tiles.
+Tests: tools/tests/test_icons.py.
+
 Changelog: 19-10-2026 03:24:21
 
 The weekly upstream check covers every program the apps pin or follow: besides Decky Loader, shadPS4 and HelixSR

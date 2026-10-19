@@ -24,7 +24,7 @@ RENAMED = {"ace-queues": "ace", "bazzite-netcatgui": "ncgui", "bazzite-datstatio
            "mesh-shaders": "mesh", "pcsx2-manager": "pcsx2",
            "ppsspp-manager": "ppsspp", "rpcs3-manager": "rpcs3",
            "shadps4-manager": "shadps4", "vita3k-manager": "vita3k",
-           "demo-tool": "dtool", "dependency-checker": "package",
+           "demo-tool": "mtool", "dtool": "mtool", "dependency-checker": "package",
            "persistent-acpi": "acpi", "sftp-tools": "sftp",
            "suite-releases": "suite", "usb-wifi": "wdriver",
            "system-overlay": "overlay"}

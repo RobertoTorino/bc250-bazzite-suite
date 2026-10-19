@@ -1,11 +1,14 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
 [![CI](https://github.com/RobertoTorino/bc250-bazzite-suite/actions/workflows/ci.yml/badge.svg)](https://github.com/RobertoTorino/bc250-bazzite-suite/actions/workflows/ci.yml)
+![Status: Beta](https://img.shields.io/badge/status-Beta-8b4fd8)
 
 # BC250 Bazzite Suite
 
 Tools for the AMD BC-250 running Bazzite, in one repository. The **[portal](portal)** installs, opens, updates
 and removes them: BC-250 Bazzite Test is always installed, every other app is optional.
+
+**Beta:** The suite is in active development: features and layout may still change between releases.
 
 ![wiki.png](portal/images/wiki.png)
 
@@ -70,7 +73,7 @@ By category, as the portal's tabs list them.
 
 **Development**: tools for working on the suite. You do not need them to use the board.
 
-- <img src="portal/images/apps/dtool.webp" width="20" height="20" alt=""/> **[Simple Demo Tool](apps/dtool)**: Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite.
+- <img src="portal/images/apps/mtool.webp" width="20" height="20" alt=""/> **[Media Tool](apps/mtool)**: Record a BC250 Bazzite Suite installation demo with OBS, and convert the suite's icons.
 - <img src="portal/images/apps/package.webp" width="20" height="20" alt=""/> **[Dependency Checker](apps/package)**: The suite's Python packages and external tools, which apps use them, and whether newer ones exist; and whether a Bazzite update waits for a reboot.
 - <img src="portal/images/apps/ncgui.webp" width="20" height="20" alt=""/> **[Bazzite NetcatGUI](apps/ncgui)**: A graphical netcat: connect to a host or listen on a port, TCP, UDP or TLS, one session per tab.
 - <img src="portal/images/apps/suite.webp" width="20" height="20" alt=""/> **[BC250 Suite Releases](apps/suite)**: The release front end: versions, pins and the board checks of a release. Runs from a checkout of this repository.

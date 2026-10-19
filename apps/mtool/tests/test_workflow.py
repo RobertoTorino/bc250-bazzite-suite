@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from demo_tool import workflow
+from media_tool import workflow
 
 
 def test_manifest_lists_optional_apps_and_excludes_required_default(tmp_path):
@@ -37,9 +37,9 @@ def test_validate_release_accepts_suite_checkout_and_tool_folder(tmp_path):
         '[apps.overlay]\nname = "Overlay"\ndetect = ["~/overlay"]\nlaunch = [["Open", "~/overlay"]]\n',
         encoding="utf-8",
     )
-    tool_folder = tmp_path / "apps" / "dtool"
-    (tool_folder / "demo_tool").mkdir(parents=True)
-    (tool_folder / "demo_tool" / "__main__.py").touch()
+    tool_folder = tmp_path / "apps" / "mtool"
+    (tool_folder / "media_tool").mkdir(parents=True)
+    (tool_folder / "media_tool" / "__main__.py").touch()
 
     installer, apps = workflow.validate_release(tool_folder)
 
@@ -123,7 +123,7 @@ def test_recording_helpers_surface_server_errors(monkeypatch):
 
 def test_set_recording_directory_configures_obs_folder(monkeypatch, tmp_path):
     monkeypatch.setitem(sys.modules, "obsws_python", SimpleNamespace(OBSSDKError=Exception))
-    recording_path = tmp_path / "SimpleVideoToolRecordings"
+    recording_path = tmp_path / "MediaToolRecordings"
     monkeypatch.setattr(workflow, "RECORDINGS_DIRECTORY", recording_path)
 
     class Client:
@@ -144,7 +144,7 @@ def test_set_recording_directory_reports_obs_request_failure(monkeypatch, tmp_pa
         pass
 
     monkeypatch.setitem(sys.modules, "obsws_python", SimpleNamespace(OBSSDKError=SdkError))
-    monkeypatch.setattr(workflow, "RECORDINGS_DIRECTORY", tmp_path / "SimpleVideoToolRecordings")
+    monkeypatch.setattr(workflow, "RECORDINGS_DIRECTORY", tmp_path / "MediaToolRecordings")
 
     class Client:
         def set_record_directory(self, _directory):

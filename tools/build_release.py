@@ -53,6 +53,13 @@ stage_app = _load("bc250_stage_app", SUITE / "tools" / "stage_app.py")
 manifest = _load("bc250_manifest", SUITE / "portal" / "bc250_portal" / "manifest.py")
 
 
+def portal_stage() -> tuple[str, str]:
+    """The portal's STAGE and STAGE_NOTE (portal/bc250_portal/__init__.py), read without importing the portal."""
+    text = (SUITE / "portal" / "bc250_portal" / "__init__.py").read_text(encoding="utf-8")
+    found = [re.search(rf'^{name} = "(.*)"$', text, re.M) for name in ("STAGE", "STAGE_NOTE")]
+    return found[0][1] if found[0] else "", found[1][1] if found[1] else ""
+
+
 def source_epoch() -> int:
     if os.environ.get("SOURCE_DATE_EPOCH"):
         return int(os.environ["SOURCE_DATE_EPOCH"])
@@ -163,6 +170,9 @@ def build(tag: str, out: Path, bundle: Path | None = None) -> Path:
     wheel = native_wheel(app, src, version)
     out.mkdir(parents=True, exist_ok=True)
     notes = [f"## {tag}", ""]
+    stage, stage_note = portal_stage()
+    if app == "portal" and stage:
+        notes += [f"> **{stage}:** {stage_note}", ""]
     if app != "portal":
         notes += [f"> **To install the suite, use the portal, not this file:** the [latest portal release]"
                   f"({LATEST_PORTAL_URL}) installs, updates and removes {app} for you and checks every download. "

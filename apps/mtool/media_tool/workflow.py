@@ -14,7 +14,7 @@ from pathlib import Path
 
 PORTAL_LAUNCHER = Path.home() / ".local" / "bin" / "bc250-bazzite-suite"
 OBS_FLATPAK_ID = "com.obsproject.Studio"
-RECORDINGS_DIRECTORY = Path.home() / "SimpleVideoToolRecordings"
+RECORDINGS_DIRECTORY = Path.home() / "MediaToolRecordings"
 RECORDING_EXTENSIONS = frozenset({".avi", ".flv", ".mkv", ".mov", ".mp4", ".m3u8", ".ts", ".webm"})
 
 
@@ -70,7 +70,7 @@ def validate_release(folder: Path) -> tuple[Path, tuple[DemoApp, ...]]:
 
     raise WorkflowError(
         f"{selected} is not a portal release or suite checkout. Choose an extracted portal release folder, "
-        "the suite repository folder, or its apps/dtool folder."
+        "the suite repository folder, or its apps/mtool folder."
     )
 
 
@@ -135,7 +135,7 @@ def connect_obs(host: str, port: int, password: str):
         import obsws_python as obs
         import websocket
     except ImportError as exc:
-        raise WorkflowError("The OBS WebSocket client is missing. Reinstall Simple Demo Tool to restore it.") from exc
+        raise WorkflowError("The OBS WebSocket client is missing. Reinstall Media Tool to restore it.") from exc
     try:
         client = obs.ReqClient(host=host, port=port, password=password, timeout=3)
         version = client.get_version()
@@ -237,7 +237,7 @@ def launch_installer(installer: Path) -> Path:
     terminal = find_terminal()
     if terminal is None:
         raise WorkflowError("No supported terminal emulator was found to run the portal installer.")
-    descriptor, name = tempfile.mkstemp(prefix="simple-demo-tool-installer-")
+    descriptor, name = tempfile.mkstemp(prefix="media-tool-installer-")
     os.close(descriptor)
     exit_file = Path(name)
     exit_file.unlink()

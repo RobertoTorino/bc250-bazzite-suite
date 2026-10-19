@@ -160,9 +160,19 @@ The icons are WebP, a fraction of the size of PNG, which the apps (through Qt) a
 is PNG: the menu entry, the Desktop icon, a Steam shortcut and a notification use it, because a desktop or Steam may
 not read WebP. In code, `LOGO_PATH` is the WebP icon; `steam.shortcut_icon()` gives the PNG beside it.
 
-To give a category a new icon, replace its four files (three WebP, the 128 px one PNG) and run
-`python3 tools/sync_icons.py`.
-`tools/tests/test_icons.py` fails when a copy is out of date or an app icon has no category.
+To give a category a new icon, drop the new images in `icons/<category>/` and run `python3 tools/sync_icons.py`.
+An image named `<category>-<size>` (any extension) replaces that size only; an image by any other name replaces all
+four. The tool scales each to its size, saves it as WebP (the 128 px one as PNG) under the category's names, removes
+the dropped file, then writes the copies. Images must be square. An image elsewhere works too:
+
+```bash
+python3 tools/sync_icons.py --category sustainable --from ~/Pictures/leaf.png              # all four sizes
+python3 tools/sync_icons.py --category sustainable --from ~/Pictures/leaf-small.png --size 128
+```
+
+[Media Tool](../other-tools/media-tool.md#convert-the-suites-icons) does the same from a window.
+`python3 tools/sync_icons.py --check` lists what is not converted or copied yet, and `tools/tests/test_icons.py`
+fails when a copy is out of date or an app icon has no category.
 
 ## Shared code: bc250_core
 

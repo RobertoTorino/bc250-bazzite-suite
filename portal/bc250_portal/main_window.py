@@ -42,7 +42,8 @@ from bc250_core.updates import ReleaseInfo, UpdateChecker, version_tuple
 from bc250_core.widgets import ClickableLogo, hint_label
 
 from . import desktop_icons, glyphs
-from . import APP_ICONS, APP_ID, APP_NAME, INFO, LOGO_PATH, __version__, find_checkout, is_suite, remember_checkout
+from . import (APP_ICONS, APP_ID, APP_NAME, INFO, LOGO_PATH, STAGE, STAGE_NOTE, __version__, find_checkout, is_suite,
+               remember_checkout)
 from .manifest import CATEGORIES, AppEntry
 from .portal_update import PortalUpdate
 from .sources import Records, SourceError, Sources, is_installed
@@ -381,7 +382,15 @@ class MainWindow(QMainWindow):
         title = QLabel(f"{APP_NAME}  <span style='color:#9aa0a6; font-size:16px;'>v{__version__}</span>")
         title.setStyleSheet(header_font() + "font-size:32px; font-weight:800;")
         title.setToolTip(f"{APP_NAME} {__version__} · core {CORE_VERSION}")
-        header.addWidget(title, 1)
+        header.addWidget(title)
+        self.stage = QLabel(STAGE)
+        self.stage.setObjectName("stage")
+        self.stage.setStyleSheet(f"background:{ACCENT}; color:white; font-weight:700; font-size:12px; "
+                                 "border-radius:6px; padding:2px 8px;")
+        self.stage.setToolTip(STAGE_NOTE)
+        self.stage.setVisible(bool(STAGE))
+        header.addWidget(self.stage, 0, Qt.AlignmentFlag.AlignVCenter)
+        header.addStretch(1)
         self.portal_button = QPushButton()
         self.portal_button.setStyleSheet(f"color:{RED}; font-weight:700;")
         self.portal_button.clicked.connect(self._open_portal_release)

@@ -101,7 +101,7 @@ nav:
       - What is Bazzite: history/bazzite.md
       - What is BC-250: history/bc250.md
   - Other tools:
-      - Simple demo tool: other-tools/simple-demo-tool.md
+      - Media tool: other-tools/media-tool.md
 validation:
   links:
     anchors: warn

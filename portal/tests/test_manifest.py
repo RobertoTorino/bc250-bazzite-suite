@@ -78,7 +78,7 @@ def test_a_category_for_its_tab():
 def test_shipped_manifest_has_a_category_for_every_app():
     entries = load(MANIFEST) + load_checkout(MANIFEST)
     assert all(e.category in CATEGORIES for e in entries)
-    assert {e.key for e in entries if e.development} == {"dtool", "package", "ncgui", "suite", "installer-tests"}
+    assert {e.key for e in entries if e.development} == {"mtool", "package", "ncgui", "suite", "installer-tests"}
 
 
 def test_short_name_for_the_tile():

@@ -4,17 +4,17 @@ from pathlib import Path
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtGui import QImage
 
-from demo_tool import main_window
-from demo_tool.workflow import WorkflowError
+from media_tool import main_window
+from media_tool.workflow import WorkflowError
 
 
 def test_bundled_icons_have_expected_dimensions():
     images = Path(main_window.__file__).resolve().parents[1] / "images"
 
-    assert QImage(str(images / "simple-demo-tool.webp")).size().width() == 512
-    assert QImage(str(images / "simple-demo-tool.webp")).size().height() == 512
-    assert QImage(str(images / "simple-demo-tool-128.png")).size().width() == 128
-    assert QImage(str(images / "simple-demo-tool-128.png")).size().height() == 128
+    assert QImage(str(images / "media-tool.webp")).size().width() == 512
+    assert QImage(str(images / "media-tool.webp")).size().height() == 512
+    assert QImage(str(images / "media-tool-128.png")).size().width() == 128
+    assert QImage(str(images / "media-tool-128.png")).size().height() == 128
 
 
 def test_window_starts_with_steps_and_no_unvalidated_release(qapp, monkeypatch):
@@ -24,7 +24,7 @@ def test_window_starts_with_steps_and_no_unvalidated_release(qapp, monkeypatch):
 
     window = main_window.MainWindow()
 
-    assert window.windowTitle() == "Simple Demo Tool"
+    assert window.windowTitle() == "Media Tool"
     assert window.start_button.text() == "Start recording and install portal"
     assert not window.start_button.isEnabled()
     assert window.app_choice.count() == 0
@@ -84,9 +84,9 @@ def test_choose_local_tool_folder_loads_parent_suite_checkout(qapp, monkeypatch,
         '[apps.overlay]\nname = "Overlay"\ndetect = ["~/overlay"]\nlaunch = [["Open", "~/overlay"]]\n',
         encoding="utf-8",
     )
-    tool_folder = tmp_path / "apps" / "dtool"
-    (tool_folder / "demo_tool").mkdir(parents=True)
-    (tool_folder / "demo_tool" / "__main__.py").touch()
+    tool_folder = tmp_path / "apps" / "mtool"
+    (tool_folder / "media_tool").mkdir(parents=True)
+    (tool_folder / "media_tool" / "__main__.py").touch()
     monkeypatch.setattr(main_window, "obs_install_command", lambda: None)
     monkeypatch.setattr(main_window.QFileDialog, "getExistingDirectory", lambda *args: str(tool_folder))
     monkeypatch.setattr(main_window, "find_portal_release", lambda: None)
@@ -126,7 +126,7 @@ def test_test_connection_shows_popup_if_obs_is_not_running(qapp, monkeypatch):
 
 def test_test_connection_sets_and_reports_recordings_folder(qapp, monkeypatch, tmp_path):
     client = object()
-    recordings_path = tmp_path / "SimpleVideoToolRecordings"
+    recordings_path = tmp_path / "MediaToolRecordings"
     monkeypatch.setattr(main_window, "obs_install_command", lambda: None)
     monkeypatch.setattr(main_window, "connect_obs", lambda *_args: (client, "test"))
     monkeypatch.setattr(main_window, "set_recording_directory", lambda _client: recordings_path)
@@ -154,7 +154,7 @@ def test_recent_recordings_are_available_without_expanding_main_window(qapp, mon
 
 
 def test_recent_recordings_uses_tool_recordings_folder(qapp, monkeypatch, tmp_path):
-    recordings_path = tmp_path / "SimpleVideoToolRecordings"
+    recordings_path = tmp_path / "MediaToolRecordings"
     folders = []
     monkeypatch.setattr(main_window, "obs_install_command", lambda: None)
     monkeypatch.setattr(main_window, "recordings_directory", lambda: recordings_path)
@@ -350,7 +350,7 @@ def test_start_hides_window_and_global_shortcut_stops_recording(qapp, monkeypatc
 def test_a_second_launch_opens_no_window(monkeypatch):
     """A double-click on the Desktop icon starts the app twice: the second launch hands over to the first."""
     from PyQt6.QtWidgets import QApplication
-    import demo_tool.__main__ as entry
+    import media_tool.__main__ as entry
     app = QApplication.instance() or QApplication([])
     asked = []
     monkeypatch.setattr(entry, "QApplication", lambda argv: app)

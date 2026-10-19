@@ -54,7 +54,7 @@ other app is optional. They are listed by category, as the portal's tabs list th
 
 | App | What it does |
 |---|---|
-| ![](../assets/apps/dtool.webp){ .app-icon } [Simple Demo Tool](../other-tools/simple-demo-tool.md) | Record a BC250 Bazzite Suite installation demo with OBS. For making videos of the suite. |
+| ![](../assets/apps/mtool.webp){ .app-icon } [Media Tool](../other-tools/media-tool.md) | Record a BC250 Bazzite Suite installation demo with OBS, and convert the suite's icons. |
 | ![](../assets/apps/package.webp){ .app-icon } [Dependency Checker](package.md) | The suite's Python packages and external tools, which apps use them, and whether newer ones exist; and whether a Bazzite update waits for a reboot. |
 | ![](../assets/apps/ncgui.webp){ .app-icon } [Bazzite NetcatGUI](ncgui.md) | A graphical netcat: connect to a host or listen on a port, TCP, UDP or TLS, one session per tab. |
 | ![](../assets/apps/suite.webp){ .app-icon } [BC250 Suite Releases](../portal.md#the-release-front-end) | The release front end: versions, pins and the board checks of a release. Runs from a checkout of this repository. |

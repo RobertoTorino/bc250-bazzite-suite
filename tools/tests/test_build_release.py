@@ -25,7 +25,7 @@ pin_spec.loader.exec_module(pin_app)
 
 BT_TAG = f"check-v{(TOOLS.parent / 'apps' / 'check' / 'VERSION').read_text().strip()}"
 PORTAL_TAG = f"portal-v{(TOOLS.parent / 'portal' / 'VERSION').read_text().strip()}"
-DEMO_TOOL_TAG = f"dtool-v{(TOOLS.parent / 'apps' / 'dtool' / 'VERSION').read_text().strip()}"
+MEDIA_TOOL_TAG = f"mtool-v{(TOOLS.parent / 'apps' / 'mtool' / 'VERSION').read_text().strip()}"
 
 
 @pytest.fixture(autouse=True)
@@ -115,15 +115,15 @@ def test_version_must_match(tmp_path):
         br.build("check-9.9.9", tmp_path)
 
 
-def test_demo_tool_release_has_the_standard_layout_and_omits_suite_marker(tmp_path):
-    br.build(DEMO_TOOL_TAG, tmp_path)
-    names = members(tmp_path / f"{DEMO_TOOL_TAG}.tar.gz")
+def test_media_tool_release_has_the_standard_layout_and_omits_suite_marker(tmp_path):
+    br.build(MEDIA_TOOL_TAG, tmp_path)
+    names = members(tmp_path / f"{MEDIA_TOOL_TAG}.tar.gz")
 
-    assert f"{DEMO_TOOL_TAG}/install.sh" in names
-    assert f"{DEMO_TOOL_TAG}/demo_tool/__main__.py" in names
-    assert f"{DEMO_TOOL_TAG}/images/simple-demo-tool.webp" in names
-    assert f"{DEMO_TOOL_TAG}/install" not in names
-    assert f"{DEMO_TOOL_TAG}/.standalone" not in names
+    assert f"{MEDIA_TOOL_TAG}/install.sh" in names
+    assert f"{MEDIA_TOOL_TAG}/media_tool/__main__.py" in names
+    assert f"{MEDIA_TOOL_TAG}/images/media-tool.webp" in names
+    assert f"{MEDIA_TOOL_TAG}/install" not in names
+    assert f"{MEDIA_TOOL_TAG}/.standalone" not in names
     assert not any("/tests/" in name for name in names)
 
 
@@ -161,6 +161,13 @@ def test_portal_needs_and_verifies_bundle(bt_release, pinned, tmp_path):
     assert f"{PORTAL_TAG}/bc250_core/platform.py" in names and f"{PORTAL_TAG}/apps.toml" in names
     notes = (tmp_path / "b" / "notes.md").read_text()
     assert BT_TAG in notes and "use the portal, not this file" not in notes
+    stage, note = br.portal_stage()
+    assert (f"> **{stage}:** {note}" in notes) == bool(stage)            # the suite's stage, at the top
+
+
+def test_only_a_portal_release_says_the_stage(bt_release):
+    stage, _note = br.portal_stage()
+    assert stage == "" or f"**{stage}:**" not in (bt_release / "notes.md").read_text()
 
 
 def test_wrong_pin_refused(bt_release, pinned, tmp_path):

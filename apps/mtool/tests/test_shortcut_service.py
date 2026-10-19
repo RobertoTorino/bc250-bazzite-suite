@@ -4,7 +4,7 @@ import asyncio
 from dbus_next.message import Message
 from dbus_next.signature import Variant
 
-from demo_tool import shortcut_service
+from media_tool import shortcut_service
 
 
 def test_shortcut_service_creates_session_binds_key_and_forwards_activation(monkeypatch):
