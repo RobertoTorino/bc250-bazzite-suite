@@ -82,7 +82,7 @@ def test_the_logs_are_tabs_of_their_own(window, monkeypatch):
     w, _app = window
     pages = (w.apps_page, w.portal_page, w.withdraw_page, w.run_page)
     assert [w.tabs.tabText(i) for i in range(w.tabs.count())] == \
-        ["1. Apps", "2. Pin and portal", "3. Retract", "Local app test", "Logs", "Commands"]
+        ["1. Release apps", "2. Pin and release Portal", "3. Retract app", "Test on this board", "Logs", "Commands"]
     assert w.tabs.widget(w.log_tab) is w.outputs and w.tabs.widget(w.commands_tab) is w.commands
     assert [w.outputs.widget(i) for i in range(w.outputs.count())] == [p.output for p in pages]
     assert not any(p.isAncestorOf(p.output) for p in pages)             # no longer inside the step's tab
@@ -98,7 +98,7 @@ def test_the_logs_are_tabs_of_their_own(window, monkeypatch):
     w.tabs.setCurrentIndex(0)
     w.portal_page.output.set_text("later")                              # another step's log: no switch
     assert w.tabs.currentIndex() == 0
-    w.run_page.output.appendPlainText("alpha started")                  # Local app test never switches
+    w.run_page.output.appendPlainText("alpha started")                  # Test on this board never switches
     w.tabs.setCurrentIndex(3)
     w.run_page.output.appendPlainText("alpha closed.")
     assert w.tabs.currentIndex() == 3

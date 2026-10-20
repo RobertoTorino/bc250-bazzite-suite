@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The apps' icons on the Desktop, which the user switches on or off in the portal ("App icons on the Desktop").
+"""The apps' icons on the Desktop, which the user switches on or off in the portal (the "Icons on Desktop" pill).
 
 Every app's installer writes an app menu entry, ~/.local/share/applications/bc250-*.desktop (or one of OTHERS), and
 by default the same file on the Desktop. The portal starts every app, so the Desktop icons are optional: switched off, the portal removes

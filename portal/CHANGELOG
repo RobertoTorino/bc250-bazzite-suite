@@ -1,3 +1,32 @@
+Changelog: 20-10-2026 11:34:30
+
+Added. The Wallpaper pill's menu lists the last 10 wallpapers chosen, newest first and each once, under Used before
+(owner, 20-10-2026): a click uses one again, the current one is ticked, one moved or deleted since is greyed out as
+not found. The portal keeps only where each came from, in wallpapers.json in its state folder
+(bc250_portal/wallpaper.py). Tests: tests/test_window.py.
+
+Changelog: 20-10-2026 11:34:29
+
+Fixed. Clicking an app's icon no longer flashes light purple behind it: the press only nudges the icon. Tests:
+tests/test_window.py.
+
+Changelog: 20-10-2026 10:22:30
+
+Added. The header looks like an app's header with pills (owner, 20-10-2026): the portal's icon as large as the
+tiles' icons (128 px), beside it the name with the version and where the apps install from, then a row of pills:
+Refresh, Icons on Desktop (Yes or No; a click switches, was the App icons on the Desktop check box), Theme switcher
+(the theme's name; a click takes the next theme, was a drop-down box) and Wallpaper. Under the mouse an app's icon
+dims a little instead of getting a border. Wallpaper: a picture of the user's own behind the window, under a veil of
+the theme's colour; it must be PNG, JPEG or WebP, at least 1920 x 1080 and 16:9, else the portal refuses it and says
+why. The portal keeps a copy in its state folder (bc250_portal/wallpaper.py), which --purge removes. Tests:
+tests/test_window.py.
+
+Changelog: 20-10-2026 10:22:29
+
+Fixed. The Install and Uninstall symbols beside each app's icon are their full size again, and the app icons too:
+the theme of 19-10-2026 gave every tool button a face and a padding, which left the symbols about a third of their
+28 px and shrank the 128 px icons. Both buttons are flat again, as before the theme. Tests: tests/test_window.py.
+
 Changelog: 20-10-2026 00:57:20
 
 Release 4.0.0. Pins check-v0.7.0, gpu-v0.2.0, helixsr-v0.6.0, compute-v0.2.0, cores-v0.2.0, oc-v0.2.0, acpi-v0.2.0, overlay-v0.5.0, bios-v0.5.0, ace-v0.5.0, mesh-v0.5.0, vram-v0.5.0, fan-v0.4.0, wdriver-v0.4.0, cec-v0.5.0, sftp-v0.5.0, mtool-v0.2.0, package-v0.8.0, ncgui-v0.5.0, rpcs3-v0.5.0, consoles-v1.4.0, shadps4-v0.5.0, decky-v0.5.0, datstation-v1.2.0, ppsspp-v0.5.0, pcsx2-v0.6.0, vita3k-v0.4.0. major redesign

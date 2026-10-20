@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The main window: Decky Loader itself, its service, Steam's switch for it and the /home/deck link as rows with their
 state and buttons, then the plugins Decky has. The download and the release check run off the GUI thread; the steps
-that need root go through pkexec (privileged.py, loader.py)."""
+that need root go through pkexec (privileged.py, loader.py). The look is the gaming apps' blue (style.py)."""
 
 from __future__ import annotations
 
@@ -19,11 +19,10 @@ from bc250_core import SUITE_MANUAL_URL, steam, window_title
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import xdg_open
 from bc250_core.settings import SettingsStore
-from bc250_core.theme import ACCENT, BLUE, GREY, PURPLE
 from bc250_core.updates import ReleaseInfo, UpdateChecker, latest_release, version_tuple
-from bc250_core.widgets import AppHeader, MetricBox, StatusText, TextDialog, Terminal, accent_button, hint_label
+from bc250_core.widgets import AppHeader, MetricBox, StatusText, TextDialog, Terminal, hint_label
 
-from . import APP_ID, APP_NAME, INFO, LOGO_PATH, __version__, loader, privileged, state
+from . import APP_ID, APP_NAME, INFO, LOGO_PATH, __version__, loader, privileged, state, style
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/decky/"
 GAME_MODE_TIP = "In Game Mode there is no password dialog: do this in Desktop Mode"
@@ -75,17 +74,17 @@ class MainWindow(QMainWindow):
         self.refresh_button.setToolTip("Read the state again")
         self.refresh_button.clicked.connect(self.refresh)
         header.add_action(self.refresh_button)
-        self.decky_box = MetricBox("Decky Loader", PURPLE)
-        self.service_box = MetricBox("Service", BLUE)
-        self.steam_box = MetricBox("Steam switch", GREY)
-        self.plugins_box = MetricBox("Plugins", ACCENT)
+        self.decky_box = MetricBox("Decky Loader", style.BLUE)
+        self.service_box = MetricBox("Service", style.BLUE)
+        self.steam_box = MetricBox("Steam switch", style.BLUE)
+        self.plugins_box = MetricBox("Plugins", style.BLUE)
         for box in (self.decky_box, self.service_box, self.steam_box, self.plugins_box):
             header.add_second(box)
         intro = hint_label(
             "Decky Loader adds plugins to Steam's Game Mode: its menu is in the Quick Access menu (the … button). "
             "The app installs the Decky release it was tried with, runs it as a system service and shows its "
             "plugins; you install and set up plugins in Game Mode. "
-            f"<a href='{MANUAL_URL}'>Manual</a>")
+            + style.link(self, MANUAL_URL, "Manual"))
         intro.setOpenExternalLinks(True)
 
         grid = QGridLayout()
@@ -94,7 +93,7 @@ class MainWindow(QMainWindow):
         grid.setVerticalSpacing(10)
         self.decky_state, self.service_state, self.steam_state, self.deck_state = (self._state_label()
                                                                                   for _ in range(4))
-        self.install_button = accent_button("Install", f"Download Decky Loader {loader.VERSION} from GitHub "
+        self.install_button = style.primary_button("Install", f"Download Decky Loader {loader.VERSION} from GitHub "
                                                        f"(about {loader.SIZE_MB} MB), check it and start it")
         self.install_button.clicked.connect(self.on_install)
         self.remove_button = QPushButton("Remove")
@@ -167,7 +166,9 @@ class MainWindow(QMainWindow):
         version.setStyleSheet("color:palette(placeholder-text);")
         lay.addWidget(version, 0, Qt.AlignmentFlag.AlignRight)
         self.setCentralWidget(central)
-        # The row buttons the size of the widest, in two columns on the right, as in shadPS4 Manager.
+        style.apply(self)
+        # The row buttons the size of the widest, in two columns on the right, as in shadPS4 Manager. Sized
+        # here, in the window, so their size includes the style sheet's padding.
         buttons = [b for _, _, row_buttons in rows for b in row_buttons]
         for button in buttons:
             button.ensurePolished()

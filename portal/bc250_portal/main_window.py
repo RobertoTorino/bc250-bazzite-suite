@@ -12,9 +12,16 @@ version is unknown, so it needs a reinstall). The notice beside check names each
 and a tab's name counts those on it, so none goes unseen on a tab that is not open. At start the portal looks for a
 newer portal release on GitHub (which is how newer app versions arrive).
 
+The header, as an app's header with pills (owner, 20-10-2026): the portal's icon as large as the tiles' icons; beside
+it the name, where the apps install from, and a row of pills, as the apps' status boxes: Refresh, the Desktop icons
+(Yes or No; a click switches), the theme (a click goes to the next one) and the wallpaper.
+
 Desktop icons: the portal's own icon is enough to reach every app, so the apps' icons on the Desktop are the user's
-choice ("App icons on the Desktop", desktop_icons.py). The first start asks when app icons are there; off, the portal
-removes them at start and after each install (the installers write one), on, it adds one for every installed app."""
+choice ("Icons on Desktop", desktop_icons.py). The first start asks when app icons are there; off, the portal
+removes them at start and after each install (the installers write one), on, it adds one for every installed app.
+
+Wallpaper: a picture of the user's own behind the window (wallpaper.py), under a veil of the theme's window colour so
+the text stays readable."""
 
 from __future__ import annotations
 
@@ -27,11 +34,11 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path, PurePath
 
-from PyQt6.QtCore import QCoreApplication, QEvent, QProcess, QSize, QTimer, Qt, QUrl, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, QEvent, QProcess, QRect, QSize, QTimer, Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPalette, QPixmap
 from PyQt6.QtWidgets import (
-    QCheckBox, QComboBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea,
-    QTabWidget, QToolButton, QVBoxLayout, QWidget,
+    QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea,
+    QSizePolicy, QTabWidget, QToolButton, QVBoxLayout, QWidget,
 )
 
 from bc250_core import SUITE_MANUAL_URL, __version__ as CORE_VERSION, upstream
@@ -39,9 +46,9 @@ from bc250_core.platform import bin_home, expand, launch_in_terminal
 from bc250_core.settings import open_settings, restore_geometry, save_geometry
 from bc250_core.theme import ACCENT, BLUE, GREY, ORANGE, RED, THEMES, header_font, muted, save_theme_name, theme_name
 from bc250_core.updates import ReleaseInfo, UpdateChecker, version_tuple
-from bc250_core.widgets import ClickableLogo, hint_label
+from bc250_core.widgets import ClickableLogo, MetricBox, hint_label
 
-from . import desktop_icons, glyphs
+from . import desktop_icons, glyphs, wallpaper
 from . import (APP_ICONS, APP_ID, APP_NAME, INFO, LOGO_PATH, STAGE, STAGE_NOTE, __version__, find_checkout, is_suite,
                remember_checkout)
 from .manifest import CATEGORIES, AppEntry
@@ -49,7 +56,8 @@ from .portal_update import PortalUpdate
 from .sources import Records, SourceError, Sources, is_installed
 
 POLL_MS = 1000
-ICON_PX = 128                   # the app icon on its tile (the icon files are 128 x 128)
+ICON_PX = 128                   # the app icon on its tile (the icon files are 128 x 128), and the portal's in the header
+HOVER_OPACITY = 0.75            # an app icon under the mouse is dimmed this much: no border
 SYMBOL_PX = 28                  # the Install / Uninstall / Reinstall symbols beside it
 DOT_PX = 16                     # the red update dot inside the icon
 BADGE_PX = 24                   # the red circular arrow inside the icon: a reinstall is needed
@@ -57,6 +65,7 @@ TILE_WIDTH = 216                # the tiles flow left to right, as many to a row
 TILE_SPACING = 12
 PAGE_MARGIN = 24                # a tab's margins take this much of its width
 TAB_KEY = "portal/tab"          # the category of the tab used last
+VEIL = 0.6                      # the theme's window colour over the wallpaper, so the text on it stays readable
 DESKTOP_ICONS_KEY = "portal/desktop_icons"
 LAUNCH_ICON_FILES = {("compute", "Unlock"): "cu-unlock", ("cores", "Unlock"): "cores-unlock"}  # else the app's
 # What each tab holds, at its top (docs/apps/categories.md says the same).
@@ -133,6 +142,17 @@ def greyed(pixmap: QPixmap) -> QPixmap:
     return out
 
 
+def dimmed(pixmap: QPixmap, opacity: float = HOVER_OPACITY) -> QPixmap:
+    """The icon under the mouse: a little fainter, so the window's colour shows through."""
+    out = QPixmap(pixmap.size())
+    out.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(out)
+    painter.setOpacity(opacity)
+    painter.drawPixmap(0, 0, pixmap)
+    painter.end()
+    return out
+
+
 def placeholder_icon(name: str) -> QPixmap:
     """For an app without an icon file: its initial on a grey tile."""
     pixmap = QPixmap(ICON_PX, ICON_PX)
@@ -194,19 +214,23 @@ class AppTile(QFrame):
         pixmap = loaded.scaled(ICON_PX, ICON_PX, Qt.AspectRatioMode.KeepAspectRatio,
                                Qt.TransformationMode.SmoothTransformation) if self.has_icon \
             else placeholder_icon(entry.name)
-        self._icons = (still_icon(pixmap), still_icon(greyed(pixmap)))      # installed, not installed
+        # installed, not installed, installed under the mouse
+        self._icons = (still_icon(pixmap), still_icon(greyed(pixmap)), still_icon(dimmed(pixmap)))
+        self.installed = False
         self.icon = QToolButton()
         self.icon.setIconSize(QSize(ICON_PX, ICON_PX))
         self.icon.setFixedSize(ICON_PX + 8, ICON_PX + 8)
         self.icon.setAutoRaise(True)
-        # A thin light purple border around the icon on hover, in the accent's family (palette(midlight) was
-        # near-black on the dark theme; the transparent border keeps the icon still), and a press that shows: a
-        # deeper solid purple and the icon nudged down-right, as a real button sinks.
-        self.icon.setStyleSheet("QToolButton { border:2px solid transparent; border-radius:18px; }"
-                                "QToolButton:hover:enabled { border-color:#D9D1C4E9; }"
-                                "QToolButton:pressed:enabled { background:#FFB39DDB; padding-top:2px;"
+        # The icon alone, at its full size: no face, no padding (the theme gives every tool button both). Under the
+        # mouse it dims a little, no border (owner, 20-10-2026); a press nudges the icon down-right, as a real button
+        # sinks, with no colour behind it (owner, 20-10-2026: no purple flash on a click).
+        self.icon.setStyleSheet("QToolButton { background:transparent; border:2px solid transparent;"
+                                " border-radius:18px; padding:0; }"
+                                "QToolButton:hover { background:transparent; border-color:transparent; }"
+                                "QToolButton:pressed:enabled { background:transparent; padding-top:2px;"
                                 " padding-left:2px; }"
                                 "QToolButton::menu-indicator { image:none; width:0; }")
+        self.icon.installEventFilter(self)
         self.open_button = self.icon                    # clicking the icon opens the app
         if len(entry.launch) > 1:
             menu = QMenu(self.icon)
@@ -265,9 +289,21 @@ class AppTile(QFrame):
         button.setFixedSize(SYMBOL_PX + 12, SYMBOL_PX + 12)
         button.setIconSize(QSize(SYMBOL_PX, SYMBOL_PX))
         button.setAutoRaise(True)
-        button.setStyleSheet(f"QToolButton {{ border:1px solid transparent; border-radius:8px; }}"
+        # No face and no padding: the theme's padding of every tool button left the symbol a third of its size.
+        button.setStyleSheet(f"QToolButton {{ background:transparent; border:1px solid transparent;"
+                             f" border-radius:8px; padding:0; }}"
                              f"QToolButton:hover:enabled {{ border:1px solid {ACCENT}; }}")
         return button
+
+    def eventFilter(self, watched, event) -> bool:
+        """The icon under the mouse dims a little, while it opens the app."""
+        if watched is self.icon and event.type() in (QEvent.Type.Enter, QEvent.Type.Leave):
+            self._show_icon(hovered=event.type() == QEvent.Type.Enter)
+        return super().eventFilter(watched, event)
+
+    def _show_icon(self, hovered: bool = False) -> None:
+        hovered = hovered and self.icon.isEnabled()
+        self.icon.setIcon(self._icons[2 if hovered else 0 if self.installed else 1])
 
     def _ink(self) -> str:
         return self.palette().color(QPalette.ColorRole.ButtonText).name()
@@ -310,9 +346,10 @@ class AppTile(QFrame):
                        "your home folder: it asks for one when you install it.")
         self.busy_label.setText(busy)
         self.busy_label.setVisible(bool(busy))
-        self.icon.setIcon(self._icons[0 if installed else 1])
+        self.installed = installed
         opens = installed and not busy and bool(entry.launch) and not entry.withdrawn
         self.icon.setEnabled(opens)
+        self._show_icon(self.icon.underMouse())
         self.icon.setCursor(Qt.CursorShape.PointingHandCursor if opens else Qt.CursorShape.ArrowCursor)
         how = ("Click to open it." if len(entry.launch) == 1 else
                "Click to open: " + ", ".join(label for label, _ in entry.launch) + "." if entry.launch else
@@ -333,6 +370,87 @@ class AppTile(QFrame):
         self.install_button.setEnabled(not busy and not entry.withdrawn)
         self.uninstall_button.setEnabled(installed and not busy)
         return "update" if update else "reinstall" if reinstall else ""
+
+
+class Pill(MetricBox):
+    """A header pill that is a button, as the apps' status boxes look: the value in large type, what it is under
+    it; the accent edge under the mouse or the keyboard focus. A click, Enter or Space emits clicked."""
+
+    clicked = pyqtSignal()
+
+    def __init__(self, value: str, caption: str, tooltip: str = ""):
+        super().__init__(caption)
+        self.setObjectName("pill")
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)      # never cut off
+        self.set_value(value, tooltip)
+
+    def set_colour(self, colour: str) -> None:
+        super().set_colour(colour)
+        self.setStyleSheet(self.styleSheet() + f"#pill:hover, #pill:focus {{ border-color:{ACCENT}; }}")
+
+    def mouseReleaseEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        if event.button() == Qt.MouseButton.LeftButton and self.rect().contains(event.position().toPoint()):
+            self.clicked.emit()
+        super().mouseReleaseEvent(event)
+
+    def keyPressEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space):
+            self.clicked.emit()
+            return
+        super().keyPressEvent(event)
+
+    def click(self) -> None:
+        self.clicked.emit()
+
+
+class TogglePill(Pill):
+    """A pill that is on or off, Yes or No: a click switches it (as a check box, with its isChecked, setChecked and
+    toggled)."""
+
+    toggled = pyqtSignal(bool)
+
+    def __init__(self, caption: str, tooltip: str = "", checked: bool = False):
+        self.checked = checked
+        super().__init__("Yes" if checked else "No", caption, tooltip)
+        self.clicked.connect(lambda: self.setChecked(not self.checked))
+
+    def isChecked(self) -> bool:  # noqa: N802 (as QCheckBox)
+        return self.checked
+
+    def setChecked(self, checked: bool) -> None:  # noqa: N802 (as QCheckBox)
+        if checked == self.checked:
+            return
+        self.checked = checked
+        self.value.setText("Yes" if checked else "No")
+        self.toggled.emit(checked)
+
+
+class Backdrop(QWidget):
+    """The window's background: the wallpaper, scaled to fill and cropped in the middle, under a veil of the theme's
+    window colour; without one, the window colour."""
+
+    def __init__(self):
+        super().__init__()
+        self.picture = QPixmap()
+
+    def set_picture(self, path: Path | None) -> None:
+        self.picture = QPixmap(str(path)) if path else QPixmap()
+        self.update()
+
+    def paintEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        if self.picture.isNull():
+            return super().paintEvent(event)
+        painter = QPainter(self)
+        scaled = self.picture.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                                     Qt.TransformationMode.SmoothTransformation)
+        x, y = (scaled.width() - self.width()) // 2, (scaled.height() - self.height()) // 2
+        painter.drawPixmap(0, 0, scaled, x, y, self.width(), self.height())
+        veil = QColor(self.palette().color(QPalette.ColorRole.Window))
+        veil.setAlphaF(VEIL)
+        painter.fillRect(QRect(0, 0, self.width(), self.height()), veil)
+        painter.end()
 
 
 class MainWindow(QMainWindow):
@@ -362,7 +480,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(INFO.display_name)
         self.resize(900, 720)
 
-        central = QWidget()
+        central = self.backdrop = Backdrop()
         root = QVBoxLayout(central)
         self.local_banner = QLabel()
         self.local_banner.setWordWrap(True)
@@ -372,62 +490,72 @@ class MainWindow(QMainWindow):
                                       "not from a published release.")
         self.local_banner.setVisible(local_build is not None)
         root.addWidget(self.local_banner)
+        # The header, as an app's (owner, 20-10-2026): the icon as large as the tiles' icons, spanning the name,
+        # where the apps install from and the row of pills.
         header = QHBoxLayout()
+        header.setSpacing(14)
         if LOGO_PATH.is_file():
-            self.logo = ClickableLogo(LOGO_PATH, 56)
+            self.logo = ClickableLogo(LOGO_PATH, ICON_PX)
             self.logo.setToolTip("Open the wiki in the browser")
             self.logo.clicked.connect(self.open_wiki)
             header.addWidget(self.logo)
-            header.addSpacing(14)
+        words = QVBoxLayout()
+        words.setSpacing(4)
+        title_row = QHBoxLayout()
         title = QLabel(f"{APP_NAME}  <span style='color:{muted()}; font-size:16px;'>v{__version__}</span>")
         title.setStyleSheet(header_font() + "font-size:32px; font-weight:800;")
         title.setToolTip(f"{APP_NAME} {__version__} · core {CORE_VERSION}")
-        header.addWidget(title)
+        title_row.addWidget(title)
         self.stage = QLabel(STAGE)
         self.stage.setObjectName("stage")
         self.stage.setStyleSheet(f"background:{ACCENT}; color:white; font-weight:700; font-size:12px; "
                                  "border-radius:6px; padding:2px 8px;")
         self.stage.setToolTip(STAGE_NOTE)
         self.stage.setVisible(bool(STAGE))
-        header.addWidget(self.stage, 0, Qt.AlignmentFlag.AlignVCenter)
-        header.addStretch(1)
+        title_row.addWidget(self.stage, 0, Qt.AlignmentFlag.AlignVCenter)
+        title_row.addStretch(1)
+        words.addLayout(title_row)
+        title_row.addLayout(updates := QHBoxLayout())   # a newer portal: shown only when there is one
+        source = ("Development: apps install from the local checkout " + str(sources.checkout) if sources.local
+                  else "Apps install from the releases this portal version pins, verified by checksum.")
+        self.source_label = hint_label(source)
+        words.addWidget(self.source_label)
         self.portal_button = QPushButton()
         self.portal_button.setStyleSheet(f"color:{RED}; font-weight:700;")
         self.portal_button.clicked.connect(self._open_portal_release)
         self.portal_button.hide()
-        header.addWidget(self.portal_button)
+        updates.addWidget(self.portal_button)
         self.portal_release: ReleaseInfo | None = None
         self.restart_button = QPushButton()
         self.restart_button.setStyleSheet(f"color:{RED}; font-weight:700;")
         self.restart_button.clicked.connect(self.restart_portal)
         self.restart_button.hide()
-        header.addWidget(self.restart_button)
-        self.icons_box = QCheckBox("App icons on the Desktop")
-        self.icons_box.setToolTip("On: every installed app gets an icon on the Desktop. Off: only the portal's icon "
-                                  "is there, and you start the apps from here. The apps stay in the app menu either "
-                                  "way.")
-        self.icons_box.setChecked(self.settings.value(DESKTOP_ICONS_KEY, False, type=bool))
+        updates.addWidget(self.restart_button)
+        words.addStretch(1)
+        pills = QHBoxLayout()
+        pills.setSpacing(8)
+        words.addLayout(pills)
+        header.addLayout(words, 1)
+        self.refresh_pill = Pill("Refresh", "Click to refresh", "Look again at which apps are installed.")
+        self.refresh_pill.clicked.connect(self._on_refresh)
+        self.icons_box = TogglePill(
+            "Icons on Desktop", "On: every installed app gets an icon on the Desktop. Off: only the portal's icon is "
+            "there, and you start the apps from here. The apps stay in the app menu either way. Click to switch.",
+            self.settings.value(DESKTOP_ICONS_KEY, False, type=bool))
         self.icons_box.toggled.connect(self._show_icons)
-        header.addWidget(self.icons_box)
-        self.theme_box = QComboBox()
-        for name, look in THEMES.items():
-            self.theme_box.addItem(look.label, name)
-        self.theme_box.setCurrentIndex(self.theme_box.findData(theme_name()))
-        self.theme_box.setToolTip("The look of every app in the suite. An app takes it the next time it starts.")
-        self.theme_box.currentIndexChanged.connect(self._choose_theme)
-        header.addWidget(self.theme_box)
-        refresh = QPushButton("Refresh")
-        refresh.setToolTip("Look again at which apps are installed.")
-        refresh.clicked.connect(self._on_refresh)
-        header.addWidget(refresh)
-        root.addLayout(header)
-        source = ("Development: apps install from the local checkout " + str(sources.checkout) if sources.local
-                  else "Apps install from the releases this portal version pins, verified by checksum.")
-        self.source_label = hint_label(source)
-        root.addWidget(self.source_label)
+        self.theme_pill = Pill(THEMES[theme_name()].label, "Theme switcher",
+                               "The look of every app in the suite. Click for the next theme; an app takes it the "
+                               "next time it starts.")
+        self.theme_pill.clicked.connect(self._next_theme)
+        self.wallpaper_pill = Pill("None", "Wallpaper")
+        self.wallpaper_pill.clicked.connect(self._wallpaper_menu)
+        for pill in (self.refresh_pill, self.icons_box, self.theme_pill, self.wallpaper_pill):
+            pills.addWidget(pill)
         self.theme_note = hint_label("The theme changes in each app the next time it starts, the portal too.")
         self.theme_note.hide()
-        root.addWidget(self.theme_note)
+        pills.addWidget(self.theme_note, 1)
+        pills.addStretch(1)
+        root.addLayout(header)
 
         self.columns = 0
         self.cards: dict[str, AppTile] = {}
@@ -469,6 +597,7 @@ class MainWindow(QMainWindow):
             page = QScrollArea()
             page.setWidgetResizable(True)
             page.setFrameShape(QFrame.Shape.NoFrame)
+            page.setStyleSheet("QScrollArea, QScrollArea > QWidget > QWidget { background:transparent; }")
             page.setWidget(content)
             page.installEventFilter(self)               # reflow when the page itself gets its new width
             self.pages[category], self.grids[category] = page, grid
@@ -481,6 +610,7 @@ class MainWindow(QMainWindow):
         root.addWidget(self.tabs, 1)
         self.reflow()
         self.setCentralWidget(central)
+        self._show_wallpaper()
 
         self.poll = QTimer(self)
         self.poll.setInterval(POLL_MS)
@@ -720,8 +850,8 @@ class MainWindow(QMainWindow):
         if not self.settings.contains(DESKTOP_ICONS_KEY):
             show = bool(desktop_icons.on_desktop(self.desktop, self.menu)) and QMessageBox.question(
                 self, APP_NAME, "Keep the app icons on the Desktop?\n\nThe portal starts every app, so its own icon "
-                "is enough. The apps stay in the app menu either way, and you can change this any time with \"App "
-                "icons on the Desktop\" at the top of the portal.",
+                "is enough. The apps stay in the app menu either way, and you can change this any time with the "
+                "\"Icons on Desktop\" pill at the top of the portal.",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes) == QMessageBox.StandardButton.Yes
             self.settings.setValue(DESKTOP_ICONS_KEY, show)
@@ -731,9 +861,67 @@ class MainWindow(QMainWindow):
         if not self.icons_box.isChecked():
             desktop_icons.remove(self.desktop, self.menu)
 
-    def _choose_theme(self, index: int) -> None:
-        save_theme_name(self.theme_box.itemData(index))
+    def _next_theme(self) -> None:
+        """The theme pill: the next theme, for every app; each takes it the next time it starts."""
+        names = list(THEMES)
+        name = names[(names.index(theme_name()) + 1) % len(names)]
+        save_theme_name(name)
+        self.theme_pill.set_value(THEMES[name].label, self.theme_pill.toolTip())
         self.theme_note.show()
+
+    def _show_wallpaper(self) -> None:
+        chosen = wallpaper.current()
+        self.backdrop.set_picture(chosen)
+        self.wallpaper_pill.set_value("Custom" if chosen else "None", (
+            "Your own picture behind the portal. " if chosen else "No picture behind the portal. ")
+            + "Click to choose one, one used before, or to remove it. " + wallpaper.RULES)
+
+    def _wallpaper_menu(self) -> None:
+        self.wallpaper_menu().exec(self.wallpaper_pill.mapToGlobal(self.wallpaper_pill.rect().bottomLeft()))
+
+    def wallpaper_menu(self) -> QMenu:
+        """The Wallpaper pill's menu: choose a picture, none, or one of those used before (newest first, under
+        "Used before"): the current one ticked, one no longer where it was greyed out."""
+        menu = QMenu(self)
+        menu.addAction("Choose a picture…", self.choose_wallpaper)
+        menu.addAction("No wallpaper", self.remove_wallpaper).setEnabled(wallpaper.current() is not None)
+        paths = wallpaper.saved()
+        if not paths:
+            return menu
+        menu.addSection("Used before")
+        current = wallpaper.current() is not None
+        for index, path in enumerate(paths):
+            here = path.is_file()
+            action = menu.addAction(path.name if here else f"{path.name} (not found)",
+                                    lambda p=path: self.apply_wallpaper(p))
+            action.setToolTip(str(path) if here else f"{path}: moved or deleted since.")
+            action.setCheckable(True)
+            action.setChecked(current and index == 0)
+            action.setEnabled(here and not action.isChecked())
+        menu.setToolTipsVisible(True)
+        return menu
+
+    def choose_wallpaper(self) -> None:
+        file, _ = QFileDialog.getOpenFileName(self, "Choose a wallpaper", str(Path.home()),
+                                              "Pictures (*.png *.jpg *.jpeg *.webp)")
+        if file:
+            self.apply_wallpaper(Path(file))
+
+    def apply_wallpaper(self, path: Path) -> None:
+        """*path* as the wallpaper, first among the ones used before; a warning when it cannot be."""
+        try:
+            wallpaper.choose(path)
+        except ValueError as exc:
+            QMessageBox.warning(self, APP_NAME, f"This picture cannot be the wallpaper:\n\n{exc}")
+            return
+        except OSError as exc:
+            QMessageBox.warning(self, APP_NAME, f"The wallpaper could not be saved:\n\n{exc}")
+            return
+        self._show_wallpaper()
+
+    def remove_wallpaper(self) -> None:
+        wallpaper.remove()
+        self._show_wallpaper()
 
     def _show_icons(self, show: bool) -> None:
         self.settings.setValue(DESKTOP_ICONS_KEY, show)

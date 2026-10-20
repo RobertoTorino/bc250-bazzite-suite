@@ -62,7 +62,7 @@ class StickView(QWidget):
         painter.drawEllipse(centre, r, r)
         painter.drawEllipse(centre, r * DRIFT, r * DRIFT)
         x, y = (v / 32768 for v in self.position)
-        painter.setBrush(QColor(style.GOLD_BRIGHT))
+        painter.setBrush(QColor(style.MARK))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.drawEllipse(QPointF(centre.x() + x * r, centre.y() + y * r), 6, 6)
 
@@ -86,7 +86,7 @@ class TouchView(QWidget):
         area = QRectF(2, 2, self.width() - 4, self.height() - 4)
         painter.setPen(QPen(self.palette().mid().color(), 1))
         painter.drawRoundedRect(area, 6, 6)
-        painter.setBrush(QColor(style.GOLD_BRIGHT))
+        painter.setBrush(QColor(style.MARK))
         painter.setPen(Qt.PenStyle.NoPen)
         for x, y in self.fingers:
             painter.drawEllipse(QPointF(area.x() + x * area.width(), area.y() + y * area.height()), 7, 7)

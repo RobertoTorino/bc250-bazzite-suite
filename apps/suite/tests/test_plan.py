@@ -310,6 +310,28 @@ def test_window_git_buttons(window, repo, monkeypatch):
     assert not commit.isEnabled() and not push.isEnabled() and "pushed already" in commit.toolTip()
 
 
+def test_window_git_tag_button(window, repo, monkeypatch):
+    """git tag after git push (owner, 20-10-2026): tag-release.sh with step 1's untagged app releases, or on step 2's
+    tab the portal's release; only once HEAD is pushed and something has no tag yet."""
+    ran = []
+    monkeypatch.setattr(window.commands, "run_now", lambda command: ran.append(command) or True)
+    tag = window.tag_button
+    assert window.tags_to_push() == ["beta-v0.1.0"]                  # beta was never tagged
+    assert not tag.isEnabled() and "Push first" in tag.toolTip()     # "work" is not pushed
+    window.portal_page.base_edit.setText("main")
+    window.reload()
+    assert tag.isEnabled() and tag.toolTip().startswith("tools/tag-release.sh beta-v0.1.0\n")
+    tag.click()
+    assert ran[-1] == "tools/tag-release.sh beta-v0.1.0" and window.tabs.currentIndex() == window.commands_tab
+    window.tabs.setCurrentWidget(window.portal_page)
+    portal = window.portal_page.portal_unit
+    assert window.tags_to_push() == ([] if portal.released else [portal.tag])
+    sh(repo, "tag", "beta-v0.1.0")
+    window.tabs.setCurrentWidget(window.apps_page)
+    window.reload()
+    assert window.tags_to_push() == [] and not tag.isEnabled() and "Nothing to tag" in tag.toolTip()
+
+
 def test_window_apply_bumps_the_portal_when_the_push_needs_it(window, repo):
     """The owner's case of 17-10-2026, second time: step 1 only said that the push needs a portal bump, the release
     was committed without it and ci-local failed. Apply now makes that bump itself (the lowest version CI accepts,
@@ -619,17 +641,33 @@ def test_window_warns_about_a_bad_tag(window, repo):
 
 @pytest.mark.skipif(not sys.platform.startswith("linux"), reason="the checks run on the board: Linux only")
 def test_window_check_buttons(window, repo):
-    page = window.portal_page
+    """The board checks are on the Test on this board tab (owner, 20-10-2026), not on the steps."""
+    page = window.run_page
     launched.clear()
     page.local_button.click()
     page.release_button.click()
+    page.withdraw_button.click()
     script = str(repo / rp.CHECK_SCRIPT)
-    assert launched == [f"{script} local", f"{script} release"]
-    assert "published portal-v0.1.0 release" in page.output.toPlainText()
+    assert launched == [f"{script} local", f"{script} release", f"{script} local"]
+    log = page.output.toPlainText()
+    assert "published portal-v0.1.0 release" in log and "App not available" in log
     assert "portal-v0.1.0" in page.release_button.toolTip()
+    assert not hasattr(window.portal_page, "local_button") and not hasattr(window.withdraw_page, "test_button")
 
 
 # --- Run from the checkout ------------------------------------------------------------------------------------------
+
+def test_installer_tests_target(repo):
+    assert rp.installer_tests_target(repo) is None                   # no tools/installer-tests/gui
+    gui = repo / "tools/installer-tests/gui"
+    write(gui / "VERSION", "0.3.0\n")
+    write(gui / "installer_test_gui/__init__.py", 'APP_NAME = "BC-250 Installer Tests"\n')
+    target = rp.installer_tests_target(repo)
+    assert (target.module, target.label, target.folder, target.changes_board) == \
+        ("installer_test_gui", "BC-250 Installer Tests 0.3.0", gui, False)
+    real = rp.installer_tests_target()                              # this checkout's
+    assert real is not None and real.icon is not None and real.icon.is_file()
+
 
 def add_windows(root: Path) -> None:
     """alpha and beta get a window each, beta changes the board, the standalone app keeps its package a level deeper
@@ -1024,7 +1062,7 @@ def test_title_names_the_checkouts_commit_and_date(window, repo, tmp_path):
     assert rp.checkout_stamp(elsewhere) == ""
 
 
-def test_window_withdraws_and_tests(window, repo, monkeypatch):
+def test_window_withdraws(window, repo, monkeypatch):
     page = window.withdraw_page
     assert [page.app_box.itemText(i) for i in range(page.app_box.count())] == ["beta-v0.1.0"]
     assert page.state.text() == "Not withdrawn." and not page.back_button.isEnabled()
@@ -1038,9 +1076,6 @@ def test_window_withdraws_and_tests(window, repo, monkeypatch):
     assert rp.withdrawn_reason(repo, "beta") == "Security: a key in the log."
     assert page.state.text() == "Withdrawn: Security: a key in the log." and page.back_button.isEnabled()
     assert "gh release edit beta-v0.1.0 --prerelease" in page.output.toPlainText()
-    launched.clear()
-    page.test_button.click()
-    assert launched == [f"{repo / rp.CHECK_SCRIPT} local"] and "App not available" in page.output.toPlainText()
     page.back_button.click()
     assert rp.withdrawn_reason(repo, "beta") == "" and page.state.text() == "Not withdrawn."
 

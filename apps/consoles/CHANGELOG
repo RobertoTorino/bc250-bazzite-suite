@@ -1,3 +1,20 @@
+Changelog: 20-10-2026 12:20:23
+
+Release 1.5.0.
+
+Changelog: 20-10-2026 10:31:32
+
+Added. The window is built like the other gaming apps again, the shadPS4 Manager's layout (owner, 20-10-2026): the
+gaming blue #0A55B0 of the app's icon in place of the gold of its former icon (style.py, the shadPS4 Manager's style
+sheet: blue table headers, outlines and step numbers), Settings… as a button at the top right instead of a box
+among the status boxes, and four numbered steps with their buttons on the right, all the same size: 1 Find (the
+address field, Search address and Search network, which replace the white search fields), 2 Register (account ID
+and PIN, Find my account ID… and Register, which was Register the board with a console), 3 Console (Login
+passcode… and Remove) and 4 Game Mode (Add to Game Mode). Below them Consoles on the network and Registered consoles
+side by side as tables (the registered consoles were cards), then one row of buttons with Stream, filled blue, on
+the right; a double click on a registered console streams it. The log says "Messages appear here." while it is
+empty. Every action works as before. Tests: tests/test_main_window.py.
+
 Changelog: 20-10-2026 00:48:10
 
 Release 1.4.0.

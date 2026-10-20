@@ -39,20 +39,24 @@ the **last session** went, and **Console type**: the selected registered console
 (**PS4 Pro · 14.00**; the exact model once a session has run). Hold the mouse over it for more: its state and what runs on it
 (the game's name and title ID) as the last search found them, its Remote Play version and the last stream's
 network test. A PS5 does not report its system software this way, so for a PS5 the box shows the model only.
-**Settings**, the last box, has the app's own settings: **Show personal details** (see [Privacy](#privacy)) and
+The window then has four numbered steps, each with its buttons on the right: **1 Find** the console, **2
+Register** the board with it, **3 Console** (the selected console's login passcode, and removing it) and **4 Game
+Mode**. Below them are two lists, **Consoles on the network** and **Registered consoles**, and under those the
+buttons for the selected console, with **Stream** on the right.
+
+**Settings…**, at the top right, has the app's own settings: **Show personal details** (see [Privacy](#privacy)) and
 **Steam comes to the front on the PS button** (see [When it does not work](#when-it-does-not-work)).
 
-**Consoles on the network:**
+**1 Find:**
 
-- **Search** (the magnifying glass in **Consoles on the network**, or the words themselves): asks every PS4 and
-  PS5 on the network to answer. Each one is listed with its name, model, address, state (**On** or **Rest mode**)
-  and system software (a PS4's, 14.00 for example; a PS5 reports a code instead), and whether the board is
+- **Search network:** asks every PS4 and PS5 on the network to answer. Each one is listed under **Consoles on the
+  network** with its name, model, address, state (**On** or **Rest mode**) and system software (a PS4's, 14.00 for example; a PS5 reports a code instead), and whether the board is
   registered with it.
-- **Search at address** (the address in the field on the right, then its magnifying glass or Enter): asks one
-  address. Use it when the search finds nothing, for example on a network that does not pass broadcasts (some mesh
-  systems, a guest network, a VPN). The app remembers the address.
+- **Search address** (the address in the field, then the button or Enter): asks one address. Use it when the
+  search finds nothing, for example on a network that does not pass broadcasts (some mesh systems, a guest network,
+  a VPN). The app remembers the address.
 
-**Find my account ID…** (next to the account ID):
+**Find my account ID…** (step 2, for the account ID):
 
 1. Press **Open the PlayStation sign-in**: your browser opens the PlayStation sign-in page. Sign in with the PSN
    account you use on the console. (**Copy the link** is for a browser on another device.)
@@ -70,19 +74,19 @@ sends the code in that address to PSN once, reads your account ID and fills it i
 account ID, nothing of the sign-in. The code works for a few minutes and only once: if PSN refuses it, sign in
 again.
 
-**Register the board with a console:**
+**2 Register:**
 
 1. On a PS5, open Settings > System > Remote Play > **Link Device**; on a PS4, Settings > Remote Play Connection
    Settings > **Add Device**. It shows an 8-digit PIN for a few minutes.
 2. In the app, select the console under **Consoles on the network**, enter your account ID and the PIN, and press
-   **Register the board with a console**.
+   **Register**.
 
-The console hands the board its keys, and the console appears under **Select a registered console**, as a card
-with its name, model, address, Remote Play version and whether a login passcode is set. Click a card to select the
-console; the buttons below stay greyed out until one is selected, then act on it. A wrong PIN or a wrong account ID
-is reported in the log at the bottom.
+The console hands the board its keys, and the console appears under **Registered consoles**, with its name, model,
+address, Remote Play version and whether a login passcode is set. Click it to select the console; the buttons of
+steps 3 and 4 and the ones under the lists stay greyed out until one is selected, then act on it. A double click
+on it starts **Stream**. A wrong PIN or a wrong account ID is reported in the log at the bottom.
 
-**The buttons for the selected console:**
+**The buttons for the selected console** (under the lists, and in steps 3 and 4):
 
 - **Wake:** turns the console on from rest mode. It takes about 20 seconds; **Search** then shows it as On.
 - **Test session:** starts a Remote Play session, keeps it for 3 seconds and closes it. When it works, the board's
@@ -142,7 +146,7 @@ is reported in the log at the bottom.
   newest first, and the total. During a stream the app asks the console every 30 seconds what it runs and adds the
   time to that game; time on the home screen is not counted. Streams from the Game Mode shortcut count too; play on
   the console itself does not. **Clear history** forgets it all.
-- **Add to Game Mode:** a Steam shortcut for the selected console, so it can be played from Bazzite's Game Mode
+- **Add to Game Mode** (step 4): a Steam shortcut for the selected console, so it can be played from Bazzite's Game Mode
   like a game: it is in the library under **Non-Steam**, with artwork drawn from the app's icon and the console's
   name and model on it. Starting it wakes the console when it is in rest mode and streams it full screen; **Exit game** in
   Steam's menu ends it. Steam has to close for the change: the app asks, closes it and starts it again. After a
@@ -150,9 +154,9 @@ is reported in the log at the bottom.
   shortcut runs `~/.local/bin/bc250-console-link`). From a terminal, `bc250-console-link --stream <console>` does
   the same: the console's name, host id or address.
 - **Rest mode:** puts the console in rest mode, through a short session.
-- **Login passcode…:** when the PSN account on the console has a 4-digit login passcode, the console asks for it
+- **Login passcode…** (step 3): when the PSN account on the console has a 4-digit login passcode, the console asks for it
   at the start of a session. Enter it here once.
-- **Remove:** forgets the console's keys on the board. When the console has a Game Mode shortcut, the app offers to
+- **Remove** (step 3): forgets the console's keys on the board. When the console has a Game Mode shortcut, the app offers to
   remove it from Steam too (Steam closes for it and starts again; in Game Mode itself, remove it in Desktop Mode
   or in Steam). A PS5 lists the board under Link Device: remove it there
   too to undo the registration completely. A PS4 has no such list. It keeps a history of the connections under

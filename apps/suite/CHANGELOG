@@ -1,3 +1,12 @@
+Changelog: 20-10-2026 10:16:46
+
+Added. Clearer names for a first release (owner, 20-10-2026): the tabs are 1. Release apps, 2. Pin and release
+Portal and 3. Retract app. A git tag button after git push runs tools/tag-release.sh with the tags of the step open:
+on tab 2 the portal's release, on the other tabs step 1's app releases that have no tag yet; it works once HEAD is
+pushed. A new tab, Test on this board, holds the tests of a release: Test app updates, Test Portal release and Test
+withdrawal (which left tabs 2 and 3), Installer tests (opens BC-250 Installer Tests from the checkout) and, under
+Test local apps, the icons of the former Local app test tab. Tests: tests/test_plan.py, tests/test_main_window.py.
+
 Changelog: 19-10-2026 17:58:49
 
 Added. GitHub status in the header, beside the build indicator (owner, 19-10-2026): a green dot while

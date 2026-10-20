@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import json
+
 from dataclasses import replace
 from pathlib import Path, PurePosixPath
 
@@ -106,10 +108,42 @@ def test_the_header_shows_the_suite_stage(window):
     assert window.stage.isVisibleTo(window) == bool(bc250_portal.STAGE)
 
 
-def test_the_tiles_icon_hover_and_press(window):
-    style = window.cards["gpu"].icon.styleSheet()
-    assert "hover:enabled { border-color:#D9D1C4E9; }" in style             # a thin light purple border, visible on dark
+def test_the_tiles_icon_hover_and_press(window, home):
+    """Under the mouse the icon dims a little, with no border (owner, 20-10-2026); pressed, it sinks, with no colour
+    behind it (no purple flash on a click)."""
+    from PyQt6.QtCore import QEvent
+    card = window.cards["gpu"]
+    style = card.icon.styleSheet()
+    assert "QToolButton:hover { background:transparent; border-color:transparent; }" in style
     assert "pressed:enabled" in style and "padding-top:2px" in style        # the icon sinks while pressed
+    assert "QToolButton:pressed:enabled { background:transparent;" in style and "B39DDB" not in style
+    (home / ".local" / "bin" / "bc250-governor-manager").write_text("#!/bin/sh\n")
+    window.refresh()
+    assert card.icon.isEnabled()
+
+    def alpha() -> int:
+        image = card.icon.icon().pixmap(mw.QSize(mw.ICON_PX, mw.ICON_PX)).toImage()
+        return max(image.pixelColor(x, y).alpha() for x in range(0, mw.ICON_PX, 8) for y in range(0, mw.ICON_PX, 8))
+
+    full = alpha()
+    card.eventFilter(card.icon, QEvent(QEvent.Type.Enter))
+    assert alpha() == round(full * mw.HOVER_OPACITY) or abs(alpha() - full * mw.HOVER_OPACITY) <= 1
+    card.eventFilter(card.icon, QEvent(QEvent.Type.Leave))
+    assert alpha() == full
+
+
+def test_icons_and_symbols_keep_their_size(window):
+    """The theme gives every tool button a padding: on the tiles it shrank the 128 px icon and left the Install and
+    Uninstall symbols a third of their size (19-10-2026). Rendered: the symbol fills its SYMBOL_PX."""
+    card = window.cards["gpu"]
+    for button in (card.icon, card.install_button, card.uninstall_button):
+        assert "padding:0;" in button.styleSheet() and "background:transparent;" in button.styleSheet()
+    from bc250_core.theme import stylesheet
+    window.setStyleSheet(stylesheet())                      # the theme's sheet, as create_app() puts it on the app
+    window.show()
+    image = card.install_button.grab().toImage()
+    ink = [x for x in range(image.width()) for y in range(image.height()) if image.pixelColor(x, y).alpha() > 128]
+    assert max(ink) - min(ink) >= mw.SYMBOL_PX * 0.6                          # was about 10 px of a 28 px symbol
 
 
 def test_short_names_drop_the_suite_prefix(window):
@@ -721,11 +755,112 @@ def test_no_restart_from_a_checkout(window):
 
 
 def test_one_theme_for_every_app(window, home):
-    """The theme box shows the chosen theme and keeps a new choice for every app; the portal says when it shows."""
+    """The theme pill shows the chosen theme; a click takes the next one, for every app; the portal says when it
+    shows."""
     from bc250_core import theme
-    assert window.theme_box.currentData() == theme.theme_name() == "gunmetal"
-    assert [window.theme_box.itemText(i) for i in range(window.theme_box.count())] == ["Gunmetal", "Silver", "Warm"]
+    pill = window.theme_pill
+    assert theme.theme_name() == "gunmetal" and pill.value.text() == "Gunmetal"
+    assert pill.caption.text() == "Theme switcher"
     assert window.theme_note.isHidden()
-    window.theme_box.setCurrentIndex(window.theme_box.findData("silver"))
-    assert theme.theme_name() == "silver" and theme.theme_file().is_relative_to(home)
-    assert not window.theme_note.isHidden()
+    seen = []
+    for _ in range(3):
+        pill.click()
+        seen.append((theme.theme_name(), pill.value.text()))
+    assert seen == [("silver", "Silver"), ("warm", "Warm"), ("gunmetal", "Gunmetal")]
+    assert theme.theme_file().is_relative_to(home) and not window.theme_note.isHidden()
+
+
+def test_the_header_is_an_apps_header_with_pills(window):
+    """The portal's icon as large as the tiles' icons; beside it the name, where the apps install from, and the
+    pills: Refresh, the Desktop icons, the theme and the wallpaper (owner, 20-10-2026)."""
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtGui import QKeyEvent
+    from PyQt6.QtCore import QEvent
+    assert window.logo.width() == window.logo.height() == mw.ICON_PX
+    pills = (window.refresh_pill, window.icons_box, window.theme_pill, window.wallpaper_pill)
+    assert [(p.value.text(), p.caption.text()) for p in pills] == [
+        ("Refresh", "Click to refresh"), ("No", "Icons on Desktop"), ("Gunmetal", "Theme switcher"),
+        ("None", "Wallpaper")]
+    refreshed = []
+    window.refresh_pill.clicked.connect(lambda: refreshed.append(1))
+    window.refresh_pill.keyPressEvent(QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Space, Qt.KeyboardModifier.NoModifier))
+    assert refreshed == [1]
+    toggled = []
+    window.icons_box.toggled.connect(toggled.append)
+    window.icons_box.click()
+    assert window.icons_box.isChecked() and window.icons_box.value.text() == "Yes" and toggled == [True]
+    window.icons_box.setChecked(True)                       # no change: no signal
+    assert toggled == [True]
+
+
+def test_the_wallpaper(window, home, tmp_path, monkeypatch):
+    """A picture of at least 1920 x 1080 in 16:9 becomes the wallpaper (a copy in the portal's state folder);
+    another is refused, with the rules (owner, 20-10-2026)."""
+    from PyQt6.QtGui import QColor, QImage
+    from bc250_portal import state_dir, wallpaper
+
+    def picture(name: str, width: int, height: int) -> Path:
+        image = QImage(width, height, QImage.Format.Format_RGB32)
+        image.fill(QColor("#ff0000"))
+        path = tmp_path / name
+        image.save(str(path))
+        return path
+
+    small, square, good = picture("small.png", 1280, 720), picture("square.png", 2000, 2000), \
+        picture("good.jpg", 2560, 1440)
+    assert "smaller than 1920 x 1080" in wallpaper.problem(small)
+    assert "not 16:9" in wallpaper.problem(square)
+    assert wallpaper.problem(picture("odd.png", 1920, 1082)) == ""          # a few pixels off
+    assert "not a PNG" in wallpaper.problem(tmp_path / "notes.txt")
+    warned = []
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: warned.append(a[2]))
+    for chosen in (small, good):
+        monkeypatch.setattr(mw.QFileDialog, "getOpenFileName", lambda *a, c=chosen, **k: (str(c), ""))
+        window.choose_wallpaper()
+    assert len(warned) == 1 and "smaller than" in warned[0] and wallpaper.RULES in warned[0]
+    assert wallpaper.current() == state_dir() / "wallpaper.jpg" and state_dir().is_relative_to(home)
+    assert window.wallpaper_pill.value.text() == "Custom" and not window.backdrop.picture.isNull()
+    good.unlink()                                           # the portal keeps its own copy
+    window.resize(900, 700)
+    window.show()
+    assert QColor(window.backdrop.grab().toImage().pixel(450, 600)).red() > 60      # red under the veil
+    window.remove_wallpaper()
+    assert wallpaper.current() is None and window.wallpaper_pill.value.text() == "None"
+    assert window.backdrop.picture.isNull()
+
+
+def test_the_wallpapers_used_before(window, tmp_path):
+    """The portal remembers where the last 10 wallpapers came from, newest first and each once, and offers them again
+    in the Wallpaper pill's menu (owner, 20-10-2026): the current one ticked, one moved or deleted greyed out."""
+    from PyQt6.QtGui import QColor, QImage
+    from bc250_portal import state_dir, wallpaper
+
+    def picture(n: int) -> Path:
+        image = QImage(1920, 1080, QImage.Format.Format_RGB32)
+        image.fill(QColor(n * 20, 0, 0))
+        path = tmp_path / f"wall{n}.png"
+        image.save(str(path))
+        return path
+
+    def entries() -> list[tuple[str, bool, bool]]:
+        actions = window.wallpaper_menu().actions()
+        used = actions[[a.text() for a in actions].index("Used before") + 1:]
+        return [(a.text(), a.isChecked(), a.isEnabled()) for a in used]
+
+    assert wallpaper.saved() == [] and "Used before" not in [a.text() for a in window.wallpaper_menu().actions()]
+    pictures = [picture(n) for n in range(12)]
+    for path in pictures:
+        window.apply_wallpaper(path)
+    assert wallpaper.saved() == pictures[:1:-1]                                    # the newest 10, newest first
+    assert json.loads((state_dir() / wallpaper.HISTORY).read_text())["saved"][0] == str(pictures[11])
+    window.apply_wallpaper(pictures[5])                                         # again: first, and only once
+    assert wallpaper.saved()[:2] == [pictures[5], pictures[11]] and len(wallpaper.saved()) == 10
+    pictures[11].unlink()
+    shown = entries()
+    assert shown[0] == ("wall5.png", True, False)                               # the current one
+    assert shown[1] == ("wall11.png (not found)", False, False)
+    assert shown[2] == ("wall10.png", False, True) and len(shown) == 10
+    window.wallpaper_menu().actions()[-1].trigger()                             # the oldest, chosen again
+    assert wallpaper.saved()[0] == pictures[2] and wallpaper.current().read_bytes() == pictures[2].read_bytes()
+    window.remove_wallpaper()                                                   # none now: none ticked
+    assert not any(checked for _, checked, _ in entries()) and len(wallpaper.saved()) == 10

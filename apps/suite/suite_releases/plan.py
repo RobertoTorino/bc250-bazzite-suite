@@ -6,11 +6,11 @@ no bc250_core, so it also runs with the system python3.
 
 A release has two steps, because an app's checksum only exists once GitHub has built its release:
 
-1. Apps: the new VERSION, every copy that tools/check_versions.py checks, and a "Release x.y.z." CHANGELOG entry.
+1. Release apps: the new VERSION, every copy that tools/check_versions.py checks, and a "Release x.y.z." CHANGELOG entry.
    The version offered first follows semantic versioning from the CHANGELOG entries since the last tag: one that
    starts with Breaking. asks for a major release, Added. for a minor one, Fixed. for a patch.
    Commit, push, tag <app>-v<x.y.z>, push the tag: release.yml builds the tarball and SHA256SUMS.
-2. Portal: pin each released app in portal/apps.toml (tag and sha256, as tools/pin_app.py), bump portal/VERSION at
+2. Pin and release Portal: pin each released app in portal/apps.toml (tag and sha256, as tools/pin_app.py), bump portal/VERSION at
    least as much as tools/check_manifest.py asks, and a CHANGELOG entry listing the pins. Commit, test on a board
    (check-release.sh local), then push and tag portal-v<x.y.z>, and check the published release
    (check-release.sh release).
@@ -468,10 +468,11 @@ def withdraw_commands(tag: str, reason: str, now: datetime.datetime | None = Non
         f"gh release edit {tag} --prerelease --title {shlex.quote('Withdrawn: ' + tag)} "
         f"--notes {shlex.quote(notes)}",
         "",
-        "# 2. Test it on a BC-250 with the app installed: Test withdrawal (check-release.sh local). The portal must",
-        "#    show the app as \"App not available\" and remove it. Take back undoes the mark after a test.",
+        "# 2. Test it on a BC-250 with the app installed: Test withdrawal, tab Test on this board (check-release.sh",
+        "#    local). The portal must show the app as \"App not available\" and remove it. Take back undoes the",
+        "#    mark after a test.",
         "",
-        "# 3. Then a portal release (2. Pin and portal: Bump portal, at least a minor version): it lists the",
+        "# 3. Then a portal release (2. Pin and release Portal: Bump portal, at least a minor version): it lists the",
         "#    withdrawal in its CHANGELOG entry; commit, push and tag it as usual.",
     ])
 
@@ -590,6 +591,20 @@ def launch_targets(root: Path = SUITE) -> list[Launch]:
             found.append(Launch(app.name, package.name, consts.get("APP_NAME", package.name), package.parent, version,
                                 board.get(app.name, False), icon))
     return found
+
+
+def installer_tests_target(root: Path = SUITE) -> Launch | None:
+    """BC-250 Installer Tests (tools/installer-tests/gui), started from the checkout as its run.sh does. None when the
+    checkout has no such window."""
+    folder = root / "tools" / "installer-tests" / "gui"
+    try:
+        version = (folder / "VERSION").read_text(encoding="utf-8").strip()
+        consts = dict(_CONSTANT.findall((folder / "installer_test_gui" / "__init__.py").read_text(encoding="utf-8")))
+    except OSError:
+        return None
+    icon = folder / "images" / "bc250-installer-test-gui.webp"
+    return Launch("installer-tests", "installer_test_gui", consts.get("APP_NAME", "installer_test_gui"), folder,
+                  version, False, icon if icon.is_file() else None)
 
 
 DOCS_ADDRESS = "127.0.0.1:8765"         # not mkdocs' default 8000, which other dev servers like to take
@@ -849,6 +864,11 @@ def push_command(linux: bool | None = None) -> str:
 def add_command() -> str:
     """The git add button: everything, the exec bits CI checks, and what is staged now."""
     return "git add -A && tools/fix-modes.sh && git status --short"
+
+
+def tag_command(tags: list[str]) -> str:
+    """The git tag button: tag-release.sh, which tags only a pushed HEAD that CI passed, and pushes the tags."""
+    return f"{TAG_SCRIPT} {' '.join(tags)}"
 
 
 def commit_command(message: str, base: str, amend: bool = False, python: str = "python3") -> str:

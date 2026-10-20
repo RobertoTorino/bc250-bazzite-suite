@@ -541,21 +541,30 @@ def test_address_field_searches_on_enter(window, config_dir):
     assert window.ops_fake.calls[-1] == ("find", "192.168.1.21")
 
 
-def test_registered_cards_fit_their_place(qapp, config_dir):
+def test_the_window_looks_like_the_other_gaming_apps(qapp, config_dir):
+    """As the shadPS4 Manager (owner, 20-10-2026): the gaming blue, numbered steps with their buttons the same size,
+    Settings… in the header, both lists as tables with a blue header, Stream the filled main button; a double click
+    on a registered console streams it."""
+    from consoles_link import style
     store = ConsoleStore(config_dir / "bc250-console-link")
     store.put(_registered(PS5))
-    store.put(_registered(PS4, nickname="PS4-728"))
     w = MainWindow(config_dir=config_dir, ops=FakeOps(), run=_now)
     try:
-        table, delegate = w.registered_table, w.registered_table.delegate
-        for width in (900, 600, 380):                                   # wide: every caption; narrow: values
-            table.resize(width, table.height())
-            table.fit_columns()
-            widths = [table.columnWidth(c) for c in range(table.columnCount())]
-            assert sum(widths) == table.viewport().width() or widths[2] == 40
-        table.resize(2000, table.height())
-        table.fit_columns()
-        assert table.columnWidth(1) >= delegate.text_width(table.font(), 1, "PS5")      # room for "Model: PS5"
-        assert table.item(0, 1).text() in ("PS5", "PS4")                               # the items keep the values
+        assert w.styleSheet() == style.STYLESHEET and "#0A55B0" in style.STYLESHEET
+        assert [b.text() for b in w.findChildren(type(w.found_box.value)) if b.property("step")] == ["1", "2", "3", "4"]
+        steps = (w.address_button, w.search_button, w.account_button, w.register_button, w.passcode_button,
+                 w.remove_button, w.game_mode_button)
+        assert len({(b.width(), b.height()) for b in steps}) == 1
+        assert w.settings_button.text() == "Settings…" and w.watch_button.property("primary")
+        assert not w.found_table.horizontalHeader().isHidden() and not w.registered_table.horizontalHeader().isHidden()
+        assert "Select a registered console" in w.console_state.text()
+        w.registered_table.selectRow(0)
+        assert w.console_state.text().startswith("Selected: ")
+        watched = []
+        w.watch = lambda: watched.append(True)
+        w.watch_button.clicked.disconnect()
+        w.watch_button.clicked.connect(w.watch)
+        w.registered_table.doubleClicked.emit(w.registered_table.model().index(0, 0))
+        assert watched == [True]
     finally:
         w.close()

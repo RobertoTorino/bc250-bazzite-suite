@@ -1,22 +1,25 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The window: enter the new versions, and it edits the files of a release (plan.py).
 
-Step 1, Apps: tick the apps to release, enter their versions and notes, Apply. It writes VERSION, the copies
+Step 1, Release apps: tick the apps to release, enter their versions and notes, Apply. It writes VERSION, the copies
 check_versions.py checks and a "Release x.y.z." CHANGELOG entry, runs check_versions.py and check_manifest.py (an
 apps.toml changed since the last portal release needs a portal bump in the same push) and shows the git commands.
-Step 2, Pin and portal: once GitHub has built the app releases, Pin fills in their tag and sha256 in apps.toml;
+Step 2, Pin and release Portal: once GitHub has built the app releases, Pin fills in their tag and sha256 in apps.toml;
 Bump portal writes the portal version (at least what check_manifest.py asks) and its CHANGELOG entry, runs
 check_manifest.py and shows the git commands: the portal release's, or step 1's with the bump in them while step
-1's releases are not tagged yet (an app added to apps.toml needs the bump in the push that adds it). Test app
-updates and Test Portal release run check-release.sh in a terminal: the portal from the checkout before the push, the
-published portal release after it. Under the tabs, git add, git commit and git push are buttons with their checks in
-between: add sets the exec bits (fix-modes.sh), commit runs check_versions.py and check_manifest.py first, push runs
-tools/ci-local.sh first (Linux) and pushes only when CI's jobs pass. Tagging stays a command.
+1's releases are not tagged yet (an app added to apps.toml needs the bump in the push that adds it). Under the tabs,
+git add, git commit, git push and git tag are buttons with their checks in between: add sets the exec bits
+(fix-modes.sh), commit runs check_versions.py and check_manifest.py first, push runs tools/ci-local.sh first (Linux)
+and pushes only when CI's jobs pass, tag runs tag-release.sh (a pushed HEAD that CI passed) with the tags of the step
+open: step 2's portal tag, else step 1's app tags.
 The header shows whether GitHub built the last push (CI, Release, Manual) and notifies when a build it saw
 running passes or fails, and GitHub status: a green dot while githubstatus.com reports GitHub up, red while it
 reports a problem; a click opens that page.
-Local app test: click an app's icon to start it from this checkout, to try it before its release; the Manual icon
-serves the manual from the checkout (mkdocs serve) and opens it in the browser.
+Test on this board: Test app updates and Test withdrawal install the portal from the checkout and start it with the
+apps from their releases, Test Portal release installs the published portal release (check-release.sh, in a
+terminal); Installer tests opens BC-250 Installer Tests. Test local apps: click an app's icon to start it from this
+checkout, to try it before its release; the Manual icon serves the manual from the checkout (mkdocs serve) and opens
+it in the browser.
 The Commands tab is a command line in the checkout (command_line.py), where the git buttons run too; its Commands
 menu offers the ones the last step showed."""
 
@@ -258,16 +261,6 @@ class PortalPage(QWidget):
         self.portal_state = QLabel()             # the portal's own release: not tagged yet, building, built
         self.portal_state.setWordWrap(True)
         self.portal_state.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        self.local_button = QPushButton("Test app updates")
-        self.local_button.setToolTip("Before the push: install the portal from this checkout and start it with the "
-                                     "apps from the pinned GitHub releases (check-release.sh local)")
-        self.local_button.clicked.connect(lambda: self.check("local"))
-        self.release_button = QPushButton("Test Portal release")
-        self.release_button.clicked.connect(lambda: self.check("release"))
-        if not sys.platform.startswith("linux"):
-            for button in (self.local_button, self.release_button):
-                button.setEnabled(False)
-                button.setToolTip("Runs on the board: Linux only")
         self.output = Terminal()                 # the window shows it under the steps, beside the command line
 
         top = QHBoxLayout()
@@ -283,23 +276,19 @@ class PortalPage(QWidget):
         portal_row.addWidget(self.portal_version)
         portal_row.addWidget(self.portal_notes, 1)
         portal_row.addWidget(self.bump_button)
-        check_row = QHBoxLayout()
-        check_row.addWidget(QLabel("Test on this board:"))
-        check_row.addWidget(self.local_button)
-        check_row.addWidget(self.release_button)
-        check_row.addStretch(1)
         lay = QVBoxLayout(self)
         lay.addWidget(hint_label(
             "After step 1 is pushed and tagged, and GitHub has built those releases (the GitHub column says where "
             "each one stands; a desktop notification comes when one is ready to pin):<br>"
             "<b>1.</b> Pin: the new tags and their checksums go into apps.toml.<br>"
             "<b>2.</b> Bump portal: the portal version and a CHANGELOG entry that lists the pinned releases.<br>"
-            "<b>3.</b> Commit, then <b>Test app updates</b> on a BC-250: it installs the portal from the checkout and "
+            "<b>3.</b> Commit, then <b>Test app updates</b> (tab Test on this board) on a BC-250: it installs the portal from the checkout and "
             "starts it with <code>--source release</code>, so the changed apps install from GitHub and must work.<br>"
-            "<b>4.</b> Only then push and tag the portal: the tag is what reaches the users. The commands appear "
-            "below after Bump portal (done before step 1's push, for an added app, they are step 1's commands "
-            "with the bump in them).<br>"
-            "<b>5.</b> Once GitHub's release workflow has built the portal: <b>Test Portal release</b> downloads and installs "
+            "<b>4.</b> Only then push and tag the portal (<b>git push</b>, then <b>git tag</b> at the bottom): the tag "
+            "is what reaches the users. The commands appear in the log after Bump portal (done before step 1's "
+            "push, for an added app, they are step 1's commands with the bump in them).<br>"
+            "<b>5.</b> Once GitHub's release workflow has built the portal: <b>Test Portal release</b> (tab Test on "
+            "this board) downloads and installs "
             "that published release and starts it, so the board runs the official release again."))
         lay.addLayout(top)
         lay.addWidget(self.pins, 1)
@@ -309,7 +298,6 @@ class PortalPage(QWidget):
         lay.addWidget(self.portal_needs)
         lay.addLayout(portal_row)
         lay.addWidget(self.portal_state)
-        lay.addLayout(check_row)
         self.candidates: list[tuple[rp.Unit, QCheckBox]] = []
         self.portal_unit: rp.Unit | None = None
 
@@ -357,10 +345,6 @@ class PortalPage(QWidget):
         self.portal_version.clear()
         self.portal_version.addItems(choices)
         self.portal_version.setToolTip(f"{suggested}: {semver}.\n\n{SEMVER_TIP}")
-        if sys.platform.startswith("linux"):
-            self.release_button.setToolTip(
-                f"After GitHub built portal-v{portal.version}: download it, check it against its SHA256SUMS, install "
-                "it and start it (check-release.sh release)")
         self.show_builds()
 
     def waiting_tags(self) -> list[str]:
@@ -396,18 +380,6 @@ class PortalPage(QWidget):
             color = {"": ORANGE, "running": BLUE, "passed": GREEN, "failed": RED}[state]
         self.portal_state.setText(text)
         self.portal_state.setStyleSheet(f"color:{color}; font-weight:600;")
-
-    def check(self, mode: str) -> None:
-        """Run check-release.sh in a terminal: it installs a portal and keeps it running there."""
-        script = shlex.quote(str(self.release_window.root / rp.CHECK_SCRIPT))
-        try:
-            self.release_window.launch(f"{script} {mode}")
-        except RuntimeError as exc:
-            self.output.set_text(str(exc))
-            return
-        what = ("the portal from this checkout, then starts it with --source release" if mode == "local" else
-                f"the published portal-v{self.release_window.portal_version()} release, then starts it")
-        self.output.set_text(f"A terminal installs {what}. Close the portal there to finish.")
 
     def fetch_tags(self) -> None:
         out = rp.git(self.release_window.root, "fetch", "--tags", "--quiet")
@@ -496,14 +468,6 @@ class WithdrawPage(QWidget):
         self.back_button = QPushButton("Take back")
         self.back_button.setToolTip("Remove the mark again (after a test, or a mistake)")
         self.back_button.clicked.connect(self.take_back)
-        self.test_button = QPushButton("Test withdrawal")
-        self.test_button.setToolTip("On a board with the app installed: install the portal from this checkout and "
-                                    "start it (check-release.sh local); it must show the app as not available and "
-                                    "remove it")
-        self.test_button.clicked.connect(self.test)
-        if not sys.platform.startswith("linux"):
-            self.test_button.setEnabled(False)
-            self.test_button.setToolTip("Runs on the board: Linux only")
         self.output = Terminal()                 # the window shows it under the steps, beside the command line
         row = QHBoxLayout()
         row.addWidget(QLabel("App:"))
@@ -513,12 +477,11 @@ class WithdrawPage(QWidget):
         reason_row.addWidget(self.reason_edit, 1)
         reason_row.addWidget(self.withdraw_button)
         reason_row.addWidget(self.back_button)
-        reason_row.addWidget(self.test_button)
         lay = QVBoxLayout(self)
         lay.addWidget(hint_label(
             "For a release that must not be used any more (privacy, security, any reason):<br>"
             "<b>1.</b> Retract: apps.toml marks the pinned release withdrawn, with the reason the boards show.<br>"
-            "<b>2.</b> Test withdrawal on a BC-250 that has the app installed: the portal from this checkout shows "
+            "<b>2.</b> <b>Test withdrawal</b> (tab Test on this board) on a BC-250 that has the app installed: the portal from this checkout shows "
             "it as \"App not available\" and removes it. Take back undoes the mark.<br>"
             "<b>3.</b> Mark the release on GitHub with the command shown (it stays, as a pre-release, so no update "
             "check offers it), then release the portal in step 2: it removes the app from the boards."))
@@ -577,17 +540,6 @@ class WithdrawPage(QWidget):
                              f"{unit.pinned_tag} --prerelease=false --title {unit.pinned_tag}")
         self.release_window.reload()
 
-    def test(self) -> None:
-        script = shlex.quote(str(self.release_window.root / rp.CHECK_SCRIPT))
-        try:
-            self.release_window.launch(f"{script} local")
-        except RuntimeError as exc:
-            self.output.set_text(str(exc))
-            return
-        self.output.set_text("A terminal installs the portal from this checkout and starts it. With the app "
-                             "installed, the portal says it is not available any more and removes it; its tile then "
-                             "shows \"App not available\". Close the portal there to finish.")
-
 
 def start_app(command: list[str], env: dict[str, str], cwd: Path, log: Path) -> subprocess.Popen:
     """Starts an app in its own session, so it keeps running when this window closes; its output goes to *log*."""
@@ -619,11 +571,31 @@ def log_tail(log: Path, lines: int = 20) -> str:
 
 
 class RunPage(QWidget):
-    """Every app window in the checkout as an icon: a click starts it from the checkout, as it is before a release."""
+    """Test on this board: the board checks of a release (check-release.sh in a terminal), the installer tests, and
+    every app window in the checkout as an icon: a click starts it from the checkout, as it is before a release."""
 
     def __init__(self, window: "ReleaseWindow"):
         super().__init__()
         self.release_window = window
+        self.local_button = QPushButton("Test app updates")
+        self.local_button.setToolTip("Before the push: install the portal from this checkout and start it with the "
+                                     "apps from the pinned GitHub releases (check-release.sh local)")
+        self.local_button.clicked.connect(lambda: self.check("local"))
+        self.release_button = QPushButton("Test Portal release")
+        self.release_button.clicked.connect(lambda: self.check("release"))
+        self.withdraw_button = QPushButton("Test withdrawal")
+        self.withdraw_button.setToolTip("On a board with the app installed: install the portal from this checkout "
+                                        "and start it (check-release.sh local); it must show the app as not available "
+                                        "and remove it")
+        self.withdraw_button.clicked.connect(lambda: self.check("withdrawal"))
+        self.installer_button = QPushButton("Installer tests")
+        self.installer_button.setToolTip("Open BC-250 Installer Tests from this checkout: every installer test, one "
+                                         "at a time, with its output live")
+        self.installer_button.clicked.connect(self.installer_tests)
+        if not sys.platform.startswith("linux"):
+            for button in (self.local_button, self.release_button, self.withdraw_button, self.installer_button):
+                button.setEnabled(False)
+                button.setToolTip("Runs on the board: Linux only")
         self.apps = QListWidget()
         self.apps.setViewMode(QListView.ViewMode.IconMode)
         self.apps.setIconSize(QSize(64, 64))
@@ -633,7 +605,22 @@ class RunPage(QWidget):
         self.apps.setWordWrap(True)
         self.apps.itemClicked.connect(lambda item: self.run(item.data(Qt.ItemDataRole.UserRole)))
         self.output = Terminal()                 # the window shows it under the steps, beside the command line
+        checks = QHBoxLayout()
+        for button in (self.local_button, self.release_button, self.withdraw_button, self.installer_button):
+            checks.addWidget(button)
+        checks.addStretch(1)
+        local = QLabel("Test local apps")
+        local.setStyleSheet("font-weight:700;")
         lay = QVBoxLayout(self)
+        lay.addWidget(hint_label(
+            "The tests of a release, on a BC-250. <b>Test app updates</b> (step 2, before the portal's push): the "
+            "portal from this checkout, with the apps from their GitHub releases. <b>Test Portal release</b> (after "
+            "GitHub built the portal): the published portal release. <b>Test withdrawal</b> (step 3): the portal from "
+            "this checkout on a board with the withdrawn app installed. Each runs in a terminal; close the portal "
+            "there to finish. <b>Installer tests</b> opens BC-250 Installer Tests."))
+        lay.addLayout(checks)
+        lay.addSpacing(8)
+        lay.addWidget(local)
         lay.addWidget(hint_label(
             "Click an app to start it from this checkout, to try it before its release: <code>python -m</code> with "
             "this venv and the checkout's core, as <code>run.sh</code> starts this app. An app that changes how the "
@@ -648,6 +635,10 @@ class RunPage(QWidget):
         self.timer.timeout.connect(self.poll)
 
     def fill(self, targets: list[rp.Launch]) -> None:
+        if sys.platform.startswith("linux"):
+            self.release_button.setToolTip(
+                f"After GitHub built portal-v{self.release_window.portal_version()}: download it, check it against "
+                "its SHA256SUMS, install it and start it (check-release.sh release)")
         self.apps.clear()
         for target in targets:
             item = QListWidgetItem(QIcon(str(target.icon)) if target.icon else QIcon(),
@@ -656,6 +647,31 @@ class RunPage(QWidget):
             item.setToolTip(" ".join(("python -m", target.module, *target.args)) + f" in {target.folder}" +
                             (f"\nopens {target.url}" if target.url else ""))
             self.apps.addItem(item)
+
+    def check(self, test: str) -> None:
+        """Run check-release.sh in a terminal: it installs a portal and keeps it running there."""
+        script = shlex.quote(str(self.release_window.root / rp.CHECK_SCRIPT))
+        mode = "release" if test == "release" else "local"
+        try:
+            self.release_window.launch(f"{script} {mode}")
+        except RuntimeError as exc:
+            self.output.appendPlainText(str(exc))
+            return
+        self.output.appendPlainText({
+            "local": "A terminal installs the portal from this checkout, then starts it with --source release. "
+                     "Close the portal there to finish.",
+            "release": f"A terminal installs the published portal-v{self.release_window.portal_version()} release, "
+                       "then starts it. Close the portal there to finish.",
+            "withdrawal": "A terminal installs the portal from this checkout and starts it. With the app installed, "
+                          "the portal says it is not available any more and removes it; its tile then shows \"App not "
+                          "available\". Close the portal there to finish."}[test])
+
+    def installer_tests(self) -> None:
+        target = rp.installer_tests_target(self.release_window.root)
+        if target is None:
+            self.output.appendPlainText("This checkout has no tools/installer-tests/gui.")
+            return
+        self.run(target)
 
     def run(self, target: rp.Launch) -> None:
         if target.changes_board and QMessageBox.question(
@@ -947,6 +963,7 @@ class ReleaseWindow(QMainWindow):
         self.sha256_source = sha256_source
         self.launch = launch
         self.start = start
+        self.units: list[rp.Unit] = []
         self.setWindowTitle(APP_NAME)
         self.resize(1100, 760)
         self.setStyleSheet(SELECTION_STYLESHEET)
@@ -968,12 +985,12 @@ class ReleaseWindow(QMainWindow):
         self.tabs = QTabWidget()
         self.apps_page = AppsPage(self)
         self.portal_page = PortalPage(self)
-        self.tabs.addTab(self.apps_page, "1. Apps")
-        self.tabs.addTab(self.portal_page, "2. Pin and portal")
+        self.tabs.addTab(self.apps_page, "1. Release apps")
+        self.tabs.addTab(self.portal_page, "2. Pin and release Portal")
         self.withdraw_page = WithdrawPage(self)
-        self.tabs.addTab(self.withdraw_page, "3. Retract")
+        self.tabs.addTab(self.withdraw_page, "3. Retract app")
         self.run_page = RunPage(self)
-        self.tabs.addTab(self.run_page, "Local app test")
+        self.tabs.addTab(self.run_page, "Test on this board")
         # Opening step 2 reads the tags again, so tags pushed from a terminal meanwhile show up; step 1 keeps what
         # was typed in it.
         self.tabs.currentChanged.connect(lambda i: i == 1 and self.portal_page.fill(rp.load_units(self.root)))
@@ -988,11 +1005,11 @@ class ReleaseWindow(QMainWindow):
         self.log_tab = self.tabs.addTab(self.outputs, "Logs")
         self.commands_tab = self.tabs.addTab(self.commands, "Commands")
         self.tabs.setTabToolTip(self.log_tab, "The log of the step last open: what Apply, Pin, Bump portal, Retract "
-                                              "or an app started from the checkout wrote")
+                                              "or a test on this board wrote")
         self.tabs.setTabToolTip(self.commands_tab, "The command line: runs a command in the checkout and shows its "
                                                    "output; Commands offers what the last step showed")
         self.tabs.currentChanged.connect(self._tab_changed)
-        for page in self.step_pages[:3]:                 # not Local app test: its lines come while you click
+        for page in self.step_pages[:3]:                 # not Test on this board: its lines come while you click
             page.output.textChanged.connect(lambda page=page: self._show_log(page))
         central = QWidget()
         lay = QVBoxLayout(central)
@@ -1013,8 +1030,8 @@ class ReleaseWindow(QMainWindow):
         self.github_status.check()
 
     def _git_row(self) -> QHBoxLayout:
-        """git add, git commit and git push as buttons, each with its checks (owner, 19-10-2026: no commands to
-        type or copy). They run in the command line, whose output opens; tagging stays a command."""
+        """git add, git commit, git push and git tag as buttons, each with its checks (owner, 19-10-2026: no commands
+        to type or copy; git tag, owner, 20-10-2026). They run in the command line, whose output opens."""
         self.add_button = QPushButton("git add")
         self.add_button.setToolTip(f"{rp.add_command()}\n\nStages every change and new file, sets the exec bits CI "
                                    "checks and lists what is staged")
@@ -1030,6 +1047,8 @@ class ReleaseWindow(QMainWindow):
         self.commit_button.clicked.connect(self.commit)
         self.push_button = QPushButton("git push")
         self.push_button.clicked.connect(lambda: self.run_git(rp.push_command()))
+        self.tag_button = QPushButton("git tag")
+        self.tag_button.clicked.connect(lambda: self.run_git(rp.tag_command(self.tags_to_push())))
         self.git_state = (False, False, 0)
         self.committing = False                 # the commit button's command runs: its message goes when it passes
         row = QHBoxLayout()
@@ -1038,7 +1057,16 @@ class ReleaseWindow(QMainWindow):
         row.addWidget(self.amend_box)
         row.addWidget(self.commit_button)
         row.addWidget(self.push_button)
+        row.addWidget(self.tag_button)
         return row
+
+    def tags_to_push(self) -> list[str]:
+        """What git tag tags: the portal's release on step 2's tab (once its VERSION has no tag), else step 1's app
+        releases that have none yet."""
+        if self.tabs.currentWidget() is self.portal_page:
+            portal = self.portal_page.portal_unit
+            return [portal.tag] if portal is not None and not portal.released else []
+        return rp.untagged_releases(self.units)
 
     def offer(self, commands: str) -> None:
         """A step showed the commands to run next: the Commands menu lists them, and their commit's message (or
@@ -1084,11 +1112,20 @@ class ReleaseWindow(QMainWindow):
             f"{ahead} commit{'s' if ahead != 1 else ''} to push. " +
             ("Runs CI's jobs here first (tools/ci-local.sh) and pushes only when they pass." if linux else
              "CI's jobs run on GitHub.")))
+        tags = self.tags_to_push()
+        what = "the portal" if self.tabs.currentWidget() is self.portal_page else "step 1's apps"
+        why = f"Nothing to tag: every release of {what} has its tag." if not tags else \
+            "Push first: a tag goes only on a pushed commit." if ahead else ""
+        self.tag_button.setEnabled(idle and not why)
+        self.tag_button.setToolTip((rp.tag_command(tags) if tags else rp.TAG_SCRIPT) + "\n\n" + (
+            why or "Tags the releases and pushes the tags once CI passed on HEAD on GitHub (it waits while CI runs); "
+                   "GitHub then builds the releases"))
 
     def _tab_changed(self, index: int) -> None:
         """A step opened: Logs shows that step's log from now on (a log tab opened leaves it as it is)."""
         if index < len(self.step_pages):
             self.outputs.setCurrentIndex(index)
+        self._show_git_state()                  # git tag tags what the open step releases
 
     def _show_log(self, page: QWidget) -> None:
         """The open step wrote its log: show it in Logs, the whole window wide."""
@@ -1123,7 +1160,7 @@ class ReleaseWindow(QMainWindow):
         self.github_status.check()
 
     def reload(self) -> None:
-        units = rp.load_units(self.root)
+        units = self.units = rp.load_units(self.root)
         self.apps_page.fill(units)
         self.portal_page.fill(units)
         self.withdraw_page.fill(units)

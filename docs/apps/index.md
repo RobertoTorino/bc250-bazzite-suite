@@ -58,7 +58,7 @@ other app is optional. They are listed by category, as the portal's tabs list th
 | ![](../assets/apps/package.webp){ .app-icon } [Dependency Checker](package.md) | The suite's Python packages and external tools, which apps use them, and whether newer ones exist; and whether a Bazzite update waits for a reboot. |
 | ![](../assets/apps/ncgui.webp){ .app-icon } [Bazzite NetcatGUI](ncgui.md) | A graphical netcat: connect to a host or listen on a port, TCP, UDP or TLS, one session per tab. |
 | ![](../assets/apps/suite.webp){ .app-icon } [BC250 Suite Releases](../portal.md#the-release-front-end) | The release front end: versions, pins and the board checks of a release. Runs from a checkout of this repository. |
-| ![](../assets/apps/installer-tests.webp){ .app-icon } BC-250 Installer Tests | Run the suite's installer tests one at a time, with their output live in the window. Runs from a checkout of this repository. |
+| ![](../assets/apps/installer-tests.webp){ .app-icon } [BC-250 Installer Tests](../development/architecture.md#tests) | Run the suite's installer tests one at a time, with their output live in the window. Runs from a checkout of this repository. |
 
 Apps that **change the board** (unlocks, the GPU governor, GPU overclocking, the ACPI override, the VRAM split,
 a patched GPU driver) change how the BC-250 runs. They are software-only and can be undone; the portal asks before it installs or opens them. Read an

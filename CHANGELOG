@@ -1,3 +1,10 @@
+Changelog: 20-10-2026 10:33:10
+
+Wiki: in The apps and App categories, BC-250 Installer Tests is a link like the other apps (to Tests in Architecture
+and consistency), so it is purple, not white; a link followed by 's (the portal's tabs, BC-250 Bazzite Test's test
+53) takes the 's inside the link, so the whole word is purple. The portal's header with pills, its wallpaper, the
+release front end's new names and Test on this board tab, and Console Link's new layout are in their chapters.
+
 Changelog: 19-10-2026 23:41:01
 
 The suite has a theme, one choice for every app: gunmetal (dark, cool blue-grey, the default), silver (light) or

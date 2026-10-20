@@ -1,3 +1,15 @@
+Changelog: 20-10-2026 12:20:24
+
+Release 0.5.1.
+
+Changelog: 20-10-2026 11:34:30
+
+Fixed. The app takes the gaming apps' look, as the shadPS4 Manager (owner, 20-10-2026): the four boxes in the header
+each had another colour as their left edge (purple, blue, none, the theme's accent) and now all have the blue one,
+the buttons take the blue outline and the blue hover in place of the suite's purple, Install is filled blue and the
+Manual link is blue. The style is decky_manager/style.py, a copy of the shadPS4 Manager's. Tests:
+tests/test_main_window.py.
+
 Changelog: 20-10-2026 00:48:10
 
 Release 0.5.0.

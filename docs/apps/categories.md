@@ -16,7 +16,7 @@ a utility, or a tool for working on the suite.
   category and gets its icon; a new icon for a category reaches every app in it. How that works is in
   [Architecture and consistency](../development/architecture.md#icons).
 
-The categories are also the [portal](../portal.md)'s tabs: an app's tile is on the tab of its category.
+The categories are also the [portal's](../portal.md) tabs: an app's tile is on the tab of its category.
 
 ## Legend
 
@@ -62,4 +62,4 @@ Every app with its icon and its category.
 | ![](../assets/apps/package.webp){ .app-icon } [Dependency Checker](package.md) | Development |
 | ![](../assets/apps/ncgui.webp){ .app-icon } [Bazzite NetcatGUI](ncgui.md) | Development |
 | ![](../assets/apps/suite.webp){ .app-icon } [BC250 Suite Releases](../portal.md#the-release-front-end) | Development |
-| ![](../assets/apps/installer-tests.webp){ .app-icon } BC-250 Installer Tests | Development |
+| ![](../assets/apps/installer-tests.webp){ .app-icon } [BC-250 Installer Tests](../development/architecture.md#tests) | Development |
