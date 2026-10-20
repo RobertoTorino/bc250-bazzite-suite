@@ -78,6 +78,11 @@ DLSS_DLL = "nvngx_dlss.dll"
 REQUIRED_DISK_MB = 1500
 TIMEOUT = 15
 CHUNK = 1 << 18
+# A server that is busy for a moment (GitHub's raw files answer 502 now and then): the download tries this often in
+# all, RETRY_PAUSE seconds apart, before it says the server is not available.
+DOWNLOAD_TRIES = 5
+RETRY_CODES = (502, 503, 504)
+RETRY_PAUSE = 3
 _VERSION_RE = re.compile(r"(\d+)\.(\d+)\.(\d+)")
 _USER_AGENT = f"{APP_ID}/{__version__}"
 
@@ -230,6 +235,37 @@ def download(url: str, dest: Path, sha256: str = "", progress: Progress | None =
     dest.parent.mkdir(parents=True, exist_ok=True)
     part = dest.with_name(dest.name + ".part")
     request = urllib.request.Request(url, headers={"User-Agent": _USER_AGENT})
+    for attempt in range(1, DOWNLOAD_TRIES + 1):
+        try:
+            digest = _download_once(request, part, name, progress, cancelled)
+            break
+        except urllib.error.HTTPError as exc:
+            part.unlink(missing_ok=True)
+            if exc.code not in RETRY_CODES:
+                raise HelixError("{0}: server answered {1} for {2}".format(name, exc.code, url)) from exc
+            if attempt == DOWNLOAD_TRIES:
+                raise HelixError("{0}: Server currently not available. Try again later.".format(name)) from exc
+        _pause(RETRY_PAUSE, cancelled)
+    if sha256 and digest.hexdigest() != sha256.lower():
+        part.unlink(missing_ok=True)
+        raise HelixError(("{0}: checksum mismatch, the download is not the file HelixSR expects. "
+                          "Nothing was kept.").format(name))
+    part.replace(dest)
+    return dest
+
+
+def _pause(seconds: float, cancelled: Cancelled | None) -> None:
+    """Wait *seconds* before the next try, in short steps so a cancel is not kept waiting."""
+    end = time.monotonic() + seconds
+    while time.monotonic() < end:
+        if cancelled and cancelled():
+            raise Aborted("cancelled")
+        time.sleep(min(0.2, max(0.0, end - time.monotonic())))
+
+
+def _download_once(request: urllib.request.Request, part: Path, name: str, progress: Progress | None,
+                   cancelled: Cancelled | None):
+    """One try at fetching *request* to *part*; returns its SHA-256 object. HTTP errors are the caller's."""
     digest = hashlib.sha256()
     done = 0
     try:
@@ -251,18 +287,12 @@ def download(url: str, dest: Path, sha256: str = "", progress: Progress | None =
     except Aborted:
         part.unlink(missing_ok=True)
         raise
-    except urllib.error.HTTPError as exc:
-        part.unlink(missing_ok=True)
-        raise HelixError("{0}: server answered {1} for {2}".format(name, exc.code, url)) from exc
+    except urllib.error.HTTPError:
+        raise
     except (urllib.error.URLError, OSError) as exc:
         part.unlink(missing_ok=True)
         raise HelixError("{0}: download failed ({1})".format(name, getattr(exc, "reason", exc))) from exc
-    if sha256 and digest.hexdigest() != sha256.lower():
-        part.unlink(missing_ok=True)
-        raise HelixError(("{0}: checksum mismatch, the download is not the file HelixSR expects. "
-                          "Nothing was kept.").format(name))
-    part.replace(dest)
-    return dest
+    return digest
 
 
 # ------------------------------------------------------------------------------------ pinned sources

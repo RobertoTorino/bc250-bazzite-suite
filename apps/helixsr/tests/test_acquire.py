@@ -10,6 +10,7 @@ import os
 import subprocess
 import sys
 import tarfile
+import urllib.error
 import zipfile
 from dataclasses import replace
 from pathlib import Path
@@ -132,6 +133,64 @@ def test_download_verifies_checksum(tmp_path):
         download((tmp_path / "missing").as_uri(), tmp_path / "x.bin")
     with pytest.raises(acquire.Aborted):
         download(src.as_uri(), tmp_path / "c.bin", cancelled=lambda: True)
+
+
+
+def http_error(code):
+    return urllib.error.HTTPError("https://h/f.bin", code, "error", {}, None)
+
+
+def test_download_retries_a_busy_server(tmp_path, monkeypatch):
+    monkeypatch.setattr(acquire, "RETRY_PAUSE", 0)
+    src = tmp_path / "src.bin"
+    src.write_bytes(b"y" * 10)
+    real = acquire.urllib.request.urlopen
+    answers = [http_error(502), http_error(503)]
+
+    def urlopen(request, timeout):
+        if answers:
+            raise answers.pop(0)
+        return real(src.as_uri(), timeout=timeout)
+    with mock.patch.object(acquire.urllib.request, "urlopen", urlopen):
+        out = download("https://h/f.bin", tmp_path / "ok.bin", sha(b"y" * 10))
+    assert out.read_bytes() == b"y" * 10 and not answers
+
+
+def test_download_gives_up_after_five_tries(tmp_path, monkeypatch):
+    monkeypatch.setattr(acquire, "RETRY_PAUSE", 0)
+    calls = []
+
+    def busy(request, timeout):
+        calls.append(request)
+        raise http_error(502)
+    with mock.patch.object(acquire.urllib.request, "urlopen", busy):
+        with pytest.raises(backend.HelixError, match=r"^NVIDIA DLSS DLL: Server currently not available\. "
+                                                     r"Try again later\.$"):
+            download("https://h/f.bin", tmp_path / "f.bin", name="NVIDIA DLSS DLL")
+    assert len(calls) == 5 and not (tmp_path / "f.bin.part").exists()
+
+    calls.clear()
+
+    def missing(request, timeout):
+        calls.append(request)
+        raise http_error(404)
+    with mock.patch.object(acquire.urllib.request, "urlopen", missing):
+        with pytest.raises(backend.HelixError, match="server answered 404"):
+            download("https://h/f.bin", tmp_path / "f.bin")
+    assert len(calls) == 1
+
+
+def test_download_cancel_during_the_pause(tmp_path, monkeypatch):
+    monkeypatch.setattr(acquire, "RETRY_PAUSE", 60)
+    tries = []
+
+    def busy(request, timeout):
+        tries.append(request)
+        raise http_error(504)
+    with mock.patch.object(acquire.urllib.request, "urlopen", busy):
+        with pytest.raises(acquire.Aborted):
+            download("https://h/f.bin", tmp_path / "f.bin", cancelled=lambda: bool(tries))
+    assert len(tries) == 1
 
 
 def test_parse_pins_and_extract(tmp_path):

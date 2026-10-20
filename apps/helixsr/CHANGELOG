@@ -1,3 +1,13 @@
+Changelog: 21-10-2026 00:17:47
+
+Release 0.7.1.
+
+Changelog: 20-10-2026 23:54:32
+
+Fixed. A download the server answers with 502, 503 or 504 (GitHub's raw files are busy now and then, as for NVIDIA's
+DLSS DLL) is tried again, 3 seconds apart, five times in all; then the setup says "Server currently not available.
+Try again later." Cancel works during the pause. Other answers fail at once, as before.
+
 Changelog: 20-10-2026 21:58:19
 
 Release 0.7.0.
