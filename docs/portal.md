@@ -6,13 +6,13 @@
 
 The BC250 Bazzite Suite's front door: one window that installs, opens, updates and removes the suite's apps.
 **The header**: the portal's icon (click it to open this wiki), its name and version, where the apps install from,
-and four pills: **Refresh** (look again at which apps are installed), **Icons on Desktop**, **Theme switcher** and
-**Wallpaper**, each described below.
+and four pills of the same width: **Refresh** (look again at which apps are installed), **Icons on Desktop**,
+**Theme switcher** and **Wallpaper**, each described below.
 
-**Bazzite Test** is always installed with the portal; every other app is optional. Bazzite Test and the notice of
-updates are at the top, on every tab. Below them is a tab for each [category](apps/categories.md): Sustainable,
-Graphics, Gaming, Utilities and Development. Each app is a tile on its category's tab, left to right in the order of
-`apps.toml` and as many to a row as the window fits:
+**Bazzite Test** is always installed with the portal; every other app is optional. The notice of updates is at the
+top, on every tab. Below it is a tab for each [category](apps/categories.md): Sustainable, Graphics, Gaming, Utilities
+and Development. Each app is a tile on its category's tab, left to right in the order of `apps.toml` and as many to a
+row as the window fits; Bazzite Test is always the first tile on Sustainable:
 
 - **The name**, without the suite's "BC-250" prefix.
 - **The icon.** Click it to open the app; an app with two windows (CU Bisect, Cores Bisect) asks which one. The
@@ -87,8 +87,9 @@ checkout uses its own checkout.
   suite. **Gunmetal** (dark, cool blue-grey, the default), **Silver** (light) or **Warm** (dark warm grey with a
   bronze accent). It is one choice for all the apps, kept in `~/.config/bc250-bazzite-suite/theme`; each app takes
   it the next time it starts, the portal too.
-- **Wallpaper**, a pill at the top: your own picture behind the portal. Click it, then **Choose a picture…**; **No
-  wallpaper** removes it. The picture must be a PNG, JPEG or WebP of at least 1920 x 1080 pixels, in 16:9 (1920 x
+- **Wallpaper**, a pill at the top: a picture behind the portal, none until you choose one. Click the pill, then
+  **Choose a picture…** for your own (**Custom**), **Example wallpaper** to see how one looks with the picture that
+  comes with the portal (**Example**), or **No wallpaper** for none. Your picture must be a PNG, JPEG or WebP of at least 1920 x 1080 pixels, in 16:9 (1920 x
   1080, 2560 x 1440, 3840 x 2160); the portal refuses another and says why. It fills the window, under a veil of the
   theme's colour so the text stays readable. The portal keeps a copy in
   `~/.local/share/bc250-bazzite-suite/portal/`, so the original may be moved or deleted; the portal's `--purge`

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Reusable widgets: status pills, metric boxes, the logo, terminal, text dialogs and the rounded tooltip.
+"""Reusable widgets: status pills, metric boxes, header pills, the logo, terminal, text dialogs and the rounded tooltip.
 
 Merged from bc250-governor-manager and bc250-bazzite-helixsr-gui: the tooltip is helixsr's (Wayland-safe parent),
 set_button_active() is governor's, show_tooltip()/hide_tooltip() are bazzite-test's."""
@@ -13,7 +13,7 @@ from PyQt6.QtCore import QEvent, QObject, QPoint, QRect, Qt, pyqtSignal
 from PyQt6.QtGui import QFontDatabase, QMouseEvent, QPixmap
 from PyQt6.QtWidgets import (
     QAbstractItemView, QApplication, QDialog, QDialogButtonBox, QFrame, QHBoxLayout, QHeaderView, QLabel,
-    QPlainTextEdit, QPushButton, QToolTip, QVBoxLayout, QWidget,
+    QPlainTextEdit, QPushButton, QSizePolicy, QToolTip, QVBoxLayout, QWidget,
 )
 
 from .text import plain_tooltip, window_title
@@ -72,10 +72,13 @@ class MetricBox(QFrame):
     """One box of a header row: a big value with a caption, centred like the stats boxes of bc250-bazzite-test
     (centred=False: left-aligned). On the theme's surface, *colour* as its left edge (GREY: none)."""
 
+    MIN_WIDTH = 120
+
     def __init__(self, caption: str, colour: str = GREY, parent: QWidget | None = None, centred: bool = True):
         super().__init__(parent)
+        self.peers: list[MetricBox] = []        # same_width(): the boxes this one keeps its width with
         self.set_colour(colour)
-        self.setMinimumWidth(120)
+        self.setMinimumWidth(self.MIN_WIDTH)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 7, 11, 7)         # 12, 8, 12, 8 inside the border
         layout.setSpacing(0)
@@ -91,11 +94,60 @@ class MetricBox(QFrame):
     def set_value(self, text: str, tooltip: str = "") -> None:
         self.value.setText(text)
         self.setToolTip(tooltip)
+        if self.peers:
+            _even(self.peers)
 
     def set_colour(self, colour: str) -> None:
         """The box's state or category colour, its left edge; GREY (neutral) has none."""
         self.setStyleSheet(surface_style(None if colour == GREY else colour)
                            + "QLabel { background:transparent; border:none; }")
+
+
+class Pill(MetricBox):
+    """A header pill that is a button, as the apps' status boxes look: the value in large type, what it is under
+    it; the accent edge under the mouse or the keyboard focus. A click, Enter or Space emits clicked."""
+
+    clicked = pyqtSignal()
+
+    def __init__(self, value: str, caption: str, tooltip: str = "", colour: str = GREY):
+        super().__init__(caption, colour)
+        self.setObjectName("pill")
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)      # never cut off
+        self.set_value(value, tooltip)
+
+    def set_colour(self, colour: str) -> None:
+        super().set_colour(colour)
+        self.setStyleSheet(self.styleSheet() + f"#pill:hover, #pill:focus {{ border-color:{ACCENT}; }}")
+
+    def mouseReleaseEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        if event.button() == Qt.MouseButton.LeftButton and self.rect().contains(event.position().toPoint()):
+            self.clicked.emit()
+        super().mouseReleaseEvent(event)
+
+    def keyPressEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space):
+            self.clicked.emit()
+            return
+        super().keyPressEvent(event)
+
+    def click(self) -> None:
+        self.clicked.emit()
+
+
+def same_width(boxes: list[MetricBox]) -> None:
+    """A row of boxes or pills all as wide as the widest, and again whenever a value changes."""
+    for box in boxes:
+        box.peers = boxes
+        box.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+    _even(boxes)
+
+
+def _even(boxes: list[MetricBox]) -> None:
+    width = max([MetricBox.MIN_WIDTH, *(box.sizeHint().width() for box in boxes)])
+    for box in boxes:
+        box.setMinimumWidth(width)
 
 
 class ClickableLogo(QLabel):

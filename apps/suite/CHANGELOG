@@ -1,3 +1,14 @@
+Changelog: 20-10-2026 20:21:21
+
+Added. The header is a row of pills of equal width, as the apps' status boxes (owner, 20-10-2026): Refresh (was a
+small button), Working tree (Clean, Changed), GitHub build (Building, Passed, Failed, Offline, Limited; a click opens
+the run), GitHub API left (the requests left this hour) and GitHub status (Up, Problem; a click opens the status page).
+Tests: tests/test_main_window.py, tests/test_plan.py.
+
+Fixed. Under Test local apps every app that changes the board shows it: an orange ! on its icon, and a line in its
+tooltip. It was a third line of text under the icon, cut off by the grid's cell when the name took two lines. Tests:
+tests/test_plan.py.
+
 Changelog: 20-10-2026 10:16:46
 
 Added. Clearer names for a first release (owner, 20-10-2026): the tabs are 1. Release apps, 2. Pin and release

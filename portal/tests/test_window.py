@@ -422,7 +422,7 @@ def test_tiles_flow_in_file_order(window, qapp):
     window.show()
     for category in ("sustainable", "gaming"):
         window.tabs.setCurrentWidget(window.pages[category])
-        tiles = [card for card in window.cards.values() if card.entry.category == category and not card.entry.required]
+        tiles = [card for card in window.cards.values() if card.entry.category == category]
         for width in (1400, 700, 300, 1400):
             window.resize(width, 720)
             qapp.processEvents()
@@ -443,15 +443,17 @@ def test_a_tab_per_category_in_order(window):
         "Sustainable", "Graphics", "Gaming", "Utilities", "Development"]
     for key, card in window.cards.items():
         inside = [c for c, grid in window.grids.items() if grid.indexOf(card) >= 0]
-        assert inside == ([] if key == "check" else [card.entry.category]), key
+        assert inside == [card.entry.category], key
     assert {k for k, c in window.cards.items() if c.entry.category == "graphics"} == {"helixsr", "ace", "mesh"}
     assert window.tabs.currentWidget() is window.pages["sustainable"]           # the first tab, the first time
 
 
-def test_bazzite_test_above_the_tabs(window):
-    check = window.cards["check"]
-    assert not window.tabs.isAncestorOf(check) and check.parentWidget() is window.notice.parentWidget()
-    assert "Sustainable" not in window.notice.text()
+def test_bazzite_test_is_the_first_tile_on_sustainable(window):
+    """Bazzite Test is pinned as the first tile on the Sustainable tab; the notice of updates stays above the tabs
+    (owner, 20-10-2026)."""
+    grid = window.grids["sustainable"]
+    assert grid.itemAtPosition(0, 0).widget() is window.cards["check"]
+    assert window.tabs.isAncestorOf(window.cards["check"]) and not window.tabs.isAncestorOf(window.notice)
 
 
 def test_the_tab_used_last_is_remembered(qapp, home, settings_dir, tmp_path, launched):
@@ -471,8 +473,8 @@ def test_a_link_in_the_notice_opens_the_tab_of_its_app(window, home):
     assert "<a href='rpcs3'>RPCS3 Manager</a> (Gaming)" in window.notice.text()
     window.notice.linkActivated.emit("rpcs3")
     assert window.tabs.currentWidget() is window.pages["gaming"]
-    window.notice.linkActivated.emit("check")                                   # above the tabs: stays put
-    assert window.tabs.currentWidget() is window.pages["gaming"]
+    window.notice.linkActivated.emit("check")                                   # on Sustainable
+    assert window.tabs.currentWidget() is window.pages["sustainable"]
 
 
 def test_development_tab_says_it_is_not_needed(window):
@@ -781,6 +783,8 @@ def test_the_header_is_an_apps_header_with_pills(window):
     assert [(p.value.text(), p.caption.text()) for p in pills] == [
         ("Refresh", "Click to refresh"), ("No", "Icons on Desktop"), ("Gunmetal", "Theme switcher"),
         ("None", "Wallpaper")]
+    widths = {p.width() for p in pills}                     # all as wide as the widest (owner, 20-10-2026)
+    assert len(widths) == 1 and widths.pop() >= max(p.sizeHint().width() for p in pills)
     refreshed = []
     window.refresh_pill.clicked.connect(lambda: refreshed.append(1))
     window.refresh_pill.keyPressEvent(QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Space, Qt.KeyboardModifier.NoModifier))
@@ -827,6 +831,39 @@ def test_the_wallpaper(window, home, tmp_path, monkeypatch):
     window.remove_wallpaper()
     assert wallpaper.current() is None and window.wallpaper_pill.value.text() == "None"
     assert window.backdrop.picture.isNull()
+
+
+def test_the_example_wallpaper(window):
+    """The portal ships an example wallpaper, to show how one looks, but never sets it by itself: the user chooses it
+    in the menu (owner, 20-10-2026). It meets the portal's own rules."""
+    from PyQt6.QtGui import QColor, QImage
+    from bc250_portal import wallpaper
+
+    def menu() -> dict[str, tuple[bool, bool]]:
+        return {a.text(): (a.isChecked(), a.isEnabled()) for a in window.wallpaper_menu().actions()}
+
+    assert wallpaper.EXAMPLE.is_file() and wallpaper.problem(wallpaper.EXAMPLE) == ""
+    assert wallpaper.shown() is None and window.wallpaper_pill.value.text() == "None"   # none at first
+    assert window.backdrop.picture.isNull() and menu()["Example wallpaper"] == (False, True)
+    assert not menu()["No wallpaper"][1]
+    window.example_wallpaper()
+    assert wallpaper.shown() == wallpaper.EXAMPLE and wallpaper.current() is None
+    assert window.wallpaper_pill.value.text() == "Example" and not window.backdrop.picture.isNull()
+    assert menu()["Example wallpaper"] == (True, False) and menu()["No wallpaper"] == (False, True)
+    assert wallpaper.saved() == []                          # not among the pictures used before
+    window.remove_wallpaper()
+    assert wallpaper.shown() is None and window.wallpaper_pill.value.text() == "None"
+    window.example_wallpaper()
+    picture = wallpaper.state_dir().parent / "mine.png"
+    image = QImage(1920, 1080, QImage.Format.Format_RGB32)
+    image.fill(QColor("#00ff00"))
+    image.save(str(picture))
+    window.apply_wallpaper(picture)                         # a picture of one's own replaces the example
+    assert not wallpaper.is_example() and window.wallpaper_pill.value.text() == "Custom"
+    assert menu()["Example wallpaper"] == (False, True)
+    window.example_wallpaper()
+    assert wallpaper.current() is None and wallpaper.shown() == wallpaper.EXAMPLE
+    assert window.wallpaper_pill.value.text() == "Example"
 
 
 def test_the_wallpapers_used_before(window, tmp_path):

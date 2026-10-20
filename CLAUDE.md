@@ -19,8 +19,8 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; ncgui is GPL-2.0-only, a port of NetcatGUI; the rest
   GPL-3.0-or-later), .gitignore. Every app
   has a `category` in `portal/apps.toml`, the same as its icon's in `icons/categories.toml` (sustainable, graphics,
-  gaming, utilities, development): the portal shows a tab per category, with check and the notice of updates above
-  the tabs (owner, 18-10-2026). Media Tool, the Dependency Checker and Bazzite NetcatGUI are development apps.
+  gaming, utilities, development): the portal shows a tab per category, with the notice of updates above the tabs
+  (owner, 18-10-2026) and check as the first tile on Sustainable (owner, 20-10-2026). Media Tool, the Dependency Checker and Bazzite NetcatGUI are development apps.
   Suite Releases (the release front end) has `.standalone` and `.checkout-only`: it runs
   from the checkout, is never released, and is listed as `[checkout.suite]`, also on the Development tab:
   a portal from a release finds the checkout on the machine (it asks only when there is none) and remembers it, the

@@ -1,3 +1,9 @@
+Changelog: 20-10-2026 20:21:21
+
+Added. widgets: Pill, a MetricBox that is a button (the accent edge under the mouse or the keyboard focus; a click,
+Enter or Space emits clicked), moved from the portal so every app can use it; same_width() keeps a row of boxes or
+pills as wide as the widest, also when a value changes. Tests: tests/test_widgets.py.
+
 Changelog: 19-10-2026 23:41:01
 
 Added. theme: the suite's theme, gunmetal (the default), silver or warm, one choice for every app in

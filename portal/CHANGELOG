@@ -1,3 +1,17 @@
+Changelog: 20-10-2026 20:21:21
+
+Added. An example wallpaper (owner, 20-10-2026): the portal ships images/wallpaper-example.webp, to show how a
+wallpaper looks before you add your own. It is never set by itself: the Wallpaper pill's menu has Example wallpaper.
+The pill reads None (as before, the start), Example or Custom. The choice is remembered in the state folder
+(wallpaper-example), which --purge removes. Tests: tests/test_window.py.
+
+Added. Bazzite Test is the first tile on the Sustainable tab (owner, 20-10-2026), no longer above the tabs; the
+notice of updates stays above the tabs, and a link to Bazzite Test in it opens Sustainable. Tests:
+tests/test_window.py.
+
+Fixed. The pills in the header are all as wide as the widest (core's same_width()), also when the theme or the
+wallpaper changes; the Pill itself now comes from core. Tests: tests/test_window.py.
+
 Changelog: 20-10-2026 12:34:53
 
 Release 4.1.0. Pins wdriver-v0.4.1, consoles-v1.5.0, decky-v0.5.1.

@@ -12,8 +12,9 @@ git add, git commit, git push and git tag are buttons with their checks in betwe
 (fix-modes.sh), commit runs check_versions.py and check_manifest.py first, push runs tools/ci-local.sh first (Linux)
 and pushes only when CI's jobs pass, tag runs tag-release.sh (a pushed HEAD that CI passed) with the tags of the step
 open: step 2's portal tag, else step 1's app tags.
-The header shows whether GitHub built the last push (CI, Release, Manual) and notifies when a build it saw
-running passes or fails, and GitHub status: a green dot while githubstatus.com reports GitHub up, red while it
+The header is a row of pills, as the apps' status boxes (owner, 20-10-2026): Refresh, the working tree, whether
+GitHub built the last push (CI, Release, Manual; it notifies when a build it saw running passes or fails), how many
+of GitHub's API requests are left, and GitHub status: green while githubstatus.com reports GitHub up, red while it
 reports a problem; a click opens that page.
 Test on this board: Test app updates and Test withdrawal install the portal from the checkout and start it with the
 apps from their releases, Test Portal release installs the published portal release (check-release.sh, in a
@@ -34,8 +35,8 @@ import sys
 import time
 from pathlib import Path
 
-from PyQt6.QtCore import QProcess, QSize, Qt, QTimer, QUrl
-from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QPainter, QPixmap
+from PyQt6.QtCore import QProcess, QRectF, QSize, Qt, QTimer, QUrl
+from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QPainter, QPen, QPixmap
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView,
                              QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPushButton, QStackedWidget,
                              QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
@@ -43,7 +44,7 @@ from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout, QH
 from bc250_core.platform import launch_in_terminal
 from bc250_core.theme import ACCENT, BLUE, GREEN, GREY, ORANGE, RED
 from bc250_core.updates import UpdateChecker
-from bc250_core.widgets import AppHeader, Terminal, accent_button, hint_label
+from bc250_core.widgets import AppHeader, MetricBox, Pill, Terminal, accent_button, hint_label, same_width
 
 from . import APP_NAME, LOGO_PATH, SUITE, __version__
 from . import plan as rp
@@ -570,6 +571,31 @@ def log_tail(log: Path, lines: int = 20) -> str:
         return ""
 
 
+ICON_PX = 64                            # the apps' icons under Test local apps
+BADGE_PX = 26                           # the warning in the corner of an app's icon that changes the board
+
+
+def board_badge(icon: QIcon) -> QIcon:
+    """*icon* with a warning in its lower right corner: the app changes how the board runs. On the icon, not in the
+    label, so a name that wraps never pushes it out of the grid's cell."""
+    pixmap = QPixmap(ICON_PX, ICON_PX)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    icon.paint(painter, 0, 0, ICON_PX, ICON_PX)
+    corner = QRectF(ICON_PX - BADGE_PX, ICON_PX - BADGE_PX, BADGE_PX, BADGE_PX)
+    painter.setPen(QPen(QColor("white"), 2))
+    painter.setBrush(QColor(ORANGE))
+    painter.drawEllipse(corner.adjusted(1, 1, -1, -1))
+    font = painter.font()
+    font.setBold(True)
+    font.setPixelSize(BADGE_PX - 8)
+    painter.setFont(font)
+    painter.drawText(corner, Qt.AlignmentFlag.AlignCenter, "!")
+    painter.end()
+    return QIcon(pixmap)
+
+
 class RunPage(QWidget):
     """Test on this board: the board checks of a release (check-release.sh in a terminal), the installer tests, and
     every app window in the checkout as an icon: a click starts it from the checkout, as it is before a release."""
@@ -598,7 +624,7 @@ class RunPage(QWidget):
                 button.setToolTip("Runs on the board: Linux only")
         self.apps = QListWidget()
         self.apps.setViewMode(QListView.ViewMode.IconMode)
-        self.apps.setIconSize(QSize(64, 64))
+        self.apps.setIconSize(QSize(ICON_PX, ICON_PX))
         self.apps.setGridSize(QSize(150, 120))
         self.apps.setResizeMode(QListView.ResizeMode.Adjust)
         self.apps.setMovement(QListView.Movement.Static)
@@ -624,8 +650,8 @@ class RunPage(QWidget):
         lay.addWidget(hint_label(
             "Click an app to start it from this checkout, to try it before its release: <code>python -m</code> with "
             "this venv and the checkout's core, as <code>run.sh</code> starts this app. An app that changes how the "
-            "board runs asks first; it uses the scripts in the checkout. Each app writes its output to "
-            f"<code>{LOG_DIR}</code>; when it stops with an error, the end of that log shows below. "
+            "board runs (an orange <b>!</b> on its icon) asks first; it uses the scripts in the checkout. Each app "
+            f"writes its output to <code>{LOG_DIR}</code>; when it stops with an error, the end of that log shows below. "
             "<b>Manual (local)</b> serves the manual from the checkout with <code>mkdocs serve</code> and opens it in "
             "the browser; it rebuilds on every save."))
         lay.addWidget(self.apps, 2)
@@ -641,10 +667,11 @@ class RunPage(QWidget):
                 "its SHA256SUMS, install it and start it (check-release.sh release)")
         self.apps.clear()
         for target in targets:
-            item = QListWidgetItem(QIcon(str(target.icon)) if target.icon else QIcon(),
-                                   target.label + ("\n\u26a0 changes the board" if target.changes_board else ""))
+            icon = QIcon(str(target.icon)) if target.icon else QIcon()
+            item = QListWidgetItem(board_badge(icon) if target.changes_board else icon, target.label)
             item.setData(Qt.ItemDataRole.UserRole, target)
-            item.setToolTip(" ".join(("python -m", target.module, *target.args)) + f" in {target.folder}" +
+            item.setToolTip(("\u26a0 Changes how the board runs: it asks first.\n" if target.changes_board else "") +
+                            " ".join(("python -m", target.module, *target.args)) + f" in {target.folder}" +
                             (f"\nopens {target.url}" if target.url else ""))
             self.apps.addItem(item)
 
@@ -730,11 +757,10 @@ def desktop_notify(summary: str, body: str) -> bool:
     return ok
 
 
-TEXT = "palette(window-text)"           # the theme's text colour: white on a dark desktop, dark on a light one
 BUILD_BUSY_MS = 30_000                  # how often to look while a build runs
 BUILD_IDLE_MS = 300_000                 # and otherwise (unchanged answers do not count against GitHub's limit)
-BUILD_LOOK = {"running": (BLUE, "\u25cf GitHub: building"), "passed": (GREEN, "\u2714 GitHub: passed"),
-              "failed": (RED, "\u2716 GitHub: failed"), "": (GREY, "GitHub: no builds")}
+BUILD_LOOK = {"running": (BLUE, "Building"), "passed": (GREEN, "Passed"), "failed": (RED, "Failed"),
+              "": (GREY, "No builds")}
 RELEASE_TEXT = {"": "no run seen", "running": "building\u2026", "passed": "ready", "failed": "failed"}
 RELEASE_TIP = {"": "GitHub shows no release run on {tag} among its newest runs: is the tag pushed?",
                "running": "GitHub's release workflow is building {tag}; Pin waits for it, and a notification "
@@ -743,7 +769,7 @@ RELEASE_TIP = {"": "GitHub shows no release run on {tag} among its newest runs: 
                "failed": "GitHub's release workflow failed on {tag}: click GitHub in the header to open the run"}
 
 
-class BuildIndicator(QPushButton):
+class BuildIndicator(Pill):
     """Whether GitHub built the newest push: CI, Release and Manual on its commit. Looks every 30 s while a build
     runs and every 5 minutes otherwise; a run seen running that finishes gives a desktop notification, and so does
     the release of an app waiting to be pinned, seen running or not (each once), and the portal's release. A
@@ -752,7 +778,7 @@ class BuildIndicator(QPushButton):
     (plan.github_token)."""
 
     def __init__(self, window: "ReleaseWindow", source, notify):
-        super().__init__()
+        super().__init__("—", "GitHub build")
         self.release_window = window
         self.source = source            # rp.fetch_runs: (runs | None when unchanged, etag)
         self.notify = notify
@@ -760,14 +786,12 @@ class BuildIndicator(QPushButton):
         self.runs: list[rp.BuildRun] = []
         self.seen: dict[str, rp.BuildRun] = {}
         self.announced: set[str] = set()        # the Release runs told about, by url
-        self.setFlat(True)
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.clicked.connect(self.open)
         self.checker = UpdateChecker(self)
         self.checker.finished.connect(self.checked)
         self.timer = QTimer(self, singleShot=True)
         self.timer.timeout.connect(self.check)
-        self.rate = QLabel()                    # GitHub's hourly limit: placed beside the button by the window
+        self.rate = MetricBox("GitHub API left")    # GitHub's hourly limit: placed beside it by the window
         self.rate.setVisible(source is not None)
         self.show_state("", "Not looked yet.")
         self.show_rate(None)
@@ -835,26 +859,25 @@ class BuildIndicator(QPushButton):
 
     def show_state(self, state: str, tooltip: str, unreachable: bool = False, limited: str = "") -> None:
         if limited:
-            color, text, self.state = GREY, f"GitHub: limit reached, back at {limited}", "limited"
+            color, text, self.state = ORANGE, "Limited", "limited"
+            tooltip = f"GitHub's limit is reached, back at {limited}.\n\n{tooltip}"
         else:
-            color, text = (GREY, "GitHub: not reachable") if unreachable else BUILD_LOOK[state]
+            color, text = (GREY, "Offline") if unreachable else BUILD_LOOK[state]
             self.state = "unreachable" if unreachable else state
-        self.setText(text)
-        self.setStyleSheet(f"color:{color}; font-weight:700;")
-        self.setToolTip(tooltip)
+        self.set_colour(color)
+        self.set_value(text, tooltip)
 
     def show_rate(self, rate: "rp.RateInfo | None") -> None:
         """How many of GitHub's requests are left this hour: none left is GitHub's limit, not a fault here."""
         if rate is None:
-            self.rate.setText("GitHub API: limit not known yet")
-            self.rate.setStyleSheet(f"color:{TEXT};")
+            value, color, now = "—", GREY, "The limit is not known yet."
         else:
-            self.rate.setText(rate.text)
-            color = RED if rate.remaining == 0 else ORANGE if rate.remaining < rate.limit / 10 else TEXT
-            self.rate.setStyleSheet(f"color:{color};")
+            value, now = f"{rate.remaining:,}", f"{rate.text}."
+            color = RED if rate.remaining == 0 else ORANGE if rate.remaining < rate.limit / 10 else GREY
         sign_in = "" if rate is not None and rate.signed_in else \
             " Signed in with gh (gh auth login), it is 5,000 an hour instead of 60."
-        self.rate.setToolTip(
+        self.rate.set_colour(color)
+        self.rate.set_value(value, f"{now}\n\n"
             "GitHub's API answers a limited number of requests an hour; answers that did not change since the last "
             "look do not count. The limit is shared by everything on this network that asks GitHub without signing "
             f"in.{sign_in} When none are left, nothing is broken: GitHub answers again after the time shown.")
@@ -892,28 +915,14 @@ class BuildIndicator(QPushButton):
         self.checker.stop(2000)
 
 
-def dot(color: str) -> QIcon:
-    pixmap = QPixmap(12, 12)
-    pixmap.fill(Qt.GlobalColor.transparent)
-    painter = QPainter(pixmap)
-    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-    painter.setPen(Qt.PenStyle.NoPen)
-    painter.setBrush(QColor(color))
-    painter.drawEllipse(1, 1, 10, 10)
-    painter.end()
-    return QIcon(pixmap)
-
-
-class GitHubStatusIndicator(QPushButton):
-    """GitHub status with a dot: green while githubstatus.com reports every part of GitHub working, red while it
+class GitHubStatusIndicator(Pill):
+    """GitHub status: green while githubstatus.com reports every part of GitHub working, red while it
     reports a problem (a build that waits in "queued" may be GitHub's), grey while it is not known. Looks every 5
     minutes; a click opens the status page."""
 
     def __init__(self, source):
-        super().__init__("GitHub status")
+        super().__init__("—", "GitHub status")
         self.source = source            # rp.fetch_github_status
-        self.setFlat(True)
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(rp.STATUS_PAGE)))
         self.checker = UpdateChecker(self)
         self.checker.finished.connect(self.checked)
@@ -943,8 +952,9 @@ class GitHubStatusIndicator(QPushButton):
 
     def show_state(self, state: str, details: str) -> None:
         self.state = state
-        self.setIcon(dot({"up": GREEN, "down": RED}.get(state, GREY)))
-        self.setToolTip(f"{details}\n\nClick to open {rp.STATUS_PAGE}")
+        self.set_colour({"up": GREEN, "down": RED}.get(state, GREY))
+        self.set_value({"up": "Up", "down": "Problem"}.get(state, "Unknown"),
+                       f"{details}\n\nClick to open {rp.STATUS_PAGE}")
 
     def stop(self) -> None:
         self.timer.stop()
@@ -969,19 +979,18 @@ class ReleaseWindow(QMainWindow):
         self.setStyleSheet(SELECTION_STYLESHEET)
         stamp = rp.checkout_stamp(root)                 # never released: the commit says which code runs
         header = AppHeader(LOGO_PATH, APP_NAME, f"{__version__} · {stamp}" if stamp else __version__)
-        self.status = QLabel()                     # the working tree, clean or changed
-        header.add_second(self.status)
+        # The header's pills, all as wide as the widest (owner, 20-10-2026).
+        self.refresh_pill = Pill("Refresh", "Click to refresh", "Read the checkout and its tags again, for changes "
+                                 "made in a terminal; what you entered stays")
+        self.refresh_pill.clicked.connect(self.refresh)
+        self.status = MetricBox("Working tree")    # clean or changed
         self.build = BuildIndicator(self, runs_source, notify)
-        header.add_second(self.build)
-        header.add_second(self.build.rate)
         self.github_status = GitHubStatusIndicator(status_source)
-        header.add_second(self.github_status)
+        pills = [self.refresh_pill, self.status, self.build, self.build.rate, self.github_status]
+        for pill in pills:
+            header.add_second(pill)
+        same_width(pills)
         header.second_row.addStretch(1)
-        self.refresh_button = QPushButton("Refresh")
-        self.refresh_button.setToolTip("Read the checkout and its tags again, for changes made in a terminal; "
-                                       "what you entered stays")
-        self.refresh_button.clicked.connect(self.refresh)
-        header.add_action(self.refresh_button)
         self.tabs = QTabWidget()
         self.apps_page = AppsPage(self)
         self.portal_page = PortalPage(self)
@@ -1173,8 +1182,10 @@ class ReleaseWindow(QMainWindow):
             f"{p.split()[0]}." for p in problems))
         self.bad_tags.setVisible(bool(problems))
         dirty = rp.git(self.root, "status", "--porcelain")
-        self.status.setText("working tree has changes" if dirty else "working tree clean" if dirty is not None
-                            else "not a git checkout")
+        self.status.set_colour(ORANGE if dirty else GREEN if dirty is not None else GREY)
+        self.status.set_value("Changed" if dirty else "Clean" if dirty is not None else "No git",
+                              "The working tree has changes." if dirty else "The working tree is clean."
+                              if dirty is not None else "This folder is not a git checkout.")
         self.git_state = rp.git_state(self.root, self.base())
         self._show_git_state()
 

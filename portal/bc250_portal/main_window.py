@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The portal window: check and the notice of updates above the tabs, on every tab; then a tab per category (the
-category of the apps' icons, apps.toml), each with the tiles of its apps. The portal opens on the tab used last.
+"""The portal window: the notice of updates above the tabs, on every tab; then a tab per category (the category of
+the apps' icons, apps.toml), each with the tiles of its apps; check is the first tile on Sustainable (owner,
+20-10-2026). The portal opens on the tab used last.
 
 Install, update and uninstall run the app's own installer in a terminal window (they may ask for the sudo
 password and print what they do); the portal watches for the exit file the terminal writes and then refreshes.
@@ -20,8 +21,8 @@ Desktop icons: the portal's own icon is enough to reach every app, so the apps' 
 choice ("Icons on Desktop", desktop_icons.py). The first start asks when app icons are there; off, the portal
 removes them at start and after each install (the installers write one), on, it adds one for every installed app.
 
-Wallpaper: a picture of the user's own behind the window (wallpaper.py), under a veil of the theme's window colour so
-the text stays readable."""
+Wallpaper: none until the user chooses one, the portal's example picture or one of their own, behind the window (wallpaper.py), under a veil of
+the theme's window colour so the text stays readable."""
 
 from __future__ import annotations
 
@@ -38,7 +39,7 @@ from PyQt6.QtCore import QCoreApplication, QEvent, QProcess, QRect, QSize, QTime
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPalette, QPixmap
 from PyQt6.QtWidgets import (
     QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea,
-    QSizePolicy, QTabWidget, QToolButton, QVBoxLayout, QWidget,
+    QTabWidget, QToolButton, QVBoxLayout, QWidget,
 )
 
 from bc250_core import SUITE_MANUAL_URL, __version__ as CORE_VERSION, upstream
@@ -46,7 +47,7 @@ from bc250_core.platform import bin_home, expand, launch_in_terminal
 from bc250_core.settings import open_settings, restore_geometry, save_geometry
 from bc250_core.theme import ACCENT, BLUE, GREY, ORANGE, RED, THEMES, header_font, muted, save_theme_name, theme_name
 from bc250_core.updates import ReleaseInfo, UpdateChecker, version_tuple
-from bc250_core.widgets import ClickableLogo, MetricBox, hint_label
+from bc250_core.widgets import ClickableLogo, Pill, hint_label, same_width
 
 from . import desktop_icons, glyphs, wallpaper
 from . import (APP_ICONS, APP_ID, APP_NAME, INFO, LOGO_PATH, STAGE, STAGE_NOTE, __version__, find_checkout, is_suite,
@@ -372,39 +373,6 @@ class AppTile(QFrame):
         return "update" if update else "reinstall" if reinstall else ""
 
 
-class Pill(MetricBox):
-    """A header pill that is a button, as the apps' status boxes look: the value in large type, what it is under
-    it; the accent edge under the mouse or the keyboard focus. A click, Enter or Space emits clicked."""
-
-    clicked = pyqtSignal()
-
-    def __init__(self, value: str, caption: str, tooltip: str = ""):
-        super().__init__(caption)
-        self.setObjectName("pill")
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)      # never cut off
-        self.set_value(value, tooltip)
-
-    def set_colour(self, colour: str) -> None:
-        super().set_colour(colour)
-        self.setStyleSheet(self.styleSheet() + f"#pill:hover, #pill:focus {{ border-color:{ACCENT}; }}")
-
-    def mouseReleaseEvent(self, event) -> None:  # noqa: N802 (Qt override)
-        if event.button() == Qt.MouseButton.LeftButton and self.rect().contains(event.position().toPoint()):
-            self.clicked.emit()
-        super().mouseReleaseEvent(event)
-
-    def keyPressEvent(self, event) -> None:  # noqa: N802 (Qt override)
-        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space):
-            self.clicked.emit()
-            return
-        super().keyPressEvent(event)
-
-    def click(self) -> None:
-        self.clicked.emit()
-
-
 class TogglePill(Pill):
     """A pill that is on or off, Yes or No: a click switches it (as a check box, with its isChecked, setChecked and
     toggled)."""
@@ -423,7 +391,7 @@ class TogglePill(Pill):
         if checked == self.checked:
             return
         self.checked = checked
-        self.value.setText("Yes" if checked else "No")
+        self.set_value("Yes" if checked else "No", self.toolTip())
         self.toggled.emit(checked)
 
 
@@ -551,6 +519,7 @@ class MainWindow(QMainWindow):
         self.wallpaper_pill.clicked.connect(self._wallpaper_menu)
         for pill in (self.refresh_pill, self.icons_box, self.theme_pill, self.wallpaper_pill):
             pills.addWidget(pill)
+        same_width([self.refresh_pill, self.icons_box, self.theme_pill, self.wallpaper_pill])   # owner, 20-10-2026
         self.theme_note = hint_label("The theme changes in each app the next time it starts, the portal too.")
         self.theme_note.hide()
         pills.addWidget(self.theme_note, 1)
@@ -566,11 +535,9 @@ class MainWindow(QMainWindow):
             card.open_clicked.connect(self.open_app)
             self.cards[entry.key] = card
 
-        # Bazzite Test and the notice of updates, above the tabs: on every tab (owner, 18-10-2026).
+        # The notice of updates, above the tabs: on every tab (owner, 18-10-2026). Bazzite Test is the first tile on
+        # its own tab, Sustainable (owner, 20-10-2026): the manifest lists the required app first.
         top = QHBoxLayout()
-        for card in self.cards.values():
-            if card.entry.required:
-                top.addWidget(card, 0, Qt.AlignmentFlag.AlignTop)
         self.notice = QLabel()
         self.notice.setWordWrap(True)
         self.notice.setTextFormat(Qt.TextFormat.RichText)
@@ -585,7 +552,7 @@ class MainWindow(QMainWindow):
         self.pages: dict[str, QScrollArea] = {}
         self.grids: dict[str, QGridLayout] = {}
         for category, label in CATEGORIES.items():
-            if not any(e.category == category and not e.required for e in entries):
+            if not any(e.category == category for e in entries):
                 continue
             content = QWidget()
             column = QVBoxLayout(content)
@@ -639,8 +606,8 @@ class MainWindow(QMainWindow):
         return max(1, (width + TILE_SPACING) // (TILE_WIDTH + TILE_SPACING))
 
     def tab_of(self, entry: AppEntry) -> str:
-        """The category of the tab that shows the app; "" for check, above the tabs."""
-        return "" if entry.required else entry.category
+        """The category of the tab that shows the app."""
+        return entry.category
 
     def reflow(self) -> None:
         """Each tab's tiles in file order, left to right and then down, in as many columns as fit."""
@@ -870,21 +837,27 @@ class MainWindow(QMainWindow):
         self.theme_note.show()
 
     def _show_wallpaper(self) -> None:
-        chosen = wallpaper.current()
-        self.backdrop.set_picture(chosen)
-        self.wallpaper_pill.set_value("Custom" if chosen else "None", (
-            "Your own picture behind the portal. " if chosen else "No picture behind the portal. ")
-            + "Click to choose one, one used before, or to remove it. " + wallpaper.RULES)
+        shown = wallpaper.shown()
+        self.backdrop.set_picture(shown)
+        value, what = ("None", "No picture behind the portal. ") if shown is None else \
+            ("Example", "The portal's example picture behind it. ") if wallpaper.current() is None else \
+            ("Custom", "Your own picture behind the portal. ")
+        self.wallpaper_pill.set_value(value, what + "Click to choose one, one used before, the example, or none. "
+                                      + wallpaper.RULES)
 
     def _wallpaper_menu(self) -> None:
         self.wallpaper_menu().exec(self.wallpaper_pill.mapToGlobal(self.wallpaper_pill.rect().bottomLeft()))
 
     def wallpaper_menu(self) -> QMenu:
-        """The Wallpaper pill's menu: choose a picture, none, or one of those used before (newest first, under
-        "Used before"): the current one ticked, one no longer where it was greyed out."""
+        """The Wallpaper pill's menu: choose a picture, the example, none, or one of those used before (newest
+        first, under "Used before"): the current one ticked, one no longer where it was greyed out."""
         menu = QMenu(self)
         menu.addAction("Choose a picture…", self.choose_wallpaper)
-        menu.addAction("No wallpaper", self.remove_wallpaper).setEnabled(wallpaper.current() is not None)
+        example = menu.addAction("Example wallpaper", self.example_wallpaper)
+        example.setCheckable(True)
+        example.setChecked(wallpaper.current() is None and wallpaper.shown() is not None)
+        example.setEnabled(wallpaper.EXAMPLE.is_file() and not example.isChecked())
+        menu.addAction("No wallpaper", self.remove_wallpaper).setEnabled(wallpaper.shown() is not None)
         paths = wallpaper.saved()
         if not paths:
             return menu
@@ -921,6 +894,10 @@ class MainWindow(QMainWindow):
 
     def remove_wallpaper(self) -> None:
         wallpaper.remove()
+        self._show_wallpaper()
+
+    def example_wallpaper(self) -> None:
+        wallpaper.use_example()
         self._show_wallpaper()
 
     def _show_icons(self, show: bool) -> None:

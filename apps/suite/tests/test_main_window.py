@@ -38,6 +38,27 @@ def test_tooltip_over_the_build_indicator(window):
     tip.hide()
 
 
+def test_the_header_is_a_row_of_pills(window):
+    """Refresh, the working tree, GitHub's build, its API requests left and GitHub status: pills as in the apps'
+    headers, all as wide as the widest (owner, 20-10-2026)."""
+    from bc250_core.widgets import MetricBox, Pill
+    w, _app = window
+    pills = [w.refresh_pill, w.status, w.build, w.build.rate, w.github_status]
+    assert all(isinstance(p, MetricBox) for p in pills)
+    assert all(isinstance(p, Pill) for p in (w.refresh_pill, w.build, w.github_status))
+    assert [p.caption.text() for p in pills] == \
+        ["Click to refresh", "Working tree", "GitHub build", "GitHub API left", "GitHub status"]
+    w.show()
+    assert len({p.width() for p in pills if p.isVisible()}) == 1
+    refreshed = []
+    w.reload = lambda: refreshed.append(1)
+    w.refresh_pill.click()
+    assert refreshed == [1]
+    w.status.set_value("A much longer value")                       # every pill grows with the widest
+    assert len({p.minimumWidth() for p in pills}) == 1
+    assert w.refresh_pill.minimumWidth() >= w.status.sizeHint().width()
+
+
 def test_selection_is_a_purple_outline(window):
     """A selected cell and the focused input field: a purple rounded outline on a transparent background, not the
     desktop's solid highlight (rendered: the cell's middle keeps the table's own background)."""
@@ -156,30 +177,29 @@ def test_github_status_is_read_from_the_status_page(monkeypatch):
     assert rp.fetch_github_status().up and asked == ["https://www.githubstatus.com/api/v2/summary.json"]
 
 
-def test_github_status_is_a_dot_that_opens_the_status_page(window, monkeypatch):
-    """A green dot while GitHub is up, red while githubstatus.com reports a problem, grey while not known; a click
-    opens https://www.githubstatus.com/ (owner, 19-10-2026)."""
+def test_github_status_is_a_pill_that_opens_the_status_page(window, monkeypatch):
+    """Green while GitHub is up, red while githubstatus.com reports a problem, grey while not known; a click opens
+    https://www.githubstatus.com/ (owner, 19-10-2026). A pill, as the apps' status boxes (owner, 20-10-2026)."""
     from PyQt6.QtGui import QColor, QDesktopServices
     from bc250_core.theme import GREEN, GREY, RED
     from suite_releases import main_window
     from suite_releases import plan as rp
     w, _app = window
     status = main_window.GitHubStatusIndicator(lambda: rp.parse_github_status(SUMMARY_DOWN))
-    assert not status.isHidden() and status.text() == "GitHub status" and status.state == ""
+    assert not status.isHidden() and status.caption.text() == "GitHub status" and status.state == ""
 
     def color() -> str:
-        image = status.icon().pixmap(12, 12).toImage()
-        return QColor(image.pixel(6, 6)).name()
+        return next((c for c in (RED, GREEN) if c in status.styleSheet()), GREY)
 
-    assert color() == QColor(GREY).name()
+    assert color() == GREY and status.value.text() == "Unknown"
     status.checked(status._fetch())
-    assert status.state == "down" and color() == QColor(RED).name()
+    assert status.state == "down" and color() == RED and status.value.text() == "Problem"
     assert "Actions: degraded performance" in status.toolTip() and "Partially Degraded Service" in status.toolTip()
     assert status.timer.interval() == main_window.BUILD_IDLE_MS
     status.checked(rp.parse_github_status(SUMMARY_UP))
-    assert status.state == "up" and color() == QColor(GREEN).name()
+    assert status.state == "up" and color() == GREEN and status.value.text() == "Up"
     status.checked(OSError("offline"))
-    assert status.state == "" and color() == QColor(GREY).name() and "offline" in status.toolTip()
+    assert status.state == "" and color() == GREY and "offline" in status.toolTip()
     opened = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda url: opened.append(url.toString()))
     status.click()

@@ -489,10 +489,10 @@ def test_window_refresh_reads_changes_and_keeps_what_was_typed(window, repo):
     combo.setEditText("0.2.0")
     notes.setText("Fixes.")
     window.portal_page.portal_notes.setText("Pins.")
-    assert window.status.text() == "working tree clean"
+    assert window.status.value.text() == "Clean"
     rp.set_version(repo, unit(repo, "beta"), "0.1.1")         # changed in a terminal while the window is open
     window.refresh()
-    assert window.status.text() == "working tree has changes"
+    assert window.status.value.text() == "Changed" and "has changes" in window.status.toolTip()
     _, tick, combo, notes = row(window, "alpha")
     assert (tick.isChecked(), combo.currentText(), notes.text()) == (True, "0.2.0", "Fixes.")
     _, btick, bcombo, _ = row(window, "beta")
@@ -759,7 +759,18 @@ def test_window_runs_an_app_from_the_checkout(window, repo, tmp_path, monkeypatc
     window.reload()
     page = window.run_page
     items = {page.apps.item(i).data(0x0100).module: page.apps.item(i) for i in range(page.apps.count())}
-    assert sorted(items) == ["alpha", "beta", "tool"] and "changes the board" in items["beta"].text()
+    assert sorted(items) == ["alpha", "beta", "tool"] and "Changes how the board runs" in items["beta"].toolTip()
+    assert "Changes how the board runs" not in items["alpha"].toolTip()
+    assert "\n" not in items["beta"].text()                         # the warning is on the icon, not in the label
+
+    from PyQt6.QtGui import QColor
+
+    def corner(item) -> str:                                        # the badge's orange, low right on the icon
+        image = item.icon().pixmap(main_window.ICON_PX, main_window.ICON_PX).toImage()
+        edge = main_window.ICON_PX - main_window.BADGE_PX // 2
+        return QColor(image.pixel(edge - 6, edge)).name()
+
+    assert corner(items["beta"]) == QColor(main_window.ORANGE).name() != corner(items["alpha"])
     page.apps.itemClicked.emit(items["alpha"])
     assert started == [([sys.executable, "-m", "alpha"], repo / "apps/alpha", tmp_path / "logs/alpha.log")]
     with mock_question(QMessageBox.StandardButton.No) as asked:
@@ -950,7 +961,8 @@ def test_window_build_indicator_notifies_when_a_run_ends(repo, tmp_path):
     assert not build.isHidden()
     build.checked((rp.parse_runs({"workflow_runs": [run(n=2), run("Release", "governor-v0.1.1", "in_progress")]}),
                    "e1"))
-    assert build.state == "running" and "building" in build.text() and notes == []
+    assert build.state == "running" and build.value.text() == "Building" and notes == []
+    assert build.caption.text() == "GitHub build" and main_window.BLUE in build.styleSheet()
     assert build.timer.interval() == main_window.BUILD_BUSY_MS
     assert build.target() == "https://github.invalid/runs/1"                  # the run still going
     assert "Release on governor-v0.1.1: in progress" in build.toolTip()
@@ -958,21 +970,23 @@ def test_window_build_indicator_notifies_when_a_run_ends(repo, tmp_path):
     assert build.state == "running" and notes == []
     build.checked((rp.parse_runs({"workflow_runs": [run(n=2), run("Release", "governor-v0.1.1",
                                                                   conclusion="failure")]}), "e2"))
-    assert build.state == "failed" and "failed" in build.text()
+    assert build.state == "failed" and build.value.text() == "Failed" and main_window.RED in build.styleSheet()
     assert notes == [("GitHub build failed", "Release on governor-v0.1.1: failure")]
     assert build.target() == "https://github.invalid/runs/1" and build.timer.interval() == main_window.BUILD_IDLE_MS
-    assert "not known yet" in build.rate.text()
+    assert build.rate.value.text() == "—" and "not known yet" in build.rate.toolTip()
     build.checked((None, "e2", rp.RateInfo(5000, 4905, 1_900_000_000, signed_in=True)))
-    assert "4,905 of 5,000 left" in build.rate.text() and "signed in" in build.rate.text()
-    assert main_window.TEXT in build.rate.styleSheet() and "gh auth login" not in build.rate.toolTip()
+    assert build.rate.value.text() == "4,905" and "4,905 of 5,000 left" in build.rate.toolTip()
+    assert "signed in" in build.rate.toolTip() and "gh auth login" not in build.rate.toolTip()
+    assert main_window.ORANGE not in build.rate.styleSheet() and main_window.RED not in build.rate.styleSheet()
     build.checked((None, "e2", rp.RateInfo(60, 3, 1_900_000_000, signed_in=False)))
     assert main_window.ORANGE in build.rate.styleSheet() and "gh auth login" in build.rate.toolTip()
     build.checked(OSError("offline"))
     assert build.state == "unreachable" and "offline" in build.toolTip()
     import time
     build.checked(rp.RateLimited(time.time() + 1800, signed_in=False))
-    assert build.state == "limited" and "back at" in build.text() and "gh auth login" in build.toolTip()
-    assert "0 of 60 left" in build.rate.text() and main_window.RED in build.rate.styleSheet()
+    assert build.state == "limited" and build.value.text() == "Limited" and "back at" in build.toolTip()
+    assert "gh auth login" in build.toolTip()
+    assert "0 of 60 left" in build.rate.toolTip() and main_window.RED in build.rate.styleSheet()
     assert build.timer.interval() >= 1800_000                                 # waits for the reset
     build.checked(rp.RateLimited(time.time() + 60, signed_in=True))
     assert "gh auth login" not in build.toolTip() and build.timer.interval() == main_window.BUILD_IDLE_MS

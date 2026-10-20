@@ -7,8 +7,8 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QTableWidget, QTab
 
 from bc250_core import theme
 from bc250_core.widgets import (
-    AppHeader, MetricBox, RoundedToolTip, StatusPill, StatusText, Terminal, TextDialog, accent_button, hide_tooltip,
-    set_button_active, show_tooltip,
+    AppHeader, MetricBox, Pill, RoundedToolTip, StatusPill, StatusText, Terminal, TextDialog, accent_button,
+    hide_tooltip, same_width, set_button_active, show_tooltip,
 )
 
 
@@ -50,6 +50,35 @@ def test_metric_box(qapp):
     box.set_colour(theme.RED)
     assert f"border-left:4px solid {theme.RED}" in box.styleSheet() and theme.PURPLE not in box.styleSheet()
     assert f"border-left:4px solid {theme.THEME.edge}" in MetricBox("Neutral").styleSheet()   # GREY: no colour
+
+
+def test_pill_is_a_metric_box_that_clicks(qapp):
+    """A click, Enter or Space emits clicked; the accent edge under the mouse or the keyboard focus."""
+    from PyQt6.QtCore import QEvent
+    from PyQt6.QtGui import QKeyEvent
+    pill = Pill("Refresh", "Click to refresh", "tip")
+    assert (pill.value.text(), pill.caption.text(), pill.toolTip()) == ("Refresh", "Click to refresh", "tip")
+    assert f"#pill:hover, #pill:focus {{ border-color:{theme.ACCENT}; }}" in pill.styleSheet()
+    clicks = []
+    pill.clicked.connect(lambda: clicks.append(1))
+    pill.click()
+    for key in (Qt.Key.Key_Space, Qt.Key.Key_Return):
+        pill.keyPressEvent(QKeyEvent(QEvent.Type.KeyPress, key, Qt.KeyboardModifier.NoModifier))
+    assert clicks == [1, 1, 1]
+    pill.set_colour(theme.RED)                                  # the edge colour and the hover both stay
+    assert theme.RED in pill.styleSheet() and "#pill:hover" in pill.styleSheet()
+
+
+def test_same_width_follows_the_widest(qapp):
+    boxes = [Pill("A", "a"), MetricBox("Caption"), Pill("No", "Icons on Desktop")]
+    same_width(boxes)
+    widths = {b.minimumWidth() for b in boxes}
+    assert len(widths) == 1 and widths.pop() >= max(b.sizeHint().width() for b in boxes)
+    boxes[1].set_value("A much longer value than any other")    # a value grows: every box with it
+    wide = boxes[1].sizeHint().width()
+    assert {b.minimumWidth() for b in boxes} == {wide} and wide > MetricBox.MIN_WIDTH
+    boxes[1].set_value("—")                                    # and shrinks back
+    assert {b.minimumWidth() for b in boxes} == {max(MetricBox.MIN_WIDTH, *(b.sizeHint().width() for b in boxes))}
 
 
 def test_set_button_active_keeps_height(qapp):
