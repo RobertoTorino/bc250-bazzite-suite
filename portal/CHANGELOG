@@ -1,3 +1,19 @@
+Changelog: 20-10-2026 23:03:59
+
+Release 5.0.0. Pins helixsr-v0.7.0.
+
+Changelog: 20-10-2026 22:51:30
+
+Added. Sys info, a fifth pill in the header (owner, 20-10-2026): a small window with what the system reports about
+the board, the BIOS (with UEFI and Secure Boot), the CPU, each GPU (with its PCIe link), the memory, the drives, the
+displays, the sound cards, the network adapters and Bluetooth controllers, the USB devices, the sensors and the OS,
+read from sysfs, /proc and /etc each time it opens, in two columns. Copy puts it on the clipboard as text. It shows
+no host or user name, no serial numbers and no MAC or IP addresses.
+
+Changelog: 20-10-2026 22:51:00
+
+Breaking. The portal always opens on the first tab, Sustainable (owner, 20-10-2026), instead of the tab used last.
+
 Changelog: 20-10-2026 22:03:21
 
 Release 4.2.1. HelixSR 2.0 fix implemented

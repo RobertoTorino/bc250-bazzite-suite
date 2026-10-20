@@ -456,13 +456,13 @@ def test_bazzite_test_is_the_first_tile_on_sustainable(window):
     assert window.tabs.isAncestorOf(window.cards["check"]) and not window.tabs.isAncestorOf(window.notice)
 
 
-def test_the_tab_used_last_is_remembered(qapp, home, settings_dir, tmp_path, launched):
+def test_the_portal_always_opens_on_the_first_tab(qapp, home, settings_dir, tmp_path, launched):
+    """Whatever tab was open last (owner, 20-10-2026)."""
     w = mw.MainWindow(load(MANIFEST), FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
     w.tabs.setCurrentWidget(w.pages["gaming"])
-    assert w.settings.value(mw.TAB_KEY) == "gaming"
     w.close()
     again = mw.MainWindow(load(MANIFEST), FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
-    assert again.tabs.currentWidget() is again.pages["gaming"]
+    assert again.tabs.currentIndex() == 0 and again.tabs.currentWidget() is again.pages["sustainable"]
     again.close()
 
 
@@ -774,15 +774,15 @@ def test_one_theme_for_every_app(window, home):
 
 def test_the_header_is_an_apps_header_with_pills(window):
     """The portal's icon as large as the tiles' icons; beside it the name, where the apps install from, and the
-    pills: Refresh, the Desktop icons, the theme and the wallpaper (owner, 20-10-2026)."""
+    pills: Refresh, the Desktop icons, the theme, the wallpaper and Sys info (owner, 20-10-2026)."""
     from PyQt6.QtCore import Qt
     from PyQt6.QtGui import QKeyEvent
     from PyQt6.QtCore import QEvent
     assert window.logo.width() == window.logo.height() == mw.ICON_PX
-    pills = (window.refresh_pill, window.icons_box, window.theme_pill, window.wallpaper_pill)
+    pills = (window.refresh_pill, window.icons_box, window.theme_pill, window.wallpaper_pill, window.sysinfo_pill)
     assert [(p.value.text(), p.caption.text()) for p in pills] == [
         ("Refresh", "Click to refresh"), ("No", "Icons on Desktop"), ("Gunmetal", "Theme switcher"),
-        ("None", "Wallpaper")]
+        ("None", "Wallpaper"), ("Sys info", "Click to view")]
     widths = {p.width() for p in pills}                     # all as wide as the widest (owner, 20-10-2026)
     assert len(widths) == 1 and widths.pop() >= max(p.sizeHint().width() for p in pills)
     refreshed = []
@@ -795,6 +795,22 @@ def test_the_header_is_an_apps_header_with_pills(window):
     assert window.icons_box.isChecked() and window.icons_box.value.text() == "Yes" and toggled == [True]
     window.icons_box.setChecked(True)                       # no change: no signal
     assert toggled == [True]
+
+
+def test_the_sys_info_pill_opens_one_window_read_each_time(window, qapp, monkeypatch):
+    """Sys info (owner, 20-10-2026): a small window with what the system reports, read again each time it opens;
+    Copy puts it on the clipboard as text."""
+    reads = iter([[("Board", [("Board", "ASRock AMD BC-250")])],
+                  [("Board", [("Board", "ASRock AMD BC-250")]), ("BIOS", [("Version", "P5.00")])]])
+    monkeypatch.setattr(mw.sysinfo, "collect", lambda: next(reads))
+    window.sysinfo_pill.click()
+    first = window.sysinfo_window
+    assert first.isVisible() and [h for h, _ in first.sections] == ["Board"]
+    window.sysinfo_pill.click()
+    assert window.sysinfo_window is first and [h for h, _ in first.sections] == ["Board", "BIOS"]
+    first.copy()
+    assert qapp.clipboard().text() == "Board\n  Board: ASRock AMD BC-250\nBIOS\n  Version: P5.00"
+    first.close()
 
 
 def test_the_wallpaper(window, home, tmp_path, monkeypatch):

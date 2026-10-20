@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The portal window: the notice of updates above the tabs, on every tab; then a tab per category (the category of
 the apps' icons, apps.toml), each with the tiles of its apps; check is the first tile on Sustainable (owner,
-20-10-2026). The portal opens on the tab used last.
+20-10-2026). The portal always opens on the first tab (owner, 20-10-2026).
 
 Install, update and uninstall run the app's own installer in a terminal window (they may ask for the sudo
 password and print what they do); the portal watches for the exit file the terminal writes and then refreshes.
@@ -15,7 +15,8 @@ newer portal release on GitHub (which is how newer app versions arrive).
 
 The header, as an app's header with pills (owner, 20-10-2026): the portal's icon as large as the tiles' icons; beside
 it the name, where the apps install from, and a row of pills, as the apps' status boxes: Refresh, the Desktop icons
-(Yes or No; a click switches), the theme (a click goes to the next one) and the wallpaper.
+(Yes or No; a click switches), the theme (a click goes to the next one), the wallpaper and Sys info (a small
+window with what the system reports about the board, sysinfo.py).
 
 Desktop icons: the portal's own icon is enough to reach every app, so the apps' icons on the Desktop are the user's
 choice ("Icons on Desktop", desktop_icons.py). The first start asks when app icons are there; off, the portal
@@ -39,7 +40,7 @@ from pathlib import Path, PurePath
 from PyQt6.QtCore import QCoreApplication, QEvent, QProcess, QRect, QSize, QTimer, Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPalette, QPixmap
 from PyQt6.QtWidgets import (
-    QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea,
+    QApplication, QDialog, QDialogButtonBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea,
     QSlider, QTabWidget, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
 )
 
@@ -50,7 +51,7 @@ from bc250_core.theme import ACCENT, BLUE, GREY, ORANGE, RED, THEMES, header_fon
 from bc250_core.updates import ReleaseInfo, UpdateChecker, version_tuple
 from bc250_core.widgets import ClickableLogo, Pill, hint_label, same_width
 
-from . import desktop_icons, glyphs, wallpaper
+from . import desktop_icons, glyphs, sysinfo, wallpaper
 from . import (APP_ICONS, APP_ID, APP_NAME, INFO, LOGO_PATH, STAGE, STAGE_NOTE, __version__, find_checkout, is_suite,
                remember_checkout)
 from .manifest import CATEGORIES, AppEntry
@@ -66,12 +67,12 @@ BADGE_PX = 24                   # the red circular arrow inside the icon: a rein
 TILE_WIDTH = 216                # the tiles flow left to right, as many to a row as fit
 TILE_SPACING = 12
 PAGE_MARGIN = 24                # a tab's margins take this much of its width
-TAB_KEY = "portal/tab"          # the category of the tab used last
 VEIL = 60                       # % of the theme's window colour over the wallpaper, so the text on it stays readable
 VEIL_MAX = 90                   # the slider's end: the picture still shows; "No wallpaper" takes it away
 VEIL_STEP = 5
 VEIL_KEY = "portal/wallpaper_transparency"
 DESKTOP_ICONS_KEY = "portal/desktop_icons"
+VALUE_PX = 300                  # a value in the Sys info window wraps beyond this width
 LAUNCH_ICON_FILES = {("compute", "Unlock"): "cu-unlock", ("cores", "Unlock"): "cores-unlock"}  # else the app's
 # What each tab holds, at its top (docs/apps/categories.md says the same).
 CATEGORY_HINTS = {
@@ -399,6 +400,65 @@ class TogglePill(Pill):
         self.toggled.emit(checked)
 
 
+class SysInfoDialog(QDialog):
+    """What the system reports about the board (sysinfo.py): a section per part in two columns of about the same
+    length, the names muted, the values selectable; Copy puts it all on the clipboard as plain text."""
+
+    def __init__(self, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.setWindowTitle(f"{APP_NAME}: Sys info")
+        self.sections: list[sysinfo.Section] = []
+        layout = QVBoxLayout(self)
+        self.grids = (QGridLayout(), QGridLayout())     # each column its own, so their rows need not line up
+        columns = QHBoxLayout()
+        columns.setSpacing(32)
+        for grid in self.grids:
+            grid.setHorizontalSpacing(16)
+            grid.setVerticalSpacing(2)
+            grid.setAlignment(Qt.AlignmentFlag.AlignTop)
+            columns.addLayout(grid)
+        layout.addLayout(columns)
+        layout.addStretch(1)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        self.copy_button = buttons.addButton("Copy", QDialogButtonBox.ButtonRole.ActionRole)
+        self.copy_button.setToolTip("Copy everything as text, for an issue or a forum post.")
+        self.copy_button.clicked.connect(self.copy)
+        buttons.rejected.connect(self.close)
+        layout.addWidget(buttons)
+
+    def fill(self, sections: list[sysinfo.Section]) -> None:
+        self.sections = sections
+        for grid in self.grids:
+            while grid.count():
+                item = grid.takeAt(0)
+                if item.widget():
+                    item.widget().deleteLater()
+        half = sum(len(rows) + 1 for _, rows in sections) / 2
+        grid, row = self.grids[0], 0
+        for title, rows in sections:
+            if grid is self.grids[0] and row and row + (len(rows) + 1) / 2 > half:     # the rest on the right
+                grid, row = self.grids[1], 0
+            heading = QLabel(title)
+            heading.setStyleSheet("font-weight:700;" + (" margin-top:8px;" if row else ""))
+            grid.addWidget(heading, row, 0, 1, 2)
+            row += 1
+            for key, value in rows:
+                name = QLabel(key)
+                name.setStyleSheet(f"color:{muted()};")
+                text = QLabel(value)
+                text.setWordWrap(True)
+                text.setFixedWidth(VALUE_PX)            # a long name wraps, at a height the layout knows
+                text.setMinimumHeight(text.heightForWidth(VALUE_PX))
+                text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+                grid.addWidget(name, row, 0, Qt.AlignmentFlag.AlignTop)
+                grid.addWidget(text, row, 1, Qt.AlignmentFlag.AlignTop)
+                row += 1
+        self.adjustSize()
+
+    def copy(self) -> None:
+        QApplication.clipboard().setText(sysinfo.as_text(self.sections))
+
+
 class Backdrop(QWidget):
     """The window's background: the wallpaper, scaled to fill and cropped in the middle, under a veil of the theme's
     window colour (*veil*, 0 to 100 %); without one, the window colour."""
@@ -527,9 +587,14 @@ class MainWindow(QMainWindow):
         self.theme_pill.clicked.connect(self._next_theme)
         self.wallpaper_pill = Pill("None", "Wallpaper")
         self.wallpaper_pill.clicked.connect(self._wallpaper_menu)
-        for pill in (self.refresh_pill, self.icons_box, self.theme_pill, self.wallpaper_pill):
+        self.sysinfo_pill = Pill("Sys info", "Click to view",
+                                 "The board, BIOS, CPU, GPU, memory, drives and OS, as the system reports them.")
+        self.sysinfo_pill.clicked.connect(self.show_sysinfo)
+        self.sysinfo_window: SysInfoDialog | None = None
+        header_pills = [self.refresh_pill, self.icons_box, self.theme_pill, self.wallpaper_pill, self.sysinfo_pill]
+        for pill in header_pills:
             pills.addWidget(pill)
-        same_width([self.refresh_pill, self.icons_box, self.theme_pill, self.wallpaper_pill])   # owner, 20-10-2026
+        same_width(header_pills)                        # owner, 20-10-2026
         self.theme_note = hint_label("The theme changes in each app the next time it starts, the portal too.")
         self.theme_note.hide()
         pills.addWidget(self.theme_note, 1)
@@ -580,10 +645,7 @@ class MainWindow(QMainWindow):
             self.pages[category], self.grids[category] = page, grid
             self.tabs.addTab(page, label)
             self.tabs.setTabToolTip(self.tabs.count() - 1, CATEGORY_HINTS[category])
-        saved = self.settings.value(TAB_KEY, "", type=str)
-        if saved in self.pages:
-            self.tabs.setCurrentWidget(self.pages[saved])
-        self.tabs.currentChanged.connect(self._tab_changed)
+        self.tabs.currentChanged.connect(self.reflow)
         root.addWidget(self.tabs, 1)
         self.reflow()
         self.setCentralWidget(central)
@@ -637,11 +699,6 @@ class MainWindow(QMainWindow):
             tiles = [c for c in self.cards.values() if self.tab_of(c.entry) == category]
             for i, tile in enumerate(tiles):
                 grid.addWidget(tile, i // columns, i % columns)
-
-    def _tab_changed(self) -> None:
-        page = self.tabs.currentWidget()
-        self.settings.setValue(TAB_KEY, next((c for c, p in self.pages.items() if p is page), ""))
-        self.reflow()
 
     def show_app(self, key: str) -> None:
         """Open the tab of the app and scroll to its tile: a link in the notice."""
@@ -899,6 +956,15 @@ class MainWindow(QMainWindow):
         action.setText("Transparency")
         action.setEnabled(wallpaper.shown() is not None)
         return action
+
+    def show_sysinfo(self) -> None:
+        """The Sys info window, read again each time it opens; one at a time."""
+        if self.sysinfo_window is None:
+            self.sysinfo_window = SysInfoDialog(self)
+        self.sysinfo_window.fill(sysinfo.collect())
+        self.sysinfo_window.show()
+        self.sysinfo_window.raise_()
+        self.sysinfo_window.activateWindow()
 
     def _wallpaper_menu(self) -> None:
         self.wallpaper_menu().exec(self.wallpaper_pill.mapToGlobal(self.wallpaper_pill.rect().bottomLeft()))

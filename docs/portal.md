@@ -6,8 +6,8 @@
 
 The BC250 Bazzite Suite's front door: one window that installs, opens, updates and removes the suite's apps.
 **The header**: the portal's icon (click it to open this wiki), its name and version, where the apps install from,
-and four pills of the same width: **Refresh** (look again at which apps are installed), **Icons on Desktop**,
-**Theme switcher** and **Wallpaper**, each described below.
+and five pills of the same width: **Refresh** (look again at which apps are installed), **Icons on Desktop**,
+**Theme switcher**, **Wallpaper** and **Sys info**, each described below.
 
 **Bazzite Test** is always installed with the portal; every other app is optional. The notice of updates is at the
 top, on every tab. Below it is a tab for each [category](apps/categories.md): Sustainable, Graphics, Gaming, Utilities
@@ -32,7 +32,7 @@ row as the window fits; Bazzite Test is always the first tile on Sustainable:
   Test has only Install, which reinstalls it: it is removed together with the portal.
 
 **The tabs.** Each tab says at its top what its apps are for; [The apps](apps/index.md) lists them by tab. The portal
-opens on the tab you used last.
+always opens on the first tab, Sustainable.
 
 **Development**, the last tab, holds the tools for working on the suite:
 [Media Tool](other-tools/media-tool.md), [Dependency Checker](apps/package.md),
@@ -98,6 +98,15 @@ checkout uses its own checkout.
   removes it. The menu also lists the last 10 wallpapers you chose, newest first, under **Used before**: click one to
   use it again. The portal remembers only where each picture was (in `wallpapers.json` in the same folder), so one
   moved or deleted since shows as not found until it is back.
+- **Sys info**, a pill at the top: a small window with what the system reports about the board: the board, the BIOS
+  (with UEFI and Secure Boot), the CPU (model, cores and threads online, top clock, microcode), each GPU (name,
+  driver, VRAM, shared memory, clock levels, VBIOS, PCIe link), the memory, the drives with the free space in your
+  home folder, the displays (each output, the monitor's name and its preferred mode), the sound cards, the network
+  adapters and Bluetooth controllers (driver and link), the USB devices, the sensors (temperatures, fan speeds and
+  the GPU's power at that moment) and the OS (version, Bazzite image, kernel, desktop). It is read each time the
+  window opens; what a system does not report is left out. **Copy** puts it all on the clipboard as text, for an
+  issue or a forum post. It holds nothing personal: no host or user name, no serial numbers, no MAC or IP
+  addresses.
 - The **Dependency Checker** is a separate app in `apps/`. It lists declared runtime Python packages and
   app-specific external tools, plus the apps and features that use them. It compares Python package versions with
   PyPI and checks whether external tools are available; tool links open the relevant app guide. Some apps use

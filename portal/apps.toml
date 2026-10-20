@@ -56,8 +56,8 @@ launch = [["Open", "~/.local/bin/bc250-governor-manager"]]
 [apps.helixsr]
 name = "HelixSR Manager"
 summary = "Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games."
-tag = "helixsr-v0.6.0"
-sha256 = "0b8306d4049dd1e92f183ed60efda183f6c96976f2aaee1c66a38f6ee151a374"
+tag = "helixsr-v0.7.0"
+sha256 = "1ed33e101d135da121a2c1ff68abb268e2b027ae9e49651590bbdf89e233c5c1"
 required = false
 changes_board = false
 category = "graphics"
