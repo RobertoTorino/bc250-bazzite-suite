@@ -783,6 +783,7 @@ def test_the_header_is_an_apps_header_with_pills(window):
     assert [(p.value.text(), p.caption.text()) for p in pills] == [
         ("Refresh", "Click to refresh"), ("No", "Icons on Desktop"), ("Gunmetal", "Theme switcher"),
         ("None", "Wallpaper"), ("Sys info", "Click to view")]
+    assert all(f"border-left:4px solid {mw.BLUE}" in p.styleSheet() for p in pills)     # as the apps' boxes
     widths = {p.width() for p in pills}                     # all as wide as the widest (owner, 20-10-2026)
     assert len(widths) == 1 and widths.pop() >= max(p.sizeHint().width() for p in pills)
     refreshed = []
@@ -806,6 +807,10 @@ def test_the_sys_info_pill_opens_one_window_read_each_time(window, qapp, monkeyp
     window.sysinfo_pill.click()
     first = window.sysinfo_window
     assert first.isVisible() and [h for h, _ in first.sections] == ["Board"]
+    from PyQt6.QtCore import Qt
+    assert first.testAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)    # semi-transparent (owner, 20-10-2026)
+    picture = first.grab().toImage()
+    assert picture.pixelColor(2, 2).alphaF() == pytest.approx(mw.SYSINFO_OPACITY / 100, abs=0.01)
     window.sysinfo_pill.click()
     assert window.sysinfo_window is first and [h for h, _ in first.sections] == ["Board", "BIOS"]
     first.copy()

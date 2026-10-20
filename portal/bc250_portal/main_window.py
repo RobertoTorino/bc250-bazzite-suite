@@ -73,6 +73,8 @@ VEIL_STEP = 5
 VEIL_KEY = "portal/wallpaper_transparency"
 DESKTOP_ICONS_KEY = "portal/desktop_icons"
 VALUE_PX = 300                  # a value in the Sys info window wraps beyond this width
+SYSINFO_OPACITY = 85            # % of the window colour behind the Sys info text: what lies behind shows through
+PILL_COLOUR = BLUE              # the header pills' left edge, as the apps' status boxes (owner, 20-10-2026)
 LAUNCH_ICON_FILES = {("compute", "Unlock"): "cu-unlock", ("cores", "Unlock"): "cores-unlock"}  # else the app's
 # What each tab holds, at its top (docs/apps/categories.md says the same).
 CATEGORY_HINTS = {
@@ -386,7 +388,7 @@ class TogglePill(Pill):
 
     def __init__(self, caption: str, tooltip: str = "", checked: bool = False):
         self.checked = checked
-        super().__init__("Yes" if checked else "No", caption, tooltip)
+        super().__init__("Yes" if checked else "No", caption, tooltip, PILL_COLOUR)
         self.clicked.connect(lambda: self.setChecked(not self.checked))
 
     def isChecked(self) -> bool:  # noqa: N802 (as QCheckBox)
@@ -402,11 +404,13 @@ class TogglePill(Pill):
 
 class SysInfoDialog(QDialog):
     """What the system reports about the board (sysinfo.py): a section per part in two columns of about the same
-    length, the names muted, the values selectable; Copy puts it all on the clipboard as plain text."""
+    length, the names muted, the values selectable; Copy puts it all on the clipboard as plain text. Its background
+    is the window colour at SYSINFO_OPACITY (owner, 20-10-2026); the text stays opaque, so it reads as well."""
 
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self.setWindowTitle(f"{APP_NAME}: Sys info")
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.sections: list[sysinfo.Section] = []
         layout = QVBoxLayout(self)
         self.grids = (QGridLayout(), QGridLayout())     # each column its own, so their rows need not line up
@@ -457,6 +461,14 @@ class SysInfoDialog(QDialog):
 
     def copy(self) -> None:
         QApplication.clipboard().setText(sysinfo.as_text(self.sections))
+
+    def paintEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        painter = QPainter(self)
+        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Source)    # replace, not blend
+        colour = QColor(self.palette().color(QPalette.ColorRole.Window))
+        colour.setAlphaF(SYSINFO_OPACITY / 100)
+        painter.fillRect(self.rect(), colour)
+        painter.end()
 
 
 class Backdrop(QWidget):
@@ -574,7 +586,8 @@ class MainWindow(QMainWindow):
         pills.setSpacing(8)
         words.addLayout(pills)
         header.addLayout(words, 1)
-        self.refresh_pill = Pill("Refresh", "Click to refresh", "Look again at which apps are installed.")
+        self.refresh_pill = Pill("Refresh", "Click to refresh", "Look again at which apps are installed.",
+                                 PILL_COLOUR)
         self.refresh_pill.clicked.connect(self._on_refresh)
         self.icons_box = TogglePill(
             "Icons on Desktop", "On: every installed app gets an icon on the Desktop. Off: only the portal's icon is "
@@ -583,12 +596,13 @@ class MainWindow(QMainWindow):
         self.icons_box.toggled.connect(self._show_icons)
         self.theme_pill = Pill(THEMES[theme_name()].label, "Theme switcher",
                                "The look of every app in the suite. Click for the next theme; an app takes it the "
-                               "next time it starts.")
+                               "next time it starts.", PILL_COLOUR)
         self.theme_pill.clicked.connect(self._next_theme)
-        self.wallpaper_pill = Pill("None", "Wallpaper")
+        self.wallpaper_pill = Pill("None", "Wallpaper", colour=PILL_COLOUR)
         self.wallpaper_pill.clicked.connect(self._wallpaper_menu)
         self.sysinfo_pill = Pill("Sys info", "Click to view",
-                                 "The board, BIOS, CPU, GPU, memory, drives and OS, as the system reports them.")
+                                 "The board, BIOS, CPU, GPU, memory, drives and OS, as the system reports them.",
+                                 PILL_COLOUR)
         self.sysinfo_pill.clicked.connect(self.show_sysinfo)
         self.sysinfo_window: SysInfoDialog | None = None
         header_pills = [self.refresh_pill, self.icons_box, self.theme_pill, self.wallpaper_pill, self.sysinfo_pill]

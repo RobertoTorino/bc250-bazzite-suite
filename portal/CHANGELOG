@@ -1,3 +1,13 @@
+Changelog: 20-10-2026 23:36:22
+
+Release 5.0.1.
+
+Changelog: 20-10-2026 23:29:27
+
+Added. The Sys info window is semi-transparent (owner, 20-10-2026): its background is the theme's window colour at
+85 %, so what lies behind shows through a little, while the text stays opaque and as readable as before. The header
+pills have a blue left edge, as the apps' status boxes do; until now they had none.
+
 Changelog: 20-10-2026 23:09:27
 
 Release 5.0.0.
