@@ -5,8 +5,9 @@
   one it does not, for the update check (this app is updated by the portal).
 * parse_pins(): the exact URLs and SHA-256 sums that a HelixSR release's setup scripts pin for NVIDIA's DLSS DLL,
   Microsoft's DXC and the portable Python, so the app downloads what the script would download, in parallel.
-* SetupWorker: downloads the release zip, the prerequisites it still needs, then runs helixsr-setup.sh --yes with
-  its output streamed to the GUI. The network files it builds are NVIDIA's property and stay on this PC.
+* SetupWorker: downloads the release zip, the prerequisites it still needs, then builds the network with its output
+  streamed to the GUI: helixsr-setup.sh --yes for 1.x, HelixSR's own builder for 2.x (see BUILDER_FROM). The network
+  files it builds are NVIDIA's property and stay on this PC.
 
 Nothing here is Qt except the thread wrappers at the bottom; the functions can be tested with file:// URLs."""
 
@@ -16,6 +17,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -32,15 +34,13 @@ from typing import Callable
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
 
 from . import APP_ID, DATA_HOME, HELIXSR_RELEASES_URL, __version__
-from .backend import HELIXSR_DLL, HelixError, file_digest, payload_status, version_key
+from .backend import FSRFG, HELIXSR_DLL, HelixError, file_digest, payload_folder, payload_status, version_key
 
 HELIXSR_API = "https://api.github.com/repos/lonewolf0622/HelixSR/releases?per_page=30"
-# The HelixSR major version this app sets up. HelixSR 2's helixsr-setup.sh hands --yes on to its game installer, which
-# then puts HelixSR Scaler (with frame generation) into every game it finds, and its package keeps the DLL in
-# HelixSR-fsrfg/; so 2.x is not offered until the app is moved to it. tools/check_upstream.py reports a newer major.
-SUPPORTED_MAJOR = 1
+# The newest HelixSR major version this app sets up (1.x too). tools/check_upstream.py reports a newer major.
+SUPPORTED_MAJOR = 2
 # The newest HelixSR release this app was checked against. tools/check_upstream.py reports a newer one every week.
-KNOWN_VERSION = "1.8.1"
+KNOWN_VERSION = "2.0.0"
 # The release HelixSR's developer points to when the latest one does not work ("If 1.9.0 does not work for you, use
 # HelixSR 1.8.1"): the Setup page offers it next to the latest. tools/check_upstream.py reports when the latest
 # release's notes name another one.
@@ -55,6 +55,20 @@ UNUSED_OUTPUT = ("manual-install", "fsr3-drop-in")
 # The start of that game installer's first line ("... with DLSS, XeSS or FSR", from 1.9.0 on "... with FSR 3.1"):
 # what follows are its questions, which the app does not answer.
 INSTALLER_START = "looking for games with"
+# HelixSR 2's helixsr-setup.sh hands --yes on to its game installer, which then puts HelixSR Scaler (with frame
+# generation) into every game it finds; without --yes it asks on the terminal. From 2.0.0 on the app therefore runs
+# what the script runs before the games: HelixSR's own builder, unchanged (its license allows running the setup, not
+# changing it), on the release's HelixSR-fsrfg folder, with the Python, the shader compiler and NVIDIA's DLL the app
+# fetched, through Wine as the script does. The games stay the Deploy and Games pages'.
+BUILDER_FROM = (2, 0, 0)
+BUILDER = "setup/helixsr_setup.py"
+DXC_WRAPPER = "dxc-wine.sh"                         # the app's own, in its work folder
+# Where the script looks for Wine to run Microsoft's shader compiler, in its order: Steam's Proton, then custom Proton
+# builds, then a system Wine (below the home folder; "wine" on PATH last).
+WINE_GLOBS = (".local/share/Steam/steamapps/common/Proton*/files/bin/wine",
+              ".steam/steam/steamapps/common/Proton*/files/bin/wine",
+              ".local/share/Steam/compatibilitytools.d/*/files/bin/wine",
+              ".steam/root/compatibilitytools.d/*/files/bin/wine")
 # From HelixSR 1.9.0 on the setup also builds frame generation for HelixSR Scaler (about 400 MB from NVIDIA), which
 # the app does not deploy: --no-fg skips it. Older setups do not know the option.
 NO_FG_FROM = (1, 9, 0)
@@ -120,11 +134,11 @@ def supported_release(api_url: str = HELIXSR_API, page_url: str = HELIXSR_RELEAS
               if isinstance(r, dict) and not r.get("draft") and not r.get("prerelease")]
     stable = [r for r in stable if not r.error]
     newest = max(stable, key=lambda r: version_tuple(r.version), default=None)
-    supported = [r for r in stable if version_tuple(r.version)[0] == SUPPORTED_MAJOR
+    supported = [r for r in stable if 1 <= version_tuple(r.version)[0] <= SUPPORTED_MAJOR
                  and r.asset_name.lower() == f"helixsr-{r.version}.zip"]
     best = max(supported, key=lambda r: version_tuple(r.version), default=None)
     if best is None:
-        best = ReleaseInfo(url=page_url, error="no HelixSR {0}.x release found".format(SUPPORTED_MAJOR))
+        best = ReleaseInfo(url=page_url, error="no HelixSR release up to {0}.x found".format(SUPPORTED_MAJOR))
     newer = newest.version if newest and version_tuple(newest.version)[0] > SUPPORTED_MAJOR else ""
     return best, newer
 
@@ -326,14 +340,16 @@ def portable_python_present(helix_data: Path) -> bool:
     return os.access(helix_data / "python" / "bin" / "python3", os.X_OK)
 
 
-def system_python_has_numpy() -> bool:
-    python = shutil.which("python3")
-    if not python:
-        return False
+def python_has_numpy(python: str) -> bool:
     try:
         return subprocess.run([python, "-c", "import numpy"], capture_output=True, timeout=20).returncode == 0
     except (OSError, subprocess.SubprocessError):
         return False
+
+
+def system_python_has_numpy() -> bool:
+    python = shutil.which("python3")
+    return bool(python) and python_has_numpy(python)
 
 
 def unpack_dxc(archive: Path, helix_data: Path) -> None:
@@ -362,6 +378,34 @@ def unpack_python(archive: Path, helix_data: Path) -> None:
         tar.extractall(helix_data, **kwargs)
     if not portable_python_present(helix_data):
         raise HelixError("the portable Python archive did not produce python/bin/python3")
+
+
+def find_wine(home: Path | None = None) -> str:
+    """The Wine that runs Microsoft's shader compiler, where HelixSR's setup looks for it; "" when there is none."""
+    home = home or Path.home()
+    for pattern in WINE_GLOBS:
+        for wine in sorted(home.glob(pattern)):
+            if os.access(wine, os.X_OK):
+                return str(wine)
+    return shutil.which("wine") or ""
+
+
+def write_dxc_wrapper(path: Path, wine: str, helix_data: Path) -> Path:
+    """A script that runs the Windows shader compiler through *wine* in its own prefix, with absolute Linux paths
+    turned into Z:\\ paths, for HelixSR's builder (--dxc)."""
+    dxc = helix_data / "dxc-win" / "bin" / "x64" / "dxc.exe"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("#!/usr/bin/env bash\n"
+                    "# Written by the HelixSR Manager: Microsoft's shader compiler through Wine for HelixSR's builder.\n"
+                    "args=()\n"
+                    "for arg in \"$@\"; do\n"
+                    "    [[ $arg == /* ]] && arg=\"Z:${arg//\\//\\\\}\"\n"
+                    "    args+=(\"$arg\")\n"
+                    "done\n"
+                    f"export WINEPREFIX={shlex.quote(str(helix_data / 'wineprefix'))} WINEDEBUG=-all\n"
+                    f"exec {shlex.quote(wine)} {shlex.quote(str(dxc))} \"${{args[@]}}\"\n", encoding="utf-8")
+    path.chmod(0o755)
+    return path
 
 
 def needed_pins(pins: dict[str, Pin], helix_data: Path, dlss_file: Path | None, immutable: bool) -> list[Pin]:
@@ -492,8 +536,8 @@ class SetupWorker(QThread):
                              "Could not look up HelixSR {0}: {1}".format(FALLBACK_VERSION, release.error))
         if not release.asset_url:
             raise HelixError("HelixSR {0} has no zip to download; see {1}".format(release.version, release.url))
-        if version_tuple(release.version)[:1] != (SUPPORTED_MAJOR,):
-            raise HelixError("HelixSR {0} is not supported yet: this app sets up HelixSR {1}.x.".format(
+        if not 1 <= version_tuple(release.version)[0] <= SUPPORTED_MAJOR:
+            raise HelixError("HelixSR {0} is not supported yet: this app sets up HelixSR up to {1}.x.".format(
                 release.version, SUPPORTED_MAJOR))
         for folder in (req.work_dir, req.helix_data):
             free = free_mb(folder)
@@ -517,7 +561,8 @@ class SetupWorker(QThread):
             shutil.rmtree(extracted)
         release_dir = extract_zip(archive, extracted)
         self._say("Extracted to {0}".format(release_dir))
-        if not (release_dir / HELIXSR_DLL).is_file():
+        payload = payload_folder(release_dir)
+        if not (payload / HELIXSR_DLL).is_file():
             raise HelixError("The release has no {0}.".format(HELIXSR_DLL))
 
         pins = parse_pins(release_dir)
@@ -556,50 +601,123 @@ class SetupWorker(QThread):
             raise Aborted("cancelled")
 
         dlss = req.dlss_file or downloads.get("dlss")
-        # From HelixSR 1.7 on the script ends with its own game installer, which asks per Steam game (--yes does not
-        # answer those). Without input it stops at the first question, so the setup only builds the network files.
-        command = ["bash", str(release_dir / SETUP_SCRIPT), "--yes", *req.extra_args]
-        if dlss is not None:
-            command += ["--dlss", str(dlss)]
-        if version_tuple(release.version) >= NO_FG_FROM:
-            command.append("--no-fg")
-        self.stage.emit("Building the network files (about 5-6 minutes on a BC-250)")
-        self._say("$ " + " ".join(command))
-        env = {**os.environ, **req.script_env}
-        env.setdefault("XDG_DATA_HOME", str(req.helix_data.parent))
         try:
-            self._process = subprocess.Popen(command, cwd=release_dir, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                                             stderr=subprocess.STDOUT, text=True, errors="replace", bufsize=1, env=env)
-        except OSError as exc:
-            raise HelixError("Could not start {0}: {1}".format(SETUP_SCRIPT, exc)) from exc
-        assert self._process.stdout is not None
-        installer = False
-        for line in self._process.stdout:
-            if installer:
-                continue
-            if INSTALLER_START in line:
-                installer = True
-                self._say(("The network is built. HelixSR's own game installer is "
-                           "skipped: use the Deploy page to put HelixSR into a game."))
-                continue
-            self._say(line.rstrip("\n"))
-        code = self._process.wait()
-        self._process = None
-        if "dlss" in downloads:
-            downloads["dlss"].unlink(missing_ok=True)         # NVIDIA's DLL is used once and deleted
-            self._say("Deleted the downloaded {0}".format(DLSS_DLL))
+            if version_tuple(release.version) >= BUILDER_FROM:
+                code = self._build(release_dir, dlss)
+            else:
+                code = self._run_script(release_dir, release.version, dlss)
+        finally:
+            if "dlss" in downloads:
+                downloads["dlss"].unlink(missing_ok=True)     # NVIDIA's DLL is used once and deleted
+                self._say("Deleted the downloaded {0}".format(DLSS_DLL))
         for name in UNUSED_OUTPUT:
             if (release_dir / name).is_dir():
                 shutil.rmtree(release_dir / name, ignore_errors=True)
         if self._cancelled():
             raise Aborted("cancelled")
         if code != 0:
-            raise HelixError("{0} exited with code {1}; see the output above.".format(SETUP_SCRIPT, code))
+            raise HelixError("{0} exited with code {1}; see the output above.".format(
+                BUILDER if version_tuple(release.version) >= BUILDER_FROM else SETUP_SCRIPT, code))
         # HelixSR 1.8+ builds the network into its DLL; older releases leave the two files next to it.
-        missing = payload_status(release_dir).missing()
+        missing = payload_status(payload).missing()
         if missing:
             raise HelixError("The setup finished but did not produce {0}".format(", ".join(missing)))
         return release_dir, release.version
+
+    def _stream(self, command: list[str], cwd: Path, env: dict[str, str], name: str,
+                stop_at: str = "") -> int:
+        """Runs *command* with its output in the log, up to a line with *stop_at* (the rest is not shown)."""
+        self._say("$ " + shlex.join(command))
+        try:
+            self._process = subprocess.Popen(command, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                             stderr=subprocess.STDOUT, text=True, errors="replace", bufsize=1, env=env)
+        except OSError as exc:
+            raise HelixError("Could not start {0}: {1}".format(name, exc)) from exc
+        assert self._process.stdout is not None
+        stopped = False
+        for line in self._process.stdout:
+            if stopped:
+                continue
+            if stop_at and stop_at in line:
+                stopped = True
+                self._say(("The network is built. HelixSR's own game installer is "
+                           "skipped: use the Deploy page to put HelixSR into a game."))
+                continue
+            self._say(line.rstrip("\n"))
+        code = self._process.wait()
+        self._process = None
+        return code
+
+    def _run_script(self, release_dir: Path, version: str, dlss: Path | None) -> int:
+        """HelixSR 1.x: its helixsr-setup.sh --yes."""
+        req = self.request
+        # From HelixSR 1.7 on the script ends with its own game installer, which asks per Steam game (--yes does not
+        # answer those). Without input it stops at the first question, so the setup only builds the network files.
+        command = ["bash", str(release_dir / SETUP_SCRIPT), "--yes", *req.extra_args]
+        if dlss is not None:
+            command += ["--dlss", str(dlss)]
+        if version_tuple(version) >= NO_FG_FROM:
+            command.append("--no-fg")
+        self.stage.emit("Building the network files (about 5-6 minutes on a BC-250)")
+        env = {**os.environ, **req.script_env}
+        env.setdefault("XDG_DATA_HOME", str(req.helix_data.parent))
+        return self._stream(command, release_dir, env, SETUP_SCRIPT, stop_at=INSTALLER_START)
+
+    def _python(self) -> str:
+        """The Python with numpy for HelixSR's builder, as its setup script picks one: the portable Python when it
+        has numpy, else the system's python3 with numpy, else the portable Python with numpy installed by pip."""
+        req = self.request
+        portable = req.helix_data / "python" / "bin" / "python3"
+        candidates = ([str(portable)] if portable_python_present(req.helix_data) else []) + \
+            [p for p in (shutil.which("python3"),) if p]
+        for python in candidates:
+            if python_has_numpy(python):
+                return python
+        if not portable_python_present(req.helix_data):
+            raise HelixError("No Python with numpy for HelixSR's setup, and the portable Python could not be fetched.")
+        self._say("Installing numpy into the portable Python ({0})".format(portable))
+        code = self._stream([str(portable), "-m", "pip", "install", "--quiet", "--disable-pip-version-check", "numpy"],
+                            req.helix_data, dict(os.environ), "pip")
+        if self._cancelled():
+            raise Aborted("cancelled")
+        if code != 0 or not python_has_numpy(str(portable)):
+            raise HelixError("numpy could not be installed into the portable Python; see the output above.")
+        return str(portable)
+
+    def _build(self, release_dir: Path, dlss: Path | None) -> int:
+        """HelixSR 2.x: its builder on HelixSR-fsrfg, without frame generation (--no-fg) and without the games."""
+        req = self.request
+        if not dxc_present(req.helix_data):
+            raise HelixError("The shader compiler is missing in {0}.".format(req.helix_data / "dxc-win"))
+        env = {**os.environ, **req.script_env}
+        wine = find_wine(Path(env["HOME"]) if env.get("HOME") else None)
+        if not wine:
+            raise HelixError("No Proton or Wine found to run the shader compiler: install Proton in Steam (any "
+                             "version) and start again.")
+        python = self._python()
+        dxc = write_dxc_wrapper(req.work_dir / DXC_WRAPPER, wine, req.helix_data)
+        self._say("Shader compiler through {0}".format(wine))
+        builder = release_dir / BUILDER
+        payload = release_dir / FSRFG
+        command = [python, str(builder), str(payload), "--dxc", str(dxc), "--yes", "--no-fg", *req.extra_args]
+        if dlss is not None:
+            command += ["--dlss", str(dlss)]
+        self.stage.emit("Building the network (about 5-6 minutes on a BC-250)")
+        try:
+            code = self._stream(command, release_dir, env, BUILDER)
+        finally:
+            shutil.rmtree(req.helix_data / "wineprefix", ignore_errors=True)   # the compiler's temporary prefix
+        if code != 0 or self._cancelled():
+            return code
+        try:
+            status = subprocess.run([python, str(builder), str(payload), "--status"], capture_output=True, text=True,
+                                    errors="replace", timeout=60, env=env).stdout.strip()
+        except (OSError, subprocess.SubprocessError) as exc:
+            status = str(exc)
+        self._say("{0}: {1}".format(FSRFG, status))
+        if "network=1" not in status.split():
+            raise HelixError("The build finished but {0} does not carry the network ({1}).".format(FSRFG, status))
+        return 0
 
 
 class UpdateChecker(QObject):

@@ -901,3 +901,34 @@ def test_the_wallpapers_used_before(window, tmp_path):
     assert wallpaper.saved()[0] == pictures[2] and wallpaper.current().read_bytes() == pictures[2].read_bytes()
     window.remove_wallpaper()                                                   # none now: none ticked
     assert not any(checked for _, checked, _ in entries()) and len(wallpaper.saved()) == 10
+
+
+def test_the_wallpapers_transparency(window):
+    """A slider in the Wallpaper pill's menu sets how much of the theme's colour lies over the picture, while it moves
+    and for the next start (owner, 20-10-2026): 60 % at first, as before, up to 90 %; off without a wallpaper."""
+    from PyQt6.QtGui import QColor, QPalette
+
+    def slider_action():
+        return next(a for a in window.wallpaper_menu().actions() if a.text() == "Transparency")
+
+    assert window.transparency() == mw.VEIL == 60 and not slider_action().isEnabled()
+    window.example_wallpaper()
+    action = slider_action()
+    assert action.isEnabled() and window.transparency_slider.value() == 60
+    assert "Transparency 60 %" in window.wallpaper_pill.toolTip()
+    assert window.transparency_slider.maximum() == mw.VEIL_MAX == 90
+    window.resize(900, 700)
+    window.show()
+    veil = QColor(window.palette().color(QPalette.ColorRole.Window))
+
+    def distance() -> int:
+        pixel = QColor(window.backdrop.grab().toImage().pixel(450, 600))
+        return sum(abs(a - b) for a, b in zip(pixel.getRgb()[:3], veil.getRgb()[:3]))
+
+    before = distance()
+    window.transparency_slider.setValue(88)                 # rounded to the step
+    assert window.backdrop.veil == 90 and window.settings.value(mw.VEIL_KEY, type=int) == 90
+    assert distance() < before                              # nearer the theme's own colour
+    assert "Transparency 90 %" in window.wallpaper_pill.toolTip()
+    window.settings.setValue(mw.VEIL_KEY, 250)              # a value from elsewhere: kept within the slider's range
+    assert window.transparency() == 90

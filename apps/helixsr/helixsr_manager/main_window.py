@@ -150,7 +150,7 @@ class MainWindow(QMainWindow):
         self.refresh()
         self._restore_window_state()
         built = latest_work_release(self.work_dir)
-        if built is not None and backend.payload_status(built).network_ready:
+        if built is not None and backend.payload_status(backend.payload_folder(built)).network_ready:
             self.setup_page.set_built(built)
         auto = self.settings.value("updates/check_on_start", True, type=bool) if check_updates is None else check_updates
         self.setup_page.set_auto_check(bool(auto))

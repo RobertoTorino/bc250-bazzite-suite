@@ -18,7 +18,7 @@ app does exactly that, reversibly, and nothing else on the system is touched. No
 
 ## What it manages
 
-- **Setup in one click** – *Download and build* fetches the latest HelixSR 1.x release from GitHub (checked against
+- **Setup in one click** – *Download and build* fetches the latest HelixSR release from GitHub (checked against
   the SHA-256 GitHub publishes for it), reads the exact
   URLs and SHA-256 sums its setup scripts pin, downloads what the PC still needs **in parallel** and verified
   (NVIDIA's DLSS 310.7.0 DLL, 59 MB; Microsoft's DirectX Shader Compiler, 25 MB; on Bazzite a portable Python,
@@ -30,9 +30,13 @@ app does exactly that, reversibly, and nothing else on the system is touched. No
   game; the app gives it no input, so it stops there and only the network files are built. From HelixSR 1.8.0
   on, the network is built into HelixSR's DLL instead of two separate files. From HelixSR 1.9.0 on, the script
   can also build frame generation for HelixSR Scaler (about 400 MB from NVIDIA); the app does not deploy that, so
-  it skips this step (`--no-fg`). The app sets up HelixSR 1.x only: HelixSR 2.0's setup, run as the app runs it,
-  installs HelixSR Scaler into every game it finds. Until the app supports 2.x, the Setup page says when it is out
-  and the app keeps getting the newest 1.x release.
+  it skips this step (`--no-fg`). HelixSR 2.x keeps its DLL in the release's `HelixSR-fsrfg` folder, and its
+  `helixsr-setup.sh --yes` would install HelixSR Scaler into every game it finds. For 2.x the app therefore runs what
+  that script runs before its game installer: HelixSR's own builder (`setup/helixsr_setup.py`, unchanged) on
+  `HelixSR-fsrfg`, with the same Python, shader compiler and Proton, and without frame generation (`--no-fg`). It
+  then checks that the DLL carries the network. Your games are only changed from the Deploy and Games pages. When
+  a later major version is out that the app does not support yet, the Setup page says so and the app keeps getting
+  the newest release it supports.
 - **Version choice** – *Version* on the Setup page picks the latest HelixSR release (the default) or HelixSR
   1.8.1, the version HelixSR's developer recommends when the latest one does not work for you (please then open
   an issue at [HelixSR](https://github.com/lonewolf0622/HelixSR/issues) with the game's `helixsr.log`).
@@ -156,7 +160,8 @@ helixsr_manager/
   backend.py        pure file logic: payload import, DLL discovery, deploy/remove (both modes),
                     helixsr.ini parse/render/validate, deployment store, Steam library discovery
   acquire.py        GitHub release lookup, pinned-source parsing, verified parallel downloads,
-                    helixsr-setup.sh runner (QThread) and the update checker
+                    the build (QThread: helixsr-setup.sh for 1.x, HelixSR's builder for 2.x) and the
+                    update checker
   setup_page.py     Setup page
   main_window.py    header, navigation, polling, confirmations, wiring of page signals to the backend
   pages.py          Overview, Deploy and helixsr.ini pages
@@ -174,8 +179,8 @@ e.g. `./test.sh -k ini`). For this app alone: `pip install -r requirements-dev.t
 `QT_QPA_PLATFORM=offscreen python -m pytest -q tests`. They cover the `helixsr.ini` round-trip against the
 upstream file, payload import from folders and zips, DLL discovery, deploy/remove in both modes (including
 re-deploy over an older build and refusing foreign DLLs), the deployment store, Steam library parsing, the
-release lookup and the whole Setup run (downloads over `file://` URLs against a fake `helixsr-setup.sh`, checksum
-and script failures, a local DLSS DLL), the main window driven through its page signals and the translations
+release lookup and the whole Setup run (downloads over `file://` URLs against a fake `helixsr-setup.sh` and a fake
+2.x builder, checksum and script failures, a local DLSS DLL), the main window driven through its page signals and the translations
 (compiler round-trip through `QTranslator`, completeness of every shipped language). The suite's CI
 (`.github/workflows/ci.yml`) runs them on every push and pull request. Releases are tagged `helixsr-v<x.y.z>` in
 the suite repository; `.github/workflows/release.yml` then builds the tarball and publishes it on GitHub.

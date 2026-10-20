@@ -1,3 +1,21 @@
+Changelog: 20-10-2026 21:58:19
+
+Release 0.7.0.
+
+Changelog: 20-10-2026 21:34:32
+
+Added. HelixSR 2.x is set up (owner, 20-10-2026). Its helixsr-setup.sh hands --yes on to its game installer, which
+would put HelixSR Scaler into every game it finds, and its license does not allow changing the script; so for 2.x the
+app runs what the script runs before its games: HelixSR's own builder, unchanged (setup/helixsr_setup.py on the
+release's HelixSR-fsrfg folder, --yes --no-fg, the DLSS DLL with --dlss), with the portable Python (numpy installed by
+pip when it has none, as the script does) or the system's python3 with numpy, the shader compiler through the Wine
+the script would use (Steam's Proton first) and a wrapper of the app's own in its work folder; Wine's temporary prefix
+is removed afterwards, and the build counts only when --status says network=1. The DLL is taken from HelixSR-fsrfg
+(payload_folder in backend.py); 1.x still runs its setup script. SUPPORTED_MAJOR is 2 (1.x stays available) and
+KNOWN_VERSION 2.0.0; the Setup page, the help and the wiki say so. The downloaded DLSS DLL is now also deleted when the
+build stops with an error. Tests: tests/test_acquire.py (a fake 2.x release whose setup script must not run, a fake
+builder, the DXC wrapper's paths, Wine and Python choice).
+
 Changelog: 20-10-2026 00:48:10
 
 Release 0.6.0.

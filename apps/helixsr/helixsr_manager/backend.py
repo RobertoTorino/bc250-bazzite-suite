@@ -42,6 +42,7 @@ PAYLOAD_DOCS = ("README.md", "LICENSE", "LICENSE-APACHE-2.0", "THIRD_PARTY_NOTIC
 PAYLOAD_FILES = (HELIXSR_DLL, WEIGHTS, KERNELS, INI, *PAYLOAD_DOCS)
 ESSENTIAL_FILES = (HELIXSR_DLL, WEIGHTS, KERNELS)
 MAX_SCAN_DEPTH = 12
+FSRFG = "HelixSR-fsrfg"                             # HelixSR 2's folder for its DLL in the release (and helixsr.ini)
 MODE_REPLACE, MODE_FOLDER = "replace", "folder"
 
 SHARPENING_MODES = ("off", "game", "override")
@@ -203,6 +204,11 @@ def ini_ignored_fields(version: str) -> set[str]:
     if key < (1, 8, 0):
         return {name for section, _, name in INI_SCHEMA if section == "Sharpening"} | {"network"}
     return {"sharpening_mode", "network"}
+
+
+def payload_folder(release_dir: Path) -> Path:
+    """Where an extracted release keeps HelixSR's DLL: HelixSR-fsrfg/ from 2.0 on, the release folder before."""
+    return release_dir / FSRFG if (release_dir / FSRFG / HELIXSR_DLL).is_file() else release_dir
 
 
 def payload_status(payload_dir: Path) -> PayloadStatus:

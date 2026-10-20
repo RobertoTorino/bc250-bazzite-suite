@@ -40,14 +40,17 @@ def help_html(payload_dir: str, deployments_file: str,
         ("<p><b>Remove</b> undoes it: HelixSR's files are deleted and the <code>.original.dll</code> gets its "
          'name back.</p>'),
         '<h2>Setup</h2>',
-        ("<p><b>Download and build</b> does the HelixSR README's setup for you: it fetches the latest HelixSR 1.x "
+        ("<p><b>Download and build</b> does the HelixSR README's setup for you: it fetches the latest HelixSR "
          'release zip from <a href="{releases_url}">GitHub</a> (2 MB) and checks its SHA-256, reads the exact '
          "sources and SHA-256 sums the release's own setup scripts pin, downloads what this PC still needs <i>in parallel</i> and verifies "
          "each file: NVIDIA's DLSS 310.7.0 DLL (59 MB, from NVIDIA's GitHub under NVIDIA's license), "
          "Microsoft's DirectX Shader Compiler (25 MB) and, on read-only systems such as Bazzite, a portable "
-         'Python (67 MB, numpy is added by the script). Then it runs <code>helixsr-setup.sh --yes</code> with '
-         'its output on the page: the script builds <code>{weights}</code> and <code>{kernels}</code> (5-6 '
-         'minutes, the shader compiler runs through your Proton) and the result is imported as the payload. '
+         'Python (67 MB, with numpy). Then it builds the network with its output on the page (5-6 minutes, the '
+         'shader compiler runs through your Proton) and the result is imported as the payload: for HelixSR 1.x '
+         'it runs <code>helixsr-setup.sh --yes</code>, which builds <code>{weights}</code> and '
+         '<code>{kernels}</code> (from 1.8 on inside the DLL); for HelixSR 2.x it runs what that script runs '
+         "before its game installer, HelixSR's own builder, so the setup never installs into your games. "
+         'Frame generation is not built (<code>--no-fg</code>). '
          'The DLSS DLL is deleted afterwards. Everything is downloaded into <code>{work_dir}</code> and '
          "<code>~/.local/share/HelixSR</code> (the script's own cache, reused next time).</p>"),
         ('<p>If a game you own already ships DLSS 310.7.0, tick <b>Use a nvngx_dlss.dll already on this PC</b>'
@@ -60,9 +63,8 @@ def help_html(payload_dir: str, deployments_file: str,
          'itself is updated through the BC250 Bazzite Suite portal.</p>'),
         ('<p><b>Download and build</b> does not start with less than about 1.5 GB free where it downloads and '
          'builds.</p>'),
-        ('<p>The app sets up HelixSR 1.x. HelixSR 2.0 changed its setup: run as the app runs it, it installs '
-         'HelixSR Scaler into every game it finds. Until the app supports 2.x, <b>Releases</b> says when it is out '
-         'and the app keeps getting the newest 1.x release.</p>'),
+        ('<p>The app sets up HelixSR 1.x and 2.x. When a later major version is out, <b>Releases</b> says so and '
+         'the app keeps getting the newest release it supports.</p>'),
         ('<p><b>Version</b> picks what <b>Download and build</b> gets: the latest HelixSR release, or HelixSR '
          "{fallback}, the version HelixSR's developer recommends when the latest one does not work for you (please"
          ' then open an issue at <a href="{helixsr_url}/issues">HelixSR</a> with the <code>helixsr.log</code> from '

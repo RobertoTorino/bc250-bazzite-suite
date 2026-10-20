@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""acquire.py with file:// URLs and a fake helixsr-setup.sh: no network, no Proton."""
+"""acquire.py with file:// URLs, a fake helixsr-setup.sh and a fake builder: no network, no Proton."""
 
 from __future__ import annotations
 
 import hashlib
 import io
 import json
+import os
+import subprocess
+import sys
 import tarfile
 import zipfile
 from dataclasses import replace
@@ -307,22 +310,24 @@ def test_update_check_covers_only_helixsr():
 
 
 def test_the_newest_release_of_the_supported_major():
-    """HelixSR 2's setup installs into every game when run with --yes: the app keeps to 1.x and says 2.0 is out."""
+    """The app sets up 1.x and 2.x (owner, 20-10-2026) and says when a later major is out that it does not."""
     with mock.patch.object(acquire, "_get_json", return_value=RELEASES):
         latest, unsupported = acquire.supported_release()
-    assert (latest.version, latest.asset_name, unsupported) == ("1.9.3", "HelixSR-1.9.3.zip", "2.0.0")
+    assert (latest.version, latest.asset_name, unsupported) == ("2.0.0", "HelixSR-2.0.0.zip", "")
     assert latest.asset_sha256 == "ab" * 32
-    status = UpdateStatus("HelixSR", "1.9.3", latest, unsupported)
+    assert UpdateStatus("HelixSR", "1.9.3", latest, unsupported).summary == "1.9.3 → 2.0.0 available (2026-10-16)"
+    with mock.patch.object(acquire, "_get_json", return_value=[gh_release("3.0.0"), *RELEASES]):
+        latest, unsupported = acquire.supported_release()
+    assert (latest.version, unsupported) == ("2.0.0", "3.0.0")
+    status = UpdateStatus("HelixSR", "2.0.0", latest, unsupported)
     assert not status.update_available and status.kind == "ok"
-    assert status.summary.endswith("; HelixSR 2.0.0 is out, this app does not support it yet")
-    assert UpdateStatus("HelixSR", "1.8.1", latest, unsupported).summary == \
-        "1.8.1 → 1.9.3 available (2026-10-16); HelixSR 2.0.0 is out, this app does not support it yet"
+    assert status.summary.endswith("; HelixSR 3.0.0 is out, this app does not support it yet")
     with mock.patch.object(acquire, "_get_json", return_value=RELEASES[1:]):
-        assert acquire.supported_release()[1] == ""
-    no_zip = [gh_release("2.0.0"), gh_release("1.9.3", zip_name="x.zip")]
+        assert acquire.supported_release()[0].version == "1.9.3"
+    no_zip = [gh_release("3.0.0"), gh_release("2.0.0", zip_name="x.zip")]
     with mock.patch.object(acquire, "_get_json", return_value=no_zip):
         latest, unsupported = acquire.supported_release()
-    assert "no HelixSR 1.x release" in latest.error and unsupported == "2.0.0"
+    assert "no HelixSR release up to 2.x" in latest.error and unsupported == "3.0.0"
     with mock.patch.object(acquire, "_get_json", side_effect=OSError("no route")):
         assert "no connection" in acquire.supported_release()[0].error
     with mock.patch.object(acquire, "_get_json", return_value={"message": "rate limit"}):
@@ -330,10 +335,10 @@ def test_the_newest_release_of_the_supported_major():
 
 
 def test_setup_worker_refuses_another_major(qapp, tmp_path):
-    release = ReleaseInfo("2.0.0", "v2.0.0", "u", "2026-10-19", "HelixSR-2.0.0.zip", "file:///nowhere.zip", 1)
+    release = ReleaseInfo("3.0.0", "v3.0.0", "u", "2026-10-19", "HelixSR-3.0.0.zip", "file:///nowhere.zip", 1)
     with mock.patch.object(acquire, "download") as dl:
         outcome, _ = run_worker(qapp, SetupRequest(release, tmp_path / "work", tmp_path / "data"))
-    assert not outcome.ok and "HelixSR 2.0.0 is not supported yet" in outcome.message and not dl.called
+    assert not outcome.ok and "HelixSR 3.0.0 is not supported yet" in outcome.message and not dl.called
 
 
 def test_setup_worker_needs_free_space(qapp, tmp_path):
@@ -419,3 +424,144 @@ def test_setup_worker_accepts_a_one_file_dll(qapp, tmp_path):
     assert backend.network_embedded(rd / backend.HELIXSR_DLL) and not (rd / backend.WEIGHTS).exists()
     assert backend.import_payload(rd, tmp_path / "payload").missing == []
     assert backend.payload_status(tmp_path / "payload").ready
+
+
+
+# HelixSR 2's package: the DLL in HelixSR-fsrfg/, a setup script that ends with its game installer (here it leaves a
+# mark when it runs at all), and the builder, which appends the network to the DLL, writes fsr3-drop-in/ and answers
+# --status as the real one does.
+SCRIPT_2X = """
+HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+echo ran > "$HERE/setup-script-ran.txt"
+"""
+BUILDER_2X = """
+import sys
+from pathlib import Path
+a = sys.argv[1:]
+out = Path(a[0])
+dll = out / 'amd_fidelityfx_dx12.dll'
+footer = b'HXSRNET1' + (7).to_bytes(8, 'little') * 2 + (1).to_bytes(8, 'little')
+if '--status' in a:
+    print('network=%d fg=0' % dll.read_bytes().endswith(footer))
+    sys.exit(0)
+(out.parent / 'args.txt').write_text(' '.join(a))
+print('[helixsr-setup] building the network ({0})'.format(BUILD))
+if BUILD != 'fail':
+    if BUILD == 'ok':
+        with dll.open('ab') as f:
+            f.write(b'weightskernels' + footer)
+    (out.parent / 'fsr3-drop-in').mkdir()
+sys.exit(4 if BUILD == 'fail' else 0)
+"""
+
+
+def prepared_2x(tmp_path, build="ok"):
+    """A HelixSR 2.0.0 release zip with the fake script and builder, and the same pinned downloads as prepared()."""
+    release, dlss = prepared(tmp_path)
+    one_x = Path(release.asset_url[len("file://"):])
+    buf = io.BytesIO()
+    with zipfile.ZipFile(one_x) as old, zipfile.ZipFile(buf, "w") as zf:
+        setup_sh = old.read("HelixSR-1.2.0/helixsr-setup.sh").decode().split(GOOD_SCRIPT)[0] + SCRIPT_2X
+        pins_py = old.read("HelixSR-1.2.0/setup/helixsr_setup.py").decode()
+        zf.writestr("HelixSR-2.0.0/helixsr-setup.sh", setup_sh)
+        zf.writestr("HelixSR-2.0.0/setup/helixsr_setup.py", pins_py + f"BUILD = {build!r}\n" + BUILDER_2X)
+        zf.writestr("HelixSR-2.0.0/HelixSR-fsrfg/amd_fidelityfx_dx12.dll", FAKE_DLL)
+        zf.writestr("HelixSR-2.0.0/HelixSR-fsrfg/helixsr.ini", backend.DEFAULT_INI_TEXT)
+        zf.writestr("HelixSR-2.0.0/helixsr-scaler/README.txt", "HelixSR Scaler\n")
+        zf.writestr("HelixSR-2.0.0/README.md", "# HelixSR 2.0.0\n")
+    archive = tmp_path / "srv" / "HelixSR-2.0.0.zip"
+    archive.write_bytes(buf.getvalue())
+    return ReleaseInfo("2.0.0", "v2.0.0", "u", "2026-10-19", archive.name, archive.as_uri(), len(buf.getvalue())), dlss
+
+
+def run_2x(qapp, tmp_path, build="ok", wine="/opt/wine/bin/wine"):
+    release, _ = prepared_2x(tmp_path, build)
+    request = SetupRequest(release, tmp_path / "work", tmp_path / "data" / "HelixSR")
+    with mock.patch.object(acquire, "is_immutable_system", return_value=True), \
+            mock.patch.object(acquire, "find_wine", return_value=wine), \
+            mock.patch.object(SetupWorker, "_python", return_value=sys.executable):
+        return run_worker(qapp, request)
+
+
+def test_setup_worker_builds_2x_without_its_game_installer(qapp, tmp_path):
+    """HelixSR 2's setup script installs into every game with --yes: the app runs its builder instead, on
+    HelixSR-fsrfg, without frame generation, and takes the DLL from there (owner, 20-10-2026)."""
+    (tmp_path / "data" / "HelixSR" / "wineprefix").mkdir(parents=True)
+    outcome, log = run_2x(qapp, tmp_path)
+    assert outcome.ok, outcome.message
+    rd = outcome.release_dir
+    assert not (rd / "setup-script-ran.txt").exists()                  # never its setup script, so never its games
+    args = (rd / "args.txt").read_text().split()
+    assert args[0] == str(rd / backend.FSRFG) and args[args.index("--dxc") + 1] == str(tmp_path / "work" /
+                                                                                        acquire.DXC_WRAPPER)
+    assert {"--yes", "--no-fg"} <= set(args) and args[args.index("--dlss") + 1] == str(tmp_path / "work" /
+                                                                                       "nvngx_dlss.dll")
+    assert not (tmp_path / "work" / "nvngx_dlss.dll").exists()        # NVIDIA's DLL is deleted afterwards
+    assert not (rd / "fsr3-drop-in").exists() and not (tmp_path / "data" / "HelixSR" / "wineprefix").exists()
+    assert any("building the network" in line for line in log) and "HelixSR-fsrfg: network=1 fg=0" in log
+    assert backend.payload_folder(rd) == rd / backend.FSRFG
+    result = backend.import_payload(rd, tmp_path / "payload")
+    assert result.missing == [] and backend.payload_status(tmp_path / "payload").ready
+    assert (tmp_path / "payload" / backend.HELIXSR_DLL).read_bytes() == (rd / backend.FSRFG / backend.HELIXSR_DLL
+                                                                         ).read_bytes()
+    assert acquire.latest_work_release(tmp_path / "work") == rd
+
+
+@pytest.mark.parametrize("build, wine, says", [("fail", "/opt/wine/bin/wine", "exited with code 4"),
+                                               ("no-network", "/opt/wine/bin/wine", "does not carry the network"),
+                                               ("ok", "", "No Proton or Wine found")])
+def test_setup_worker_2x_failures(qapp, tmp_path, build, wine, says):
+    outcome, _ = run_2x(qapp, tmp_path, build, wine)
+    assert not outcome.ok and says in outcome.message
+    assert not (tmp_path / "work" / "nvngx_dlss.dll").exists()
+
+
+def test_the_dxc_wrapper_runs_the_compiler_through_wine(tmp_path):
+    """Absolute Linux paths become Z:\\ paths; Wine runs in its own prefix; a Proton folder may have spaces."""
+    wine = tmp_path / "Proton - Experimental" / "wine"
+    wine.parent.mkdir()
+    wine.write_text('#!/usr/bin/env bash\necho "$WINEPREFIX|$WINEDEBUG"\nprintf "%s\\n" "$@"\n')
+    wine.chmod(0o755)
+    wrapper = acquire.write_dxc_wrapper(tmp_path / "work" / "dxc-wine.sh", str(wine), tmp_path / "data")
+    out = subprocess.run([str(wrapper), "-T", "cs_6_6", "/tmp/a b/k4.hlsl", "-Fo", "/out/k4.cso"],
+                         capture_output=True, text=True, check=True).stdout.splitlines()
+    assert out == [f"{tmp_path / 'data' / 'wineprefix'}|-all", str(tmp_path / "data" / "dxc-win" / "bin" / "x64" /
+                                                                    "dxc.exe"),
+                   "-T", "cs_6_6", "Z:\\tmp\\a b\\k4.hlsl", "-Fo", "Z:\\out\\k4.cso"]
+
+
+def test_find_wine_takes_proton_first(tmp_path, monkeypatch):
+    monkeypatch.setattr(acquire.shutil, "which", lambda name: "/usr/bin/wine" if name == "wine" else None)
+    assert acquire.find_wine(tmp_path) == "/usr/bin/wine"
+    for folder in (".local/share/Steam/compatibilitytools.d/GE-Proton10-1", ".steam/steam/steamapps/common/Proton 9.0",
+                   ".steam/steam/steamapps/common/Proton - Experimental"):
+        wine = tmp_path / folder / "files" / "bin" / "wine"
+        wine.parent.mkdir(parents=True)
+        wine.write_text("#!/bin/sh\n")
+        wine.chmod(0o755)
+    assert acquire.find_wine(tmp_path) == str(tmp_path / ".steam/steam/steamapps/common/Proton - Experimental/files/"
+                                                         "bin/wine")
+
+
+def test_the_builders_python(qapp, tmp_path, monkeypatch):
+    """As HelixSR's script: the portable Python with numpy, else the system's with numpy, else numpy by pip into
+    the portable one."""
+    data = tmp_path / "data"
+    portable = str(data / "python" / "bin" / "python3")
+    worker = SetupWorker(SetupRequest(None, tmp_path / "work", data))
+    monkeypatch.setattr(acquire.shutil, "which", lambda name: "/usr/bin/python3")
+    numpy = {"/usr/bin/python3"}
+    monkeypatch.setattr(acquire, "python_has_numpy", lambda python: python in numpy)
+    assert worker._python() == "/usr/bin/python3"                      # no portable Python
+    make_python_tgz(tmp_path / "p.tgz")
+    unpack_python(tmp_path / "p.tgz", data)
+    numpy.add(portable)
+    assert worker._python() == portable
+    numpy.clear()
+    pip = []
+    monkeypatch.setattr(worker, "_stream", lambda command, *a, **k: pip.append(command) or numpy.add(portable) or 0)
+    assert worker._python() == portable and pip[0][:4] == [portable, "-m", "pip", "install"]
+    numpy.clear()
+    monkeypatch.setattr(worker, "_stream", lambda *a, **k: 1)
+    with pytest.raises(acquire.HelixError, match="numpy could not be installed"):
+        worker._python()

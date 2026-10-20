@@ -1,3 +1,10 @@
+Changelog: 20-10-2026 21:54:38
+
+Added. Record portal tour on the Test on this board tab (owner, 20-10-2026): it runs tools/record-tour.sh in the
+background, with its output in Logs, and records the portal's video tour from the checkout into
+~/Videos/bc250-portal-tour-v<portal version>.mp4, then opens it in the video player. The button is off while it
+records; closing the window stops a recording. Tests: tests/test_plan.py.
+
 Changelog: 20-10-2026 20:21:21
 
 Added. The header is a row of pills of equal width, as the apps' status boxes (owner, 20-10-2026): Refresh (was a

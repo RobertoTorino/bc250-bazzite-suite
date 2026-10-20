@@ -42,6 +42,7 @@ from urllib.parse import urlparse
 SUITE = Path(__file__).resolve().parents[3]           # apps/suite/suite_releases/plan.py
 TOOLS = SUITE / "tools"
 CHECK_SCRIPT = "apps/suite/check-release.sh"  # relative to the checkout
+RECORD_SCRIPT = "tools/record-tour.sh"         # the portal's video tour, relative to the checkout
 TAG_SCRIPT = "tools/tag-release.sh"     # tags only a pushed HEAD that holds the version: never one before the bump
 CI_LOCAL = "tools/ci-local.sh"          # CI's jobs here, in a container (Linux): the push only when they pass
 CHECKOUT_ONLY = ".checkout-only"        # an app folder with this marker runs from the checkout and is never released

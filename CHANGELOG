@@ -1,3 +1,14 @@
+Changelog: 20-10-2026 21:25:05
+
+tools/portal_tour.py renders a video tour of the portal for the wiki and YouTube: the real portal window from the
+checkout, driven by a script offscreen in a temporary home folder (a few apps installed, one behind its pin, no
+network, nothing from the machine it runs on), with the pointer, clicks and captions drawn in, into an MP4 (H.264,
+1920 x 1080, 30 fps) through ffmpeg. It shows the header and its pills, the update notice, the tiles, every tab, the
+wallpaper and its transparency, and the three themes. tools/record-tour.sh records it again after a change: it
+picks the venv as test.sh does and writes ~/Videos/bc250-portal-tour-v<portal version>.mp4, or the file it is given. Suite
+Releases has it as Record portal tour. The tour leaves with os._exit once the video is written: Python's shutdown,
+which destroys the Qt objects in no fixed order, crashed now and then after a complete recording.
+
 Changelog: 20-10-2026 10:33:10
 
 Wiki: in The apps and App categories, BC-250 Installer Tests is a link like the other apps (to Tests in Architecture

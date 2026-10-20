@@ -44,8 +44,8 @@ class SetupPage(QWidget):
         layout.addLayout(header)
         layout.addWidget(hint_label(
             "One click does what the HelixSR README asks you to do by hand: download the release, fetch NVIDIA's "
-            "DLSS DLL, Microsoft's shader compiler and (on Bazzite) a portable Python in parallel, run "
-            "<code>helixsr-setup.sh</code> and import the result as the payload. The DLSS DLL is used once and "
+            "DLSS DLL, Microsoft's shader compiler and (on Bazzite) a portable Python in parallel, build the "
+            "network with HelixSR's own setup and import the result as the payload. The DLSS DLL is used once and "
             "deleted; the network files it produces are NVIDIA's property and stay on this PC."))
 
         updates = QGroupBox("Releases")
@@ -107,7 +107,7 @@ class SetupPage(QWidget):
 
         actions = QHBoxLayout()
         self.start = accent_button("Download and build", ("Download the latest release and everything the setup "
-                                                          "needs, run helixsr-setup.sh and import the result"))
+                                                          "needs, build the network and import the result"))
         self.start.clicked.connect(self._start_clicked)
         actions.addWidget(self.start)
         self.cancel = QPushButton("Cancel")
@@ -136,7 +136,7 @@ class SetupPage(QWidget):
         vbox.addWidget(self.progress)
         self.terminal = Terminal()
         self.terminal.setMinimumHeight(220)
-        self.terminal.setToolTip("Output of the downloads and of helixsr-setup.sh")
+        self.terminal.setToolTip("Output of the downloads and of HelixSR's setup")
         vbox.addWidget(self.terminal, 1)
         layout.addWidget(box, 1)
         self._lines: list[str] = []

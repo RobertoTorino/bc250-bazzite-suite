@@ -22,7 +22,8 @@ choice ("Icons on Desktop", desktop_icons.py). The first start asks when app ico
 removes them at start and after each install (the installers write one), on, it adds one for every installed app.
 
 Wallpaper: none until the user chooses one, the portal's example picture or one of their own, behind the window (wallpaper.py), under a veil of
-the theme's window colour so the text stays readable."""
+the theme's window colour so the text stays readable. A slider in the Wallpaper pill's menu sets the veil, the
+picture's transparency (owner, 20-10-2026): a dark picture can take a stronger one, so the icons on it stand out."""
 
 from __future__ import annotations
 
@@ -39,7 +40,7 @@ from PyQt6.QtCore import QCoreApplication, QEvent, QProcess, QRect, QSize, QTime
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPalette, QPixmap
 from PyQt6.QtWidgets import (
     QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea,
-    QTabWidget, QToolButton, QVBoxLayout, QWidget,
+    QSlider, QTabWidget, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
 )
 
 from bc250_core import SUITE_MANUAL_URL, __version__ as CORE_VERSION, upstream
@@ -66,7 +67,10 @@ TILE_WIDTH = 216                # the tiles flow left to right, as many to a row
 TILE_SPACING = 12
 PAGE_MARGIN = 24                # a tab's margins take this much of its width
 TAB_KEY = "portal/tab"          # the category of the tab used last
-VEIL = 0.6                      # the theme's window colour over the wallpaper, so the text on it stays readable
+VEIL = 60                       # % of the theme's window colour over the wallpaper, so the text on it stays readable
+VEIL_MAX = 90                   # the slider's end: the picture still shows; "No wallpaper" takes it away
+VEIL_STEP = 5
+VEIL_KEY = "portal/wallpaper_transparency"
 DESKTOP_ICONS_KEY = "portal/desktop_icons"
 LAUNCH_ICON_FILES = {("compute", "Unlock"): "cu-unlock", ("cores", "Unlock"): "cores-unlock"}  # else the app's
 # What each tab holds, at its top (docs/apps/categories.md says the same).
@@ -397,14 +401,19 @@ class TogglePill(Pill):
 
 class Backdrop(QWidget):
     """The window's background: the wallpaper, scaled to fill and cropped in the middle, under a veil of the theme's
-    window colour; without one, the window colour."""
+    window colour (*veil*, 0 to 100 %); without one, the window colour."""
 
     def __init__(self):
         super().__init__()
         self.picture = QPixmap()
+        self.veil = VEIL
 
     def set_picture(self, path: Path | None) -> None:
         self.picture = QPixmap(str(path)) if path else QPixmap()
+        self.update()
+
+    def set_veil(self, percent: int) -> None:
+        self.veil = percent
         self.update()
 
     def paintEvent(self, event) -> None:  # noqa: N802 (Qt override)
@@ -416,7 +425,7 @@ class Backdrop(QWidget):
         x, y = (scaled.width() - self.width()) // 2, (scaled.height() - self.height()) // 2
         painter.drawPixmap(0, 0, scaled, x, y, self.width(), self.height())
         veil = QColor(self.palette().color(QPalette.ColorRole.Window))
-        veil.setAlphaF(VEIL)
+        veil.setAlphaF(self.veil / 100)
         painter.fillRect(QRect(0, 0, self.width(), self.height()), veil)
         painter.end()
 
@@ -449,6 +458,7 @@ class MainWindow(QMainWindow):
         self.resize(900, 720)
 
         central = self.backdrop = Backdrop()
+        central.set_veil(self.transparency())
         root = QVBoxLayout(central)
         self.local_banner = QLabel()
         self.local_banner.setWordWrap(True)
@@ -842,8 +852,53 @@ class MainWindow(QMainWindow):
         value, what = ("None", "No picture behind the portal. ") if shown is None else \
             ("Example", "The portal's example picture behind it. ") if wallpaper.current() is None else \
             ("Custom", "Your own picture behind the portal. ")
-        self.wallpaper_pill.set_value(value, what + "Click to choose one, one used before, the example, or none. "
-                                      + wallpaper.RULES)
+        if shown is not None:
+            what += f"Transparency {self.backdrop.veil} %. "
+        self.wallpaper_pill.set_value(value, what + "Click to choose one, one used before, the example, or none, "
+                                      "or to set its transparency. " + wallpaper.RULES)
+
+    def transparency(self) -> int:
+        """The wallpaper's transparency in %: how much of the theme's window colour lies over it."""
+        value = self.settings.value(VEIL_KEY, VEIL, type=int)
+        return min(max(value, 0), VEIL_MAX)
+
+    def set_transparency(self, percent: int) -> None:
+        self.settings.setValue(VEIL_KEY, percent)
+        self.backdrop.set_veil(percent)
+        self._show_wallpaper()
+
+    def _transparency_action(self, menu: QMenu) -> QWidgetAction:
+        """The menu's slider for the wallpaper's transparency, which changes the window while it moves."""
+        row = QWidget()
+        line = QHBoxLayout(row)
+        line.setContentsMargins(12, 4, 12, 4)
+        line.addWidget(QLabel("Transparency"))
+        slider = self.transparency_slider = QSlider(Qt.Orientation.Horizontal)
+        slider.setRange(0, VEIL_MAX)
+        slider.setSingleStep(VEIL_STEP)
+        slider.setPageStep(VEIL_STEP * 2)
+        slider.setTickInterval(VEIL_STEP * 2)
+        slider.setTickPosition(QSlider.TickPosition.TicksBelow)
+        slider.setMinimumWidth(160)
+        slider.setValue(self.backdrop.veil)
+        slider.setToolTip("More: the theme's colour over the picture, for a dark or busy one. Less: more of the "
+                          "picture.")
+        shown = QLabel(f"{slider.value()} %")
+        shown.setMinimumWidth(shown.fontMetrics().horizontalAdvance("100 %"))
+        line.addWidget(slider, 1)
+        line.addWidget(shown)
+
+        def moved(value: int) -> None:
+            value = round(value / VEIL_STEP) * VEIL_STEP
+            shown.setText(f"{value} %")
+            self.set_transparency(value)
+
+        slider.valueChanged.connect(moved)
+        action = QWidgetAction(menu)
+        action.setDefaultWidget(row)
+        action.setText("Transparency")
+        action.setEnabled(wallpaper.shown() is not None)
+        return action
 
     def _wallpaper_menu(self) -> None:
         self.wallpaper_menu().exec(self.wallpaper_pill.mapToGlobal(self.wallpaper_pill.rect().bottomLeft()))
@@ -858,6 +913,8 @@ class MainWindow(QMainWindow):
         example.setChecked(wallpaper.current() is None and wallpaper.shown() is not None)
         example.setEnabled(wallpaper.EXAMPLE.is_file() and not example.isChecked())
         menu.addAction("No wallpaper", self.remove_wallpaper).setEnabled(wallpaper.shown() is not None)
+        menu.addSeparator()
+        menu.addAction(self._transparency_action(menu))
         paths = wallpaper.saved()
         if not paths:
             return menu

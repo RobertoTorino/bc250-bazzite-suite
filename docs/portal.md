@@ -91,7 +91,9 @@ checkout uses its own checkout.
   **Choose a picture…** for your own (**Custom**), **Example wallpaper** to see how one looks with the picture that
   comes with the portal (**Example**), or **No wallpaper** for none. Your picture must be a PNG, JPEG or WebP of at least 1920 x 1080 pixels, in 16:9 (1920 x
   1080, 2560 x 1440, 3840 x 2160); the portal refuses another and says why. It fills the window, under a veil of the
-  theme's colour so the text stays readable. The portal keeps a copy in
+  theme's colour so the text stays readable. **Transparency**, a slider in the same menu, sets that veil from 0 to
+  90 % (60 % at first): move it up for a dark or busy picture, so the icons stand out, down to see more of the
+  picture. The window changes while you move it, and the portal remembers it. The portal keeps a copy in
   `~/.local/share/bc250-bazzite-suite/portal/`, so the original may be moved or deleted; the portal's `--purge`
   removes it. The menu also lists the last 10 wallpapers you chose, newest first, under **Used before**: click one to
   use it again. The portal remembers only where each picture was (in `wallpapers.json` in the same folder), so one
@@ -249,7 +251,9 @@ apps/suite/install.sh --uninstall             # remove them; the checkout stays
   release** run the two board tests below in a terminal, with `apps/suite/check-release.sh`: the portal from the
   checkout before the push, and the published portal release after GitHub has built it. **Test withdrawal** does
   the first on a board with a withdrawn app installed. **Installer tests** opens BC-250 Installer Tests from the
-  checkout. Linux only.
+  checkout. **Record portal tour** records the portal's video tour from the checkout as it is now, for the wiki and
+  YouTube (`tools/record-tour.sh`, about a minute, its output in Logs), into
+  `~/Videos/bc250-portal-tour-v<portal version>.mp4`, and opens it in your video player. Linux only.
 - **Test local apps**, on the same tab: every app window in the checkout, as an icon. A click starts that app from the checkout,
   to try a change before its release: `python -m <package>` with the checkout's venv and its `core`, as `run.sh`
   starts Suite Releases. An app that changes how the board runs asks first, as in the portal; started from the

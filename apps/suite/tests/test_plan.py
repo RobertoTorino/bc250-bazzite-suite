@@ -655,6 +655,42 @@ def test_window_check_buttons(window, repo):
     assert not hasattr(window.portal_page, "local_button") and not hasattr(window.withdraw_page, "test_button")
 
 
+
+def test_window_records_the_portal_tour(window, repo, tmp_path, monkeypatch):
+    """Record portal tour runs tools/record-tour.sh in the background, its output in Logs, into
+    ~/Videos/bc250-portal-tour-v<portal version>.mp4, and opens the video (owner, 20-10-2026)."""
+    from PyQt6.QtWidgets import QApplication
+    from suite_releases import main_window
+    page = window.run_page
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    opened = []
+    monkeypatch.setattr(main_window, "open_url", opened.append)
+    page.tour_button.click()
+    assert "has no tools/record-tour.sh" in page.output.toPlainText() and page.recorder is None
+
+    def record(script: str) -> None:
+        write(repo / rp.RECORD_SCRIPT, script)
+        page.output.clear()
+        window.tabs.setCurrentWidget(page)
+        page.tour_button.click()
+        assert not page.tour_button.isEnabled() and window.tabs.currentIndex() == window.log_tab
+        page.recorder.waitForFinished(10000)
+        for _ in range(20):
+            QApplication.processEvents()
+            if page.recorder is None:
+                break
+        assert page.recorder is None and page.tour_button.isEnabled()
+
+    out = tmp_path / "home" / "Videos" / "bc250-portal-tour-v0.1.0.mp4"
+    record('echo "Recording the portal tour into $1"\nmkdir -p "$(dirname "$1")"\necho video > "$1"\n')
+    log = page.output.toPlainText()
+    assert f"$ tools/record-tour.sh {out}" in log and f"Recording the portal tour into {out}" in log
+    assert out.read_text() == "video\n" and opened == [out.as_uri()]
+    record('echo "ffmpeg is needed" >&2\nexit 1\n')
+    log = page.output.toPlainText()
+    assert "ffmpeg is needed" in log and "stopped with exit code 1" in log and len(opened) == 1
+
+
 # --- Run from the checkout ------------------------------------------------------------------------------------------
 
 def test_installer_tests_target(repo):

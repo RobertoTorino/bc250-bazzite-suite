@@ -18,7 +18,8 @@ of GitHub's API requests are left, and GitHub status: green while githubstatus.c
 reports a problem; a click opens that page.
 Test on this board: Test app updates and Test withdrawal install the portal from the checkout and start it with the
 apps from their releases, Test Portal release installs the published portal release (check-release.sh, in a
-terminal); Installer tests opens BC-250 Installer Tests. Test local apps: click an app's icon to start it from this
+terminal); Installer tests opens BC-250 Installer Tests; Record portal tour records the portal's video tour
+from this checkout (tools/record-tour.sh) into ~/Videos and opens it. Test local apps: click an app's icon to start it from this
 checkout, to try it before its release; the Manual icon serves the manual from the checkout (mkdocs serve) and opens
 it in the browser.
 The Commands tab is a command line in the checkout (command_line.py), where the git buttons run too; its Commands
@@ -618,8 +619,14 @@ class RunPage(QWidget):
         self.installer_button.setToolTip("Open BC-250 Installer Tests from this checkout: every installer test, one "
                                          "at a time, with its output live")
         self.installer_button.clicked.connect(self.installer_tests)
+        self.tour_button = QPushButton("Record portal tour")
+        self.tour_button.setToolTip("Record the portal's video tour from this checkout, for the wiki and YouTube "
+                                    f"({rp.RECORD_SCRIPT}, about a minute), into ~/Videos, and open it")
+        self.tour_button.clicked.connect(self.record_tour)
+        self.recorder: QProcess | None = None
         if not sys.platform.startswith("linux"):
-            for button in (self.local_button, self.release_button, self.withdraw_button, self.installer_button):
+            for button in (self.local_button, self.release_button, self.withdraw_button, self.installer_button,
+                           self.tour_button):
                 button.setEnabled(False)
                 button.setToolTip("Runs on the board: Linux only")
         self.apps = QListWidget()
@@ -632,7 +639,8 @@ class RunPage(QWidget):
         self.apps.itemClicked.connect(lambda item: self.run(item.data(Qt.ItemDataRole.UserRole)))
         self.output = Terminal()                 # the window shows it under the steps, beside the command line
         checks = QHBoxLayout()
-        for button in (self.local_button, self.release_button, self.withdraw_button, self.installer_button):
+        for button in (self.local_button, self.release_button, self.withdraw_button, self.installer_button,
+                       self.tour_button):
             checks.addWidget(button)
         checks.addStretch(1)
         local = QLabel("Test local apps")
@@ -643,7 +651,8 @@ class RunPage(QWidget):
             "portal from this checkout, with the apps from their GitHub releases. <b>Test Portal release</b> (after "
             "GitHub built the portal): the published portal release. <b>Test withdrawal</b> (step 3): the portal from "
             "this checkout on a board with the withdrawn app installed. Each runs in a terminal; close the portal "
-            "there to finish. <b>Installer tests</b> opens BC-250 Installer Tests."))
+            "there to finish. <b>Installer tests</b> opens BC-250 Installer Tests. <b>Record portal tour</b> records "
+            "the portal's video tour from this checkout, as it is now, and opens it when it is done."))
         lay.addLayout(checks)
         lay.addSpacing(8)
         lay.addWidget(local)
@@ -699,6 +708,45 @@ class RunPage(QWidget):
             self.output.appendPlainText("This checkout has no tools/installer-tests/gui.")
             return
         self.run(target)
+
+    def tour_file(self) -> Path:
+        return Path.home() / "Videos" / f"bc250-portal-tour-v{self.release_window.portal_version()}.mp4"
+
+    def record_tour(self) -> None:
+        """tools/record-tour.sh in the background, its output in Logs; the video opens when it is done."""
+        script = self.release_window.root / rp.RECORD_SCRIPT
+        if not script.is_file():
+            self.output.appendPlainText(f"This checkout has no {rp.RECORD_SCRIPT}.")
+            return
+        if self.recorder is not None:
+            return
+        out = self.tour_file()
+        self.recorder = QProcess(self)
+        self.recorder.setWorkingDirectory(str(self.release_window.root))
+        self.recorder.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
+        self.recorder.readyReadStandardOutput.connect(self._recorder_output)
+        self.recorder.finished.connect(lambda code, _status: self._recorded(code, out))
+        self.tour_button.setEnabled(False)
+        self.output.appendPlainText(f"$ {rp.RECORD_SCRIPT} {out}")
+        self.release_window._show_log(self)
+        self.recorder.start("bash", [str(script), str(out)])
+
+    def _recorder_output(self) -> None:
+        if self.recorder is not None:
+            text = bytes(self.recorder.readAllStandardOutput()).decode(errors="replace").rstrip("\n")
+            if text:
+                self.output.appendPlainText(text)
+
+    def _recorded(self, code: int, out: Path) -> None:
+        self._recorder_output()
+        self.recorder.deleteLater()
+        self.recorder = None
+        self.tour_button.setEnabled(True)
+        if code == 0 and out.is_file():
+            self.output.appendPlainText(f"The portal tour is in {out}; it opens in your video player.")
+            open_url(QUrl.fromLocalFile(str(out)).toString())
+        else:
+            self.output.appendPlainText(f"Recording the portal tour stopped with exit code {code}; see above.")
 
     def run(self, target: rp.Launch) -> None:
         if target.changes_board and QMessageBox.question(
@@ -1193,4 +1241,9 @@ class ReleaseWindow(QMainWindow):
         self.build.stop()
         self.github_status.stop()
         self.commands.shutdown()
+        recorder = self.run_page.recorder
+        if recorder is not None:                         # a tour being recorded: stopped, not left half-written
+            recorder.finished.disconnect()
+            recorder.kill()
+            recorder.waitForFinished(3000)
         super().closeEvent(event)
