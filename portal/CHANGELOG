@@ -1,3 +1,7 @@
+Changelog: 20-10-2026 20:47:37
+
+Release 4.2.0. Pins check-v0.8.0, overlay-v0.6.0, bios-v0.6.0, ace-v0.6.0, mesh-v0.6.0, vram-v0.6.0, fan-v0.5.0, wdriver-v0.5.0, cec-v0.6.0, sftp-v0.6.0, package-v0.9.0, ncgui-v0.6.0, rpcs3-v0.6.0, consoles-v1.6.0, shadps4-v0.6.0, decky-v0.6.0, datstation-v1.3.0, ppsspp-v0.6.0, pcsx2-v0.7.0, vita3k-v0.5.0.
+
 Changelog: 20-10-2026 20:21:21
 
 Added. An example wallpaper (owner, 20-10-2026): the portal ships images/wallpaper-example.webp, to show how a
