@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+# No Claude Code for the windows the tests open: the Claude pill reads nothing of this machine.
+os.environ["CLAUDE_CONFIG_DIR"] = str(Path(__file__).resolve().parent / "no-claude")
 APP = Path(__file__).resolve().parents[1]
 CORE = APP.parents[1] / "core"
 for path in (CORE, APP):

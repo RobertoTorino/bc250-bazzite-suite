@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from helixsr_manager import backend
+from upscaler import backend
 from tests.conftest import FAKE_DLL, FAKE_GAME_DLL
 
 NEWER_DLL = b"MZ-HelixSR 1.9.3-fake-dll"

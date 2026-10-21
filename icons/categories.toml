@@ -22,10 +22,10 @@ category = "sustainable"
 icons = ["apps/gpu/images/bc250-governor-manager"]
 tile = "portal/images/apps/gpu.webp"
 
-[helixsr]
+[upscaler]
 category = "graphics"
-icons = ["apps/helixsr/images/bc250-bazzite-helixsr-gui"]
-tile = "portal/images/apps/helixsr.webp"
+icons = ["apps/upscaler/images/bc250-upscaler"]
+tile = "portal/images/apps/upscaler.webp"
 
 [compute]
 category = "sustainable"

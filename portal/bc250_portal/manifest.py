@@ -27,7 +27,7 @@ RENAMED = {"ace-queues": "ace", "bazzite-netcatgui": "ncgui", "bazzite-datstatio
            "demo-tool": "mtool", "dtool": "mtool", "dependency-checker": "package",
            "persistent-acpi": "acpi", "sftp-tools": "sftp",
            "suite-releases": "suite", "usb-wifi": "wdriver",
-           "system-overlay": "overlay"}
+           "system-overlay": "overlay", "helixsr": "upscaler"}
 
 
 class ManifestError(ValueError):

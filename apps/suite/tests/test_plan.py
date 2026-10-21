@@ -1014,6 +1014,7 @@ def test_window_build_indicator_notifies_when_a_run_ends(repo, tmp_path):
     assert build.rate.value.text() == "4,905" and "4,905 of 5,000 left" in build.rate.toolTip()
     assert "signed in" in build.rate.toolTip() and "gh auth login" not in build.rate.toolTip()
     assert main_window.ORANGE not in build.rate.styleSheet() and main_window.RED not in build.rate.styleSheet()
+    assert main_window.GREEN in build.rate.styleSheet()                    # a left edge while plenty are left
     build.checked((None, "e2", rp.RateInfo(60, 3, 1_900_000_000, signed_in=False)))
     assert main_window.ORANGE in build.rate.styleSheet() and "gh auth login" in build.rate.toolTip()
     build.checked(OSError("offline"))

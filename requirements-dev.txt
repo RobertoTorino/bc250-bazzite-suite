@@ -5,7 +5,7 @@
 -r tools/requirements-dev.txt
 -r apps/check/requirements-dev.txt
 -r apps/gpu/requirements-dev.txt
--r apps/helixsr/requirements-dev.txt
+-r apps/upscaler/requirements-dev.txt
 -r apps/acpi/requirements-dev.txt
 -r apps/overlay/requirements-dev.txt
 -r apps/suite/requirements-dev.txt

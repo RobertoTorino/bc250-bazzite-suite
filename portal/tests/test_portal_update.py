@@ -28,10 +28,10 @@ def text_of(entries) -> str:
 
 def test_compare_names_the_changed_apps():
     current = load(MANIFEST)
-    new = bumped(current, gpu="gpu-v9.0.0", helixsr="helixsr-v9.1.0")
+    new = bumped(current, gpu="gpu-v9.0.0", upscaler="upscaler-v9.1.0")
     changes = pu.compare(current, new)
     assert [(c.name, c.new) for c in changes] == [("BC-250 GPU Governor Manager", "9.0.0"),
-                                                  ("HelixSR Manager", "9.1.0")]
+                                                  ("BC-250 Upscaler Manager", "9.1.0")]
     assert all(c.old for c in changes)
     assert pu.compare(current, current) == []
 

@@ -353,8 +353,8 @@ class DeployPage(QWidget):
         self.opti_hint = hint_label(
             "The OptiScaler that comes with HelixSR goes next to the game's .exe as dxgi.dll (or under the name of an "
             "OptiScaler the game already has), with its OptiScaler.ini pointed at this folder. Start the game and "
-            "select <b>DLSS</b>; OptiScaler's menu (Insert) shows <b>FSR HelixSR</b>. Remove puts back everything it "
-            "replaced.")
+            "select <b>DLSS</b>; OptiScaler's menu (Insert) shows <b>FSR HelixSR</b>. A Steam game's launch options "
+            "get the WINEDLLOVERRIDES Proton needs for it. Remove puts back everything it replaced.")
         mode_layout.addWidget(self.opti_hint)
         self.folder_hint = hint_label(
             "You install OptiScaler yourself, as its documentation describes. <b>OptiScaler.ini</b> is OptiScaler's "

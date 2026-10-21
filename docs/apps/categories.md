@@ -42,7 +42,7 @@ Every app with its icon and its category.
 | ![](../assets/apps/acpi.webp){ .app-icon } [BC-250 Persistent ACPI](acpi.md) | Sustainable |
 | ![](../assets/apps/vram.webp){ .app-icon } [BC-250 Memory Manager](vram.md) | Sustainable |
 | ![](../assets/apps/fan.webp){ .app-icon } [BC-250 Fan Control](fan.md) | Sustainable |
-| ![](../assets/apps/helixsr.webp){ .app-icon } [HelixSR Manager](helixsr.md) | Graphics |
+| ![](../assets/apps/upscaler.webp){ .app-icon } [BC-250 Upscaler Manager](upscaler.md) | Graphics |
 | ![](../assets/apps/ace.webp){ .app-icon } [BC-250 ACE Queues](ace.md) | Graphics |
 | ![](../assets/apps/mesh.webp){ .app-icon } [BC-250 Mesh Shaders](mesh.md) | Graphics |
 | ![](../assets/apps/consoles.webp){ .app-icon } [Console Link](consoles.md) | Gaming |

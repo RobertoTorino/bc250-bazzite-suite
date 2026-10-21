@@ -11,6 +11,10 @@ from pathlib import Path
 import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+CORE = Path(__file__).resolve().parents[3] / "core"
+if str(CORE) not in sys.path:
+    sys.path.append(str(CORE))              # bc250_core from the checkout, as the installer bundles it; last, so
+                                            # tests is still this app's
 
 FAKE_DLL = b"MZ-HelixSR 1.2.0-fake-dll"
 FAKE_GAME_DLL = b"MZ-amd-original-dll"
@@ -40,7 +44,7 @@ def settings_dir(tmp_path, monkeypatch):
     for fmt in (QSettings.Format.NativeFormat, QSettings.Format.IniFormat):
         QSettings.setPath(fmt, QSettings.Scope.UserScope, str(tmp_path / "settings"))
     if sys.platform == "win32":
-        from helixsr_manager import __main__ as main_module, main_window
+        from upscaler import __main__ as main_module, main_window
 
         class FileSettings(QSettings):
             def __init__(self, *args):
@@ -55,7 +59,7 @@ def settings_dir(tmp_path, monkeypatch):
 
 def make_release(folder: Path, *, network: bool = True, ini: bool = True, readme: bool = True) -> Path:
     """Lay out an extracted HelixSR release (what the user points the import at)."""
-    from helixsr_manager import backend
+    from upscaler import backend
     folder.mkdir(parents=True, exist_ok=True)
     (folder / backend.HELIXSR_DLL).write_bytes(FAKE_DLL)
     if network:
@@ -83,7 +87,7 @@ def payload(tmp_path: Path) -> Path:
 @pytest.fixture
 def game(tmp_path: Path) -> Path:
     """A game folder with the FSR DLL in a nested Win64 folder, like Unreal games have."""
-    from helixsr_manager import backend
+    from upscaler import backend
     root = tmp_path / "steamapps" / "common" / "SomeGame"
     win64 = root / "Engine" / "Plugins" / "FSR3" / "ThirdParty" / "Win64"
     win64.mkdir(parents=True)

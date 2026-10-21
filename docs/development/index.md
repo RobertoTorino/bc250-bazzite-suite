@@ -140,8 +140,8 @@ The same tool reports a newer stable release than the pin (for DirectMesh the ne
 check the checksum of what they download themselves. The governor has no pin in the repository (its version is the
 one COPR built); the GPU Governor Manager compares the installed package with filippor's latest release.
 
-The HelixSR Manager pins no HelixSR release: it gets the latest of one major version (`SUPPORTED_MAJOR`), or the
-fallback HelixSR's developer names. Its `apps/helixsr/helixsr_manager/acquire.py` holds `SUPPORTED_MAJOR`,
+The BC-250 Upscaler Manager pins no HelixSR release: it gets the latest of one major version (`SUPPORTED_MAJOR`), or the
+fallback HelixSR's developer names. Its `apps/upscaler/upscaler/acquire.py` holds `SUPPORTED_MAJOR`,
 `KNOWN_VERSION`, the newest release the app was checked against, and `FALLBACK_VERSION`. The same tool reports a newer
 stable release (users get it at once, so what changed in its setup, its zip and `helixsr.ini` needs a look and a try
 on the board; then `KNOWN_VERSION` moves), a newer major version (users do not get it until the app is moved to it), a fallback
@@ -182,12 +182,12 @@ Code shared by the suite's apps. Nothing in it imports an app: each app passes i
 |---|---|---|
 | `appinfo` | `AppInfo` (id, name, version, logo, tag prefix, settings names) | new |
 | `theme` | The suite's theme (`THEMES`, `theme_name()`, `save_theme_name()`, `apply_theme()`, `surface_style()`, `muted()`), `STATE_COLORS`, bundled Inter font, `header_font()`, `HOVER_STYLESHEET`; self-contained, so an app not on core carries a copy | all six GUIs |
-| `text` | `fmt()` (`%1` placeholders), `fill()` (`{name}` placeholders), `plain_tooltip()`, `window_title()` | governor, helixsr |
+| `text` | `fmt()` (`%1` placeholders), `fill()` (`{name}` placeholders), `plain_tooltip()`, `window_title()` | governor, upscaler |
 | `widgets` | `AppHeader` (the window header), `StatusPill`, `MetricBox`, `Pill` (a `MetricBox` that is a button), `same_width()`, `ClickableLogo`, `Terminal`, `TextDialog`, `RoundedToolTip`, `show_tooltip()`, `page_header()`, `hint_label()`, `accent_button()`, `set_button_active()` | governor + helixsr's Wayland tooltip + bazzite-test's manual tooltips |
 | `app` | `create_app()` / `run_app()` / `exec_app()`: names, Fusion with the theme, tooltip, icon, SIGTERM | the apps' `__main__` |
 | `settings` | `open_settings(info)` at each app's existing file, geometry helpers, `SettingsStore` (typed defaults) | bazzite-test's `AppSettings` |
-| `help` | `HelpView` (the content stays in the app) | helixsr |
-| `updates` | `latest_release()` (with a tag prefix for the suite's per-app tags), `UpdateStatus`, `UpdateChecker` (any job, off the GUI thread) | helixsr + governor |
+| `help` | `HelpView` (the content stays in the app) | upscaler |
+| `updates` | `latest_release()` (with a tag prefix for the suite's per-app tags), `UpdateStatus`, `UpdateChecker` (any job, off the GUI thread) | upscaler + governor |
 | `platform` | XDG folders, `xdg_open()`, `launch_in_terminal()` (with an exit file the caller can watch) | the bisect GUIs' `terminal.py` |
 | `steam` | Steam's folders and users, `with_steam_closed()`, `shortcuts.vdf` and the shortcuts' artwork in `grid/` (standard library only) | consoles |
 | `steam_art` | `draw_icon_art()`: a shortcut's four pictures drawn from an app's icon, in the icon's colour | consoles |
@@ -203,5 +203,5 @@ imports it, so each release runs on the core it was tested with.
 cd core && QT_QPA_PLATFORM=offscreen python -m pytest -q tests
 ```
 
-`tests/test_parity.py` renders core's widgets next to the copies in `apps/gpu` and `apps/helixsr` and requires
+`tests/test_parity.py` renders core's widgets next to the copies in `apps/gpu` and `apps/upscaler` and requires
 identical pixels; a case is skipped once its app no longer has its own copy.

@@ -426,7 +426,7 @@ def write_dxc_wrapper(path: Path, wine: str, helix_data: Path) -> Path:
     dxc = helix_data / "dxc-win" / "bin" / "x64" / "dxc.exe"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("#!/usr/bin/env bash\n"
-                    "# Written by the HelixSR Manager: Microsoft's shader compiler through Wine for HelixSR's builder.\n"
+                    "# Written by the BC-250 Upscaler Manager: Microsoft's shader compiler through Wine for HelixSR's builder.\n"
                     "args=()\n"
                     "for arg in \"$@\"; do\n"
                     "    [[ $arg == /* ]] && arg=\"Z:${arg//\\//\\\\}\"\n"

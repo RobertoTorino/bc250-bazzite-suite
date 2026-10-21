@@ -206,3 +206,70 @@ def test_github_status_is_a_pill_that_opens_the_status_page(window, monkeypatch)
     assert opened == ["https://www.githubstatus.com/"]
     status.stop()
     assert w.github_status.isHidden() and main_window.GitHubStatusIndicator(None).isHidden()
+
+
+def _answer(at: str, msg: str, req: str, model: str = "claude-opus-5-5", **usage) -> str:
+    import json
+    return json.dumps({"type": "assistant", "timestamp": at, "requestId": req,
+                       "message": {"id": msg, "model": model, "usage": usage}})
+
+
+def test_claude_usage_counts_each_answer_once(tmp_path):
+    """Today's tokens and the last 5 hours' from Claude Code's transcripts, subagents' included; an answer of
+    several parts counts once, Claude Code's own notes (<synthetic>) and other lines not at all."""
+    import datetime
+    import os
+    from suite_releases import plan as rp
+    now = datetime.datetime(2026, 10, 21, 12, 0).timestamp()
+
+    def at(hours_ago: float) -> str:
+        moment = datetime.datetime.fromtimestamp(now - hours_ago * 3600, datetime.timezone.utc)
+        return moment.isoformat().replace("+00:00", "Z")
+
+    assert rp.fetch_claude_usage(now, tmp_path) is None                       # no Claude Code here
+    session = tmp_path / "projects" / "-home-x-repo"
+    (session / "s1" / "subagents").mkdir(parents=True)
+    (session / "s1.jsonl").write_text("\n".join([
+        _answer(at(1), "m1", "r1", input_tokens=10, output_tokens=100, cache_read_input_tokens=1000),
+        _answer(at(1), "m1", "r1", input_tokens=10, output_tokens=100, cache_read_input_tokens=1000),   # part 2
+        _answer(at(8), "m2", "r2", input_tokens=1, output_tokens=2, cache_creation_input_tokens=3),     # today
+        _answer(at(1), "m3", "r3", model="<synthetic>", output_tokens=50),
+        '{"type": "user", "message": {"content": "usage"}}', "not json"]))
+    (session / "s1" / "subagents" / "a.jsonl").write_text(
+        _answer(at(2), "m4", "r4", model="claude-haiku-5-5", input_tokens=5, output_tokens=5))
+    (session / "old.jsonl").write_text(_answer(at(30), "m5", "r5", output_tokens=999))
+    for path in session.rglob("*.jsonl"):                                    # written as of *now*; old.jsonl before
+        os.utime(path, (now - 30 * 3600,) * 2 if path.name == "old.jsonl" else (now,) * 2)
+    today, recent = rp.fetch_claude_usage(now, tmp_path)
+    assert (today.messages, today.input, today.output, today.cache_write, today.cache_read) == (3, 16, 107, 3, 1000)
+    assert today.total == 1126 and today.models == (("claude-opus-5-5", 1116), ("claude-haiku-5-5", 10))
+    assert recent.messages == 2 and recent.total == 1120
+    assert [rp.short_count(n) for n in (999, 1126, 4_567_890)] == ["999", "1.1k", "4.6M"]
+
+
+def test_claude_usage_is_a_pill_that_opens_the_usage_page(window, monkeypatch):
+    """Claude tokens today, blue once known, hidden without Claude Code; a click opens Claude's usage page."""
+    from PyQt6.QtGui import QDesktopServices
+    from bc250_core.theme import BLUE
+    from suite_releases import main_window
+    from suite_releases import plan as rp
+    w, _app = window
+    w.claude.checked(w.claude._fetch())
+    assert w.claude.isHidden()                                                # conftest: no Claude Code
+    today = rp.ClaudeUsage(0, 3, 16, 107, 3, 1_234_567, (("claude-opus-5-5", 1_234_693),))
+    pill = main_window.ClaudeUsageIndicator(lambda: (today, rp.ClaudeUsage(0, 1, output=5)))
+    assert not pill.isHidden() and pill.caption.text() == "Claude tokens today" and BLUE not in pill.styleSheet()
+    pill.checked(pill._fetch())
+    assert pill.value.text() == "1.2M" and BLUE in pill.styleSheet() and pill.timer.interval() == main_window.BUILD_IDLE_MS
+    assert "Today: 1,234,693 tokens in 3 answers" in pill.toolTip() and "Last 5 hours: 5 tokens" in pill.toolTip()
+    assert "claude-opus-5-5: 1,234,693" in pill.toolTip()
+    pill.checked(OSError("denied"))
+    assert BLUE not in pill.styleSheet() and "denied" in pill.toolTip()
+    opened = []
+    monkeypatch.setattr(QDesktopServices, "openUrl", lambda url: opened.append(url.toString()))
+    pill.click()
+    assert opened == ["https://claude.ai/settings/usage"]
+    pill.checked(None)
+    assert pill.isHidden()
+    pill.stop()
+    assert main_window.ClaudeUsageIndicator(None).isHidden()

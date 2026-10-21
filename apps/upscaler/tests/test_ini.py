@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from helixsr_manager import backend
-from helixsr_manager.backend import DEFAULT_INI_TEXT, HelixIni, parse_ini, render_ini, validate_ini
+from upscaler import backend
+from upscaler.backend import DEFAULT_INI_TEXT, HelixIni, parse_ini, render_ini, validate_ini
 
 
 def test_defaults_match_upstream_file():

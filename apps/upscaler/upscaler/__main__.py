@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Entry point: python -m helixsr_manager [--payload DIR] [--deployments FILE] [--work DIR]"""
+"""Entry point: python -m upscaler [--payload DIR] [--deployments FILE] [--work DIR]"""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from . import instance
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(prog="helixsr_manager", description=f"{APP_NAME} {__version__}")
+    parser = argparse.ArgumentParser(prog="upscaler", description=f"{APP_NAME} {__version__}")
     parser.add_argument("--payload", metavar="DIR", default=None,
                         help=f"folder that holds the imported HelixSR release (default: {PAYLOAD_DIR})")
     parser.add_argument("--deployments", metavar="FILE", default=None,

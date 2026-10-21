@@ -23,7 +23,7 @@ other app is optional. They are listed by category, as the portal's tabs list th
 
 | App | What it does |
 |---|---|
-| ![](../assets/apps/helixsr.webp){ .app-icon } [HelixSR Manager](helixsr.md) | Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games. |
+| ![](../assets/apps/upscaler.webp){ .app-icon } [BC-250 Upscaler Manager](upscaler.md) | Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games. |
 | ![](../assets/apps/ace.webp){ .app-icon } [BC-250 ACE Queues](ace.md) | Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use. **Changes the board.** |
 | ![](../assets/apps/mesh.webp){ .app-icon } [BC-250 Mesh Shaders](mesh.md) | Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use. **Changes the board.** |
 

@@ -1,3 +1,13 @@
+Changelog: 21-10-2026 02:13:01
+
+Release 5.1.0. Pins upscaler-v0.7.1.
+
+Changelog: 21-10-2026 01:54:13
+
+Added. The HelixSR Manager is BC-250 Upscaler Manager, under the key upscaler (owner, 21-10-2026), with its
+launcher bc250-upscaler; RENAMED moves an installed copy's record from helixsr to upscaler. apps.toml pins
+upscaler-v0.7.1 without a checksum until the first release under the new prefix.
+
 Changelog: 21-10-2026 00:31:21
 
 Release 5.0.2. Pins helixsr-v0.7.1. HelixSR setup improved stability.

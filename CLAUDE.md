@@ -13,7 +13,7 @@ The **BC250 Bazzite Suite** (exactly that name): tools for the AMD BC-250 on Baz
 its manifest. **check** (BC-250 Bazzite Test) is always installed and always listed first; every other listed app is an optional
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
-- `apps/<name>/`: check, gpu, helixsr, compute, cores, oc, acpi,
+- `apps/<name>/`: check, gpu, upscaler, compute, cores, oc, acpi,
   overlay, bios, ace, mesh, vram, fan, wdriver, cec, sftp, consoles, shadps4, rpcs3, ppsspp, pcsx2, vita3k, decky, mtool, package, ncgui, datstation, suite. Each has its
   own VERSION, CHANGELOG, LICENSE (acpi is MIT; consoles is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; ncgui is GPL-2.0-only, a port of NetcatGUI; the rest
@@ -115,7 +115,7 @@ The same repository is used from both systems.
   `python3` has no PyQt6. Create one from the repo root:
   - Linux: `python3 -m venv .venv-linux && .venv-linux/bin/python -m pip install -r requirements-dev.txt`
   - Windows (Git Bash): `py -m venv .venv-windows && .venv-windows/Scripts/python.exe -m pip install -r requirements-dev.txt`
-- **Windows-only test failures:** gpu's tests need `os.getuid` and one helixsr test needs the exec bit; both
+- **Windows-only test failures:** gpu's tests need `os.getuid` and one upscaler test needs the exec bit; both
   pass on Linux and in CI.
 - **Tests must not write to the Windows registry** (QSettings' native format there): the conftest fixtures turn
   settings into .ini files in a temp folder.

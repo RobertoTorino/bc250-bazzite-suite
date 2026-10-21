@@ -1,3 +1,13 @@
+Changelog: 21-10-2026 00:39:06
+
+Added. A Claude tokens today pill at the end of the header: the tokens Claude Code on this machine used since
+midnight, read from its transcripts (~/.claude/projects, or CLAUDE_CONFIG_DIR), each answer once. The tooltip adds
+the last 5 hours, the input, output and cache tokens and each model; a click opens Claude's usage page. Hidden
+without Claude Code; it looks every 5 minutes and on Refresh. Tests: tests/test_main_window.py.
+
+Fixed. GitHub API left has a green left edge while plenty of requests are left; it had none (grey) until fewer than
+a tenth were left. Tests: tests/test_plan.py.
+
 Changelog: 20-10-2026 21:54:38
 
 Added. Record portal tour on the Test on this board tab (owner, 20-10-2026): it runs tools/record-tour.sh in the

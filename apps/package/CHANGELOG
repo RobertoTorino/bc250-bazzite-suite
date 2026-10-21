@@ -1,3 +1,12 @@
+Changelog: 21-10-2026 02:13:00
+
+Release 0.9.1.
+
+Changelog: 21-10-2026 01:54:13
+
+Fixed. The HelixSR Manager is BC-250 Upscaler Manager (owner, 21-10-2026): its catalogue entry is [app.upscaler]
+with the launcher ~/.local/bin/bc250-upscaler.
+
 Changelog: 20-10-2026 20:38:28
 
 Release 0.9.0.

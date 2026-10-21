@@ -66,8 +66,8 @@ checkout uses its own checkout.
   installed apps among them show the red dot. When the new pins cannot be read (offline, for example), the button
   says **Portal x.y.z available**.
 - **Outside the suite**, in orange below the updates: a newer release of a program that an installed app installs
-  in its newest version, so the app can install it now, for example **HelixSR Manager (Graphics): HelixSR 1.9.3
-  is out**, with what to do in the app. Today these are HelixSR (the HelixSR Manager) and PCSX2's nightly builds
+  in its newest version, so the app can install it now, for example **BC-250 Upscaler Manager (Graphics): HelixSR 1.9.3
+  is out**, with what to do in the app. Today these are HelixSR (the BC-250 Upscaler Manager) and PCSX2's nightly builds
   (the PCSX2 Manager on its nightly channel). The portal shows what the app found the last time it looked, so open
   the app now and then; when you come back to the portal, the notice follows. Programs an app pins (Decky Loader,
   shadPS4, PPSSPP, RPCS3, Vita3K, PCSX2's stable release, DirectMesh) are not listed: a newer one comes with a new
@@ -157,7 +157,7 @@ removes.
 | Memory Manager | The VRAM split in CMOS | Set the split back in the app (or **Undo**) and reboot |
 
 The GPU Governor Manager changes nothing of its own: the governor and its `config.toml` belong to the governor
-package, which stays installed. HelixSR keeps the imported payload (`~/.local/share/bc250-bazzite-helixsr-gui`) and
+package, which stays installed. HelixSR keeps the imported payload (`~/.local/share/bc250-upscaler`) and
 leaves the games it deployed to as they are; **Remove** each deployment in the app first.
 
 Settings live in `~/.config/bc250-*`, results and logs in `~/.local/share/bc250-*` (Bazzite Test also writes its
@@ -307,6 +307,12 @@ reports it: a green dot while every part of GitHub is up, a red dot while the pa
 or a part such as Actions or Pages degraded or down). A build that waits in *queued* for long is often such a
 problem. Hover for the incident and the parts affected; click to open the status page. It looks every 5 minutes,
 and **Refresh** looks at once.
+
+**Claude tokens today** says how many tokens Claude Code on this computer used since midnight, read from its own
+transcripts (`~/.claude`, or the folder `CLAUDE_CONFIG_DIR` names). Hover for the last 5 hours, the input, output and
+cache tokens, and each model; click to open [Claude's usage page](https://claude.ai/settings/usage), which shows
+your plan's limits. Other computers and claude.ai are not counted. Without Claude Code the pill is not shown. It
+looks every 5 minutes, and **Refresh** looks at once.
 
 The releases step 2 waits for are followed from the same runs. The **GitHub** column of the pin table says where
 each release to pin stands: *no run seen* (is the tag pushed?), *building…*, *ready* or *failed*; **Pin** waits

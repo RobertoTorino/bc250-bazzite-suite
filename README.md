@@ -28,7 +28,7 @@ checks each download against its checksum.
 
 3. Start **BC250 Bazzite Suite** from the app menu or the Desktop, and install the apps you want from there.
 
-The other releases on the Releases page (`gpu-v…`, `helixsr-v…` and so on) are the app downloads the portal
+The other releases on the Releases page (`gpu-v…`, `upscaler-v…` and so on) are the app downloads the portal
 uses. You do not need them.
 
 ## The apps
@@ -48,7 +48,7 @@ By category, as the portal's tabs list them.
 
 **Graphics**: graphics features for games.
 
-- <img src="portal/images/apps/helixsr.webp" width="20" height="20" alt=""/> **[HelixSR Manager](apps/helixsr)**: Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games.
+- <img src="portal/images/apps/upscaler.webp" width="20" height="20" alt=""/> **[BC-250 Upscaler Manager](apps/upscaler)**: Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games.
 - <img src="portal/images/apps/ace.webp" width="20" height="20" alt=""/> **[BC-250 ACE Queues](apps/ace)**: Async compute for games: a patched RADV beside the system Mesa, built on the board and tested before use.
 - <img src="portal/images/apps/mesh.webp" width="20" height="20" alt=""/> **[BC-250 Mesh Shaders](apps/mesh)**: Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use.
 

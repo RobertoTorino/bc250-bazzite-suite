@@ -7,7 +7,7 @@
 # whatever HEAD is, also a commit from before the bump or one CI failed, which release.yml then refuses.
 #
 #   tools/tag-release.sh portal-v0.9.5
-#   tools/tag-release.sh governor-v0.1.1 helixsr-v0.2.1
+#   tools/tag-release.sh governor-v0.1.1 upscaler-v0.2.1
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 

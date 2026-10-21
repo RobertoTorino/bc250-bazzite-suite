@@ -14,7 +14,7 @@ def _file(settings) -> Path:
 
 
 def test_native_file_matches_old_location(settings_dir, info):
-    # QSettings(APP_ID, APP_ID), as governor and helixsr: <config>/<id>/<id>.conf on Linux
+    # QSettings(APP_ID, APP_ID), as governor and upscaler: <config>/<id>/<id>.conf on Linux
     s = open_settings(info)
     assert _file(s).parent.name == info.app_id
     assert _file(s).stem == info.app_id

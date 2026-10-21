@@ -24,7 +24,7 @@ The servers see your IP address, as any website you open does.
   newer portal release is out.
 - The shadPS4, RPCS3, PPSSPP and PCSX2 Managers and the Decky Loader Manager ask for the emulator's or Decky's
   newest release when their window opens, and download the release you install.
-- [HelixSR Manager](apps/helixsr.md), [BC-250 Mesh Shaders](apps/mesh.md) and the
+- [BC-250 Upscaler Manager](apps/upscaler.md), [BC-250 Mesh Shaders](apps/mesh.md) and the
   [GPU Governor Manager](apps/gpu.md) look for a newer release of what they install at start; each can be
   told not to in its settings.
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Installs HelixSR Manager for the current user: a private venv with PyQt6, the app
+# Installs BC-250 Upscaler Manager for the current user: a private venv with PyQt6, the app
 # in ~/.local/share, a launcher in ~/.local/bin and a desktop entry with icon, so it shows up in
 # the application menu like any other app. Nothing is layered with rpm-ostree, no root needed.
-# The imported HelixSR release lives in ~/.local/share/bc250-bazzite-helixsr-gui/payload and is
+# The imported HelixSR release lives in ~/.local/share/bc250-upscaler/payload and is
 # kept across updates and uninstalls (it is never shipped with this app).
 #
 #   ./install.sh                         install or update
@@ -18,8 +18,10 @@
 
 set -euo pipefail
 
-APP_ID="bc250-bazzite-helixsr-gui"
+APP_ID="bc250-upscaler"
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# bc250_core: bundled next to upscaler in a release; in the suite checkout it lives in core/.
+if [[ -d "$SRC_DIR/bc250_core" ]]; then CORE_SRC="$SRC_DIR/bc250_core"; else CORE_SRC="$SRC_DIR/../../core/bc250_core"; fi
 
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 BIN_DIR="$HOME/.local/bin"
@@ -29,13 +31,33 @@ APPS_DIR="$DATA_HOME/applications"
 ICON_DIR="$DATA_HOME/icons/hicolor/128x128/apps"
 DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+# The app before its rename (HelixSR Manager, until 21-10-2026): its payload, settings and list of deployed games move
+# to the new name, its launcher, menu entry, icons and the rest of its folder go.
+OLD_ID="bc250-bazzite-helixsr-gui"
 
 say()  { printf '\033[1;35m==>\033[0m %s\n' "$*"; }
 fail() { printf '\033[1;31merror:\033[0m %s\n' "$*" >&2; exit 1; }
 
+# Install and uninstall both take over a copy installed under the old name.
+move_old() {
+    if [[ -d "$DATA_HOME/$OLD_ID/payload" && ! -e "$APP_DIR/payload" ]]; then
+        say "Moving the imported HelixSR payload to $APP_DIR/payload"
+        mkdir -p "$APP_DIR"
+        mv "$DATA_HOME/$OLD_ID/payload" "$APP_DIR/payload"
+    fi
+    if [[ -d "$CONFIG_DIR/$OLD_ID" && ! -e "$CONFIG_DIR/$APP_ID" ]]; then
+        mv "$CONFIG_DIR/$OLD_ID" "$CONFIG_DIR/$APP_ID"
+        [[ ! -e "$CONFIG_DIR/$APP_ID/$OLD_ID.conf" ]] || mv "$CONFIG_DIR/$APP_ID/$OLD_ID.conf" "$CONFIG_DIR/$APP_ID/$APP_ID.conf"
+    fi
+    rm -rf -- "${DATA_HOME:?}/$OLD_ID"
+    rm -f "$BIN_DIR/$OLD_ID" "$APPS_DIR/$OLD_ID.desktop" "$ICON_DIR/$OLD_ID.png" "$DESKTOP_DIR/$OLD_ID.desktop" \
+          "$DATA_HOME/icons/hicolor/512x512/apps/$OLD_ID.png"
+}
+
 uninstall() {
+    move_old
     say "Removing $APP_ID"
-    rm -rf "$APP_DIR/venv" "$APP_DIR/helixsr_manager" "$APP_DIR/bc250_bazzite_helixsr" "$APP_DIR/images"
+    rm -rf "$APP_DIR/venv" "$APP_DIR/upscaler" "$APP_DIR/bc250_core" "$APP_DIR/images"
     rm -f "$APP_DIR/requirements.txt" "$APP_DIR/LICENSE" "$APP_DIR/README.md"
     if $PURGE; then
         say "Removing the imported payload and the settings"
@@ -73,15 +95,18 @@ $PURGE && ! $UNINSTALL && fail "--purge only goes with --uninstall"
 [[ "$(id -u)" -ne 0 ]] || fail "run this as your own user, not with sudo: the app, venv and launcher belong in your home folder"
 if $UNINSTALL; then uninstall; exit 0; fi
 
-[[ -f "$SRC_DIR/helixsr_manager/__main__.py" ]] || fail "run this script from the unpacked release directory"
+[[ -f "$SRC_DIR/upscaler/__main__.py" ]] || fail "run this script from the unpacked release directory"
+[[ -f "$CORE_SRC/__init__.py" ]] || fail "bc250_core is missing: run install.sh from a clone or the unpacked release directory"
 command -v python3 >/dev/null || fail "python3 is required"
 python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' || fail "Python 3.11 or newer is required"
 python3 -c 'import venv, ensurepip' 2>/dev/null || fail "python3 venv/ensurepip modules are missing"
 
 say "Installing the app to $APP_DIR"
 mkdir -p "$APP_DIR" "$BIN_DIR" "$APPS_DIR" "$ICON_DIR"
-rm -rf "$APP_DIR/helixsr_manager" "$APP_DIR/bc250_bazzite_helixsr" "$APP_DIR/images"   # and the package before its rename
-cp -R "$SRC_DIR/helixsr_manager" "$SRC_DIR/images" "$APP_DIR/"
+move_old
+rm -rf "$APP_DIR/upscaler" "$APP_DIR/bc250_core" "$APP_DIR/images"
+cp -R "$SRC_DIR/upscaler" "$SRC_DIR/images" "$APP_DIR/"
+cp -R "$CORE_SRC" "$APP_DIR/bc250_core"     # the core it was tested with (from the checkout: bundled like a release)
 cp "$SRC_DIR/requirements.txt" "$SRC_DIR/LICENSE" "$SRC_DIR/README.md" "$APP_DIR/" 2>/dev/null || true
 find "$APP_DIR" -name '__pycache__' -type d -prune -exec rm -rf {} +
 
@@ -97,7 +122,7 @@ say "Installing the launcher, desktop entry and icon"
 cat > "$BIN_DIR/$APP_ID" <<EOF
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-cd "$APP_DIR" && exec "$VENV_DIR/bin/python" -m helixsr_manager "\$@"
+cd "$APP_DIR" && exec "$VENV_DIR/bin/python" -m upscaler "\$@"
 EOF
 chmod 755 "$BIN_DIR/$APP_ID"
 
@@ -118,7 +143,7 @@ rm -f "$DATA_HOME/icons/hicolor/512x512/apps/$APP_ID.png"   # the 512 px icon of
 command -v update-desktop-database >/dev/null && update-desktop-database -q "$APPS_DIR" || true
 command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$DATA_HOME/icons/hicolor" 2>/dev/null || true
 
-say "Installed. Find \"HelixSR Manager\" in the application menu$($DESKTOP_SHORTCUT && echo ' or on the Desktop'), or run: $BIN_DIR/$APP_ID"
+say "Installed. Find \"BC-250 Upscaler Manager\" in the application menu$($DESKTOP_SHORTCUT && echo ' or on the Desktop'), or run: $BIN_DIR/$APP_ID"
 case ":$PATH:" in
     *":$BIN_DIR:"*) ;;
     *) echo "    (note: $BIN_DIR is not on your PATH in this shell)" ;;

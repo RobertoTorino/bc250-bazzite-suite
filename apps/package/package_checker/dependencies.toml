@@ -28,9 +28,9 @@ launchers = ["~/.local/bin/bc250-bazzite-test"]
 name = "BC-250 GPU Governor Manager"
 launchers = ["~/.local/bin/bc250-governor-manager"]
 
-[app.helixsr]
-name = "HelixSR Manager"
-launchers = ["~/.local/bin/bc250-bazzite-helixsr-gui"]
+[app.upscaler]
+name = "BC-250 Upscaler Manager"
+launchers = ["~/.local/bin/bc250-upscaler"]
 
 [app.compute]
 name = "BC-250 CU Bisect"
@@ -957,7 +957,7 @@ owner = "gpu"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
-owner = "helixsr"
+owner = "upscaler"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]

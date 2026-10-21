@@ -18,8 +18,8 @@ ASSET, SHA256), read here without importing the app:
    Linux zip and the SHA-256 GitHub publishes for it, for the pin;
  * the pinned release's zip: the SHA-256 GitHub publishes for it must still be the pinned one.
 
-The HelixSR Manager gets the latest HelixSR release of one major version, or the fallback its developer names
-(apps/helixsr/helixsr_manager/acquire.py: SUPPORTED_MAJOR, KNOWN_VERSION, FALLBACK_VERSION), read here without
+The BC-250 Upscaler Manager gets the latest HelixSR release of one major version, or the fallback its developer names
+(apps/upscaler/upscaler/acquire.py: SUPPORTED_MAJOR, KNOWN_VERSION, FALLBACK_VERSION), read here without
 importing the app:
  * the latest stable release: newer than KNOWN_VERSION means the app gets it without having been checked against it;
    what changed (setup options, the files in the zip, helixsr.ini) needs a look, and a try on the board. A later major
@@ -59,7 +59,7 @@ from types import ModuleType
 SUITE = Path(__file__).resolve().parent.parent
 LOADER = SUITE / "apps" / "decky" / "decky_manager" / "loader.py"
 EMULATOR = SUITE / "apps" / "shadps4" / "shadps4_manager" / "emulator.py"
-ACQUIRE = SUITE / "apps" / "helixsr" / "helixsr_manager" / "acquire.py"
+ACQUIRE = SUITE / "apps" / "upscaler" / "upscaler" / "acquire.py"
 PPSSPP = SUITE / "apps" / "ppsspp" / "ppsspp_manager" / "emulator.py"
 PCSX2 = SUITE / "apps" / "pcsx2" / "pcsx2_manager" / "emulator.py"
 RPCS3 = SUITE / "apps" / "rpcs3" / "rpcs3_manager" / "emulator.py"
@@ -132,7 +132,7 @@ def load_shadps4_pin(path: Path = EMULATOR) -> Pin:
 
 @dataclass
 class HelixPin:
-    """What the HelixSR Manager knows of HelixSR: the constants of acquire.py."""
+    """What the BC-250 Upscaler Manager knows of HelixSR: the constants of acquire.py."""
     KNOWN_VERSION: str
     FALLBACK_VERSION: str
     SUPPORTED_MAJOR: int
@@ -244,7 +244,7 @@ def check_helixsr(pin: HelixPin, get: Fetch = fetch) -> Report:
     version = report.latest.lstrip("v")
     if _version(report.latest)[:1] > (pin.SUPPORTED_MAJOR,):
         report.drift.append(f"{report.latest} is out ({str(latest.get('published_at', ''))[:10]}), a new major "
-                            f"version: the HelixSR Manager stays on {pin.SUPPORTED_MAJOR}.x (SUPPORTED_MAJOR) and does "
+                            f"version: the BC-250 Upscaler Manager stays on {pin.SUPPORTED_MAJOR}.x (SUPPORTED_MAJOR) and does "
                             f"not offer it. Look at what changed (setup options, the files in the zip, helixsr.ini), "
                             f"move the app to it and try it on the board. {latest.get('html_url', '')}")
     elif _version(report.latest) > _version(pin.KNOWN_VERSION):

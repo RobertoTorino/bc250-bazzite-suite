@@ -3,7 +3,7 @@
 
 The org/app pair comes from AppInfo (settings_org/settings_app, default app_id), so moving an app onto core does
 not move its settings file:
-  governor, helixsr      QSettings(APP_ID, APP_ID)                          ~/.config/<id>/<id>.conf
+  governor, upscaler     QSettings(APP_ID, APP_ID)                          ~/.config/<id>/<id>.conf
   bazzite-test           QSettings(IniFormat, UserScope, APP_ID, APP_ID)    ~/.config/<id>/<id>.ini
   bisect/unlock GUIs     bare QSettings() with org/app set on the app       ~/.config/<org>/<app>.conf"""
 

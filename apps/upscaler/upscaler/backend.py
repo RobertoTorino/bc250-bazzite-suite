@@ -22,6 +22,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
+from bc250_core.steam import write_atomic
+
 
 HELIXSR_DLL = "amd_fidelityfx_dx12.dll"
 UPSCALER_DLL = "amd_fidelityfx_upscaler_dx12.dll"
@@ -672,6 +674,148 @@ def uninstall_optiscaler(folder: Path) -> list[Path]:
     except OSError:
         pass
     return removed
+
+
+# --------------------------------------------------------------------------------------- Steam launch options
+# Under Proton Wine loads its own dxgi.dll, not the game's, so OptiScaler only loads with WINEDLLOVERRIDES="dxgi=n,b"
+# in the game's launch options. Steam keeps them per user in userdata/<user>/config/localconfig.vdf, under
+# UserLocalConfigStore/Software/Valve/Steam/apps/<AppID>/LaunchOptions, in the text key-value format. Steam writes
+# that file again when it exits, so the window changes it with Steam closed (bc250_core.steam.with_steam_closed); the
+# OptiScaler record in the HelixSR folder keeps what was there before, for Remove.
+_VDF_TOKEN = re.compile(r'"((?:[^"\\]|\\.)*)"|([{}])|//[^\n]*')
+_APPS_PATH = ("userlocalconfigstore", "software", "valve", "steam", "apps")
+_OVERRIDES = re.compile(r"""\bWINEDLLOVERRIDES=("[^"]*"|'[^']*'|\S*)""")
+
+
+def _vdf_unescape(text: str) -> str:
+    return re.sub(r"\\(.)", lambda m: {"n": "\n", "t": "\t"}.get(m[1], m[1]), text)
+
+
+def _vdf_escape(text: str) -> str:
+    return text.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def _vdf_entries(text: str):
+    """(path, key, kind, span) for every entry of a text key-value file; path holds the enclosing keys in lower case.
+    A value's span covers it with its quotes, a block's (kind "block", given at its end) its inside, from after { to
+    its }."""
+    stack: list[tuple[str, int]] = []
+    key: str | None = None
+    for match in _VDF_TOKEN.finditer(text):
+        string, brace = match.groups()
+        if string is None and brace is None:            # a // comment
+            continue
+        if brace == "{":
+            if key is None:
+                raise HelixError("A Steam configuration file has a block without a name.")
+            stack.append((key, match.end()))
+            key = None
+        elif brace == "}":
+            if not stack or key is not None:
+                raise HelixError("A Steam configuration file is not complete.")
+            name, start = stack.pop()
+            yield tuple(k.lower() for k, _ in stack), name, "block", (start, match.start())
+        elif key is None:
+            key = _vdf_unescape(string)
+        else:
+            yield tuple(k.lower() for k, _ in stack), key, "value", (match.start(), match.end())
+            key = None
+    if stack or key is not None:
+        raise HelixError("A Steam configuration file is not complete.")
+
+
+def _vdf_insert(text: str, close: int, lines: list[str]) -> str:
+    """*lines* at the end of the block whose } is at *close*, one tab deeper than the }."""
+    start = text.rfind("\n", 0, close) + 1
+    indent, lead = text[start:close], ""
+    if indent.strip():                                  # the } shares its line: start a new one
+        start, indent, lead = close, "", "\n"
+    return text[:start] + lead + "".join(f"{indent}\t{line}\n" for line in lines) + text[start:]
+
+
+def launch_configs(steam: Path) -> list[Path]:
+    """Every Steam user's localconfig.vdf."""
+    return sorted(p for p in (steam / "userdata").glob("*/config/localconfig.vdf") if p.is_file())
+
+
+def launch_options(config: Path, app_id: str) -> str:
+    """The launch options of *app_id* in one localconfig.vdf, "" without."""
+    text = _read_raw(config)
+    for path, key, kind, (start, end) in _vdf_entries(text):
+        if kind == "value" and path == (*_APPS_PATH, app_id) and key.lower() == "launchoptions":
+            return _vdf_unescape(text[start + 1:end - 1])
+    return ""
+
+
+def set_launch_options(config: Path, app_id: str, value: str) -> None:
+    """Sets the launch options of *app_id* in one localconfig.vdf: the value replaced, else added to the game's block,
+    else a block for the game added to apps. The rest of the file stays byte for byte. Only with Steam closed."""
+    text = _read_raw(config)
+    quoted = f'"{_vdf_escape(value)}"'
+    app = apps = None
+    for path, key, kind, (start, end) in _vdf_entries(text):
+        if kind == "value" and path == (*_APPS_PATH, app_id) and key.lower() == "launchoptions":
+            text = text[:start] + quoted + text[end:]
+            break
+        if kind == "block" and path == _APPS_PATH and key == app_id:
+            app = end
+        elif kind == "block" and path == _APPS_PATH[:-1] and key.lower() == "apps":
+            apps = end
+    else:
+        if app is not None:
+            text = _vdf_insert(text, app, [f'"LaunchOptions"\t\t{quoted}'])
+        elif apps is not None:
+            text = _vdf_insert(text, apps, [f'"{app_id}"', "{", f'\t"LaunchOptions"\t\t{quoted}', "}"])
+        else:
+            raise HelixError("{0} has no list of games (apps); start the game once from Steam first.".format(config))
+    write_atomic(config, text.encode("utf-8", errors="surrogateescape"))
+
+
+def with_override(options: str, dll: str) -> str:
+    """The launch options with *dll* (dxgi.dll) loaded from the game's folder first: dxgi=n,b in WINEDLLOVERRIDES,
+    added to one that is there, else in front of the line. The rest of the line stays."""
+    name = Path(dll).stem.lower()
+    match = _OVERRIDES.search(options)
+    if match:
+        value = match.group(1).strip("\"'")
+        names = {n.strip().lower() for part in value.split(";") for n in part.split("=")[0].split(",")}
+        if name in names:
+            return options
+        merged = f'WINEDLLOVERRIDES="{name}=n,b' + (f";{value}" if value else "") + '"'
+        return options[:match.start()] + merged + options[match.end():]
+    line = options.strip()
+    if "%command%" in line:
+        return f'WINEDLLOVERRIDES="{name}=n,b" {line}'
+    return f'WINEDLLOVERRIDES="{name}=n,b" %command%' + (f" {line}" if line else "")
+
+
+def record_launch_options(folder: Path, app_id: str, changes: list[tuple[Path, str, str]]) -> None:
+    """Keeps (config, before, after) of the launch options set for OptiScaler in its record, so Remove can put back
+    what was there. A config set before keeps its first before."""
+    record = optiscaler_record(folder)
+    if record is None:
+        return
+    entries = {(e["config"], e["app_id"]): e for e in record.get("launch", [])}
+    for config, before, after in changes:
+        key = (str(config), app_id)
+        first = entries[key]["before"] if key in entries else before
+        entries[key] = {"config": str(config), "app_id": app_id, "before": first, "after": after}
+    record["launch"] = list(entries.values())
+    (folder / OPTISCALER_MARKER).write_text(json.dumps(record, indent=1) + "\n", encoding="utf-8")
+
+
+def launch_restores(entries: list[dict]) -> list[tuple[Path, str, str]]:
+    """(config, AppID, value) that put back the launch options of a record's *entries*: only where they are still
+    what the app set; the user's own later change stays."""
+    restores = []
+    for entry in entries:
+        config = Path(entry["config"])
+        try:
+            if launch_options(config, entry["app_id"]) == entry["after"]:
+                restores.append((config, entry["app_id"], entry["before"]))
+        except (OSError, HelixError):
+            continue
+    return restores
 
 
 # ------------------------------------------------------------------------------------------ helixsr.ini

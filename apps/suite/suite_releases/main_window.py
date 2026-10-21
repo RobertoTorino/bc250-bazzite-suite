@@ -14,8 +14,9 @@ and pushes only when CI's jobs pass, tag runs tag-release.sh (a pushed HEAD that
 open: step 2's portal tag, else step 1's app tags.
 The header is a row of pills, as the apps' status boxes (owner, 20-10-2026): Refresh, the working tree, whether
 GitHub built the last push (CI, Release, Manual; it notifies when a build it saw running passes or fails), how many
-of GitHub's API requests are left, and GitHub status: green while githubstatus.com reports GitHub up, red while it
-reports a problem; a click opens that page.
+of GitHub's API requests are left (green, orange under a tenth, red at none), GitHub status: green while
+githubstatus.com reports GitHub up, red while it reports a problem; a click opens that page, and Claude tokens today:
+what Claude Code on this machine used, from its transcripts; a click opens Claude's usage page.
 Test on this board: Test app updates and Test withdrawal install the portal from the checkout and start it with the
 apps from their releases, Test Portal release installs the published portal release (check-release.sh, in a
 terminal); Installer tests opens BC-250 Installer Tests; Record portal tour records the portal's video tour
@@ -921,7 +922,7 @@ class BuildIndicator(Pill):
             value, color, now = "—", GREY, "The limit is not known yet."
         else:
             value, now = f"{rate.remaining:,}", f"{rate.text}."
-            color = RED if rate.remaining == 0 else ORANGE if rate.remaining < rate.limit / 10 else GREY
+            color = RED if rate.remaining == 0 else ORANGE if rate.remaining < rate.limit / 10 else GREEN
         sign_in = "" if rate is not None and rate.signed_in else \
             " Signed in with gh (gh auth login), it is 5,000 an hour instead of 60."
         self.rate.set_colour(color)
@@ -1009,13 +1010,67 @@ class GitHubStatusIndicator(Pill):
         self.checker.stop(2000)
 
 
+class ClaudeUsageIndicator(Pill):
+    """Claude tokens today: what Claude Code on this machine used since midnight, read from its own transcripts
+    (plan.fetch_claude_usage), blue once known; the tooltip adds the last 5 hours (Claude's usage window), the kinds
+    and the models. Hidden without Claude Code here. Looks every 5 minutes; a click opens Claude's usage page, which
+    shows the plan's limits (they are not on this machine)."""
+
+    def __init__(self, source):
+        super().__init__("\u2014", "Claude tokens today")
+        self.source = source            # rp.fetch_claude_usage: (today, last 5 hours) | None
+        self.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(rp.CLAUDE_USAGE_PAGE)))
+        self.checker = UpdateChecker(self)
+        self.checker.finished.connect(self.checked)
+        self.timer = QTimer(self, singleShot=True)
+        self.timer.timeout.connect(self.check)
+        self.set_value("\u2014", f"Not looked yet.\n\nClick to open {rp.CLAUDE_USAGE_PAGE}")
+        self.setVisible(source is not None)
+
+    def check(self) -> None:
+        if self.source is not None:
+            self.checker.start(self._fetch)
+
+    def _fetch(self) -> object:
+        """Worker thread: the usage, None without Claude Code, or the error to show."""
+        try:
+            return self.source()
+        except (OSError, ValueError) as exc:
+            return exc
+
+    def checked(self, result: object) -> None:
+        self.timer.start(BUILD_IDLE_MS)
+        if result is None:
+            self.setVisible(False)
+            return
+        if isinstance(result, Exception):
+            self.set_colour(GREY)
+            self.set_value("\u2014", f"Claude Code's transcripts could not be read: {result}")
+            return
+        today, recent = result
+        self.set_colour(BLUE)
+        self.set_value(rp.short_count(today.total), "\n".join([
+            f"Today: {today.total:,} tokens in {today.messages:,} answers.",
+            f"Last 5 hours: {recent.total:,} tokens in {recent.messages:,} answers.", "",
+            f"Input {today.input:,}, output {today.output:,}, cache written {today.cache_write:,}, "
+            f"cache read {today.cache_read:,}.",
+            *(f"{model}: {tokens:,}" for model, tokens in today.models), "",
+            "Claude Code on this machine, from its transcripts; other machines and claude.ai are not in it.",
+            f"Click to open {rp.CLAUDE_USAGE_PAGE} for the plan's limits."]))
+
+    def stop(self) -> None:
+        self.timer.stop()
+        self.checker.stop(2000)
+
+
 class ReleaseWindow(QMainWindow):
     def __init__(self, root: Path = SUITE, sha256_source=rp.fetch_sha256, launch=launch_in_terminal,
                  start=start_app, runs_source=rp.fetch_runs, notify=desktop_notify, settings=None,
-                 status_source=rp.fetch_github_status):
+                 status_source=rp.fetch_github_status, claude_source=rp.fetch_claude_usage):
         """*runs_source* reads the GitHub Actions runs (None: no build indicator); *notify* shows a desktop
         notification; *settings* keeps the command line's history (None: this session only); *status_source*
-        reads githubstatus.com (None: no GitHub status)."""
+        reads githubstatus.com (None: no GitHub status); *claude_source* reads Claude Code's usage (None: no
+        Claude pill)."""
         super().__init__()
         self.root = root
         self.sha256_source = sha256_source
@@ -1034,7 +1089,8 @@ class ReleaseWindow(QMainWindow):
         self.status = MetricBox("Working tree")    # clean or changed
         self.build = BuildIndicator(self, runs_source, notify)
         self.github_status = GitHubStatusIndicator(status_source)
-        pills = [self.refresh_pill, self.status, self.build, self.build.rate, self.github_status]
+        self.claude = ClaudeUsageIndicator(claude_source)
+        pills = [self.refresh_pill, self.status, self.build, self.build.rate, self.github_status, self.claude]
         for pill in pills:
             header.add_second(pill)
         same_width(pills)
@@ -1085,6 +1141,7 @@ class ReleaseWindow(QMainWindow):
         self.reload()
         self.build.check()
         self.github_status.check()
+        self.claude.check()
 
     def _git_row(self) -> QHBoxLayout:
         """git add, git commit, git push and git tag as buttons, each with its checks (owner, 19-10-2026: no commands
@@ -1215,6 +1272,7 @@ class ReleaseWindow(QMainWindow):
                 self.amend_box.setChecked(False)
         self.build.check()                      # a push from a terminal: its build
         self.github_status.check()
+        self.claude.check()
 
     def reload(self) -> None:
         units = self.units = rp.load_units(self.root)
@@ -1240,6 +1298,7 @@ class ReleaseWindow(QMainWindow):
     def closeEvent(self, event) -> None:
         self.build.stop()
         self.github_status.stop()
+        self.claude.stop()
         self.commands.shutdown()
         recorder = self.run_page.recorder
         if recorder is not None:                         # a tour being recorded: stopped, not left half-written

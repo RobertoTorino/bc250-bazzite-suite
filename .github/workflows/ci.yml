@@ -44,7 +44,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [core, portal, tools, apps/check, apps/gpu, apps/helixsr, apps/acpi,
+        dir: [core, portal, tools, apps/check, apps/gpu, apps/upscaler, apps/acpi,
               apps/compute, apps/cores, apps/oc,
               apps/mtool, apps/package, apps/ncgui,
               apps/suite,
@@ -217,8 +217,8 @@ jobs:
         run: bash tools/installer-tests/check.sh
       - name: gpu installer
         run: bash tools/installer-tests/gpu.sh
-      - name: helixsr installer
-        run: bash tools/installer-tests/helixsr.sh
+      - name: upscaler installer
+        run: bash tools/installer-tests/upscaler.sh
       - name: compute installers
         run: bash tools/installer-tests/compute.sh
       - name: cores installer

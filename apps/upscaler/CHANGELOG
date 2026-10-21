@@ -1,3 +1,34 @@
+Changelog: 21-10-2026 02:13:00
+
+Release 0.7.1.
+
+Changelog: 21-10-2026 01:54:13
+
+Breaking. The app is BC-250 Upscaler Manager (owner, 21-10-2026: it is not HelixSR itself, and the old name
+confused people), in the window, the menu entry, the portal and the wiki. With the name go the folder apps/upscaler,
+the package upscaler, the portal key upscaler, the release tags upscaler-v<x.y.z>, the wiki chapter
+docs/apps/upscaler.md and the installed name bc250-upscaler: the launcher ~/.local/bin/bc250-upscaler, the folders
+~/.local/share/bc250-upscaler and ~/.config/bc250-upscaler, the desktop entry and the icon. install.sh takes over a
+copy installed as bc250-bazzite-helixsr-gui, on install and uninstall: the imported payload, the settings
+(bc250-bazzite-helixsr-gui.conf becomes bc250-upscaler.conf) and the list of deployed games move to the new folders
+(not over ones that are there already), the old launcher, menu entry, Desktop icon, icons and the rest of the old
+folder (venv, downloads) go. The games themselves are not touched. HelixSR keeps its name wherever the app means the
+upscaler it deploys. The portal notice of a newer HelixSR is published under the key upscaler. The installer test
+plants a copy under the old name.
+
+Changelog: 21-10-2026 01:43:59
+
+Added. With OptiScaler installed for a Steam game (Deploy, stand-alone folder), the app also sets the game's Steam
+launch options (owner, 21-10-2026): WINEDLLOVERRIDES="dxgi=n,b" (under the name OptiScaler got), added to the
+launch options already there, for every Steam user (userdata/<user>/config/localconfig.vdf, only that line changes).
+Steam writes that file again when it closes, so the app asks to close it, sets them and starts Steam again
+(bc250_core.steam.with_steam_closed, as Console Link does); in Game Mode Steam stays open and the line is copied to the
+clipboard. OptiScaler's record in the HelixSR folder keeps the launch options of before, and Remove puts them back
+unless they were changed since. helixsr now uses bc250_core (its steam module only, owner, 21-10-2026): install.sh
+copies it from the checkout as a release bundles it, and uninstalls it. Help, the Deploy page and the wiki say so.
+Tests: tests/test_optiscaler.py (reading and writing localconfig.vdf, adding the override, the record) and
+tests/test_main_window.py (Deploy and Remove with Steam running, Game Mode); the installer test checks the core.
+
 Changelog: 21-10-2026 00:17:47
 
 Release 0.7.1.

@@ -260,20 +260,20 @@ def test_install_success_records_tag(window, launched, monkeypatch, home):
 
 def test_failed_install_warns_and_records_nothing(window, launched, monkeypatch):
     monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: YES)
-    entry = next(e for e in window.entries if e.key == "helixsr")
+    entry = next(e for e in window.entries if e.key == "upscaler")
     window.install(entry)
     assert wait_for(lambda: launched)
     shown = []
     monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: shown.append(a[2]))
     launched[0][1].write_text("1\n")
     window._check_pending()
-    assert window.records.get("helixsr") == "" and shown and "exit status 1" in shown[0]
+    assert window.records.get("upscaler") == "" and shown and "exit status 1" in shown[0]
 
 
 def test_uninstall_forgets_release(window, launched, monkeypatch, home):
-    entry = next(e for e in window.entries if e.key == "helixsr")
-    (home / ".local" / "bin" / "bc250-bazzite-helixsr-gui").write_text("#!/bin/sh\n")
-    window.records.set("helixsr", entry.tag)
+    entry = next(e for e in window.entries if e.key == "upscaler")
+    (home / ".local" / "bin" / "bc250-upscaler").write_text("#!/bin/sh\n")
+    window.records.set("upscaler", entry.tag)
     window.refresh()
     monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: YES)
     window.uninstall(entry)
@@ -282,7 +282,7 @@ def test_uninstall_forgets_release(window, launched, monkeypatch, home):
     assert line.endswith("&& bash install.sh --uninstall")
     exit_file.write_text("0\n")
     window._check_pending()
-    assert window.records.get("helixsr") == ""
+    assert window.records.get("upscaler") == ""
     assert not window.sources.folder(entry).exists()
 
 
@@ -300,13 +300,13 @@ def test_shell_line_quotes_folder():
 
 
 def test_red_dot_and_count_for_updates(window, home):
-    for name in ("bc250-governor-manager", "bc250-bazzite-helixsr-gui"):
+    for name in ("bc250-governor-manager", "bc250-upscaler"):
         (home / ".local" / "bin" / name).write_text("#!/bin/sh\n")
     window.records.set("gpu", "gpu-v0.0.9")              # older than the pin: an update
-    window.records.set("helixsr", next(e.tag for e in window.entries if e.key == "helixsr"))   # the pinned one
+    window.records.set("upscaler", next(e.tag for e in window.entries if e.key == "upscaler"))   # the pinned one
     window.refresh()
     assert not window.cards["gpu"].dot.isHidden()
-    assert window.cards["helixsr"].dot.isHidden()
+    assert window.cards["upscaler"].dot.isHidden()
     assert "gpu-v0.0.9" in window.cards["gpu"].dot.toolTip()
     notice = window.notice.text()
     assert "\u25cf 1 update</b>" in notice and "<a href='gpu'>GPU Governor Manager</a> (Sustainable): update to v" in notice
@@ -324,16 +324,16 @@ def test_updates_outside_the_suite(window, home):
     from bc250_core import upstream
     helix = upstream.Outside("HelixSR", "1.8.1", "1.9.3", "2026-10-16", "https://x/v1.9.3",
                              "Get HelixSR… on the Setup page updates it.")
-    upstream.publish("helixsr", [helix])
+    upstream.publish("upscaler", [helix])
     upstream.publish("pcsx2", [upstream.Outside("PCSX2 nightly", "2.9.127", "2.9.128")])
     window.refresh()
     assert "Outside" not in window.notice.text()                        # neither app is installed
-    (home / ".local" / "bin" / "bc250-bazzite-helixsr-gui").write_text("#!/bin/sh\n")
-    window.records.set("helixsr", next(e.tag for e in window.entries if e.key == "helixsr"))
+    (home / ".local" / "bin" / "bc250-upscaler").write_text("#!/bin/sh\n")
+    window.records.set("upscaler", next(e.tag for e in window.entries if e.key == "upscaler"))
     window.refresh()
     notice = window.notice.text()
     assert "No updates" not in notice and "\u25cf Outside the suite</b>" in notice
-    assert ("<a href='helixsr'>HelixSR Manager</a> (Graphics): HelixSR 1.9.3 is out (2026-10-16), installed 1.8.1. "
+    assert ("<a href='upscaler'>Upscaler Manager</a> (Graphics): HelixSR 1.9.3 is out (2026-10-16), installed 1.8.1. "
             "Get HelixSR… on the Setup page updates it.") in notice
     assert "PCSX2" not in notice and "Outside the suite" in window.notice.toolTip()
     sustainable_tabs = [window.tabs.tabText(i) for i in range(window.tabs.count())]
@@ -345,7 +345,7 @@ def test_updates_outside_the_suite(window, home):
     notice = window.notice.text()
     assert notice.index("\u25cf 1 update</b>") < notice.index("Outside the suite")
     # The app found nothing more to install; the portal sees it when its window is active again.
-    upstream.publish("helixsr", [])
+    upstream.publish("upscaler", [])
     window.show_notice(window.marked)
     assert "Outside the suite" not in window.notice.text() and "Outside" not in window.notice.toolTip()
 
@@ -353,19 +353,19 @@ def test_updates_outside_the_suite(window, home):
 def test_circular_arrow_and_count_for_reinstalls(window, home):
     # Installed but not recorded: by hand, or under an earlier key that RENAMED does not know (shadps4 became
     # shadps4-manager before RENAMED existed).
-    for name in ("bc250-governor-manager", "bc250-bazzite-helixsr-gui"):
+    for name in ("bc250-governor-manager", "bc250-upscaler"):
         (home / ".local" / "bin" / name).write_text("#!/bin/sh\n")
-    window.records.set("helixsr", "helixsr-v0.0.1")                          # an update, for the count
+    window.records.set("upscaler", "upscaler-v0.0.1")                          # an update, for the count
     window.refresh()
     card = window.cards["gpu"]
     assert card.status == "Reinstall needed" and not card.badge.isHidden() and card.dot.isHidden()
     assert "Reinstall needed" in card.icon.toolTip() and "version is unknown" in card.badge.toolTip()
     assert card.install_button.toolTip().startswith("Reinstall ")
-    assert window.cards["helixsr"].badge.isHidden() and not window.cards["helixsr"].dot.isHidden()
+    assert window.cards["upscaler"].badge.isHidden() and not window.cards["upscaler"].dot.isHidden()
     assert "\u25cf 1 update, 1 reinstall</b>" in window.notice.text()
     assert "<a href='gpu'>GPU Governor Manager</a> (Sustainable): reinstall needed" in window.notice.text()
-    window.records.remove("helixsr")
-    (home / ".local" / "bin" / "bc250-bazzite-helixsr-gui").unlink()
+    window.records.remove("upscaler")
+    (home / ".local" / "bin" / "bc250-upscaler").unlink()
     window.refresh()
     assert "\u25cf 1 reinstall</b>" in window.notice.text()
     window.records.set("gpu", next(e.tag for e in window.entries if e.key == "gpu"))
@@ -444,7 +444,7 @@ def test_a_tab_per_category_in_order(window):
     for key, card in window.cards.items():
         inside = [c for c, grid in window.grids.items() if grid.indexOf(card) >= 0]
         assert inside == [card.entry.category], key
-    assert {k for k, c in window.cards.items() if c.entry.category == "graphics"} == {"helixsr", "ace", "mesh"}
+    assert {k for k, c in window.cards.items() if c.entry.category == "graphics"} == {"upscaler", "ace", "mesh"}
     assert window.tabs.currentWidget() is window.pages["sustainable"]           # the first tab, the first time
 
 
@@ -648,17 +648,17 @@ def test_an_install_with_icons_off_removes_the_new_icon(qapp, home, settings_dir
 
 
 def _withdrawn_window(home, tmp_path, installed: bool):
-    entries = [replace(e, withdrawn="Privacy: shows the account ID.") if e.key == "helixsr" else e
+    entries = [replace(e, withdrawn="Privacy: shows the account ID.") if e.key == "upscaler" else e
                for e in load(MANIFEST)]
     if installed:
-        (home / ".local" / "bin" / "bc250-bazzite-helixsr-gui").write_text("#!/bin/sh\n")
+        (home / ".local" / "bin" / "bc250-upscaler").write_text("#!/bin/sh\n")
     return mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
 
 
 def test_a_withdrawn_app_is_not_available(qapp, home, settings_dir, tmp_path, launched, monkeypatch):
     w = _withdrawn_window(home, tmp_path, installed=False)
     try:
-        card = w.cards["helixsr"]
+        card = w.cards["upscaler"]
         assert not card.withdrawn.isHidden() and card.withdrawn.text() == "App not available"
         assert card.status == "App not available" and not card.install_button.isEnabled()
         assert "Privacy: shows the account ID." in card.install_button.toolTip()
@@ -679,9 +679,9 @@ def test_the_portal_removes_a_withdrawn_app(qapp, home, settings_dir, tmp_path, 
         assert told and "is not available any more" in told[0] and "Privacy: shows the account ID." in told[0]
         line, exit_file = launched[0]
         assert line.endswith("&& bash install.sh --uninstall")
-        card = w.cards["helixsr"]
+        card = w.cards["upscaler"]
         assert not card.icon.isEnabled() and card.dot.isHidden()          # no opening, no update
-        (home / ".local" / "bin" / "bc250-bazzite-helixsr-gui").unlink()
+        (home / ".local" / "bin" / "bc250-upscaler").unlink()
         exit_file.write_text("0\n")
         w._check_pending()
         assert card.status == "App not available" and "It cannot be installed." in card.icon.toolTip()
@@ -702,7 +702,7 @@ def test_a_withdrawn_app_that_could_not_be_removed_stays_removable(qapp, home, s
         launched[0][1].write_text("1\n")
         w._check_pending()
         assert warned and "exit status 1" in warned[0]
-        card = w.cards["helixsr"]
+        card = w.cards["upscaler"]
         assert card.uninstall_button.isEnabled()            # the user can try again by hand
         assert "The portal removes it from the board." in card.icon.toolTip()
         assert len(launched) == 1                           # tried once per start, not in a loop

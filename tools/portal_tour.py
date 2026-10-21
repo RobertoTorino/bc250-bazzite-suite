@@ -24,7 +24,7 @@ from pathlib import Path
 SUITE = Path(__file__).resolve().parents[1]
 WIDTH, HEIGHT = 1920, 1080
 SCALE = 1.2                                         # the window is 1600 x 900 at 120 %: readable on a phone too
-INSTALLED = ("check", "gpu", "helixsr", "shadps4", "rpcs3", "cec", "package")
+INSTALLED = ("check", "gpu", "upscaler", "shadps4", "rpcs3", "cec", "package")
 BEHIND = "shadps4"                                  # installed from an older release: the red dot and the notice
 
 

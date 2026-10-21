@@ -1,3 +1,10 @@
+Changelog: 21-10-2026 01:54:13
+
+The HelixSR Manager is BC-250 Upscaler Manager (owner, 21-10-2026): apps/helixsr is apps/upscaler with the
+package upscaler, the portal key, the tags (upscaler-v), the wiki chapter, the installer test, the tile icon, the CI
+matrix and installer step, the dependency catalogue, the bug report form and CLAUDE.md follow; the installed name is
+bc250-upscaler, and the installer takes over a copy under the old one.
+
 Changelog: 20-10-2026 21:25:05
 
 tools/portal_tour.py renders a video tour of the portal for the wiki and YouTube: the real portal window from the

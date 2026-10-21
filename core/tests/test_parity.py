@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Migration gate: core's widgets render pixel-identical to the copies in governor and helixsr that they replace.
+"""Migration gate: core's widgets render pixel-identical to the copies in governor and upscaler that they replace.
 
 Each pair is built with the same arguments, rendered offscreen with grab() and compared as images. Once an app has
 moved onto core its copy is gone and its cases are skipped."""
@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import QPushButton, QWidget
 from bc250_core import widgets as core
 from conftest import SUITE
 
-APPS = {"gpu": "gpu_governor", "helixsr": "helixsr_manager"}
+APPS = {"gpu": "gpu_governor", "upscaler": "upscaler"}
 
 
 def _app_widgets(app: str):
@@ -58,7 +58,7 @@ CASES = {
 @pytest.mark.parametrize("case", sorted(CASES))
 def test_renders_like_app(qapp, app, case):
     if app == "gpu" and case == "status_pill_default":
-        pytest.skip("core takes helixsr's StatusPill(); governor's differs only for text=None, which it never passes")
+        pytest.skip("core takes upscaler's StatusPill(); governor's differs only for text=None, which it never passes")
     old = _app_widgets(app)
     make = CASES[case]
     assert _pixels(make(old)) == _pixels(make(core))

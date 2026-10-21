@@ -11,7 +11,7 @@ body:
         - portal
         - check
         - gpu
-        - helixsr
+        - upscaler
         - compute
         - cores
         - oc

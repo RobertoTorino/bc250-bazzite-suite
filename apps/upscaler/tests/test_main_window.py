@@ -10,8 +10,8 @@ from unittest import mock
 import pytest
 from PyQt6.QtWidgets import QMessageBox
 
-from helixsr_manager import backend
-from helixsr_manager.main_window import MainWindow
+from upscaler import backend
+from upscaler.main_window import MainWindow
 from tests.conftest import FAKE_DLL
 
 
@@ -74,8 +74,8 @@ def test_ini_page_saves_default(window, payload):
 def test_setup_page_builds_and_imports(qapp, tmp_path):
     """Setup page -> SetupWorker (fake release over file://) -> payload imported, Overview updated."""
     from PyQt6.QtCore import QEventLoop, QTimer
-    from helixsr_manager import acquire
-    from helixsr_manager.acquire import UpdateStatus
+    from upscaler import acquire
+    from upscaler.acquire import UpdateStatus
     from tests.test_acquire import prepared
 
     release, _ = prepared(tmp_path)
@@ -102,18 +102,18 @@ def test_setup_page_builds_and_imports(qapp, tmp_path):
 
 
 def test_update_hint_on_overview(window):
-    from helixsr_manager.acquire import ReleaseInfo, UpdateStatus
+    from upscaler.acquire import ReleaseInfo, UpdateStatus
     newer = ReleaseInfo("9.0.0", "v9.0.0", "u", "2030-01-01", "HelixSR-9.0.0.zip", "https://x/z.zip", 10)
-    from helixsr_manager import upstream
+    from upscaler import upstream
     window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.2.0", newer)})
     assert "9.0.0" in window.overview.update_hint.text() and window.setup_page.helix_pill.text() == "Update"
     assert not hasattr(window.setup_page, "app_pill")                  # the portal updates this app
     # The portal's notice gets it too, and loses it once the payload is the newest.
-    (outside,) = upstream.read_all()["helixsr"]
+    (outside,) = upstream.read_all()["upscaler"]
     assert (outside.installed, outside.latest, outside.url) == ("1.2.0", "9.0.0", "u")
     assert "Get HelixSR" in outside.action
     window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.2.0", ReleaseInfo(error="offline"))})
-    assert "helixsr" in upstream.read_all()                                # a failed check changes nothing
+    assert "upscaler" in upstream.read_all()                                # a failed check changes nothing
     window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.2.0", ReleaseInfo("1.2.0", "v1.2.0", "u", "d"))})
     assert window.overview.update_hint.text() == "" and window.setup_page.helix_pill.text() == "Up to date"
     assert upstream.read_all() == {}
@@ -162,7 +162,7 @@ def test_ini_page_greys_out_what_the_version_ignores(window):
 
 
 def test_setup_page_fallback_choice(window):
-    from helixsr_manager.acquire import ReleaseInfo, UpdateStatus
+    from upscaler.acquire import ReleaseInfo, UpdateStatus
     latest = ReleaseInfo("1.9.0", "v1.9.0", "u", "2026-10-15", "HelixSR-1.9.0.zip", "https://x/z.zip", 10)
     window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.8.1", latest)})
     assert "1.9.0" in window.overview.update_hint.text() and "Get HelixSR" in window.overview.update_hint.text()
@@ -170,9 +170,9 @@ def test_setup_page_fallback_choice(window):
     assert window.setup_page.fallback() and window.settings.value("setup/fallback", type=bool)
     window._updates_checked({"helixsr": UpdateStatus("HelixSR", "1.8.1", latest)})
     assert "fallback" in window.overview.update_hint.text()
-    from helixsr_manager import upstream
+    from upscaler import upstream
     assert upstream.read_all() == {}                                    # the fallback was chosen: nothing to do
-    with mock.patch("helixsr_manager.main_window.SetupWorker") as worker:
+    with mock.patch("upscaler.main_window.SetupWorker") as worker:
         window.setup_page.start_requested.emit(None)
     request = worker.call_args.args[0]
     assert request.fallback and request.release is None
@@ -200,6 +200,80 @@ def test_optiscaler_through_deploy_page(window, payload, tmp_path):
     with mock.patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes):
         window.overview.remove_requested.emit(dep)
     assert (exe_dir / "dxgi.dll").read_bytes() == b"MZ-the-games-dxgi" and not (exe_dir / "OptiScaler.ini").exists()
+
+
+def steam_game(tmp_path: Path, app_id: str = "1593500"):
+    """make_game() in a Steam library, with its appmanifest and a Steam user's localconfig.vdf."""
+    from tests.test_optiscaler import make_game, write_config
+    game, exe_dir = make_game(tmp_path)
+    (tmp_path / "steamapps" / f"appmanifest_{app_id}.acf").write_text(
+        f'"appid" "{app_id}"\n"installdir" "{game.name}"\n', encoding="utf-8")
+    return game, exe_dir, write_config(tmp_path)
+
+
+def test_optiscaler_sets_and_restores_steam_launch_options(qapp, payload, tmp_path):
+    from tests.test_optiscaler import add_optiscaler
+    from upscaler import main_window
+    add_optiscaler(payload)
+    game, exe_dir, config = steam_game(tmp_path)
+    closed = []
+
+    def with_steam_closed(change, **kwargs):
+        closed.append(kwargs["running"]())
+        change()
+        return True
+
+    with mock.patch.object(backend, "steam_libraries", return_value=[tmp_path / "steamapps"]):
+        w = MainWindow(payload, tmp_path / "deployments.json", tmp_path / "work", tmp_path / "HelixSR",
+                       check_updates=False)
+    try:
+        w.deploy_page.mode_folder.setChecked(True)
+        with mock.patch.object(main_window.steam, "find_steam", return_value=tmp_path / "Steam"), \
+                mock.patch.object(main_window.steam, "game_mode", return_value=False), \
+                mock.patch.object(main_window.steam, "steam_running", return_value=True), \
+                mock.patch.object(main_window.steam, "with_steam_closed", side_effect=with_steam_closed), \
+                mock.patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes) as asked, \
+                mock.patch.object(QMessageBox, "information") as info, \
+                mock.patch.object(QMessageBox, "critical") as crit:
+            w.deploy_page.set_game_path(game)
+            w.deploy_page.deploy.click()
+            assert not crit.called and closed == [True]
+            assert "Steam is running" in asked.call_args.args[2]
+            assert 'are now:\nWINEDLLOVERRIDES="dxgi=n,b" %command%' in info.call_args.args[2]
+            assert backend.launch_options(config, "1593500") == 'WINEDLLOVERRIDES="dxgi=n,b" %command%'
+            w.deploy_page.deploy.click()                                     # again: already there, Steam stays
+            assert closed == [True] and "already load it" in info.call_args.args[2]
+            w.overview.remove_requested.emit(w.store.find(w.deploy_page.folder()))
+            assert closed == [True, True] and backend.launch_options(config, "1593500") == ""
+            assert (exe_dir / "dxgi.dll").read_bytes() == b"MZ-the-games-dxgi"
+    finally:
+        w.close()
+
+
+def test_launch_options_in_game_mode_are_copied(qapp, payload, tmp_path):
+    from tests.test_optiscaler import add_optiscaler
+    from upscaler import main_window
+    add_optiscaler(payload)
+    game, exe_dir, config = steam_game(tmp_path)
+    with mock.patch.object(backend, "steam_libraries", return_value=[tmp_path / "steamapps"]):
+        w = MainWindow(payload, tmp_path / "deployments.json", tmp_path / "work", tmp_path / "HelixSR",
+                       check_updates=False)
+    try:
+        w.deploy_page.mode_folder.setChecked(True)
+        with mock.patch.object(main_window.steam, "find_steam", return_value=tmp_path / "Steam"), \
+                mock.patch.object(main_window.steam, "game_mode", return_value=True), \
+                mock.patch.object(main_window.steam, "with_steam_closed") as closed, \
+                mock.patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes), \
+                mock.patch.object(QMessageBox, "information") as info:
+            w.deploy_page.set_game_path(game)
+            w.deploy_page.deploy.click()
+            text = info.call_args.args[2]
+            assert not closed.called and "were not changed: In Game Mode" in text and "clipboard" in text
+            assert qapp.clipboard().text() == 'WINEDLLOVERRIDES="dxgi=n,b" %command%'
+            assert backend.launch_options(config, "1593500") == ""
+            assert "launch" not in backend.optiscaler_record(w.deploy_page.folder())
+    finally:
+        w.close()
 
 
 # ------------------------------------------------------------------------------------------ games page
@@ -234,7 +308,7 @@ def test_games_page_runs_a_game_with_helixsr(qapp, payload, game, tmp_path):
         page.table.selectRow(0)
         assert page.run.isEnabled()
         with mock.patch.object(backend, "game_running", return_value=False), \
-                mock.patch("helixsr_manager.main_window.subprocess.Popen") as popen, \
+                mock.patch("upscaler.main_window.subprocess.Popen") as popen, \
                 mock.patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes) as asked:
             page.run.click()
         assert asked.called and target.read_bytes() == FAKE_DLL and w.store.find(target) is not None
@@ -248,12 +322,12 @@ def test_games_page_runs_a_game_with_helixsr(qapp, payload, game, tmp_path):
         assert page.scans[game].state()[1] == "The game put its own DLL back"
         page.table.selectRow(0)
         with mock.patch.object(backend, "game_running", return_value=True), \
-                mock.patch("helixsr_manager.main_window.subprocess.Popen") as popen, \
+                mock.patch("upscaler.main_window.subprocess.Popen") as popen, \
                 mock.patch.object(QMessageBox, "information") as info:
             page.run.click()                                               # running: nothing changes
         assert info.called and not popen.called and target.read_bytes() == FAKE_GAME_DLL
         with mock.patch.object(backend, "game_running", return_value=False), \
-                mock.patch("helixsr_manager.main_window.subprocess.Popen") as popen, \
+                mock.patch("upscaler.main_window.subprocess.Popen") as popen, \
                 mock.patch.object(QMessageBox, "question") as asked:
             page.run.click()                                               # put back without asking
         assert not asked.called and popen.called and target.read_bytes() == FAKE_DLL

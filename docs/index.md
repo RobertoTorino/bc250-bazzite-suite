@@ -48,7 +48,7 @@ unstable unlock, and [Memory Manager](apps/vram.md) sets the VRAM split.
 <div class="home-card" markdown>
 #### :material-gamepad-variant: Gaming
 
-[HelixSR Manager](apps/helixsr.md) deploys an FSR 3.1 drop-in upscaler into games, and
+[BC-250 Upscaler Manager](apps/upscaler.md) deploys an FSR 3.1 drop-in upscaler into games, and
 [ACE Queues](apps/ace.md) and [Mesh Shaders](apps/mesh.md) bring async compute and mesh shaders,
 beside the system Mesa.
 </div>

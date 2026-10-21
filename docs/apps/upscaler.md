@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-![HelixSR Manager](../assets/helixsr/bc250-bazzite-helixsr-gui.webp){ .app-logo }
+![BC-250 Upscaler Manager](../assets/upscaler/bc250-upscaler.webp){ .app-logo }
 
-# HelixSR Manager
+# BC-250 Upscaler Manager
 
 PyQt6 front-end that deploys **[HelixSR](https://github.com/lonewolf0622/HelixSR)** – the FSR 3.1 drop-in
 upscaler with DLSS-style neural networks – into games on an **AMD BC-250** board running **Bazzite**
@@ -12,7 +12,8 @@ HelixSR is not an injector: it is a replacement for the `amd_fidelityfx_upscaler
 `amd_fidelityfx_dx12.dll` a game ships with. Deploying it means renaming the game's DLL to `*.original.dll`
 and dropping HelixSR's DLL, its two network files and an optional `helixsr.ini` in the same folder. This
 app does exactly that, reversibly, and nothing else on the system is touched. No launch options, no
-`WINEDLLOVERRIDES`, no Proton tweaks are needed.
+`WINEDLLOVERRIDES`, no Proton tweaks are needed. Only OptiScaler, for games without FSR 3.1, needs a launch
+option; the app sets that one too (see below).
 
 ---
 
@@ -52,13 +53,13 @@ app does exactly that, reversibly, and nothing else on the system is touched. No
   OptiScaler). *Run with HelixSR* (or a double-click) puts HelixSR in when it is missing, older, or replaced by
   the game's own DLL after an update, then starts the game through Steam (`steam://rungameid/<AppID>`). It
   asks before the first install into a game and does nothing while the game runs.
-- **Payload** – one imported HelixSR release, kept under `~/.local/share/bc250-bazzite-helixsr-gui/payload`.
+- **Payload** – one imported HelixSR release, kept under `~/.local/share/bc250-upscaler/payload`.
   Filled by the Setup page, or by hand: run the release's `helixsr-setup.sh` yourself and import the folder or
   the zip. It builds `helixsr_weights.bin` and `helixsr_kernels.pak` from NVIDIA's DLSS DLL – those files are
   NVIDIA's property, so this app never ships them. Only the known HelixSR files are copied; the payload survives
   updates and `./install.sh --uninstall`.
 - **Deployments** – every place HelixSR was put, with a live status (in place, older or newer build, network
-  files missing, original restored when a game update or Steam put the game's own DLL back, folder gone), in `~/.config/bc250-bazzite-helixsr-gui/deployments.json`.
+  files missing, original restored when a game update or Steam put the game's own DLL back, folder gone), in `~/.config/bc250-upscaler/deployments.json`.
 - **Two deploy modes**
   - *Replace the game's DLL* – for games with native FSR 3.1: pick the game folder (Steam libraries are
     scanned, including `libraryfolders.vdf` and the Flatpak Steam), the app finds every upscaler DLL (Unreal
@@ -70,8 +71,13 @@ app does exactly that, reversibly, and nothing else on the system is touched. No
     it when you switch back to the latest), it also installs OptiScaler next to the game's `.exe` (Scan finds that folder): as
     `dxgi.dll`, or under the name of an OptiScaler the game already has, with `fakenvapi`, and its
     `OptiScaler.ini` pointed at the HelixSR folder. Select DLSS in the game. What it replaces is kept in the
-    HelixSR folder's `backup`; *Remove* puts it back. If OptiScaler's menu (Insert) does not appear in a game, add
-    `WINEDLLOVERRIDES="dxgi=n,b" %command%` to its launch options in Steam. Untick it to install OptiScaler
+    HelixSR folder's `backup`; *Remove* puts it back. Under Proton OptiScaler only loads with
+    `WINEDLLOVERRIDES="dxgi=n,b"` in the game's Steam launch options, so for a Steam game the app adds that too:
+    to the launch options already there (`WINEDLLOVERRIDES="dxgi=n,b" %command%` when there are none), for every
+    Steam user. Steam writes its settings again when it closes, so it has to be closed for this: the app asks, closes
+    Steam, sets them and starts Steam again. In Game Mode Steam stays open; the line is then copied to the clipboard
+    to paste into the game's *Properties* in Steam. *Remove* puts the launch options back as they were, unless you
+    changed them since. Untick it to install OptiScaler
     yourself: the page then gives you the `OptiScaler.ini` lines (`Dx12Upscaler=fsr31`, `FfxDx12Path`,
     `FfxDx12SRPath` as `Z:\` paths) to paste.
     Optionally it adds a second upscaler, for example AMD's `amd_fidelityfx_upscaler_dx12.dll` with FSR 4: it
@@ -86,7 +92,9 @@ app does exactly that, reversibly, and nothing else on the system is touched. No
 ## Privilege model
 
 Everything runs as your normal desktop user: game folders under Steam are yours, the payload and the
-deployment list live in your XDG directories. No `pkexec`, no root, no `rpm-ostree` layering.
+deployment list live in your XDG directories. No `pkexec`, no root, no `rpm-ostree` layering. With OptiScaler
+the app also changes the game's launch options in your Steam settings (`userdata/<user>/config/localconfig.vdf`),
+and only that line.
 
 ## Requirements
 
@@ -102,30 +110,32 @@ the network files built by its `helixsr-setup.sh`; see the
 ## Install on Bazzite
 
 Install it from the BC250 Bazzite Suite portal, where it is under Gaming. Or download
-`helixsr-v<version>.tar.gz` from the suite's
+`upscaler-v<version>.tar.gz` from the suite's
 [releases](https://github.com/RobertoTorino/bc250-bazzite-suite/releases), unpack it and run the installer:
 
 ```shell
-tar -xzf helixsr-v*.tar.gz
-cd helixsr-v*/
+tar -xzf upscaler-v*.tar.gz
+cd upscaler-v*/
 ./install.sh
 ```
 
 It installs the app for your user only: a private venv with PyQt6 and the app under
-`~/.local/share/bc250-bazzite-helixsr-gui`, the launcher `~/.local/bin/bc250-bazzite-helixsr-gui`, a
+`~/.local/share/bc250-upscaler`, the launcher `~/.local/bin/bc250-upscaler`, a
 desktop entry, the icon and a Desktop icon (`./install.sh --no-desktop-shortcut` leaves the Desktop icon out).
-**HelixSR Manager** then appears in the application menu (and in Steam's
+**BC-250 Upscaler Manager** then appears in the application menu (and in Steam's
 Game Mode via *Add a Non-Steam Game* if you want it there). Run `./install.sh` again from a newer release to
 update, `./install.sh --uninstall` to remove it; the imported payload and the deployed games are left alone.
 `./install.sh --uninstall --purge` also removes the payload and the settings. The list of deployed games stays, so
-a reinstalled app can still restore them.
+a reinstalled app can still restore them. An installed copy under the app's former name, HelixSR Manager, is taken
+over: its payload, settings and list of deployed games move to the new folders, its launcher and menu entry go.
 
 ## Run from the repository
 
 ```shell
 git clone https://github.com/RobertoTorino/bc250-bazzite-suite.git
-cd bc250-bazzite-suite/apps/helixsr
-python3 -m venv python && python/bin/pip install -r requirements.txt && python/bin/python -m helixsr_manager
+cd bc250-bazzite-suite/apps/upscaler
+python3 -m venv python && python/bin/pip install -r requirements.txt
+PYTHONPATH=../../core python/bin/python -m upscaler
 ```
 
 `--payload DIR`, `--deployments FILE` and `--work DIR` point the app at another payload folder, deployment
@@ -154,9 +164,9 @@ games found; it refreshes every 5 seconds.
 ## Development
 
 ```
-helixsr_manager/
+upscaler/
   __init__.py       app name, version, XDG paths
-  __main__.py       entry point (python -m helixsr_manager)
+  __main__.py       entry point (python -m upscaler)
   backend.py        pure file logic: payload import, DLL discovery, deploy/remove (both modes),
                     helixsr.ini parse/render/validate, deployment store, Steam library discovery
   acquire.py        GitHub release lookup, pinned-source parsing, verified parallel downloads,
@@ -167,9 +177,11 @@ helixsr_manager/
   pages.py          Overview, Deploy and helixsr.ini pages
   help.py           Help page
   widgets.py        status pills, metric boxes, rounded tooltip (shared with bc250-governor-manager)
+bc250_core/         the suite's shared code (its steam.py closes and starts Steam), bundled by install.sh and
+                    the release
   fonts/            Inter (SIL OFL), used for the header on Linux
 install.sh          per-user installer (venv, launcher, desktop entry, icon); --uninstall removes it, keeps the payload
-bc250-bazzite-helixsr-gui.desktop  desktop entry template, Exec is filled in by install.sh
+bc250-upscaler.desktop  desktop entry template, Exec is filled in by install.sh
 tests/              pytest suite (offscreen Qt, temporary payload and game folders, no real HelixSR needed)
 test.sh             runs it with the project venv
 ```
@@ -182,13 +194,13 @@ re-deploy over an older build and refusing foreign DLLs), the deployment store, 
 release lookup and the whole Setup run (downloads over `file://` URLs against a fake `helixsr-setup.sh` and a fake
 2.x builder, checksum and script failures, a local DLSS DLL), the main window driven through its page signals and the translations
 (compiler round-trip through `QTranslator`, completeness of every shipped language). The suite's CI
-(`.github/workflows/ci.yml`) runs them on every push and pull request. Releases are tagged `helixsr-v<x.y.z>` in
+(`.github/workflows/ci.yml`) runs them on every push and pull request. Releases are tagged `upscaler-v<x.y.z>` in
 the suite repository; `.github/workflows/release.yml` then builds the tarball and publishes it on GitHub.
 
 The backend has no Qt dependency so it can be exercised from the command line or reused.
 
 ## License
 
-GPL-3.0-or-later, see [LICENSE](https://github.com/RobertoTorino/bc250-bazzite-suite/blob/main/apps/helixsr/LICENSE). The bundled Inter font is under the SIL Open Font License
-(`helixsr_manager/fonts/Inter-LICENSE.txt`). HelixSR is a separate project under its own license; its
+GPL-3.0-or-later, see [LICENSE](https://github.com/RobertoTorino/bc250-bazzite-suite/blob/main/apps/upscaler/LICENSE). The bundled Inter font is under the SIL Open Font License
+(`upscaler/fonts/Inter-LICENSE.txt`). HelixSR is a separate project under its own license; its
 network files are derived from NVIDIA's DLSS and are never distributed by this app.

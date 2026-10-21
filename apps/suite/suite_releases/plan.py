@@ -545,7 +545,7 @@ def portal_minimum(root: Path, base: str, portal_version: str) -> tuple[str, str
 class Launch:
     """One window of an app, as `python -m <module>` in the checkout: how an app is tried before its release."""
     key: str                            # the app folder under apps/
-    module: str                         # "helixsr_manager"
+    module: str                         # "upscaler"
     name: str                           # its APP_NAME, else the module
     folder: Path                        # where the module runs from: its package's parent
     version: str
@@ -851,6 +851,105 @@ def fetch_github_status() -> GitHubStatus:
     request = urllib.request.Request(STATUS_URL, headers={"User-Agent": "bc250-release"})
     with urllib.request.urlopen(request, timeout=15) as response:
         return parse_github_status(json.load(response))
+
+
+# --- Claude usage: the tokens Claude Code used, from its transcripts on this machine ------------------------------
+
+CLAUDE_USAGE_PAGE = "https://claude.ai/settings/usage"
+CLAUDE_WINDOW = 5 * 3600                # Claude's usage limits count in windows of 5 hours
+
+
+@dataclass(frozen=True)
+class ClaudeUsage:
+    """The tokens of Claude Code's answers since *since* (seconds since the epoch), by kind and by model."""
+    since: float
+    messages: int = 0
+    input: int = 0
+    output: int = 0
+    cache_write: int = 0
+    cache_read: int = 0
+    models: tuple[tuple[str, int], ...] = ()     # (model, tokens), the most first
+
+    @property
+    def total(self) -> int:
+        return self.input + self.output + self.cache_write + self.cache_read
+
+
+def claude_dir() -> Path:
+    """Claude Code's folder: CLAUDE_CONFIG_DIR, else ~/.claude (on Windows too)."""
+    return Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+
+
+def read_claude_answers(folder: Path, since: float) -> list[tuple[float, str, dict]]:
+    """Each answer of Claude since *since* in the transcripts under *folder*/projects (subagents' included), once:
+    (time, model, usage). An answer of several parts repeats its usage on every part, so it counts by its ids.
+    Only files written since then are read; a line that is not an answer, or not JSON, is skipped."""
+    seen: set[tuple[str, str]] = set()
+    answers = []
+    for path in (folder / "projects").rglob("*.jsonl"):
+        try:
+            if path.stat().st_mtime < since:
+                continue
+            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            continue
+        for line in lines:
+            if '"usage"' not in line:
+                continue
+            try:
+                entry = json.loads(line)
+                message = entry["message"]
+                usage = message["usage"]
+                at = datetime.datetime.fromisoformat(entry["timestamp"].replace("Z", "+00:00")).timestamp()
+            except (ValueError, KeyError, TypeError, AttributeError):
+                continue
+            key = (str(message.get("id")), str(entry.get("requestId")))
+            if entry.get("type") != "assistant" or not isinstance(usage, dict) or at < since or key in seen:
+                continue
+            seen.add(key)
+            answers.append((at, str(message.get("model") or "unknown"), usage))
+    return answers
+
+
+def sum_claude_usage(answers: list[tuple[float, str, dict]], since: float) -> ClaudeUsage:
+    def count(usage: dict, name: str) -> int:
+        value = usage.get(name)
+        return value if isinstance(value, int) else 0
+
+    kinds = {"input": "input_tokens", "output": "output_tokens", "cache_write": "cache_creation_input_tokens",
+             "cache_read": "cache_read_input_tokens"}
+    totals = dict.fromkeys(kinds, 0)
+    models: dict[str, int] = {}
+    messages = 0
+    for at, model, usage in answers:
+        if at < since or model == "<synthetic>":         # Claude Code's own notes, not answers of the model
+            continue
+        messages += 1
+        for kind, name in kinds.items():
+            totals[kind] += count(usage, name)
+        models[model] = models.get(model, 0) + sum(count(usage, name) for name in kinds.values())
+    ranked = tuple(sorted(models.items(), key=lambda m: -m[1]))
+    return ClaudeUsage(since, messages, models=ranked, **totals)
+
+
+def fetch_claude_usage(now: float | None = None, folder: Path | None = None) -> tuple[ClaudeUsage, ClaudeUsage] | None:
+    """Claude Code's tokens today (since local midnight) and in the last 5 hours; None without Claude Code here."""
+    folder = claude_dir() if folder is None else folder
+    if not (folder / "projects").is_dir():
+        return None
+    now = time.time() if now is None else now
+    midnight = datetime.datetime.fromtimestamp(now).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+    recent = now - CLAUDE_WINDOW
+    answers = read_claude_answers(folder, min(midnight, recent))
+    return sum_claude_usage(answers, midnight), sum_claude_usage(answers, recent)
+
+
+def short_count(n: int) -> str:
+    """12,345 as 12.3k, 4,567,890 as 4.6M: for a pill."""
+    for size, unit in ((1_000_000_000, "B"), (1_000_000, "M"), (1_000, "k")):
+        if n >= size:
+            return f"{n / size:.1f}{unit}"
+    return str(n)
 
 
 # --- The commands for the owner --------------------------------------------------------------------------------

@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """PyQt6 front-end that installs HelixSR (the FSR/DLSS hybrid upscaler) into games on an AMD BC-250 running Bazzite."""
 
-APP_NAME = "HelixSR Manager"
-APP_ID = "bc250-bazzite-helixsr-gui"
+APP_NAME = "BC-250 Upscaler Manager"
+APP_ID = "bc250-upscaler"
 __version__ = "0.7.1"
 
 import os
@@ -13,9 +13,9 @@ LOGO_PATH = ROOT / "images" / f"{APP_ID}.webp"
 WINDOW_ICON_PATH = LOGO_PATH
 FONT_DIR = Path(__file__).resolve().parent / "fonts"
 DISPLAY_NAME = f"{APP_NAME} {__version__}"
-# The app lives in the BC250 Bazzite Suite repository; its releases are tagged helixsr-v<x.y.z> there.
+# The app lives in the BC250 Bazzite Suite repository; its releases are tagged upscaler-v<x.y.z> there.
 SUITE_URL = "https://github.com/RobertoTorino/bc250-bazzite-suite"
-REPO_URL = f"{SUITE_URL}/tree/main/apps/helixsr"
+REPO_URL = f"{SUITE_URL}/tree/main/apps/upscaler"
 HELIXSR_URL = "https://github.com/lonewolf0622/HelixSR"
 HELIXSR_RELEASES_URL = f"{HELIXSR_URL}/releases"
 OPTISCALER_URL = "https://github.com/OptiScaler/OptiScaler"

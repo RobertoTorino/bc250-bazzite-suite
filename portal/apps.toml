@@ -53,18 +53,18 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-governor-manager"]
 launch = [["Open", "~/.local/bin/bc250-governor-manager"]]
 
-[apps.helixsr]
-name = "HelixSR Manager"
+[apps.upscaler]
+name = "BC-250 Upscaler Manager"
 summary = "Deploy HelixSR (FSR 3.1 drop-in upscaler with DLSS-style networks) into games."
-tag = "helixsr-v0.7.1"
-sha256 = "c26db16356078ce257c577491e6a131ebc0b948d508437036d9a9063662d5e98"
+tag = "upscaler-v0.7.1"
+sha256 = ""
 required = false
 changes_board = false
 category = "graphics"
 install = ["bash install.sh"]
 uninstall = ["bash install.sh --uninstall"]
-detect = ["~/.local/bin/bc250-bazzite-helixsr-gui"]
-launch = [["Open", "~/.local/bin/bc250-bazzite-helixsr-gui"]]
+detect = ["~/.local/bin/bc250-upscaler"]
+launch = [["Open", "~/.local/bin/bc250-upscaler"]]
 
 [apps.compute]
 name = "BC-250 CU Bisect"

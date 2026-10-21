@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from helixsr_manager import backend
+from upscaler import backend
 from tests.conftest import FAKE_DLL, FAKE_GAME_DLL
 
 

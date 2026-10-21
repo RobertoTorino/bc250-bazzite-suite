@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import subprocess
+import time
 from pathlib import Path
 
 from PyQt6.QtCore import QSettings, Qt, QTimer
@@ -13,6 +14,8 @@ from PyQt6.QtWidgets import (
     QApplication, QFileDialog, QFrame, QHBoxLayout, QLabel, QListWidget, QMainWindow, QMessageBox, QScrollArea,
     QStackedWidget, QVBoxLayout, QWidget,
 )
+
+from bc250_core import steam
 
 from . import APP_ID, APP_NAME, DEPLOYMENTS_FILE, DISPLAY_NAME, LOGO_PATH, PAYLOAD_DIR, __version__, plain_tooltip
 from . import backend, upstream
@@ -463,7 +466,9 @@ class MainWindow(QMainWindow):
                 if exe_dir is not None and backend.optiscaler_record(folder) is None and QMessageBox.question(
                         self, "Install OptiScaler",
                         ("Put OptiScaler into\n{exe_dir}\nnext to the game's .exe, pointed at HelixSR in\n{folder}?"
-                         "\n\nA file of the game it replaces is kept in {backup}; Remove puts it back.").format(
+                         "\n\nA file of the game it replaces is kept in {backup}; Remove puts it back. The game's "
+                         "Steam launch options get the WINEDLLOVERRIDES that Proton needs to load it; Remove takes "
+                         "that out again.").format(
                                     exe_dir=exe_dir, folder=folder, backup=folder / backend.OPTISCALER_BACKUP)) \
                         != QMessageBox.StandardButton.Yes:
                     return
@@ -484,9 +489,10 @@ class MainWindow(QMainWindow):
             len(written), location.parent if mode == MODE_REPLACE else location), 8000)
         if mode == MODE_FOLDER:
             record = backend.optiscaler_record(folder)
-            text = (("HelixSR is in\n{folder}\nand OptiScaler, as {name}, in\n{exe_dir}\n\nStart the game and select "
-                     "DLSS. OptiScaler's menu (Insert) shows FSR HelixSR.").format(
-                                folder=folder, name=record["optiscaler"], exe_dir=record["exe_dir"])
+            launch = self._set_launch_options(folder, game_dir) if exe_dir is not None and record else ""
+            text = (("HelixSR is in\n{folder}\nand OptiScaler, as {name}, in\n{exe_dir}\n\n{launch}Start the game and "
+                     "select DLSS. OptiScaler's menu (Insert) shows FSR HelixSR.").format(
+                                folder=folder, name=record["optiscaler"], exe_dir=record["exe_dir"], launch=launch)
                     if exe_dir is not None and record else
                     ("HelixSR is in\n{folder}\n\nNow point OptiScaler at it: the OptiScaler.ini lines "
                      "on the Deploy page (Copy button) go into the game's OptiScaler.ini.").format(folder=folder))
@@ -512,6 +518,7 @@ class MainWindow(QMainWindow):
                 if mode == MODE_REPLACE else "Delete HelixSR's files in\n{0}?".format(location))
         if QMessageBox.question(self, "Remove HelixSR", what) != QMessageBox.StandardButton.Yes:
             return
+        launch = (backend.optiscaler_record(location) or {}).get("launch", []) if mode == MODE_FOLDER else []
         try:
             removed = (backend.remove(location, self.payload_dir) if mode == MODE_REPLACE
                        else backend.remove_folder(location, self.payload_dir))
@@ -526,6 +533,86 @@ class MainWindow(QMainWindow):
         self._rescan_game_of(location)
         self.statusBar().showMessage("Removed {0} file(s); HelixSR is gone from {1}".format(
             len(removed), location.parent if mode == MODE_REPLACE else location), 8000)
+        if launch:
+            self._restore_launch_options(launch)
+
+    # ------------------------------------------------------------------------------------ Steam launch options
+    def _app_id(self, game_dir: Path | None) -> str:
+        if game_dir is None:
+            return ""
+        ids = {folder.resolve(): app_id for folder, app_id in backend.steam_app_ids(self.libraries).items()}
+        return ids.get(game_dir.resolve(), "")
+
+    def _write_launch_options(self, changes: list[tuple[Path, str, str]], why: str) -> str | None:
+        """Writes (config, AppID, value) with Steam closed, as Steam writes localconfig.vdf again when it exits: a
+        running Steam is closed after asking and started again. In Game Mode Steam is the session and stays. Returns
+        None when written, else why not."""
+        if steam.game_mode():
+            return "In Game Mode Steam is the session itself and stays open."
+        if steam.steam_running() and QMessageBox.question(
+                self, "Steam launch options",
+                ("{0}\n\nSteam is running and writes its settings again when it closes, so it has to close for this. "
+                 "Close Steam now and start it again afterwards?").format(why)) != QMessageBox.StandardButton.Yes:
+            return "Steam stayed open."
+
+        def change() -> None:
+            for config, app_id, value in changes:
+                backend.set_launch_options(config, app_id, value)
+
+        def wait(seconds: float) -> None:
+            QApplication.processEvents()
+            time.sleep(seconds)
+
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            steam.with_steam_closed(change, running=steam.steam_running, sleep=wait)
+        except (steam.SteamError, HelixError, OSError) as exc:
+            return str(exc)
+        finally:
+            QApplication.restoreOverrideCursor()
+        return None
+
+    def _set_launch_options(self, folder: Path, game_dir: Path | None) -> str:
+        """Under Proton OptiScaler only loads with WINEDLLOVERRIDES in the game's launch options: set for every
+        Steam user and kept in OptiScaler's record for Remove. Returns a paragraph for the message after Deploy, ""
+        for a game outside Steam."""
+        record = backend.optiscaler_record(folder) or {}
+        name, app_id, root = record.get("optiscaler", ""), self._app_id(game_dir), steam.find_steam()
+        if not name.lower().endswith(".dll") or not app_id or root is None:
+            return ""
+        try:
+            plan = [(config, before, backend.with_override(before, name)) for config in backend.launch_configs(root)
+                    for before in [backend.launch_options(config, app_id)]]
+        except (HelixError, OSError) as exc:
+            plan, problem = [], str(exc)
+        else:
+            problem = None if plan else "Steam has no users on this system yet."
+        line = plan[0][2] if plan else backend.with_override("", name)
+        changed = [(config, before, after) for config, before, after in plan if before != after]
+        if problem is None and not changed:
+            return "The game's Steam launch options already load it:\n{0}\n\n".format(line)
+        if problem is None:
+            problem = self._write_launch_options([(c, app_id, a) for c, _, a in changed], "Set the Steam launch options of {0} to\n{1}".format(
+                self._game_name(game_dir), line))
+        if problem is None:
+            backend.record_launch_options(folder, app_id, changed)
+            return "The game's Steam launch options are now:\n{0}\n\n".format(line)
+        self._copy(line)
+        return ("The game's Steam launch options were not changed: {0} Set them in the game's Properties in Steam "
+                "(copied to the clipboard):\n{1}\n\n").format(problem, line)
+
+    def _restore_launch_options(self, entries: list[dict]) -> None:
+        """After Remove: the launch options Deploy set go back to what they were, where the user did not change
+        them since."""
+        restores = backend.launch_restores(entries)
+        if not restores:
+            return
+        problem = self._write_launch_options(restores, "Put the game's Steam launch options back to what they were "
+                                                       "before OptiScaler?")
+        if problem is not None:
+            QMessageBox.information(self, "Steam launch options", (
+                "The game's Steam launch options were not changed: {0} Take WINEDLLOVERRIDES out of them in the "
+                "game's Properties in Steam; without OptiScaler it does nothing.").format(problem))
 
     def _forget(self, dep: Deployment) -> None:
         self.store.forget(dep.location)
@@ -590,7 +677,7 @@ class MainWindow(QMainWindow):
         updates = [upstream.Outside("HelixSR", helix.installed, helix.latest.version, helix.latest.published,
                                     helix.latest.url, "Get HelixSR… on the Setup page updates it.")] \
             if helix.update_available and not on_fallback else []
-        upstream.publish("helixsr", updates)
+        upstream.publish("upscaler", updates)
 
     # ------------------------------------------------------------ setup (download + build)
     def _start_setup(self, dlss_file: Path | None) -> None:

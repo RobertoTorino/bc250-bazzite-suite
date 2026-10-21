@@ -11,7 +11,7 @@ from .backend import HELIXSR_DLL, INI, KERNELS, SECOND_UPSCALER_DLL, UPSCALER_DL
 
 
 def help_html(payload_dir: str, deployments_file: str,
-              work_dir: str = "~/.local/share/bc250-bazzite-helixsr-gui/work") -> str:
+              work_dir: str = "~/.local/share/bc250-upscaler/work") -> str:
     """The Help page. The paths and URLs are filled into the paragraphs afterwards."""
     values = dict(app_name=APP_NAME, version=__version__, helixsr_url=HELIXSR_URL, releases_url=HELIXSR_RELEASES_URL,
                   optiscaler_url=OPTISCALER_URL, repo_url=REPO_URL, upscaler_dll=UPSCALER_DLL, helixsr_dll=HELIXSR_DLL,
@@ -118,8 +118,11 @@ def help_html(payload_dir: str, deployments_file: str,
          'has) with <code>fakenvapi</code>, and its <code>OptiScaler.ini</code> points at the HelixSR folder. '
          "Start the game and select <b>DLSS</b>. A file of the game it replaces, and an <code>OptiScaler.ini</code> "
          "the game already had, are kept in the HelixSR folder's <code>backup</code>; <b>Remove</b> puts them "
-         'back. If OptiScaler\'s menu (Insert) does not appear in a game, add <code>WINEDLLOVERRIDES="dxgi=n,b" '
-         '%command%</code> to its launch options in Steam.</p>'),
+         'back. Under Proton OptiScaler only loads with <code>WINEDLLOVERRIDES="dxgi=n,b"</code> in the '
+         "game's Steam launch options, so for a Steam game the app adds it to them. Steam writes its settings "
+         'again when it closes, so the app asks to close Steam for this and starts it again afterwards; in Game '
+         'Mode Steam stays open and the line is copied to the clipboard for the game\'s Properties in Steam. '
+         '<b>Remove</b> puts the launch options back, unless you changed them since.</p>'),
         ("<p><b>Second upscaler</b> (optional, OptiScaler folder only): pick another FidelityFX upscaler DLL, for "
          "example AMD's <code>amd_fidelityfx_upscaler_dx12.dll</code> with FSR 4. It is copied into the folder as "
          "<code>{second}</code> and <code>UpscalerDll</code> in its helixsr.ini points at it, so OptiScaler's FFX "
