@@ -275,7 +275,9 @@ def test_window_bump_before_the_push_gives_step_ones_commands(window, repo):
 
 def test_window_git_buttons(window, repo, monkeypatch):
     """git add, git commit and git push as buttons (owner, 19-10-2026): each only when it has something to do, with
-    the message of the commit the last step showed, and run in the command line, whose tab opens."""
+    the message of the commit the last step showed, and run in the command line, whose tab opens. Push asks first
+    (owner, 21-10-2026)."""
+    from PyQt6.QtWidgets import QMessageBox
     ran = []
     monkeypatch.setattr(window.commands, "run_now", lambda command: ran.append(command) or True)
     add, commit, push = window.add_button, window.commit_button, window.push_button
@@ -301,7 +303,14 @@ def test_window_git_buttons(window, repo, monkeypatch):
     window.commands.last_code, window.committing = 0, True
     window.refresh()
     assert window.commit_message.text() == ""
-    push.click()
+    monkeypatch.setattr(rp, "_token", "github_pat_x")                    # fine-grained: no warning
+    with mock_question(QMessageBox.StandardButton.No) as asked:
+        push.click()                                                 # it asks first: no, nothing runs
+    text = asked.call_args.args[2]
+    assert asked.called and ran[-1] != rp.push_command() and "work" in text and rp.push_command() in text
+    assert "\u26a0" not in text
+    with mock_question(QMessageBox.StandardButton.Yes):
+        push.click()
     assert ran[-1] == rp.push_command()
     window.amend_box.setChecked(True)                                # HEAD is not pushed: it may be amended
     assert commit.isEnabled()
@@ -312,7 +321,9 @@ def test_window_git_buttons(window, repo, monkeypatch):
 
 def test_window_git_tag_button(window, repo, monkeypatch):
     """git tag after git push (owner, 20-10-2026): tag-release.sh with step 1's untagged app releases, or on step 2's
-    tab the portal's release; only once HEAD is pushed and something has no tag yet."""
+    tab the portal's release; only once HEAD is pushed and something has no tag yet. It asks first, and warns about
+    a token that reaches every repository (owner, 21-10-2026)."""
+    from PyQt6.QtWidgets import QMessageBox
     ran = []
     monkeypatch.setattr(window.commands, "run_now", lambda command: ran.append(command) or True)
     tag = window.tag_button
@@ -321,7 +332,12 @@ def test_window_git_tag_button(window, repo, monkeypatch):
     window.portal_page.base_edit.setText("main")
     window.reload()
     assert tag.isEnabled() and tag.toolTip().startswith("tools/tag-release.sh beta-v0.1.0\n")
-    tag.click()
+    monkeypatch.setattr(rp, "_token", "gho_login")                       # a gh login reaches every repository
+    with mock_question(QMessageBox.StandardButton.No) as asked:
+        tag.click()
+    assert not ran and "beta-v0.1.0" in asked.call_args.args[2] and "every repository" in asked.call_args.args[2]
+    with mock_question(QMessageBox.StandardButton.Yes):
+        tag.click()
     assert ran[-1] == "tools/tag-release.sh beta-v0.1.0" and window.tabs.currentIndex() == window.commands_tab
     window.tabs.setCurrentWidget(window.portal_page)
     portal = window.portal_page.portal_unit
@@ -929,6 +945,11 @@ def test_github_token_from_the_environment_or_a_gh_login(monkeypatch):
     assert rp.github_token(run=gh) == "gho_login" and len(asked) == 1         # asked once per run
     monkeypatch.setattr(rp, "_token", None)
     assert rp.github_token(run=lambda argv, **kw: subprocess.CompletedProcess(argv, 1, "", "not logged in")) == ""
+
+
+def test_token_warning():
+    assert rp.token_warning("") == rp.token_warning("github_pat_abc") == ""
+    assert "every repository" in rp.token_warning("gho_abc") and "every repository" in rp.token_warning("ghp_abc")
 
 
 def test_github_token_asked_once_while_checks_overlap(monkeypatch):

@@ -49,6 +49,19 @@ The pins in `portal/apps.toml` name a tag and the sha256 of its asset, so a rele
 
 Direct pushes keep working. Rules that require pull requests or passing checks would block them, so they stay off.
 
+## Environments
+
+**Settings → Environments.** The release job of `release.yml` runs in the environment `release`. GitHub creates it
+on the first release; it can also be made first with **New environment**.
+
+- **Required reviewers:** yourself. Each release then waits on GitHub until you approve it: the run shows
+  *Review deployments*, and GitHub sends a notification. A tag pushed with a stolen login, or by mistake, builds and
+  publishes nothing until then.
+- **Prevent self-review:** off, or you cannot approve your own releases.
+- **Deployment branches and tags:** **Selected branches and tags**, with the tag rule `*-v*`.
+
+Without required reviewers the job runs straight on, as before.
+
 ## Actions
 
 **Settings → Actions → General.**

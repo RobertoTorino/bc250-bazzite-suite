@@ -294,8 +294,10 @@ apps/suite/install.sh --uninstall             # remove them; the checkout stays
   add to the last commit (only a commit that is not pushed yet). **git push** runs `tools/ci-local.sh` first on
   Linux and pushes only when CI's jobs pass. **git tag** runs `tools/tag-release.sh` (below) with the tags of the
   step open: on tab 2 the portal's release, on the other tabs step 1's app releases that have no tag yet; it
-  works once HEAD is pushed. Each button works only when it has something to do, and none while a command runs;
-  their output appears in **Commands**.
+  works once HEAD is pushed. **git push** and **git tag** ask first, with the commits or tags they send and
+  the command. When the GitHub token on the machine is a `gh` login or a classic token, which reach every
+  repository of your account, they say so: a fine-grained token for this repository only is safer. Each button
+  works only when it has something to do, and none while a command runs; their output appears in **Commands**.
 - **The command line** in **Commands** runs a command in the checkout, so you need no separate terminal for the
   commands the steps show. Type it and press Enter; its output appears above the line as it runs. **Commands**
   lists the commands the last step showed (Apply, Bump portal or Retract), one per line: pick one to put it on
@@ -351,7 +353,8 @@ version (the bump is not committed yet), while that folder has uncommitted chang
 up to an hour. A portal tag also waits for the app releases it pins: each one tagged on GitHub and pinned with its
 sha256 (step 2), as the portal's release needs them. A plain `git tag` tags whatever HEAD is at that moment, also the commit from before the bump or one
 CI failed. `release.yml` asks the same before it builds anything: a tag on a commit CI did not pass gives no
-release.
+release. With an approval set on the `release` environment (see
+[GitHub settings](development/github-settings.md#environments)), it then waits for you to approve it on GitHub.
 
 `python3 tools/release_plan.py` lists every app with its version, its last tag and its pin, without Qt.
 

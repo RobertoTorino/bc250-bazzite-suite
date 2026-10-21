@@ -1,3 +1,10 @@
+Changelog: 21-10-2026 09:57:39
+
+Added. git push and git tag ask first (owner, 21-10-2026), with the commits or tags they send and the command.
+When the GitHub token on the machine is a gh login or a classic token, which reach every repository of the
+account, the question says so and points to a fine-grained token for this repository (plan.token_warning).
+Tests: tests/test_plan.py.
+
 Changelog: 21-10-2026 09:29:19
 
 Added. Close issues on the Test on this board tab: a window lists the open issues on GitHub (plan.fetch_open_issues,

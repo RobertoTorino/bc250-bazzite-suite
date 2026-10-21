@@ -22,6 +22,9 @@ name: Release
 # Only a commit that CI passed becomes a release: the first job waits for every CI run on the tagged commit (the
 # push to main; a tag starts no CI of its own), up to 75 minutes, and stops everything when one did not pass.
 # tools/tag-release.sh asks the same before it tags.
+#
+# The release job runs in the environment "release": with Required reviewers set on it (Settings, Environments),
+# GitHub waits for that approval before it builds and publishes anything. Without them it runs straight on.
 
 on:
   push:
@@ -51,6 +54,7 @@ jobs:
   release:
     needs: ci
     runs-on: ubuntu-latest
+    environment: release
     env:
       TAG: ${{ github.ref_name }}
       GH_TOKEN: ${{ github.token }}

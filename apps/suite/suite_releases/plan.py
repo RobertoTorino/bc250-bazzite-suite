@@ -744,6 +744,17 @@ def github_token(run=subprocess.run) -> str:
         return _token
 
 
+def token_warning(token: str) -> str:
+    """What push and tag say about the GitHub token on this machine: a gh login (gho_) or a classic token (ghp_)
+    reaches every repository of the account, a fine-grained one (github_pat_) only those it names. "" when it is
+    fine-grained or there is none."""
+    if not token or token.startswith("github_pat_"):
+        return ""
+    return ("The GitHub token on this machine (a gh login or a classic token) reaches every repository of your "
+            "account, not only this one. A fine-grained token for this repository only limits what someone with "
+            "this account can do: github.com, Settings, Developer settings, Fine-grained tokens.")
+
+
 def fetch_runs(etag: str = "") -> tuple[list[BuildRun] | None, str, RateInfo | None]:
     """The newest workflow runs (newest first), the ETag to send next time and GitHub's hourly limit as it stands;
     runs None when nothing changed since *etag*. GitHub answers that with 304, which does not count against the

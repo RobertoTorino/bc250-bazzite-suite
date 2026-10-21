@@ -1,3 +1,9 @@
+Changelog: 21-10-2026 09:57:39
+
+The release job of release.yml runs in the environment release (owner, 21-10-2026): with Required reviewers set
+on it in the repository's settings, GitHub waits for the owner's approval before it builds and publishes a release.
+Without them it runs as before. The wiki's GitHub settings page says how to set it; the Portal chapter mentions it.
+
 Changelog: 21-10-2026 09:29:19
 
 The development chapter of the wiki says how to close the Upstream review issue once handled, which the workflow

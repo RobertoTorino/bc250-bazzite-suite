@@ -11,7 +11,8 @@ check_manifest.py and shows the git commands: the portal release's, or step 1's 
 git add, git commit, git push and git tag are buttons with their checks in between: add sets the exec bits
 (fix-modes.sh), commit runs check_versions.py and check_manifest.py first, push runs tools/ci-local.sh first (Linux)
 and pushes only when CI's jobs pass, tag runs tag-release.sh (a pushed HEAD that CI passed) with the tags of the step
-open: step 2's portal tag, else step 1's app tags.
+open: step 2's portal tag, else step 1's app tags. Push and tag ask first, with what they send, and warn when the
+GitHub token on the machine reaches every repository of the account.
 The header is a row of pills, as the apps' status boxes (owner, 20-10-2026): Refresh, the working tree, whether
 GitHub built the last push (CI, Release, Manual; it notifies when a build it saw running passes or fails), how many
 of GitHub's API requests are left (green, orange under a tenth, red at none), GitHub status: green while
@@ -1259,9 +1260,9 @@ class ReleaseWindow(QMainWindow):
         self.commit_button = QPushButton("git commit")
         self.commit_button.clicked.connect(self.commit)
         self.push_button = QPushButton("git push")
-        self.push_button.clicked.connect(lambda: self.run_git(rp.push_command()))
+        self.push_button.clicked.connect(self.push)
         self.tag_button = QPushButton("git tag")
-        self.tag_button.clicked.connect(lambda: self.run_git(rp.tag_command(self.tags_to_push())))
+        self.tag_button.clicked.connect(self.tag)
         self.git_state = (False, False, 0)
         self.committing = False                 # the commit button's command runs: its message goes when it passes
         row = QHBoxLayout()
@@ -1294,6 +1295,25 @@ class ReleaseWindow(QMainWindow):
         if self.commands.run_now(command):
             self.tabs.setCurrentIndex(self.commands_tab)
         self._show_git_state()
+
+    def confirm_git(self, title: str, what: str, command: str) -> bool:
+        """Push and tag reach GitHub: they ask first, with the command and what it sends, and say when the token on
+        this machine reaches more than this repository."""
+        warning = rp.token_warning(rp.github_token())
+        text = f"{what}\n\n{command}" + (f"\n\n\u26a0 {warning}" if warning else "") + "\n\nGo ahead?"
+        return QMessageBox.question(self, title, text) == QMessageBox.StandardButton.Yes
+
+    def push(self) -> None:
+        commits = (rp.git(self.root, "log", "--oneline", f"{self.base()}..HEAD") or "").strip()
+        if self.confirm_git("git push", f"Push to GitHub:\n\n{commits}", rp.push_command()):
+            self.run_git(rp.push_command())
+
+    def tag(self) -> None:
+        tags = self.tags_to_push()
+        if self.confirm_git("git tag", "Tag and push these releases; GitHub then builds and publishes them (after "
+                            "your approval, when the release environment asks for it):\n\n" + "\n".join(tags),
+                            rp.tag_command(tags)):
+            self.run_git(rp.tag_command(tags))
 
     def commit(self) -> None:
         amend = self.amend_box.isChecked()
