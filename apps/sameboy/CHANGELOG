@@ -1,0 +1,17 @@
+Changelog: 21-10-2026 14:25:29
+
+Release 0.1.0.
+
+Changelog: 21-10-2026 13:23:31
+
+Added. SameBoy Manager: Game Boy and Game Boy Color games on the BC-250 with the SameBoy core of RetroArch (SameBoy
+releases no Linux build). As SwanStation Manager does, the app installs RetroArch from Flathub (a Flatpak, for the user,
+or uses the one that is installed) and the core from the libretro build server (checked as a zip with one x86-64 Linux
+library; the build server keeps only the newest build, so the core is not pinned: the app records its build date and
+SHA-256, says when there is a newer build, also in the portal's notice of updates outside the suite, and installs it on
+Update). No BIOS is needed. It finds the games in the chosen folders (.gb and .gbc files, and .zip files with one in
+them, told by the cartridge header's checksum and ROM size, the system from its colour flag) and puts the ticked ones in
+Steam for Game Mode, "[GB] Title" or "[GBC] Title", the artwork drawn from the app's icon. The Game Mode shortcuts run
+~/.local/bin/bc250-sameboy-run, which starts the RetroArch Flatpak with the core (--fullscreen) and, when Steam starts a
+game on a Wayland desktop, without RetroArch's Wayland socket so Steam's overlay works. Not tried on the board yet: a
+game from Game Mode, a zipped game, the controllers under Steam Input.

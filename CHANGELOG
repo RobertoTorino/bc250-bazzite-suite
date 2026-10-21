@@ -1,3 +1,17 @@
+Changelog: 21-10-2026 13:46:48
+
+Added. mGBA Manager (apps/mgba, Game Boy Advance), SameBoy Manager (apps/sameboy, Game Boy and Game Boy Color) and Xenia
+Manager (apps/xenia, Xbox 360), after SwanStation Manager the emulator managers the owner asked for (21-10-2026): their
+installer tests, CI jobs, wiki chapters and entries in the Dependency Checker's catalogue and the portal's manifest.
+tools/check_upstream.py checks the mGBA pin weekly, as it does PPSSPP's. CLAUDE.md lists SwanStation and the three new
+apps and their shellcheck lines; the wiki's portal chapter and the development chapter name their pins; the disclaimer
+of the README and the wiki's home page names Nintendo and Microsoft.
+
+Changelog: 21-10-2026 12:44:22
+
+Added. SwanStation Manager (apps/swanstation), the PS1 game manager: its icon, installer test, CI jobs, manual chapter
+and entries in the Dependency Checker's catalogue and the portal's manifest.
+
 Changelog: 21-10-2026 11:31:43
 
 tools/make_portal_sounds.py: the start-up swoosh is lower (a band of noise from 70 to 900 Hz under a low-pass, over a

@@ -3,7 +3,7 @@
 """Upstream check: are the apps that pin an upstream release still in step with it?
 
     python3 tools/check_upstream.py [--report FILE] [decky] [shadps4] [helixsr] [ppsspp] [pcsx2] [rpcs3]
-                                    [directmesh]                     # all when none is named
+                                    [mgba] [directmesh]              # all when none is named
 
 Decky Loader Manager pins one Decky release (apps/decky/decky_manager/loader.py: VERSION, TAG, SHA256)
 and writes Decky's release unit itself (loader.unit_text()). This compares them with Decky's GitHub repository:
@@ -27,13 +27,15 @@ importing the app:
  * the fallback the latest release's notes name ("If 1.9.0 does not work for you, use HelixSR 1.8.1") must be
    FALLBACK_VERSION, and that release must still have its zip.
 
-The PPSSPP, PCSX2 and RPCS3 Managers and Mesh Shaders pin one release each (PPSSPP and PCSX2's stable VERSION and
-RPCS3's LANDMARK in their emulator.py, DIRECTMESH in bc250-mesh-shaders.sh), read here without importing the app:
+The PPSSPP, PCSX2, RPCS3 and mGBA Managers and Mesh Shaders pin one release each (VERSION in the emulator.py of
+PPSSPP, PCSX2's stable channel and mGBA, RPCS3's LANDMARK, DIRECTMESH in bc250-mesh-shaders.sh), read here without
+importing the app:
  * the latest stable release (DirectMesh: the newest directmesh-v* tag): newer than the pin means a new version of the
    app, tried on the board first. Their checksums are checked by the apps themselves when they download.
 The governor's version is whatever COPR built, nothing in the repository pins it: the GPU Governor Manager says when
-filippor's release is newer than the installed package. Vita3K is not checked: it publishes a build almost daily,
-and the Vita3K Manager says when a newer one is out.
+filippor's release is newer than the installed package. Vita3K and Xenia are not checked: they publish a build almost
+daily, and the Vita3K and Xenia Managers say when a newer one is out. Nor are the cores of SwanStation and SameBoy:
+the libretro buildbot keeps only the newest build, and the apps say when there is a newer one.
 
 Exit code 0: all in step; 1: an upstream moved (the report says what); 2: one could not be checked (network, GitHub's
 rate limit).
@@ -63,6 +65,7 @@ ACQUIRE = SUITE / "apps" / "upscaler" / "upscaler" / "acquire.py"
 PPSSPP = SUITE / "apps" / "ppsspp" / "ppsspp_manager" / "emulator.py"
 PCSX2 = SUITE / "apps" / "pcsx2" / "pcsx2_manager" / "emulator.py"
 RPCS3 = SUITE / "apps" / "rpcs3" / "rpcs3_manager" / "emulator.py"
+MGBA = SUITE / "apps" / "mgba" / "mgba_manager" / "emulator.py"
 MESH = SUITE / "apps" / "mesh" / "bc250-mesh-shaders.sh"
 DIRECTMESH_REPO = "lonewolf0622/bc250meshtaskwork"
 DIRECTMESH_PREFIX = "directmesh-"
@@ -301,9 +304,10 @@ def load_release(name: str) -> Release:
                        f"DIRECTMESH in {MESH.relative_to(SUITE)}", DIRECTMESH_PREFIX)
     path, constant, app = {"ppsspp": (PPSSPP, "VERSION", "the PPSSPP Manager"),
                            "pcsx2": (PCSX2, "VERSION", "the PCSX2 Manager (its stable channel)"),
-                           "rpcs3": (RPCS3, "LANDMARK", "the RPCS3 Manager")}[name]
+                           "rpcs3": (RPCS3, "LANDMARK", "the RPCS3 Manager"),
+                           "mgba": (MGBA, "VERSION", "the mGBA Manager")}[name]
     values = _string_constants(path)
-    title = {"ppsspp": "PPSSPP", "pcsx2": "PCSX2", "rpcs3": "RPCS3"}[name]
+    title = {"ppsspp": "PPSSPP", "pcsx2": "PCSX2", "rpcs3": "RPCS3", "mgba": "mGBA"}[name]
     return Release(title, app, values["REPO"], values[constant], f"{constant} in {path.relative_to(SUITE)}")
 
 
@@ -334,6 +338,7 @@ CHECKS = {"decky": ("Decky Loader", lambda: check(load_loader())),
           "ppsspp": ("PPSSPP", lambda: check_release(load_release("ppsspp"))),
           "pcsx2": ("PCSX2", lambda: check_release(load_release("pcsx2"))),
           "rpcs3": ("RPCS3", lambda: check_release(load_release("rpcs3"))),
+          "mgba": ("mGBA", lambda: check_release(load_release("mgba"))),
           "directmesh": ("DirectMesh", lambda: check_release(load_release("directmesh")))}
 
 

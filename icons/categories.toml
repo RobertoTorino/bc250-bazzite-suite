@@ -154,6 +154,26 @@ category = "gaming"
 icons = ["apps/pcsx2/images/bc250-pcsx2-manager"]
 tile = "portal/images/apps/pcsx2.webp"
 
+[swanstation]
+category = "gaming"
+icons = ["apps/swanstation/images/bc250-swanstation-manager"]
+tile = "portal/images/apps/swanstation.webp"
+
+[mgba]
+category = "gaming"
+icons = ["apps/mgba/images/bc250-mgba-manager"]
+tile = "portal/images/apps/mgba.webp"
+
+[sameboy]
+category = "gaming"
+icons = ["apps/sameboy/images/bc250-sameboy-manager"]
+tile = "portal/images/apps/sameboy.webp"
+
+[xenia]
+category = "gaming"
+icons = ["apps/xenia/images/bc250-xenia-manager"]
+tile = "portal/images/apps/xenia.webp"
+
 [vita3k]
 category = "gaming"
 icons = ["apps/vita3k/images/bc250-vita3k-manager"]

@@ -22,8 +22,11 @@ The servers see your IP address, as any website you open does.
 
 - The [portal](portal.md) downloads the apps you install from the suite's releases, and at start asks whether a
   newer portal release is out.
-- The shadPS4, RPCS3, PPSSPP and PCSX2 Managers and the Decky Loader Manager ask for the emulator's or Decky's
-  newest release when their window opens, and download the release you install.
+- The shadPS4, RPCS3, PPSSPP, PCSX2, mGBA and Xenia Managers and the Decky Loader Manager ask for the
+  emulator's or Decky's newest release when their window opens, and download the release you install.
+- The [SwanStation Manager](apps/swanstation.md) and the [SameBoy Manager](apps/sameboy.md) download their core
+  from the libretro build server (`buildbot.libretro.com`), ask it for a newer build when their window opens, and
+  have Flatpak install RetroArch from Flathub (`flathub.org`, `dl.flathub.org`).
 - [BC-250 Upscaler Manager](apps/upscaler.md), [BC-250 Mesh Shaders](apps/mesh.md) and the
   [GPU Governor Manager](apps/gpu.md) look for a newer release of what they install at start; each can be
   told not to in its settings.

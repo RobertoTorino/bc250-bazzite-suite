@@ -51,6 +51,10 @@ Every app with its icon and its category.
 | ![](../assets/apps/ppsspp.webp){ .app-icon } [PPSSPP Manager](ppsspp.md) | Gaming |
 | ![](../assets/apps/pcsx2.webp){ .app-icon } [PCSX2 Manager](pcsx2.md) | Gaming |
 | ![](../assets/apps/vita3k.webp){ .app-icon } [Vita3K Manager](vita3k.md) | Gaming |
+| ![](../assets/apps/swanstation.webp){ .app-icon } [SwanStation Manager](swanstation.md) | Gaming |
+| ![](../assets/apps/mgba.webp){ .app-icon } [mGBA Manager](mgba.md) | Gaming |
+| ![](../assets/apps/sameboy.webp){ .app-icon } [SameBoy Manager](sameboy.md) | Gaming |
+| ![](../assets/apps/xenia.webp){ .app-icon } [Xenia Manager](xenia.md) | Gaming |
 | ![](../assets/apps/decky.webp){ .app-icon } [Decky Loader Manager](decky.md) | Gaming |
 | ![](../assets/apps/datstation.webp){ .app-icon } [Bazzite DatStation](datstation.md) | Gaming |
 | ![](../assets/apps/overlay.webp){ .app-icon } [System Overlay](overlay.md) | Utilities |

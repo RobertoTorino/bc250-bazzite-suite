@@ -624,6 +624,42 @@ colours (owner, 19-10-2026).
   Windows' compositor (Graphics Capture, Desktop Duplication, GDI, DwmSharedSurface), which Wine does not have, and
   it is a spatial upscaler like gamescope's FSR 1.
 
+- **SwanStation Manager (built 21-10-2026, owner's decision; not tried on the board).** PS1, the first of six
+  emulator managers the owner asked for (list below). Not standalone: SwanStation is a libretro core, so the app
+  installs RetroArch from Flathub (a Flatpak, `--user`; one already installed is used) and the core from the libretro
+  buildbot, and its run wrapper starts `flatpak run org.libretro.RetroArch -L <core>`. The Flatpak has
+  `--filesystem=host`, so the core stays in the app's own folder. The buildbot keeps only the newest core build, so
+  the core is not pinned (the one place the apps' "tested release, checked SHA-256" rule does not hold): it is checked
+  as a zip with one x86-64 ELF library, its build date and SHA-256 are recorded in `core.json`, and the app says when
+  the buildbot's ETag or Last-Modified changed. Stable buildbot cores exist only inside a 274 MB 7z, so that was no
+  alternative. To decide: pin by building the core ourselves, or accept this. The BIOS is read from RetroArch's
+  `system` folder (names from the core's info file). Release (owner): `swanstation-v0.1.0`, then pin it and bump the
+  portal (an added app needs a minor bump).
+- **More emulator managers (owner, 21-10-2026; built 21-10-2026, not tried on the board).** After SwanStation
+  Manager: mGBA (Game Boy Advance, MPL-2.0), SameBoy (Game Boy and Color, MIT) and Xenia (Xbox 360, BSD-3-Clause).
+  Mesen (NES and SNES) was built and then dropped by the owner (21-10-2026): too complicated for this case. Licenses
+  checked 21-10-2026 against each project's LICENSE. All are downloaded by an app, as the existing managers do: none
+  has to be bundled. Ryujinx (Switch) was dropped by the owner. Each app has the layout of the others, its installer
+  test, CI jobs, a wiki chapter, catalogue entries and an apps.toml entry without a pin; SwanStation's CLAUDE.md
+  lines came with them.
+  - **mGBA Manager** (`apps/mgba`): pins mGBA 0.10.5, its Linux AppImage (FUSE 2, as shadPS4's). mGBA updates
+    itself from its own window; the app sees that by the size and Install puts 0.10.5 back. Lists `.gba` and zipped
+    `.gba`, told by the cartridge header's checksum; Game Boy games are left to SameBoy Manager.
+  - **SameBoy Manager** (`apps/sameboy`): SameBoy releases no Linux binary, so the owner chose RetroArch with
+    libretro's SameBoy core (21-10-2026), the SwanStation pattern. The core is libretro's port (0.14.7 when built, a
+    version behind SameBoy's own releases) and, like SwanStation's, not pinned: the same decision is open for both.
+    No BIOS needed. Lists `.gb`, `.gbc` and zipped ones by the header checksum and ROM size, the system from the
+    colour flag.
+  - **Xenia Manager** (`apps/xenia`): pins Xenia Canary build e6cd2e4 (20-10-2026), the Linux AppImage of
+    `xenia-canary/xenia-canary` (the older `xenia-canary-releases` repository stopped in March 2026). Builds come
+    almost daily and are tagged with a commit, so "newer" is the release published after the pin, and the weekly
+    upstream check leaves it out, as it does Vita3K. Lists XGD disc images, `default.xex` folders, `.zar`, and Games on
+    Demand and Arcade packages under their header's name.
+  - SwanStation and SameBoy now put a newer core in the portal's notice of updates outside the suite, and an Update
+    clears it (before, the window kept offering the build it had just installed).
+  - Release (owner): `mgba-v0.1.0`, `sameboy-v0.1.0`, `xenia-v0.1.0` (and `swanstation-v0.1.0`), then pin them and
+    bump the portal (added apps need a minor bump).
+
 ## Known issues to fix
 
 - **HelixSR 2.0, our own solution (owner, 20-10-2026: HelixSR's developer did not answer

@@ -384,7 +384,7 @@ class PortalPage(QWidget):
                     "passed": f"{portal.tag} is released: GitHub built it. Test Portal release installs it on this board.",
                     "failed": f"{portal.tag} is tagged but GitHub's release workflow failed on it: click GitHub in "
                               "the header to open the run."}[state]
-            color = {"": ORANGE, "running": BLUE, "passed": GREEN, "failed": RED}[state]
+            color = {"": ORANGE, "running": ORANGE, "passed": GREEN, "failed": RED}[state]
         self.portal_state.setText(text)
         self.portal_state.setStyleSheet(f"color:{color}; font-weight:600;")
 

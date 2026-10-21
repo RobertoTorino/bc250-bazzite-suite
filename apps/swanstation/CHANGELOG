@@ -1,0 +1,17 @@
+Changelog: 21-10-2026 14:25:29
+
+Release 0.1.0.
+
+Changelog: 21-10-2026 12:44:22
+
+Added. SwanStation Manager: PS1 games on the BC-250 with the SwanStation core of RetroArch. The app installs RetroArch
+from Flathub (a Flatpak, for the user, or uses the one that is installed) and the SwanStation core from the libretro
+build server (checked as a zip with one x86-64 Linux library; the build server keeps only the newest build, so the core
+is not pinned: the app records its build date and SHA-256, says when there is a newer build, also in the portal's notice
+of updates outside the suite, and installs it on Update). It shows the PS1 BIOS in RetroArch's system folder (Open
+folder, to copy yours in), finds the games in the chosen folders (CUE sheets with their BIN files, M3U playlists, CHD,
+PBP and ISO, IMG or BIN images that are PS1 discs, with the disc ID from SYSTEM.CNF) and puts the ticked ones in Steam
+for Game Mode, "[PS1] Title", the artwork drawn from the app's icon. The Game Mode shortcuts run
+~/.local/bin/bc250-swanstation-run, which starts the RetroArch Flatpak with the core (--fullscreen) and, when Steam
+starts a game on a Wayland desktop, without RetroArch's Wayland socket so Steam's overlay works. Not tried on the board
+yet: the Flatpak install, a game from Game Mode, the controllers under Steam Input.

@@ -1,3 +1,16 @@
+Changelog: 21-10-2026 14:25:29
+
+Release 6.1.0. Pins swanstation-v0.1.0, mgba-v0.1.0, sameboy-v0.1.0, xenia-v0.1.0.
+
+Changelog: 21-10-2026 13:46:48
+
+Added. apps.toml lists mGBA Manager, SameBoy Manager and Xenia Manager under Gaming, without a pin until
+their first release.
+
+Changelog: 21-10-2026 12:44:22
+
+Added. apps.toml lists SwanStation Manager under Gaming, without a pin until its first release.
+
 Changelog: 21-10-2026 12:14:24
 
 Release 6.0.0. Pins package-v0.10.0. Introducing Big Picture Mode for the Portal in short BPM

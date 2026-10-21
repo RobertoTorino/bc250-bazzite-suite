@@ -61,7 +61,11 @@ By category, as the portal's tabs list them.
 - <img src="portal/images/apps/datstation.webp" width="20" height="20" alt=""/> **[Bazzite DatStation](apps/datstation)**: PlayStation quiz, console history, system versions, region codes, user guides and news, with your scores.
 - <img src="portal/images/apps/ppsspp.webp" width="20" height="20" alt=""/> **[PPSSPP Manager](apps/ppsspp)**: PSP games with the PPSSPP emulator: a tested PPSSPP release, your games found and added to Game Mode.
 - <img src="portal/images/apps/pcsx2.webp" width="20" height="20" alt=""/> **[PCSX2 Manager](apps/pcsx2)**: PS2 games with the PCSX2 emulator: a tested PCSX2 release, your PS2 BIOS, your games found and added to Game Mode.
+- <img src="portal/images/apps/swanstation.webp" width="20" height="20" alt=""/> **[SwanStation Manager](apps/swanstation)**: PS1 games with the SwanStation emulator: RetroArch and its SwanStation core installed, your PS1 BIOS checked, your games found and added to Game Mode.
 - <img src="portal/images/apps/vita3k.webp" width="20" height="20" alt=""/> **[Vita3K Manager](apps/vita3k)**: PS Vita games with the Vita3K emulator: a tested Vita3K build, the firmware and your games installed through it, added to Game Mode.
+- <img src="portal/images/apps/mgba.webp" width="20" height="20" alt=""/> **[mGBA Manager](apps/mgba)**: Game Boy Advance games with the mGBA emulator: a tested mGBA release, your games found and added to Game Mode.
+- <img src="portal/images/apps/sameboy.webp" width="20" height="20" alt=""/> **[SameBoy Manager](apps/sameboy)**: Game Boy and Game Boy Color games with the SameBoy emulator: RetroArch and its SameBoy core installed, your games found and added to Game Mode.
+- <img src="portal/images/apps/xenia.webp" width="20" height="20" alt=""/> **[Xenia Manager](apps/xenia)**: Xbox 360 games with the Xenia emulator (experimental on Linux): a tested Xenia build, your games found and added to Game Mode.
 
 **Utilities**: handy tools around the board.
 
@@ -90,6 +94,7 @@ Each app keeps its own `LICENSE`.
 ## Disclaimer
 
 The BC250 Bazzite Suite is an independent community project. It is not affiliated with or endorsed by AMD, ASRock,
-the Bazzite / Universal Blue project, Sony, or the makers of the emulators the apps work with. BC-250 is AMD's
-product name, Bazzite is the name of the Universal Blue project, and PlayStation and the names of the emulators
-belong to their owners; the suite uses them only to say what it works with.
+the Bazzite / Universal Blue project, Sony, Nintendo, Microsoft, or the makers of the emulators the apps work with.
+BC-250 is AMD's product name, Bazzite is the name of the Universal Blue project, and PlayStation, the names of
+Nintendo's and Microsoft's consoles and the names of the emulators belong to their owners; the suite uses them only
+to say what it works with.

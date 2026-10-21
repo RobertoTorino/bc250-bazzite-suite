@@ -157,8 +157,9 @@ its own `LICENSE`.
 ## Disclaimer
 
 The BC250 Bazzite Suite is an independent community project. It is not affiliated with or endorsed by AMD, ASRock,
-the Bazzite / Universal Blue project, Sony, or the makers of the emulators the apps work with. BC-250 is AMD's
-product name, Bazzite is the name of the Universal Blue project, and PlayStation and the names of the emulators
-belong to their owners; the suite uses them only to say what it works with.
+the Bazzite / Universal Blue project, Sony, Nintendo, Microsoft, or the makers of the emulators the apps work with.
+BC-250 is AMD's product name, Bazzite is the name of the Universal Blue project, and PlayStation, the names of
+Nintendo's and Microsoft's consoles and the names of the emulators belong to their owners; the suite uses them only
+to say what it works with.
 </div>
 </section>

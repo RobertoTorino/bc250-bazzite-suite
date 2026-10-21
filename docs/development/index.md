@@ -142,8 +142,10 @@ The shadPS4 Manager installs one shadPS4 release, pinned in `apps/shadps4/shadps
 SHA-256 GitHub publishes for it that a new pin needs, and the SHA-256 of the pinned zip. A new shadPS4 can change
 what the app relies on (its `config.json`, the shadNet protocol), so a new pin also needs a look at what changed.
 
-The PPSSPP, PCSX2 (its stable channel) and RPCS3 Managers and Mesh Shaders each pin one release: `VERSION` or
-`LANDMARK` in the app's `emulator.py`, and `DIRECTMESH` in `apps/mesh/bc250-mesh-shaders.sh`.
+The PPSSPP, PCSX2 (its stable channel), RPCS3 and mGBA Managers and Mesh Shaders each pin one release: `VERSION` or
+`LANDMARK` in the app's `emulator.py`, and `DIRECTMESH` in `apps/mesh/bc250-mesh-shaders.sh`. mGBA can update itself
+from its own window; its `emulator.py` also holds the size of the pinned AppImage (`SIZE`), by which the app sees
+that, so a new pin moves it too.
 The same tool reports a newer stable release than the pin (for DirectMesh the newest `directmesh-v*` tag); the apps
 check the checksum of what they download themselves. The governor has no pin in the repository (its version is the
 one COPR built); the GPU Governor Manager compares the installed package with filippor's latest release.
@@ -177,9 +179,23 @@ Vita3K's source at the new build:
 The tests hold the `config.yml` the pinned build writes on its first start (`tests/fixtures/config-4186.yml`); a new
 pin replaces it with the new build's, renamed for it.
 
+The Xenia Manager installs one Xenia Canary build, pinned in `apps/xenia/xenia_manager/emulator.py` (`BUILD`,
+`COMMIT`, `PUBLISHED`, `SHA256`, `SIZE`). Xenia has no stable releases either: every change is a release of
+`xenia-canary/xenia-canary`, tagged with its commit, with `xenia_canary_linux.AppImage` and the SHA-256 GitHub
+publishes for it. A tag is no number, so the app takes a release published after `PUBLISHED` as a newer build; the
+tool does not check them. A new pin takes the asset's digest and size and the release's date, and a look at what the
+app relies on in Xenia's source at the new commit: the `--fullscreen` option and the positional path
+(`src/xenia/app/xenia_main.cc`), the storage root in `$XDG_DATA_HOME/Xenia` (the same file, and `GetUserFolder` in
+`src/xenia/base/filesystem_posix.cc`), the places of the game partition in a disc image
+(`src/xenia/vfs/devices/disc_image_device.cc`, which `GAME_PARTITIONS` in the app's `games.py` copies), and GTK on
+X11 (`GDK_BACKEND` in `src/xenia/ui/windowed_app_main_posix.cc`).
+
+SwanStation and SameBoy Managers pin nothing: their cores come from libretro's build server, which keeps only the
+newest build, and the apps say when there is a newer one. RetroArch is a Flatpak that Flatpak updates.
+
 ```bash
-python3 tools/check_upstream.py            # all three
-python3 tools/check_upstream.py helixsr    # one: decky, shadps4 or helixsr
+python3 tools/check_upstream.py            # all of them
+python3 tools/check_upstream.py helixsr    # one: decky, shadps4, helixsr, ppsspp, pcsx2, rpcs3, mgba or directmesh
 ```
 
 ## bc250_core

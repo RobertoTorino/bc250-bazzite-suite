@@ -1,3 +1,17 @@
+Changelog: 21-10-2026 14:25:29
+
+Release 0.11.0.
+
+Changelog: 21-10-2026 13:46:48
+
+Added. The catalogue lists mGBA Manager, SameBoy Manager and Xenia Manager: their PyQt6 requirement and the Steam
+shutdown they use; flatpak for SameBoy Manager (RetroArch), FUSE 2 for mGBA's AppImage and fusermount for Xenia's.
+
+Changelog: 21-10-2026 12:44:22
+
+Added. The catalogue lists SwanStation Manager, its PyQt6 requirement, the Steam shutdown it uses and a new tool, flatpak
+(RetroArch is a Flatpak).
+
 Changelog: 21-10-2026 12:07:02
 
 Release 0.10.0.

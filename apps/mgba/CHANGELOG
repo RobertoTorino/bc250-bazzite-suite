@@ -1,0 +1,14 @@
+Changelog: 21-10-2026 14:25:29
+
+Release 0.1.0.
+
+Changelog: 21-10-2026 13:23:31
+
+Added. mGBA Manager: Game Boy Advance games on the BC-250 with mGBA. The app installs mGBA 0.10.5, the Linux AppImage
+of its GitHub release, checked against the SHA-256 it was tried with, and says when GitHub has a newer release or when
+mGBA updated itself in its own window (Install puts 0.10.5 back). It finds the games in the chosen folders (.gba files,
+and .zip files with one in them, told by the cartridge header and its checksum, with the game code from it) and puts
+the ticked ones in Steam for Game Mode, "[GBA] Title", the artwork drawn from the app's icon. The Game Mode shortcuts
+run ~/.local/bin/bc250-mgba-run, which starts mGBA full screen (-f); when Steam starts a game, a real controller is
+read instead of Steam's virtual one, and on a Wayland desktop mGBA opens through XWayland so Steam's overlay works.
+Not tried on the board yet: a game from Game Mode, the controllers under Steam Input.
