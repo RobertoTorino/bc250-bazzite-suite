@@ -5,6 +5,7 @@ rpm, journalctl, ldd, podman, curl) first on PATH. Nothing here touches /usr/loc
 
 from __future__ import annotations
 
+import hashlib
 import os
 import subprocess
 import sys
@@ -22,7 +23,9 @@ APP = Path(__file__).resolve().parent.parent
 SCRIPT = APP / "bc250-mesh-shaders.sh"
 PREFIX = "usr/local/lib/bc250-mesh-shaders"
 KERNEL = "7.2.8-ogc5.1.fc44.x86_64"
-BUILT = "DirectMesh v1.3.1, Mesa 26.2.1, 2026-10-13 19:42 UTC"
+# The suite's patch as a build names it: the start of its SHA-256.
+SUITE_PATCH = hashlib.sha256((APP / "mesa" / "bc250-suite-mesa-26.2.1.patch").read_bytes()).hexdigest()[:8]
+BUILT = f"DirectMesh v1.3.1, Mesa 26.2.1, suite patch {SUITE_PATCH}, 2026-10-13 19:42 UTC"
 
 needs_bash = pytest.mark.skipif(sys.platform == "win32", reason="runs the bash script with stub commands")
 
@@ -82,8 +85,8 @@ class Board:
         return dict(line.split(": ", 1) for line in r.stdout.splitlines())
 
     def make_build(self, directmesh: str = "v1.3.1", built: str = "2026-10-13 19:42 UTC",
-                   library: bytes = b"radv") -> None:
-        """What a finished --build leaves in the cache."""
+                   library: bytes = b"radv", suite_patch: str | None = SUITE_PATCH) -> None:
+        """What a finished --build leaves in the cache (suite_patch None: a build from before the suite's patch)."""
         stage = self.stage
         for d in ("lib64", "share/vulkan/icd.d", "share/drirc.d", "libexec"):
             (stage / d).mkdir(parents=True, exist_ok=True)
@@ -94,7 +97,8 @@ class Board:
         test = stage / "libexec/bc250-mesh-test"
         test.write_text(FAKE_TEST)
         test.chmod(0o755)
-        (stage / "BUILD-INFO").write_text(f"directmesh={directmesh}\nmesa=26.2.1\npatch=abc\nfedora=44\n"
+        suite = f"suite_patch={suite_patch}\n" if suite_patch else ""
+        (stage / "BUILD-INFO").write_text(f"directmesh={directmesh}\nmesa=26.2.1\npatch=abc\n{suite}fedora=44\n"
                                           f"built={built}\n")
 
     def install(self) -> None:

@@ -83,8 +83,8 @@ A failed test means: don't use the driver on this kernel. Its output is in
 ## Switches
 
 **Switches…** puts the driver's switches in front of the launch options, for comparisons and for finding the cause of
-a problem in one game. Leave them all off to play: that is the driver as DirectMesh ships it. After a change, copy
-the launch options to the game again.
+a problem in one game. Leave them all off to play, unless the game needs one: off is the driver as DirectMesh ships
+it. After a change, copy the launch options to the game again.
 
 | Switch | What it does |
 |---|---|
@@ -93,6 +93,7 @@ the launch options to the game again.
 | Private corners only (`RADV_BC250_MESH_SAFE_ADAPTIVE=0`) | No shared vertices at all: every triangle exports its own corners. Slower; the most cautious route. |
 | DirectMesh off (`RADV_DIRECTMESH=0`) | The driver falls back to its base BC-250 settings, for a comparison on the same driver. |
 | Hide mesh shaders (`RADV_DEBUG=nomeshshader`) | The game does not see mesh shaders and takes its own path without them, for a comparison. |
+| Split mesh shaders that write memory (`RADV_BC250_MESH_SPLIT_WRITES=1`) | For a game whose large mesh shaders write to buffers (PS5 emulators): the driver splits them anyway and runs those writes once. It cannot check that the game never reads them back in the same draw, so only for the game that needs it. |
 
 `run.log` notes the switches each game was started with.
 
@@ -164,6 +165,9 @@ it is; remove that first with **Remove**. `--purge` also removes the settings an
   its signature with the keys of the Mesa release maintainers (from Mesa's own source, bundled with the app).
 - **The patch** (`mesa/bc250-directmesh-mesa-<version>.patch`): the patch DirectMesh publishes with its release
   for stock Mesa, bundled with the app and checked against the SHA-256 the release publishes.
+- **The suite's patch** (`mesa/bc250-suite-mesa-<version>.patch`): applied on top of DirectMesh's, with what the
+  suite adds to it: mesh shaders that write memory can be split (the switch above). The Build step names it by the
+  start of its SHA-256 (`suite patch 1a2b3c4d`); when an app update changes it, build again.
 - **The build:** RADV alone (no OpenGL, no LLVM), with the prefix `/usr/local/lib/bc250-mesh-shaders`, in a
   `registry.fedoraproject.org/fedora` container of your Bazzite's Fedora version, so it links against the same
   libraries. The driver's game profiles (`drirc`) point at the system's.

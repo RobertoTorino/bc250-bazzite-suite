@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QApplication, QDialog, QMessageBox
 from mesh_shaders import main_window
 from mesh_shaders.main_window import MainWindow
 from mesh_shaders.switches import SWITCHES, SwitchesDialog
-from conftest import SCRIPT, needs_bash
+from conftest import BUILT, SCRIPT, SUITE_PATCH, needs_bash
 
 pytestmark = needs_bash
 
@@ -28,7 +28,8 @@ def window(qapp, board, monkeypatch):
 
 def test_fresh_board(window):
     assert window.pill.text() == "Not built"
-    assert window.build_state.text().startswith("Not built. Builds DirectMesh v1.3.1, Mesa 26.2.1:")
+    assert window.build_state.text().startswith(f"Not built. Builds DirectMesh v1.3.1, Mesa 26.2.1, suite patch "
+                                                f"{SUITE_PATCH}:")
     assert window.build_button.isEnabled()
     assert not window.install_button.isEnabled() and not window.remove_button.isEnabled()
     assert not window.test_button.isEnabled()
@@ -47,7 +48,7 @@ def test_installed_and_tested(window, board):
     board.install()
     window.refresh()
     assert window.pill.text() == "Test needed"
-    assert window.install_state.text().startswith("Installed: DirectMesh v1.3.1, Mesa 26.2.1, 2026-10-13 19:42 UTC")
+    assert window.install_state.text().startswith(f"Installed: {BUILT}")
     assert window.test_button.isEnabled() and not window.install_button.isEnabled()
     board.pass_test()
     window.refresh()
@@ -70,6 +71,14 @@ def test_build_of_an_older_directmesh(window, board):
     board.make_build(directmesh="v1.3")
     window.refresh()
     assert "This version of the app builds DirectMesh v1.3.1, Mesa 26.2.1" in window.build_state.text()
+
+
+def test_build_from_before_the_suite_patch(window, board):
+    board.make_build(suite_patch=None)
+    window.refresh()
+    assert window.build_state.text().startswith("Built: DirectMesh v1.3.1, Mesa 26.2.1, 2026-10-13 19:42 UTC.")
+    assert f"This version of the app builds DirectMesh v1.3.1, Mesa 26.2.1, suite patch {SUITE_PATCH}:" in \
+        window.build_state.text()
 
 
 def test_switches_go_into_the_launch_options(window, board, monkeypatch):

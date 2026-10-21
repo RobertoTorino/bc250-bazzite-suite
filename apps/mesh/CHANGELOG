@@ -1,3 +1,17 @@
+Changelog: 21-10-2026 20:24:57
+
+Release 0.7.0.
+
+Changelog: 21-10-2026 18:34:48
+
+Added. The suite's own patch for the driver (mesa/bc250-suite-mesa-26.2.1.patch), applied on top of DirectMesh's: a
+new switch, Split mesh shaders that write memory (RADV_BC250_MESH_SPLIT_WRITES=1), lets the driver split large mesh
+shaders that store to buffers, or use an atomic's result to decide such stores, as the fault reporting of PS5
+emulators does (SILENT HILL stopped at "BC250 mesh split rejected"). Those writes run once, in the first piece of the
+split. It is off unless chosen per game, because the driver cannot check that the game never reads the writes back.
+The build applies the patch and names it ("suite patch" and the start of its SHA-256); a build from before it shows
+as outdated, so build, install and test again.
+
 Changelog: 21-10-2026 02:13:00
 
 Release 0.6.1.

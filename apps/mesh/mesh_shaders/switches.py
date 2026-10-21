@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The DirectMesh driver's switches for one game: environment variables in front of the launch options, for
-comparisons and for finding the cause of a problem. All off is the driver as DirectMesh ships it."""
+comparisons and for finding the cause of a problem, and one for games that need it. All off is the driver as
+DirectMesh ships it."""
 
 from __future__ import annotations
 
@@ -39,6 +40,10 @@ SWITCHES = (
            "The driver falls back to its base BC-250 settings, for a comparison on the same driver."),
     Switch("RADV_DEBUG", "nomeshshader", "Hide mesh shaders",
            "The game does not see mesh shaders and takes its own path without them, for a comparison."),
+    Switch("RADV_BC250_MESH_SPLIT_WRITES", "1", "Split mesh shaders that write memory",
+           "For a game whose large mesh shaders write to buffers (PS5 emulators): the driver splits them anyway and "
+           "runs those writes once. It cannot check that the game never reads them back in the same draw, so only "
+           "for the game that needs it."),
 )
 
 
@@ -53,7 +58,7 @@ class SwitchesDialog(QDialog):
         self.setWindowTitle(window_title("Switches"))
         lay = QVBoxLayout(self)
         intro = QLabel("For comparisons and for finding the cause of a problem in one game. Leave them all off to "
-                       "play: that is the driver as DirectMesh ships it.")
+                       "play, unless the game needs one: off is the driver as DirectMesh ships it.")
         intro.setWordWrap(True)
         lay.addWidget(intro)
         self.boxes: dict[Switch, QCheckBox] = {}

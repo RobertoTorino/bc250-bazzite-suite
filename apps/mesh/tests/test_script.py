@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import subprocess
 
-from conftest import APP, BUILT, KERNEL, PREFIX, needs_bash
+from conftest import APP, BUILT, KERNEL, PREFIX, SUITE_PATCH, needs_bash
 
 pytestmark = needs_bash
 
@@ -19,7 +19,7 @@ def test_status_of_a_fresh_board(board):
         "Board": "BC-250 (1002:13fe)",
         "Kernel": KERNEL,
         "System Mesa": "26.2.4",
-        "DirectMesh": "v1.3.1, Mesa 26.2.1",
+        "DirectMesh": f"v1.3.1, Mesa 26.2.1, suite patch {SUITE_PATCH}",
         "Build": "none",
         "Driver": "not installed",
         "Test": "none",

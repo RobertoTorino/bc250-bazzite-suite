@@ -93,8 +93,8 @@ fi
 # --- Checks ------------------------------------------------------------------------------------
 [ "$(uname -s)" = Linux ] || die "This app runs on Linux (Bazzite) only."
 for f in bc250-mesh-shaders.sh bc250-mesh-shaders-run mesa/build-in-container.sh \
-         mesa/bc250-directmesh-mesa-26.2.1.patch mesa/release-maintainers-keys.asc meshtest/mesh-test.c \
-         meshtest/mesh-test.comp requirements.txt VERSION \
+         mesa/bc250-directmesh-mesa-26.2.1.patch mesa/bc250-suite-mesa-26.2.1.patch mesa/release-maintainers-keys.asc \
+         meshtest/mesh-test.c meshtest/mesh-test.comp requirements.txt VERSION \
          mesh_shaders/__main__.py "images/$APP_ID.webp" "images/$APP_ID-128.png"; do
     [ -f "$SRC/$f" ] || die "$f is missing: run install.sh from a clone or the extracted release folder."
 done

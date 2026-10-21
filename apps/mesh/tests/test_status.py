@@ -4,13 +4,13 @@ from mesh_shaders.status import Status, parse, verdict
 FRESH = """Board: BC-250 (1002:13fe)
 Kernel: 7.2.8-ogc5.1.fc44.x86_64
 System Mesa: 26.2.4
-DirectMesh: v1.3.1, Mesa 26.2.1
+DirectMesh: v1.3.1, Mesa 26.2.1, suite patch 1a2b3c4d
 Build: none
 Driver: not installed
 Test: none
 Launch options: /usr/local/bin/bc250-mesh-shaders-run %command%
 """
-BUILT = "DirectMesh v1.3.1, Mesa 26.2.1, 2026-10-13 19:42 UTC"
+BUILT = "DirectMesh v1.3.1, Mesa 26.2.1, suite patch 1a2b3c4d, 2026-10-13 19:42 UTC"
 
 
 def status(**changes: str) -> Status:
@@ -22,7 +22,7 @@ def test_parse_reads_each_line_once():
     s = parse(FRESH + "Build: something later\nnot a field\n")
     assert s.get("Build") == "none" and s.launch_options.endswith("%command%")
     assert s.is_bc250 and not s.built and not s.installed and not s.tested
-    assert s.directmesh == "v1.3.1, Mesa 26.2.1" and s.driver == ""
+    assert s.directmesh == "v1.3.1, Mesa 26.2.1, suite patch 1a2b3c4d" and s.driver == ""
 
 
 def test_build_and_driver():
@@ -36,6 +36,8 @@ def test_build_and_driver():
 def test_a_build_of_an_older_directmesh_is_outdated():
     s = status(Build="DirectMesh v1.3, Mesa 26.2.1, 2026-10-05 10:00 UTC")
     assert s.build_outdated
+    assert status(Build="DirectMesh v1.3.1, Mesa 26.2.1, 2026-10-13 19:42 UTC").build_outdated     # no suite patch
+    assert status(Build=BUILT.replace("1a2b3c4d", "9f8e7d6c")).build_outdated
     assert not status(Build=BUILT, DirectMesh="").build_outdated
 
 

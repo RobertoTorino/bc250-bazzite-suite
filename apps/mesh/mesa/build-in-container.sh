@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Runs inside a Fedora container (bc250-mesh-shaders.sh --build starts it): checks the Mesa source against its
-# signature and the DirectMesh patch against its checksum, patches Mesa, builds RADV alone and the mesh test, and
-# installs them into /work/stage.
+# signature and the DirectMesh patch against its checksum, patches Mesa with it and then with the suite's own patch,
+# builds RADV alone and the mesh test, and installs them into /work/stage.
 #
 #   /app   this app (read-only): mesa/ and meshtest/
 #   /src   mesa-$MESA_VER.tar.xz and its .sig (read-only)
@@ -14,6 +14,7 @@ set -euo pipefail
 : "${MESA_VER:?}" "${PREFIX:?}" "${DIRECTMESH:?}" "${PATCH_SHA256:?}"
 TARBALL=/src/mesa-$MESA_VER.tar.xz
 PATCH=/app/mesa/bc250-directmesh-mesa-$MESA_VER.patch
+SUITE_PATCH=/app/mesa/bc250-suite-mesa-$MESA_VER.patch
 STAGE=/work/stage
 LOGS=/work/logs
 
@@ -50,6 +51,11 @@ tar -xf "$TARBALL" -C /work/mesa --strip-components=1
 (cd /work/mesa && patch -p1 --dry-run <"$PATCH" >/dev/null) ||
     die "The DirectMesh patch does not apply to Mesa $MESA_VER."
 (cd /work/mesa && patch -p1 -s <"$PATCH")
+say "Applying the suite's patch on top of it"
+[ -f "$SUITE_PATCH" ] || die "$(basename "$SUITE_PATCH") is missing from the app."
+(cd /work/mesa && patch -p1 --dry-run <"$SUITE_PATCH" >/dev/null) ||
+    die "The suite's patch does not apply on top of DirectMesh $DIRECTMESH."
+(cd /work/mesa && patch -p1 -s <"$SUITE_PATCH")
 
 say "Building RADV with DirectMesh (this takes a while)"
 # RADV alone, without LLVM (it compiles shaders with ACO), for X11 and Wayland.
@@ -74,6 +80,7 @@ gcc -O2 -Wall -Werror -I/work -o "$STAGE$PREFIX/libexec/bc250-mesh-test" /app/me
     echo "directmesh=$DIRECTMESH"
     echo "mesa=$MESA_VER"
     echo "patch=$PATCH_SHA256"
+    echo "suite_patch=$(sha256sum "$SUITE_PATCH" | cut -c1-8)"
     echo "fedora=$(. /etc/os-release && echo "$VERSION_ID")"
     echo "built=$(date -u '+%Y-%m-%d %H:%M UTC')"
 } >"$STAGE$PREFIX/BUILD-INFO"

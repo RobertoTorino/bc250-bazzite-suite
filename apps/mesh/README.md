@@ -11,4 +11,5 @@ How to install and use it: [BC-250 Mesh Shaders in the manual](https://robertoto
 ## License
 
 GPL-3.0-or-later, see [LICENSE](LICENSE). The DirectMesh patch in `mesa/` is the published patch of
-[DirectMesh](https://github.com/lonewolf0622/bc250meshtaskwork) by lonewolf0622, unchanged, and MIT, as Mesa.
+[DirectMesh](https://github.com/lonewolf0622/bc250meshtaskwork) by lonewolf0622, unchanged, and MIT, as Mesa. The
+suite's patch in `mesa/`, applied on top of it, is GPL-3.0-or-later, as the app.

@@ -16,7 +16,7 @@
 # test results in ~/.local/state/bc250-mesh-shaders; under sudo or pkexec these are the calling user's.
 set -euo pipefail
 
-VERSION="0.6.1"
+VERSION="0.7.0"
 # The DirectMesh release this version of the app builds: its patch (in mesa/), the stock Mesa release it is made
 # for, and the patch's SHA-256 from the release's SHA256SUMS.
 DIRECTMESH=v1.3.1
@@ -24,6 +24,8 @@ MESA_VER=26.2.1
 PATCH_SHA256=6669d4644d9a00ad8da022dd2716c59e4d235a2c6f0eb4f272c9c8d9fbcc9b77
 
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+# The suite's own patch, applied on top of DirectMesh's; a build names it by the start of its SHA-256.
+SUITE_PATCH="$HERE/mesa/bc250-suite-mesa-$MESA_VER.patch"
 PREFIX=/usr/local/lib/bc250-mesh-shaders        # built into the driver: its ICD file and drirc paths
 # BC250_MESH_ROOT is for testing only: a folder that stands in for / (usr/local and sys).
 ROOT_DIR="${BC250_MESH_ROOT:-}"
@@ -77,11 +79,17 @@ board_id() {
     return 1
 }
 
-# "DirectMesh v1.3.1, Mesa 26.2.1, 2026-10-13 19:42 UTC" from a BUILD-INFO file.
+# "DirectMesh v1.3.1, Mesa 26.2.1, suite patch 1a2b3c4d, 2026-10-13 19:42 UTC" from a BUILD-INFO file (a build
+# from before the suite's patch has no suite patch).
 build_info() {
-    printf 'DirectMesh %s, Mesa %s, %s' "$(field directmesh "$1" | grep . || echo '?')" \
-        "$(field mesa "$1" | grep . || echo '?')" "$(field built "$1" | grep . || echo '?')"
+    local suite
+    suite=$(field suite_patch "$1")
+    printf 'DirectMesh %s, Mesa %s, %s%s' "$(field directmesh "$1" | grep . || echo '?')" \
+        "$(field mesa "$1" | grep . || echo '?')" "${suite:+suite patch $suite, }" \
+        "$(field built "$1" | grep . || echo '?')"
 }
+
+suite_patch_id() { sha256sum "$SUITE_PATCH" 2>/dev/null | cut -c1-8; }
 
 # True when the test passed with the running kernel and the installed driver.
 tested_now() {
@@ -97,7 +105,7 @@ do_status() {
     if id=$(board_id); then echo "Board: BC-250 (1002:$id)"; else echo "Board: no BC-250 found (1002:13fe or 1002:143f)"; fi
     echo "Kernel: $(kernel)"
     echo "System Mesa: $(system_mesa | grep . || echo unknown)"
-    echo "DirectMesh: $DIRECTMESH, Mesa $MESA_VER"
+    echo "DirectMesh: $DIRECTMESH, Mesa $MESA_VER, suite patch $(suite_patch_id | grep . || echo '?')"
     if [ -f "$STAGE_DRIVER/BUILD-INFO" ]; then
         echo "Build: $(build_info "$STAGE_DRIVER/BUILD-INFO")"
     else
