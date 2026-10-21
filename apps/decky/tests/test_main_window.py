@@ -42,7 +42,7 @@ class FakeSystem:
         if args[0] == "install":
             self.seen_download = Path(args[1]).read_bytes() == BINARY
             install(self.paths)
-            return privileged.Result(True, "Decky Loader 3.2.10 is installed and running.")
+            return privileged.Result(True, "Decky Loader 3.3.0 is installed and running.")
         if args[0] == "remove":
             self.paths.unit.unlink()
             self.paths.binary.unlink()
@@ -108,7 +108,7 @@ def test_installed_and_running_with_plugins(qapp, setup):
     state.enable_cef(steam_dirs)
     make_plugin(paths.plugins, "SDH-CssLoader", "CSS Loader", "2.1.2", "DeckThemes")
     window = _window(setup)
-    assert window.pill.text() == "Ready" and window.decky_box.value.text() == "3.2.10"
+    assert window.pill.text() == "Ready" and window.decky_box.value.text() == "3.3.0"
     assert "Running as root; starts at boot." == window.service_state.text()
     assert not window.install_button.isEnabled() and window.remove_button.isEnabled()
     assert window.restart_button.isEnabled() and window.steam_box.value.text() == "On"
@@ -135,8 +135,8 @@ def test_older_newer_and_unknown_versions(qapp, setup):
     install(paths, "v3.2.8")
     window = _window(setup)
     assert window.install_button.text() == "Update" and window.install_button.isEnabled()
-    assert "brings 3.2.10" in window.decky_state.text()
-    install(paths, "v3.3.0")                                 # Decky updated itself
+    assert "brings 3.3.0" in window.decky_state.text()
+    install(paths, "v3.4.0")                                 # Decky updated itself
     window.refresh()
     assert "updated itself" in window.decky_state.text() and window.install_button.text() == "Install"
     paths.version_file.unlink()
@@ -145,9 +145,9 @@ def test_older_newer_and_unknown_versions(qapp, setup):
 
 
 def test_a_newer_release_is_named(qapp, setup):
-    window = _window(setup, latest=lambda: ReleaseInfo(version="3.3.0", tag="v3.3.0", published="2026-11-01"))
-    assert "Decky Loader 3.3.0 is out (2026-11-01)" in window.decky_state.text()
-    window = _window(setup, latest=lambda: ReleaseInfo(version="3.2.10"))
+    window = _window(setup, latest=lambda: ReleaseInfo(version="3.4.0", tag="v3.4.0", published="2026-12-01"))
+    assert "Decky Loader 3.4.0 is out (2026-12-01)" in window.decky_state.text()
+    window = _window(setup, latest=lambda: ReleaseInfo(version="3.3.0"))
     assert "is out" not in window.decky_state.text()
     window = _window(setup, latest=lambda: ReleaseInfo(error="no connection"))
     assert "is out" not in window.decky_state.text()
@@ -162,7 +162,7 @@ def test_install_downloads_checks_and_runs_the_root_part(qapp, setup, monkeypatc
     assert system.calls == [["install", str(download / "PluginLoader")]] and system.seen_download
     assert not (download / "PluginLoader").exists()            # the download goes once it is installed
     assert state.cef_enabled(steam_dirs)
-    assert window.pill.text() == "Ready" and "Quick Access menu" in window.running.text()
+    assert window.pill.text() == "Ready" and "Ctrl + 2" in window.running.text()
 
 
 def test_a_different_download_never_reaches_the_root_part(qapp, setup, monkeypatch):

@@ -1,3 +1,21 @@
+Changelog: 21-10-2026 09:36:42
+
+Release 0.7.0.
+
+Changelog: 21-10-2026 09:16:37
+
+Fixed. The app says how to reach Decky's menu without a … button. Its introduction and its line after an install
+name Ctrl + 2 beside the … button, and Big Picture Mode beside Game Mode. The wiki chapter adds that Steam's Power
+menu lists a controller's own combination under Show Controller Shortcuts, that Steam's desktop window has no
+Decky, and that the plug icon is the last of the Quick Access menu's icons. Tests: tests/test_main_window.py.
+
+Changelog: 21-10-2026 08:49:46
+
+Added. The app installs Decky Loader 3.3.0 (was 3.2.10): loader.py pins its release v3.3.0 and the SHA-256 of
+its PluginLoader, e80d03e641d1766a33a817cb27ab8d2e0a4633685e5d27e4de948a6687526181, as GitHub publishes it; the
+download is about 33 MB (was 26). Decky's service unit is the same at v3.3.0, so loader.unit_text() is unchanged.
+Tests: tests/test_loader.py, tests/test_main_window.py, tests/test_state.py.
+
 Changelog: 21-10-2026 02:13:00
 
 Release 0.6.1.

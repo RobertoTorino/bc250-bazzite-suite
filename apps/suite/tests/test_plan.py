@@ -1194,3 +1194,22 @@ def test_the_portal_counts_apps_toml_since_its_last_tag(repo):
         "0.2.0", "minor: apps.toml changed since portal-v0.1.0 (gamma was added)")
     entry(repo / "portal/CHANGELOG", "Breaking. Reads only apps.toml format 2.")
     assert rp.portal_suggestion(repo, unit(repo, "portal"))[0] == "1.0.0"
+
+
+def test_open_issues_without_pull_requests():
+    """GitHub's issues list holds the pull requests too: Close issues shows the issues only."""
+    data = [{"number": 12, "title": "Upstream review", "html_url": "https://github.com/o/r/issues/12",
+             "updated_at": "2026-10-20T06:01:02Z"},
+            {"number": 13, "title": "A pull request", "pull_request": {}, "html_url": "", "updated_at": ""},
+            "not an issue"]
+    assert rp.parse_issues(data) == [rp.Issue(12, "Upstream review", "https://github.com/o/r/issues/12", "2026-10-20")]
+    assert rp.parse_issues(data)[0].label == "#12 Upstream review (updated 2026-10-20)"
+    assert rp.parse_issues({"message": "Not Found"}) == []
+
+
+def test_close_issues_command():
+    repo = rp.repo_slug()
+    assert rp.close_issues_command([12]) == f"gh issue close 12 --repo {repo}"
+    assert rp.close_issues_command([12, 14], " Decky pinned at v3.3.0, it's in step ") == (
+        f"gh issue close 12 --repo {repo} --comment 'Decky pinned at v3.3.0, it'\"'\"'s in step' && "
+        f"gh issue close 14 --repo {repo} --comment 'Decky pinned at v3.3.0, it'\"'\"'s in step'")

@@ -33,11 +33,11 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-VERSION = "3.2.10"
-TAG = "v3.2.10"
+VERSION = "3.3.0"
+TAG = "v3.3.0"
 ASSET = "PluginLoader"
-SHA256 = "c2cf316a53e1c1d318c6dda8821c827e5db275922987f9097956d7a1576e8258"
-SIZE_MB = 26
+SHA256 = "e80d03e641d1766a33a817cb27ab8d2e0a4633685e5d27e4de948a6687526181"
+SIZE_MB = 33
 REPO = "SteamDeckHomebrew/decky-loader"
 URL = f"https://github.com/{REPO}/releases/download/{TAG}/{ASSET}"
 RELEASE_PAGE = f"https://github.com/{REPO}/releases/tag/{TAG}"

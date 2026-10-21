@@ -8,8 +8,12 @@ Brings **plugins to Game Mode** on the **AMD BC-250** with [Decky Loader](https:
 the plugin loader made for the Steam Deck. The app installs the Decky release it was tried with, runs it as a system
 service, and shows whether it runs and which plugins it has.
 
-Decky's own menu is in Game Mode: press the **…** button for the Quick Access menu, then the plug icon. There you open
-Decky's store, install plugins, switch them off and set them up. What a plugin does, and whether it works on the
+Decky's own menu is in Steam's Quick Access menu, in Game Mode and in Big Picture Mode; Steam's desktop window has
+no Quick Access menu, so Decky does not show there. Open the Quick Access menu, the panel on the right, with the
+**…** button, or **Ctrl + 2** on a keyboard; a controller without a **…** button has its own combination, which
+Steam lists under **Show Controller Shortcuts** in its Power menu (hold the controller's Steam, PS or Xbox button).
+Decky is the plug icon at the bottom of the menu's row of icons. There you open Decky's store, install plugins,
+switch them off and set them up. What a plugin does, and whether it works on the
 BC-250, is up to the plugin. A plugin that sets power limits or clocks changes how the board runs: that is your
 choice in Decky, not this app's.
 
@@ -18,13 +22,13 @@ choice in Decky, not this app's.
 - **Steam**, started at least once.
 - **Your password**, for installing, removing and restarting Decky: it runs as root from a system service, as on
   the Steam Deck.
-- About 26 MB for Decky itself, and room for the plugins you install.
+- About 33 MB for Decky itself, and room for the plugins you install.
 
 ## Using it
 
 The window has four rows, then the list of plugins.
 
-1. **Decky Loader**: **Install** downloads Decky from its GitHub release (about 26 MB), checks it against the
+1. **Decky Loader**: **Install** downloads Decky from its GitHub release (about 33 MB), checks it against the
    checksum this version of the app was tried with, installs it in `~/homebrew/services` and starts its service.
    It asks for your password for that. When an older Decky is there, the button says **Update**. **Remove** stops
    Decky and removes it; your plugins and their settings stay, unless you tick the box to remove them too.
@@ -42,7 +46,7 @@ off. **Open plugins folder** opens that folder.
 
 Steps that need your password are greyed out in Game Mode, which has no password dialog. Use Desktop Mode for them.
 
-After installing, start Steam again, or switch to Game Mode, and Decky appears in the Quick Access menu.
+After installing, start Steam again, or switch to Game Mode, and Decky appears in the Quick Access menu (**Ctrl + 2**).
 
 ## Updates
 

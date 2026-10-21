@@ -1,3 +1,14 @@
+Changelog: 21-10-2026 09:29:19
+
+The development chapter of the wiki says how to close the Upstream review issue once handled, which the workflow
+never does: gh issue list and gh issue close, or Close issues in Suite Releases, which the Portal chapter
+describes.
+
+Changelog: 21-10-2026 08:56:37
+
+tools/tests/test_check_upstream.py follows Decky Loader Manager's new pin, v3.3.0: the releases it calls newer
+and older than the pin are v3.3.1, v3.4.0 and v4.0.0, and v3.2.10.
+
 Changelog: 21-10-2026 01:54:13
 
 The HelixSR Manager is BC-250 Upscaler Manager (owner, 21-10-2026): apps/helixsr is apps/upscaler with the

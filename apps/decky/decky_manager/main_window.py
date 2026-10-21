@@ -26,7 +26,8 @@ from . import APP_ID, APP_NAME, INFO, LOGO_PATH, __version__, loader, privileged
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/decky/"
 GAME_MODE_TIP = "In Game Mode there is no password dialog: do this in Desktop Mode"
-AFTER_STEAM = "Decky appears in Game Mode's Quick Access menu (the … button) once Steam starts again."
+AFTER_STEAM = ("Decky appears in the Quick Access menu of Game Mode and Big Picture Mode (the … button, or Ctrl + 2) "
+               "once Steam starts again.")
 
 Root = Callable[[list[str]], privileged.Result]
 Latest = Callable[[], ReleaseInfo]
@@ -81,7 +82,8 @@ class MainWindow(QMainWindow):
         for box in (self.decky_box, self.service_box, self.steam_box, self.plugins_box):
             header.add_second(box)
         intro = hint_label(
-            "Decky Loader adds plugins to Steam's Game Mode: its menu is in the Quick Access menu (the … button). "
+            "Decky Loader adds plugins to Steam's Game Mode and Big Picture Mode: its menu is in the Quick Access menu "
+            "(the … button, or Ctrl + 2). "
             "The app installs the Decky release it was tried with, runs it as a system service and shows its "
             "plugins; you install and set up plugins in Game Mode. "
             + style.link(self, MANUAL_URL, "Manual"))

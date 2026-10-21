@@ -1,3 +1,11 @@
+Changelog: 21-10-2026 09:29:19
+
+Added. Close issues on the Test on this board tab: a window lists the open issues on GitHub (plan.fetch_open_issues,
+with the token of a gh login when there is one), each with a tick box, and Run closes the ticked ones with gh issue
+close in the Commands tab, with the comment typed under the list on each. A double click opens an issue. The
+Upstream workflow never closes its issue; this closes it once handled. Tests: tests/test_plan.py,
+tests/test_main_window.py.
+
 Changelog: 21-10-2026 00:39:06
 
 Added. A Claude tokens today pill at the end of the header: the tokens Claude Code on this machine used since

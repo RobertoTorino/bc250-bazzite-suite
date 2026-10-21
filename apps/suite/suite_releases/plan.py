@@ -818,6 +818,49 @@ def finished_releases(announced: set[str], runs: list[BuildRun], tags: list[str]
     return found
 
 
+# --- GitHub issues: the open ones, closed once handled -----------------------------------------------------------
+
+ISSUES_URL = "https://api.github.com/repos/{repo}/issues?state=open&per_page=100"
+
+
+@dataclass(frozen=True)
+class Issue:
+    """One open issue on GitHub: the weekly Upstream review or Backlog review, or one someone opened."""
+    number: int
+    title: str
+    url: str
+    updated: str                        # "2026-10-20", the day of its last change
+
+    @property
+    def label(self) -> str:
+        return f"#{self.number} {self.title} (updated {self.updated})"
+
+
+def parse_issues(data: object) -> list[Issue]:
+    """The issues of GitHub's answer, without the pull requests it lists among them."""
+    return [Issue(int(i.get("number") or 0), str(i.get("title") or ""), str(i.get("html_url") or ""),
+                  str(i.get("updated_at") or "")[:10])
+            for i in data if isinstance(i, dict) and "pull_request" not in i] if isinstance(data, list) else []
+
+
+def fetch_open_issues() -> list[Issue]:
+    """The repository's open issues, newest first. Raises OSError offline, urllib.error.HTTPError on GitHub's
+    refusal (its hourly limit)."""
+    headers = {"Accept": "application/vnd.github+json", "User-Agent": "bc250-release"}
+    token = github_token()
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    request = urllib.request.Request(ISSUES_URL.format(repo=repo_slug()), headers=headers)
+    with urllib.request.urlopen(request, timeout=15) as response:
+        return parse_issues(json.load(response))
+
+
+def close_issues_command(numbers: list[int], comment: str = "") -> str:
+    """gh issue close for each of *numbers*, with *comment* on each when there is one; it needs a gh login."""
+    note = f" --comment {shlex.quote(comment.strip())}" if comment.strip() else ""
+    return " && ".join(f"gh issue close {n} --repo {repo_slug()}{note}" for n in numbers)
+
+
 # --- GitHub's own status: is GitHub up? ------------------------------------------------------------------------
 
 STATUS_PAGE = "https://www.githubstatus.com/"

@@ -20,8 +20,8 @@ def test_installed_version(tmp_path):
     paths.services.mkdir(parents=True)
     paths.binary.write_bytes(b"")
     assert state.installed_version(paths) == "unknown"
-    paths.version_file.write_text("v3.2.10\n")              # the app's and Decky's updater's
-    assert state.installed_version(paths) == "3.2.10"
+    paths.version_file.write_text("v3.3.0\n")              # the app's and Decky's updater's
+    assert state.installed_version(paths) == "3.3.0"
     paths.version_file.write_text("v3.3.0-pre1")
     assert state.installed_version(paths) == "3.3.0-pre1"
     paths.binary.unlink()

@@ -20,7 +20,8 @@ what Claude Code on this machine used, from its transcripts; a click opens Claud
 Test on this board: Test app updates and Test withdrawal install the portal from the checkout and start it with the
 apps from their releases, Test Portal release installs the published portal release (check-release.sh, in a
 terminal); Installer tests opens BC-250 Installer Tests; Record portal tour records the portal's video tour
-from this checkout (tools/record-tour.sh) into ~/Videos and opens it. Test local apps: click an app's icon to start it from this
+from this checkout (tools/record-tour.sh) into ~/Videos and opens it; Close issues lists the open GitHub issues,
+and closes the ticked ones with gh issue close in the Commands tab. Test local apps: click an app's icon to start it from this
 checkout, to try it before its release; the Manual icon serves the manual from the checkout (mkdocs serve) and opens
 it in the browser.
 The Commands tab is a command line in the checkout (command_line.py), where the git buttons run too; its Commands
@@ -39,7 +40,7 @@ from pathlib import Path
 
 from PyQt6.QtCore import QProcess, QRectF, QSize, Qt, QTimer, QUrl
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QPainter, QPen, QPixmap
-from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView,
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView,
                              QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPushButton, QStackedWidget,
                              QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
 
@@ -625,6 +626,10 @@ class RunPage(QWidget):
                                     f"({rp.RECORD_SCRIPT}, about a minute), into ~/Videos, and open it")
         self.tour_button.clicked.connect(self.record_tour)
         self.recorder: QProcess | None = None
+        self.issues_button = QPushButton("Close issues")
+        self.issues_button.setToolTip("The open issues on GitHub: tick the ones that are handled, and Run closes "
+                                      "them (gh issue close, in the Commands tab)")
+        self.issues_button.clicked.connect(self.close_issues)
         if not sys.platform.startswith("linux"):
             for button in (self.local_button, self.release_button, self.withdraw_button, self.installer_button,
                            self.tour_button):
@@ -641,7 +646,7 @@ class RunPage(QWidget):
         self.output = Terminal()                 # the window shows it under the steps, beside the command line
         checks = QHBoxLayout()
         for button in (self.local_button, self.release_button, self.withdraw_button, self.installer_button,
-                       self.tour_button):
+                       self.tour_button, self.issues_button):
             checks.addWidget(button)
         checks.addStretch(1)
         local = QLabel("Test local apps")
@@ -653,7 +658,9 @@ class RunPage(QWidget):
             "GitHub built the portal): the published portal release. <b>Test withdrawal</b> (step 3): the portal from "
             "this checkout on a board with the withdrawn app installed. Each runs in a terminal; close the portal "
             "there to finish. <b>Installer tests</b> opens BC-250 Installer Tests. <b>Record portal tour</b> records "
-            "the portal's video tour from this checkout, as it is now, and opens it when it is done."))
+            "the portal's video tour from this checkout, as it is now, and opens it when it is done. <b>Close "
+            "issues</b> lists the open issues on GitHub, such as the weekly Upstream review, and closes the ones "
+            "you tick once they are handled."))
         lay.addLayout(checks)
         lay.addSpacing(8)
         lay.addWidget(local)
@@ -709,6 +716,20 @@ class RunPage(QWidget):
             self.output.appendPlainText("This checkout has no tools/installer-tests/gui.")
             return
         self.run(target)
+
+    def close_issues(self) -> None:
+        dialog = IssuesDialog(self, self.release_window.issues_source)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.run_close(dialog.numbers(), dialog.comment.text())
+
+    def run_close(self, numbers: list[int], comment: str) -> None:
+        """gh issue close for each ticked issue, in the Commands tab, as the git buttons run."""
+        if not numbers:
+            return
+        if self.release_window.commands.run_now(rp.close_issues_command(numbers, comment)):
+            self.release_window.tabs.setCurrentIndex(self.release_window.commands_tab)
+        else:
+            self.output.appendPlainText("Close issues: the command line is busy or has no bash; nothing was closed.")
 
     def tour_file(self) -> Path:
         return Path.home() / "Videos" / f"bc250-portal-tour-v{self.release_window.portal_version()}.mp4"
@@ -795,6 +816,82 @@ class RunPage(QWidget):
                                         (f"; the end of {log}:\n{tail}" if tail else "."))
         if not self.running:
             self.timer.stop()
+
+
+class IssuesDialog(QDialog):
+    """The open issues on GitHub, read in the background (plan.fetch_open_issues), each with a tick box; Run closes
+    the ticked ones."""
+
+    def __init__(self, parent: QWidget, source):
+        super().__init__(parent)
+        self.setWindowTitle("Close issues")
+        self.resize(640, 420)
+        self.state = QLabel("Reading the open issues on GitHub…")
+        self.state.setWordWrap(True)
+        self.list = QListWidget()
+        self.list.itemChanged.connect(self._show_state)
+        self.list.itemDoubleClicked.connect(lambda item: open_url(item.data(Qt.ItemDataRole.UserRole + 1)))
+        self.comment = QLineEdit()
+        self.comment.setPlaceholderText("Comment on each (optional), e.g. Decky pinned at v3.3.0")
+        self.run_button = accent_button("Run", "Close the ticked issues with gh issue close; it needs a gh login "
+                                               "(gh auth login)")
+        self.run_button.clicked.connect(self.accept)
+        cancel = QPushButton("Cancel")
+        cancel.clicked.connect(self.reject)
+        buttons = QHBoxLayout()
+        buttons.addStretch(1)
+        buttons.addWidget(cancel)
+        buttons.addWidget(self.run_button)
+        lay = QVBoxLayout(self)
+        lay.addWidget(hint_label(
+            "Tick the issues that are handled and press <b>Run</b>: it closes them with <code>gh issue close</code> "
+            "in the Commands tab, with the comment when you write one. A double click opens an issue on GitHub. "
+            "The weekly Upstream review and Backlog review open a new issue when they have something again."))
+        lay.addWidget(self.state)
+        lay.addWidget(self.list, 1)
+        lay.addWidget(self.comment)
+        lay.addLayout(buttons)
+        self.run_button.setEnabled(False)
+        self.checker = UpdateChecker(self)
+        self.checker.finished.connect(self.fill)
+        self.checker.start(lambda: self._fetch(source))
+
+    @staticmethod
+    def _fetch(source) -> object:
+        """Worker thread: the issues, or the error to show."""
+        try:
+            return source()
+        except (OSError, ValueError) as exc:
+            return exc
+
+    def fill(self, result: object) -> None:
+        if isinstance(result, Exception):
+            self.state.setText(f"Could not read the issues from GitHub: {result}")
+            return
+        self.list.blockSignals(True)
+        for issue in result:
+            item = QListWidgetItem(issue.label)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Unchecked)
+            item.setData(Qt.ItemDataRole.UserRole, issue.number)
+            item.setData(Qt.ItemDataRole.UserRole + 1, issue.url)
+            item.setToolTip(issue.url)
+            self.list.addItem(item)
+        self.list.blockSignals(False)
+        self.state.setText(f"{len(result)} open issue{'' if len(result) == 1 else 's'} on GitHub." if result
+                           else "No open issues on GitHub.")
+        self._show_state()
+
+    def numbers(self) -> list[int]:
+        return [self.list.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.list.count())
+                if self.list.item(i).checkState() == Qt.CheckState.Checked]
+
+    def _show_state(self) -> None:
+        self.run_button.setEnabled(bool(self.numbers()))
+
+    def done(self, code: int) -> None:
+        self.checker.stop(2000)
+        super().done(code)
 
 
 def desktop_notify(summary: str, body: str) -> bool:
@@ -1066,13 +1163,15 @@ class ClaudeUsageIndicator(Pill):
 class ReleaseWindow(QMainWindow):
     def __init__(self, root: Path = SUITE, sha256_source=rp.fetch_sha256, launch=launch_in_terminal,
                  start=start_app, runs_source=rp.fetch_runs, notify=desktop_notify, settings=None,
-                 status_source=rp.fetch_github_status, claude_source=rp.fetch_claude_usage):
+                 status_source=rp.fetch_github_status, claude_source=rp.fetch_claude_usage,
+                 issues_source=rp.fetch_open_issues):
         """*runs_source* reads the GitHub Actions runs (None: no build indicator); *notify* shows a desktop
         notification; *settings* keeps the command line's history (None: this session only); *status_source*
         reads githubstatus.com (None: no GitHub status); *claude_source* reads Claude Code's usage (None: no
-        Claude pill)."""
+        Claude pill); *issues_source* reads the open GitHub issues for Close issues."""
         super().__init__()
         self.root = root
+        self.issues_source = issues_source
         self.sha256_source = sha256_source
         self.launch = launch
         self.start = start

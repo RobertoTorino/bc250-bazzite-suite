@@ -272,7 +272,10 @@ apps/suite/install.sh --uninstall             # remove them; the checkout stays
   the first on a board with a withdrawn app installed. **Installer tests** opens BC-250 Installer Tests from the
   checkout. **Record portal tour** records the portal's video tour from the checkout as it is now, for the wiki and
   YouTube (`tools/record-tour.sh`, about a minute, its output in Logs), into
-  `~/Videos/bc250-portal-tour-v<portal version>.mp4`, and opens it in your video player. Linux only.
+  `~/Videos/bc250-portal-tour-v<portal version>.mp4`, and opens it in your video player. Linux only, except
+  **Close issues**: it lists the open issues on GitHub, such as the weekly Upstream review, each with a tick box.
+  **Run** closes the ticked ones with `gh issue close` in the Commands tab, with a comment when you write one; it
+  needs a gh login (`gh auth login`). A double click opens an issue on GitHub.
 - **Test local apps**, on the same tab: every app window in the checkout, as an icon. A click starts that app from the checkout,
   to try a change before its release: `python -m <package>` with the checkout's venv and its `core`, as `run.sh`
   starts Suite Releases. An app that changes how the board runs asks first, as in the portal; started from the

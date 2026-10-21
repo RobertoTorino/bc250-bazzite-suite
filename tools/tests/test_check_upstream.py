@@ -52,8 +52,8 @@ def test_in_step():
     assert report.text().startswith(f"Decky Loader: pinned {LOADER.TAG}, latest stable {LOADER.TAG}. In step.")
 
 
-@pytest.mark.parametrize("latest, moved", [("v3.2.11", True), ("v3.3.0", True), ("v4.0.0", True),
-                                           ("v3.2.9", False), (LOADER.TAG, False)])
+@pytest.mark.parametrize("latest, moved", [("v3.3.1", True), ("v3.4.0", True), ("v4.0.0", True),
+                                           ("v3.2.10", False), (LOADER.TAG, False)])
 def test_a_newer_release(latest, moved):
     report = check_upstream.check(LOADER, github(latest=latest))
     assert bool(report.drift) == moved
@@ -80,7 +80,7 @@ def test_exit_codes(monkeypatch, capsys, tmp_path):
     real = check_upstream.check
     monkeypatch.setattr(check_upstream, "check", lambda loader: real(loader, github()))
     assert check_upstream.main(["decky"]) == 0 and "In step." in summary.read_text()
-    monkeypatch.setattr(check_upstream, "check", lambda loader: real(loader, github("v3.3.0")))
+    monkeypatch.setattr(check_upstream, "check", lambda loader: real(loader, github("v3.4.0")))
     assert check_upstream.main(["decky"]) == 1
 
     def offline(loader):

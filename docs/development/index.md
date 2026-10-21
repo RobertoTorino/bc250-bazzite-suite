@@ -125,9 +125,17 @@ SHA-256 GitHub publishes for the pinned binary, and Decky's `plugin_loader-relea
 `main` (Decky's own updater installs `main`'s). It exits with 0 when they match, 1 when Decky moved and 2 when it
 could not check. The Upstream workflow (`.github/workflows/upstream.yml`) runs it every Monday and can be started by
 hand. What moved goes into the open **Upstream review** issue (a new one when none is open, else its list is
-updated with a comment), which notifies everyone who watches the repository; close it once handled. The run fails
-only when an upstream could not be checked. A moved pin means a new version of the app is due, with the new pin
-tried on the board first.
+updated with a comment), which notifies everyone who watches the repository. The workflow never closes it: close
+it once every item on it is handled on `main`, else next Monday's run opens it again. **Close issues** in Suite
+Releases (tab Test on this board) does it, or a command with a gh login:
+
+```bash
+gh issue list                                                  # the open issues, with their numbers
+gh issue close <number> --comment "Decky pinned at v3.3.0."    # close one, saying how it was handled
+```
+
+The run fails only when an upstream could not be checked. A moved pin means a new version of the app is due, with
+the new pin tried on the board first.
 
 The shadPS4 Manager installs one shadPS4 release, pinned in `apps/shadps4/shadps4_manager/emulator.py`
 (`VERSION`, `TAG`, `ASSET`, `SHA256`). The same tool checks it: a newer stable release, with the Linux zip and the

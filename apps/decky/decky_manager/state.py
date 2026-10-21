@@ -47,7 +47,7 @@ def command(argv: list[str]) -> tuple[int, str]:
 # --- Decky itself ------------------------------------------------------------------------------------------------
 
 def installed_version(paths: Paths) -> str:
-    """The installed Decky version ("3.2.10"); "unknown" when the binary is there without its version file; "" when
+    """The installed Decky version ("3.3.0"); "unknown" when the binary is there without its version file; "" when
     Decky is not installed. Decky's own updater writes the same file."""
     if not paths.binary.is_file():
         return ""
