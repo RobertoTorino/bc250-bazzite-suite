@@ -6,8 +6,9 @@
 
 The BC250 Bazzite Suite's front door: one window that installs, opens, updates and removes the suite's apps.
 **The header**: the portal's icon (click it to open this wiki), its name and version, where the apps install from,
-and five pills of the same width: **Refresh** (look again at which apps are installed), **Icons on Desktop**,
-**Theme switcher**, **Wallpaper** and **Sys info**, each described below.
+and seven pills of the same width: **Refresh** (look again at which apps are installed), **Installed apps**,
+**Install all updates**, **Icons on Desktop**, **Theme switcher**, **Wallpaper** and **Sys info**, each described
+below.
 
 **Bazzite Test** is always installed with the portal; every other app is optional. The notice of updates is at the
 top, on every tab. Below it is a tab for each [category](apps/categories.md): Sustainable, Graphics, Gaming, Utilities
@@ -77,6 +78,15 @@ checkout uses its own checkout.
   front. When you come back to the window, it sees the newer portal and shows this red button: click it to restart
   into the new portal, which then shows the red dot on the apps it updates. While an app installs or uninstalls,
   the button waits for it to end.
+- **Installed apps**, a pill at the top: how many of the portal's apps are installed, for example **12/27**. An app
+  that is not available any more is not counted.
+- **Install all updates**, a pill at the top: the number of apps the notice names, updates and reinstalls. Click it
+  to install them all, one after the other. The portal asks once, with the list, and warns when one of them changes
+  the board. Each app's installer runs in its own terminal, as a single install does. When one asks for your
+  password, type it in that terminal: the next one waits until it has ended. While it runs, the pill shows which one
+  of how many it is at, for example **2/5**. An install that fails does not stop the others; at the end the portal
+  names those that failed, and the Install button on their tiles tries again. **Refresh**, while it waits for a
+  terminal that was closed, can stop waiting, and then stops the rest too.
 - **Icons on Desktop**, a pill at the top (Yes or No; click it to switch): on, every installed app has an icon on the Desktop; off, only the
   portal's icon is there and you start the apps from the portal. The apps stay in the app menu either way, so KDE's
   search and Steam's **Add a Non-Steam Game** still find them. The first time the portal starts with app icons on

@@ -14,9 +14,15 @@ and a tab's name counts those on it, so none goes unseen on a tab that is not op
 newer portal release on GitHub (which is how newer app versions arrive).
 
 The header, as an app's header with pills (owner, 20-10-2026): the portal's icon as large as the tiles' icons; beside
-it the name, where the apps install from, and a row of pills, as the apps' status boxes: Refresh, the Desktop icons
-(Yes or No; a click switches), the theme (a click goes to the next one), the wallpaper and Sys info (a small
-window with what the system reports about the board, sysinfo.py).
+it the name, where the apps install from, and a row of pills, as the apps' status boxes: Refresh, Installed apps
+(installed / listed), Install all updates, the Desktop icons (Yes or No; a click switches), the theme (a click goes
+to the next one), the wallpaper and Sys info (a small window with what the system reports about the board,
+sysinfo.py).
+
+Install all updates: every app the notice names (an update or a reinstall), one after the other, each in its own
+terminal as a single install. An installer that asks for the sudo password waits for it in its terminal, and so
+does the batch: the next one starts when it has ended. One question first, with the board warning when one of them
+changes the board; one message at the end names those that failed.
 
 Desktop icons: the portal's own icon is enough to reach every app, so the apps' icons on the Desktop are the user's
 choice ("Icons on Desktop", desktop_icons.py). The first start asks when app icons are there; off, the portal
@@ -523,6 +529,9 @@ class MainWindow(QMainWindow):
         self.worker.finished.connect(self._prepared)
         self._job: tuple[AppEntry, str] | None = None
         self._withdrawal_tried: set[str] = set()        # withdrawn apps the portal tried to remove this time
+        self.batch: list[AppEntry] | None = None        # Install all updates: the apps still to go; None: no batch
+        self.batch_size = 0
+        self.batch_failed: list[str] = []
         self.settings = open_settings(INFO, self)
         self.installed = installed
         self.launch = launch or (lambda argv: QProcess.startDetached(argv[0], argv[1:])[0])
@@ -589,6 +598,11 @@ class MainWindow(QMainWindow):
         self.refresh_pill = Pill("Refresh", "Click to refresh", "Look again at which apps are installed.",
                                  PILL_COLOUR)
         self.refresh_pill.clicked.connect(self._on_refresh)
+        self.installed_pill = Pill("0/0", "Installed apps", colour=PILL_COLOUR)
+        self.installed_pill.setCursor(Qt.CursorShape.ArrowCursor)      # it only shows
+        self.installed_pill.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.updates_pill = Pill("0", "Install all updates", colour=PILL_COLOUR)
+        self.updates_pill.clicked.connect(self.install_all)
         self.icons_box = TogglePill(
             "Icons on Desktop", "On: every installed app gets an icon on the Desktop. Off: only the portal's icon is "
             "there, and you start the apps from here. The apps stay in the app menu either way. Click to switch.",
@@ -605,7 +619,8 @@ class MainWindow(QMainWindow):
                                  PILL_COLOUR)
         self.sysinfo_pill.clicked.connect(self.show_sysinfo)
         self.sysinfo_window: SysInfoDialog | None = None
-        header_pills = [self.refresh_pill, self.icons_box, self.theme_pill, self.wallpaper_pill, self.sysinfo_pill]
+        header_pills = [self.refresh_pill, self.installed_pill, self.updates_pill, self.icons_box, self.theme_pill,
+                        self.wallpaper_pill, self.sysinfo_pill]
         for pill in header_pills:
             pills.addWidget(pill)
         same_width(header_pills)                        # owner, 20-10-2026
@@ -749,7 +764,30 @@ class MainWindow(QMainWindow):
                 card.uninstall_button.setEnabled(False)
         self.marked = marked
         self.show_notice(marked)
+        self.show_counts()
         self.check_installed()
+
+    def show_counts(self) -> None:
+        """The Installed apps pill (installed / listed, a withdrawn app not counted) and the Install all updates pill
+        (how many the notice names; during a batch, which one of how many)."""
+        listed = [entry for entry in self.entries if not entry.withdrawn]
+        installed = sum(is_installed(entry) for entry in listed)
+        self.installed_pill.set_value(f"{installed}/{len(listed)}", f"{installed} of the {len(listed)} apps in this "
+                                      "portal are installed.")
+        if self.batch is not None:
+            done = self.batch_size - len(self.batch)
+            self.updates_pill.set_value(f"{done}/{self.batch_size}", (
+                f"Installing update {done} of {self.batch_size}, each in its own terminal. When one asks for your "
+                "password, type it there: the next one starts when it has ended."))
+            self.updates_pill.setEnabled(False)
+            return
+        count = len(self.marked)
+        self.updates_pill.set_value(str(count), (
+            f"Click to install {'all ' * (count > 1)}{count} the notice names (updates and reinstalls), one after "
+            "the other. When an installer asks for your password, the next one waits "
+            "until you typed it in its terminal and it has ended.") if count else
+            "No updates: every installed app is the version this portal pins.")
+        self.updates_pill.setEnabled(bool(count) and not self.busy())
 
     def outside_updates(self) -> list[tuple[AppEntry, upstream.Outside]]:
         """Updates outside the suite that an installed app can install now, as the apps last recorded them
@@ -1102,6 +1140,47 @@ class MainWindow(QMainWindow):
         self.refresh()
         return True
 
+    def install_all(self) -> None:
+        """Install all updates: every app the notice names, after one question (with the board warning when one of
+        them changes the board), one after the other."""
+        entries = [entry for entry, _ in self.marked]
+        if self.busy() or not entries:
+            return
+        names = "".join(f"<li>{escape(entry.name)}"
+                        + (f" <b style='color:{ORANGE};'>(changes the board)</b>" if entry.changes_board else "")
+                        + "</li>" for entry in entries)
+        board = [entry.name for entry in entries if entry.changes_board]
+        warning = ("<p><b>Some of them change how your BC-250 runs</b> (clocks, voltages, unlocked units or firmware "
+                   "tables). A wrong setting can make the board unstable or stop it from booting until the change is "
+                   "undone: read their manuals first.</p>") if board else ""
+        answer = QMessageBox.question(
+            self, APP_NAME, f"<p>Install these {len(entries)} updates, one after the other?</p><ul>{names}</ul>"
+            f"{warning}<p>Each runs its installer in a terminal. When one asks for your password, type it there: the "
+            "next one waits until it has ended.</p>",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel, QMessageBox.StandardButton.Cancel)
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        entries = [entry for entry in entries if not entry.checkout_only or self._know_checkout(entry)]
+        if not entries:
+            return
+        self.batch, self.batch_size, self.batch_failed = entries, len(entries), []
+        self._next_in_batch()
+
+    def _next_in_batch(self) -> None:
+        """The batch's next install; at its end, the ones that failed in one message."""
+        if self.batch is None:
+            return
+        if self.batch:
+            self._start(self.batch.pop(0), "install")
+            return
+        failed, self.batch = self.batch_failed, None
+        self.refresh()
+        if failed:
+            QMessageBox.warning(self, APP_NAME, f"{len(failed)} of the {self.batch_size} updates did not install:\n\n"
+                                + "\n".join(failed) + "\n\nTheir terminal windows show what happened; the Install "
+                                "button on each tile tries again.")
+        self.remove_withdrawn()
+
     def _start(self, entry: AppEntry, action: str) -> None:
         self._job = (entry, action)
         self.refresh()
@@ -1120,6 +1199,10 @@ class MainWindow(QMainWindow):
         if entry is None:
             return
         if isinstance(result, Exception):
+            if self.batch is not None:
+                self.batch_failed.append(f"{entry.name}: could not be prepared ({result})")
+                self._next_in_batch()
+                return
             QMessageBox.critical(self, APP_NAME, f"{entry.name} could not be prepared:\n\n{result}")
             self.refresh()
             return
@@ -1130,6 +1213,7 @@ class MainWindow(QMainWindow):
         try:
             launch_in_terminal(shell_line(folder, commands), exit_file=exit_file)
         except (RuntimeError, OSError) as exc:
+            self.batch = None                           # no terminal for the next one either
             QMessageBox.critical(self, APP_NAME, f"Could not open a terminal for the installer:\n\n{exc}\n\n"
                                  f"Run it by hand instead:\n{shell_line(folder, commands)}")
             self.refresh()
@@ -1161,6 +1245,11 @@ class MainWindow(QMainWindow):
         elif ok:
             self.records.remove(entry.key)
             self.sources.forget(entry)
+        if self.batch is not None:
+            if not ok:
+                self.batch_failed.append(f"{entry.name}: exit status {status or '?'}")
+            self._next_in_batch()
+            return
         self.refresh()
         if not ok:
             QMessageBox.warning(self, APP_NAME, f"The {pending.action} of {entry.name} ended with exit status "
@@ -1169,16 +1258,18 @@ class MainWindow(QMainWindow):
 
     def _on_refresh(self) -> None:
         if self.pending is not None:
+            rest = f" The rest of the batch ({len(self.batch)}) is not installed then." if self.batch else ""
             answer = QMessageBox.question(
                 self, APP_NAME, f"Still waiting for the {self.pending.action} of {self.pending.entry.name} to end in "
-                "its terminal window. Stop waiting (for example because that window was closed)?")
+                f"its terminal window. Stop waiting (for example because that window was closed)?{rest}")
             if answer == QMessageBox.StandardButton.Yes:
                 self.cancel_pending()
                 return
         self.refresh()
 
     def cancel_pending(self) -> None:
-        """Stop waiting for a terminal that was closed before its installer finished."""
+        """Stop waiting for a terminal that was closed before its installer finished, and for the rest of a batch."""
+        self.batch = None
         if self.pending is not None:
             self.pending.exit_file.unlink(missing_ok=True)
             self.pending = None

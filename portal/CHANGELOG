@@ -1,3 +1,16 @@
+Changelog: 21-10-2026 02:39:53
+
+Release 5.1.1. Pins sftp-v0.6.1, consoles-v1.6.1.
+
+Changelog: 21-10-2026 02:36:01
+
+Added. Two pills in the header (owner, 21-10-2026): Installed apps, how many of the listed apps are installed (12/27;
+a withdrawn app not counted), and Install all updates, the number of apps the notice names. A click installs them
+all after one question (with the board warning when one changes the board), one after the other, each in its own
+terminal; an installer that asks for the sudo password holds the batch until it has ended. A failed install does not
+stop the rest; one message at the end names those that failed. Stopping the wait for a closed terminal stops the
+rest of the batch too.
+
 Changelog: 21-10-2026 02:19:46
 
 Release 5.1.0. Pins check-v0.8.1, overlay-v0.6.1, bios-v0.6.1, ace-v0.6.1, mesh-v0.6.1, vram-v0.6.1, fan-v0.5.1, wdriver-v0.5.1, cec-v0.6.1, package-v0.9.1, ncgui-v0.6.1, rpcs3-v0.6.1, shadps4-v0.6.1, decky-v0.6.1, datstation-v1.3.1, ppsspp-v0.6.1, pcsx2-v0.7.1, vita3k-v0.5.1.

@@ -320,6 +320,86 @@ def test_red_dot_and_count_for_updates(window, home):
     assert window.tabs.tabText(sustainable) == "Sustainable"
 
 
+def test_installed_apps_pill_counts_installed_of_listed(qapp, home, settings_dir, tmp_path, launched):
+    """Installed apps: installed / listed, a withdrawn app not counted (owner, 21-10-2026)."""
+    entries = [replace(e, withdrawn="test") if e.key == "sftp" else e for e in load(MANIFEST)]
+    w = mw.MainWindow(entries, FakeSources(tmp_path / "work"), Records(tmp_path / "installed.json"))
+    listed = len(entries) - 1
+    assert w.installed_pill.value.text() == f"0/{listed}"
+    for name in ("bc250-governor-manager", "bc250-upscaler"):
+        (home / ".local" / "bin" / name).write_text("#!/bin/sh\n")
+    w.refresh()
+    assert w.installed_pill.value.text() == f"2/{listed}" and f"2 of the {listed} apps" in w.installed_pill.toolTip()
+    w.close()
+
+
+def test_install_all_updates_one_after_the_other(window, launched, monkeypatch, home):
+    """Install all updates: one question for every app the notice names (owner, 21-10-2026), with the board warning
+    when one changes the board; then each in its own terminal, the next only when the one before ended (an installer
+    waiting for the sudo password holds the batch); one message at the end names those that failed."""
+    for name in ("bc250-governor-manager", "bc250-upscaler", "bc250-persistent-acpi-gui"):
+        (home / ".local" / "bin" / name).write_text("#!/bin/sh\n")
+    window.records.set("gpu", "gpu-v0.0.9")                  # an update
+    window.records.set("upscaler", "upscaler-v0.0.1")        # an update
+    window.refresh()                                         # acpi: installed, not recorded: a reinstall
+    keys = [entry.key for entry, _ in window.marked]
+    assert set(keys) == {"gpu", "upscaler", "acpi"}
+    pill = window.updates_pill
+    assert pill.value.text() == "3" and pill.isEnabled() and "all 3" in pill.toolTip()
+    asked = []
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: (asked.append(a[2]), CANCEL)[1])
+    pill.click()
+    assert "Install these 3 updates" in asked[0] and "change how your BC-250 runs" in asked[0]   # acpi
+    assert window.batch is None and launched == []                          # cancelled: nothing happens
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: YES)
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: pytest.fail("one question only"))
+    pill.click()
+    assert wait_for(lambda: len(launched) == 1)
+    assert window.sources.prepared == [keys[0]] and pill.value.text() == "1/3" and not pill.isEnabled()
+    # Its installer waits for the password: no exit file yet, so the batch waits too.
+    window._check_pending()
+    assert window.pending is not None and len(launched) == 1
+    launched[0][1].write_text("0\n")
+    window._check_pending()
+    assert wait_for(lambda: len(launched) == 2) and window.records.get(keys[0]) != ""
+    launched[1][1].write_text("1\n")                          # a failure: the batch goes on
+    window._check_pending()
+    assert wait_for(lambda: len(launched) == 3) and pill.value.text() == "3/3"
+    shown = []
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: shown.append(a[2]))
+    launched[2][1].write_text("0\n")
+    window._check_pending()
+    assert window.batch is None and not window.busy() and window.sources.prepared == keys
+    assert len(shown) == 1 and "1 of the 3 updates did not install" in shown[0] and "exit status 1" in shown[0]
+    failed = next(e for e in window.entries if e.key == keys[1])
+    assert failed.name in shown[0] and [e.key for e, _ in window.marked] == [keys[1]]
+    assert pill.value.text() == "1" and pill.isEnabled()
+
+
+def test_stop_waiting_ends_the_batch(window, launched, monkeypatch, home):
+    for name in ("bc250-governor-manager", "bc250-upscaler"):
+        (home / ".local" / "bin" / name).write_text("#!/bin/sh\n")
+    window.records.set("gpu", "gpu-v0.0.9")
+    window.records.set("upscaler", "upscaler-v0.0.1")
+    window.refresh()
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: YES)
+    asked = []
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: (asked.append(a[2]), YES)[1])
+    window.install_all()
+    assert wait_for(lambda: launched)
+    window._on_refresh()                                     # its terminal was closed
+    assert "The rest of the batch (1) is not installed then." in asked[-1]
+    assert window.batch is None and window.pending is None and len(launched) == 1
+    assert window.updates_pill.value.text() == "2" and window.updates_pill.isEnabled()
+
+
+def test_no_updates_no_batch(window, launched):
+    assert window.updates_pill.value.text() == "0" and not window.updates_pill.isEnabled()
+    assert "No updates" in window.updates_pill.toolTip()
+    window.install_all()
+    assert window.batch is None and launched == []
+
+
 def test_updates_outside_the_suite(window, home):
     from bc250_core import upstream
     helix = upstream.Outside("HelixSR", "1.8.1", "1.9.3", "2026-10-16", "https://x/v1.9.3",
@@ -774,15 +854,18 @@ def test_one_theme_for_every_app(window, home):
 
 def test_the_header_is_an_apps_header_with_pills(window):
     """The portal's icon as large as the tiles' icons; beside it the name, where the apps install from, and the
-    pills: Refresh, the Desktop icons, the theme, the wallpaper and Sys info (owner, 20-10-2026)."""
+    pills: Refresh, Installed apps, Install all updates, the Desktop icons, the theme, the wallpaper and Sys info
+    (owner, 20-10-2026 and 21-10-2026)."""
     from PyQt6.QtCore import Qt
     from PyQt6.QtGui import QKeyEvent
     from PyQt6.QtCore import QEvent
     assert window.logo.width() == window.logo.height() == mw.ICON_PX
-    pills = (window.refresh_pill, window.icons_box, window.theme_pill, window.wallpaper_pill, window.sysinfo_pill)
+    pills = (window.refresh_pill, window.installed_pill, window.updates_pill, window.icons_box, window.theme_pill,
+             window.wallpaper_pill, window.sysinfo_pill)
+    listed = len(window.entries)
     assert [(p.value.text(), p.caption.text()) for p in pills] == [
-        ("Refresh", "Click to refresh"), ("No", "Icons on Desktop"), ("Gunmetal", "Theme switcher"),
-        ("None", "Wallpaper"), ("Sys info", "Click to view")]
+        ("Refresh", "Click to refresh"), (f"0/{listed}", "Installed apps"), ("0", "Install all updates"),
+        ("No", "Icons on Desktop"), ("Gunmetal", "Theme switcher"), ("None", "Wallpaper"), ("Sys info", "Click to view")]
     assert all(f"border-left:4px solid {mw.BLUE}" in p.styleSheet() for p in pills)     # as the apps' boxes
     widths = {p.width() for p in pills}                     # all as wide as the widest (owner, 20-10-2026)
     assert len(widths) == 1 and widths.pop() >= max(p.sizeHint().width() for p in pills)
