@@ -1,3 +1,19 @@
+Changelog: 21-10-2026 11:31:43
+
+tools/make_portal_sounds.py: the start-up swoosh is lower (a band of noise from 70 to 900 Hz under a low-pass, over a
+sliding bass tone) and has little above 2 kHz.
+
+Changelog: 21-10-2026 11:22:52
+
+tools/sync_icons.py also copies each category's 512 px icon to portal/images/categories/<category>.webp, for the portal's
+Suite Big Picture Mode.
+
+Changelog: 21-10-2026 10:55:37
+
+tools/make_portal_sounds.py makes the portal's two sounds (the start-up swoosh and the intro of Suite Big Picture
+Mode) from arithmetic alone, so they are original files; replace them by a WAV of the same name to change a sound.
+The portal's installer test checks that the sounds and pygame-ce arrive.
+
 Changelog: 21-10-2026 09:57:39
 
 The release job of release.yml runs in the environment release (owner, 21-10-2026): with Required reviewers set

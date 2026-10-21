@@ -11,8 +11,8 @@
 # Run it as your own user, not with sudo: only the copies to /opt ask for the sudo password.
 #  * /opt/bc250-bazzite-suite-v<version>, root-owned, with /opt/bc250-bazzite-suite pointing at it: the portal,
 #    its apps.toml and the bc250_core it was tested with. Older versions are removed.
-#  * ~/.local/share/bc250-bazzite-suite/venv: the suite's shared venv with PyQt6, removed with the last suite
-#    app that uses it.
+#  * ~/.local/share/bc250-bazzite-suite/venv: the suite's shared venv with PyQt6 and pygame-ce (the controller of
+#    Suite Big Picture Mode), removed with the last suite app that uses it.
 #  * ~/.local/bin/bc250-bazzite-suite, an app menu entry and a Desktop icon.
 #  * BC-250 Bazzite Test, which the suite always includes, through its own installer (bundled in the release).
 # The other apps are installed from the portal, each with its own installer.
@@ -296,7 +296,7 @@ for old in "$OPT_DIR/$APP_ID"-v*; do
     as_root rm -rf "$old"
 done
 
-# --- 2. Shared suite venv with PyQt6 ------------------------------------------------------------
+# --- 2. Shared suite venv with PyQt6 and pygame-ce ------------------------------------------------------------
 if [ ! -x "$VENV/bin/python" ] || ! "$VENV/bin/python" -c 'import sys' 2>/dev/null; then
     info "Creating the suite venv in $VENV"
     rm -rf "$VENV"
@@ -305,7 +305,7 @@ if [ ! -x "$VENV/bin/python" ] || ! "$VENV/bin/python" -c 'import sys' 2>/dev/nu
 fi
 mkdir -p "$VENV_USERS"
 touch "$VENV_USERS/$APP_ID"
-info "Installing PyQt6 into the venv (downloads ~100 MB the first time)"
+info "Installing PyQt6 and pygame-ce into the venv (downloads ~110 MB the first time)"
 "$VENV/bin/python" -m pip install -q --disable-pip-version-check --upgrade pip
 "$VENV/bin/python" -m pip install -q --disable-pip-version-check --upgrade -r "$LINK/requirements.txt"
 "$VENV/bin/python" -c 'import PyQt6.QtWidgets' || die "PyQt6 does not load from the venv."

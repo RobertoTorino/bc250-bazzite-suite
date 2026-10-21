@@ -1057,6 +1057,14 @@ owner = "datstation"
 specifier = ">=6.11,<7"
 
 [[dependency]]
+name = "pygame-ce"
+description = "A community-maintained game library for Python, built on SDL. The portal reads a game controller with it (the pad's buttons under SDL's common names), to move around Suite Big Picture Mode; it opens no window and plays no sound with it."
+
+[[dependency.source]]
+owner = "portal"
+specifier = ">=2.5,<3"
+
+[[dependency]]
 name = "PyQt6-Charts"
 description = "Qt's chart module for PyQt6. Bazzite Test draws its benchmark and history graphs with it, the Governor Manager its clock, load and temperature graphs."
 

@@ -69,6 +69,7 @@ def main() -> int:
     window = MainWindow(shown, sources, Records(state_dir() / "installed.json"), portal_check=portal_check,
                         local_build=local_build, installed=installed_copy())
     window.show()
+    window.start_up()
     server = instance.serve(INFO.app_id, window)  # noqa: F841 (kept alive while the app runs)
     return exec_app(app)
 

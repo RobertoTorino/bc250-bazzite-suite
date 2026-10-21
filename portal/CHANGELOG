@@ -1,3 +1,44 @@
+Changelog: 21-10-2026 12:01:48
+
+Added. The intro of Suite Big Picture Mode draws the portal's icon from a 1024 px picture
+(images/bc250-bazzite-suite-1024.webp), larger than before and scaled once to the screen's own pixels, and switching
+back to Suite Desktop Mode plays the start-up swoosh again (owner, 21-10-2026).
+
+Changelog: 21-10-2026 11:31:43
+
+Fixed. Suite Big Picture Mode (owner, 21-10-2026): the orange local-build banner shows in it too, and so do all the
+header's pills, the same ones as in Suite Desktop Mode (the window's row moves under the title and back): the focus
+reaches them with up from the top row of icons, and A or Enter presses one. The mode pill reads Desktop or BPM mode,
+and the dedicated Sound and mode pills of the mode are gone. An install or an update leaves the mode for the desktop,
+where its terminal opens. The start-up swoosh has more bass and little above 2 kHz.
+
+Changelog: 21-10-2026 11:22:52
+
+Fixed. Suite Big Picture Mode (owner, 21-10-2026): the mode pill reads BPM mode and is as wide as the Sound pill, so its
+text is no longer cut off; the line under the title is a short one per category, and ends in … where a screen is too
+narrow for it. The icons are drawn from the 512 px icon of their category (portal/images/categories/, written by
+tools/sync_icons.py), scaled once to the screen's own pixels, instead of the 256 px tile.
+
+Changelog: 21-10-2026 11:08:05
+
+Added. The portal fits a 1280 px handheld screen, the Steam Deck's (1280 x 800) and the ROG Xbox Ally X's (1280 x 720
+with the desktop's scaling) (owner, 21-10-2026). The header's pills are in one row where there is room, else in
+rows of about equal length, so the window is no longer 1390 px wide at least; the window opens at most as wide as the
+screen. Suite Big Picture Mode draws its icons, type and header smaller on a screen under 1000 px high, swipes with a
+finger.
+
+Changelog: 21-10-2026 10:55:32
+
+Added. Sound and Suite Big Picture Mode (owner, 21-10-2026). A swoosh plays when the portal opens; the new Sound pill
+(Yes or No, kept) switches it and the mode's sound off, and without an audio output it is disabled and the portal
+silent. The new Suite mode pill, and F11, switch between Suite Desktop Mode, the window as it was, and Suite Big
+Picture Mode: fullscreen, with large icons and type, a category strip, and a focus that moves with the arrow keys or
+a controller (d-pad, left stick, A, B, LB/RB, Y). It opens with a short animated intro with a futuristic sound; any
+key, click or button skips it. The portal remembers the last mode and opens in it, and keeps the desktop window's
+size, not the screen's. The sounds are made by tools/make_portal_sounds.py. The controller is read with pygame-ce,
+which the portal's requirements add to the suite's venv; the portal listens to it only while its window has the
+focus. The wallpaper's drawing moved to looks.py, unchanged.
+
 Changelog: 21-10-2026 09:44:38
 
 Release 5.2.0. Pins decky-v0.7.0. Update Decky Loader manager to use Decky 3.3.0

@@ -23,7 +23,7 @@ apps from their releases, Test Portal release installs the published portal rele
 terminal); Installer tests opens BC-250 Installer Tests; Record portal tour records the portal's video tour
 from this checkout (tools/record-tour.sh) into ~/Videos and opens it; Close issues lists the open GitHub issues,
 and closes the ticked ones with gh issue close in the Commands tab. Test local apps: click an app's icon to start it from this
-checkout, to try it before its release; the Manual icon serves the manual from the checkout (mkdocs serve) and opens
+checkout, to try it before its release (the portal is the first icon); the Manual icon serves the manual from the checkout (mkdocs serve) and opens
 it in the browser.
 The Commands tab is a command line in the checkout (command_line.py), where the git buttons run too; its Commands
 menu offers the ones the last step showed."""
@@ -41,10 +41,12 @@ from pathlib import Path
 
 from PyQt6.QtCore import QProcess, QRectF, QSize, Qt, QTimer, QUrl
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QPainter, QPen, QPixmap
+from PyQt6.QtNetwork import QLocalSocket
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView,
                              QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPushButton, QStackedWidget,
                              QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
 
+from bc250_core.instance import server_name
 from bc250_core.platform import launch_in_terminal
 from bc250_core.theme import ACCENT, BLUE, GREEN, GREY, ORANGE, RED
 from bc250_core.updates import UpdateChecker
@@ -600,6 +602,16 @@ def board_badge(icon: QIcon) -> QIcon:
     return QIcon(pixmap)
 
 
+def instance_running(app_id: str) -> bool:
+    """Whether *app_id* is open for this user: something listens on its instance socket (core's instance.py). It only
+    connects and lets go, so the open window is not asked to show itself."""
+    connection = QLocalSocket()
+    connection.connectToServer(server_name(app_id))
+    found = connection.waitForConnected(500)
+    connection.abort()
+    return found
+
+
 class RunPage(QWidget):
     """Test on this board: the board checks of a release (check-release.sh in a terminal), the installer tests, and
     every app window in the checkout as an icon: a click starts it from the checkout, as it is before a release."""
@@ -670,7 +682,7 @@ class RunPage(QWidget):
             "this venv and the checkout's core, as <code>run.sh</code> starts this app. An app that changes how the "
             "board runs (an orange <b>!</b> on its icon) asks first; it uses the scripts in the checkout. Each app "
             f"writes its output to <code>{LOG_DIR}</code>; when it stops with an error, the end of that log shows below. "
-            "<b>Manual (local)</b> serves the manual from the checkout with <code>mkdocs serve</code> and opens it in "
+            "The portal is the first icon; when a portal is already open it warns instead, as a second one would only show the open one. <b>Manual (local)</b> serves the manual from the checkout with <code>mkdocs serve</code> and opens it in "
             "the browser; it rebuilds on every save."))
         lay.addWidget(self.apps, 2)
         self.running: list[tuple[rp.Launch, subprocess.Popen, Path]] = []
@@ -777,6 +789,13 @@ class RunPage(QWidget):
                 f"{target.name} changes how the board runs. Like every app of the suite it is software-only and "
                 f"reversible; started from the checkout it uses the scripts in {target.folder}.\n\nStart it?") \
                 != QMessageBox.StandardButton.Yes:
+            return
+        if target.app_id and instance_running(target.app_id):
+            QMessageBox.warning(
+                self, "Local app test",
+                f"{target.name} is already open (the installed one, or one started here).\n\nA second one never "
+                "opens: starting it again only brings the open window to the front, so the checkout would not be "
+                f"tested. Close {target.name} first, then click its icon again.")
             return
         if target.url and answers(target.url):
             # Already up (started here or before): mkdocs would only fail on the taken port.
@@ -1398,8 +1417,8 @@ class ReleaseWindow(QMainWindow):
         self.apps_page.fill(units)
         self.portal_page.fill(units)
         self.withdraw_page.fill(units)
-        docs = rp.docs_target(self.root)
-        self.run_page.fill(rp.launch_targets(self.root) + ([docs] if docs else []))
+        portal, docs = rp.portal_target(self.root), rp.docs_target(self.root)
+        self.run_page.fill(([portal] if portal else []) + rp.launch_targets(self.root) + ([docs] if docs else []))
         problems = rp.bad_tags(self.root, units)
         self.bad_tags.setText("\n".join(
             f"\u26a0 {p}: release.yml cannot build it. Delete it (git tag -d {p.split()[0]} && git push origin "

@@ -6,9 +6,11 @@
 
 The BC250 Bazzite Suite's front door: one window that installs, opens, updates and removes the suite's apps.
 **The header**: the portal's icon (click it to open this wiki), its name and version, where the apps install from,
-and seven pills of the same width: **Refresh** (look again at which apps are installed), **Installed apps**,
-**Install all updates**, **Icons on Desktop**, **Theme switcher**, **Wallpaper** and **Sys info**, each described
-below.
+and nine pills of the same width: **Refresh** (look again at which apps are installed), **Installed apps**,
+**Install all updates**, **Icons on Desktop**, **Sound**, **Theme switcher**, **Wallpaper**, **Suite mode** and
+**Sys info**, each described below. The pills are in one row when the window is wide enough; on a narrower
+window, such as the 1280 px screen of a Steam Deck or an ROG Xbox Ally X, they wrap into two rows of about equal
+length.
 
 **Bazzite Test** is always installed with the portal; every other app is optional. The notice of updates is at the
 top, on every tab. Below it is a tab for each [category](apps/categories.md): Sustainable, Graphics, Gaming, Utilities
@@ -93,6 +95,11 @@ checkout uses its own checkout.
   the Desktop, it asks whether to keep them. While the switch is off, the portal removes the icons the apps'
   installers put there, at start and after each install. It only touches the icons of the suite's apps, never its
   own or anything else on the Desktop.
+- **Sound**, a pill at the top (Yes or No; click it to switch): a short swoosh plays when the portal opens, and
+  [Suite Big Picture Mode](#suite-big-picture-mode) has its own sound when it opens. No switches all of them off. The swoosh plays again
+  when you switch back from Suite Big Picture Mode to Suite Desktop Mode.
+  The portal remembers the choice. When the board has no audio output, the pill says No and is disabled, and the
+  portal stays silent.
 - **Theme switcher**, a pill at the top showing the theme; click it for the next one: the look of every app in the
   suite. **Gunmetal** (dark, cool blue-grey, the default), **Silver** (light) or **Warm** (dark warm grey with a
   bronze accent). It is one choice for all the apps, kept in `~/.config/bc250-bazzite-suite/theme`; each app takes
@@ -108,6 +115,9 @@ checkout uses its own checkout.
   removes it. The menu also lists the last 10 wallpapers you chose, newest first, under **Used before**: click one to
   use it again. The portal remembers only where each picture was (in `wallpapers.json` in the same folder), so one
   moved or deleted since shows as not found until it is back.
+- **Suite mode**, a pill at the top: the portal is in **Suite Desktop Mode** (this window, **Desktop**) or in
+  **Suite Big Picture Mode** (**Big Picture**). Click it, or press **F11**, to switch to the other one. The portal
+  remembers the last mode and opens in it.
 - **Sys info**, a pill at the top: a small window with what the system reports about the board: the board, the BIOS
   (with UEFI and Secure Boot), the CPU (model, cores and threads online, top clock, microcode), each GPU (name,
   driver, VRAM, shared memory, clock levels, VBIOS, PCIe link), the memory, the drives with the free space in your
@@ -150,6 +160,41 @@ keeps settings; add `--purge` to remove those too. First it asks about each othe
 `y` uninstalls it, `s` skips it (it stays installed), `c` cancels the whole uninstall before anything is removed.
 Those apps keep their own settings, also with `--purge`. Of the portal's own records, only those of the apps you
 kept stay, with the release each one's uninstaller needs; with no app left, that folder goes too.
+
+### Suite Big Picture Mode
+
+For a TV and a controller, as Steam has its Big Picture. The portal goes fullscreen and shows the apps as large
+icons with large type: the category names across the top, the apps of the open category below, and what the keys do
+at the bottom. It opens with a short animated intro, about two seconds, with its own sound; press any key, click or
+press any button on the controller to skip it. The header has the same pills as Suite Desktop Mode, under the title (the mode pill reads **BPM mode** here; click
+it to go back to Suite Desktop Mode), and, in a portal that runs from a checkout, the orange local-build banner. Press
+up on the top row of icons to reach the pills, and A or Enter to press one. The wallpaper and its transparency are the
+same. The line under the title says in a few words what the open category is
+for. The icons are drawn from a 512 px picture, so they stay sharp on a 4K screen.
+
+| Keyboard | Controller | Does |
+|---|---|---|
+| Arrow keys | D-pad or left stick | Move between the icons |
+| Enter | A | Open the app; an app with two windows asks which one |
+| Page Up, Page Down | LB, RB | The category before and after |
+| F11 | Y or Start | Back to Suite Desktop Mode |
+| Escape | B | Back, in a menu or a question |
+
+An app that is not installed is grey. Installing runs the app's installer in a terminal, so the portal asks, and
+then goes back to Suite Desktop Mode to do it. A red dot or a red circular arrow marks an update or a reinstall as in
+Suite Desktop Mode; to update, switch back to it.
+
+**Handhelds.** Suite Big Picture Mode is made for the Steam Deck (1280 x 800) and the ROG Xbox Ally X (1920 x 1080,
+shown at 1280 x 720 with the desktop's scaling): below 1000 px of height the icons, the type and the header are
+drawn smaller, down to about two thirds, so two rows of icons and the bar of keys fit on the screen. You can also
+swipe a page with a finger on the touch screen. The built-in controls are controllers like any other. Where Steam
+Input already turns them into keys (the Deck's desktop layout does: d-pad to the arrow keys, A to Enter, B to
+Escape), the keyboard column above applies and works as it is.
+
+The controller is read with [pygame-ce](https://pypi.org/project/pygame-ce/), which the portal's installer adds to
+the suite's venv; it takes any controller SDL knows (Xbox, PlayStation, Switch Pro and most others). The portal
+listens to the controller only while its own window has the focus, so a game's input never moves it. Without a
+controller, the keyboard and the mouse work as always.
 
 ### What stays after an uninstall
 
@@ -276,7 +321,9 @@ apps/suite/install.sh --uninstall             # remove them; the checkout stays
   **Close issues**: it lists the open issues on GitHub, such as the weekly Upstream review, each with a tick box.
   **Run** closes the ticked ones with `gh issue close` in the Commands tab, with a comment when you write one; it
   needs a gh login (`gh auth login`). A double click opens an issue on GitHub.
-- **Test local apps**, on the same tab: every app window in the checkout, as an icon. A click starts that app from the checkout,
+- **Test local apps**, on the same tab: the portal and every app window in the checkout, as an icon (the portal first).
+  When the portal is already open, its icon warns instead of starting: a second portal never opens (starting it only
+  brings the open window to the front), so close it first. A click starts that app from the checkout,
   to try a change before its release: `python -m <package>` with the checkout's venv and its `core`, as `run.sh`
   starts Suite Releases. An app that changes how the board runs asks first, as in the portal; started from the
   checkout it uses the scripts in the checkout. Each app writes its output to

@@ -1,3 +1,15 @@
+Changelog: 21-10-2026 11:42:36
+
+Added. The portal's icon under Test local apps warns when a portal is already open (owner, 21-10-2026): a second portal
+never opens, starting it only brings the open window to the front, so the checkout would not be tested. It looks
+for the open portal without disturbing it, and does not start another.
+
+Changelog: 21-10-2026 11:39:11
+
+Added. Test local apps, on the Test on this board tab, has the portal as its first icon (owner, 21-10-2026): a click
+starts it from the checkout (python -m bc250_portal in portal/, with the checkout's core), to try a change to the
+portal before its release, as the apps' icons do.
+
 Changelog: 21-10-2026 09:57:39
 
 Added. git push and git tag ask first (owner, 21-10-2026), with the commits or tags they send and the command.

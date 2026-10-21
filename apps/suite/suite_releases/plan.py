@@ -553,6 +553,7 @@ class Launch:
     icon: Path | None
     args: tuple[str, ...] = ()          # after `python -m <module>`
     url: str = ""                       # a server: the page to open once it answers
+    app_id: str = ""                    # an app that runs once per user: a second launch only shows the first
 
     @property
     def label(self) -> str:
@@ -592,6 +593,22 @@ def launch_targets(root: Path = SUITE) -> list[Launch]:
             found.append(Launch(app.name, package.name, consts.get("APP_NAME", package.name), package.parent, version,
                                 board.get(app.name, False), icon))
     return found
+
+
+def portal_target(root: Path = SUITE) -> Launch | None:
+    """The portal, started from the checkout as `python -m bc250_portal` in portal/: it takes its apps from the
+    checkout, as it does when it runs from one. None when the checkout has no portal window."""
+    folder = root / "portal"
+    if not (folder / "bc250_portal" / "__main__.py").is_file():
+        return None
+    try:
+        version = (folder / "VERSION").read_text(encoding="utf-8").strip()
+        consts = dict(_CONSTANT.findall((folder / "bc250_portal" / "__init__.py").read_text(encoding="utf-8")))
+    except OSError:
+        return None
+    icon = folder / "images" / "bc250-bazzite-suite.webp"
+    return Launch("portal", "bc250_portal", consts.get("APP_NAME", "bc250_portal"), folder, version, False,
+                  icon if icon.is_file() else None, app_id=consts.get("APP_ID", ""))
 
 
 def installer_tests_target(root: Path = SUITE) -> Launch | None:

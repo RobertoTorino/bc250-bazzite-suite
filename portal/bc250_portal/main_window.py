@@ -14,7 +14,8 @@ and a tab's name counts those on it, so none goes unseen on a tab that is not op
 newer portal release on GitHub (which is how newer app versions arrive).
 
 The header, as an app's header with pills (owner, 20-10-2026): the portal's icon as large as the tiles' icons; beside
-it the name, where the apps install from, and a row of pills, as the apps' status boxes: Refresh, Installed apps
+it the name, where the apps install from, and a row of pills (rows, on a window too narrow for one; owner,
+21-10-2026), as the apps' status boxes: Refresh, Installed apps
 (installed / listed), Install all updates, the Desktop icons (Yes or No; a click switches), the theme (a click goes
 to the next one), the wallpaper and Sys info (a small window with what the system reports about the board,
 sysinfo.py).
@@ -30,7 +31,13 @@ removes them at start and after each install (the installers write one), on, it 
 
 Wallpaper: none until the user chooses one, the portal's example picture or one of their own, behind the window (wallpaper.py), under a veil of
 the theme's window colour so the text stays readable. A slider in the Wallpaper pill's menu sets the veil, the
-picture's transparency (owner, 20-10-2026): a dark picture can take a stronger one, so the icons on it stand out."""
+picture's transparency (owner, 20-10-2026): a dark picture can take a stronger one, so the icons on it stand out.
+
+Sound and Suite Big Picture Mode (owner, 21-10-2026): a swoosh plays when the portal opens, and the Sound pill turns
+it, and the Big Picture sounds, off (the choice is kept; without an audio output the pill is disabled and the portal
+silent). The Suite mode pill switches between Suite Desktop Mode, this window, and Suite Big Picture Mode
+(bigpicture.py): fullscreen with large icons, for a TV and a controller (gamepad.py), opened by a short animated
+intro with its own sound. F11 switches too. The last mode is kept: the portal opens in it."""
 
 from __future__ import annotations
 
@@ -43,21 +50,24 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path, PurePath
 
-from PyQt6.QtCore import QCoreApplication, QEvent, QProcess, QRect, QSize, QTimer, Qt, QUrl, pyqtSignal
-from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPalette, QPixmap
+from PyQt6.QtCore import QCoreApplication, QEvent, QProcess, QSize, QTimer, Qt, QUrl, pyqtSignal
+from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QKeyEvent, QKeySequence, QPainter, QPalette, QPixmap, QShortcut
 from PyQt6.QtWidgets import (
     QApplication, QDialog, QDialogButtonBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea,
-    QSlider, QTabWidget, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
+    QSlider, QStackedWidget, QTabWidget, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
 )
 
 from bc250_core import SUITE_MANUAL_URL, __version__ as CORE_VERSION, upstream
 from bc250_core.platform import bin_home, expand, launch_in_terminal
-from bc250_core.settings import open_settings, restore_geometry, save_geometry
+from bc250_core.settings import GEOMETRY_KEY, open_settings, restore_geometry, save_geometry
 from bc250_core.theme import ACCENT, BLUE, GREY, ORANGE, RED, THEMES, header_font, muted, save_theme_name, theme_name
 from bc250_core.updates import ReleaseInfo, UpdateChecker, version_tuple
 from bc250_core.widgets import ClickableLogo, Pill, hint_label, same_width
 
-from . import desktop_icons, glyphs, sysinfo, wallpaper
+from . import audio, desktop_icons, glyphs, sysinfo, wallpaper
+from .bigpicture import DESKTOP_NAME, NAME as BIG_NAME, BigPicture, Intro
+from .gamepad import Gamepad
+from .looks import HOVER_OPACITY, VEIL, Backdrop, dimmed, greyed  # noqa: F401 (HOVER_OPACITY: the tests)
 from . import (APP_ICONS, APP_ID, APP_NAME, INFO, LOGO_PATH, STAGE, STAGE_NOTE, __version__, find_checkout, is_suite,
                remember_checkout)
 from .manifest import CATEGORIES, AppEntry
@@ -66,18 +76,18 @@ from .sources import Records, SourceError, Sources, is_installed
 
 POLL_MS = 1000
 ICON_PX = 128                   # the app icon on its tile (the icon files are 128 x 128), and the portal's in the header
-HOVER_OPACITY = 0.75            # an app icon under the mouse is dimmed this much: no border
 SYMBOL_PX = 28                  # the Install / Uninstall / Reinstall symbols beside it
 DOT_PX = 16                     # the red update dot inside the icon
 BADGE_PX = 24                   # the red circular arrow inside the icon: a reinstall is needed
 TILE_WIDTH = 216                # the tiles flow left to right, as many to a row as fit
 TILE_SPACING = 12
 PAGE_MARGIN = 24                # a tab's margins take this much of its width
-VEIL = 60                       # % of the theme's window colour over the wallpaper, so the text on it stays readable
 VEIL_MAX = 90                   # the slider's end: the picture still shows; "No wallpaper" takes it away
 VEIL_STEP = 5
 VEIL_KEY = "portal/wallpaper_transparency"
 DESKTOP_ICONS_KEY = "portal/desktop_icons"
+SOUND_KEY = "portal/sound"
+MODE_KEY = "portal/mode"                # "desktop" or "bigpicture": the mode the portal opens in
 VALUE_PX = 300                  # a value in the Sys info window wraps beyond this width
 SYSINFO_OPACITY = 85            # % of the window colour behind the Sys info text: what lies behind shows through
 PILL_COLOUR = BLUE              # the header pills' left edge, as the apps' status boxes (owner, 20-10-2026)
@@ -140,31 +150,6 @@ def short_name(name: str) -> str:
         if name.startswith(prefix):
             return name[len(prefix):]
     return name
-
-
-def greyed(pixmap: QPixmap) -> QPixmap:
-    """The icon of an app that is not installed: grey and faded, with its own transparency kept."""
-    image = pixmap.toImage().convertToFormat(QImage.Format.Format_ARGB32)
-    grey = image.convertToFormat(QImage.Format.Format_Grayscale8).convertToFormat(QImage.Format.Format_ARGB32)
-    grey.setAlphaChannel(image.convertToFormat(QImage.Format.Format_Alpha8))
-    out = QPixmap(pixmap.size())
-    out.fill(Qt.GlobalColor.transparent)
-    painter = QPainter(out)
-    painter.setOpacity(0.45)
-    painter.drawImage(0, 0, grey)
-    painter.end()
-    return out
-
-
-def dimmed(pixmap: QPixmap, opacity: float = HOVER_OPACITY) -> QPixmap:
-    """The icon under the mouse: a little fainter, so the window's colour shows through."""
-    out = QPixmap(pixmap.size())
-    out.fill(Qt.GlobalColor.transparent)
-    painter = QPainter(out)
-    painter.setOpacity(opacity)
-    painter.drawPixmap(0, 0, pixmap)
-    painter.end()
-    return out
 
 
 def placeholder_icon(name: str) -> QPixmap:
@@ -477,47 +462,18 @@ class SysInfoDialog(QDialog):
         painter.end()
 
 
-class Backdrop(QWidget):
-    """The window's background: the wallpaper, scaled to fill and cropped in the middle, under a veil of the theme's
-    window colour (*veil*, 0 to 100 %); without one, the window colour."""
-
-    def __init__(self):
-        super().__init__()
-        self.picture = QPixmap()
-        self.veil = VEIL
-
-    def set_picture(self, path: Path | None) -> None:
-        self.picture = QPixmap(str(path)) if path else QPixmap()
-        self.update()
-
-    def set_veil(self, percent: int) -> None:
-        self.veil = percent
-        self.update()
-
-    def paintEvent(self, event) -> None:  # noqa: N802 (Qt override)
-        if self.picture.isNull():
-            return super().paintEvent(event)
-        painter = QPainter(self)
-        scaled = self.picture.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatioByExpanding,
-                                     Qt.TransformationMode.SmoothTransformation)
-        x, y = (scaled.width() - self.width()) // 2, (scaled.height() - self.height()) // 2
-        painter.drawPixmap(0, 0, scaled, x, y, self.width(), self.height())
-        veil = QColor(self.palette().color(QPalette.ColorRole.Window))
-        veil.setAlphaF(self.veil / 100)
-        painter.fillRect(QRect(0, 0, self.width(), self.height()), veil)
-        painter.end()
-
-
 class MainWindow(QMainWindow):
     def __init__(self, entries: list[AppEntry], sources: Sources, records: Records,
                  portal_check: Callable[[], ReleaseInfo] | None = None, local_build: Path | None = None,
                  desktop: Path | None = None, menu: Path | None = None, parent: QWidget | None = None,
-                 installed: Path | None = None, launch: Callable[[list[str]], bool] | None = None):
+                 installed: Path | None = None, launch: Callable[[list[str]], bool] | None = None,
+                 sounds: audio.Sounds | None = None, gamepad: Gamepad | None = None):
         """*portal_check* returns the newest portal release (run once, off the GUI thread); None: no check.
         *local_build* is the suite checkout this portal runs from or was installed from: a banner says so.
         *desktop* and *menu* are the Desktop folder and the app menu entries' folder (default: the user's).
         *installed* is where the installed portal is (installed_copy()): a newer one there offers a restart; None: no
-        check. *launch* starts a program detached (default QProcess.startDetached; tests pass a fake)."""
+        check. *launch* starts a program detached (default QProcess.startDetached; tests pass a fake). *sounds* and
+        *gamepad* are the portal's sound player and controller reader (tests pass fakes)."""
         super().__init__(parent)
         self.entries = entries
         self.desktop = desktop or desktop_icons.desktop_dir()
@@ -533,10 +489,16 @@ class MainWindow(QMainWindow):
         self.batch_size = 0
         self.batch_failed: list[str] = []
         self.settings = open_settings(INFO, self)
+        self.sounds = sounds or audio.Sounds()
+        self.sounds.enabled = self.settings.value(SOUND_KEY, True, type=bool)
+        self.gamepad = gamepad or Gamepad(self)
+        self.gamepad.action.connect(self._gamepad_action)
+        self.intro: Intro | None = None
         self.installed = installed
         self.launch = launch or (lambda argv: QProcess.startDetached(argv[0], argv[1:])[0])
         self.setWindowTitle(INFO.display_name)
-        self.resize(900, 720)
+        screen = QApplication.primaryScreen()
+        self.resize(min(1180, screen.availableGeometry().width()) if screen else 1180, 720)
 
         central = self.backdrop = Backdrop()
         central.set_veil(self.transparency())
@@ -558,7 +520,7 @@ class MainWindow(QMainWindow):
             self.logo.setToolTip("Open the wiki in the browser")
             self.logo.clicked.connect(self.open_wiki)
             header.addWidget(self.logo)
-        words = QVBoxLayout()
+        words = self.header_words = QVBoxLayout()
         words.setSpacing(4)
         title_row = QHBoxLayout()
         title = QLabel(f"{APP_NAME}  <span style='color:{muted()}; font-size:16px;'>v{__version__}</span>")
@@ -591,9 +553,12 @@ class MainWindow(QMainWindow):
         self.restart_button.hide()
         updates.addWidget(self.restart_button)
         words.addStretch(1)
-        pills = QHBoxLayout()
-        pills.setSpacing(8)
-        words.addLayout(pills)
+        self.pill_box = QWidget()                       # the pills: one row where it fits, else as many as do
+        self.pill_grid = QGridLayout(self.pill_box)
+        self.pill_grid.setContentsMargins(0, 0, 0, 0)
+        self.pill_grid.setSpacing(8)
+        self.pill_columns = 0
+        words.addWidget(self.pill_box)
         header.addLayout(words, 1)
         self.refresh_pill = Pill("Refresh", "Click to refresh", "Look again at which apps are installed.",
                                  PILL_COLOUR)
@@ -619,15 +584,21 @@ class MainWindow(QMainWindow):
                                  PILL_COLOUR)
         self.sysinfo_pill.clicked.connect(self.show_sysinfo)
         self.sysinfo_window: SysInfoDialog | None = None
-        header_pills = [self.refresh_pill, self.installed_pill, self.updates_pill, self.icons_box, self.theme_pill,
-                        self.wallpaper_pill, self.sysinfo_pill]
-        for pill in header_pills:
-            pills.addWidget(pill)
+        self.sound_tip = ("A swoosh when the portal opens, and the sound of the intro of " + BIG_NAME +
+                          ". Click to switch.")
+        self.sound_box = TogglePill("Sound", self.sound_tip, self.sounds.enabled)
+        self.sound_box.toggled.connect(self._set_sound)
+        self.mode_pill = Pill("Desktop", "Suite mode", colour=PILL_COLOUR)
+        self.mode_pill.clicked.connect(self.toggle_mode)
+        header_pills = [self.refresh_pill, self.installed_pill, self.updates_pill, self.icons_box, self.sound_box,
+                        self.theme_pill, self.wallpaper_pill, self.mode_pill, self.sysinfo_pill]
+        self.header_pills = header_pills
         same_width(header_pills)                        # owner, 20-10-2026
         self.theme_note = hint_label("The theme changes in each app the next time it starts, the portal too.")
         self.theme_note.hide()
-        pills.addWidget(self.theme_note, 1)
-        pills.addStretch(1)
+        self.pill_box.installEventFilter(self)
+        self.pill_box.setMinimumWidth(1)                # the window may be as narrow as one pill: the rest wraps
+        self.reflow_pills(len(header_pills))
         root.addLayout(header)
 
         self.columns = 0
@@ -677,7 +648,20 @@ class MainWindow(QMainWindow):
         self.tabs.currentChanged.connect(self.reflow)
         root.addWidget(self.tabs, 1)
         self.reflow()
-        self.setCentralWidget(central)
+        self.big = BigPicture(entries, CATEGORIES, CATEGORY_HINTS)
+        self.big.set_veil(self.transparency())
+        self.big.open_requested.connect(self._big_open)
+        self.big.set_banner(self.local_banner.text())
+        self.stack = QStackedWidget()               # Suite Desktop Mode (the window above), Suite Big Picture Mode
+        self.stack.addWidget(central)
+        self.stack.addWidget(self.big)
+        self.stack.installEventFilter(self)         # the intro follows its size
+        self.setCentralWidget(self.stack)
+        QShortcut(QKeySequence("F11"), self, self.toggle_mode)
+        self._desktop_geometry = None
+        self._pill_index = 0
+        self._show_sound()
+        self._show_mode()
         self._show_wallpaper()
 
         self.poll = QTimer(self)
@@ -729,6 +713,25 @@ class MainWindow(QMainWindow):
             for i, tile in enumerate(tiles):
                 grid.addWidget(tile, i // columns, i % columns)
 
+    def reflow_pills(self, columns: int = 0) -> None:
+        """The header's pills in a row when the window is wide enough (a TV, a desktop), else in as many rows as it
+        takes (a 1280 px handheld screen), of the same length: as many columns as the width holds. The theme note follows
+        the last pill."""
+        width = max(pill.minimumWidth() for pill in self.header_pills)
+        spacing = self.pill_grid.horizontalSpacing()
+        count = len(self.header_pills)
+        columns = columns or max(1, min(count, (self.pill_box.width() + spacing) // (width + spacing)))
+        columns = -(-count // (-(-count // columns)))      # the rows are as even as can be: 5 and 4, not 8 and 1
+        if columns == self.pill_columns:
+            return
+        self.pill_columns = columns
+        while self.pill_grid.count():
+            self.pill_grid.takeAt(0)
+        for i, pill in enumerate(self.header_pills):
+            self.pill_grid.addWidget(pill, i // columns, i % columns)
+        last = len(self.header_pills)
+        self.pill_grid.addWidget(self.theme_note, last // columns, last % columns, 1, columns - last % columns)
+
     def show_app(self, key: str) -> None:
         """Open the tab of the app and scroll to its tile: a link in the notice."""
         card = self.cards.get(key)
@@ -738,8 +741,13 @@ class MainWindow(QMainWindow):
             page.ensureWidgetVisible(card)
 
     def eventFilter(self, watched, event) -> bool:
-        if watched in self.pages.values() and event.type() == QEvent.Type.Resize:
+        if watched is self.pill_box:
+            if event.type() == QEvent.Type.Resize:
+                self.reflow_pills()
+        elif watched in self.pages.values() and event.type() == QEvent.Type.Resize:
             self.reflow()
+        elif self.intro is not None and watched is self.stack and event.type() == QEvent.Type.Resize:
+            self.intro.setGeometry(self.stack.rect())
         return super().eventFilter(watched, event)
 
     # ------------------------------------------------------------------------------------------- state
@@ -766,6 +774,7 @@ class MainWindow(QMainWindow):
         self.show_notice(marked)
         self.show_counts()
         self.check_installed()
+        self.big.sync(self.cards)
 
     def show_counts(self) -> None:
         """The Installed apps pill (installed / listed, a withdrawn app not counted) and the Install all updates pill
@@ -958,6 +967,7 @@ class MainWindow(QMainWindow):
     def _show_wallpaper(self) -> None:
         shown = wallpaper.shown()
         self.backdrop.set_picture(shown)
+        self.big.set_picture(shown)
         value, what = ("None", "No picture behind the portal. ") if shown is None else \
             ("Example", "The portal's example picture behind it. ") if wallpaper.current() is None else \
             ("Custom", "Your own picture behind the portal. ")
@@ -974,6 +984,7 @@ class MainWindow(QMainWindow):
     def set_transparency(self, percent: int) -> None:
         self.settings.setValue(VEIL_KEY, percent)
         self.backdrop.set_veil(percent)
+        self.big.set_veil(percent)
         self._show_wallpaper()
 
     def _transparency_action(self, menu: QMenu) -> QWidgetAction:
@@ -1082,6 +1093,151 @@ class MainWindow(QMainWindow):
         except OSError as exc:
             QMessageBox.warning(self, APP_NAME, f"The Desktop icons could not be changed:\n\n{exc}")
 
+    # --------------------------------------------------------------------------------- sound and the modes
+    def _show_sound(self) -> None:
+        """The Sound pill and the Big Picture one: the user's choice, or No and disabled without an audio output."""
+        available = self.sounds.available()
+        on = self.sounds.enabled and available
+        self.sound_box.blockSignals(True)
+        self.sound_box.setChecked(on)
+        self.sound_box.blockSignals(False)
+        self.sound_box.set_value("Yes" if on else "No", self.sound_tip if available else audio.NO_OUTPUT)
+        self.sound_box.setEnabled(available)
+
+    def _set_sound(self, on: bool) -> None:
+        self.sounds.enabled = on
+        self.settings.setValue(SOUND_KEY, on)
+        if not on:
+            self.sounds.stop()
+        self._show_sound()
+
+    def in_big_picture(self) -> bool:
+        return self.stack.currentWidget() is self.big
+
+    def _show_mode(self) -> None:
+        big = self.in_big_picture()
+        self.mode_pill.set_value("BPM mode" if big else "Desktop", (
+            f"You are in {BIG_NAME}. Click for {DESKTOP_NAME}, the window of apps in tabs (F11)." if big else
+            f"You are in {DESKTOP_NAME}. Click for {BIG_NAME}: fullscreen, with large icons, for a TV and a "
+            "controller (F11)."))
+
+    def start_up(self) -> None:
+        """Once the window shows: the swoosh, or the intro of Big Picture Mode when the portal last ran in it."""
+        self._show_sound()
+        if self.settings.value(MODE_KEY, "desktop", type=str) == "bigpicture":
+            self.enter_big_picture()
+        else:
+            self.sounds.play(audio.SWOOSH)
+
+    def toggle_mode(self) -> None:
+        if self.in_big_picture():
+            self.leave_big_picture()
+        else:
+            self.enter_big_picture()
+
+    def enter_big_picture(self) -> None:
+        if self.in_big_picture():
+            return
+        self._desktop_geometry = self.saveGeometry()
+        self.settings.setValue(MODE_KEY, "bigpicture")
+        self.big.sync(self.cards)
+        self._pill_index = self.header_words.indexOf(self.pill_box)
+        self.header_words.removeWidget(self.pill_box)
+        self.big.place_pills(self.pill_box, self.header_pills)       # the same pills, under the title
+        self.stack.setCurrentWidget(self.big)
+        self.showFullScreen()
+        self._show_mode()
+        self._show_sound()
+        self.gamepad.start()
+        self.intro = Intro(self.stack)
+        self.intro.finished.connect(self._intro_done)
+        self.intro.skipped.connect(self.sounds.stop)
+        self.intro.begin()
+        self.sounds.play(audio.INTRO)
+
+    def _intro_done(self) -> None:
+        self.intro = None
+        if self.in_big_picture():
+            self.big.focus_first()
+
+    def leave_big_picture(self) -> None:
+        if not self.in_big_picture():
+            return
+        if self.intro is not None:
+            self.intro.skip()
+        self.gamepad.stop()
+        self.sounds.stop()
+        self.settings.setValue(MODE_KEY, "desktop")
+        self.big.release_pills(self.pill_box)
+        self.header_words.insertWidget(self._pill_index, self.pill_box)
+        self.stack.setCurrentWidget(self.backdrop)
+        self.showNormal()
+        self._show_mode()
+        self.sounds.play(audio.SWOOSH)                  # as when the portal opens in Suite Desktop Mode
+
+    def _big_open(self, entry: AppEntry) -> None:
+        """A tile in Big Picture Mode: open the app, ask for the installer of one that is not installed (it runs in a
+        terminal, so the portal goes back to the desktop first)."""
+        card = self.cards[entry.key]
+        if entry.withdrawn or not card.busy_label.isHidden():
+            return
+        if not card.installed:
+            answer = QMessageBox.question(
+                self, APP_NAME, f"{entry.name} is not installed.\n\nInstalling runs its installer in a terminal, so "
+                f"the portal switches to {DESKTOP_NAME} first. Install it?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.Yes)
+            if answer == QMessageBox.StandardButton.Yes:
+                self.leave_big_picture()
+                self.install(entry)
+            return
+        if not entry.launch:
+            return
+        if len(entry.launch) == 1:
+            self.open_app(entry, entry.launch[0][1])
+            return
+        menu = QMenu(self)
+        for label, command in entry.launch:
+            menu.addAction(label, lambda c=command: self.open_app(entry, c))
+        tile = self.big.tiles[entry.key]
+        menu.exec(tile.mapToGlobal(tile.rect().bottomLeft()))
+
+    def _gamepad_action(self, action: str) -> None:
+        """What the controller does reaches the portal as the keys it would press: in a menu or a dialog the keys
+        Qt knows, in Big Picture Mode its own moves. Only while the portal's window has the focus."""
+        if QApplication.activeWindow() is None:
+            return
+        if self.intro is not None:
+            self.intro.skip()
+            return
+        popup, dialog = QApplication.activePopupWidget(), QApplication.activeModalWidget()
+        if popup is not None or dialog is not None:
+            target = popup or QApplication.focusWidget() or dialog
+            keys = {"up": Qt.Key.Key_Up, "down": Qt.Key.Key_Down, "left": Qt.Key.Key_Left,
+                    "right": Qt.Key.Key_Right, "back": Qt.Key.Key_Escape,
+                    "accept": Qt.Key.Key_Return if popup is not None else Qt.Key.Key_Space}
+            if popup is None:                           # a dialog's buttons: the focus moves with Tab
+                keys.update(up=Qt.Key.Key_Backtab, left=Qt.Key.Key_Backtab, down=Qt.Key.Key_Tab,
+                            right=Qt.Key.Key_Tab)
+            key = keys.get(action)
+            if key is not None and target is not None:
+                for kind in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease):
+                    QApplication.sendEvent(target, QKeyEvent(kind, key, Qt.KeyboardModifier.NoModifier))
+            return
+        if not self.in_big_picture():
+            return
+        if action in ("up", "down", "left", "right"):
+            self.big.move_focus(action)
+        elif action == "accept":
+            item = self.big.focused_item()
+            if item is not None:
+                item.click()
+            else:
+                self.big.focus_first()
+        elif action in ("previous", "next"):
+            self.big.change_category(-1 if action == "previous" else 1)
+        elif action == "mode":
+            self.leave_big_picture()
+
     def remove_withdrawn(self) -> None:
         """A withdrawn app still on the board goes, one at a time, with its own uninstaller (the portal's uninstall,
         without the question): the next one when this one has ended. One that cannot be removed stays listed with
@@ -1182,6 +1338,8 @@ class MainWindow(QMainWindow):
         self.remove_withdrawn()
 
     def _start(self, entry: AppEntry, action: str) -> None:
+        if self.in_big_picture():                       # the installer runs in a terminal: on the desktop
+            self.leave_big_picture()
         self._job = (entry, action)
         self.refresh()
         self.worker.start(lambda: self._prepare(entry))
@@ -1288,7 +1446,12 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, APP_NAME, f"{entry.name} could not be started:\n\n{exc}")
 
     def closeEvent(self, event) -> None:
-        save_geometry(self, self.settings)
+        if self.in_big_picture():                   # the window's own size, not the screen's
+            self.settings.setValue(GEOMETRY_KEY, self._desktop_geometry)
+        else:
+            save_geometry(self, self.settings)
+        self.gamepad.stop()
+        self.sounds.stop()
         self.worker.stop(2000)
         self.portal_checker.stop(2000)
         super().closeEvent(event)

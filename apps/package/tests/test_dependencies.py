@@ -69,7 +69,7 @@ def test_catalog_lists_python_and_external_dependencies():
     tools = load_tools(CATALOG)
 
     assert {dependency.name for dependency in dependencies} == {
-        "PyQt6", "PyQt6-Charts", "obsws-python", "dbus-next", "pillow", "paramiko", "cryptography"}
+        "PyQt6", "PyQt6-Charts", "pygame-ce", "obsws-python", "dbus-next", "pillow", "paramiko", "cryptography"}
     pyqt = next(dependency for dependency in dependencies if dependency.name == "PyQt6")
     assert {source.owner for source in pyqt.sources} >= {"portal", "core", "check", "package"}
     assert {tool.name for tool in tools} >= {"flashrom", "pkexec", "umr", "podman"}
@@ -219,7 +219,7 @@ def test_packages_are_checked_in_each_app_environment(tmp_path):
 
     results = {result.dependency.name: result for result in check_dependencies(
         list(dependencies.values()), "test-agent", environments, get_latest=lambda name, _agent: {
-            "PyQt6": "6.12.0", "PyQt6-Charts": "6.11.0", "obsws-python": "1.8.0", "dbus-next": "0.2.3",
+            "PyQt6": "6.12.0", "PyQt6-Charts": "6.11.0", "pygame-ce": "2.5.8", "obsws-python": "1.8.0", "dbus-next": "0.2.3",
             "pillow": "12.3.0", "paramiko": "4.0.0", "cryptography": "46.0.0"}[name],
         get_vulnerabilities=NO_CVES)}
 
@@ -263,7 +263,7 @@ def test_package_checks_preserve_independent_results(tmp_path):
     results = check_dependencies(dependencies, "test-agent", {"portal": (venv,)}, get_latest=latest,
                                  get_vulnerabilities=NO_CVES)
 
-    assert len(results) == 7
+    assert len(results) == 8
     assert results[0].update_available
     assert isinstance(results[0], DependencyStatus)
     assert all(result.error == "offline" for result in results[1:])

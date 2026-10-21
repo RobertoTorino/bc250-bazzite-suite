@@ -189,7 +189,7 @@ in [Development](index.md#bc250_core).
 
 Core is **bundled per app**. `tools/stage_app.py` copies `bc250_core/` next to the package of every app that
 imports it, so each release runs on the core it was tested with. From a checkout, the installer bundles the
-checkout's core the same way. The shared venv holds only PyQt6.
+checkout's core the same way. The shared venv holds only PyQt6 and pygame-ce (the portal's controller reader).
 
 Before you write a helper in an app, look in core. If two apps need the same code, move it into core and give it a
 test. Apps that are not on core yet keep a copy of core's `instance.py`; `tools/tests/test_instance_copies.py`

@@ -19,7 +19,9 @@ ROOT = Path(__file__).resolve().parent.parent           # portal/ in the checkou
 CHECKOUT_FILE = "suite-checkout"                        # in ROOT, written by install.sh when installed from a checkout
 MANIFEST = ROOT / "apps.toml"
 LOGO_PATH = ROOT / "images" / f"{APP_ID}.webp"
+INTRO_LOGO = ROOT / "images" / f"{APP_ID}-1024.webp"      # the same picture at 1024 px, for the intro of Big Picture Mode
 APP_ICONS = ROOT / "images" / "apps"                    # <key>.webp: the small icon on each app's card
+CATEGORY_ICONS = ROOT / "images" / "categories"         # <category>.webp: the 512 px icon, for Suite Big Picture Mode
 INFO = AppInfo(app_id=APP_ID, name=APP_NAME, version=__version__, logo=LOGO_PATH, tag_prefix="portal-v",
                settings_app="bc250-bazzite-suite-portal")
 

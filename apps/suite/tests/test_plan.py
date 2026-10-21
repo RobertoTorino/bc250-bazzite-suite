@@ -756,6 +756,78 @@ def test_launch_targets(repo):
     assert env["PYTHONPATH"].split(os.pathsep)[0] == str(repo / "core")
 
 
+def test_portal_target(repo):
+    assert rp.portal_target(repo) is None                                     # the fixture's portal has no window
+    write(repo / "portal/bc250_portal/__main__.py", "print('portal')\n")
+    write(repo / "portal/bc250_portal/__init__.py", 'APP_NAME = "Suite Portal"\n__version__ = "0.1.0"\n')
+    write(repo / "portal/images/bc250-bazzite-suite.webp", "webp")
+    portal = rp.portal_target(repo)
+    assert (portal.key, portal.module, portal.folder, portal.label) == (
+        "portal", "bc250_portal", repo / "portal", "Suite Portal 0.1.0")
+    assert portal.icon == repo / "portal/images/bc250-bazzite-suite.webp" and not portal.changes_board
+    command, env = rp.launch_command(repo, portal, python="/venv/python")
+    assert command == ["/venv/python", "-m", "bc250_portal"]                  # --source auto: from the checkout
+    assert env["PYTHONPATH"].split(os.pathsep)[0] == str(repo / "core")
+    assert rp.portal_target() is not None and rp.portal_target().module == "bc250_portal"      # this checkout's
+
+
+def test_the_portal_is_the_first_icon_under_test_local_apps(window, repo, tmp_path, monkeypatch):
+    from suite_releases import main_window
+    add_windows(repo)
+    write(repo / "portal/bc250_portal/__main__.py", "print('portal')\n")
+    monkeypatch.setattr(main_window, "LOG_DIR", tmp_path / "logs")
+    started = []
+    window.start = lambda command, env, cwd, log: started.append((command, cwd, log)) or FakeProcess()
+    window.reload()
+    page = window.run_page
+    modules = [page.apps.item(i).data(0x0100).module for i in range(page.apps.count())]
+    assert modules[0] == "bc250_portal" and modules[1:] == ["alpha", "beta", "tool"]
+    monkeypatch.setattr(main_window, "instance_running", lambda app_id: False)
+    page.apps.itemClicked.emit(page.apps.item(0))
+    assert started == [([sys.executable, "-m", "bc250_portal"], repo / "portal", tmp_path / "logs/bc250_portal.log")]
+
+
+def test_an_open_portal_is_warned_about_and_not_started_again(window, repo, tmp_path, monkeypatch):
+    from PyQt6.QtWidgets import QMessageBox
+    from suite_releases import main_window
+    write(repo / "portal/bc250_portal/__main__.py", "print('portal')\n")
+    write(repo / "portal/bc250_portal/__init__.py", 'APP_NAME = "Suite Portal"\nAPP_ID = "suite-portal"\n')
+    monkeypatch.setattr(main_window, "LOG_DIR", tmp_path / "logs")
+    started, asked = [], []
+    window.start = lambda command, env, cwd, log: started.append(command) or FakeProcess()
+    monkeypatch.setattr(QMessageBox, "warning", lambda *args: asked.append(args[2]))
+    seen = []
+    monkeypatch.setattr(main_window, "instance_running", lambda app_id: seen.append(app_id) or True)
+    window.reload()
+    page = window.run_page
+    page.apps.itemClicked.emit(page.apps.item(0))
+    assert seen == ["suite-portal"] and started == []                          # open: warned, not started
+    assert len(asked) == 1 and "already open" in asked[0] and "Close Suite Portal first" in asked[0]
+    monkeypatch.setattr(main_window, "instance_running", lambda app_id: False)
+    page.apps.itemClicked.emit(page.apps.item(0))
+    assert len(started) == 1 and len(asked) == 1
+
+
+def test_instance_running_sees_a_listening_app_and_does_not_disturb_it():
+    pytest.importorskip("PyQt6.QtWidgets")
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PyQt6.QtNetwork import QLocalServer
+    from PyQt6.QtWidgets import QApplication
+    app = QApplication.instance() or QApplication([])          # noqa: F841 (kept alive for the sockets)
+    from bc250_core.instance import server_name
+    from suite_releases import main_window
+    name = server_name("suite-test-instance")
+    QLocalServer.removeServer(name)
+    assert not main_window.instance_running("suite-test-instance")
+    server = QLocalServer()
+    assert server.listen(name)
+    try:
+        assert main_window.instance_running("suite-test-instance")
+    finally:
+        server.close()
+    assert not main_window.instance_running("suite-test-instance")
+
+
 def test_docs_target(repo):
     assert rp.docs_target(repo) is None                                       # no mkdocs.yml
     write(repo / "mkdocs.yml", "site_name: S\nsite_url: https://example.invalid/suite/\n")

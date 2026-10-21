@@ -28,7 +28,7 @@ tile. Standalone apps may live under `apps/` without appearing in the portal.
   checkout-only the same way: `.checkout-only` and `[checkout.installer-tests]` with `folder`.
 - `core/bc250_core/`: shared Python code. It is **bundled per app** at release time (`tools/stage_app.py`), so each
   app runs on the core it was tested with; the shared venv `~/.local/share/bc250-bazzite-suite/venv` holds only
-  PyQt6.
+  PyQt6 and pygame-ce (the portal's controller reader).
 - `portal/`: the portal, `apps.toml` (one pinned release per app) and its `install.sh`.
 - `tools/`: release and CI tools, `tools/installer-tests/` (installers on Linux with fakeroot shims).
 
