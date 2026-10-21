@@ -881,6 +881,19 @@ def test_the_header_is_an_apps_header_with_pills(window):
     assert toggled == [True]
 
 
+def test_the_tabs_are_as_large_as_the_pills(window, qapp):
+    """Each category tab as wide and as high as a header pill (owner, 21-10-2026), also after the pills widen; a gap
+    above the tabs, so the line over them is a divider."""
+    window.show()
+    qapp.processEvents()
+    bar, pill = window.tabs.tabBar(), window.refresh_pill
+    assert {bar.tabRect(i).width() for i in range(bar.count())} == {pill.width()}
+    assert {bar.tabRect(i).height() for i in range(bar.count())} == {pill.height() + mw.PillTabBar.GAP}  # the gap
+    window.theme_pill.set_value("A much longer theme name")
+    qapp.processEvents()
+    assert pill.minimumWidth() > 0 and bar.tabRect(0).width() == pill.minimumWidth()
+
+
 def test_the_sys_info_pill_opens_one_window_read_each_time(window, qapp, monkeypatch):
     """Sys info (owner, 20-10-2026): a small window with what the system reports, read again each time it opens;
     Copy puts it on the clipboard as text."""

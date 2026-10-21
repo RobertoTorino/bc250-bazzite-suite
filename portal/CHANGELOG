@@ -1,3 +1,16 @@
+Changelog: 21-10-2026 23:24:09
+
+Release 6.3.0. Pins clb-v0.1.0.
+
+Changelog: 21-10-2026 23:08:55
+
+Added. apps.toml lists Console LinkB under Gaming, without a pin until its first release.
+
+Changelog: 21-10-2026 22:13:26
+
+Added. The category tabs are as large as the header pills, with their names in bold, and follow the pills when
+they widen. A gap above the tabs makes the line over them a divider.
+
 Changelog: 21-10-2026 20:41:52
 
 Release 6.2.0. Pins mesh-v0.7.0.

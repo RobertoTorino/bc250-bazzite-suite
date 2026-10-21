@@ -129,6 +129,11 @@ category = "gaming"
 icons = ["apps/consoles/images/bc250-console-link"]
 tile = "portal/images/apps/consoles.webp"
 
+[clb]
+category = "gaming"
+icons = ["apps/clb/images/bc250-console-linkb"]
+tile = "portal/images/apps/clb.webp"
+
 [shadps4]
 category = "gaming"
 icons = ["apps/shadps4/images/bc250-shadps4-manager"]

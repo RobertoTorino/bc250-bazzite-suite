@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The portal window: the notice of updates above the tabs, on every tab; then a tab per category (the category of
 the apps' icons, apps.toml), each with the tiles of its apps; check is the first tile on Sustainable (owner,
-20-10-2026). The portal always opens on the first tab (owner, 20-10-2026).
+20-10-2026). The portal always opens on the first tab (owner, 20-10-2026). Each tab is as large as a header pill
+(owner, 21-10-2026).
 
 Install, update and uninstall run the app's own installer in a terminal window (they may ask for the sudo
 password and print what they do); the portal watches for the exit file the terminal writes and then refreshes.
@@ -54,7 +55,7 @@ from PyQt6.QtCore import QCoreApplication, QEvent, QProcess, QSize, QTimer, Qt, 
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QKeyEvent, QKeySequence, QPainter, QPalette, QPixmap, QShortcut
 from PyQt6.QtWidgets import (
     QApplication, QDialog, QDialogButtonBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QMenu, QMessageBox, QPushButton, QScrollArea,
-    QSlider, QStackedWidget, QTabWidget, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
+    QSlider, QStackedWidget, QTabBar, QTabWidget, QToolButton, QVBoxLayout, QWidget, QWidgetAction,
 )
 
 from bc250_core import SUITE_MANUAL_URL, __version__ as CORE_VERSION, upstream
@@ -393,6 +394,28 @@ class TogglePill(Pill):
         self.toggled.emit(checked)
 
 
+class PillTabBar(QTabBar):
+    """The category tabs, each as large as a header pill (owner, 21-10-2026); wider where a name needs it. A gap
+    above them, so the line over the tabs divides them from the notice."""
+
+    GAP = 10
+
+    def __init__(self, pill: Pill):
+        super().__init__()
+        self.pill = pill
+        self.setStyleSheet(f"QTabBar::tab {{ font-size:15px; font-weight:700; margin-top:{self.GAP}px; }}")
+
+    def tabSizeHint(self, index: int) -> QSize:  # noqa: N802 (Qt override)
+        hint = super().tabSizeHint(index)          # the margin included
+        return QSize(max(hint.width(), self.pill.minimumWidth()),
+                     max(hint.height(), self.pill.sizeHint().height() + self.GAP))
+
+    def refit(self) -> None:
+        """Lay the tabs out again, after the pills changed size (setTabText makes QTabBar measure them anew)."""
+        if self.count():
+            self.setTabText(0, self.tabText(0))
+
+
 class SysInfoDialog(QDialog):
     """What the system reports about the board (sysinfo.py): a section per part in two columns of about the same
     length, the names muted, the values selectable; Copy puts it all on the clipboard as plain text. Its background
@@ -623,6 +646,7 @@ class MainWindow(QMainWindow):
 
         # A tab per category with apps on it, in the order of CATEGORIES (development last).
         self.tabs = QTabWidget()
+        self.tabs.setTabBar(PillTabBar(self.refresh_pill))
         self.tabs.setDocumentMode(True)
         self.pages: dict[str, QScrollArea] = {}
         self.grids: dict[str, QGridLayout] = {}
@@ -744,6 +768,8 @@ class MainWindow(QMainWindow):
         if watched is self.pill_box:
             if event.type() == QEvent.Type.Resize:
                 self.reflow_pills()
+            elif event.type() == QEvent.Type.LayoutRequest and hasattr(self, "tabs"):
+                self.tabs.tabBar().refit()          # a pill's new value made the pills wider or narrower
         elif watched in self.pages.values() and event.type() == QEvent.Type.Resize:
             self.reflow()
         elif self.intro is not None and watched is self.stack and event.type() == QEvent.Type.Resize:

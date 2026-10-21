@@ -55,6 +55,7 @@ By category, as the portal's tabs list them.
 **Gaming**: apps for playing.
 
 - <img src="portal/images/apps/consoles.webp" width="20" height="20" alt=""/> **[Console Link](apps/consoles)**: Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session.
+- <img src="portal/images/apps/clb.webp" width="20" height="20" alt=""/> **[Console LinkB](apps/clb)**: Stream your Xbox (Remote Play) or games from Xbox Cloud Gaming to the board, signed in with your Microsoft account.
 - <img src="portal/images/apps/shadps4.webp" width="20" height="20" alt=""/> **[shadPS4 Manager](apps/shadps4)**: PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found (or unpacked from .pkg files) and added to Game Mode.
 - <img src="portal/images/apps/decky.webp" width="20" height="20" alt=""/> **[Decky Loader Manager](apps/decky)**: Plugins in Game Mode with Decky Loader: a tested Decky release as a system service, its state and its plugins.
 - <img src="portal/images/apps/rpcs3.webp" width="20" height="20" alt=""/> **[RPCS3 Manager](apps/rpcs3)**: PS3 games with the RPCS3 emulator: a tested RPCS3 build, the firmware, your games found and added to Game Mode.

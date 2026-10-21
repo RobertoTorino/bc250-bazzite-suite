@@ -1,3 +1,11 @@
+Changelog: 21-10-2026 23:13:19
+
+Added. Console LinkB (apps/clb): Xbox Remote Play and Xbox Cloud Gaming on the board, a separate app beside Console
+Link (owner, 21-10-2026). Its icon, installer test, CI jobs, wiki chapter, and entries in the Dependency Checker's
+catalogue, the portal's manifest, the README, the wiki's app lists and its privacy page. The root
+requirements-dev.txt takes the app's requirements (aiortc, pygame-ce). CLAUDE.md lists the app, its license and its
+shellcheck line.
+
 Changelog: 21-10-2026 13:46:48
 
 Added. mGBA Manager (apps/mgba, Game Boy Advance), SameBoy Manager (apps/sameboy, Game Boy and Game Boy Color) and Xenia

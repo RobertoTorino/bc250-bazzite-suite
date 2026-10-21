@@ -49,7 +49,7 @@ jobs:
               apps/mtool, apps/package, apps/ncgui,
               apps/suite,
               apps/overlay, apps/bios, apps/ace, apps/vram, apps/cec, apps/sftp,
-              apps/consoles, apps/mesh, apps/shadps4, apps/rpcs3, apps/decky,
+              apps/consoles, apps/clb, apps/mesh, apps/shadps4, apps/rpcs3, apps/decky,
               apps/datstation, apps/ppsspp, apps/pcsx2, apps/vita3k, apps/fan,
               apps/wdriver, apps/swanstation, apps/mgba, apps/sameboy, apps/xenia,
               tools/installer-tests/gui]   # every folder with tests/
@@ -147,7 +147,7 @@ jobs:
       # that their own release workflows already held to it.
       - name: shellcheck (errors, all scripts)
         run: find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 shellcheck -x -S error
-      - name: shellcheck (warnings, cores, oc, acpi, overlay, bios, ace, vram, fan, wdriver, cec, sftp, consoles, mesh, shadps4, rpcs3, ppsspp, pcsx2, vita3k, swanstation, mgba, sameboy, xenia, decky, netcatgui, datstation and the suite's own scripts)
+      - name: shellcheck (warnings, cores, oc, acpi, overlay, bios, ace, vram, fan, wdriver, cec, sftp, consoles, clb, mesh, shadps4, rpcs3, ppsspp, pcsx2, vita3k, swanstation, mgba, sameboy, xenia, decky, netcatgui, datstation and the suite's own scripts)
         run: |
           shellcheck -x -S warning portal/install.sh apps/check/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \
             tools/hooks/pre-push
@@ -157,7 +157,8 @@ jobs:
           shellcheck -S warning apps/acpi/bc250-acpi-override.sh apps/acpi/install.sh
           shellcheck -S warning apps/overlay/install.sh apps/bios/install.sh apps/vram/install.sh
           shellcheck -S warning apps/fan/install.sh apps/wdriver/install.sh
-          shellcheck -S warning apps/cec/install.sh apps/sftp/install.sh apps/consoles/install.sh
+          shellcheck -S warning apps/cec/install.sh apps/sftp/install.sh apps/consoles/install.sh \
+            apps/clb/install.sh
           shellcheck -S warning apps/ace/bc250-ace-queues.sh apps/ace/bc250-ace-queues-run \
             apps/ace/install.sh apps/ace/mesa/build-in-container.sh
           shellcheck -S warning apps/mesh/bc250-mesh-shaders.sh apps/mesh/bc250-mesh-shaders-run \
@@ -273,6 +274,8 @@ jobs:
         run: bash tools/installer-tests/sftp.sh
       - name: consoles installer
         run: bash tools/installer-tests/consoles.sh
+      - name: clb installer
+        run: bash tools/installer-tests/clb.sh
       - name: Media Tool installer
         run: bash tools/installer-tests/mtool.sh
       - name: Dependency checker installer

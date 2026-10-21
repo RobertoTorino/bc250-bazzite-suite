@@ -663,6 +663,33 @@ colours (owner, 19-10-2026).
     clears it (before, the window kept offering the build it had just installed).
   - Release (owner): `mgba-v0.1.0`, `sameboy-v0.1.0`, `xenia-v0.1.0` (and `swanstation-v0.1.0`), then pin them and
     bump the portal (added apps need a minor bump).
+- **Console LinkB (owner, 21-10-2026; built 21-10-2026, not tried with Microsoft's services or on the board).**
+  Xbox Remote Play and Xbox Cloud Gaming, a separate app beside Console Link (`apps/clb`, package `console_linkb`,
+  tag prefix `clb-v`; the owner chose the name "for now"). GPL-3.0-or-later; the protocol is ported from Greenlight
+  (`packages/desktop`, the released 2.4.2 client's session calls, and `packages/player`) and xal-node (the MSAL
+  sign-in), both MIT with LICENSE files; their MIT notice is in the app's README, and each ported file says where it
+  comes from. xbox-xcloud-player was not used: it declares MIT only in its package.json, with no LICENSE file.
+  The name: "Console Xlink" was dropped for its likeness to XLink Kai (Team XLink's Xbox tunnelling tool); no
+  trademark search was done for "Console LinkB" either.
+  - How it works: device code sign-in (microsoft.com/link), only the refresh token kept (`account.json`, 0600); the
+    console list and the wake command from xccs.xboxlive.com; cloud titles from the gssv service, named by
+    catalog.gamepass.com; the cloud token tries Game Pass (`xgpuweb`) first, then the free-to-play games
+    (`xgpuwebf2p`). The stream: aiortc (WebRTC, PyAV decodes), no STUN server (as the reference), the service's
+    candidates merged into its answer before aiortc gets it, Teredo addresses turned into two IPv4 candidates as
+    the reference does; the input reports byte for byte as the reference's (every 16 ms), the frames' metadata
+    report, rumble to the pad; the first controller through pygame-ce, the keyboard as a pad.
+  - Tested on this machine only: recorded-style answers for every call, and a whole WebRTC connection against an
+    aiortc stand-in for the service (handshake, control, input, video, sound, rumble, a dialog, the end).
+  - To try on the board (owner; the owner has an Xbox account but no Xbox): sign in; Fortnite from the cloud
+    without Game Pass (Epic says it needs none; reported limit 60 min a session); the picture's smoothness at
+    1080p60 (the frames are turned into images in Python, with PyAV's swscale: may need a faster path), the sound's
+    delay, the controller. aiortc offers only H.264 Baseline profiles, where a browser offers Main too: the
+    service accepted Firefox's (Baseline) offers, so it should accept these. A stream from a console at home stays
+    untested until someone with an Xbox tries it.
+  - Not in this version: Game Mode shortcuts (Console Link's Steam pattern), the stream's statistics, a choice of
+    region, the microphone (chat channel), touch and mouse/keyboard input for games that take them.
+  - Release (owner): `clb-v0.1.0` and a Dependency Checker release (its catalogue lists the app), then pin `clb`
+    and bump the portal (an added app needs a minor bump).
 
 ## Known issues to fix
 

@@ -304,6 +304,19 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-console-link"]
 launch = [["Open", "~/.local/bin/bc250-console-link"]]
 
+[apps.clb]
+name = "Console LinkB"
+short = "Console LinkB"
+summary = "Stream your Xbox (Remote Play) or games from Xbox Cloud Gaming to the board, signed in with your Microsoft account."
+tag = "clb-v0.1.0"
+required = false
+changes_board = false
+category = "gaming"
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-console-linkb"]
+launch = [["Open", "~/.local/bin/bc250-console-linkb"]]
+
 [apps.shadps4]
 name = "shadPS4 Manager"
 summary = "PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found (or unpacked from .pkg files) and added to Game Mode."

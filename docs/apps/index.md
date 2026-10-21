@@ -32,6 +32,7 @@ other app is optional. They are listed by category, as the portal's tabs list th
 | App | What it does |
 |---|---|
 | ![](../assets/apps/consoles.webp){ .app-icon } [Console Link](consoles.md) | Find, wake and register PS4 and PS5 consoles on the network, and start a Remote Play session. |
+| ![](../assets/apps/clb.webp){ .app-icon } [Console LinkB](clb.md) | Stream your Xbox (Remote Play) or games from Xbox Cloud Gaming to the board, signed in with your Microsoft account. |
 | ![](../assets/apps/shadps4.webp){ .app-icon } [shadPS4 Manager](shadps4.md) | PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found (or unpacked from .pkg files) and added to Game Mode. |
 | ![](../assets/apps/decky.webp){ .app-icon } [Decky Loader Manager](decky.md) | Plugins in Game Mode with Decky Loader: a tested Decky release as a system service, its state and its plugins. |
 | ![](../assets/apps/rpcs3.webp){ .app-icon } [RPCS3 Manager](rpcs3.md) | PS3 games with the RPCS3 emulator: a tested RPCS3 build, the firmware, your games found and added to Game Mode. |

@@ -41,6 +41,9 @@ app downloads its Python packages from PyPI.
 - [Console Link](apps/consoles.md#privacy) talks to your own consoles on your own network, and to PlayStation
   (PSN) only for **Find my account ID**; the sign-in happens in your browser. Its window masks your account ID,
   online ID and the consoles' addresses.
+- [Console LinkB](apps/clb.md#privacy) talks to Microsoft's Xbox services when you sign in, refresh, wake a
+  console or stream; the sign-in happens in your browser. Its log masks the account's tokens, your gamertag, the
+  consoles' IDs and network addresses.
 - [shadPS4 Manager](apps/shadps4.md#shadnet): shadPS4 signs in to the shadNet server you set, with the
   account you set. shadPS4 keeps the password as it is and shadNet sends it unencrypted: use one you use nowhere
   else.
@@ -60,10 +63,10 @@ Each app keeps its settings in `~/.config/<app>` and its data and logs in `~/.lo
 the exact list. Nothing of it is uploaded. Uninstalling with `--purge` removes the settings and logs too.
 
 Some of it can identify you: host and user names, serial numbers, MAC and IP addresses, account IDs. Where an app
-shows or saves such details, it masks them: [Bazzite Test](apps/check.md) masks them in saved logs (on by
-default, in **Settings › Privacy**), and [Console Link](apps/consoles.md#privacy) in its window and log. Before
-you share a log or a screenshot, for example in an issue, look it over for anything you would rather keep to
-yourself.
+shows or saves such details, it masks them: [Bazzite Test](apps/check.md) masks them in saved logs (on by default,
+in **Settings › Privacy**), [Console Link](apps/consoles.md#privacy) in its window and log, and
+[Console LinkB](apps/clb.md#privacy) in its log. Before you share a log or a screenshot, for example in an issue,
+look it over for anything you would rather keep to yourself.
 
 ## This wiki
 
