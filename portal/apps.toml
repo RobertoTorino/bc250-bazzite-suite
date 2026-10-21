@@ -253,8 +253,8 @@ launch = [["Open", "~/.local/bin/media-tool"]]
 [apps.package]
 name = "Dependency Checker"
 summary = "The suite's Python packages and external tools, which apps use them, and whether newer ones exist; and whether a Bazzite update waits for a reboot."
-tag = "package-v0.9.1"
-sha256 = "63a968313f6af9dba4ea800d65a156852508867c8216e7adec851a561f8dad62"
+tag = "package-v0.10.0"
+sha256 = "2022306fb43d7ab69d10244c98f57a74ddfe674efbf24e332b32e7748f22e7af"
 required = false
 changes_board = false
 category = "development"
