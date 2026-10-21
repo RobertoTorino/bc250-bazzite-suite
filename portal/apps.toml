@@ -160,8 +160,8 @@ launch = [["Open", "~/.local/bin/bc250-ace-queues"]]
 [apps.mesh]
 name = "BC-250 Mesh Shaders"
 summary = "Mesh shaders for games: RADV with DirectMesh beside the system Mesa, built on the board and tested before use."
-tag = "mesh-v0.6.1"
-sha256 = "6c4002dbdfddd0efa93f844fc834ec284443cfa7ccdf5b9a72af4d3eb10b20bf"
+tag = "mesh-v0.7.0"
+sha256 = "edfcb9f1cc4e146349d4b71f155023dfad2be74cfceeadbbefb745cbdbfc336d"
 required = false
 changes_board = true
 category = "graphics"
