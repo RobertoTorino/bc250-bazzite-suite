@@ -320,8 +320,8 @@ launch = [["Open", "~/.local/bin/bc250-shadps4-manager"]]
 [apps.decky]
 name = "Decky Loader Manager"
 summary = "Plugins in Game Mode with Decky Loader: a tested Decky release as a system service, its state and its plugins."
-tag = "decky-v0.6.1"
-sha256 = "a4da2d9f2cb21a6a8339031428297f93cf839b1761a4809ccaf6b431afe1257e"
+tag = "decky-v0.7.0"
+sha256 = "d40243c7463d86a30881837b205cbb9569d2a2c8908c6616c71d643da3bdf5d6"
 required = false
 changes_board = false
 category = "gaming"
