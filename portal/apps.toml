@@ -240,8 +240,8 @@ launch = [["Open", "~/.local/bin/bc250-bazzite-sftp-tools"]]
 [apps.mtool]
 name = "Media Tool"
 summary = "Record a BC250 Bazzite Suite installation demo with OBS, and convert the suite's icons."
-tag = "mtool-v0.2.0"
-sha256 = "8f1490d298f309c06befea38fbdb4864ae76281f518455aa190c00fe1329375c"
+tag = "mtool-v0.3.0"
+sha256 = "0b820e01e438a9c99f84b3d0ef21daf84f91b1d5ab210fd7d891453aacf5c44e"
 required = false
 changes_board = false
 category = "development"
