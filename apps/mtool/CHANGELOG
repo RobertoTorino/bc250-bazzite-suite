@@ -1,3 +1,17 @@
+Changelog: 22-10-2026 16:20:03
+
+Release 0.3.0.
+
+Changelog: 22-10-2026 15:34:45
+
+Added. Three pills in the header: Portal video tour, Apps video tour and Convert icons, which was a button at the
+bottom of the window. Portal video tour records the portal's tour from a suite checkout (its tools/record-tour.sh),
+with or without music and, when ticked, the copy on the wiki's Portal Tour page. Apps video tour lists every app
+of the checkout's manifest (each program of compute and cores apart) and records the tour of each ticked one
+(tools/record-app-tour.sh), at the length chosen. The recordings run in the background, one after another, with
+their output in the window; Stop ends the one that runs and what it started; Play plays the video in the tool. The
+videos go to ~/Videos. Tests: tests/test_tours.py.
+
 Changelog: 20-10-2026 00:48:10
 
 Release 0.2.0.

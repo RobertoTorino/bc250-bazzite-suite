@@ -73,6 +73,25 @@ same picture in `mkdocs serve`:
 python tools/portal_screenshot.py          # from the venv; --out FILE to save it elsewhere
 ```
 
+The video tours are made the same way, frame by frame from the real windows, offscreen. `tools/record-tour.sh`
+records the portal's tour, about two minutes, with music under it that fades out over the last two seconds
+(`tools/sounds/the_quiet_engine_remix_3min.mp3`, made with generative AI tools; `--no-music` leaves it out).
+`tools/record-tour.sh --wiki` also writes the copy on the [Portal Tour](../portal-tour.md) page,
+`docs/videos/portal-tour.mp4` (1280 × 720, about 6 MB) and its poster: run it after a change to the portal's window.
+`tools/record-app-tour.sh` records one app's, about 40 seconds, the same script for every app, with music under it
+that fades out over the last two seconds (`tools/sounds/the_quiet_engine.mp3`, made with generative AI tools):
+
+```bash
+tools/record-app-tour.sh fan                          # ~/Videos/bc250-fan-tour-v<version>.mp4
+tools/record-app-tour.sh compute --package cu_unlock  # compute and cores have two programs
+tools/record-app-tour.sh cec cec.mp4 --seconds 30     # another file, another length
+tools/record-app-tour.sh fan --no-music               # without sound; --music FILE for another track
+```
+
+The app starts from the checkout in a home folder of its own. The tour points at the controls of its header, with
+their tooltips as captions, and opens its tabs or pages; it presses no buttons and nothing runs as root. What the
+app reads from the board is real, so watch the video before you publish it.
+
 The controller beside the board on the home page changes with every portal release, in the order of
 `docs/images/home/controllers/controllers.toml`. To add one, put its picture in that folder (WebP, 1295 × 1600, with
 a transparent background, like the others) and add it at the end of the list with its alt text.

@@ -5,6 +5,7 @@
 # Portal
 
 The BC250 Bazzite Suite's front door: one window that installs, opens, updates and removes the suite's apps.
+The [Portal Tour](portal-tour.md) shows it in a two-minute video.
 **The header**: the portal's icon (click it to open this wiki), its name and version, where the apps install from,
 and nine pills of the same width: **Refresh** (look again at which apps are installed), **Installed apps**,
 **Install all updates**, **Icons on Desktop**, **Sound**, **Theme switcher**, **Wallpaper**, **Suite mode** and

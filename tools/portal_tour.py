@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
 """A video tour of the portal, for the wiki and YouTube: the real portal window from this checkout, driven by a
-script and rendered frame by frame into an MP4 (H.264, 1920 x 1080, 30 fps, no sound).
+script and rendered frame by frame into an MP4 (H.264, 1920 x 1080, 30 fps), with music under it that fades out over
+the last two seconds (tools/sounds/the_quiet_engine_remix_3min.mp3, made with generative AI tools).
 
-    python3 tools/portal_tour.py [OUT.mp4] [--fps 30]
+    python3 tools/portal_tour.py [OUT.mp4] [--music FILE | --no-music] [--wiki] [--fps 30]
+
+--wiki also writes the copy on the wiki's Portal Tour page: docs/videos/portal-tour.mp4 (1280 x 720, smaller) and its
+poster, docs/images/portal/portal-tour-poster.webp (the title card).
 
 It runs offscreen in a temporary home folder: a few apps "installed" (their detect paths and records), one of them
 behind its pinned release so the update notice shows, no network, and nothing from the machine it runs on (no user
-or host names, no checkout path). The pointer, the clicks and the captions are drawn into the frames. Needs PyQt6
-(the dev venv) and ffmpeg with libx264."""
+or host names, no checkout path), no sound from the portal and no controller. The pointer, the clicks and the
+captions are drawn into the frames. Needs PyQt6 (the dev venv) and ffmpeg with libx264.
+The frames are drawn by tools/tour_frames.py, which tools/app_tour.py uses too."""
 
 from __future__ import annotations
 
@@ -21,37 +26,35 @@ import sys
 import tempfile
 from pathlib import Path
 
-SUITE = Path(__file__).resolve().parents[1]
-WIDTH, HEIGHT = 1920, 1080
-SCALE = 1.2                                         # the window is 1600 x 900 at 120 %: readable on a phone too
+import tour_frames
+from tour_frames import SCALE, SUITE, Recorder
+
 INSTALLED = ("check", "gpu", "upscaler", "shadps4", "rpcs3", "cec", "package")
 BEHIND = "shadps4"                                  # installed from an older release: the red dot and the notice
+MUSIC = SUITE / "tools" / "sounds" / "the_quiet_engine_remix_3min.mp3"
+FADE = 2.0                                          # the music fades out over the video's last seconds
+WIKI_VIDEO = SUITE / "docs" / "videos" / "portal-tour.mp4"
+WIKI_POSTER = SUITE / "docs" / "images" / "portal" / "portal-tour-poster.webp"
 
 
 def prepare_home(home: Path) -> None:
-    for var, sub in (("HOME", ""), ("XDG_DATA_HOME", ".local/share"), ("XDG_CONFIG_HOME", ".config"),
-                     ("XDG_STATE_HOME", ".local/state"), ("XDG_CACHE_HOME", ".cache")):
-        (home / sub).mkdir(parents=True, exist_ok=True)
-        os.environ[var] = str(home / sub)
-    os.environ["QT_QPA_PLATFORM"] = "offscreen"
-    os.environ["QT_SCALE_FACTOR"] = str(SCALE)
-    os.environ.pop("QT_SCREEN_SCALE_FACTORS", None)
-    sys.path[:0] = [str(SUITE / "core"), str(SUITE / "portal")]
+    tour_frames.prepare_home(home)
+    sys.path[:0] = [str(SUITE / "portal")]
 
 
-class Tour:
+class Tour(Recorder):
     def __init__(self, out: Path, fps: int, home: Path):
         from PyQt6.QtCore import QSettings
         from PyQt6.QtWidgets import QApplication
 
         from bc250_core.app import create_app
-        from bc250_portal import INFO, MANIFEST, state_dir
+        from bc250_portal import INFO, LOGO_PATH, MANIFEST, audio, state_dir
+        from bc250_portal.gamepad import Gamepad
         from bc250_portal.manifest import load, load_checkout
         from bc250_portal.sources import Records, Sources
 
-        self.fps = fps
         self.home = home
-        self.app = QApplication.instance() or create_app(INFO, [])
+        app = QApplication.instance() or create_app(INFO, [])
         for fmt in (QSettings.Format.NativeFormat, QSettings.Format.IniFormat):
             QSettings.setPath(fmt, QSettings.Scope.UserScope, str(home / ".config"))
         entries = load(MANIFEST)
@@ -70,173 +73,27 @@ class Tour:
         state_dir().mkdir(parents=True, exist_ok=True)
         (state_dir() / "installed.json").write_text(json.dumps(records), encoding="utf-8")
         from bc250_portal.main_window import MainWindow
-        self.window = MainWindow(shown, Sources(state_dir() / "releases", checkout=None, download=None),
-                                 Records(state_dir() / "installed.json"), desktop=home / "Desktop",
-                                 menu=home / ".local/share/applications")
-        self.window.setWindowTitle(INFO.display_name)
-        self.window.move(0, 0)
-        self.window.resize(round(WIDTH / SCALE), round(HEIGHT / SCALE))
-        self.window.show()
-        self.pump()
-        self.pointer = (WIDTH * 0.55, HEIGHT * 0.6)
-        self.click_at: tuple[float, float, int] | None = None
-        self.caption = ""
-        self.popup = None
-        self.overlay = None                         # a whole frame drawn instead of the window (title cards)
-        self.ffmpeg = subprocess.Popen(
-            ["ffmpeg", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{WIDTH}x{HEIGHT}",
-             "-r", str(fps), "-i", "-", "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-pix_fmt", "yuv420p",
-             "-movflags", "+faststart", str(out)], stdin=subprocess.PIPE)
 
-    # --- frames ---------------------------------------------------------------------------------------------
-    def pump(self) -> None:
+        class Silent(audio.Sounds):                 # the Sound pill as on a board with an output, but nothing plays
+            def available(self) -> bool:
+                return True
+
+            def play(self, name: str) -> bool:
+                return False
+
+        def no_controller():
+            raise OSError("no controller in the tour")
+
+        window = MainWindow(shown, Sources(state_dir() / "releases", checkout=None, download=None),
+                            Records(state_dir() / "installed.json"), desktop=home / "Desktop",
+                            menu=home / ".local/share/applications", sounds=Silent(),
+                            gamepad=Gamepad(source_factory=no_controller))
+        window.setWindowTitle(INFO.display_name)
+        tour_frames.place(window)
+        window.show()
         for _ in range(3):
-            self.app.processEvents()
-
-    def frame(self):
-        from PyQt6.QtCore import QPointF, QRectF, Qt
-        from PyQt6.QtGui import QColor, QFont, QImage, QPainter, QPainterPath, QPen
-
-        image = QImage(WIDTH, HEIGHT, QImage.Format.Format_RGB888)
-        painter = QPainter(image)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
-        if self.overlay is not None:
-            painter.drawImage(0, 0, self.overlay)
-        else:
-            shot = self.window.grab()
-            painter.drawPixmap(QRectF(0, 0, WIDTH, HEIGHT), shot, QRectF(shot.rect()))
-            if self.popup is not None and self.popup.isVisible():
-                menu = self.popup.grab()
-                top_left = self.popup.pos() - self.window.pos()
-                painter.drawPixmap(QRectF(top_left.x() * SCALE, top_left.y() * SCALE, menu.width(), menu.height()),
-                                   menu, QRectF(menu.rect()))
-            if self.click_at is not None:
-                x, y, age = self.click_at
-                radius = 12 + age * 3
-                painter.setPen(QPen(QColor(255, 255, 255, max(0, 230 - age * 28)), 4))
-                painter.setBrush(Qt.BrushStyle.NoBrush)
-                painter.drawEllipse(QPointF(x, y), radius, radius)
-                self.click_at = (x, y, age + 1) if age < 8 else None
-            x, y = self.pointer
-            arrow = QPainterPath()
-            for i, (dx, dy) in enumerate(((0, 0), (0, 34), (9, 26), (15, 40), (21, 37), (15, 24), (27, 24))):
-                (arrow.moveTo if i == 0 else arrow.lineTo)(x + dx, y + dy)
-            arrow.closeSubpath()
-            painter.setPen(QPen(QColor("black"), 2))
-            painter.setBrush(QColor("white"))
-            painter.drawPath(arrow)
-        if self.caption:
-            font = QFont(self.app.font())
-            font.setPixelSize(34)
-            font.setWeight(QFont.Weight.DemiBold)
-            painter.setFont(font)
-            box = painter.boundingRect(QRectF(0, 0, WIDTH - 360, 400),
-                                       int(Qt.AlignmentFlag.AlignCenter) | int(Qt.TextFlag.TextWordWrap), self.caption)
-            box = box.adjusted(-28, -18, 28, 18)
-            box.moveCenter(QPointF(WIDTH / 2, HEIGHT - 70 - box.height() / 2))
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QColor(10, 14, 22, 215))
-            painter.drawRoundedRect(box, 14, 14)
-            painter.setPen(QColor("white"))
-            painter.drawText(box, int(Qt.AlignmentFlag.AlignCenter) | int(Qt.TextFlag.TextWordWrap), self.caption)
-        painter.end()
-        return image
-
-    def emit(self, image, count: int = 1) -> None:
-        data = image.constBits().asstring(image.sizeInBytes())
-        stride = image.bytesPerLine()
-        if stride != WIDTH * 3:
-            data = b"".join(data[row * stride: row * stride + WIDTH * 3] for row in range(HEIGHT))
-        assert self.ffmpeg.stdin is not None
-        for _ in range(count):
-            self.ffmpeg.stdin.write(data)
-
-    def hold(self, seconds: float) -> None:
-        """The same picture for *seconds* (a click ring still fades out first)."""
-        frames = round(seconds * self.fps)
-        while self.click_at is not None and frames > 0:
-            self.pump()
-            self.emit(self.frame())
-            frames -= 1
-        self.pump()
-        self.emit(self.frame(), max(frames, 0))
-
-    def move(self, target: tuple[float, float], seconds: float = 0.8) -> None:
-        start, frames = self.pointer, max(1, round(seconds * self.fps))
-        for i in range(1, frames + 1):
-            t = i / frames
-            ease = t * t * (3 - 2 * t)
-            self.pointer = (start[0] + (target[0] - start[0]) * ease, start[1] + (target[1] - start[1]) * ease)
-            self.pump()
-            self.emit(self.frame())
-
-    def at(self, widget, fx: float = 0.5, fy: float = 0.5) -> tuple[float, float]:
-        """Where a point of *widget* is in the video (fractions of its width and height)."""
-        from PyQt6.QtCore import QPoint
-        point = widget.mapTo(self.window, QPoint(round(widget.width() * fx), round(widget.height() * fy)))
-        return point.x() * SCALE, point.y() * SCALE
-
-    def tab_at(self, index: int) -> tuple[float, float]:
-        from PyQt6.QtCore import QPoint
-        bar = self.window.tabs.tabBar()
-        point = bar.mapTo(self.window, bar.tabRect(index).center() + QPoint(0, 2))
-        return point.x() * SCALE, point.y() * SCALE
-
-    def click(self, action=None) -> None:
-        self.click_at = (*self.pointer, 0)
-        self.emit(self.frame(), 2)
-        if action is not None:
-            action()
-        self.pump()
-
-    def say(self, text: str) -> None:
-        self.caption = text
-
-    def fade(self, first, second, seconds: float = 0.6) -> None:
-        from PyQt6.QtGui import QPainter
-        frames = max(1, round(seconds * self.fps))
-        for i in range(1, frames + 1):
-            image = first.copy()
-            painter = QPainter(image)
-            painter.setOpacity(i / frames)
-            painter.drawImage(0, 0, second)
-            painter.end()
-            self.emit(image)
-
-    def card(self, title: str, lines: list[str]):
-        """A title card in the theme's colours, with the portal's icon."""
-        from PyQt6.QtCore import QRectF, Qt
-        from PyQt6.QtGui import QColor, QFont, QImage, QPainter, QPalette, QPixmap
-
-        from bc250_portal import LOGO_PATH
-        image = QImage(WIDTH, HEIGHT, QImage.Format.Format_RGB888)
-        image.fill(self.window.palette().color(QPalette.ColorRole.Window))
-        painter = QPainter(image)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
-        logo = QPixmap(str(LOGO_PATH))
-        painter.drawPixmap(QRectF(WIDTH / 2 - 128, 190, 256, 256), logo, QRectF(logo.rect()))
-        font = QFont(self.app.font())
-        font.setPixelSize(76)
-        font.setWeight(QFont.Weight.Bold)
-        painter.setFont(font)
-        text = self.window.palette().color(QPalette.ColorRole.WindowText)
-        painter.setPen(text)
-        painter.drawText(QRectF(0, 490, WIDTH, 110), int(Qt.AlignmentFlag.AlignCenter), title)
-        font.setPixelSize(40)
-        font.setWeight(QFont.Weight.Normal)
-        painter.setFont(font)
-        painter.setPen(QColor(text.red(), text.green(), text.blue(), 200))
-        for i, line in enumerate(lines):
-            painter.drawText(QRectF(0, 625 + i * 64, WIDTH, 60), int(Qt.AlignmentFlag.AlignCenter), line)
-        painter.end()
-        return image
-
-    def finish(self) -> int:
-        assert self.ffmpeg.stdin is not None
-        self.ffmpeg.stdin.close()
-        return self.ffmpeg.wait()
+            app.processEvents()
+        super().__init__(out, fps, window, LOGO_PATH)
 
     # --- the tour -------------------------------------------------------------------------------------------
     def run(self) -> None:
@@ -257,6 +114,15 @@ class Tour:
         self.say("Its header: the portal's icon and name, and where the apps install from.")
         self.move(self.at(w.logo))
         self.hold(3)
+        self.say("A click on the icon opens the wiki in the browser: everything about each app.")
+        self.hold(1.2)
+        self.click()                                # only the ring: the tour opens no browser
+        self.hold(0.8)
+        shown = self.frame()
+        wiki = self.card("Wiki", [SUITE_MANUAL_URL.removeprefix("https://").rstrip("/")])
+        self.fade(shown, wiki, 0.6)
+        self.emit(wiki, round(2.8 * self.fps))
+        self.fade(wiki, shown, 0.6)
         for pill, text in ((w.refresh_pill, "Refresh looks again at which apps are installed."),
                            (w.icons_box, "Icons on Desktop: one icon per app on the Desktop, or only the portal's."),
                            (w.theme_pill, "The theme switcher: one look for every app in the suite."),
@@ -284,13 +150,13 @@ class Tour:
 
         self.say("")
         for index in range(1, w.tabs.count()):
-            self.move(self.tab_at(index), 0.7)
+            self.move(self.tab_at(w.tabs.tabBar(), index), 0.7)
             self.click(lambda i=index: w.tabs.setCurrentIndex(i))
             category = next(k for k, page in w.pages.items() if page is w.tabs.widget(index))
             self.say(f"{CATEGORIES[category]}: {CATEGORY_HINTS[category]}")
             self.hold(3.8)
         self.say("")
-        self.move(self.tab_at(0), 0.7)
+        self.move(self.tab_at(w.tabs.tabBar(), 0), 0.7)
         self.click(lambda: w.tabs.setCurrentIndex(0))
         self.hold(0.6)
 
@@ -320,6 +186,8 @@ class Tour:
         self.popup = None
         self.pump()
 
+        self.big_picture()
+
         self.say("Gunmetal, Silver or Warm: each app takes the theme the next time it starts.")
         self.move(self.at(w.theme_pill))
         self.click(w._next_theme)
@@ -335,6 +203,48 @@ class Tour:
                                                SUITE_MANUAL_URL.removeprefix("https://").rstrip("/")])
         self.fade(last, end, 0.8)
         self.emit(end, round(5 * self.fps))
+
+    def big_picture(self) -> None:
+        """Suite Big Picture Mode: in by the Suite mode pill, its intro, the focus moved as a controller moves it,
+        and back to the desktop."""
+        from bc250_portal.bigpicture import INTRO_MS
+
+        w = self.window
+        self.say("Suite mode switches to Big Picture Mode: fullscreen with large icons, for a TV and a controller.")
+        self.move(self.at(w.mode_pill))
+        self.hold(3.5)
+        self.click(w.enter_big_picture)
+        intro = w.intro
+        intro.animation.stop()                      # the intro follows the video's frames, not the clock
+        pointer, self.pointer = self.pointer, (-100, -100)
+        self.say("")
+        frames = round(INTRO_MS / 1000 * self.fps)
+        for i in range(1, frames + 1):
+            intro._step(i / frames)
+            self.pump()
+            self.emit(self.frame())
+        intro._done()
+        self.pump()
+        self.say("The d-pad, the stick or the arrow keys move the focus; A or Enter opens the app.")
+        self.hold(1.2)
+        for direction in ("right", "right", "right", "right", "left", "left"):     # the top row: above the captions
+            w.big.move_focus(direction)
+            self.hold(0.7)
+        self.hold(1)
+        self.say("LB and RB, or Page Up and Page Down, change the category.")
+        for _ in range(2):
+            w.big.change_category(1)
+            self.hold(1.8)
+        w.big.change_category(-2)
+        self.hold(0.6)
+        self.say("Y or F11 goes back to Suite Desktop Mode, and the portal opens in the mode it was last in.")
+        self.hold(3.5)
+        last = self.frame()
+        w.leave_big_picture()
+        self.pointer = pointer
+        self.pump()
+        self.fade(last, self.frame(), 0.5)
+        self.hold(0.5)
 
     def open_menu(self) -> None:
         self.popup = self.window.wallpaper_menu()
@@ -395,9 +305,25 @@ def render_still(theme: str, out: Path) -> None:
         tour.frame().save(str(out))
 
 
+def wiki_copy(video: Path) -> int:
+    """The wiki's copy of *video*: 1280 x 720 and about a third of the size, so the repository stays small, and the
+    title card as its poster. ffmpeg's exit code."""
+    WIKI_POSTER.parent.mkdir(parents=True, exist_ok=True)
+    code = subprocess.run(
+        ["ffmpeg", "-loglevel", "error", "-y", "-i", str(video), "-vf", "scale=1280:720:flags=lanczos",
+         "-c:v", "libx264", "-preset", "slow", "-crf", "26", "-tune", "stillimage", "-pix_fmt", "yuv420p",
+         "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", str(WIKI_VIDEO)]).returncode
+    return code or subprocess.run(
+        ["ffmpeg", "-loglevel", "error", "-y", "-ss", "1", "-i", str(video), "-frames:v", "1",
+         "-vf", "scale=1280:720:flags=lanczos", "-c:v", "libwebp", "-quality", "85", str(WIKI_POSTER)]).returncode
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("out", nargs="?", default="portal-tour.mp4")
+    parser.add_argument("--music", type=Path, default=MUSIC, help="the track under the video (default: the suite's)")
+    parser.add_argument("--no-music", action="store_true", help="a video without sound")
+    parser.add_argument("--wiki", action="store_true", help="also write the copy on the wiki's Portal Tour page")
     parser.add_argument("--fps", type=int, default=30)
     parser.add_argument("--still", nargs=2, metavar=("THEME", "PNG"), help=argparse.SUPPRESS)
     args = parser.parse_args()
@@ -407,15 +333,26 @@ def main() -> int:
     if not shutil.which("ffmpeg"):
         print("ffmpeg is needed", file=sys.stderr)
         return 1
+    music = None if args.no_music else args.music.resolve()
+    if music is not None and not music.is_file():
+        print(f"No music at {music} (--no-music for a video without sound)", file=sys.stderr)
+        return 1
     out = Path(args.out).resolve()
     with tempfile.TemporaryDirectory(prefix="portal-tour-") as folder:
         home = Path(folder)
         prepare_home(home)
-        tour = Tour(out, args.fps, home)
+        silent = out if music is None else home / "silent.mp4"
+        tour = Tour(silent, args.fps, home)
         try:
             tour.run()
         finally:
             code = tour.finish()
+        if code == 0 and music is not None:
+            code = tour_frames.add_music(silent, music, out, tour.frames / tour.fps, FADE)
+    if code == 0 and args.wiki:
+        code = wiki_copy(out)
+        if code == 0:
+            print(WIKI_VIDEO.relative_to(SUITE).as_posix(), WIKI_POSTER.relative_to(SUITE).as_posix())
     print(out if code == 0 else f"ffmpeg failed ({code})")
     return code
 

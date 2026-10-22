@@ -92,7 +92,8 @@ How to install and use them: **[the manual](https://robertotorino.github.io/bc25
 GPL-3.0-or-later ([LICENSE](LICENSE)), except BC-250 Persistent ACPI, which is MIT, Console Link, which is
 AGPL-3.0 (its protocol code comes from chiaki-ng), and Bazzite NetcatGUI, which is GPL-2.0 (a port of NetcatGUI).
 Each app keeps its own `LICENSE`. The icons were made with generative AI tools and edited by hand in Photoshop, the
-sounds with generative AI tools; both are under the license of the folder they are in, like the code beside them.
+sounds and the music of the video tours with generative AI tools; all are under the license of the folder they are in,
+like the code beside them.
 
 ## Disclaimer
 

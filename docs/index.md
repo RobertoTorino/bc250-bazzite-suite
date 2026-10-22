@@ -152,8 +152,9 @@ use **Security → Report a vulnerability** instead, as the [security policy](SE
 
 GPL-3.0-or-later, except BC-250 Persistent ACPI, which is MIT, Console Link, which is AGPL-3.0 (its
 protocol code comes from chiaki-ng), and Bazzite NetcatGUI, which is GPL-2.0 (a port of NetcatGUI). Each app has
-its own `LICENSE`. The icons were made with generative AI tools and edited by hand in Photoshop, the sounds with
-generative AI tools; both are under the license of the app they come with, like its code.
+its own `LICENSE`. The icons were made with generative AI tools and edited by hand in Photoshop, the sounds and the
+music of the video tours with generative AI tools; all are under the license of the app or tool they come with, like its
+code.
 
 ## Disclaimer
 

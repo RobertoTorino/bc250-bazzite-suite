@@ -18,6 +18,7 @@
 *.woff2             binary
 *.wav               binary
 *.ogg               binary
+*.mp3               binary
 *.mp4               binary
 *.gz                binary
 *.ico               binary

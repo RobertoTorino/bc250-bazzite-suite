@@ -33,6 +33,7 @@ from PyQt6.QtWidgets import (
 from . import APP_NAME, __version__
 from .global_shortcut import GlobalShortcutManager
 from .icons import IconsDialog, find_checkout
+from .tours import AppsTourDialog, Pill, PortalTourDialog
 from .workflow import (
     PORTAL_LAUNCHER,
     DemoApp,
@@ -96,11 +97,29 @@ class MainWindow(QMainWindow):
         title = QLabel(f"{APP_NAME}  <span style='color:#9aa0a6; font-size:14px;'>v{__version__}</span>")
         title.setStyleSheet("font-size:24px; font-weight:800;")
         header_right.addWidget(title)
-        intro = QLabel("Prepare OBS, install a portal release, and record a real optional-app install.")
-        intro.setWordWrap(True)
-        header_right.addWidget(intro)
+        # The second line: the tools beside the demo recording, as pills.
+        pills = QHBoxLayout()
+        pills.setSpacing(8)
+        self.portal_tour_pill = Pill("Portal video tour", "Record the portal's tour",
+                                     "Record the portal's video tour from a suite checkout: about two minutes, "
+                                     "with music, and the copy on the wiki's Portal Tour page if you like.")
+        self.portal_tour_pill.clicked.connect(self._show_portal_tour)
+        self.apps_tour_pill = Pill("Apps video tour", "Record the apps' tours",
+                                   "Record a short video tour of each app you tick, from a suite checkout: about "
+                                   "40 seconds each, with music.")
+        self.apps_tour_pill.clicked.connect(self._show_apps_tour)
+        self.icons_pill = Pill("Convert icons", "Make a category's icons",
+                               "Make a category's icons from new images in a suite checkout.")
+        self.icons_pill.clicked.connect(self._show_icons)
+        for pill in (self.portal_tour_pill, self.apps_tour_pill, self.icons_pill):
+            pills.addWidget(pill)
+        pills.addStretch(1)
+        header_right.addLayout(pills)
         header.addLayout(header_right, 1)
         layout.addLayout(header)
+        intro = QLabel("Prepare OBS, install a portal release, and record a real optional-app install.")
+        intro.setWordWrap(True)
+        layout.addWidget(intro)
 
         obs_box = QGroupBox("1. OBS setup")
         obs_layout = QVBoxLayout(obs_box)
@@ -190,15 +209,6 @@ class MainWindow(QMainWindow):
         action_layout.addLayout(recording_buttons)
         layout.addWidget(action_box)
 
-        icons_box = QGroupBox("Suite icons")
-        icons_layout = QHBoxLayout(icons_box)
-        icons_text = QLabel("Make a category's icons from new images in a suite checkout.")
-        icons_text.setWordWrap(True)
-        icons_layout.addWidget(icons_text, 1)
-        self.icons_button = QPushButton("Convert icons…")
-        self.icons_button.clicked.connect(self._show_icons)
-        icons_layout.addWidget(self.icons_button)
-        layout.addWidget(icons_box)
         layout.addStretch(1)
         self.setCentralWidget(central)
 
@@ -303,8 +313,18 @@ class MainWindow(QMainWindow):
         refresh()
         dialog.exec()
 
+    def _checkout(self) -> Path | None:
+        """The suite checkout: the chosen portal release when it is one, else the one the tool runs from."""
+        return find_checkout(self.release_dir, Path(__file__).resolve().parent)
+
     def _show_icons(self) -> None:
-        IconsDialog(find_checkout(self.release_dir, Path(__file__).resolve().parent), self).exec()
+        IconsDialog(self._checkout(), self).exec()
+
+    def _show_portal_tour(self) -> None:
+        PortalTourDialog(self._checkout(), self._open_recording, self).exec()
+
+    def _show_apps_tour(self) -> None:
+        AppsTourDialog(self._checkout(), self._open_recording, self).exec()
 
     def _open_recording(self, recording: Path) -> bool:
         if not recording.is_file():

@@ -1,3 +1,40 @@
+Changelog: 22-10-2026 15:23:12
+
+Added. A Portal Tour page in the wiki, after Portal, with the portal's video tour (docs/videos/portal-tour.mp4, 1280 x
+720, with music) and the title card as its poster; the Portal chapter links to it. tools/record-tour.sh --wiki
+(tools/portal_tour.py --wiki) records the tour and writes that copy and its poster again.
+
+Changelog: 22-10-2026 15:14:31
+
+Added. The portal's tour has music too: tools/sounds/the_quiet_engine_remix_3min.mp3, a remix of the app tours'
+track made with generative AI tools, faded out over the video's last two seconds. tools/record-tour.sh and
+tools/portal_tour.py take --music FILE and --no-music, as the app tours do. Recorder counts the frames it writes,
+for both tours.
+
+Changelog: 22-10-2026 15:11:22
+
+Added. The app tours have music: tools/sounds/the_quiet_engine.mp3, made with generative AI tools, under the video
+(looped when the video is longer) and faded out over its last two seconds (tour_frames.add_music). --music FILE
+takes another track, --no-music makes a video without sound. .gitattributes marks MP3 files as binary. The README
+and the wiki's Home page say how the music was made.
+
+Changelog: 22-10-2026 15:08:54
+
+Added. A video tour of each app, about 40 seconds: tools/record-app-tour.sh <app> (tools/app_tour.py) starts the app
+from the checkout through its own __main__, offscreen in a home folder of its own, and records its real window: its
+title card, its summary from portal/apps.toml, the controls of its header with their own tooltips as captions, an
+even spread of its tabs or pages, and its chapter of the wiki. The same script for every app, only the name changes
+(--package picks the program of compute and cores, --seconds the length). It presses no buttons; pkexec, sudo and
+run0 refuse during the tour, and a dialog the app opens is closed. The drawing of the frames moved from
+tools/portal_tour.py to tools/tour_frames.py, which both tours use; the portal's tour is the same frame for frame.
+
+Changelog: 22-10-2026 14:02:02
+
+Added. The portal's video tour (tools/portal_tour.py) shows that a click on the portal's icon opens the wiki, and Suite
+Big Picture Mode: in by the Suite mode pill, its intro, the focus moving over the tiles, the categories, and back to
+Suite Desktop Mode. The tour runs on an offscreen screen of the video's size, so the fullscreen mode fills the frame,
+plays no sound and reads no controller.
+
 Changelog: 22-10-2026 10:21:45
 
 Added. CONTRIBUTING.md and a pull request template: each folder's license applies to what is contributed to it,

@@ -4,9 +4,10 @@
 
 # Media Tool
 
-A standalone Qt app for recording a BC250 Bazzite Suite installation demo on Bazzite, and for converting the
-suite's category icons in a checkout. The suite portal lists it on its Development tab. It does not use the
-suite's shared Python environment.
+A standalone Qt app for recording a BC250 Bazzite Suite installation demo on Bazzite, and, in a checkout of the suite,
+for recording the video tours of the portal and the apps and for converting the suite's category icons. The three
+pills in its header, **Portal video tour**, **Apps video tour** and **Convert icons**, open those tools. The suite
+portal lists it on its Development tab. It does not use the suite's shared Python environment.
 
 ## Install
 
@@ -55,10 +56,29 @@ portal, Media Tool reports the error and does not start recording. The app only 
 folder; it does not automate other OBS settings or click through the portal. That keeps the capture source and
 normal portal warnings under your control.
 
+## Record the video tours
+
+The tours are recorded from a checkout of the suite, from the real windows, offscreen: nothing shows on the screen
+while they record. They go to your Videos folder, with music under them that fades out over the last two seconds
+(untick **Music** for a video without sound). Under **Suite checkout**, check the folder: the tool finds it as for
+the icons (below). A recording runs in the background; its output shows in the window, **Stop** ends it, and
+**Play** plays the video in Media Tool.
+
+- **Portal video tour** records the portal's tour, about two minutes: `bc250-portal-tour-v<portal version>.mp4`.
+  Tick **Also write the copy on the wiki's Portal Tour page** to write `docs/videos/portal-tour.mp4` and its poster
+  in the checkout too, for you to review and commit.
+- **Apps video tour** lists every app, each of the two programs of CU Bisect and Cores Bisect apart. Tick the apps
+  (**All**, **None**), set the **Length** (40 seconds by default) and choose **Record**: each tour takes a few
+  seconds, `bc250-<app>-tour-v<version>.mp4`. Double-click an app to play its video. What an app reads from the
+  board is real, so watch a video before you publish it.
+
+The tool runs the checkout's `tools/record-tour.sh` and `tools/record-app-tour.sh` with the checkout's development
+environment (`.venv-linux`, see [Development](../development/index.md)); they need ffmpeg.
+
 ## Convert the suite's icons
 
 Every app in a category shares the category's icon, kept in a checkout of the suite at 1024, 512, 256 and 128 px
-([Icons](../development/architecture.md#icons)). **Convert icons…** makes them from your own images:
+([Icons](../development/architecture.md#icons)). The **Convert icons** pill makes them from your own images:
 
 1. Under **Suite checkout**, check the folder. The tool finds it by itself when the chosen portal release is a
    checkout or the tool runs from one; otherwise choose it with **Choose folder…**.
