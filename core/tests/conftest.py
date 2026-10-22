@@ -45,6 +45,13 @@ def settings_dir(tmp_path, qapp, monkeypatch):
 
 
 @pytest.fixture
+def board(tmp_path) -> Path:
+    """A fake BC-250 /proc and /sys (board.py)."""
+    from board import make_board
+    return make_board(tmp_path / "root")
+
+
+@pytest.fixture
 def info(tmp_path):
     """A test AppInfo with a unique id, so no test sees another's settings."""
     from bc250_core.appinfo import AppInfo

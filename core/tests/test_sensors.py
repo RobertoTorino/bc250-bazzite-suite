@@ -8,8 +8,8 @@ import shutil
 
 import pytest
 
-from system_overlay.sensors import Fan, Sensors
-from conftest import Clock, diskstats, gpu_metrics, net_dev, proc_stat, write
+from bc250_core.sensors import Fan, Sensors
+from board import Clock, diskstats, gpu_metrics, net_dev, proc_stat, write
 
 
 def sensors(board, governor=(1000, 1850), clock=None) -> Sensors:

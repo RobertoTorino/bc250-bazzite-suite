@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Reads the overlay's values from /proc and /sys, without root. Every reader returns None when its source is
-missing, so the overlay shows "—" instead of failing on a board or kernel that lacks it.
+"""Reads the board's live values from /proc and /sys, without root. Every reader returns None when its source is
+missing, so an app shows "—" instead of failing on a board or kernel that lacks it.
 
 On the BC-250: CPU temperature from k10temp (Tctl), GPU clock, power, voltage and temperature from amdgpu, fans
 and the VRM temperature from the nct6686 Super I/O. amdgpu's gpu_busy_percent is not supported on this GPU; the GPU
@@ -75,7 +75,7 @@ def governor_range() -> tuple[int, int] | None:
         message = QDBusMessage.createMethodCall("com.cyanskillfish.Governor", "/com/cyanskillfish/Governor/Range/Current",
                                                 "org.freedesktop.DBus.Properties", "Get")
         message.setArguments(["com.cyanskillfish.Governor.Range", prop])
-        reply = bus.call(message, QDBus.CallMode.Block, 300)     # short: the overlay must never hang on the bus
+        reply = bus.call(message, QDBus.CallMode.Block, 300)     # short: an app must never hang on the bus
         if reply.type() != QDBusMessage.MessageType.ReplyMessage or not reply.arguments():
             return None
         try:
@@ -203,7 +203,7 @@ class Sensors:
     def governor(self) -> tuple[int, int] | None:
         try:
             return self._governor()
-        except Exception:               # noqa: BLE001 - a broken bus must not stop the overlay
+        except Exception:               # noqa: BLE001 - a broken bus must not stop the app
             return None
 
     # ----------------------------------------------------------------- memory

@@ -9,11 +9,11 @@ from PyQt6.QtCore import QRectF, Qt, QTimer
 from PyQt6.QtGui import QAction, QActionGroup, QColor, QContextMenuEvent, QMouseEvent, QPainter, QPaintEvent, QPen
 from PyQt6.QtWidgets import QGridLayout, QLabel, QMenu, QWidget
 
+from bc250_core.sensors import Reading, Sensors
 from bc250_core.settings import SettingsStore, restore_geometry, save_geometry
 from bc250_core.theme import ACCENT, ORANGE, RED, header_font
 
 from . import APP_NAME, INFO
-from .sensors import Reading, Sensors
 
 INTERVAL_MS = 1000
 RADIUS = 10

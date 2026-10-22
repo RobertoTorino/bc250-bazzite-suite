@@ -5,9 +5,9 @@ from __future__ import annotations
 
 from PyQt6.QtCore import Qt
 
+from bc250_core.sensors import Fan, Reading, Sensors
 from bc250_core.theme import ORANGE, RED
 from system_overlay import overlay
-from system_overlay.sensors import Fan, Reading, Sensors
 from conftest import Clock, gpu_metrics, proc_stat, write
 
 
