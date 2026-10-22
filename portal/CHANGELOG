@@ -1,3 +1,7 @@
+Changelog: 23-10-2026 00:36:30
+
+Release 6.7.0. Pins check-v0.10.0, upscaler-v0.9.0, overlay-v0.8.0, bios-v0.8.0, ace-v0.8.0, mesh-v0.9.0, vram-v0.8.0, fan-v0.7.0, wdriver-v0.7.0, cec-v0.8.0, sftp-v0.8.0, package-v0.14.0, ncgui-v0.8.0, rpcs3-v0.8.0, consoles-v1.8.0, clb-v0.3.0, shadps4-v0.9.0, swanstation-v0.3.0, decky-v0.9.0, datstation-v1.5.0, ppsspp-v0.8.0, pcsx2-v0.9.0, vita3k-v0.7.0, mgba-v0.3.0, sameboy-v0.3.0, xenia-v0.3.0.
+
 Changelog: 22-10-2026 23:28:29
 
 Release 6.7.0. Pins ips35-v0.1.0.
