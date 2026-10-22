@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The main window: PCSX2 itself, the PS2 BIOS and the game folders as three steps with their state and buttons,
 then the games found, each with a box for Game Mode. Downloading PCSX2, asking GitHub for a newer one and changing
-Steam's files run off the GUI thread; nothing here needs root. The look is the app's own blue (style.py)."""
+Steam's files run off the GUI thread; nothing here needs root. The look is the app's own blue (style.py). Covers…
+takes the suite's SteamGridDB API key, with which Update Game Mode looks up the pictures for each game first (core's
+covers)."""
 
 from __future__ import annotations
 
@@ -14,14 +16,14 @@ from PyQt6.QtWidgets import (QAbstractItemView, QCheckBox, QFileDialog, QGridLay
                              QInputDialog, QLabel, QMainWindow, QMessageBox, QPushButton, QTableWidget,
                              QTableWidgetItem, QVBoxLayout, QWidget)
 
-from bc250_core import SUITE_MANUAL_URL, steam, upstream, window_title
+from bc250_core import SUITE_MANUAL_URL, covers, steam, upstream, window_title
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import bin_home, xdg_open
 from bc250_core.settings import SettingsStore
 from bc250_core.updates import ReleaseInfo, UpdateChecker
 from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, hint_label
 
-from . import APP_NAME, INFO, LOGO_PATH, ROOT, __version__, emulator, memcards, shortcuts, style, userdata
+from . import APP_ID, APP_NAME, INFO, LOGO_PATH, ROOT, __version__, emulator, memcards, shortcuts, style, userdata
 from .games import Game, scan
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/pcsx2/"
@@ -39,12 +41,15 @@ class MainWindow(QMainWindow):
                  run: Path | None = None, fetch: emulator.Download = emulator.download,
                  steam_closed=steam.with_steam_closed, steam_running=steam.steam_running,
                  newer_release=emulator.newer_release, latest_nightly=emulator.latest_nightly,
-                 open_folder=xdg_open):
+                 open_folder=xdg_open,
+                 covers_home: Path | None = None, covers_get: covers.Get = covers._get,
+                 covers_key: Path | None = None):
         """*home*: where the app installs PCSX2; *pcsx2_home*: PCSX2's own folder; *steam_dir*: Steam's folder
         (None: looked up); *run*: the run wrapper the shortcuts start; *fetch*: the download; *steam_closed* and
         *steam_running*: closing Steam for a change and asking whether it runs; *newer_release* and *latest_nightly*:
         ask GitHub for a newer stable and for the newest nightly build; *open_folder*: opens the BIOS folder in the
-        file manager (tests never touch the real ones)."""
+        file manager; *covers_home*, *covers_get* and *covers_key*: where the SteamGridDB pictures are kept, how
+        SteamGridDB is asked and the suite's key file (tests never touch the real ones)."""
         super().__init__()
         self.resize(980, 760)
         self.home = home or emulator.emulator_home()
@@ -54,6 +59,9 @@ class MainWindow(QMainWindow):
         self.fetch = fetch
         self.steam_closed = steam_closed
         self.steam_running = steam_running
+        self.covers_home = covers_home or covers.covers_home(APP_ID)
+        self.covers_get = covers_get
+        self.covers_key = covers_key
         self.open_folder = open_folder
         self._newer_release = newer_release
         self._latest_nightly = latest_nightly
@@ -67,6 +75,7 @@ class MainWindow(QMainWindow):
         self.worker.finished.connect(self._job_done)
         self.games: list[Game] = []
         self.in_steam: dict[str, str] = {}
+        self.no_cover: set[str] = set()               # games in Steam not yet looked up on SteamGridDB, with a key
         self.version = ""
         self.replaced = False                       # PCSX2 updated itself to a build the app was not tried with
         self.bios: list[Path] = []
@@ -168,6 +177,10 @@ class MainWindow(QMainWindow):
         self.memcards_button.setToolTip("The saves on PCSX2's memory cards: import, export, copy, delete; a new "
                                         "card, format and check")
         self.memcards_button.clicked.connect(self.on_memcards)
+        self.covers_button = QPushButton("Covers…")
+        self.covers_button.setToolTip("The SteamGridDB API key, one for the whole suite: with it, Update Game Mode "
+                                      "gives each game its cover, banner and logo from SteamGridDB in Steam")
+        self.covers_button.clicked.connect(self.on_covers)
         self.steam_button = style.primary_button("Update Game Mode", STEAM_TIP)
         self.steam_button.clicked.connect(self.on_update_steam)
         buttons = QHBoxLayout()
@@ -175,6 +188,7 @@ class MainWindow(QMainWindow):
         buttons.addWidget(self.pcsx2_button)
         buttons.addWidget(self.memcards_button)
         buttons.addStretch(1)
+        buttons.addWidget(self.covers_button)
         buttons.addWidget(self.steam_button)
 
         self.running = QLabel()
@@ -236,8 +250,11 @@ class MainWindow(QMainWindow):
         self.games = scan(self.folders)
         try:
             self.in_steam = shortcuts.in_steam(self.steam_dir) if self.steam_dir else {}
+            self.no_cover = ({str(g.file) for g in self.games if str(g.file) in self.in_steam
+                              and not covers.known(self.covers_home, shortcuts.cover_name(g))}
+                             if covers.read_key(self.covers_key) else set())
         except OSError:
-            self.in_steam = {}
+            self.in_steam, self.no_cover = {}, set()
         self._show_state()
         self._fill_table()
 
@@ -431,11 +448,13 @@ class MainWindow(QMainWindow):
         self.folder_button.setEnabled(idle)
         self.forget_button.setEnabled(idle and bool(self.folders))
         self.play_button.setEnabled(idle and installed_ and self.chosen() is not None)
+        self.covers_button.setEnabled(idle)
         self.pcsx2_button.setEnabled(idle and installed_)
         self.memcards_button.setEnabled(idle)
         add, remove = self.steam_plan()
         named = shortcuts.names(add)        # a name in Steam that differs (one from before the prefix) is renamed
-        changed = bool(remove) or any(self.in_steam.get(str(g.file)) != named[g.file] for g in add)
+        changed = bool(remove) or any(self.in_steam.get(str(g.file)) != named[g.file] or str(g.file) in self.no_cover
+                                      for g in add)
         self.steam_button.setEnabled(idle and changed and self.steam_dir is not None and not steam.game_mode())
         if self.steam_dir is None:
             self.steam_button.setToolTip("Steam was never started on this system: start it once first")
@@ -590,18 +609,29 @@ class MainWindow(QMainWindow):
             text += "\n\nSteam closes for it and starts again in the background."
         if not self._ask("Game Mode", text):
             return
-        changes = shortcuts.changes(add, remove, self.run_path, LOGO_PATH, self.in_steam)
-        folder, closed = self.steam_dir, self.steam_closed
+        folder, closed, run, existing = self.steam_dir, self.steam_closed, self.run_path, self.in_steam
+        key, home, get = covers.read_key(self.covers_key), self.covers_home, self.covers_get
 
         def job() -> tuple[bool, str]:
+            # The covers first, off the GUI thread; the artwork is drawn here too, on QImage only.
+            notes = (covers.fetch([(shortcuts.cover_name(g), g.title) for g in add], shortcuts.COVERS, key, home,
+                                  get) if key else [])
+            changes = shortcuts.changes(add, remove, run, LOGO_PATH, existing,
+                                        found=lambda g: covers.art(home, shortcuts.cover_name(g), shortcuts.COVERS))
             try:
                 restarted = closed(lambda: steam.write_shortcuts(folder, changes))
             except (steam.SteamError, steam.ShortcutError, OSError) as error:
-                return False, f"Steam was not changed: {error}"
+                return False, "\n".join([*notes, f"Steam was not changed: {error}"])
             again = " Steam was closed for it and starts again in the background." if restarted else ""
-            return True, (f"{len(add)} game(s) in Steam, under Non-Steam in the library"
-                          f"{f'; {len(remove)} taken out' if remove else ''}.{again}")
-        self._start("Changing Steam's shortcuts…", job)
+            return True, "\n".join([*notes, f"{len(add)} game(s) in Steam, under Non-Steam in the library"
+                                              f"{f'; {len(remove)} taken out' if remove else ''}.{again}"])
+        self._start("Looking up covers and changing Steam's shortcuts…" if key else "Changing Steam's shortcuts…",
+                    job)
+
+    def on_covers(self) -> None:
+        """Asks for the suite's SteamGridDB API key; empty turns the lookup off (the pictures kept stay in use)."""
+        if covers.edit_key(self, self.covers_key):
+            self.refresh()
 
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 (Qt override)
         if self.worker.running and not self._ask("Close", "A download or a change to Steam is still running. "

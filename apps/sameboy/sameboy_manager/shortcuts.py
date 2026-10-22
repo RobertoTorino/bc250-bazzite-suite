@@ -5,20 +5,22 @@ the SameBoy core, the game full screen (bc250-sameboy-run --fullscreen "<game>")
 The file and its format are core's (bc250_core.steam). The shortcut runs the wrapper, not RetroArch, so its Steam
 number (from the program and the name) stays the same whatever RetroArch's version. A cartridge dump carries no
 pictures, so the artwork is drawn from the app's icon by core's steam_art: a background in the icon's colour, the
-icon and the game's title."""
+icon and the game's title. The pictures from SteamGridDB (core's covers), when they are kept for the game, replace
+the drawn ones they cover."""
 
 from __future__ import annotations
 
 import shlex
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from pathlib import Path
 
-from bc250_core import steam, steam_art
+from bc250_core import covers, steam, steam_art
 
 from .games import Game
 
 RUN = "~/.local/bin/bc250-sameboy-run"
 RUN_NAME = "bc250-sameboy-run"
+COVERS = covers.ALL         # from SteamGridDB: all four, the app draws them from its icon otherwise
 APP_TAG = "SameBoy Manager"
 
 
@@ -75,19 +77,26 @@ def entry(game: Game, name: str, run: Path, logo: Path) -> dict:
                                 launch_options(game), (game.system, APP_TAG))
 
 
+def cover_name(game: Game) -> str:
+    """The name the game's pictures from SteamGridDB are kept under."""
+    return covers.name(game.title)
+
+
 def in_steam(folder: Path) -> dict[str, str]:
     """The game files that have a shortcut of this app, for any Steam user, with the shortcut's name."""
     return {_file(item): str(item.get("AppName", "")) for item in steam.shortcuts(folder) if ours(item)}
 
 
 def changes(add: Iterable[Game], remove: Iterable[Game], run: Path, logo: Path, existing: dict[str, str],
-            art: bool = True) -> list[steam.Change]:
+            art: bool = True, found: Callable[[Game], dict[str, bytes]] = lambda _game: {}) -> list[steam.Change]:
     """The changes for core's write_shortcuts: the games to add (or bring up to date) and to take out. The names
     are made unique over the games added; a shortcut taken out is named as in Steam (*existing*, from in_steam()),
-    so its artwork, numbered by the name, goes too."""
+    so its artwork, numbered by the name, goes too. *found*: a game's pictures from SteamGridDB, in place of the
+    drawn ones."""
     add, remove = list(add), list(remove)
     named = names(add)
-    result = [steam.Change(entry(g, named[g.file], run, logo), for_game(g), draw_art(g, logo) if art else {})
+    result = [steam.Change(entry(g, named[g.file], run, logo), for_game(g),
+                           {**draw_art(g, logo), **found(g)} if art else {})
               for g in add]
     result += [steam.Change(entry(g, existing.get(str(g.file), g.title), run, logo), for_game(g), remove=True)
                for g in remove]

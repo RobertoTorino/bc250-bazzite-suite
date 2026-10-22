@@ -89,3 +89,15 @@ def test_the_drawn_artwork(tmp_path, qapp):
     for suffix in ("p", "", "_hero"):
         image = QImage.fromData(art[suffix], "PNG")
         assert (image.width(), image.height()) == steam.ART[suffix], suffix
+
+
+def test_pictures_from_steamgriddb_in_place_of_the_drawn_ones(tmp_path, qapp):
+    from bc250_core import covers
+    title = "Pokemon - Yellow Version (USA, Europe) (SGB Enhanced)"     # named after its file
+    game = Game(Path(f"/games/{title}.gbc"), title, "GBC", "gbc")
+    assert shortcuts.COVERS == ("p", "", "_hero", "_logo") and shortcuts.cover_name(game) == covers.name(game.title)
+    assert covers.search_title(game.title) == "Pokemon - Yellow Version"
+    drawn = shortcuts.draw_art(game, LOGO_PATH)
+    change = shortcuts.changes([game], [], RUN, LOGO_PATH, {}, found=lambda _g: {"p": b"cover", "_hero": b"hero"})[0]
+    assert change.art == {**drawn, "p": b"cover", "_hero": b"hero"}
+    assert shortcuts.changes([game], [], RUN, LOGO_PATH, {})[0].art == drawn

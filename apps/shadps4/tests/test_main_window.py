@@ -442,3 +442,46 @@ def test_shadnet_pill_from_shadps4_while_it_runs(qapp, folders):
     assert window.shadnet_pill.text() == "shadNet Offline"
     assert window.shadnet_pill.toolTip() == "shadPS4's sign-in was refused: the password is wrong."
     window.close()
+
+
+def test_covers_with_the_suites_key(qapp, folders, monkeypatch, tmp_path):
+    """Covers… keeps the suite's key; Update Game Mode then looks up the games and puts the cover on the portrait,
+    and a game in Steam not looked up yet makes the button do something again."""
+    from PyQt6.QtGui import QColor, QImage
+    from PyQt6.QtWidgets import QInputDialog
+
+    picture = QImage(600, 900, QImage.Format.Format_ARGB32)
+    picture.fill(QColor("#0000ff"))
+    picture.save(str(tmp_path / "blue.png"))
+    asked = []
+
+    def get(url: str, headers: dict[str, str]) -> bytes:
+        asked.append(url)
+        if "search/" in url:
+            return json.dumps({"success": True, "data": [{"id": 1, "name": "One"}]}).encode()
+        if "grids/" in url:
+            return json.dumps({"success": True, "data": [{"score": 1, "mime": "image/png",
+                                                          "url": "https://cdn2.steamgriddb.com/p.png"}]}).encode()
+        return (tmp_path / "blue.png").read_bytes()
+    _install(folders["home"])
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    key = tmp_path / "key"
+    window = _window(folders, covers_home=tmp_path / "covers", covers_get=get, covers_key=key)
+    window.table.item(0, 0).setCheckState(Qt.CheckState.Checked)
+    window.on_update_steam()
+    _wait(window, qapp)
+    assert asked == [] and not window.steam_button.isEnabled()                  # no key: nothing asked
+    monkeypatch.setattr(QInputDialog, "exec", lambda self: (self.setTextValue("0123456789abcdef"), 1)[1])
+    window.on_covers()
+    assert key.read_text() == "0123456789abcdef\n"
+    assert window.no_cover == {str(window.games[0].eboot)} and window.steam_button.isEnabled()
+    window.on_update_steam()
+    _wait(window, qapp)
+    assert window.running.text().startswith("Covers: SteamGridDB had pictures for 1 of 1 game(s).\n1 game(s) in")
+    assert not any("heroes/" in url or "logos/" in url for url in asked)        # the portrait alone
+    assert "0123456789abcdef" not in window.output.toPlainText()
+    number = shortcuts.entry(window.games[0], "[PS4] One", folders["run"], LOGO_PATH)["appid"] & 0xFFFFFFFF
+    grid = steam.user_folders(folders["steam_dir"])[0] / "grid"
+    assert QImage(str(grid / f"{number}p.png")).pixelColor(300, 450).name() == "#0000ff"
+    assert window.no_cover == set() and not window.steam_button.isEnabled()
+    window.close()

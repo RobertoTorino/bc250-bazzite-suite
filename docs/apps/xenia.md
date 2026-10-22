@@ -63,6 +63,13 @@ Steam's overlay works over a game started from Steam, in Game Mode and on the de
 
 Change Game Mode from Desktop Mode: in Game Mode Steam is the session itself and cannot close for the change.
 
+#### Covers
+
+With a SteamGridDB API key, the app takes all four pictures from SteamGridDB instead of drawing them: the cover, the
+wide picture, the banner and the logo. Press **Covers…** to enter the key, one for the whole suite. A picture
+SteamGridDB does not have stays drawn. See [Covers from SteamGridDB](covers.md) for the key, how a game is looked up
+and how to use pictures of your own.
+
 ## From a terminal
 
 `bc250-xenia-run` starts the installed Xenia with the options you give it. The Game Mode shortcuts use it, so they
@@ -112,6 +119,7 @@ the desktop too, and the run wrapper has nothing to change for it.
 | Xenia's settings, saves and installed content | `~/.local/share/Xenia` (Xenia's own folder) |
 | The app's settings, with the game folders | `~/.config/bc250-xenia-manager` |
 | The Game Mode shortcuts | Steam's `shortcuts.vdf` and `grid` folder, per Steam user |
+| The pictures found on SteamGridDB | `~/.local/share/bc250-xenia-manager/covers` |
 | Launchers | `~/.local/bin/bc250-xenia-manager`, `~/.local/bin/bc250-xenia-run` |
 
 ## Install and remove
@@ -124,7 +132,7 @@ Game Mode then no longer start: take them out first by unticking them and pressi
 ./install.sh                         # install or update
 ./install.sh --no-desktop-shortcut   # app menu entry only, no icon on the Desktop
 ./install.sh --uninstall             # remove the app and the Xenia it installed; keeps its settings
-./install.sh --uninstall --purge     # also remove its settings
+./install.sh --uninstall --purge     # also remove its settings and covers
 ```
 
 ## Disclaimer

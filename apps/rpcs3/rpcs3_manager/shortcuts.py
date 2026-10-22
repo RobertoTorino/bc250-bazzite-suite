@@ -7,15 +7,16 @@ The file and its format are core's (bc250_core.steam). The shortcut runs the wra
 Steam number (from the program and the name) stays the same when the app brings another RPCS3. The artwork comes
 from the game's own folder: ICON0.PNG (320 × 176) on the portrait and the wide picture and as the logo on the banner
 (Steam's Properties > Customization > Logo), PIC1.PNG (1920 × 1080, its background) on the banner and behind the wide
-one; without them the title is drawn on a dark background."""
+one; without them the title is drawn on a dark background. A cover from SteamGridDB (core's covers), when one is
+kept for the game, is the portrait instead: the game's own pictures fill the other three."""
 
 from __future__ import annotations
 
 import shlex
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from pathlib import Path
 
-from bc250_core import steam
+from bc250_core import covers, steam
 
 from .games import Game
 
@@ -23,6 +24,7 @@ RUN = "~/.local/bin/bc250-rpcs3-run"
 RUN_NAME = "bc250-rpcs3-run"
 TAGS = ("PS3", "RPCS3 Manager")
 PREFIX = f"[{TAGS[0]}] "    # before each name, so the same title on another system or on Steam itself is told apart
+COVERS = covers.PORTRAIT    # from SteamGridDB: the portrait alone, the game's own pictures are the rest
 
 
 def launch_options(game: Game) -> str:
@@ -77,14 +79,21 @@ def in_steam(folder: Path) -> dict[str, str]:
     return {_eboot(item): str(item.get("AppName", "")) for item in steam.shortcuts(folder) if ours(item)}
 
 
+def cover_name(game: Game) -> str:
+    """The name the game's pictures from SteamGridDB are kept under."""
+    return covers.name(game.title, game.title_id)
+
+
 def changes(add: Iterable[Game], remove: Iterable[Game], run: Path, logo: Path, existing: dict[str, str],
-            art: bool = True) -> list[steam.Change]:
+            art: bool = True, found: Callable[[Game], dict[str, bytes]] = lambda _game: {}) -> list[steam.Change]:
     """The changes for core's write_shortcuts: the games to add (or bring up to date) and to take out. The names
     are made unique over the games added; a shortcut taken out is named as in Steam (*existing*, from in_steam()),
-    so its artwork, numbered by the name, goes too."""
+    so its artwork, numbered by the name, goes too. *found*: a game's pictures from SteamGridDB, in place of the
+    drawn ones."""
     add, remove = list(add), list(remove)
     named = names(add)
-    result = [steam.Change(entry(g, named[g.eboot], run, logo), for_game(g), draw_art(g, logo) if art else {})
+    result = [steam.Change(entry(g, named[g.eboot], run, logo), for_game(g),
+                           {**draw_art(g, logo), **found(g)} if art else {})
               for g in add]
     result += [steam.Change(entry(g, existing.get(str(g.eboot), g.title), run, logo), for_game(g), remove=True)
                for g in remove]

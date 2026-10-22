@@ -1,3 +1,21 @@
+Changelog: 22-10-2026 19:31:16
+
+Release 0.8.0.
+
+Changelog: 22-10-2026 18:10:06
+
+Added. Pictures from SteamGridDB for the games in Steam (owner, 22-10-2026), with core's covers. A PS2 disc brings
+no pictures, so all four were drawn from the app's icon and the game's title. With the suite's SteamGridDB API key,
+entered under the new Covers… button (one key for every app of the suite), Update Game Mode first looks each ticked
+game up by its title, the file's name without tags such as "(USA)", and takes the cover, the wide picture, the
+banner and the logo with the most votes; a picture SteamGridDB does not have stays drawn. What is found is kept in
+~/.local/share/bc250-pcsx2-manager/covers under the game's serial, so it is not asked for again; a game in Steam not
+yet looked up turns Update Game Mode on. A refused key or no network stops the lookup with a message and the drawn
+pictures are used; the shortcuts are written all the same. Without a key nothing changes. The artwork is now drawn in
+the background job, after the lookup. install.sh --uninstall --purge removes the covers folder too; the installer test checks it. Test: the pictures in place of the drawn ones for a file named
+"Gran Turismo 4 (USA) (v2.00).iso", and Covers… with Update Game Mode in the window asking for all four kinds,
+SteamGridDB's answers made in the test.
+
 Changelog: 21-10-2026 02:13:00
 
 Release 0.7.1.

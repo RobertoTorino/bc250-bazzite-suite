@@ -82,6 +82,13 @@ A game started from Steam reads your controllers itself. [How it works](#how-it-
 
 Change Game Mode from Desktop Mode: in Game Mode Steam is the session itself and cannot close for the change.
 
+#### Covers
+
+A PS Vita game has no cover in the shape Steam's library uses, so the app draws one: the game's icon with its title on
+a dark background. With a SteamGridDB API key, the app takes a cover from SteamGridDB for each game instead; the
+background and the logo on the game's page stay the game's own. See [Covers from SteamGridDB](covers.md) for the
+key, how a game is looked up and how to use a cover of your own.
+
 ## From a terminal
 
 `bc250-vita3k-run` starts the installed Vita3K with the options you give it. The Game Mode shortcuts use it, so they
@@ -147,6 +154,7 @@ game. Game Mode runs every game through X11 already.
 | Vita3K's shader cache and log | `~/.cache/AppImage-Cache/Vita3K` |
 | The app's settings | `~/.config/bc250-vita3k-manager` |
 | The Game Mode shortcuts | Steam's `shortcuts.vdf` and `grid` folder, per Steam user |
+| The covers found on SteamGridDB | `~/.local/share/bc250-vita3k-manager/covers` |
 | Launchers | `~/.local/bin/bc250-vita3k-manager`, `~/.local/bin/bc250-vita3k-run` |
 
 Vita3K can keep its storage elsewhere (its **Settings**, the storage folder); the app reads where it is.
@@ -161,7 +169,7 @@ Mode then no longer start: take them out first by unticking them and pressing **
 ./install.sh                         # install or update
 ./install.sh --no-desktop-shortcut   # app menu entry only, no icon on the Desktop
 ./install.sh --uninstall             # remove the app and the Vita3K it installed; keeps its settings
-./install.sh --uninstall --purge     # also remove its settings
+./install.sh --uninstall --purge     # also remove its settings and covers
 ```
 
 ## Disclaimer

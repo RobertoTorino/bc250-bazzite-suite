@@ -82,6 +82,13 @@ A game started from Steam reads your controllers itself. [How it works](#how-it-
 
 Change Game Mode from Desktop Mode: in Game Mode Steam is the session itself and cannot close for the change.
 
+#### Covers
+
+A PS3 game has no cover in the shape Steam's library uses, so the app draws one: the game's icon with its title on
+a dark background. With a SteamGridDB API key, the app takes a cover from SteamGridDB for each game instead; the
+background and the logo on the game's page stay the game's own. See [Covers from SteamGridDB](covers.md) for the
+key, how a game is looked up and how to use a cover of your own.
+
 ## From a terminal
 
 `bc250-rpcs3-run` starts the installed RPCS3 with the options you give it. The Game Mode shortcuts use it, so they
@@ -145,6 +152,7 @@ already.
 | RPCS3's shader cache | `~/.cache/rpcs3` |
 | The app's settings, with the game folders | `~/.config/bc250-rpcs3-manager` |
 | The Game Mode shortcuts | Steam's `shortcuts.vdf` and `grid` folder, per Steam user |
+| The covers found on SteamGridDB | `~/.local/share/bc250-rpcs3-manager/covers` |
 | Launchers | `~/.local/bin/bc250-rpcs3-manager`, `~/.local/bin/bc250-rpcs3-run` |
 
 RPCS3 can keep its drives elsewhere (its **Configuration > Virtual File System**); the app reads where they are.
@@ -159,7 +167,7 @@ Mode then no longer start: take them out first by unticking them and pressing **
 ./install.sh                         # install or update
 ./install.sh --no-desktop-shortcut   # app menu entry only, no icon on the Desktop
 ./install.sh --uninstall             # remove the app and the RPCS3 it installed; keeps its settings
-./install.sh --uninstall --purge     # also remove its settings
+./install.sh --uninstall --purge     # also remove its settings and covers
 ```
 
 ## Disclaimer

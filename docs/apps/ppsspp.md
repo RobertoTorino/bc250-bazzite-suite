@@ -71,6 +71,13 @@ A game started from Steam reads your controllers itself. [How it works](#how-it-
 
 Change Game Mode from Desktop Mode: in Game Mode Steam is the session itself and cannot close for the change.
 
+#### Covers
+
+A PSP game has no cover in the shape Steam's library uses, so the app draws one: the game's icon with its title on a
+dark background. With a SteamGridDB API key, the app takes a cover from SteamGridDB for each game instead; the
+background and the logo on the game's page stay the game's own. See [Covers from SteamGridDB](covers.md) for the
+key, how a game is looked up and how to use a cover of your own.
+
 ## Renaming the files
 
 A dumped disc often gets a meaningless file name. **Rename files…** opens a window with the ISO and CSO images the
@@ -141,6 +148,7 @@ already.
 | PPSSPP's saves, settings, memory stick games | `~/.config/ppsspp` (the PSP's memory stick) |
 | The app's settings, with the game folders | `~/.config/bc250-ppsspp-manager` |
 | The Game Mode shortcuts | Steam's `shortcuts.vdf` and `grid` folder, per Steam user |
+| The pictures found on SteamGridDB | `~/.local/share/bc250-ppsspp-manager/covers` |
 | Launchers | `~/.local/bin/bc250-ppsspp-manager`, `~/.local/bin/bc250-ppsspp-run` |
 
 PPSSPP can keep its memory stick elsewhere (its `--root` option and settings); the app reads the standard place.
@@ -155,7 +163,7 @@ games in Game Mode then no longer start: take them out first by unticking them a
 ./install.sh                         # install or update
 ./install.sh --no-desktop-shortcut   # app menu entry only, no icon on the Desktop
 ./install.sh --uninstall             # remove the app and the PPSSPP it installed; keeps its settings
-./install.sh --uninstall --purge     # also remove its settings
+./install.sh --uninstall --purge     # also remove its settings and covers
 ```
 
 ## Disclaimer

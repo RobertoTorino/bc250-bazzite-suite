@@ -15,14 +15,14 @@ from PyQt6.QtWidgets import (QAbstractItemView, QFileDialog, QGridLayout, QHBoxL
                              QLabel, QMainWindow, QMessageBox, QPushButton, QTableWidget, QTableWidgetItem,
                              QVBoxLayout, QWidget)
 
-from bc250_core import SUITE_MANUAL_URL, steam, upstream, window_title
+from bc250_core import SUITE_MANUAL_URL, covers, steam, upstream, window_title
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import bin_home, xdg_open
 from bc250_core.settings import SettingsStore
 from bc250_core.updates import UpdateChecker
 from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, hint_label
 
-from . import APP_NAME, INFO, LOGO_PATH, ROOT, __version__, emulator, shortcuts, style, userdata
+from . import APP_ID, APP_NAME, INFO, LOGO_PATH, ROOT, __version__, emulator, shortcuts, style, userdata
 from .games import Game, scan
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/swanstation/"
@@ -39,12 +39,15 @@ class MainWindow(QMainWindow):
                  run: Path | None = None, fetch: emulator.Download = emulator.download,
                  flatpak: emulator.Run = emulator.run, head_of: emulator.Head = emulator.head,
                  steam_closed=steam.with_steam_closed, steam_running=steam.steam_running,
-                 open_folder=xdg_open):
+                 open_folder=xdg_open, covers_home: Path | None = None, covers_get: covers.Get = covers._get,
+                 covers_key: Path | None = None):
         """*home*: where the app installs the core; *retroarch*: RetroArch's own folder (the Flatpak's); *steam_dir*:
         Steam's folder (None: looked up); *run*: the run wrapper the shortcuts start; *fetch*: the download of the
         core; *flatpak*: runs a flatpak command; *head_of*: asks the buildbot for a core's headers;
         *steam_closed* and *steam_running*: closing Steam for a change and asking whether it runs; *open_folder*:
-        opens the BIOS folder in the file manager (tests never touch the real ones)."""
+        opens the BIOS folder in the file manager; *covers_home*, *covers_get* and *covers_key*: where the pictures
+        from SteamGridDB are kept, how SteamGridDB is asked and the suite's key file (tests never touch the real
+        ones)."""
         super().__init__()
         self.resize(980, 720)
         self.home = home or emulator.emulator_home()
@@ -55,6 +58,9 @@ class MainWindow(QMainWindow):
         self.flatpak = flatpak
         self.head_of = head_of
         self.open_folder = open_folder
+        self.covers_home = covers_home or covers.covers_home(APP_ID)
+        self.covers_get = covers_get
+        self.covers_key = covers_key
         self.steam_closed = steam_closed
         self.steam_running = steam_running
         self.newer = ""                                 # the date of a newer core build, when there is one
@@ -65,6 +71,7 @@ class MainWindow(QMainWindow):
         self.worker.finished.connect(self._job_done)
         self.games: list[Game] = []
         self.in_steam: dict[str, str] = {}
+        self.no_cover: set[str] = set()               # games in Steam not yet looked up on SteamGridDB, with a key
         self.retroarch = ""                             # the RetroArch version, "" when it is not installed
         self.core = ""                                  # the build date of the core, "" when it is not installed
         self.bios: list[Path] = []
@@ -150,12 +157,17 @@ class MainWindow(QMainWindow):
         self.retroarch_button.setToolTip("Open RetroArch's own window: its settings, controllers and the core's "
                                          "options")
         self.retroarch_button.clicked.connect(self.on_open_retroarch)
+        self.covers_button = QPushButton("Covers…")
+        self.covers_button.setToolTip("The SteamGridDB API key, one for the whole suite: with it, Update Game Mode "
+                                      "gives each game its cover, banner and logo from SteamGridDB in Steam")
+        self.covers_button.clicked.connect(self.on_covers)
         self.steam_button = style.primary_button("Update Game Mode", STEAM_TIP)
         self.steam_button.clicked.connect(self.on_update_steam)
         buttons = QHBoxLayout()
         buttons.addWidget(self.play_button)
         buttons.addWidget(self.retroarch_button)
         buttons.addStretch(1)
+        buttons.addWidget(self.covers_button)
         buttons.addWidget(self.steam_button)
 
         self.running = QLabel()
@@ -217,8 +229,11 @@ class MainWindow(QMainWindow):
         self.games = scan(self.folders)
         try:
             self.in_steam = shortcuts.in_steam(self.steam_dir) if self.steam_dir else {}
+            self.no_cover = ({str(g.file) for g in self.games if str(g.file) in self.in_steam
+                              and not covers.known(self.covers_home, shortcuts.cover_name(g))}
+                             if covers.read_key(self.covers_key) else set())
         except OSError:
-            self.in_steam = {}
+            self.in_steam, self.no_cover = {}, set()
         self._show_state()
         self._fill_table()
 
@@ -331,10 +346,12 @@ class MainWindow(QMainWindow):
         self.folder_button.setEnabled(idle)
         self.forget_button.setEnabled(idle and bool(self.folders))
         self.play_button.setEnabled(idle and self.ready and self.chosen() is not None)
+        self.covers_button.setEnabled(idle)
         self.retroarch_button.setEnabled(idle and bool(self.retroarch))
         add, remove = self.steam_plan()
         named = shortcuts.names(add)        # a name in Steam that differs is renamed
-        changed = bool(remove) or any(self.in_steam.get(str(g.file)) != named[g.file] for g in add)
+        changed = bool(remove) or any(self.in_steam.get(str(g.file)) != named[g.file] or str(g.file) in self.no_cover
+                                      for g in add)
         self.steam_button.setEnabled(idle and changed and self.steam_dir is not None and not steam.game_mode())
         if self.steam_dir is None:
             self.steam_button.setToolTip("Steam was never started on this system: start it once first")
@@ -478,18 +495,29 @@ class MainWindow(QMainWindow):
             text += "\n\nSteam closes for it and starts again in the background."
         if not self._ask("Game Mode", text):
             return
-        changes = shortcuts.changes(add, remove, self.run_path, LOGO_PATH, self.in_steam)
-        folder, closed = self.steam_dir, self.steam_closed
+        folder, closed, run, existing = self.steam_dir, self.steam_closed, self.run_path, self.in_steam
+        key, home, get = covers.read_key(self.covers_key), self.covers_home, self.covers_get
 
         def job() -> tuple[bool, str]:
+            # The pictures first, off the GUI thread; the artwork is drawn here too, on QImage only.
+            notes = (covers.fetch([(shortcuts.cover_name(g), g.title) for g in add], shortcuts.COVERS, key, home,
+                                  get) if key else [])
+            changes = shortcuts.changes(add, remove, run, LOGO_PATH, existing,
+                                        found=lambda g: covers.art(home, shortcuts.cover_name(g), shortcuts.COVERS))
             try:
                 restarted = closed(lambda: steam.write_shortcuts(folder, changes))
             except (steam.SteamError, steam.ShortcutError, OSError) as error:
-                return False, f"Steam was not changed: {error}"
+                return False, "\n".join([*notes, f"Steam was not changed: {error}"])
             again = " Steam was closed for it and starts again in the background." if restarted else ""
-            return True, (f"{len(add)} game(s) in Steam, under Non-Steam in the library"
-                          f"{f'; {len(remove)} taken out' if remove else ''}.{again}")
-        self._start("Changing Steam's shortcuts…", job)
+            return True, "\n".join([*notes, f"{len(add)} game(s) in Steam, under Non-Steam in the library"
+                                              f"{f'; {len(remove)} taken out' if remove else ''}.{again}"])
+        self._start("Looking up covers and changing Steam's shortcuts…" if key else "Changing Steam's shortcuts…",
+                    job)
+
+    def on_covers(self) -> None:
+        """Asks for the suite's SteamGridDB API key; empty turns the lookup off (the pictures kept stay in use)."""
+        if covers.edit_key(self, self.covers_key):
+            self.refresh()
 
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 (Qt override)
         if self.worker.running and not self._ask("Close", "A download or a change to Steam is still running. "

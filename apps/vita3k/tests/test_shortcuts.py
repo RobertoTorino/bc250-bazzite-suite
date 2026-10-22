@@ -97,3 +97,12 @@ def test_artwork_sizes_with_and_without_the_games_pictures(tmp_path, qapp):
     assert wide.pixelColor(460, 215).name() == "#ff0000"                          # icon0.png in the middle
     logo = QImage.fromData(art["_logo"], "PNG")
     assert (logo.width(), logo.height()) == (128, 128) and logo.pixelColor(10, 10).name() == "#ff0000"
+
+
+def test_pictures_from_steamgriddb_in_place_of_the_drawn_ones(tmp_path, qapp):
+    game = read_game(make_game(tmp_path, "A", "PCSB01234", pictures=True))
+    assert shortcuts.COVERS == ("p",) and shortcuts.cover_name(game) == "PCSB01234"
+    drawn = shortcuts.draw_art(game, LOGO_PATH)
+    change = shortcuts.changes([game], [], RUN, LOGO_PATH, {}, found=lambda _g: {"p": b"cover"})[0]
+    assert change.art == {**drawn, "p": b"cover"}
+    assert shortcuts.changes([game], [], RUN, LOGO_PATH, {})[0].art == drawn

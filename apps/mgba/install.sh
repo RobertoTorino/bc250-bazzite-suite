@@ -5,7 +5,7 @@
 #   ./install.sh                         # install or update
 #   ./install.sh --no-desktop-shortcut   # app menu entry only, no icon on the Desktop
 #   ./install.sh --uninstall             # remove the app and the mGBA it installed; keeps its settings
-#   ./install.sh --uninstall --purge     # also remove its settings
+#   ./install.sh --uninstall --purge     # also remove its settings and covers
 #
 # Run it as your own user; installing needs no root. mGBA itself is downloaded by the app (Install), not here.
 #  * ~/.local/share/bc250-mgba-manager/app: the app, with the bc250_core it was tested with (bundled in the
@@ -74,8 +74,8 @@ if $UNINSTALL; then
         rm -rf "$VENV"
     fi
     if $PURGE; then
-        info "Removing the settings"
-        rm -rf "${CONFIG_DIR:?}/$APP_ID"
+        info "Removing the settings and the covers found on SteamGridDB"
+        rm -rf "${CONFIG_DIR:?}/$APP_ID" "${DATA_DIR:?}/$APP_ID/covers"
     fi
     rmdir "${DATA_DIR:?}/$APP_ID" 2>/dev/null || true
     info "$APP_NAME is uninstalled. mGBA's own folder ($CONFIG_DIR/mgba), your games and their saves were left as they are."

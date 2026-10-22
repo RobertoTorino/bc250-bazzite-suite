@@ -88,3 +88,16 @@ def test_the_drawn_artwork(tmp_path, qapp):
     for suffix in ("p", "", "_hero"):
         image = QImage.fromData(art[suffix], "PNG")
         assert (image.width(), image.height()) == steam.ART[suffix], suffix
+
+
+def test_pictures_from_steamgriddb_in_place_of_the_drawn_ones(tmp_path, qapp):
+    """All four from SteamGridDB: a PS2 disc brings none. The title is the file's name, whose tags are left out
+    when SteamGridDB is asked."""
+    from bc250_core import covers
+    game = read_disc(make_disc(tmp_path / "Gran Turismo 4 (USA) (v2.00).iso", "SCUS_973.28"))
+    assert game.title == "Gran Turismo 4 (USA) (v2.00)" and covers.search_title(game.title) == "Gran Turismo 4"
+    assert shortcuts.COVERS == ("p", "", "_hero", "_logo") and shortcuts.cover_name(game) == "SCUS-97328"
+    drawn = shortcuts.draw_art(game, LOGO_PATH)
+    change = shortcuts.changes([game], [], RUN, LOGO_PATH, {}, found=lambda _g: {"p": b"cover", "_hero": b"hero"})[0]
+    assert change.art == {**drawn, "p": b"cover", "_hero": b"hero"}             # the others stay drawn
+    assert shortcuts.changes([game], [], RUN, LOGO_PATH, {})[0].art == drawn

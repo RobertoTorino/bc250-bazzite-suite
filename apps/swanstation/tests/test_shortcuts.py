@@ -87,3 +87,16 @@ def test_the_drawn_artwork(tmp_path, qapp):
     for suffix in ("p", "", "_hero"):
         image = QImage.fromData(art[suffix], "PNG")
         assert (image.width(), image.height()) == steam.ART[suffix], suffix
+
+
+def test_pictures_from_steamgriddb_in_place_of_the_drawn_ones(tmp_path, qapp):
+    from bc250_core import covers
+    game = read_image(make_disc(tmp_path / "Final Fantasy VII (USA) (Disc 1).iso", disc_id="SCUS_941.63"))
+    assert shortcuts.COVERS == covers.ALL and shortcuts.cover_name(game) == "SCUS-94163"
+    assert covers.search_title(game.title) == "Final Fantasy VII"                # looked up without the tags
+    assert shortcuts.cover_name(Game(Path("/g/Other.chd"), "Other")).startswith("title-")    # a CHD has no ID here
+    drawn = shortcuts.draw_art(game, LOGO_PATH)
+    found = {"p": b"cover", "_hero": b"banner"}
+    change = shortcuts.changes([game], [], RUN, LOGO_PATH, {}, found=lambda _g: found)[0]
+    assert change.art == {**drawn, **found} and change.art[""] == drawn[""]
+    assert shortcuts.changes([game], [], RUN, LOGO_PATH, {})[0].art == drawn

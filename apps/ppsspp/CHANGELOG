@@ -1,3 +1,20 @@
+Changelog: 22-10-2026 19:31:16
+
+Release 0.7.0.
+
+Changelog: 22-10-2026 18:10:06
+
+Added. Covers from SteamGridDB for the portrait in Steam's library (owner, 22-10-2026), with core's covers. A PSP
+game has no 2:3 picture of its own, so the portrait was always drawn from its icon and title. With the suite's
+SteamGridDB API key, entered under the new Covers… button (one key for every app of the suite), Update Game Mode
+first looks each ticked game up by its title and takes the portrait with the most votes. Only the portrait: the wide
+picture, the banner and the logo stay the game's own. What is found is kept in
+~/.local/share/bc250-ppsspp-manager/covers under the game's disc ID, so it is not asked for again; a game in Steam
+not yet looked up turns Update Game Mode on. A refused key or no network stops the lookup with a message and the
+drawn portrait is used; the shortcuts are written all the same. Without a key nothing changes. The artwork is now
+drawn in the background job, after the lookup. install.sh --uninstall --purge removes the covers folder too; the installer test checks it. Test: the cover in place of the drawn portrait, and Covers… with
+Update Game Mode in the window, SteamGridDB's answers made in the test.
+
 Changelog: 21-10-2026 02:13:00
 
 Release 0.6.1.

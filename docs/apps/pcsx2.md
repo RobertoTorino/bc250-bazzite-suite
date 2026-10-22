@@ -75,6 +75,13 @@ A game started from Steam reads your controllers itself. [How it works](#how-it-
 
 Change Game Mode from Desktop Mode: in Game Mode Steam is the session itself and cannot close for the change.
 
+#### Covers
+
+With a SteamGridDB API key, the app takes the pictures for each game from SteamGridDB instead of drawing them: the
+cover, the wide picture, the banner and the logo. A picture SteamGridDB does not have stays drawn. The title the app
+looks up is the file's name, without tags such as `(USA)`, so a file named after the game finds it best. See
+[Covers from SteamGridDB](covers.md) for the key, how a game is looked up and how to use a picture of your own.
+
 ## Memory cards
 
 **Memory cards…** shows the memory cards in PCSX2's memory card folder (`~/.config/PCSX2/memcards`, or the folder
@@ -178,6 +185,7 @@ already.
 | The memory cards' backups | Beside each card, in PCSX2's memory card folder |
 | The app's settings, with the game folders | `~/.config/bc250-pcsx2-manager` |
 | The Game Mode shortcuts | Steam's `shortcuts.vdf` and `grid` folder, per Steam user |
+| The pictures found on SteamGridDB | `~/.local/share/bc250-pcsx2-manager/covers` |
 | Launchers | `~/.local/bin/bc250-pcsx2-manager`, `~/.local/bin/bc250-pcsx2-run` |
 
 ## Install and remove
@@ -190,7 +198,7 @@ Game Mode then no longer start: take them out first by unticking them and pressi
 ./install.sh                         # install or update
 ./install.sh --no-desktop-shortcut   # app menu entry only, no icon on the Desktop
 ./install.sh --uninstall             # remove the app and the PCSX2 it installed; keeps its settings
-./install.sh --uninstall --purge     # also remove its settings
+./install.sh --uninstall --purge     # also remove its settings and covers
 ```
 
 ## Disclaimer

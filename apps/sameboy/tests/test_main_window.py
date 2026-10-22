@@ -337,3 +337,60 @@ def test_an_unreachable_buildbot_leaves_the_notice_as_it_was(qapp, folders):
     _until(qapp, lambda: not window.release_check.running)
     assert window.newer == "" and len(upstream.read_all()["sameboy"]) == 1
     window.close()
+
+
+def test_covers_with_the_suites_key(qapp, folders, monkeypatch, tmp_path):
+    """Covers… keeps the suite's key; Update Game Mode then looks up the game by its title, without the tags of its
+    file name, and puts SteamGridDB's pictures in place of all four drawn ones, and a game in Steam not looked up yet
+    makes the button do something again."""
+    import json
+
+    from PyQt6.QtGui import QColor, QImage
+    from PyQt6.QtWidgets import QInputDialog
+
+    from sameboy_manager import LOGO_PATH
+
+    picture = QImage(600, 900, QImage.Format.Format_ARGB32)
+    picture.fill(QColor("#0000ff"))
+    picture.save(str(tmp_path / "blue.png"))
+    asked = []
+
+    def get(url: str, headers: dict[str, str]) -> bytes:
+        asked.append(url)
+        if "search/" in url:
+            return json.dumps({"success": True, "data": [{"id": 1, "name": "Tetris"}]}).encode()
+        if "/game/1?" in url:
+            return json.dumps({"success": True, "data": [{"score": 1, "mime": "image/png",
+                                                          "url": "https://cdn2.steamgriddb.com/x.png"}]}).encode()
+        return (tmp_path / "blue.png").read_bytes()
+    _install(folders["home"])
+    make_gb(tmp_path / "more" / "Tetris (World) (Rev 1).gb")
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    key = tmp_path / "key"
+    window = _window(folders, covers_home=tmp_path / "covers", covers_get=get, covers_key=key)
+    window.add_folder(tmp_path / "more")
+    row = _titles(window).index("Tetris (World) (Rev 1)")
+    window.table.item(row, 0).setCheckState(Qt.CheckState.Checked)
+    window.on_update_steam()
+    _wait(window, qapp)
+    assert asked == [] and not window.steam_button.isEnabled()                  # no key: nothing asked
+    monkeypatch.setattr(QInputDialog, "exec", lambda self: (self.setTextValue("0123456789abcdef"), 1)[1])
+    window.on_covers()
+    assert key.read_text() == "0123456789abcdef\n"
+    game = window.games[row]
+    assert window.no_cover == {str(game.file)} and window.steam_button.isEnabled()
+    window.on_update_steam()
+    _wait(window, qapp)
+    assert window.running.text().startswith("Covers: SteamGridDB had pictures for 1 of 1 game(s).\n1 game(s) in")
+    assert asked[0].endswith("search/autocomplete/Tetris")
+    assert any("heroes/" in url for url in asked) and any("logos/" in url for url in asked)
+    assert "0123456789abcdef" not in window.output.toPlainText()
+    name = shortcuts.names([game])[game.file]
+    number = shortcuts.entry(game, name, folders["run"], LOGO_PATH)["appid"] & 0xFFFFFFFF
+    grid = steam.user_folders(folders["steam_dir"])[0] / "grid"
+    for suffix in ("p", "", "_hero"):
+        image = QImage(str(grid / f"{number}{suffix}.png"))
+        assert image.pixelColor(image.width() // 2, image.height() // 2).name() == "#0000ff", suffix
+    assert QImage(str(grid / f"{number}_logo.png")).size() == picture.size()
+    assert window.no_cover == set() and not window.steam_button.isEnabled()
+    window.close()

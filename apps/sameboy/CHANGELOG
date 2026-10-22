@@ -1,3 +1,21 @@
+Changelog: 22-10-2026 19:31:16
+
+Release 0.2.0.
+
+Changelog: 22-10-2026 18:09:37
+
+Added. Pictures from SteamGridDB for the games in Steam (owner, 22-10-2026), with core's covers. A cartridge dump
+brings no pictures, so all four were always drawn from the app's icon and the game's title. With the suite's
+SteamGridDB API key, entered under the new Covers… button (one key for every app of the suite, kept in
+~/.config/bc250-bazzite-suite/steamgriddb-key), Update Game Mode first looks each ticked game up by its title, without
+the tags of its file name ("Tetris (World) (Rev 1)" as "Tetris"), and puts the cover, the wide picture, the banner and
+the logo SteamGridDB has in place of the drawn ones; one it lacks stays drawn. The pictures are kept in
+~/.local/share/bc250-sameboy-manager/covers under a name from the game's title, so a game is asked for once; a game in
+Steam not yet looked up turns Update Game Mode on. A refused key or no network stops the lookup with a message and the
+shortcuts are written all the same. Without a key nothing changes. The artwork is now drawn in the background job,
+after the lookup. install.sh --uninstall --purge removes the covers folder too; the installer test checks it. Test: the pictures in place of the drawn ones, a file name's tags left out of the lookup, and
+Covers… with Update Game Mode in the window.
+
 Changelog: 21-10-2026 14:25:29
 
 Release 0.1.0.

@@ -3,7 +3,8 @@
 and buttons, then the games found, each with a box for Game Mode. Downloading shadPS4, asking GitHub for a newer one
 and changing Steam's files run off the GUI thread; nothing here needs root. The look is the app's own blue
 (style.py). Extract PKG… (or a package dropped on the window, or given to the app) opens the package extractor
-(extract_dialog.py) on the game folders."""
+(extract_dialog.py) on the game folders. Covers… takes the suite's SteamGridDB API key, with which Update Game Mode
+looks up a cover for each game's portrait first (core's covers)."""
 
 from __future__ import annotations
 
@@ -17,14 +18,14 @@ from PyQt6.QtWidgets import (QAbstractItemView, QCheckBox, QFileDialog, QGridLay
                              QLabel, QMainWindow, QMessageBox, QPushButton, QTableWidget, QTableWidgetItem,
                              QVBoxLayout, QWidget)
 
-from bc250_core import SUITE_MANUAL_URL, steam, window_title
+from bc250_core import SUITE_MANUAL_URL, covers, steam, window_title
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import bin_home, xdg_open
 from bc250_core.settings import SettingsStore
 from bc250_core.updates import ReleaseInfo, UpdateChecker
 from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, hint_label
 
-from . import APP_NAME, INFO, LOGO_PATH, ROOT, __version__, emulator, shadnet, shortcuts, style, userdata
+from . import APP_ID, APP_NAME, INFO, LOGO_PATH, ROOT, __version__, emulator, shadnet, shortcuts, style, userdata
 from .games import Game, scan
 from .shadnet_dialog import ShadNetDialog
 
@@ -44,12 +45,14 @@ class MainWindow(QMainWindow):
                  steam_closed=steam.with_steam_closed, steam_running=steam.steam_running,
                  newer_release=emulator.newer_release, latest_nightly=emulator.latest_nightly,
                  shadnet_connect: shadnet.Connect = shadnet._connect,
-                 shad_running=userdata.shadps4_running):
+                 shad_running=userdata.shadps4_running, covers_home: Path | None = None,
+                 covers_get: covers.Get = covers._get, covers_key: Path | None = None):
         """*home*: where the app installs shadPS4; *shad_home*: shadPS4's own folder; *steam_dir*: Steam's folder
         (None: looked up); *run*: the run wrapper the shortcuts start; *fetch*: the download; *steam_closed* and
         *steam_running*: closing Steam for a change and asking whether it runs; *newer_release* and
         *latest_nightly*: ask GitHub for a newer stable and for the newest nightly build; *shadnet_connect*: opens a connection to a shadNet server; *shad_running*: whether shadPS4
-        runs (tests never touch the real ones)."""
+        runs; *covers_home*, *covers_get* and *covers_key*: where the covers are kept, how SteamGridDB is asked and
+        the suite's key file (tests never touch the real ones)."""
         super().__init__()
         self.resize(980, 760)
         self.home = home or emulator.emulator_home()
@@ -61,6 +64,9 @@ class MainWindow(QMainWindow):
         self.steam_running = steam_running
         self.shadnet_connect = shadnet_connect
         self.shad_running = shad_running
+        self.covers_home = covers_home or covers.covers_home(APP_ID)
+        self.covers_get = covers_get
+        self.covers_key = covers_key
         self.shadnet_check = UpdateChecker(self)        # whether the shadNet server answers, off the GUI thread
         self.shadnet_check.finished.connect(self._server_checked)
         self.shadnet_watch = QTimer(self)               # while shadPS4 runs: its log says whether it signed in
@@ -81,6 +87,7 @@ class MainWindow(QMainWindow):
         self.in_steam: dict[str, str] = {}
         self.no_logo: set[str] = set()                # games in Steam whose shortcut has no logo yet
         self.old_tags: set[str] = set()               # games in Steam whose shortcut has the tags of an older name
+        self.no_cover: set[str] = set()               # games in Steam not yet looked up on SteamGridDB, with a key
         self.version = ""
         self.config: dict = {}
         self.users: list[userdata.User] = []
@@ -184,12 +191,17 @@ class MainWindow(QMainWindow):
         self.shad_button = QPushButton("shadPS4 settings")
         self.shad_button.setToolTip("Open shadPS4's own window (Big Picture): its settings and game list")
         self.shad_button.clicked.connect(self.on_open_shadps4)
+        self.covers_button = QPushButton("Covers…")
+        self.covers_button.setToolTip("The SteamGridDB API key, one for the whole suite: with it, Update Game Mode "
+                                      "gives each game a cover from SteamGridDB in Steam's library")
+        self.covers_button.clicked.connect(self.on_covers)
         self.steam_button = style.primary_button("Update Game Mode", STEAM_TIP)
         self.steam_button.clicked.connect(self.on_update_steam)
         buttons = QHBoxLayout()
         buttons.addWidget(self.play_button)
         buttons.addWidget(self.shad_button)
         buttons.addStretch(1)
+        buttons.addWidget(self.covers_button)
         buttons.addWidget(self.steam_button)
 
         self.running = QLabel()
@@ -259,8 +271,11 @@ class MainWindow(QMainWindow):
             self.no_logo = {str(g.eboot) for g in self.games if str(g.eboot) in self.in_steam and
                             shortcuts.logo_missing(self.steam_dir, g, self.in_steam[str(g.eboot)], self.run_path)}
             self.old_tags = shortcuts.old_tags(self.steam_dir) if self.steam_dir else set()
+            self.no_cover = ({str(g.eboot) for g in self.games if str(g.eboot) in self.in_steam
+                              and not covers.known(self.covers_home, shortcuts.cover_name(g))}
+                             if covers.read_key(self.covers_key) else set())
         except OSError:
-            self.in_steam, self.no_logo, self.old_tags = {}, set(), set()
+            self.in_steam, self.no_logo, self.old_tags, self.no_cover = {}, set(), set(), set()
         self._show_state()
         self._fill_table()
 
@@ -501,10 +516,11 @@ class MainWindow(QMainWindow):
         self.folder_button.setEnabled(idle and installed)
         self.extract_button.setEnabled(idle)
         self.shadnet_button.setEnabled(idle)
+        self.covers_button.setEnabled(idle)
         self.play_button.setEnabled(idle and installed and self.chosen() is not None)
         self.shad_button.setEnabled(idle and installed)
         add, remove = self.steam_plan()
-        stale = self.no_logo | self.old_tags
+        stale = self.no_logo | self.old_tags | self.no_cover
         named = shortcuts.names(add)        # a name in Steam that differs (one from before the prefix) is renamed
         changed = bool(remove) or any(self.in_steam.get(str(g.eboot)) != named[g.eboot] or str(g.eboot) in stale
                                       for g in add)
@@ -674,18 +690,29 @@ class MainWindow(QMainWindow):
             text += "\n\nSteam closes for it and starts again in the background."
         if not self._ask("Game Mode", text):
             return
-        changes = shortcuts.changes(add, remove, self.run_path, LOGO_PATH, self.in_steam)
-        folder, closed = self.steam_dir, self.steam_closed
+        folder, closed, run, existing = self.steam_dir, self.steam_closed, self.run_path, self.in_steam
+        key, home, get = covers.read_key(self.covers_key), self.covers_home, self.covers_get
 
         def job() -> tuple[bool, str]:
+            # The covers first, off the GUI thread; the artwork is drawn here too, on QImage only.
+            notes = (covers.fetch([(shortcuts.cover_name(g), g.title) for g in add], shortcuts.COVERS, key, home,
+                                  get) if key else [])
+            changes = shortcuts.changes(add, remove, run, LOGO_PATH, existing,
+                                        found=lambda g: covers.art(home, shortcuts.cover_name(g), shortcuts.COVERS))
             try:
                 restarted = closed(lambda: steam.write_shortcuts(folder, changes))
             except (steam.SteamError, steam.ShortcutError, OSError) as error:
-                return False, f"Steam was not changed: {error}"
+                return False, "\n".join([*notes, f"Steam was not changed: {error}"])
             again = " Steam was closed for it and starts again in the background." if restarted else ""
-            return True, (f"{len(add)} game(s) in Steam, under Non-Steam in the library"
-                          f"{f'; {len(remove)} taken out' if remove else ''}.{again}")
-        self._start("Changing Steam's shortcuts…", job)
+            return True, "\n".join([*notes, f"{len(add)} game(s) in Steam, under Non-Steam in the library"
+                                              f"{f'; {len(remove)} taken out' if remove else ''}.{again}"])
+        self._start("Looking up covers and changing Steam's shortcuts…" if key else "Changing Steam's shortcuts…",
+                    job)
+
+    def on_covers(self) -> None:
+        """Asks for the suite's SteamGridDB API key; empty turns the lookup off (the covers kept stay in use)."""
+        if covers.edit_key(self, self.covers_key):
+            self.refresh()
 
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 (Qt override)
         if self.worker.running and not self._ask("Close", "A download or a change to Steam is still running. "

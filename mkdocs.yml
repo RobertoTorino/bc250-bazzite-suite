@@ -60,6 +60,7 @@ nav:
   - Apps:
       - apps/index.md
       - App categories: apps/categories.md
+      - Covers from SteamGridDB: apps/covers.md
       - BC-250 Bazzite Test: apps/check.md
       - BC-250 GPU Governor Manager: apps/gpu.md
       - BC-250 Upscaler Manager: apps/upscaler.md

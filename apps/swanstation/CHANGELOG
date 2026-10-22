@@ -1,3 +1,20 @@
+Changelog: 22-10-2026 19:31:16
+
+Release 0.2.0.
+
+Changelog: 22-10-2026 18:09:08
+
+Added. Pictures from SteamGridDB for the games in Steam (owner, 22-10-2026), with the suite's SteamGridDB API key
+(core's covers), entered under the new Covers… button. A game brings no pictures, so all four were drawn from the app's
+icon and the title; with the key, Update Game Mode first looks each ticked game up by its file name without the tags in
+brackets ("(USA)", "(Disc 1)") and takes the cover, the wide picture, the banner and the logo with the highest score,
+each in place of the drawn one; a picture SteamGridDB does not have stays drawn. What is found is kept in
+~/.local/share/bc250-swanstation-manager/covers under the game's disc ID (SLUS-00594), or a name from its title without one, so a game is
+asked for once; a game in Steam not yet looked up turns Update Game Mode on. A refused key or no network stops the
+lookup with a message, and the shortcuts are written all the same. Without a key nothing changes. The artwork is now
+drawn in the background job, after the lookup. install.sh --uninstall --purge removes the covers folder too; the installer test checks it. Test: the pictures from SteamGridDB in place of the drawn ones with a
+No-Intro file name, and Covers… with Update Game Mode in the window, SteamGridDB's answers recorded.
+
 Changelog: 21-10-2026 14:25:29
 
 Release 0.1.0.

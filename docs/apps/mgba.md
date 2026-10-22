@@ -58,6 +58,13 @@ Steam's overlay works over a game started from Steam, in Game Mode and on the de
 
 Change Game Mode from Desktop Mode: in Game Mode Steam is the session itself and cannot close for the change.
 
+#### Covers
+
+With a SteamGridDB API key, the app takes the cover, the wide picture, the banner and the logo from SteamGridDB
+instead of drawing them. Press **Covers…** and enter your key; it is one key for the whole suite. A game is looked up
+by its file name without tags such as `(USA)`; a picture SteamGridDB does not have stays drawn. See
+[Covers from SteamGridDB](covers.md) for the key, how a game is looked up and how to use pictures of your own.
+
 ## From a terminal
 
 `bc250-mgba-run` starts the installed mGBA with the options you give it. The Game Mode shortcuts use it, so they
@@ -114,6 +121,7 @@ X11 already.
 | Your saves | Beside each game, as mGBA keeps them (`.sav`) |
 | The app's settings, with the game folders | `~/.config/bc250-mgba-manager` |
 | The Game Mode shortcuts | Steam's `shortcuts.vdf` and `grid` folder, per Steam user |
+| The pictures found on SteamGridDB | `~/.local/share/bc250-mgba-manager/covers` |
 | Launchers | `~/.local/bin/bc250-mgba-manager`, `~/.local/bin/bc250-mgba-run` |
 
 ## Install and remove
@@ -126,7 +134,7 @@ them out first by unticking them and pressing **Update Game Mode**.
 ./install.sh                         # install or update
 ./install.sh --no-desktop-shortcut   # app menu entry only, no icon on the Desktop
 ./install.sh --uninstall             # remove the app and the mGBA it installed; keeps its settings
-./install.sh --uninstall --purge     # also remove its settings
+./install.sh --uninstall --purge     # also remove its settings and covers
 ```
 
 ## Disclaimer

@@ -74,10 +74,11 @@ check "venv kept, own marker gone" "[ -x $D/bc250-bazzite-suite/venv/bin/python 
 
 echo "== 6. reinstall, then uninstall --purge as the last venv user"
 rm "$D/bc250-bazzite-suite/venv-users/bc250-bazzite-test"
+mkdir -p "$D/$APP/covers" && touch "$D/$APP/covers/CUSA00001p.png"       # covers found on SteamGridDB
 bash "$T/stage/install.sh" > "$T/log6" 2>&1 && bash "$T/stage/install.sh" --uninstall --purge >> "$T/log6" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "venv removed" "[ ! -e $D/bc250-bazzite-suite/venv ] && [ ! -e $D/bc250-bazzite-suite/venv-users ]"
-check "settings removed" "[ ! -e $XDG_CONFIG_HOME/$APP ] && [ ! -e $D/$APP ]"
+check "settings and covers removed" "[ ! -e $XDG_CONFIG_HOME/$APP ] && [ ! -e $D/$APP ]"
 check "Vita3K's own folders still there" "[ -f $XDG_CONFIG_HOME/Vita3K/config.yml ] && [ -d $D/Vita3K/Vita3K/ux0/app/PCSB00245 ]"
 
 [ $fail -eq 0 ] && echo "ALL OK" || for n in 1 3 4 5 6; do echo "--- log$n"; cat "$T/log$n"; done

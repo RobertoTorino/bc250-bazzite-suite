@@ -115,6 +115,13 @@ Steam's overlay works over a game started from Steam, in Game Mode and on the de
 it needs **Enable the Steam Overlay while in-game** in Steam's settings (In Game); Steam's FPS counter there is a
 setting of its own.
 
+#### Covers
+
+A PS4 game has no cover in the shape Steam's library uses, so the app draws one: the game's icon with its title on a
+dark background. With a SteamGridDB API key, the app takes a cover from SteamGridDB for each game instead; the
+background and the logo on the game's page stay the game's own. See [Covers from SteamGridDB](covers.md) for the
+key, how a game is looked up and how to use a cover of your own.
+
 ### Quit a game
 
 shadPS4's quit window asks whether to quit: **Cross** or **Enter** quits, **Circle** or **Esc** goes back to the game.
@@ -320,6 +327,7 @@ already.
 | The quit hotkeys | `~/.local/share/shadPS4/input_config/global.ini` |
 | The app's settings, with Extract PKG's last used folders | `~/.config/bc250-shadps4-manager` |
 | The Game Mode shortcuts | Steam's `shortcuts.vdf` and `grid` folder, per Steam user |
+| The covers found on SteamGridDB | `~/.local/share/bc250-shadps4-manager/covers` |
 | Launchers | `~/.local/bin/bc250-shadps4-manager`, `~/.local/bin/bc250-shadps4-run`, `~/.local/bin/bc250-shadps4-pkg-cli` |
 
 ## Install and remove

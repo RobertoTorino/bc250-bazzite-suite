@@ -635,6 +635,18 @@ colours (owner, 19-10-2026).
   GPL-3.0; to check before starting. The quit window itself opens from any controller and keyboard since
   22-10-2026 (the Manager's quit hotkeys in shadPS4's `input_config/global.ini`).
 
+- **Descriptions for the games in Steam (on hold, owner 22-10-2026: after the release of the covers).** A non-Steam
+  game's page shows Steam's fixed notice where a Steam game has its description, developer and release date:
+  shortcuts.vdf has no field for them, so no manager can write one. Only a Decky plugin can fill that panel. The
+  owner tries MetaDeck (Decky's plugin store; it looks non-Steam games up on IGDB) on the board, with the managers'
+  "[PS4] Title" names. If it works, a short note in the wiki points to it; our own Decky plugin is not planned
+  (JavaScript inside Steam's interface, an IGDB key, and upkeep with every Steam update, for what MetaDeck does).
+- **Covers from SteamGridDB (owner, 22-10-2026; built 22-10-2026, tried on the board by the owner 22-10-2026: it
+  works).** core's `covers` with one SteamGridDB API key for the whole suite (`~/.config/bc250-bazzite-suite/
+  steamgriddb-key`), a Covers… button in the nine game managers. shadps4, rpcs3, vita3k and ppsspp take the portrait
+  only (their games bring pictures of their own); pcsx2, swanstation, mgba, sameboy and xenia all four pictures.
+  `--purge` removes the covers folder in the eight others too. The wiki's page is docs/apps/covers.md. Open: the
+  releases of the nine apps (owner).
 - **SwanStation Manager (built 21-10-2026, owner's decision; not tried on the board).** PS1, the first of six
   emulator managers the owner asked for (list below). Not standalone: SwanStation is a libretro core, so the app
   installs RetroArch from Flathub (a Flatpak, `--user`; one already installed is used) and the core from the libretro

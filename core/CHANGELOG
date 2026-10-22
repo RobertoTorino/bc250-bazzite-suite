@@ -1,3 +1,15 @@
+Changelog: 22-10-2026 18:07:44
+
+Added. covers: artwork from SteamGridDB for the games the managers put in Steam (owner, 22-10-2026), with one API key
+of the user's own for the whole suite in ~/.config/bc250-bazzite-suite/steamgriddb-key (mode 0600; edit_key() asks
+for it in a dialog). A game is looked up by its title, without ™, ® and the bracket tags of a file name: the exact
+name, else the first found; of each kind asked for (the portrait, the wide picture, the banner, the logo) the still
+picture with the highest score, leaving out those marked nsfw, humor or epilepsy. What is found is kept in the app's
+covers folder under Steam's own names, with a .done marker, so a game is asked for once; art() fits the pictures to
+steam.ART's sizes for an app to lay over its drawn ones. A refused key or no network stops the lookup with a
+message; the key goes only to SteamGridDB's API and is in no message. Test: tests/test_covers.py, with SteamGridDB's
+answers recorded.
+
 Changelog: 20-10-2026 20:21:21
 
 Added. widgets: Pill, a MetricBox that is a button (the accent edge under the mouse or the keyboard focus; a click,
