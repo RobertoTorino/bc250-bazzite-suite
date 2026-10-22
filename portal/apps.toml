@@ -321,8 +321,8 @@ launch = [["Open", "~/.local/bin/bc250-console-linkb"]]
 [apps.shadps4]
 name = "shadPS4 Manager"
 summary = "PS4 games with the shadPS4 emulator: a tested shadPS4 release, your games found (or unpacked from .pkg files) and added to Game Mode."
-tag = "shadps4-v0.6.1"
-sha256 = "52794f2db1079834359bf65d72503bfb2dd4f7de30c7fd0d32c9b26d4d004204"
+tag = "shadps4-v0.7.0"
+sha256 = "46957d3b0b66757bae95a0dcfdd897f8375de544148dbbe6a96944b7b807d74b"
 required = false
 changes_board = false
 category = "gaming"
