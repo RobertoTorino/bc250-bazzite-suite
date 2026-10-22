@@ -1,3 +1,13 @@
+Changelog: 22-10-2026 21:10:49
+
+Added. sensors: the board's live values from /proc and /sys without root (CPU load, clock and temperature, GPU load,
+clock, power, voltage and temperature, the GPU governor's range, VRAM, RAM, VRM and NVMe temperatures, network,
+disk and fans), moved here unchanged from System Overlay so that USB IPS3.5 reads the same. New with it:
+interfaces() lists the network interfaces, and net() and read() (Sensors.interface) can measure one of them; each
+interface keeps its own previous reading. Without one, as System Overlay asks, the network is all interfaces but
+loopback, as before. Test: tests/test_sensors.py
+(moved with it, and a test for one interface) on the fake board in tests/board.py.
+
 Changelog: 22-10-2026 18:07:44
 
 Added. covers: artwork from SteamGridDB for the games the managers put in Steam (owner, 22-10-2026), with one API key

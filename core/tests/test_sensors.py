@@ -110,3 +110,19 @@ def test_garbage_is_ignored(board):
     write(board / "proc/net/dev", "h\nh\nenp4s0: x 1 0 0 0 0 0 0 y 1 0 0 0 0 0 0")
     s = sensors(board)
     assert s.gpu_mhz() is None and s.cpu_load() is None and s.net() is None
+
+
+def test_one_network_interface(board, tmp_path):
+    clock = Clock()
+    s = sensors(board, clock=clock)
+    write(board / "proc/net/dev", net_dev(1_000_000, 50_000) + "\nwlan0: 500 1 0 0 0 0 0 0 70 1 0 0 0 0 0 0")
+    assert s.interfaces() == ["enp4s0", "wlan0"]
+    assert s.net("wlan0") is None and s.net() is None
+    clock.now += 1
+    write(board / "proc/net/dev", net_dev(1_500_000, 50_000) + "\nwlan0: 1500 1 0 0 0 0 0 0 70 1 0 0 0 0 0 0")
+    assert s.net("wlan0") == (1000.0, 0.0)
+    assert s.net() == (501_000.0, 0.0)                              # all of them, measured on their own
+    assert s.net("eth9") is None                                    # gone or never there
+    s.interface = "wlan0"
+    clock.now += 1
+    assert s.read().net == (0.0, 0.0)                               # read() measures the chosen one

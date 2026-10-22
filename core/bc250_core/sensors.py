@@ -108,8 +108,10 @@ class Sensors:
         self.root = Path(root)
         self._governor = governor
         self._last_cpu: tuple[int, int] | None = None      # (busy, total) jiffies of the previous reading
-        self._net_rate = _Rate(clock)
+        self._clock = clock
+        self._net_rates: dict[str | None, _Rate] = {}       # per interface; None: all of them
         self._disk_rate = _Rate(clock)
+        self.interface: str | None = None       # the network interface read() measures; None: all but loopback
 
     # ------------------------------------------------------------------ hwmon
     def _hwmons(self) -> list[Path]:
@@ -234,24 +236,35 @@ class Sensors:
         return self._temp("nvme")
 
     # --------------------------------------------------------------- activity
-    def _net_counters(self) -> tuple[int, int] | None:
+    def _net_lines(self) -> list[tuple[str, list[str]]]:
+        found = []
+        for line in (_read(self.root / "proc/net/dev") or "").splitlines()[2:]:
+            name, _, rest = line.partition(":")
+            if name.strip() and name.strip() != "lo" and len(rest.split()) >= 9:
+                found.append((name.strip(), rest.split()))
+        return found
+
+    def interfaces(self) -> list[str]:
+        """The network interfaces, without loopback, in the kernel's order."""
+        return [name for name, _ in self._net_lines()]
+
+    def _net_counters(self, interface: str | None = None) -> tuple[int, int] | None:
         rx = tx = 0
-        lines = (_read(self.root / "proc/net/dev") or "").splitlines()[2:]
+        lines = [(n, f) for n, f in self._net_lines() if interface is None or n == interface]
         if not lines:
             return None
-        for line in lines:
-            name, _, rest = line.partition(":")
-            fields = rest.split()
-            if name.strip() == "lo" or len(fields) < 9:
-                continue
+        for _, fields in lines:
             try:
                 rx, tx = rx + int(fields[0]), tx + int(fields[8])
             except ValueError:
                 return None
         return rx, tx
 
-    def net(self) -> tuple[float, float] | None:
-        return self._net_rate(self._net_counters())
+    def net(self, interface: str | None = None) -> tuple[float, float] | None:
+        """Download and upload of *interface*, or of all but loopback; each interface has its own previous reading,
+        so switching between them never compares one's counters with another's."""
+        rate = self._net_rates.setdefault(interface, _Rate(self._clock))
+        return rate(self._net_counters(interface))
 
     def _disk_counters(self) -> tuple[int, int] | None:
         disks = {p.name for p in (self.root / "sys/block").glob("*") if not p.name.startswith(_NOT_A_DISK)}
@@ -287,5 +300,5 @@ class Sensors:
         return Reading(cpu_load=self.cpu_load(), cpu_mhz=self.cpu_mhz(), cpu_temp=self.cpu_temp(),
                        gpu_load=self.gpu_load(), gpu_mhz=self.gpu_mhz(), gpu_watts=self.gpu_watts(),
                        gpu_mv=self.gpu_mv(), gpu_temp=self.gpu_temp(), governor=self.governor(), vram=self.vram(),
-                       ram=self.ram(), vrm_temp=self.vrm_temp(), nvme_temp=self.nvme_temp(), net=self.net(),
+                       ram=self.ram(), vrm_temp=self.vrm_temp(), nvme_temp=self.nvme_temp(), net=self.net(self.interface),
                        disk=self.disk(), fans=self.fans())

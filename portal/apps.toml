@@ -237,6 +237,19 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-bazzite-sftp-tools"]
 launch = [["Open", "~/.local/bin/bc250-bazzite-sftp-tools"]]
 
+[apps.ips35]
+name = "USB IPS3.5"
+summary = "CPU, GPU, memory, fan and temperatures on a Turzx USB IPS screen (Turing Smart Screen 3.5\")."
+tag = "ips35-v0.1.0"
+sha256 = ""
+required = false
+changes_board = false
+category = "utilities"
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-usb-ips35"]
+launch = [["Open", "~/.local/bin/bc250-usb-ips35"]]
+
 [apps.mtool]
 name = "Media Tool"
 summary = "Record a BC250 Bazzite Suite installation demo with OBS, and convert the suite's icons."

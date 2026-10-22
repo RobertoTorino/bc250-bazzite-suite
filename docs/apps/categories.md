@@ -25,7 +25,7 @@ The categories are also the [portal's](../portal.md) tabs: an app's tile is on t
 | ![](../assets/categories/sustainable.webp){ .app-icon } | **Sustainable** | The board itself: test it, tune it, unlock it, cool it, and keep it running well for a long time. Most of these apps change how the board runs. |
 | ![](../assets/categories/graphics.webp){ .app-icon } | **Graphics** | Graphics features for games: upscaling, async compute and mesh shaders on the board's GPU. |
 | ![](../assets/categories/gaming.webp){ .app-icon } | **Gaming** | Playing: emulators, Remote Play with your console, plugins in Game Mode, and PlayStation trivia. |
-| ![](../assets/categories/utilities.webp){ .app-icon } | **Utilities** | Handy tools around the board: an overlay, the BIOS settings, Wi-Fi, the TV over HDMI-CEC, and file transfer. |
+| ![](../assets/categories/utilities.webp){ .app-icon } | **Utilities** | Handy tools around the board: an overlay, a USB stats screen, the BIOS settings, Wi-Fi, the TV over HDMI-CEC, and file transfer. |
 | ![](../assets/categories/development.webp){ .app-icon } | **Development** | Tools for working on the suite itself. You do not need them to use the board. |
 
 ## Apps by category
@@ -59,6 +59,7 @@ Every app with its icon and its category.
 | ![](../assets/apps/decky.webp){ .app-icon } [Decky Loader Manager](decky.md) | Gaming |
 | ![](../assets/apps/datstation.webp){ .app-icon } [Bazzite DatStation](datstation.md) | Gaming |
 | ![](../assets/apps/overlay.webp){ .app-icon } [System Overlay](overlay.md) | Utilities |
+| ![](../assets/apps/ips35.webp){ .app-icon } [USB IPS3.5](ips35.md) | Utilities |
 | ![](../assets/apps/bios.webp){ .app-icon } [BC-250 BIOS Reader](bios.md) | Utilities |
 | ![](../assets/apps/wdriver.webp){ .app-icon } [BC-250 USB Wi-Fi](wdriver.md) | Utilities |
 | ![](../assets/apps/cec.webp){ .app-icon } [HDMI CEC Manager](cec.md) | Utilities |

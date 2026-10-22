@@ -647,6 +647,29 @@ colours (owner, 19-10-2026).
   only (their games bring pictures of their own); pcsx2, swanstation, mgba, sameboy and xenia all four pictures.
   `--purge` removes the covers folder in the eight others too. The wiki's page is docs/apps/covers.md. Open: the
   releases of the nine apps (owner).
+- **USB IPS3.5 (owner, 22-10-2026; built 22-10-2026).** `apps/ips35`, Utilities: the board's values on a Turzx USB
+  IPS screen (USB ID 1a86:5722, a CDC-ACM serial port, no driver needed; the owner's is a Turing Smart Screen 3.5",
+  serial USB35INCHIPSV2). Measured on the owner's board (22-10-2026): no answer to HELLO, about 166 KB/s (a whole
+  picture 1.85 s, so only changed rectangles are sent), brightness 0 brightest to 255 darkest, a picture cut off
+  halfway leaves the screen out of step until it is reset (a flood of the RESET byte; it re-enumerates in about 2 s),
+  and a command must be a USB transfer of its own: the screen drops the rest of the 64-byte packet that carries a
+  command, so a command written together with its pixels lost 58 bytes (first taken for a 29-column offset of the
+  panel; the photos showed it was the lost bytes once partial updates went wrong). From
+  the Windows app's manual, on the owner's request (22-10-2026): CPU and GPU temperature tiles, header text, a
+  chosen network interface, six themes and a background picture (the Windows themes' .data files are a .NET
+  format, not read), and the weather from Open-Meteo (the app's only network use, only with a chosen place and
+  its tile shown). The
+  owner's remarks (22-10-2026): VRM and NVMe tiles say "temp", each tile's tooltip says what it shows, the network
+  interfaces say Ethernet, Wi-Fi or Virtual (from /sys/class/net), a Clock tab (24 or 12 hours, the zone's name or
+  UTC offset, five date formats), Save picture and Save report under the preview, a theme or colour being tried shows
+  in the preview only, the user's own text, tile, accent and background colours, and a drawn weather icon (day and
+  night, from Open-Meteo's is_day); folded into the unreleased 0.1.0 entry of its CHANGELOG. The
+  UsbMonitor 3.5", 5" and 7" are known by their HELLO answer but not tried; other Turing revisions (other USB IDs,
+  another protocol) are not supported. System Overlay's sensors moved to core for it (by accident in the owner's
+  vram-v0.7.1 commit, 22-10-2026; the CHANGELOG entries followed). The owner's board shows the values cleanly in
+  portrait (22-10-2026). Open: the owner tries landscape, the themes and colours, a background picture, the clock
+  options and the weather icon on the screen; the releases (owner): `ips35-v0.1.0`, core's and overlay's next ones, then pin it and bump the portal (an
+  added app needs a minor bump).
 - **SwanStation Manager (built 21-10-2026, owner's decision; not tried on the board).** PS1, the first of six
   emulator managers the owner asked for (list below). Not standalone: SwanStation is a libretro core, so the app
   installs RetroArch from Flathub (a Flatpak, `--user`; one already installed is used) and the core from the libretro

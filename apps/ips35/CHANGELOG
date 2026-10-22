@@ -1,0 +1,28 @@
+Changelog: 22-10-2026 23:28:29
+
+Release 0.1.0.
+
+Changelog: 22-10-2026 23:00:01
+
+Added. First version. USB IPS3.5 shows the board's live values on a Turzx USB IPS screen (USB ID 1a86:5722: the Turing
+Smart Screen 3.5" and the UsbMonitor 3.5", 5" and 7"), which Linux sees as a USB serial port (cdc_acm), so it needs no
+driver. The values are tiles (CPU, GPU, CPU and GPU temperature, VRAM, RAM, fan, VRM and NVMe temperature, network for
+all interfaces or a chosen one, each named with its kind: Ethernet, Wi-Fi or virtual, disk, and the weather with an icon
+for the sky, a moon at night; choose which) under a header with the user's own text and the time (24 or 12 hours with
+AM/PM, the time zone's name or offset from UTC and the date if wanted; summer and winter time follow the system's zone),
+in six themes with the user's own text, tile, accent and background colours if wanted (a theme or colour being tried
+shows in the window's preview only, until it is chosen), on a picture of the user's own if wanted, drawn at the screen's
+size in four orientations and updated every second; only the parts that changed are sent, because a whole 3.5" picture
+takes almost two seconds over the screen's link. The window shows a preview at the screen's own size (1:1; the 5" and 7"
+scaled down) and the screen's state, and sets the brightness, the orientation, the values and Start with the desktop
+(minimized). Every command goes to the screen in a USB transfer of its own: the screen drops whatever shares a USB
+packet with a command (found on the owner's Turing 3.5": with the pixels in the same write, a picture lost its first 29
+pixels and every update after it landed wrong). The screen is reset each time the app connects, so a picture cut off
+halfway before (an app that was killed, a cable pulled) cannot shift what follows, and it is found again when it is
+plugged back in. The weather comes from Open-Meteo (no account or key) for a place the user searches for, every 30
+minutes while its tile is shown; it is the app's only use of the network, and without a place nothing is sent. The
+settings are on six tabs (Screen, Values, Look, Clock, Weather, Start). Save picture saves what the screen shows as a
+PNG at its own size, Save report every value at that moment, with the date, time and zone, as a text file. Allow access
+gives the logged-in user the screen's port with a udev rule (pkexec, once); the screen goes dark when the app quits,
+unless that is switched off. Reads the sensors through bc250_core.sensors, without root. The protocol, the reset and the
+separate transfers were measured on the owner's board with a Turing Smart Screen 3.5" (22-10-2026).

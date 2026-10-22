@@ -1,3 +1,12 @@
+Changelog: 22-10-2026 23:28:29
+
+Release 6.7.0. Pins ips35-v0.1.0.
+
+Changelog: 22-10-2026 21:45:34
+
+Added. apps.toml lists USB IPS3.5 under Utilities, without a pin until its first release. The Utilities tab's text
+names the USB stats screen.
+
 Changelog: 22-10-2026 21:00:31
 
 Release 6.6.0. added video tour to the wiki

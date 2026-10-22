@@ -1,3 +1,12 @@
+Changelog: 22-10-2026 23:28:29
+
+Release 0.14.0.
+
+Changelog: 22-10-2026 21:45:34
+
+Added. The catalogue lists USB IPS3.5: its PyQt6 requirement, and pkexec and udevadm for the udev rule that gives
+the user the screen's port.
+
 Changelog: 22-10-2026 19:31:16
 
 Release 0.13.0.

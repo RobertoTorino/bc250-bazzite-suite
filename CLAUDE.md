@@ -14,7 +14,7 @@ its manifest. **check** (BC-250 Bazzite Test) is always installed and always lis
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
 - `apps/<name>/`: check, gpu, upscaler, compute, cores, oc, acpi,
-  overlay, bios, ace, mesh, vram, fan, wdriver, cec, sftp, consoles, clb, shadps4, rpcs3, ppsspp, pcsx2, vita3k, swanstation,
+  overlay, ips35, bios, ace, mesh, vram, fan, wdriver, cec, sftp, consoles, clb, shadps4, rpcs3, ppsspp, pcsx2, vita3k, swanstation,
   mgba, sameboy, xenia, decky, mtool, package, ncgui, datstation, suite. Each has its
   own VERSION, CHANGELOG, LICENSE (acpi is MIT; consoles is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; ncgui is GPL-2.0-only, a port of NetcatGUI; clb
@@ -145,7 +145,7 @@ shellcheck -S warning apps/cores/bc250-cores-bisect.sh apps/cores/bc250-cores-un
 shellcheck -S warning apps/oc/bc250-gpu-oc-bisect.sh apps/oc/install.sh
 shellcheck -S warning apps/acpi/bc250-acpi-override.sh apps/acpi/install.sh \
   apps/overlay/install.sh apps/bios/install.sh apps/vram/install.sh apps/fan/install.sh \
-  apps/cec/install.sh apps/sftp/install.sh \
+  apps/cec/install.sh apps/sftp/install.sh apps/ips35/install.sh \
   apps/consoles/install.sh apps/clb/install.sh apps/mtool/install.sh apps/suite/*.sh
 shellcheck -S warning apps/ace/bc250-ace-queues.sh apps/ace/bc250-ace-queues-run \
   apps/ace/install.sh apps/ace/mesa/build-in-container.sh

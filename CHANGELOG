@@ -1,3 +1,12 @@
+Changelog: 22-10-2026 21:45:34
+
+Added. USB IPS3.5 (apps/ips35, Utilities; owner, 22-10-2026): the board's live values on a Turzx USB IPS screen,
+the Turing Smart Screen 3.5" and its family. Its icon, installer test, CI jobs, wiki chapter and entries in the
+Dependency Checker's catalogue and the portal's manifest; CLAUDE.md lists it and its shellcheck line. System Overlay's
+sensors moved to core (bc250_core.sensors) so that both apps read the same; the development chapter lists the module.
+The Utilities tab's text and the wiki's categories page name the USB stats screen. The wiki's privacy page lists its
+weather lookup at Open-Meteo, the app's only network use.
+
 Changelog: 22-10-2026 18:07:53
 
 Added. A Covers from SteamGridDB page in the wiki, under Apps after App categories: Steam's four pictures, which of

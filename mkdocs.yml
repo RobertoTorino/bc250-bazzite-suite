@@ -69,6 +69,7 @@ nav:
       - BC-250 GPU OC Bisect: apps/oc.md
       - BC-250 Persistent ACPI: apps/acpi.md
       - System Overlay: apps/overlay.md
+      - USB IPS3.5: apps/ips35.md
       - BC-250 BIOS Reader: apps/bios.md
       - BC-250 Memory Manager: apps/vram.md
       - BC-250 Fan Control: apps/fan.md

@@ -52,6 +52,10 @@ launchers = ["~/.local/bin/bc250-persistent-acpi-gui"]
 name = "System Overlay"
 launchers = ["~/.local/bin/bc250-system-overlay"]
 
+[app.ips35]
+name = "USB IPS3.5"
+launchers = ["~/.local/bin/bc250-usb-ips35"]
+
 [app.bios]
 name = "BC-250 BIOS Reader"
 launchers = ["~/.local/bin/bc250-bios-reader"]
@@ -208,6 +212,12 @@ owner = "decky"
 need = "required"
 usage = "Password prompt for installing, removing and restarting Decky Loader's system service, and for the /home/deck link."
 anchor = "using-it"
+
+[[tool.source]]
+owner = "ips35"
+need = "required"
+usage = "Password prompt for adding the udev rule that gives your user the screen's port (Allow access)."
+anchor = "access-to-the-screen"
 
 [[tool]]
 name = "umr"
@@ -1054,6 +1064,10 @@ owner = "overlay"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
+owner = "ips35"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
 owner = "bios"
 specifier = ">=6.11,<7"
 
@@ -1232,6 +1246,12 @@ executables = ["udevadm"]
 owner = "wdriver"
 need = "required"
 usage = "Reload udev's rules after installing or removing the stick's rule."
+
+[[tool.source]]
+owner = "ips35"
+need = "required"
+usage = "Applies the rule that gives your user the screen's port, at once, without unplugging it."
+anchor = "access-to-the-screen"
 
 [[dependency]]
 name = "obsws-python"

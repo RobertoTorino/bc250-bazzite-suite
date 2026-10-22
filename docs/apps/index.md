@@ -50,6 +50,7 @@ other app is optional. They are listed by category, as the portal's tabs list th
 | App | What it does |
 |---|---|
 | ![](../assets/apps/overlay.webp){ .app-icon } [System Overlay](overlay.md) | CPU, GPU, refresh rate, fan and temperatures in a small window that stays on top. |
+| ![](../assets/apps/ips35.webp){ .app-icon } [USB IPS3.5](ips35.md) | CPU, GPU, memory, fan and temperatures on a Turzx USB IPS screen (Turing Smart Screen 3.5"), with the time, the date and the weather, in your own theme and colours. |
 | ![](../assets/apps/bios.webp){ .app-icon } [BC-250 BIOS Reader](bios.md) | The BIOS settings as the setup screen shows them, hidden menus included. Stock or modded BIOS. Read-only. |
 | ![](../assets/apps/wdriver.webp){ .app-icon } [BC-250 USB Wi-Fi](wdriver.md) | The driver for AIC8800D80 USB Wi-Fi sticks: built for the running kernel, loaded at boot, rebuilt after a kernel update. **Changes the board.** |
 | ![](../assets/apps/cec.webp){ .app-icon } [HDMI CEC Manager](cec.md) | Turn the TV on and off with the board, switch its input and use its remote, over HDMI-CEC. |

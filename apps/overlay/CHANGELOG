@@ -1,3 +1,12 @@
+Changelog: 22-10-2026 23:28:29
+
+Release 0.8.0.
+
+Changelog: 22-10-2026 21:10:49
+
+Fixed. The sensors module moved to the shared core (bc250_core.sensors), unchanged, so another app reads the same
+values; the overlay imports it from there. Nothing changes in the window: all its tests pass as before.
+
 Changelog: 22-10-2026 19:31:16
 
 Release 0.7.0.

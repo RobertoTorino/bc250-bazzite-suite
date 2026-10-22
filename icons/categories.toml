@@ -104,6 +104,11 @@ category = "utilities"
 icons = ["apps/sftp/images/bc250-bazzite-sftp-tools"]
 tile = "portal/images/apps/sftp.webp"
 
+[ips35]
+category = "utilities"
+icons = ["apps/ips35/images/bc250-usb-ips35"]
+tile = "portal/images/apps/ips35.webp"
+
 [mtool]
 category = "development"
 icons = ["apps/mtool/images/media-tool"]

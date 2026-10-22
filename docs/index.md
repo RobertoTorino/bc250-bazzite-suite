@@ -29,6 +29,7 @@ hide:
 [Bazzite Test](apps/check.md) checks, stress-tests and benchmarks the board,
 [BIOS Reader](apps/bios.md) shows every BIOS setting, hidden menus too, and
 [System Overlay](apps/overlay.md) keeps CPU, GPU, fan and temperatures on top,
+[USB IPS3.5](apps/ips35.md) shows them on a small USB screen,
 [Fan Control](apps/fan.md) guards the board against overheating, and
 [USB Wi-Fi](apps/wdriver.md) brings the driver for AIC8800D80 Wi-Fi sticks.
 </div>
