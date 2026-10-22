@@ -14,6 +14,12 @@
 *.ttf               binary
 *.png               binary
 *.jpg               binary
+*.webp              binary
+*.woff2             binary
+*.wav               binary
+*.ogg               binary
+*.mp4               binary
+*.gz                binary
 *.ico               binary
 *.cpio              binary
 *.aml               binary

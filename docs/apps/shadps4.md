@@ -111,7 +111,22 @@ In Game Mode the games are in the library under **Non-Steam**. They start shadPS
 **Exit game** work as for any game.
 
 Steam's overlay works over a game started from Steam, in Game Mode and on the desktop: press **Shift+Tab** or the
-**PS button** for the game's page, its controller layout and its settings, without leaving the game.
+**PS button** for the game's page, its controller layout and its settings, without leaving the game. On the desktop
+it needs **Enable the Steam Overlay while in-game** in Steam's settings (In Game); Steam's FPS counter there is a
+setting of its own.
+
+### Quit a game
+
+shadPS4's quit window asks whether to quit: **Cross** or **Enter** quits, **Circle** or **Esc** goes back to the game.
+Open it with:
+
+- **Share + Options** on a DualShock 4 or DualSense (Back + Start on other controllers: View + Menu on an Xbox
+  controller), pressed together;
+- **Ctrl+Shift+End** on the keyboard, also with the keypad's End (the 1 key with Num Lock off) on a keyboard without
+  an End key of its own.
+
+The app adds these to shadPS4's `input_config/global.ini` when it starts; the rest of the file stays as it is. The
+controller works on the desktop as well, where the keyboard may stay with Big Picture after Steam started the game.
 
 A game started from Steam reads your controllers itself, a DualShock 4 or DualSense with its touchpad and motion
 sensors. [How it works](#how-it-works) explains both.
@@ -136,9 +151,9 @@ extracted.
   TITLE, TITLE_ID and VERSION. When the package has no readable `param.sfo`, CONTENT_ID and TITLE_ID come from the
   package header. Right-click the preview to copy a line, only its value, or everything.
 - **icon preview (click):** the package's `icon0.png`, or the app's logo when there is none. Click it to see the
-  package's `pic0.png` (or `pic1.png`) full screen; a click, Esc or the B button closes it. Right-click the full
-  screen picture for **save as wallpaper**: it saves the picture as a PNG, named after the content id, to your
-  Pictures folder or wherever you choose.
+  package's `pic0.png` (or `pic1.png`) full screen; a click, Esc or the B button closes it. Right-click the icon,
+  or the full screen picture, for **save as wallpaper**: it saves the picture as a PNG, named after the content id,
+  to your Pictures folder or wherever you choose. The icon's menu also has **show full screen**.
 - **Rename to CONTENT_ID:** renames the package file to its content id, `UP9000-CUSA00038_00-ASTRONAUT0000002.pkg`.
   A game or patch gets its APP_VER appended without the dot (`...-0100.pkg`), add-on content (CATEGORY `ac`) keeps
   the content id alone. The window says so when the file already has that name or another file has it.
@@ -147,6 +162,13 @@ extracted.
   that folder (**Add folder…**). The window refuses to extract into a `TITLE_ID` folder that already has something
   in it, and lists what it found: each extraction or preview needs a fresh folder, so nothing is mixed with an
   earlier run.
+- **Updates:** an update (CATEGORY `gp`) for a game that is in the output folder goes into a folder beside it,
+  `TITLE_ID-UPDATE` (for example `CUSA41215-UPDATE`). shadPS4 lays it over the game when the game starts, so the
+  game's own folder stays as it is, and deleting the `-UPDATE` folder takes the update out. When the folder holds an
+  update already, the window asks whether to replace it: the new one is extracted beside it first and takes its
+  place only when every file was written, else the old one stays. An update package extracted without its game in
+  the output folder goes into `TITLE_ID`, as a game does: a package with the game and its update in one says `gp`
+  too.
 - **Extract PKG:** writes `sce_sys/` (the package's metadata files: `param.sfo`, icons, pictures, trophies, the
   decrypted `license.dat`, `nptitle.dat` and `npbind.dat`), then every file of the package, with the progress bar
   counting files. When it is done, the output folder opens in your file manager. The log at the bottom shows each
@@ -192,7 +214,7 @@ When a package does not extract:
 - **"Failed to find PFSC header":** the package's file system could not be decrypted: the package keeps its retail
   encryption, or it is damaged. Only fake-signed packages can be extracted.
 - **"Guardrail: target output folder is not empty":** choose or make an empty folder; the `TITLE_ID` folder under
-  it must not exist yet or must be empty.
+  it must not exist yet or must be empty. An update is the exception: see **Updates** above.
 - **"PKG file size is different":** the file is shorter than its header says: an incomplete download or copy.
 - **Preflight failed for file N:** the package's metadata for that file is inconsistent. Switch on Salvage Mode to
   get the other files.
@@ -295,6 +317,7 @@ already.
 | Extract PKG's log, and its crash marker and progress while it is open | `~/.local/share/bc250-shadps4-manager/pkgxtractor.log`, `.state`, `.progress` |
 | shadPS4's saves, settings, system modules | `~/.local/share/shadPS4` (shadPS4's own folder) |
 | Your shadNet account | `~/.local/share/shadPS4/users.json`, the server in its `config.json` |
+| The quit hotkeys | `~/.local/share/shadPS4/input_config/global.ini` |
 | The app's settings, with Extract PKG's last used folders | `~/.config/bc250-shadps4-manager` |
 | The Game Mode shortcuts | Steam's `shortcuts.vdf` and `grid` folder, per Steam user |
 | Launchers | `~/.local/bin/bc250-shadps4-manager`, `~/.local/bin/bc250-shadps4-run`, `~/.local/bin/bc250-shadps4-pkg-cli` |

@@ -249,6 +249,10 @@ class MainWindow(QMainWindow):
         self.modules = userdata.check_modules(userdata.modules_folder(self.shad_home, self.config))
         self.folders = userdata.game_folders(self.config)
         self.users = userdata.read_users(self.shad_home)
+        try:
+            userdata.add_quit_bindings(self.shad_home)          # the quit window from any keyboard or controller
+        except OSError:
+            pass
         self.games = scan(self.folders)
         try:
             self.in_steam = shortcuts.in_steam(self.steam_dir) if self.steam_dir else {}

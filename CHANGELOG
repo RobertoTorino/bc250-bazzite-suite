@@ -1,3 +1,11 @@
+Changelog: 22-10-2026 10:21:45
+
+Added. CONTRIBUTING.md and a pull request template: each folder's license applies to what is contributed to it,
+media included, with their source named and whether they were made with generative AI tools. The README and the
+wiki's Home page say how the icons (generative AI, edited by hand in Photoshop) and the sounds (generative AI) were
+made, and that they are under the license of the folder they are in (owner, 22-10-2026); the README has a license badge. .gitattributes marks WebP, WOFF2, WAV, OGG, MP4 and
+gzip files as binary.
+
 Changelog: 21-10-2026 23:13:19
 
 Added. Console LinkB (apps/clb): Xbox Remote Play and Xbox Cloud Gaming on the board, a separate app beside Console

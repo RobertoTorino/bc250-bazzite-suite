@@ -7,6 +7,7 @@ manager, whose game folders it offers as the output, so an extracted game shows 
 from __future__ import annotations
 
 import os
+import shutil
 import time
 from datetime import datetime
 from pathlib import Path
@@ -99,6 +100,28 @@ def directory_has_entries(directory: Path) -> tuple[bool, list[str], str]:
         return False, [], ""
     except OSError:
         return True, [], "Failed to inspect target directory"
+
+
+def pkg_category(pkg: PKG) -> str:
+    """CATEGORY from the package's param.sfo, lower case (gd a game, gp an update, ac add-on content); "" without."""
+    if not pkg.sfo:
+        return ""
+    try:
+        category = PSF.from_bytes(pkg.sfo).get_string("CATEGORY") or ""
+    except PSFError:
+        return ""
+    return category.replace("\x00", "").strip().lower()
+
+
+def extraction_target(output_root: Path, title_id: str, category: str) -> tuple[Path, bool]:
+    """The folder a package goes into, and whether it is an update beside its game. A game goes into its TITLE_ID
+    folder; an update (CATEGORY gp) into TITLE_ID-UPDATE beside the game's folder, which shadPS4 lays over the game
+    (fs.cpp in 0.20.0), so the game stays as it was. Without the game's folder there a gp package goes into TITLE_ID:
+    a game with its update in it says gp too."""
+    game = output_root / sanitize_folder_name(title_id or "unknown_title")
+    if category == "gp" and directory_has_entries(game)[0] and game.is_dir():
+        return game.with_name(f"{game.name}-UPDATE"), True
+    return game, False
 
 
 def load_image(data: bytes, fmt: str = "PNG") -> QImage:
@@ -198,21 +221,26 @@ class FullScreenImageViewer(QWidget):
         self._label.setPixmap(expanded.copy(crop_x, crop_y, target.width(), target.height()))
 
     def _save_as_wallpaper(self) -> None:
-        if self._pixmap.isNull():
-            QMessageBox.information(self, "Nothing to save", "No image is currently available.")
-            return
-        base_dir = QStandardPaths.writableLocation(
-            QStandardPaths.StandardLocation.PicturesLocation) or str(Path.home())
-        default_name = f"{self._content_id}.png" if self._content_id else f"{APP_ID}-wallpaper.png"
-        selected, _ = QFileDialog.getSaveFileName(
-            self, "Save as wallpaper", str(Path(base_dir) / default_name),
-            "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg);;All Files (*)")
-        if not selected:
-            return
-        if not self._pixmap.toImage().save(selected):
-            QMessageBox.warning(self, "Save failed", "Could not save wallpaper image.")
-            return
-        QMessageBox.information(self, "Wallpaper saved", f"Saved to:\n{selected}")
+        save_as_wallpaper(self, self._pixmap, self._content_id)
+
+
+def save_as_wallpaper(parent: QWidget, pixmap: QPixmap, content_id: str) -> None:
+    """Saves pic0/pic1 where the user chooses: the Pictures folder, named after the content id, by default."""
+    if pixmap.isNull():
+        QMessageBox.information(parent, "Nothing to save", "No image is currently available.")
+        return
+    base_dir = QStandardPaths.writableLocation(
+        QStandardPaths.StandardLocation.PicturesLocation) or str(Path.home())
+    default_name = f"{content_id}.png" if content_id else f"{APP_ID}-wallpaper.png"
+    selected, _ = QFileDialog.getSaveFileName(
+        parent, "Save as wallpaper", str(Path(base_dir) / default_name),
+        "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg);;All Files (*)")
+    if not selected:
+        return
+    if not pixmap.toImage().save(selected):
+        QMessageBox.warning(parent, "Save failed", "Could not save wallpaper image.")
+        return
+    QMessageBox.information(parent, "Wallpaper saved", f"Saved to:\n{selected}")
 
 
 # ---------------------------------------------------------------------------
@@ -232,6 +260,29 @@ class ClickableIconLabel(QLabel):
         self._viewer: Optional[FullScreenImageViewer] = None
 
     def mousePressEvent(self, event: QMouseEvent) -> None:  # noqa: N802
+        # Only the left button opens the picture. A right click opened it too, and Qt shows the context menu on the
+        # release on Windows (over the picture, by then) but on the press on Linux: there only the picture came up.
+        if event.button() != Qt.MouseButton.LeftButton:
+            event.ignore()
+            return
+        self.show_full_screen()
+
+    def contextMenuEvent(self, event: QContextMenuEvent) -> None:  # noqa: N802
+        if not self.pkg_loaded and not self.output_path and not self.pkg_path:
+            event.ignore()
+            return
+        menu = QMenu(self)
+        menu.addAction("show full screen").triggered.connect(self.show_full_screen)
+        menu.addAction("save as wallpaper").triggered.connect(self._save_as_wallpaper)
+        menu.exec(event.globalPos())
+        event.accept()
+
+    def _save_as_wallpaper(self) -> None:
+        found = self._preview_image()
+        if found is not None:
+            save_as_wallpaper(self, QPixmap.fromImage(found[0]), found[1])
+
+    def show_full_screen(self) -> None:
         if not self.pkg_loaded and not self.output_path and not self.pkg_path:
             QMessageBox.information(self, "No package loaded", "Select a PKG file first.")
             return
@@ -245,6 +296,26 @@ class ClickableIconLabel(QLabel):
             except RuntimeError:
                 self._viewer = None
 
+        found = self._preview_image()
+        if found is None:
+            return
+        image, content_id = found
+        viewer = FullScreenImageViewer(image, content_id)
+        viewer.destroyed.connect(self._viewer_destroyed)
+        self._viewer = viewer
+
+        screen = None
+        top = self.window()
+        if top is not None and top.windowHandle() is not None:
+            screen = top.windowHandle().screen()
+        if screen is None:
+            screen = QGuiApplication.primaryScreen()
+        if screen is not None:
+            viewer.setGeometry(screen.geometry())
+        viewer.showFullScreen()
+
+    def _preview_image(self) -> Optional[tuple[QImage, str]]:
+        """pic0 (or pic1) from the extracted folder or the package, with the content id; says so when none."""
         image = QImage()
         content_id = ""
         preview_path = self._resolve_preview_image_path()
@@ -275,21 +346,8 @@ class ClickableIconLabel(QLabel):
         if image.isNull():
             QMessageBox.information(
                 self, "Image not found", "pic0.png or pic1.png is not available in this package.")
-            return
-
-        viewer = FullScreenImageViewer(image, content_id)
-        viewer.destroyed.connect(self._viewer_destroyed)
-        self._viewer = viewer
-
-        screen = None
-        top = self.window()
-        if top is not None and top.windowHandle() is not None:
-            screen = top.windowHandle().screen()
-        if screen is None:
-            screen = QGuiApplication.primaryScreen()
-        if screen is not None:
-            viewer.setGeometry(screen.geometry())
-        viewer.showFullScreen()
+            return None
+        return image, content_id
 
     def _viewer_destroyed(self, *_args: object) -> None:
         self._viewer = None
@@ -343,13 +401,14 @@ class ExtractionWorker(QObject):
     finished = pyqtSignal()
 
     def __init__(self, pkg_path: Path, output_path: Path, progress_path: Optional[Path],
-                 preview_only: bool, salvage_mode: bool) -> None:
+                 preview_only: bool, salvage_mode: bool, replace_update: bool = False) -> None:
         super().__init__()
         self._pkg_path = pkg_path
         self._output_path = output_path
         self._progress_path = progress_path
         self._preview_only = preview_only
         self._salvage_mode = salvage_mode
+        self._replace_update = replace_update       # the user agreed to replace the update already there
 
     def log(self, message: str) -> None:
         self.log_message.emit(message)
@@ -397,16 +456,25 @@ class ExtractionWorker(QObject):
         self.log(f"Using TITLE_ID from PKG header: {folder_name}")
         if not folder_name:
             self.log("Warning: TITLE_ID missing, using unknown_title")
-            folder_name = "unknown_title"
-        sanitized = sanitize_folder_name(folder_name)
-        if sanitized != folder_name:
+        sanitized = sanitize_folder_name(folder_name or "unknown_title")
+        if folder_name and sanitized != folder_name:
             self.log(f"Sanitized folder name: {sanitized}")
 
-        self.log("Creating TITLE_ID extraction subfolder...")
-        output_folder = output_folder / sanitized
+        output_folder, update = extraction_target(output_folder, folder_name, pkg_category(pkg))
+        if update:
+            self.log(f"An update (CATEGORY gp) for the game in {output_folder.with_name(sanitized)}: extracting into "
+                     f"{output_folder.name}, which shadPS4 lays over the game.")
+        else:
+            self.log("Creating TITLE_ID extraction subfolder...")
+        final_folder = output_folder
 
         has_entries, samples, guard_error = directory_has_entries(output_folder)
-        if has_entries:
+        if has_entries and update and self._replace_update and not self._preview_only and output_folder.is_dir():
+            # The new update goes into a folder beside the old one and takes its place only when it is complete.
+            output_folder = final_folder.with_name(f".{final_folder.name}.new")
+            shutil.rmtree(output_folder, ignore_errors=True)
+            self.log(f"Replacing the update in {final_folder}: extracting into {output_folder.name} first.")
+        elif has_entries:
             self.log("Guardrail: target output folder is not empty.")
             self.log(f"Target folder: {output_folder}")
             self.log("For stability, each preview/extraction requires a new empty folder.")
@@ -542,9 +610,22 @@ class ExtractionWorker(QObject):
             except OSError:
                 self.log("Warning: Could not write salvage_report.txt")
 
+        if output_folder != final_folder:
+            if extraction_error or aborted_early:
+                shutil.rmtree(output_folder, ignore_errors=True)
+                self.log(f"The update in {final_folder} stays as it was.")
+                extraction_error = True
+            else:
+                old = final_folder.with_name(f".{final_folder.name}.old")
+                shutil.rmtree(old, ignore_errors=True)
+                final_folder.rename(old)
+                output_folder.rename(final_folder)
+                shutil.rmtree(old, ignore_errors=True)
+                self.log(f"The new update replaced the old one in {final_folder}.")
+
         if not extraction_error:
-            if output_folder.exists():
-                self.open_folder.emit(str(output_folder))
+            if final_folder.exists():
+                self.open_folder.emit(str(final_folder))
             else:
                 self.log("Warning: Output folder path does not exist")
 
@@ -947,19 +1028,44 @@ class ExtractDialog(QDialog):
             QMessageBox.warning(self, "Error", "Please select a destination folder.")
             return
 
+        pkg_path, output_root = Path(self.pkg_input.text().strip()), Path(self.output_input.text().strip())
+        replace_update = False
+        if not preview_only:
+            replace_update = self._ask_replace_update(pkg_path, output_root)
+            if replace_update is None:
+                return
+
         self._set_busy(True)
         self.progress_bar.setValue(0)
         self.log_output.clear()
         self.extracted = self.extracted or not preview_only       # the caller looks for games again
 
-        worker = ExtractionWorker(Path(self.pkg_input.text().strip()),
-                                  Path(self.output_input.text().strip()),
-                                  self._progress_path, preview_only, self.salvage_check.isChecked())
+        worker = ExtractionWorker(pkg_path, output_root, self._progress_path, preview_only,
+                                  self.salvage_check.isChecked(), replace_update)
         worker.log_message.connect(self.on_log)
         worker.update_progress.connect(self.progress_bar.setValue)
         worker.set_max_progress.connect(self.progress_bar.setMaximum)
         worker.open_folder.connect(self.open_folder)
         self._start_thread(worker)
+
+    def _ask_replace_update(self, pkg_path: Path, output_root: Path) -> Optional[bool]:
+        """For an update whose TITLE_ID-UPDATE folder is there already: whether to replace it (None: the user said
+        no). False for everything else, which the worker checks itself."""
+        with PKG() as pkg:
+            try:
+                ok, _ = open_pkg_with_retry(pkg, pkg_path, 2, 60)
+            except OSError:
+                ok = False
+            if not ok:
+                return False
+            target, update = extraction_target(output_root, pkg.title_id.replace("\x00", ""), pkg_category(pkg))
+        if not update or not directory_has_entries(target)[0]:
+            return False
+        answer = QMessageBox.question(
+            self, "Replace the update",
+            f"{target} holds an update for this game already.\n\nReplace it with this one? The new update is "
+            "extracted first; the old one is removed only when that worked.")
+        return True if answer == QMessageBox.StandardButton.Yes else None
 
     @pyqtSlot(str)
     def open_folder(self, folder: str) -> None:

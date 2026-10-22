@@ -627,6 +627,13 @@ colours (owner, 19-10-2026).
   (github.com/Blinue/Magpie, 21-10-2026), which is not a candidate: Windows-only, it captures windows through
   Windows' compositor (Graphics Capture, Desktop Duplication, GDI, DwmSharedSurface), which Wine does not have, and
   it is a spatial upscaler like gamescope's FSR 1.
+- **Our own shadPS4 build (on hold, owner 22-10-2026).** shadPS4 Manager installs shadPS4's own release; built by
+  the suite (the owner built shadPS4 for Windows before), with ace's and mesh's Mesa builds as the pattern. In it:
+  shadPS4's quit window (`Overlay::ToggleQuitWindow`) as the suite's: a "Suite Control" header, the suite's icon
+  (128 px, if it fits), the black background 75 % opaque. Perhaps also Extract PKG inside shadPS4 (installing a
+  package from shadPS4 itself): shadPS4 is GPL-2.0-or-later, the Manager GPL-3.0-or-later, so a build with both is
+  GPL-3.0; to check before starting. The quit window itself opens from any controller and keyboard since
+  22-10-2026 (the Manager's quit hotkeys in shadPS4's `input_config/global.ini`).
 
 - **SwanStation Manager (built 21-10-2026, owner's decision; not tried on the board).** PS1, the first of six
   emulator managers the owner asked for (list below). Not standalone: SwanStation is a libretro core, so the app
@@ -1193,6 +1200,10 @@ app IDs, launchers, packages, settings folders, and the files hdmi-cec writes ke
 moves. The Steam shortcut tags take the new names (owner, 14-10-2026): shadps4-manager brings an old shortcut up to
 date with Update Game Mode, console-link with Update in Game Mode. An app's identifiers move (with an old-ID
 fallback, as console-link's `OLD_APP_ID`) only when it is ported, together with its hardware code paths.
+
+Media licenses (owner's decision, 22-10-2026): the icons (a generative AI base, edited by hand in Photoshop) and the sounds (generative AI) stay under the
+license of the folder they are in, like the code: no separate or proprietary license for media, consistent with
+"open by default". The README, the wiki's Home page and CONTRIBUTING.md say so.
 
 No translations (owner's decision, 15-10-2026): every app is English only, Qt's own dialog buttons included. The
 `.ts`/`.qm` files, the language pickers, `--lang`, the i18n tools and tests, core's translator loading and every

@@ -119,3 +119,19 @@ def test_whether_shadps4_runs(tmp_path):
         (tmp_path / "30").mkdir(exist_ok=True)
         (tmp_path / "30" / "comm").write_text(name + "\n")
         assert userdata.shadps4_running(tmp_path)
+
+
+def test_the_quit_hotkeys(tmp_path):
+    # Not there yet: shadPS4's header and the three lines; shadPS4 adds the rest of its defaults when it starts.
+    path = tmp_path / "input_config" / "global.ini"
+    assert userdata.add_quit_bindings(tmp_path) == list(userdata.QUIT_BINDINGS)
+    assert path.read_text() == userdata.GLOBAL_INI_HEADER + "".join(f"{b}\n" for b in userdata.QUIT_BINDINGS)
+    assert userdata.add_quit_bindings(tmp_path) == []
+    # As shadPS4 0.20.0 writes it (the owner's board): its own Ctrl+Shift+End stays, the other two are added, every
+    # other line stays as it is; spacing as shadPS4 reads it, and a file without a newline at the end.
+    written = (userdata.GLOBAL_INI_HEADER + "hotkey_pause = f9\nhotkey_quit=lctrl,lshift,end\n"
+               "hotkey_volume_up = kpplus")
+    path.write_text(written)
+    assert userdata.add_quit_bindings(tmp_path) == ["hotkey_quit = lctrl, lshift, kp1", "hotkey_quit = back, options"]
+    assert path.read_text() == (written + "\nhotkey_quit = lctrl, lshift, kp1\nhotkey_quit = back, options\n")
+    assert userdata.add_quit_bindings(tmp_path) == []

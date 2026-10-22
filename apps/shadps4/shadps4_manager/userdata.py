@@ -2,8 +2,9 @@
 """shadPS4's own folder, ~/.local/share/shadPS4 (its saves, settings and system modules): the game folders and the
 system module folder from its config.json, which system modules are there, and the users and shadNet settings (its
 users.json). shadPS4 writes these files; the app writes only the shadNet settings, which shadPS4 has no place for
-(a game folder is added through shadPS4's own --add-game-folder). Both files are JSON as shadPS4 writes them (indented
-by two, no newline at the end), and every other setting in them stays as it is.
+(a game folder is added through shadPS4's own --add-game-folder), and the quit hotkeys in input_config/global.ini.
+Both JSON files are written as shadPS4 writes them (indented by two, no newline at the end), and every other setting
+in them stays as it is.
 
 System modules are libraries of the PS4's firmware (.sprx), which the app cannot ship: they come from the user's own
 console. shadPS4 0.20.0 loads these from the folder when a game asks for them (sysmodule_internal.cpp); for some it
@@ -100,6 +101,49 @@ def check_modules(folder: Path) -> Modules:
     except OSError:
         present = set()
     return Modules(folder, tuple(n for n in NEEDED if n in present), tuple(n for n in OPTIONAL if n in present))
+
+
+# --- Quit hotkeys ----------------------------------------------------------------------------------------------
+
+# shadPS4's quit window (Cross or Enter quits, Circle or Escape cancels) opens only on Ctrl+Shift+End by default: the
+# End key alone, not the keypad's End (a keyboard without an End key of its own), and from no controller button.
+# Back + Start (Share + Options on a DualShock 4 or DualSense, View + Menu on an Xbox controller) is a pair every
+# controller has; shadPS4 gives a combination priority over its single buttons, so Share alone stays the touchpad.
+# shadPS4 reads controllers without the window's focus too, so a game Steam started takes them while the keyboard
+# stays with Big Picture. Its own default goes in as well: shadPS4 adds it only to a global.ini with no hotkey_quit.
+QUIT_BINDINGS = ("hotkey_quit = lctrl, lshift, end", "hotkey_quit = lctrl, lshift, kp1",
+                 "hotkey_quit = back, options")
+GLOBAL_INI_HEADER = ("# Anything put here will be loaded for all games,\n"
+                     "# alongside the game's config or default.ini depending on your preference.\n")
+
+
+def _binding(line: str) -> str:
+    """A line as shadPS4 reads it: without spaces."""
+    return "".join(line.split())
+
+
+def add_quit_bindings(home: Path) -> list[str]:
+    """Adds the lines of QUIT_BINDINGS that input_config/global.ini lacks, each line as it is, after shadPS4's own
+    header in a file that is not there yet (shadPS4 then adds the rest of its defaults). Returns the lines added.
+    shadPS4 reads the file when a game starts (or on F8), so it may run meanwhile. OSError when it cannot be written."""
+    path = home / "input_config" / "global.ini"
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        text = None
+    present = {_binding(line) for line in (text or "").splitlines()}
+    missing = [line for line in QUIT_BINDINGS if _binding(line) not in present]
+    if not missing:
+        return []
+    if text is None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        text = GLOBAL_INI_HEADER
+    elif text and not text.endswith("\n"):
+        text += "\n"
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    temporary.write_text(text + "".join(f"{line}\n" for line in missing), encoding="utf-8")
+    temporary.replace(path)
+    return missing
 
 
 # --- Users and shadNet -----------------------------------------------------------------------------------------

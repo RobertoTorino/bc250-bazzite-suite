@@ -12,9 +12,9 @@ import shutil
 from pathlib import Path
 
 import pytest
-from PyQt6.QtCore import QElapsedTimer, QEventLoop, QMimeData, QPointF, QSettings, Qt, QThread, QUrl
-from PyQt6.QtGui import QDesktopServices, QDropEvent
-from PyQt6.QtWidgets import QDialog, QMessageBox
+from PyQt6.QtCore import QElapsedTimer, QEvent, QEventLoop, QMimeData, QPointF, QSettings, Qt, QThread, QUrl
+from PyQt6.QtGui import QColor, QContextMenuEvent, QDesktopServices, QDropEvent, QImage, QMouseEvent
+from PyQt6.QtWidgets import QDialog, QFileDialog, QMenu, QMessageBox
 
 from shadps4_manager import INFO, extract_dialog
 from shadps4_manager.extract_dialog import OUTPUT_FOLDER_KEY, PKG_FOLDER_KEY, ExtractDialog
@@ -114,6 +114,59 @@ def test_extract_guardrail_and_preview_only(qapp, window, built_pkg, tmp_path, s
     assert not (preview_dir / built_pkg.title_id / "eboot.bin").exists()
 
 
+def test_an_update_goes_beside_its_game(qapp, window, built_pkg, tmp_path, monkeypatch):
+    # An update (CATEGORY gp) goes into TITLE_ID-UPDATE beside the game, which shadPS4 lays over the game; the game's
+    # folder stays as it was. A second update replaces the first only when the user says so and it extracted.
+    from pkg_builder import build_pkg, default_tree
+    monkeypatch.setattr(QDesktopServices, "openUrl", lambda url: None)
+    asked: list[str] = []
+    answer = [QMessageBox.StandardButton.Yes]
+    monkeypatch.setattr(QMessageBox, "question", lambda _p, _t, text, *a: asked.append(text) or answer[0])
+    out = tmp_path / "games"
+    out.mkdir()
+    game, update = out / built_pkg.title_id, out / f"{built_pkg.title_id}-UPDATE"
+    window.output_input.setText(str(out))
+
+    def extract(pkg_path):
+        window.pkg_input.setText(str(pkg_path))
+        window.on_extract()
+        pump(qapp, lambda: window._thread is None)
+        return window.log_output.toPlainText()
+
+    # Without its game a gp package goes into TITLE_ID, as a game with its update in it does.
+    first = build_pkg(tmp_path / "update1.pkg", default_tree(), category="gp", app_ver="01.01")
+    assert "=== Extraction complete! ===" in extract(first.path)
+    assert (game / "eboot.bin").read_bytes() == first.expected_files["eboot.bin"]
+    shutil.rmtree(game)
+
+    assert "=== Extraction complete! ===" in extract(built_pkg.path)
+    log = extract(first.path)
+    assert "=== Extraction complete! ===" in log and "lays over the game" in log, log
+    assert (game / "eboot.bin").read_bytes() == built_pkg.expected_files["eboot.bin"]
+    assert (update / "eboot.bin").read_bytes() == first.expected_files["eboot.bin"]
+    assert not asked
+
+    # A newer update: the user says no, nothing changes; yes, it takes the old one's place.
+    second = build_pkg(tmp_path / "update2.pkg", default_tree(), category="gp", app_ver="01.02")
+    answer[0] = QMessageBox.StandardButton.No
+    extract(second.path)
+    assert len(asked) == 1 and str(update) in asked[0]
+    assert (update / "eboot.bin").read_bytes() == first.expected_files["eboot.bin"]
+    answer[0] = QMessageBox.StandardButton.Yes
+    log = extract(second.path)
+    assert "The new update replaced the old one" in log, log
+    assert (update / "eboot.bin").read_bytes() == second.expected_files["eboot.bin"]
+    assert sorted(p.name for p in out.iterdir()) == [game.name, update.name]
+
+    # One that fails to extract leaves the old update as it was.
+    third = build_pkg(tmp_path / "update3.pkg", default_tree(), category="gp", app_ver="01.03")
+    monkeypatch.setattr(extract_dialog.PKG, "extract_files", lambda self, index: (_ for _ in ()).throw(OSError("bad")))
+    log = extract(third.path)
+    assert "stays as it was" in log, log
+    assert (update / "eboot.bin").read_bytes() == second.expected_files["eboot.bin"]
+    assert sorted(p.name for p in out.iterdir()) == [game.name, update.name]
+
+
 def test_preview_only_is_no_extraction(qapp, window, built_pkg, tmp_path):
     window.pkg_input.setText(str(built_pkg.path))
     window.output_input.setText(str(tmp_path))
@@ -146,6 +199,41 @@ def test_rename_to_content_id(window, built_pkg, tmp_path):
     assert not copy.exists()
     assert window.pkg_input.text() == str(renamed)
     assert "Renamed PKG to CONTENT_ID-APP_VER" in window.log_output.toPlainText()
+
+
+def test_right_click_on_the_icon_offers_the_menu(qapp, window, tmp_path, monkeypatch):
+    # A right click opened the picture full screen; on Linux, where Qt shows the context menu on the press, the
+    # menu never came. Now only a left click opens it, and a right click offers the menu.
+    picture = tmp_path / "pic0.png"
+    image = QImage(64, 36, QImage.Format.Format_RGB32)
+    image.fill(QColor("#0000ff"))
+    assert image.save(str(picture))
+    label = window.icon_preview
+    label.pkg_loaded, label.preview_image_path = True, str(picture)
+    centre = QPointF(label.width() / 2, label.height() / 2)
+
+    def press(button):
+        label.mousePressEvent(QMouseEvent(QEvent.Type.MouseButtonPress, centre, label.mapToGlobal(centre),
+                                          button, button, Qt.KeyboardModifier.NoModifier))
+
+    press(Qt.MouseButton.RightButton)
+    assert label._viewer is None
+
+    offered = []
+    monkeypatch.setattr(QMenu, "exec", lambda menu, *a: offered.extend(a.text() for a in menu.actions()))
+    label.contextMenuEvent(QContextMenuEvent(QContextMenuEvent.Reason.Mouse, centre.toPoint(),
+                                             label.mapToGlobal(centre).toPoint()))
+    assert offered == ["show full screen", "save as wallpaper"]
+
+    saved = tmp_path / "saved.png"
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *a, **k: (str(saved), ""))
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
+    label._save_as_wallpaper()
+    assert QImage(str(saved)).pixelColor(1, 1).name() == "#0000ff"
+
+    press(Qt.MouseButton.LeftButton)
+    assert label._viewer is not None and label._viewer.isVisible()
+    label._viewer.close()
 
 
 def test_empty_inputs_warn_instead_of_starting(qapp, window, monkeypatch):

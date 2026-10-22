@@ -1,3 +1,35 @@
+Changelog: 22-10-2026 12:55:41
+
+Release 0.7.0.
+
+Changelog: 22-10-2026 11:59:11
+
+Added. Extract PKG: an update (CATEGORY gp) for a game in the output folder goes into TITLE_ID-UPDATE beside the
+game, which shadPS4 lays over the game when it starts; the game's folder stays as it was. Before, the window
+refused, as the game's TITLE_ID folder was not empty, and an update had to be extracted elsewhere and its files
+moved over the game by hand. An update already there is replaced when the user says so: the new one is extracted
+into a folder beside it and takes its place only when every file was written, else the old one stays. A gp package
+without its game in the output folder goes into TITLE_ID as before, as a game with its update in it says gp too. The
+command-line tool is unchanged. Test: an update without its game, beside its game, a second one refused and
+replaced, and one that fails to extract.
+
+Changelog: 22-10-2026 11:48:18
+
+Added. shadPS4's quit window from a controller and from any keyboard: the app adds to shadPS4's
+input_config/global.ini, when it starts, the lines it lacks of Share + Options (Back + Start on every controller),
+Ctrl+Shift+End and Ctrl+Shift+End on the keypad. shadPS4 opened it only on Ctrl+Shift+End with the End key of its
+own, which a keyboard without one does not have, and from no controller button; a game started from Big Picture on
+the desktop could only be quit through Steam. shadPS4's own default goes in too, as shadPS4 adds it only to a file
+without hotkey_quit. Tested on the owner's board with a DualSense Edge and a keyboard whose End is on the keypad.
+Test: the file made from nothing, and as shadPS4 0.20.0 writes it.
+
+Changelog: 22-10-2026 11:00:15
+
+Fixed. Extract PKG: a right click on the icon preview opened the picture full screen, and on Linux, where the
+context menu comes on the press, without the menu that came with it on Windows. Only a left click opens the picture
+now; a right click offers show full screen and save as wallpaper. Test: a right click opens no picture and offers
+the menu, save as wallpaper saves the picture, a left click opens it.
+
 Changelog: 21-10-2026 02:13:00
 
 Release 0.6.1.
