@@ -1,3 +1,11 @@
+Changelog: 22-10-2026 20:48:48
+
+Release 6.6.0. Pins check-v0.9.0, upscaler-v0.8.0, overlay-v0.7.0, ace-v0.7.0, mesh-v0.8.0, fan-v0.6.0, wdriver-v0.6.0, cec-v0.7.0, sftp-v0.7.0, package-v0.13.0, ncgui-v0.7.0, rpcs3-v0.7.0, consoles-v1.7.0, clb-v0.2.0, shadps4-v0.8.0, swanstation-v0.2.0, decky-v0.8.0, datstation-v1.4.0, ppsspp-v0.7.0, pcsx2-v0.8.0, vita3k-v0.6.0, mgba-v0.2.0, sameboy-v0.2.0, xenia-v0.2.0. added video tour to the wiki
+
+Changelog: 22-10-2026 20:48:21
+
+Release 6.6.0. added video tour to the wiki
+
 Changelog: 22-10-2026 17:15:51
 
 Release 6.5.0. Pins mtool-v0.3.0. added video tour to the wiki
