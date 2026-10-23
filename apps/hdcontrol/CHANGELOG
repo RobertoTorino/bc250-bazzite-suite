@@ -1,3 +1,84 @@
+Changelog: 23-10-2026 15:22:20
+
+Release 0.3.0.
+
+Changelog: 23-10-2026 15:07:48
+
+Added. Two boxes in the header after the firmware (owner, 23-10-2026): Reports, the input reports a second, and
+Bluetooth off in, how long until the idle service switches a controller on Bluetooth off; the window is at least
+1072 px wide for the six. For that countdown the service keeps when each controller was last used in
+$XDG_RUNTIME_DIR/bc250-usb-hdcontrol-idle.json (at most every 5 seconds; removed when it stops), so the window shows
+the service's own time, not one of its own.
+
+Changelog: 23-10-2026 14:44:00
+
+Fixed. A controller on Bluetooth no longer reads "The update needs the USB cable" while it runs the latest firmware:
+the firmware box and the Connection box's tooltip say so only when an update is out (owner, 23-10-2026: on the
+latest firmware it confused).
+
+Changelog: 23-10-2026 14:37:43
+
+Added. With two or more controllers connected, a tab for each under the header instead of the list in it (owner,
+23-10-2026): the player number its lights show, the model, the connection and the battery ("Player 2 · Edge ·
+Bluetooth · 40 %"), all at a glance; a click shows that controller in the window. The idle service's notification
+names the controller the same way ("DualSense Edge (player 2) switched off").
+
+Changelog: 23-10-2026 14:11:39
+
+Fixed. After a firmware update the window says to remove the controller from the system's Bluetooth settings and pair
+it again: the update ends the pairing (owner's Edge, 23-10-2026: after 0x0200 to 0x0217 it blinked quickly and
+switched off without reaching the board, and paired only after its old entry was removed). The wiki says so too.
+
+Changelog: 23-10-2026 13:56:29
+
+Added. Switch off when unused (owner, 23-10-2026: with a service, the PS5's choices, 10 minutes by default): a user
+service that install.sh adds and --uninstall removes (bc250-usb-hdcontrol-idle, python -m usb_hdcontrol
+--idle-watch, idle.py) reads the input reports of every controller on Bluetooth and, after 10, 30 or 60 minutes
+without a button, a stick off its middle or a trigger pulled, ends its Bluetooth connection as Turn off does and
+says so in a desktop notification (notify-send; also when it fails, owner 23-10-2026) and the journal, naming the
+controller by the player number its lights showed ("DualSense Edge (player 2)"; each controller has its own wait); the
+motion sensors do not count, controllers on the USB cable are left alone, and Never in the window turns it off. The
+window's controller box has the choice, Switch Bluetooth off when unused; the service reads it again each time. Turn
+off is now Turn Bluetooth off, as wide as Test vibration and the choice, the three spread down the column (owner,
+23-10-2026). The drawing's d-pad and face buttons sit further towards the edges, each by 80 % of a face button's
+size (owner, 23-10-2026).
+
+Changelog: 23-10-2026 13:48:00
+
+Added. The editor's Triggers box says that the range is saved in the profile, but on Linux the controller still
+reports the whole travel (owner's Edge, 23-10-2026: R2 set to 0 to 50 % in Fn + Square, read back as 0 to 128, filled
+like L2; Cross set to Circle did send Circle), and that a PS5 may use it (owner, 23-10-2026: keep it, with the note).
+
+Changelog: 23-10-2026 13:38:36
+
+Added. The drawing shows the player indicator under the touchpad, lit as the controller's own lights and large
+enough to see on a big screen (owner, 23-10-2026: an 80-inch one; read from
+hid-playstation's LEDs in /sys, which every user may read; only root may set them), and hovering over it names the
+player: with two controllers connected, it tells which one the window shows (owner, 23-10-2026). The spec sheet no
+longer lists it among the parts the drawing leaves out. The drawing's touchpad is wider; every other part moves
+out by the same amount on its side and keeps its size (owner, 23-10-2026).
+
+Changelog: 23-10-2026 13:33:06
+
+Added. The profile card in use says Active and follows Fn + Triangle, Square, Cross or Circle live: the DualSense
+Edge reports its active profile in byte 49 of its USB input report, upper four bits (read on the owner's Edge,
+23-10-2026: 1 for Fn + Triangle, 2 for Fn + Square; over Bluetooth one byte further, not yet read). The same capture
+showed a profile written by the app working on Linux: after Fn + Square, Cross set to send Circle sent Circle.
+
+Changelog: 23-10-2026 12:53:43
+
+Added. Create, edit and clear the DualSense Edge's profiles (owner, 23-10-2026). Under each card Create… on an empty
+slot, Edit… and Clear on a profile, over the USB cable; the default profile (Fn + Triangle) is never changed, also
+refused in profiles.py itself. The editor sets the name, each stick's curve and sensitivity (0 to 10), the triggers'
+ranges and what each button sends. Each change saves a backup of the four profiles first, then writes three reports
+with the slot's ID (0x60 Square, 0x61 Cross, 0x62 Circle) and each report's own CRC-32, or clears with 0x68, and reads
+the slot back to check it. A new profile starts from the default profile's bytes and gets its own 16-byte ID; an
+edited one keeps its own bytes; the bytes the app does not know stay as the controller made them. Tried on the owner's
+Edge before (23-10-2026, a test script on the same reports): written, read back byte for byte, cleared, the default
+profile unchanged; the stick curves' points follow the web application's tables. On the owner's Edge (23-10-2026)
+the controller applied the button map and the curves itself on Linux: Cross set to Circle sent Circle, the left stick
+on Digital jumped to the edge while the right one on Default moved smoothly.
+
 Changelog: 23-10-2026 10:09:17
 
 Release 0.2.0.

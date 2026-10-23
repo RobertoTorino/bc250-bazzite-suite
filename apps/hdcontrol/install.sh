@@ -13,6 +13,8 @@
 #  * ~/.local/share/bc250-bazzite-suite/venv, the BC250 Bazzite Suite's shared venv with PyQt6 (the wheels bundle
 #    Qt; nothing is layered). It is removed with the last suite app that uses it.
 #  * ~/.local/bin/bc250-usb-hdcontrol to start it from a terminal, plus an app menu entry and a Desktop icon.
+#  * ~/.config/systemd/user/bc250-usb-hdcontrol-idle.service, enabled: switches a controller on Bluetooth off after
+#    the minutes chosen in the window unused (Never in the window leaves it idle).
 #  * Made by the app, removed with --purge: the firmware it downloaded and the backups of the profiles, in
 #    ~/.local/share/bc250-usb-hdcontrol/firmware and profiles.
 set -euo pipefail
@@ -29,6 +31,8 @@ LAUNCHER="$HOME/.local/bin/$APP_ID"
 MENU_ENTRY="$DATA_DIR/applications/$APP_ID.desktop"
 DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
 DESKTOP_ICON="$DESKTOP_DIR/$APP_ID.desktop"
+UNIT_DIR="$CONFIG_DIR/systemd/user"
+IDLE="$APP_ID-idle"
 
 SRC=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 # bc250_core: bundled next to usb_hdcontrol in a release; in the suite checkout it lives in core/.
@@ -56,6 +60,12 @@ $PURGE && ! $UNINSTALL && die "--purge only goes with --uninstall."
 [ "$(id -u)" -ne 0 ] || die "Run this as your own user, not with sudo: the app, the venv and the launcher belong in your home folder."
 
 if $UNINSTALL; then
+    if [ -e "$UNIT_DIR/$IDLE.service" ]; then
+        info "Removing the service that switches unused controllers off"
+        systemctl --user disable --now "$IDLE.service" >/dev/null 2>&1 || true
+        rm -f "$UNIT_DIR/$IDLE.service" "$UNIT_DIR/default.target.wants/$IDLE.service"
+        systemctl --user daemon-reload >/dev/null 2>&1 || true
+    fi
     info "Removing the launcher, the menu entry and the app"
     rm -f "$LAUNCHER" "$MENU_ENTRY" "$DESKTOP_ICON"
     command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q "$DATA_DIR/applications" || true
@@ -157,6 +167,32 @@ if $DESKTOP_SHORTCUT && [ -d "$DESKTOP_DIR" ]; then
     command -v gio >/dev/null 2>&1 && gio set "$DESKTOP_ICON" metadata::trusted true 2>/dev/null || true
 elif ! $DESKTOP_SHORTCUT; then
     rm -f "$DESKTOP_ICON"
+fi
+
+# --- 4. The service that switches unused controllers off ----------------------------------------
+info "Adding the service that switches unused controllers off"
+mkdir -p "$UNIT_DIR"
+cat >"$UNIT_DIR/$IDLE.service" <<EOF
+# Written by the $APP_NAME's install.sh; --uninstall removes it.
+[Unit]
+Description=$APP_NAME: switch a controller on Bluetooth off when it is not used
+
+[Service]
+ExecStart=$LAUNCHER --idle-watch
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target
+EOF
+systemctl --user daemon-reload >/dev/null 2>&1 || true
+if systemctl --user enable "$IDLE.service" >/dev/null 2>&1; then
+    systemctl --user restart "$IDLE.service" >/dev/null 2>&1 || true    # an update runs its new code at once
+else
+    # No user session to ask (an install over ssh, say): enable it as systemctl would, for the next login.
+    mkdir -p "$UNIT_DIR/default.target.wants"
+    ln -sfn "../$IDLE.service" "$UNIT_DIR/default.target.wants/$IDLE.service"
+    info "Note: the service starts with your next login."
 fi
 
 info "Done. Start \"$APP_NAME\" from the app menu$($DESKTOP_SHORTCUT && echo ' or the Desktop'), or run: $APP_ID"

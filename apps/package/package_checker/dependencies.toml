@@ -176,13 +176,13 @@ anchor = "reading-the-bios-flash-chip-optional"
 
 [[tool]]
 name = "bluetoothctl"
-description = "BlueZ's command line for Bluetooth. USB HD Control uses it only to disconnect a controller from Bluetooth, so that Linux takes its USB cable instead."
+description = "BlueZ's command line for Bluetooth. USB HD Control uses it only to end a controller's Bluetooth connection: so that Linux takes its USB cable instead, or to switch it off."
 executables = ["bluetoothctl"]
 
 [[tool.source]]
 owner = "hdcontrol"
 need = "optional"
-usage = "Use the cable: disconnects a controller that stayed on Bluetooth while plugged in."
+usage = "Use the cable disconnects a controller that stayed on Bluetooth while plugged in; Turn Bluetooth off and the idle service switch a controller off."
 anchor = "on-the-cable-and-over-bluetooth"
 
 [[tool]]
@@ -687,6 +687,12 @@ need = "required"
 usage = "Tell your user's systemd about the load service, which sends the camera's firmware when it is plugged in."
 anchor = "loading-by-itself"
 
+[[tool.source]]
+owner = "hdcontrol"
+need = "required"
+usage = "Enable your user's service that switches an unused controller on Bluetooth off."
+anchor = "the-controller-box"
+
 [[tool]]
 name = "journalctl"
 description = "Reads the systemd journal: the system, service and kernel logs."
@@ -776,6 +782,12 @@ usage = "The thermal guard's warnings on the desktop; without it they go only to
 owner = "wdriver"
 need = "optional"
 usage = "The driver service's word on the desktop when it rebuilt the driver after a kernel update, or could not."
+
+[[tool.source]]
+owner = "hdcontrol"
+need = "optional"
+usage = "The idle service's word on the desktop when it switched an unused controller off, or could not; without it only the journal has it."
+anchor = "the-controller-box"
 
 [[tool]]
 name = "radeontop"

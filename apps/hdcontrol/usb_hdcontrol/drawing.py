@@ -22,9 +22,10 @@ from bc250_core.widgets import hide_tooltip, show_tooltip
 
 from . import style
 
-BOX = QRectF(25, 0, 350, 270)
-CABLE_SPACE = 120.0                 # above the controller, for the cable
 NARROW = 0.85                       # the body's width against the first drawing
+STRETCH = 36.0                      # the touchpad this much wider, all else out by half (owner, 23-10-2026)
+BOX = QRectF(25 - STRETCH / 2, 0, 350 + STRETCH, 270)
+CABLE_SPACE = 120.0                 # above the controller, for the cable
 # Whole parts, as pages and profiles light them, and the buttons each is made of.
 PART_BUTTONS = {
     "body": (), "touchpad": ("touchpad",), "lightbar": (), "usb": (), "ps": ("ps",),
@@ -42,8 +43,16 @@ SHAKE_AMPLITUDE = 3.0
 
 
 def x(value: float) -> float:
-    """A horizontal position of the first drawing, 85 % as far from the middle; sizes are not scaled."""
-    return 200 + (value - 200) * NARROW
+    """A horizontal position of the first drawing, 85 % as far from the middle and then moved out by half of STRETCH,
+    so that only the touchpad, across the middle, gets wider; sizes are not scaled."""
+    offset = value - 200
+    return 200 + offset * NARROW + math.copysign(STRETCH / 2, offset) if offset else 200.0
+
+
+# The d-pad and the face buttons, each moved towards its edge by 80 % of a face button's size (owner, 23-10-2026).
+PAD_SHIFT = 0.8 * 26
+DPAD_X = x(92) - PAD_SHIFT
+FACE_X = x(308) + PAD_SHIFT
 
 
 def body_path() -> QPainterPath:
@@ -87,18 +96,19 @@ def regions(edge: bool) -> list[tuple[str, QPainterPath]]:
     found += [
         ("USB-C port: the cable for charging and the firmware update", _rect(190, 33, 20, 7, 2)),
         ("Light bar", _rect(x(136) - 2, 50, 10, 54)), ("Light bar", _rect(x(264) - 8, 50, 10, 54)),
-        ("Touchpad: press it to click", _rect(x(138) + 6, 46, 124 * NARROW - 12, 64, 10)),
+        ("Touchpad: press it to click", _rect(x(138) + 6, 46, x(262) - x(138) - 12, 64, 10)),
         ("Create", _rect(x(112) - 4, 50, 8, 16, 4)), ("Options", _rect(x(280) - 4, 50, 8, 16, 4)),
     ]
-    cx, cy = x(92), 106.0
+    cx, cy = DPAD_X, 106.0
     for name, (dx, dy) in (("D-pad up", (0, -1)), ("D-pad down", (0, 1)), ("D-pad left", (-1, 0)),
                            ("D-pad right", (1, 0))):
         found.append((name, _rect(cx + dx * 20 - 8.5, cy + dy * 20 - 8.5, 17, 17, 4)))
-    cx = x(308)
+    cx = FACE_X
     for name, (dx, dy) in (("Triangle", (0, -25)), ("Circle", (25, 0)), ("Cross", (0, 25)), ("Square", (-25, 0))):
         found.append((name, _circle(cx + dx, cy + dy, 13)))
     found += [("Left stick: press it for L3", _circle(x(150), 150, 22)),
               ("Right stick: press it for R3", _circle(x(250), 150, 22)),
+              ("Player indicator", _rect(167, 112, 66, 11, 3)),
               ("PS button", _circle(200, 140, 7)), ("Mute", _rect(194, 150, 12, 8, 2))]
     if edge:
         found += [("Fn, left: hold it and press a face button to switch profiles", _rect(x(150) - 10, 180, 20, 8, 4)),
@@ -135,6 +145,7 @@ class ControllerView(QWidget):
         self.sticks = (0.0, 0.0, 0.0, 0.0)              # left x, y, right x, y: -1 to 1
         self.triggers = (0.0, 0.0)                      # L2, R2: 0 to 1
         self.light: QColor | None = None                # the light bar's colour; None: unknown, drawn dark
+        self.players: tuple[bool, ...] | None = None    # the five player lights, left to right; None: unknown
         self.cable_phase: float | None = None
         self.data_progress: float | None = None         # 0 to 1 while an update sends the firmware
         self.data_phase = 0.0
@@ -174,6 +185,19 @@ class ControllerView(QWidget):
     def set_light(self, colour: QColor | None) -> None:
         self.light = colour
         self.update()
+
+    def set_players(self, lights: tuple[bool, ...] | None) -> None:
+        if lights != self.players:
+            self.players = lights
+            self.update()
+
+    def _name(self, name: str) -> str:
+        """A part's name for the tooltip; the player indicator says which player it shows."""
+        if name != "Player indicator":
+            return name
+        from .controller import PLAYER_LIGHTS
+        number = PLAYER_LIGHTS.get(self.players) if self.players else None
+        return f"Player indicator: player {number}" if number else "Player indicator"
 
     def animate_cable(self, on: bool) -> None:
         """The cable going into the port, again and again, while the page is shown."""
@@ -230,7 +254,7 @@ class ControllerView(QWidget):
         if name != self.hovered:
             self.hovered = name
             if name:
-                show_tooltip(event.globalPosition().toPoint(), name, self)
+                show_tooltip(event.globalPosition().toPoint(), self._name(name), self)
             else:
                 hide_tooltip()
         super().mouseMoveEvent(event)
@@ -297,6 +321,7 @@ class ControllerView(QWidget):
         self._draw_dpad(p)
         self._draw_face(p)
         self._draw_sticks(p)
+        self._draw_players(p)
         self._shape(p, self.is_lit("ps"), lambda: p.drawEllipse(QPointF(200, 140), 7, 7))
         self._shape(p, self.is_lit("mute"), lambda: p.drawRoundedRect(QRectF(194, 152, 12, 4), 2, 2))
         if self.edge:
@@ -351,8 +376,17 @@ class ControllerView(QWidget):
         for left in (x(136) + 3, x(264) - 3):
             p.drawLine(QPointF(left, 54), QPointF(left, 100))
 
+    def _draw_players(self, p: QPainter) -> None:
+        """The five player lights under the touchpad, white where the controller's are on; large enough to see on a
+        big screen (owner, 23-10-2026)."""
+        p.setPen(Qt.PenStyle.NoPen)
+        for index in range(5):
+            on = self.players is not None and self.players[index]
+            p.setBrush(QColor("#ffffff") if on else QColor(THEME.edge))
+            p.drawRoundedRect(QRectF(200 + (index - 2) * 13 - 5, 115, 10, 5), 2.5, 2.5)
+
     def _draw_touchpad(self, p: QPainter) -> None:
-        rect = QRectF(x(138) + 6, 46, 124 * NARROW - 12, 64)
+        rect = QRectF(x(138) + 6, 46, x(262) - x(138) - 12, 64)
         self._shape(p, self.is_lit("touchpad"), lambda: p.drawRoundedRect(rect, 10, 10))
         if self.data_progress is not None:
             p.save()
@@ -367,7 +401,7 @@ class ControllerView(QWidget):
 
     def _draw_dpad(self, p: QPainter) -> None:
         """Four white arms with a black border and a gap between them (owner, 23-10-2026); a pressed one blue."""
-        cx, cy = x(92), 106.0
+        cx, cy = DPAD_X, 106.0
         for button, (dx, dy) in (("up", (0, -1)), ("down", (0, 1)), ("left", (-1, 0)), ("right", (1, 0))):
             lit = self.is_lit(button)
             p.setBrush(QColor(style.BLUE_LIGHT) if lit else QColor("white"))
@@ -375,7 +409,7 @@ class ControllerView(QWidget):
             p.drawRoundedRect(QRectF(cx + dx * 20 - 8.5, cy + dy * 20 - 8.5, 17, 17), 4, 4)
 
     def _draw_face(self, p: QPainter) -> None:
-        cx, cy = x(308), 106.0
+        cx, cy = FACE_X, 106.0
         centres = {"triangle": (0, -25), "circle": (25, 0), "cross": (0, 25), "square": (-25, 0)}
         for button, (dx, dy) in centres.items():
             centre = QPointF(cx + dx, cy + dy)

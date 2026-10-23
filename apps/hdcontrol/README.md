@@ -4,15 +4,16 @@
 
 The **DualSense** and **DualSense Edge** controllers on **Bazzite**. The window shows the controller's connection,
 battery and firmware, updates its firmware from the official update server over a USB cable (officially offered only
-on a PS5 and in an app for Windows), and shows the DualSense Edge's four profiles, with a backup of them. Linux's own driver keeps driving the controller; the app needs no root.
+on a PS5 and in an app for Windows), and shows the DualSense Edge's four profiles, creates and edits them, with a backup of them. A small service
+switches a controller on Bluetooth off when it is not used, as a PS5 does. Linux's own driver keeps driving the controller; the app needs no root.
 
 How to install and use it: [USB HD Control in the manual](https://robertotorino.github.io/bc250-bazzite-suite/apps/hdcontrol/).
 
 ## License
 
 GPL-3.0-or-later, see [LICENSE](LICENSE). The update protocol is ported from
-[dualsense-updater-rs](https://github.com/nchie/dualsense-updater-rs), MIT, Copyright 2026 nchie, and the layout of
-the Edge's profiles from [dualsense-edge-profile-web-application](https://github.com/steffalon/dualsense-edge-profile-web-application),
+[dualsense-updater-rs](https://github.com/nchie/dualsense-updater-rs), MIT, Copyright 2026 nchie, and the layout and
+writing of the Edge's profiles from [dualsense-edge-profile-web-application](https://github.com/steffalon/dualsense-edge-profile-web-application),
 MIT, Copyright (c) 2023 steffalon; the files ported from them say so in their header and keep the MIT notice below.
 The controllers' firmware is Sony's: it is not part of this app.
 

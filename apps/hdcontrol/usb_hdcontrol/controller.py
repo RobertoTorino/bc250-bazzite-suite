@@ -108,6 +108,34 @@ def _battery(device: Path) -> Battery | None:
     return None
 
 
+# hid-playstation's player numbers as the five lights under the touchpad show them, left to right (owner's board,
+# 23-10-2026: one controller lit the middle one, a second one two).
+PLAYER_LIGHTS = {(False, False, True, False, False): 1, (False, True, False, True, False): 2,
+                 (True, False, True, False, True): 3, (True, True, False, True, True): 4, (True,) * 5: 5}
+
+
+def player_lights(found: Controller) -> tuple[bool, ...] | None:
+    """The player indicator as the kernel set it (readable by every user, written only by root), or None when the
+    controller has none in /sys."""
+    lights = []
+    for number in range(1, 6):
+        led = next(iter(sorted((found.sys_path / "leds").glob(f"*:white:player-{number}"))), None)
+        if led is None:
+            return None
+        try:
+            lights.append((led / "brightness").read_text().strip() not in ("", "0"))
+        except OSError:
+            return None
+    return tuple(lights)
+
+
+def player_number(found: Controller) -> int | None:
+    """The player number the controller's lights show, or None (no lights in /sys, or a pattern that is not
+    hid-playstation's)."""
+    lights = player_lights(found)
+    return PLAYER_LIGHTS.get(lights) if lights else None
+
+
 def find(sys_root: Path = SYS) -> list[Controller]:
     """Every DualSense and DualSense Edge, USB ones first (only they take a firmware update)."""
     found = []

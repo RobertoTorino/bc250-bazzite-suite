@@ -116,7 +116,8 @@ def intro_steps(edge: bool) -> list[IntroStep]:
             "Four profiles",
             "The DualSense Edge keeps four profiles. Hold Fn, below a stick, and press Triangle, Square, Cross or "
             "Circle to switch. A profile sets how the sticks respond, how far the triggers travel and what each "
-            "button does, the back buttons too. The app shows each profile and keeps a backup of them.",
+            "button does, the back buttons too. The app shows each profile, keeps a backup of them, and creates and "
+            "edits the three besides the default.",
             ("fn", "back", "sticks", "triggers")))
     else:
         steps.append(IntroStep(
@@ -288,9 +289,13 @@ def info_html(live: list[tuple[str, str]], product: int) -> str:
 
 class ProfileCard(QFrame):
     """One profile slot, a column of the main page: Fn and its button, the name, and what the profile sets. A click
-    chooses it, and the drawing then lights what it changes."""
+    chooses it, and the drawing then lights what it changes. Under it Create… on an empty slot, Edit… and Clear on a
+    profile; the default profile (Fn + Triangle) has none: the app does not change it."""
 
     clicked = pyqtSignal(object)        # the Profile
+    create = pyqtSignal(object)
+    edit = pyqtSignal(object)
+    clear = pyqtSignal(object)
 
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
@@ -301,6 +306,10 @@ class ProfileCard(QFrame):
         layout.setContentsMargins(12, 10, 12, 10)
         self.slot = QLabel()
         self.slot.setStyleSheet("font-size:12px; font-weight:600;")
+        self.active = QLabel("Active")
+        self.active.setStyleSheet(f"font-size:12px; font-weight:700; color:{style.BLUE_LIGHT};")
+        self.active.setToolTip("The profile the controller uses now.")
+        self.active.setVisible(False)
         self.name = QLabel()
         self.name.setWordWrap(True)
         self.name.setTextFormat(Qt.TextFormat.PlainText)       # a profile's name is the user's text
@@ -309,9 +318,26 @@ class ProfileCard(QFrame):
         self.details.setWordWrap(True)
         self.details.setTextFormat(Qt.TextFormat.RichText)
         self.details.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
-        for label in (self.slot, self.name, self.details):
+        top = QHBoxLayout()
+        top.addWidget(self.slot)
+        top.addStretch(1)
+        top.addWidget(self.active)
+        layout.addLayout(top)
+        for label in (self.name, self.details):
             layout.addWidget(label)
         layout.addStretch(1)
+        actions = QHBoxLayout()
+        actions.setSpacing(6)
+        self.create_button = QPushButton("Create…")
+        self.edit_button = QPushButton("Edit…")
+        self.clear_button = QPushButton("Clear")
+        for button, signal in ((self.create_button, self.create), (self.edit_button, self.edit),
+                               (self.clear_button, self.clear)):
+            button.clicked.connect(lambda _checked=False, signal=signal: signal.emit(self.profile))
+            actions.addWidget(button)
+        actions.addStretch(1)
+        layout.addLayout(actions)
+        self.set_actions(True, "")
         self.set_chosen(False)
 
     def set_chosen(self, chosen: bool) -> None:
@@ -321,18 +347,33 @@ class ProfileCard(QFrame):
         self.setStyleSheet(style.soften(surface_style(style.BLUE_LIGHT if chosen else None))
                            + "QLabel { background:transparent; border:none; }")
 
+    def set_active(self, active: bool) -> None:
+        self.active.setVisible(active)
+
+    def set_actions(self, allowed: bool, reason: str) -> None:
+        """Whether the profile may be changed now; *reason* says why not (the cable, an update running)."""
+        profile = self.profile
+        writable = profile is not None and profile.slot in profiles.WRITE_REPORTS
+        self.create_button.setVisible(writable and profile.empty)
+        self.edit_button.setVisible(writable and not profile.empty)
+        self.clear_button.setVisible(writable and not profile.empty)
+        for button, tip in ((self.create_button, "Makes a profile in this slot, starting from the default profile."),
+                            (self.edit_button, "Changes this profile's name, sticks, triggers and buttons."),
+                            (self.clear_button, "Removes this profile from the controller.")):
+            button.setEnabled(allowed)
+            button.setToolTip(tip if allowed else reason)
+
     def set_profile(self, profile: profiles.Profile) -> None:
         self.profile = profile
         self.slot.setText(f"Fn + {SYMBOLS[profile.slot]}  {profile.slot}")
-        self.setToolTip(f"Fn + {profile.slot}: no profile yet. Create one on a PS5 or in the official app for Windows."
-                        if profile.empty else
+        default = profile.slot not in profiles.WRITE_REPORTS
+        self.setToolTip(f"Fn + {profile.slot}: no profile yet. Create… makes one." if profile.empty else
                         f"Fn + {profile.slot}: {profile.name}. Click to see on the drawing what it sets; click again "
-                        "to let go.")
+                        "to let go." + (" The default profile: the app does not change it." if default else ""))
         if profile.empty:
             self.name.setText("Empty")
             self.name.setStyleSheet(header_font() + f"font-size:17px; font-weight:800; color:{muted()};")
-            self.details.setText(f"<span style='color:{muted()}'>No profile in this slot. Create one on a PS5 or in "
-                                 "the official app for Windows.</span>")
+            self.details.setText(f"<span style='color:{muted()}'>No profile in this slot.</span>")
             return
         self.name.setStyleSheet(header_font() + "font-size:17px; font-weight:800;")
         self.name.setText(profile.name + ("" if profile.crc_ok else " (checksum does not match)"))

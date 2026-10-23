@@ -139,3 +139,19 @@ def test_disconnect_bluetooth_without_bluetoothctl():
     def missing(argv, **kwargs):
         raise FileNotFoundError(argv[0])
     assert "not installed" in controller.disconnect_bluetooth("aa:bb:cc:dd:ee:ff", missing)
+
+
+def test_the_player_lights_as_the_kernel_set_them(tmp_path):
+    plug(tmp_path, players="01010")
+    plug(tmp_path, node="hidraw5", instance=5, players=None)
+    first, second = controller.find(tmp_path)
+    assert controller.player_lights(first) == (False, True, False, True, False)
+    assert controller.PLAYER_LIGHTS[controller.player_lights(first)] == 2
+    assert controller.player_lights(second) is None                    # no LEDs in /sys: unknown
+
+
+def test_the_player_number(tmp_path):
+    plug(tmp_path, players="11011")
+    plug(tmp_path, node="hidraw5", instance=5, players="11000")         # not a pattern hid-playstation sets
+    four, odd = controller.find(tmp_path)
+    assert controller.player_number(four) == 4 and controller.player_number(odd) is None

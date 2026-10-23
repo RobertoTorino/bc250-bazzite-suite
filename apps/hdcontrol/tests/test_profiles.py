@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
+import dataclasses
 import json
+
+import pytest
 
 from conftest import DEFAULT_PROFILE, FakeDevice, empty_slot, profile_reports
 from usb_hdcontrol import profiles
@@ -79,3 +82,86 @@ def test_changed_parts():
     third[30] = 1                                   # right stick Quick
     profile = profiles.parse("Circle", profile_reports(0x79, "Racing", bytes(third)))
     assert profiles.changed_parts(profile) == {"triggers", "dpad", "back", "sticks"}
+
+
+def _settings(**changes):
+    return dataclasses.replace(profiles.settings_of(profiles.parse("Triangle", DEFAULT_PROFILE)), **changes)
+
+
+def test_settings_of_the_default_profile_keep_its_curve_points():
+    settings = _settings()
+    assert settings.name == "Default Profile" and (settings.left_curve, settings.right_curve) == (0, 0)
+    assert settings.left_level is None and settings.right_level is None     # its points are zeros: kept as they are
+    assert settings.buttons == tuple(range(16))
+
+
+def test_the_owners_write_test_as_built_by_the_app():
+    """The reports the owner's Edge took on 23-10-2026: the default profile renamed "Write test" in Fn + Square,
+    with the per-report CRCs the test script printed."""
+    reports = profiles.framed("Square", profiles.build(_settings(name="Write test"), DEFAULT_PROFILE))
+    assert [r[0] for r in reports] == [0x60] * 3 and [r[1] for r in reports] == [0, 1, 2]
+    assert [r[60:64].hex() for r in reports] == ["2511dc23", "bc4ba189", "a4eeddbd"]
+
+
+def test_build_puts_every_setting_in_and_keeps_the_rest():
+    buttons = list(range(16))
+    buttons[5], buttons[14] = 0x04, 0x10            # Cross sends Circle, the left back button Options
+    parts = profiles.build(_settings(name="Racing ✓", left_curve=1, left_level=7, right_curve=5, right_level=0,
+                                     triggers=(26, 230, 0, 128), buttons=tuple(buttons)),
+                           DEFAULT_PROFILE, new_id=bytes(range(16)))
+    profile = profiles.parse("Cross", parts)
+    assert profile.name == "Racing ✓" and profile.crc_ok
+    assert (profile.left_curve, profile.right_curve) == ("Quick", "Dynamic")
+    assert profile.triggers == (26, 230, 0, 128)
+    assert profile.remapped == (("Cross", "Circle"), ("Left back button", "Options"))
+    assert parts[1][28:44] == bytes(range(16))
+    assert parts[1][47:53] == profiles.curve_points(1, 7) and parts[1][44] == 0x03
+    assert parts[1][56:60] + parts[2][2:4] == profiles.curve_points(5, 0) and parts[1][53] == 0x03
+    assert parts[2][28] == 0xC0                      # a byte the app does not know, as the controller made it
+    settings = profiles.settings_of(profile)
+    assert (settings.left_level, settings.right_level) == (7, 0)
+
+
+def test_curve_points_follow_the_tables():
+    assert list(profiles.curve_points(0, 3)) == [128, 128, 196, 196, 225, 225]
+    assert list(profiles.curve_points(1, 5)) == [38, 38, 107, 167, 255, 255]
+    assert list(profiles.curve_points(2, 2)) == [76, 50, 140, 102, 200, 162]
+    assert profiles.curve_level(3, profiles.curve_points(3, 9)) == 9 and profiles.curve_level(3, bytes(6)) is None
+
+
+def test_build_refuses_what_the_controller_cannot_hold():
+    for changes, words in (({"name": " "}, "name"), ({"name": "x" * 40}, "name"),
+                           ({"triggers": (100, 100, 0, 255)}, "range"), ({"buttons": (0,) * 15}, "button map")):
+        with pytest.raises(profiles.ProfileError, match=words):
+            profiles.build(_settings(**changes), DEFAULT_PROFILE)
+    assert profiles.name_fits("x" * 39) and not profiles.name_fits("😀" * 20)
+
+
+def test_write_reads_back_and_clear_empties():
+    device = FakeDevice()
+    parts = profiles.build(_settings(name="Write test"), DEFAULT_PROFILE)
+    written = profiles.write(device, "Circle", parts, wait=0)
+    assert written.name == "Write test" and [r[0] for r in device.sent] == [0x62] * 3
+    profiles.clear(device, "Circle", wait=0)
+    assert device.sent[-1][:2] == bytes([0x68, 4])
+    after = profiles.read(device)
+    assert after[3].empty and after[0].reports == DEFAULT_PROFILE
+
+
+def test_the_default_profile_is_never_written_or_cleared():
+    device = FakeDevice()
+    for change in (lambda: profiles.write(device, "Triangle", DEFAULT_PROFILE, wait=0),
+                   lambda: profiles.clear(device, "Triangle", wait=0)):
+        with pytest.raises(profiles.ProfileError, match="default profile"):
+            change()
+    assert device.sent == []
+
+
+def test_a_write_the_controller_does_not_keep_is_an_error():
+    class Deaf(FakeDevice):
+        def set_feature(self, data):
+            self.sent.append(bytes(data))
+    with pytest.raises(profiles.ProfileError, match="did not keep"):
+        profiles.write(Deaf(), "Square", profiles.build(_settings(), DEFAULT_PROFILE), wait=0)
+    with pytest.raises(profiles.ProfileError, match="still holds"):
+        profiles.clear(Deaf({0x73: DEFAULT_PROFILE[0]}), "Square", wait=0)

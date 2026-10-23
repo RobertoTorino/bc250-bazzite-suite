@@ -54,7 +54,9 @@ def profile_reports(first: int, name: str, third: bytes | None = None) -> tuple[
 
 
 class FakeDevice:
-    """A controller's hidraw node: answers the firmware report and the profile reports, records what is sent."""
+    """A controller's hidraw node: answers the firmware report and the profile reports, records what is sent, and
+    keeps a profile written or cleared as the owner's Edge did (23-10-2026): a part written with 0x60 to 0x63 reads
+    back under its slot's read report with bytes 60 to 63 zero, and 0x68 empties the slot byte 1 names."""
 
     def __init__(self, reports: dict[int, bytes] | None = None):
         self.reports = {0x20: FIRMWARE_REPORT}
@@ -74,6 +76,12 @@ class FakeDevice:
 
     def set_feature(self, data: bytes) -> None:
         self.sent.append(bytes(data))
+        if 0x60 <= data[0] <= 0x63:
+            first = 0x70 + 3 * {0x63: 0, 0x60: 1, 0x61: 2, 0x62: 3}[data[0]]
+            self.reports[first + data[1]] = bytes([first + data[1]]) + bytes(data[1:60]) + bytes(4)
+        elif data[0] == 0x68:
+            first = 0x70 + 3 * (data[1] - 1)
+            self.reports.update(zip(range(first, first + 3), empty_slot(first)))
 
     def close(self) -> None:
         self.closed = True
@@ -108,10 +116,12 @@ def write(path: Path, text: str) -> None:
 
 
 def plug(sys_root: Path, node: str = "hidraw2", product: int = 0x0DF2, bus: int = 0x03, instance: int = 3,
-         battery: tuple[str, str] | None = ("100", "Full"), vendor: int = 0x054C) -> Path:
+         battery: tuple[str, str] | None = ("100", "Full"), vendor: int = 0x054C,
+         players: str | None = "00100") -> Path:
     """A controller as the kernel shows it: /sys/class/hidraw/<node>/device links to the HID device, with its
-    uevent, report descriptor, power_supply (named after the controller's address, as hid-playstation does) and its
-    four input devices (the controller, its motion sensors, touchpad and headset jack), each with its event node."""
+    uevent, report descriptor, power_supply (named after the controller's address, as hid-playstation does), its
+    player lights (*players*: their brightness, left to right) and its four input devices (the controller, its motion
+    sensors, touchpad and headset jack), each with its event node."""
     device = sys_root / "devices/usb6/6-2" / f"{bus:04X}:{vendor:04X}:{product:04X}.{instance:04X}"
     write(device / "uevent", f"DRIVER=playstation\nHID_ID={bus:04X}:{vendor:08X}:{product:08X}\n"
                              "HID_NAME=Sony Interactive Entertainment Wireless Controller\nHID_UNIQ=aa:bb:cc:dd:ee:ff")
@@ -120,6 +130,8 @@ def plug(sys_root: Path, node: str = "hidraw2", product: int = 0x0DF2, bus: int 
         supply = device / "power_supply/ps-controller-battery-00:00:00:00:00:00"
         write(supply / "capacity", battery[0])
         write(supply / "status", battery[1])
+    for index, on in enumerate(players or ""):
+        write(device / "leds" / f"input{10 + 4 * instance}:white:player-{index + 1}" / "brightness", on)
     for index, suffix in enumerate(("", " Motion Sensors", " Touchpad", " Headset Jack")):
         number = 10 + 4 * instance + index          # the joystick first, as the kernel registers them
         write(device / "input" / f"input{number}" / "name",

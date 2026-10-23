@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Entry point: python -m usb_hdcontrol [--info]
+"""Entry point: python -m usb_hdcontrol [--info | --idle-watch]
 
 Without options it opens the window. --info prints each controller's connection, battery, firmware and (on the
-DualSense Edge) profiles, without a window and without the network."""
+DualSense Edge) profiles, without a window and without the network. --idle-watch is the idle service (idle.py): it
+switches a controller on Bluetooth off after the minutes chosen in the window without use."""
 
 from __future__ import annotations
 
@@ -48,10 +49,16 @@ def main() -> int:
     parser = argparse.ArgumentParser(prog="usb_hdcontrol", description=f"{APP_NAME} {__version__}")
     parser.add_argument("--info", action="store_true",
                         help="print each controller's battery, firmware and profiles, without a window")
+    parser.add_argument("--idle-watch", action="store_true",
+                        help="switch controllers on Bluetooth off after the minutes chosen in the window unused "
+                             "(the user service install.sh adds runs this)")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__} (core {CORE_VERSION})")
     args, qt_args = parser.parse_known_args()
     if args.info:
         return print_info()
+    if args.idle_watch:
+        from . import idle
+        return idle.run()
 
     from bc250_core.app import create_app, exec_app
 

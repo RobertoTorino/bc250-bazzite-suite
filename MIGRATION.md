@@ -746,16 +746,42 @@ colours (owner, 19-10-2026).
   it does not write them (the write reports 0x60 to 0x63 and the per-report CRC the web app adds are not confirmed).
   The firmware update works on the owner's Edge: the owner ran it from the window (23-10-2026, 06:27; Claude's own
   run had been stopped by the session's permission check), 0x0200 to 0x0217 in about 20 s, the controller back on
-  USB 2 s later with the new firmware, its profiles byte for byte as the backup made before. Not checked: the
-  Bluetooth pairing after the update, and a plain DualSense (none at the board). Pages after Sony's Windows app (owner, 23-10-2026;
+  USB 2 s later with the new firmware, its profiles byte for byte as the backup made before. The Bluetooth pairing
+  does not survive the update (owner, 23-10-2026): the Edge blinked quickly and switched off, never reaching the
+  board, and paired again only after its old entry was removed from Bluetooth; the window and the wiki say so. Not
+  checked: a plain DualSense (none at the board). Pages after Sony's Windows app (owner, 23-10-2026;
   built the same day, after hdcontrol-v0.1.1): Connect your controller with an animated cable, a three-page
   introduction once after the first controller connects, the main page with a drawing of the app's own (no Sony
   artwork) and the profiles as four cards that light on the drawing what they set. Next (owner's order, 23-10-2026):
   profile writing, so that Create a profile and an editor can follow: first a write test on the owner's Edge that the
-  owner starts (copy the default profile to the empty Fn + Square slot through reports 0x60 to 0x63, read it back,
-  clear it with 0x68), with a backup first. Still the next step for the app (owner, 23-10-2026: in the next chat), with the
-  two items on hold below: the battery runtime test and the plain DualSense's specifications; and the idle switch-off
-  to decide. Then (owner, 23-10-2026): the drawing live from the input reports, the light bar's
+  owner starts (copy the default profile to the empty Fn + Square slot, read it back, clear it with 0x68), with a
+  backup first. In the reference, 0x60 to 0x63 are one report per slot (Square, Cross, Circle, Triangle), each
+  written three times with the part in byte 1, and 0x68's byte 1 is the slot's place in read order (Square 2). The write works on the owner's Edge (23-10-2026,
+  12:36, firmware 0x0217, USB, a test script outside the app): the default profile renamed "Write test" in Fn + Square
+  with the per-report CRC-32 over 0xA3 and the 64 bytes (tail still zero) as the reference sends it, accepted at the
+  first try; read back byte for byte as sent (bytes 1 to 59; 60 to 63 read back zero), the default profile unchanged.
+  The clear works too (12:46): 0x68 with byte 1 = 2 emptied Fn + Square, the default profile unchanged. Open: whether
+  the controller checks the per-report CRC at all. Built after it (owner, 23-10-2026: an editor and Create first, the default
+  profile read-only, profiles before the idle switch-off): Create…, Edit… and Clear on the cards, the editor (name,
+  stick curves and sensitivity, trigger ranges, button map), a backup before each change, read back after it; not
+  released. Board result (23-10-2026, the owner's Edge on USB, a read-only capture of the input reports): a profile
+  created in the app works on Linux without a PS5: Fn + Square switched to it and Cross then reported Circle, Fn +
+  Triangle switched back. The left Fn button is bit 0x10 of the third button byte; while Fn is held the button pressed
+  with it does not reach the button bytes. Byte 49 of USB report 0x01: its upper four bits are the active profile (1
+  Fn + Triangle, 2 Fn + Square); byte 51: the face buttons as pressed, before the profile's map. Clear worked
+  (the slot was empty afterwards). Open: the bytes
+  over Bluetooth (one further). Built after it (owner, 23-10-2026): the card in use says Active, from byte 49 (byte
+  51 not used). Open: in the owner's first try in the window the drawing lit nothing for any button (two Edges
+  connected then, one on Bluetooth); cause unknown. Then (owner, 23-10-2026): the player
+  indicator on the drawing, from hid-playstation's LEDs in /sys (player-1 to player-5, readable by the user), the
+  player number on hovering; the touchpad drawn wider. Board result (23-10-2026, the owner in the window): Active
+  follows Fn + Square and Fn + Triangle; Cross set to Circle lights Circle; R2 set to 0 to 50 % (read back 0 to 128)
+  fills like L2: the controller does not apply the trigger range on Linux (a PS5 may, or the reference's reading of
+  bytes 4 to 7 is wrong); the editor keeps it with a note (owner). The curves work: the left stick on Digital jumped
+  to the edge, the right one on Default moved smoothly. Edit works (several edits by the owner). Open: a profile with a shorter trigger made on a PS5, compared byte for byte (with the PS5 test on hold below). Still the
+  next step for the app (owner, 23-10-2026: in the next chat), with the
+  two items on hold below: the battery runtime test and the plain DualSense's specifications; then the idle switch-off
+  (decided, below). Then (owner, 23-10-2026): the drawing live from the input reports, the light bar's
   colour, a vibration test, the update's data flow, turning with the mouse, the drawing redone (85 % wide, larger
   d-pad and face buttons in the first pads' colours, the gaming blue). Open on the board (the owner): press every
   button, the Edge's Fn and back buttons included (their bits, 0x10 to 0x80 of the third button byte, are from the
@@ -765,15 +791,32 @@ colours (owner, 19-10-2026).
   rearranged (owner, 23-10-2026). Found on the owner's board (23-10-2026): the Edge plugged in while connected over
   Bluetooth stays on Bluetooth (hid-playstation: duplicate MAC address, the USB HID device left without a driver);
   the app now says so and offers Use the cable (bluetoothctl disconnect, then a replug). The owner tried it
-  (23-10-2026): after the fix for BlueZ 5.87's answer, Use the cable and a replug bring the Edge onto USB. The release (owner): `hdcontrol-v0.1.0`,
-  `package`'s next one, then pin it and bump the portal (an added app needs a minor bump; check_manifest says so
-  until then).
-- **Switching an idle controller off in USB HD Control (on hold, owner 23-10-2026: to decide in the next chat).**
-  Nothing on Linux tells a Bluetooth controller to switch off when it is idle, as a PS5 does (10, 30 or 60 minutes):
-  the owner's Edge drained its battery over a few hours idle and got a low-battery warning. The app could end the
-  Bluetooth connection after N minutes without input (as Turn off does); with the window closed that needs a small
-  background service (a user unit reading the input reports). To decide: whether, the minutes to offer, and the
-  service.
+  (23-10-2026): after the fix for BlueZ 5.87's answer, Use the cable and a replug bring the Edge onto USB. Released (owner): `hdcontrol-v0.1.0`, 0.1.1 and
+  0.2.0.
+- **Switching an idle controller off in USB HD Control (owner, 23-10-2026: decided; built the same day, works
+  on the board, not released).** Nothing on Linux tells a Bluetooth controller to switch off when it is idle, as a PS5 does: the
+  owner's Edge drained its battery over a few hours idle and got a low-battery warning. The app ends the Bluetooth
+  connection after N minutes without input (as Turn off does), also with the window closed, through a small
+  background service (a user unit reading the input reports). The choices are the PS5's: Off, 10, 30 or 60 minutes,
+  10 by default. Built: idle.py (python -m usb_hdcontrol --idle-watch), the user unit
+  bc250-usb-hdcontrol-idle from install.sh, the choice in the controller box. Board result (23-10-2026, installed from the
+  checkout): the re-paired Edge on Bluetooth, left alone, went off after 10 minutes (journal: "DualSense Edge on
+  Bluetooth unused for 10 minutes: switched off."); the other Edge on the cable, also untouched, stayed on. Then (owner,
+  23-10-2026): a desktop notification when it switches a controller off, or fails to (notify-send, as the Dependency
+  Checker's reminder); a sample sent on the board looked right (owner). With several controllers each has its own wait,
+  and the notification names the one switched off by its player number (read before it goes). Several controllers in the window
+  (owner, 23-10-2026): a tab for each under the header ("Player 2 · Edge · Bluetooth · 40 %") instead of the list in
+  it. Two new boxes in the header (owner,
+  23-10-2026, after a try with three pills in the controller box that the owner turned down; the player number and
+  the active profile dropped, the tabs, the drawing and the cards show them): Reports (input reports a second) and
+  Bluetooth off in (from the service's file in $XDG_RUNTIME_DIR); six boxes make the window at least 1072 px wide.
+  Open: one in use over Bluetooth stays on; two on Bluetooth at once, the tabs and the two boxes on
+  the board (the report rate over USB and Bluetooth).
+- **Export and import of profiles in USB HD Control (on hold, owner 23-10-2026: until the owner can test with a
+  PS5).** A profile is three 64-byte reports with nothing personal in them (name, sticks, triggers, button map, a
+  16-byte ID, a CRC), so it can be shared as a file: Export… on a card writes one profile, Import… on an empty slot
+  writes one through the same path as Create (backup, write, read back, a new ID), also from a backup file (a
+  restore). Open: whether a PS5 accepts a profile written this way as its own, and what it does with the ID.
 - **Specifications of the plain DualSense in USB HD Control (on hold, owner 23-10-2026: when an official spec
   sheet is found).** The info sheet lists only facts with an official source; Sony's DualSense manual was not found
   online, and shops disagree on its battery. The owner will look for one.
@@ -782,7 +825,10 @@ colours (owner, 19-10-2026).
   10 %) and the time, with the light bar, the player LEDs, rumble and the adaptive triggers on and off, before and
   after the firmware update, and see whether any of them (they are host-set: the light bar's brightness is
   `/sys/class/leds/<input>:rgb:indicator`, root-only by default) or the update changes it. Then decide what the app
-  offers (a battery log, a power-saving setting).
+  offers (a battery log, a power-saving setting). Found (23-10-2026, both of the owner's Edges on USB, read-only): the
+  controllers' test interface (feature reports 0x80 and 0x81, the battery read of community testers) gives 3.709 V at
+  100 % (Full) and 3.723 V at 95 %, so it does not follow the charge as a cell's voltage would (4.1 to 4.2 V when
+  full) and is not used; the 10 % steps stay the measure.
 - **SwanStation Manager (built 21-10-2026, owner's decision; not tried on the board).** PS1, the first of six
   emulator managers the owner asked for (list below). Not standalone: SwanStation is a libretro core, so the app
   installs RetroArch from Flathub (a Flatpak, `--user`; one already installed is used) and the core from the libretro

@@ -112,7 +112,7 @@ def test_the_dpad_is_white_with_black_borders_and_gaps(qapp):
     image = view.grab().toImage()
     # The middle of the d-pad, between the four arms, is the body, not an arm.
     scale = min(view.width() / drawing.BOX.width(), view.height() / drawing.BOX.height())
-    centre_x = view.width() / 2 + (drawing.x(92) - drawing.BOX.center().x()) * scale
+    centre_x = view.width() / 2 + (drawing.DPAD_X - drawing.BOX.center().x()) * scale
     centre_y = view.height() / 2 + (106 - drawing.BOX.center().y()) * scale
     assert image.pixelColor(round(centre_x), round(centre_y)) != QColor("white")
     view.show_input({"up"}, (0.0, 0.0, 0.0, 0.0), (0.0, 0.0))
@@ -121,7 +121,7 @@ def test_the_dpad_is_white_with_black_borders_and_gaps(qapp):
 
 
 @pytest.mark.parametrize("point, name", [
-    ((drawing.x(308), 81), "Triangle"), ((drawing.x(308), 131), "Cross"), ((drawing.x(92), 86), "D-pad up"),
+    ((drawing.FACE_X, 81), "Triangle"), ((drawing.FACE_X, 131), "Cross"), ((drawing.DPAD_X, 86), "D-pad up"),
     ((drawing.x(150), 150), "Left stick: press it for L3"), ((200, 140), "PS button"),
     ((drawing.x(80), 20), "L2 trigger"), ((drawing.x(80), 36), "L1"), ((200, 36), "USB-C port"),
     ((200, 70), "Touchpad: press it to click"), ((drawing.x(136) + 3, 80), "Light bar"),
@@ -153,8 +153,18 @@ def test_the_tooltip_follows_the_mouse(qapp, monkeypatch):
         view.mouseMoveEvent(QMouseEvent(QMouseEvent.Type.MouseMove, QPointF(px, py), QPointF(px, py),
                                         Qt.MouseButton.NoButton, Qt.MouseButton.NoButton,
                                         Qt.KeyboardModifier.NoModifier))
-    move_to(drawing.x(308), 131)
-    move_to(drawing.x(308), 132)                        # still the cross: shown once
+    move_to(drawing.FACE_X, 131)
+    move_to(drawing.FACE_X, 132)                        # still the cross: shown once
     move_to(200, 140)
     move_to(200, 250)
     assert shown == ["Cross", "PS button"] and hidden == [1]
+
+
+def test_the_player_indicator_names_the_player(qapp):
+    view = drawing.ControllerView()
+    assert drawing.part_at(True, QPointF(200, 118)) == "Player indicator"
+    assert view._name("Player indicator") == "Player indicator"
+    view.set_players((False, False, True, False, False))
+    assert view._name("Player indicator") == "Player indicator: player 1" and view._name("Cross") == "Cross"
+    view.set_players((False, True, True, False, False))                # no known pattern: no number
+    assert view._name("Player indicator") == "Player indicator"

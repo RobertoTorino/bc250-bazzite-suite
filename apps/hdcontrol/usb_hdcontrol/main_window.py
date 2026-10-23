@@ -8,17 +8,18 @@ its own thread; the window shows how far it is."""
 
 from __future__ import annotations
 
+import dataclasses
 import html
+import math
 import time
 from collections.abc import Callable
 from pathlib import Path
 
 from PyQt6.QtCore import QSocketNotifier, Qt, QTimer
 from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import (QCheckBox, QColorDialog, QComboBox, QFileDialog, QGridLayout, QHBoxLayout,
-                             QLabel,
-                             QMessageBox, QSizePolicy,
-                             QProgressBar, QPushButton, QStackedWidget, QVBoxLayout, QWidget)
+from PyQt6.QtWidgets import (QAbstractButton, QCheckBox, QColorDialog, QComboBox, QDialog, QFileDialog, QGridLayout,
+                             QHBoxLayout, QLabel, QMessageBox, QProgressBar, QPushButton, QSizePolicy,
+                             QStackedWidget, QTabBar, QVBoxLayout, QWidget)
 
 from bc250_core import window_title
 from bc250_core.settings import restore_geometry, save_geometry
@@ -26,11 +27,12 @@ from bc250_core.theme import GREY, STATE_COLORS
 from bc250_core.updates import UpdateChecker
 from bc250_core.widgets import AppHeader, StatusText, hint_label, same_width
 
-from . import (APP_NAME, INFO, LOGO_PATH, __version__, controller, feedback, firmware, hidraw, inputs, profiles, style,
-               updater)
+from . import (APP_NAME, INFO, LOGO_PATH, __version__, controller, feedback, firmware, hidraw, idle, inputs, profiles,
+               style, updater)
 from .battery import BatteryIcon
 from .controller import Controller, FirmwareInfo
 from .drawing import ControllerView
+from .editor import ProfileEditor
 from .pages import Box, ConnectPage, InfoDialog, IntroPage, ProfileCard, Section, SoftPill
 from .settings import ControlSettings
 
@@ -47,6 +49,17 @@ LIGHT_COLOURS = (("Blue", "#0050ff"), ("Red", "#ff2020"), ("Green", "#10d040"), 
 # The header's values, short so its boxes stay narrow; the full names are in their tooltips.
 SHORT_NAMES = {0x0CE6: "DualSense", 0x0DF2: "Edge"}
 SHORT_CONNECTIONS = {"usb": "USB", "bluetooth": "Bluetooth"}
+
+
+def controller_label(found: Controller) -> str:
+    """A controller's tab, shown with two or more connected (owner, 23-10-2026): its player number first (the one its
+    lights show), then model, connection and battery, so all of them show at a glance."""
+    number = controller.player_number(found)
+    parts = [f"Player {number}"] if number else []
+    parts += [SHORT_NAMES[found.product], SHORT_CONNECTIONS.get(found.bus, found.bus)]
+    if found.battery is not None and found.battery.capacity is not None:
+        parts.append(f"{found.battery.capacity} %")
+    return " · ".join(parts)
 
 
 def _job(function: Callable, *args) -> Callable[[], object]:
@@ -90,8 +103,12 @@ class MainWindow(QWidget):
                  open_reader: Callable[[Path], inputs.Reader] = inputs.Reader,
                  disconnect: Callable[[str], str] = controller.disconnect_bluetooth,
                  open_rumble: Callable[[Path], feedback.Rumble] = feedback.Rumble,
-                 set_lightbar: Callable[..., None] = feedback.set_lightbar):
+                 set_lightbar: Callable[..., None] = feedback.set_lightbar,
+                 monotonic: Callable[[], float] = time.monotonic, idle_state: Path | None = None):
         super().__init__()
+        self.monotonic = monotonic          # the idle service's clock, for its countdown
+        self.idle_state = idle_state or idle.state_path()
+        self.rate_mark: tuple[int, float] | None = None     # the reader's count and when, for the report rate
         self.setWindowTitle(APP_NAME)
         self.settings = ControlSettings(INFO, self)
         self.sys_root = sys_root
@@ -126,6 +143,7 @@ class MainWindow(QWidget):
         self.returning_until = 0.0          # after an update: until then a missing controller is restarting
         self.intro_open = False
         self.chosen_slot = ""               # the profile card the user clicked: the drawing lights what it sets
+        self.active_slot = ""               # the Edge's profile in use, from its input reports
 
         layout = QVBoxLayout(self)
         header = AppHeader(LOGO_PATH, APP_NAME, __version__)
@@ -138,7 +156,11 @@ class MainWindow(QWidget):
         self.installed_box = Box("Installed firmware")
         self.latest_pill = SoftPill("—", "Latest firmware")
         self.latest_pill.clicked.connect(self.firmware_clicked)
-        boxes = [self.controller_box, self.connection_box, self.installed_box, self.latest_pill]
+        # Live, after the firmware (owner, 23-10-2026): input reports a second, and the idle switch-off's countdown.
+        self.rate_pill = Box("Reports")
+        self.off_pill = Box("Bluetooth off in")
+        boxes = [self.controller_box, self.connection_box, self.installed_box, self.latest_pill, self.rate_pill,
+                 self.off_pill]
         for box in boxes:
             header.add_second(box)
         # Every box as wide as "Bluetooth" needs, so that none changes width when the connection does.
@@ -146,10 +168,6 @@ class MainWindow(QWidget):
         self.connection_box.value.setMinimumWidth(self.connection_box.value.fontMetrics().horizontalAdvance(
             SHORT_CONNECTIONS["bluetooth"]))
         same_width(boxes)
-        self.controller_combo = QComboBox()
-        self.controller_combo.setToolTip("More than one controller is connected: the one the window shows.")
-        self.controller_combo.activated.connect(self.choose)
-        header.add_second(self.controller_combo)
         header.add_second(QWidget(), 1)     # the boxes stay together on the left
         # The battery stands beside both rows at the right end, its top level with the title (owner, 23-10-2026).
         self.battery_icon = BatteryIcon()
@@ -214,6 +232,9 @@ class MainWindow(QWidget):
         self.cards = [ProfileCard() for _slot in profiles.SLOTS]
         for card in self.cards:
             card.clicked.connect(self.choose_profile)
+            card.create.connect(self.create_profile)
+            card.edit.connect(self.edit_profile)
+            card.clear.connect(self.clear_profile)
             cards.addWidget(card, 1)
         profile_layout.addWidget(self.cards_row, 1)
         profile_buttons = QHBoxLayout()
@@ -248,6 +269,15 @@ class MainWindow(QWidget):
         self.stack = QStackedWidget()
         for page in (self.connect_page, self.intro_page, self.main_page):
             self.stack.addWidget(page)
+        self.controller_tabs = QTabBar()        # a tab per controller, with two or more connected
+        self.controller_tabs.setExpanding(False)
+        self.controller_tabs.setUsesScrollButtons(False)   # a few controllers at most: nothing to scroll
+        self.controller_tabs.setStyleSheet("QTabBar::tab { font-size:15px; font-weight:600; padding:7px 18px; }")
+        for arrow in self.controller_tabs.findChildren(QAbstractButton):    # Qt makes them all the same
+            arrow.setToolTip("More controllers: scroll the tabs.")
+        self.controller_tabs.setToolTip("More than one controller is connected: the window shows the chosen one.")
+        self.controller_tabs.currentChanged.connect(self.choose)
+        layout.addWidget(self.controller_tabs)
         layout.addWidget(self.stack, 1)
 
         self.check_job = UpdateChecker(self)
@@ -338,12 +368,34 @@ class MainWindow(QWidget):
         self.vibrate_button.setToolTip("Runs the left motor, then the right one, almost a second each: you should "
                                        "feel each on its own side.")
         self.vibrate_button.clicked.connect(self.test_vibration)
-        side.addWidget(self.vibrate_button, 0, Qt.AlignmentFlag.AlignLeft)
-        self.off_button = QPushButton("Turn off")
+        self.off_button = QPushButton("Turn Bluetooth off")
         self.off_button.setToolTip("Switches the controller off by ending its Bluetooth connection; press the PS "
                                    "button to switch it on again. On the USB cable it stays on: the cable powers it.")
         self.off_button.clicked.connect(self.turn_off)
+        self.idle_combo = QComboBox()
+        for minutes in idle.CHOICES:
+            self.idle_combo.addItem(f"after {minutes} min" if minutes else "Never", minutes)
+        self.idle_combo.setCurrentIndex(max(0, self.idle_combo.findData(self.settings.get("idle_minutes"))))
+        self.idle_combo.setToolTip("Switches a controller on Bluetooth off when no button, stick or trigger was used "
+                                   "this long, as a PS5 does; on the USB cable it stays on. A small service that "
+                                   "install.sh adds does it, also with the window closed.")
+        self.idle_combo.currentIndexChanged.connect(
+            lambda _index: self.settings.set("idle_minutes", self.idle_combo.currentData()))
+        # The two buttons and the choice equally wide, spread down the column (owner, 23-10-2026).
+        controls = (self.vibrate_button, self.off_button, self.idle_combo)
+        width = max(widget.sizeHint().width() for widget in controls) + 16
+        for widget in controls:
+            widget.setFixedWidth(width)
+        idle_box = QVBoxLayout()
+        idle_box.setSpacing(4)
+        idle_box.addWidget(QLabel("Switch Bluetooth off when unused:"))
+        idle_box.addWidget(self.idle_combo, 0, Qt.AlignmentFlag.AlignLeft)
+        side.addStretch(1)
+        side.addWidget(self.vibrate_button, 0, Qt.AlignmentFlag.AlignLeft)
+        side.addStretch(1)
         side.addWidget(self.off_button, 0, Qt.AlignmentFlag.AlignLeft)
+        side.addStretch(1)
+        side.addLayout(idle_box)
         side.addStretch(1)
         layout.addLayout(side, 0, 1, 2, 1)
         layout.setColumnStretch(0, 3)
@@ -404,8 +456,24 @@ class MainWindow(QWidget):
         if self.stack.currentWidget() is not page:
             self.stack.setCurrentWidget(page)
 
-    def choose(self, _index: int) -> None:
-        self.chosen = self.controller_combo.currentData() or ""
+    def _show_tabs(self) -> None:
+        """The tabs follow the controllers; rebuilt only when one comes, goes or its text changes."""
+        tabs = self.controller_tabs
+        wanted = [(controller_label(each), each.node) for each in self.controllers]
+        tabs.setVisible(len(wanted) > 1)
+        tabs.blockSignals(True)
+        if wanted != [(tabs.tabText(i), tabs.tabData(i)) for i in range(tabs.count())]:
+            while tabs.count():
+                tabs.removeTab(0)
+            for text, node in wanted:
+                tabs.setTabData(tabs.addTab(text), node)
+        for index in range(tabs.count()):
+            if tabs.tabData(index) == self.chosen:
+                tabs.setCurrentIndex(index)
+        tabs.blockSignals(False)
+
+    def choose(self, index: int) -> None:
+        self.chosen = self.controller_tabs.tabData(index) or "" if index >= 0 else ""
         self.refresh()
 
     def read_again(self) -> None:
@@ -436,13 +504,7 @@ class MainWindow(QWidget):
     def show_state(self) -> None:
         found = self.current()
         latest = self.latest()
-        self.controller_combo.setVisible(len(self.controllers) > 1)
-        self.controller_combo.blockSignals(True)
-        self.controller_combo.clear()
-        for each in self.controllers:
-            self.controller_combo.addItem(f"{each.name}, {each.connection}", each.node)
-        self.controller_combo.setCurrentIndex(max(0, self.controller_combo.findData(self.chosen)))
-        self.controller_combo.blockSignals(False)
+        self._show_tabs()
 
         if self.updating:
             state = ("Updating the firmware", "info", "Leave the controller plugged in until the update is done.")
@@ -464,10 +526,13 @@ class MainWindow(QWidget):
         self.badge.set_status(*state)
 
         self.controller_box.set_value(SHORT_NAMES[found.product] if found else "—", found.name if found else "")
+        update_waits = self.info is not None and latest is not None and latest > self.info.update
         self.connection_box.set_value(SHORT_CONNECTIONS.get(found.bus, found.bus) if found else "—",
                                       found.connection + (": the firmware update needs the USB cable."
-                                                          if found.bus != "usb" else ".") if found else "")
+                                                          if found.bus != "usb" and update_waits else ".")
+                                      if found else "")
         self._show_battery(found)
+        self._show_pills(found)
         self._show_firmware(found, latest)
         self._show_profiles(found)
         self._show_update(found, latest)
@@ -487,6 +552,7 @@ class MainWindow(QWidget):
         live = (found is not None and not self.updating and not self.read_problem
                 and self.stack.currentWidget() is self.main_page)
         self._follow(found.node if live else "")
+        self.view.set_players(controller.player_lights(found) if found is not None else None)
         ready = found is not None and not self.updating and not self.read_problem
         for button in (*self.light_buttons, self.other_light):
             button.setEnabled(ready)
@@ -527,6 +593,41 @@ class MainWindow(QWidget):
             return
         if reading is not None:
             self.view.show_input(set(reading.pressed), reading.sticks, reading.triggers)
+            if reading.profile != self.active_slot:
+                self.active_slot = reading.profile
+                self._show_profiles(self.current())
+
+    def _show_pills(self, found: Controller | None) -> None:
+        """The header's live pills: how many input reports a second come in, and how long until the idle service
+        switches a controller on Bluetooth off."""
+        now = self.monotonic()
+        if self.reader is not None:
+            if self.rate_mark is not None and now - self.rate_mark[1] >= 0.5:
+                rate = (self.reader.count - self.rate_mark[0]) / (now - self.rate_mark[1])
+                self.rate_pill.set_value(f"{rate:.0f} Hz", "Input reports a second from the controller now: "
+                                         "steady and high is a good connection.")
+                self.rate_mark = (self.reader.count, now)
+            elif self.rate_mark is None:
+                self.rate_mark = (self.reader.count, now)
+        else:
+            self.rate_mark = None
+            self.rate_pill.set_value("—", "Input reports a second, while the drawing reads the controller.")
+        self.off_pill.set_value(*self._off_in(found, now))
+
+    def _off_in(self, found: Controller | None, now: float) -> tuple[str, str]:
+        if found is None:
+            return "—", "How long until an unused controller on Bluetooth is switched off."
+        if found.bus != "bluetooth":
+            return "Cable", "On the USB cable it stays on: the cable powers it."
+        minutes = self.settings.get("idle_minutes")
+        if not minutes:
+            return "Never", "Switch Bluetooth off when unused is set to Never."
+        last = idle.read_state(self.idle_state).get(found.node)
+        if last is None:
+            return "—", ("The service that switches unused controllers off is not running: install.sh adds it.")
+        left = last + minutes * 60 - now
+        text = f"{math.ceil(left / 60)} min" if left >= 60 else f"{max(0, round(left))} s"
+        return text, f"Switched off after {minutes} minutes unused; any button, stick or trigger starts it over."
 
     def _stop_reading(self) -> None:
         if self.notifier is not None:
@@ -538,6 +639,9 @@ class MainWindow(QWidget):
             self.reader = None
         self.reader_node = ""
         self.view.clear_input()
+        if self.active_slot:
+            self.active_slot = ""
+            self._show_profiles(self.current())
 
     def turn_off(self) -> None:
         """A controller over Bluetooth switches itself off when the connection ends, as Steam's Turn off does."""
@@ -547,8 +651,8 @@ class MainWindow(QWidget):
             return
         problem = self.disconnect(address)
         if problem:
-            QMessageBox.warning(self, window_title("Turn off"), f"{problem} Hold the PS button for 10 s to switch "
-                                "the controller off.")
+            QMessageBox.warning(self, window_title("Turn Bluetooth off"), f"{problem} Hold the PS button for 10 s "
+                                "to switch the controller off.")
             return
         self.refresh()
 
@@ -711,7 +815,7 @@ class MainWindow(QWidget):
             lines.append(self._file_check(info.target, latest))
         if found.bus == "bluetooth" and self.held:
             lines.append(html.escape(ON_BLUETOOTH))
-        elif found.bus != "usb":
+        elif found.bus != "usb" and newer:     # only then: on the latest firmware it would only confuse (owner)
             lines.append("The update needs the USB cable: connect the controller with it.")
         self.firmware_text.setText("<br>".join(lines))
 
@@ -753,12 +857,18 @@ class MainWindow(QWidget):
         else:
             self.profile_text.setText("The four profiles stored in the controller, as it reports them: hold Fn and "
                                       "press the button to switch. Click one to see on the drawing what it sets. "
-                                      "Change them on a PS5 or in the official app for Windows.")
+                                      "Create…, Edit… and Clear change them over the USB cable; the default "
+                                      "profile stays as it is.")
         shown = self.profiles if edge else []
         self.cards_row.setVisible(bool(shown))
+        allowed = found is not None and found.bus == "usb" and not self.updating
+        reason = ("Wait until the firmware update is done." if self.updating else
+                  "Plug in the USB cable to change the profiles.")
         for card, profile in zip(self.cards, shown):
             if card.profile != profile:
                 card.set_profile(profile)
+            card.set_actions(allowed, reason)
+            card.set_active(edge and profile.slot == self.active_slot)
             card.set_chosen(profile.slot == self.chosen_slot)
         chosen = next((p for p in shown if p.slot == self.chosen_slot), None)
         self.view.set_edge(found.edge if found else True)
@@ -770,6 +880,63 @@ class MainWindow(QWidget):
         """A click on a card chooses it, a second click lets go."""
         self.chosen_slot = "" if self.chosen_slot == profile.slot else profile.slot
         self._show_profiles(self.current())
+
+    # ---------------------------------------------------------------- profiles
+    def create_profile(self, profile: profiles.Profile) -> None:
+        self._edit(profile, creating=True)
+
+    def edit_profile(self, profile: profiles.Profile) -> None:
+        self._edit(profile, creating=False)
+
+    def _edit(self, profile: profiles.Profile, creating: bool) -> None:
+        """A new profile starts from the default's bytes, an edited one from its own."""
+        base = self.profiles[0] if creating else profile
+        settings = profiles.settings_of(base)
+        if creating:
+            settings = dataclasses.replace(settings, name="New profile")
+        title = f"{'Create' if creating else 'Edit'} the profile"
+        dialog = ProfileEditor(profile.slot, settings, creating, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        try:
+            parts = profiles.build(dialog.settings(), base.reports, profiles.new_id() if creating else None)
+        except profiles.ProfileError as exc:
+            QMessageBox.warning(self, window_title(title), f"The profile cannot be saved: {exc}.")
+            return
+        if self._change(title, lambda device: profiles.write(device, profile.slot, parts)):
+            self.chosen_slot = profile.slot             # the drawing lights what it sets
+
+    def clear_profile(self, profile: profiles.Profile) -> None:
+        title = "Clear the profile"
+        answer = QMessageBox.question(self, window_title(title), f"Remove {profile.name} from Fn + {profile.slot}? "
+                                      "The app saves a backup of the profiles first.")
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        if self._change(title, lambda device: profiles.clear(device, profile.slot)) and \
+                self.chosen_slot == profile.slot:
+            self.chosen_slot = ""
+
+    def _change(self, title: str, action: Callable) -> bool:
+        """Backs up the profiles, changes one, and reads them again."""
+        found = self.current()
+        if found is None or found.bus != "usb" or self.updating:
+            return False
+        saved = ""
+        try:
+            with self.open_device(found.path(self.dev), found.sizes()) as device:
+                saved = str(profiles.backup(profiles.read(device), profiles.backup_path(self.firmware_home),
+                                            found.name, firmware.version_text(self.info.update) if self.info else ""))
+                try:
+                    action(device)
+                finally:
+                    self.profiles = profiles.read(device)
+        except (OSError, ValueError, profiles.ProfileError) as exc:
+            kept = f" The profiles from before are saved in {saved}." if saved else ""
+            QMessageBox.warning(self, window_title(title), f"It did not work: {_error(exc)}.{kept}")
+            self._show_profiles(found)
+            return False
+        self._show_profiles(found)
+        return True
 
     # ---------------------------------------------------------------- latest
     def check_latest(self) -> None:
@@ -898,7 +1065,8 @@ class MainWindow(QWidget):
             saved = f" The profiles from before are saved in {result}." if result else ""
             self.progress_text.setText(f"Firmware {firmware.version_text(self.update_target)} is sent: the controller "
                                        "restarts with it and comes back in a few seconds, and the header then shows "
-                                       f"its new version.{saved}")
+                                       "its new version. For Bluetooth, remove it from the system's Bluetooth "
+                                       f"settings and pair it again: the update ends the pairing.{saved}")
         self.read_key = ""                  # read the firmware again when the controller is back
         self.refresh()
 

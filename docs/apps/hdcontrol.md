@@ -21,14 +21,20 @@ The header shows the controller the window is looking at:
 | **Connection** | USB or Bluetooth |
 | **Installed firmware** | the firmware the controller runs, as the update server numbers it (for example `0x0217`): green when it is the latest official firmware, orange when a newer one is out. Its tooltip has the build date |
 | **Latest firmware** | the latest official version for this controller. Orange when the controller can be updated to it, on the USB cable: a click starts the update. Otherwise a click asks the update server again. Its tooltip says when the app last asked it, and why an update cannot start |
+| **Reports** | how many input reports a second the controller sends now, for example `250 Hz`. Steady and high is a good connection; a low or jumpy number over Bluetooth points to interference or distance |
+| **Bluetooth off in** | for a controller on Bluetooth, the time left before it is switched off unused (see **Switch Bluetooth off when unused**); any button, stick or trigger starts it over. **Cable** on the USB cable, **Never** when switched off, "—" when the service is not running |
 
 At the right end of the header, the battery stands as a phone shows it, with the percentage inside it: five modules from the
 bottom up for the level, green, orange at 20 % or less, red at 10 % or less. While the controller charges, the
 modules above its level fill one after another, upwards, in green. The controller reports its level in steps of
 10 %.
 
-The state beside the title says whether an update is available. With more than one controller connected, a list
-in the header chooses which one the window shows.
+The state beside the title says whether an update is available.
+
+With more than one controller connected, a tab for each appears under the header, for example **Player 1 · Edge ·
+USB · 100 %** and **Player 2 · Edge · Bluetooth · 40 %**: the player number its lights show, the model, the
+connection and the battery. Click a tab to show that controller in the window: its drawing, firmware, light bar and
+profiles. With one controller there are no tabs.
 
 Below the header, the window shows one of three pages:
 
@@ -67,8 +73,24 @@ down it and the touchpad filling as the firmware goes in.
   colour. The colour is set at once and
   again each time the controller connects while the app is open; the drawing shows it. The controller does not keep
   it: it forgets it when it disconnects, and Steam or a game may set another. **Off** saves some battery.
-- **Turn off** switches a controller on Bluetooth off by ending its connection; the PS button switches it on again.
+- **Turn Bluetooth off** switches a controller on Bluetooth off by ending its connection; the PS button switches it on again.
   On the USB cable it stays on: the cable powers it.
+- **Switch Bluetooth off when unused**: after 10, 30 or 60 minutes without a button pressed, a stick moved or a trigger pulled,
+  a controller on Bluetooth is switched off the same way, as a PS5 does; **Never** leaves it on. 10 minutes is the
+  default. Nothing in Linux does this by itself, and a controller left on drains its battery in a few hours. A small
+  service that the installer adds does it, also while the window is closed. It ignores the motion sensors, so a
+  controller lying on a table counts as unused, and it leaves controllers on the USB cable alone.
+
+    With several controllers connected, each has its own wait: one in use stays on while an unused one goes off. A
+    desktop notification says which one, by the player number its lights showed, for example **DualSense Edge
+    (player 2) switched off: Not used for 10 minutes. Press the PS button to switch it on again.** If switching it off
+    fails, the notification says so and why; hold the PS button for 10 seconds then. The journal keeps the same lines:
+    `journalctl --user -u bc250-usb-hdcontrol-idle`.
+- **Player indicator**: the short row of small white lights just under the touchpad. Linux lights it when the
+  controller connects, with the player number in the order the controllers connected: one light in the middle for
+  player 1, two for player 2, three for 3, four for 4, all five for 5. All dark means the controller is off. The
+  drawing shows the same lights, and hovering over them names the player: with two controllers connected, it is
+  the number on the chosen tab. The app does not change them (only root may).
 - **Test vibration** runs the left motor, then the right one, almost a second each, and the drawing shakes on that
   side: you should feel each on its own side. A motor that stays still while the drawing shakes is worth a closer
   look.
@@ -88,7 +110,9 @@ When a newer version is out, **Latest firmware** in the header turns orange; a c
 
 It takes about half a minute. The controller then checks the firmware's signature, switches to it and
 restarts. It leaves USB for a moment and comes back; the header then shows the new version. The profiles stay as
-they were.
+they were. The Bluetooth pairing does not: to use the controller without the cable again, remove it from the system's
+Bluetooth settings first, then pair it anew (hold Create and PS until the light bar blinks quickly). Without that it
+blinks for a while and switches off.
 
 Before it starts:
 
@@ -128,12 +152,44 @@ The DualSense Edge keeps four profiles; Fn and Triangle, Square, Cross or Circle
 default profile). The **Profiles** box shows them side by side, a column each, as the controller reports them: the
 name, each stick's curve (Default, Quick, Precise, Steady, Digital or Dynamic), each trigger's range, and the
 buttons that send something other than themselves (the back buttons included). A profile whose checksum does not
-match is marked. Click a profile to see on the drawing what it sets: the Fn buttons, and the sticks, triggers and
+match is marked. The card of the profile the controller uses now says **Active**, and follows when you switch with
+Fn. Click a profile to see on the drawing what it sets: the Fn buttons, and the sticks, triggers and
 buttons it changes from their defaults. Click it again to let go.
 
-The app reads the profiles; change them on a PS5 or in the official app for Windows. **Back up…** saves them in a JSON
-file, exactly as the controller holds them, and **Read again** reads them anew, for example after you changed them on
-a PS5. The app also saves a backup before every firmware update, in `~/.local/share/bc250-usb-hdcontrol/profiles/`.
+**Back up…** saves them in a JSON file, exactly as the controller holds them, and **Read again** reads them anew, for
+example after you changed them on a PS5. The app also saves a backup before every firmware update and before every
+change to a profile, in `~/.local/share/bc250-usb-hdcontrol/profiles/`.
+
+### Create, edit and clear
+
+Under each card, with the controller on the USB cable:
+
+- **Create…** on an empty slot makes a profile there, starting from the default profile's settings.
+- **Edit…** changes a profile.
+- **Clear** removes it from the controller, after asking.
+
+The default profile (Fn + Triangle) has none of these: the app never changes it. Over Bluetooth, and during a firmware
+update, the buttons are greyed out.
+
+The editor sets:
+
+- **Name**: up to 39 characters.
+- **Sticks**: each stick's curve (Default, Quick, Precise, Steady, Digital or Dynamic) and its sensitivity, 0 to 10.
+  A profile made on a PS5 shows "as it is" next to the slider: its curve stays exactly as it was until you change the
+  curve or the slider.
+- **Triggers**: where on its travel L2 and R2 start and stop counting, in percent. The controller keeps the range in
+  the profile, but on Linux it still reports the trigger's whole travel: it was tried on a DualSense Edge, where R2
+  set to 0 to 50 % filled like L2. A PS5 may use the range.
+- **Buttons**: what each button sends, the back buttons included: its own, another button, Options or the
+  touchpad's click.
+
+**Save to the controller** saves a backup of all four profiles, writes the profile, and reads it back to check that the
+controller kept it. If it did not, the window says so and names the backup. The parts of a profile the app does not
+show stay as the controller holds them.
+
+The controller applies a profile itself, also on Linux: after Fn + Square, a button you set to send another sends
+that one, and the drawing shows what the controller sends (Cross set to Circle lights Circle). The sticks follow
+their curves too (on Digital a stick jumps to the edge). The triggers' range is the exception, as above.
 
 The plain DualSense has no profiles.
 
@@ -144,6 +200,8 @@ bc250-usb-hdcontrol --info
 ```
 
 prints each controller's connection, battery, firmware and profiles, without a window and without the network.
+`bc250-usb-hdcontrol --idle-watch` is what the service runs; `journalctl --user -u bc250-usb-hdcontrol-idle` shows
+when it switched a controller off.
 
 ## Access to the controller
 
@@ -166,14 +224,15 @@ It installs:
 
 - the app in `~/.local/share/bc250-usb-hdcontrol/app`, with the `bc250_core` it was tested with;
 - PyQt6 in the suite's shared venv `~/.local/share/bc250-bazzite-suite/venv`;
-- the launcher `~/.local/bin/bc250-usb-hdcontrol`, an app menu entry and a Desktop icon.
+- the launcher `~/.local/bin/bc250-usb-hdcontrol`, an app menu entry and a Desktop icon;
+- the user service `bc250-usb-hdcontrol-idle`, which switches unused controllers off (see the controller box).
 
 Settings are kept in `~/.config/bc250-usb-hdcontrol/bc250-usb-hdcontrol.ini`.
 
 ## Credits
 
 The update protocol comes from [dualsense-updater-rs](https://github.com/nchie/dualsense-updater-rs) (nchie), the
-layout of the Edge's profiles from
+layout and writing of the Edge's profiles from
 [dualsense-edge-profile-web-application](https://github.com/steffalon/dualsense-edge-profile-web-application)
 (steffalon). The firmware report is read as Linux's `hid-playstation` driver reads it.
 

@@ -5,13 +5,17 @@ report 0x01, over Bluetooth report 0x31 with one byte more in front. Bytes from 
 (left x, y, right x, y), the triggers (L2, R2), a counter, then three bytes of buttons: the d-pad as a hat (0 up,
 clockwise to 7, 8 none) with Square, Cross, Circle, Triangle; L1, R1, L2, R2, Create, Options, L3, R3; PS, the
 touchpad's click, Mute and, on the DualSense Edge, the left and right Fn and back buttons (those four bits as SDL
-reads them; not yet read on the owner's Edge, 23-10-2026)."""
+reads them; the left Fn's read on the owner's Edge, 23-10-2026). On the Edge byte 49 of the USB report (in the part
+hid-playstation leaves reserved) holds the active profile in its upper four bits: 1 Fn + Triangle, 2 Square, 3 Cross,
+4 Circle (read on the owner's Edge, 23-10-2026: 1 and 2; over Bluetooth one byte further, not yet read)."""
 
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from .profiles import SLOTS
 
 REPORT_USB = 0x01
 REPORT_BT = 0x31
@@ -31,6 +35,7 @@ class Reading:
     pressed: frozenset[str] = field(default_factory=frozenset)
     sticks: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)    # -1 (left, up) to 1 (right, down)
     triggers: tuple[float, float] = (0.0, 0.0)                          # 0 to 1
+    profile: str = ""                                                   # the DualSense Edge's active slot, SLOTS
 
 
 def _axis(value: int) -> float:
@@ -50,12 +55,15 @@ def parse(data: bytes) -> Reading | None:
     buttons = data[base + 7:base + 10]
     pressed = set(HAT.get(buttons[0] & 0x0F, ()))
     pressed |= {name for index, bit, name in BITS if buttons[index] & bit}
-    return Reading(frozenset(pressed), sticks, triggers)
+    profile = data[base + 48] >> 4 if len(data) > base + 48 else 0
+    return Reading(frozenset(pressed), sticks, triggers, SLOTS[profile - 1] if 1 <= profile <= len(SLOTS) else "")
 
 
 class Reader:
     """The node opened for reading, without blocking: read() gives the newest reading of the reports waiting, or
     None when none came. The window calls it from a QSocketNotifier."""
+
+    count = 0                               # input reports read: the window's report rate
 
     def __init__(self, path: Path | str):
         self.fd = os.open(str(path), os.O_RDONLY | os.O_NONBLOCK | os.O_CLOEXEC)
@@ -69,6 +77,7 @@ class Reader:
                 return newest
             if not data:
                 return newest
+            self.count += 1
             newest = parse(data) or newest
 
     def close(self) -> None:

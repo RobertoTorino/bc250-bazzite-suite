@@ -65,7 +65,6 @@ PARTS: dict[int, tuple[Part, ...]] = {
              "describe them; they carry no sound or picture."),
         Part("Microphone", "Bottom edge", "Built in."),
         Part("Speaker", "Front", "Built in."),
-        Part("Player indicator", "Front, under the touchpad", "Lights that show the player number."),
     ),
 }
 DUALSENSE_PARTS = (
@@ -75,7 +74,6 @@ DUALSENSE_PARTS = (
          "describe them; they carry no sound or picture."),
     Part("Microphone", "Bottom edge", "Built in."),
     Part("Speaker", "Front", "Built in."),
-    Part("Player indicator", "Front, under the touchpad", "Lights that show the player number."),
 )
 
 

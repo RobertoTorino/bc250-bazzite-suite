@@ -1,3 +1,10 @@
+Changelog: 23-10-2026 12:44:18
+
+The wiki's USB HD Control chapter explains the player indicator, the row of lights under the touchpad: Linux lights
+it with the player number when the controller connects (one light in the middle for player 1, two for player 2;
+owner's board, 23-10-2026: the Edge on USB first, a second controller switched on later showed two), and all dark
+means the controller is off.
+
 Changelog: 23-10-2026 07:13:18
 
 The release workflow no longer runs its release job in the environment "release", so GitHub asks no approval

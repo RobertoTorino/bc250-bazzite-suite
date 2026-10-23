@@ -15,6 +15,7 @@ from usb_hdcontrol import firmware, main_window, updater
 from test_firmware import image
 
 NOW = 1_800_000_000.0
+MONOTONIC = [5000.0]                                    # the idle service's clock, as a test moves it
 
 
 class FakeReader:
@@ -26,9 +27,13 @@ class FakeReader:
         self.fd, self.write_end = os.pipe()
         self.queue: list = []
         self.closed = False
+        self.count = 0                                  # reports read, as the real reader counts them
 
     def read(self):
-        return self.queue.pop(0) if self.queue else None
+        if not self.queue:
+            return None
+        self.count += 1
+        return self.queue.pop(0)
 
     def close(self):
         import os
@@ -94,7 +99,8 @@ def make(qapp, tmp_path, monkeypatch):
                                         get=fake_get, update=fake_update, clock=lambda: NOW,
                                         writable=lambda path: writable, open_reader=open_reader,
                                         open_rumble=open_rumble, set_lightbar=set_lightbar,
-                                        disconnect=disconnect or (lambda address: ""))
+                                        disconnect=disconnect or (lambda address: ""),
+                                        monotonic=lambda: MONOTONIC[0], idle_state=tmp_path / "idle.json")
         window.device, window.updates, window.urls = device, updates, urls
         window.readers, window.rumbles, window.lights = readers, rumbles, lights
         window.warnings, window.questions = warnings, questions
@@ -140,7 +146,7 @@ def test_an_edge_with_an_update_waiting(make, tmp_path):
     first, second = window.cards[0], window.cards[1]
     assert first.slot.text() == "Fn + △  Triangle" and first.name.text() == "Default Profile"
     assert "Each its own" in first.details.text() and "Default" in first.details.text()
-    assert second.name.text() == "Empty" and "Create one on a PS5" in second.details.text()
+    assert second.name.text() == "Empty" and "No profile in this slot" in second.details.text()
 
 
 def test_no_check_at_start_when_switched_off_or_recent(make, tmp_path, qapp):
@@ -184,6 +190,15 @@ def test_a_dualsense_over_bluetooth(make, tmp_path):
     assert window.battery_icon.status == "Discharging" and window.battery_icon.lit_modules() == 1
 
 
+def test_on_bluetooth_and_up_to_date_the_cable_is_not_mentioned(make, tmp_path):
+    plug(tmp_path / "sys", bus=0x05)
+    up_to_date = json.dumps({"FwUpdate0044LatestVersion": "0x0200"}).encode()      # what the fake Edge runs
+    window = make(get=lambda url: up_to_date)
+    assert "It is the latest official firmware" in window.firmware_text.text()
+    assert "USB cable" not in window.firmware_text.text()
+    assert window.connection_box.toolTip() == "Bluetooth."
+
+
 def test_no_access(make, tmp_path):
     plug(tmp_path / "sys")
     window = make(writable=False)
@@ -204,6 +219,7 @@ def test_update_downloads_backs_up_and_sends(make, tmp_path, qapp):
     [backup] = (tmp_path / "home" / "profiles").glob("profiles-*.json")
     assert json.loads(backup.read_text())["profiles"][0]["name"] == "Default Profile"
     assert "restarts" in window.progress_text.text() and not window.progress_bar.isVisible()
+    assert "pair it again: the update ends the pairing" in window.progress_text.text()
 
 
 def test_update_with_the_image_kept_names_its_check(make, tmp_path, qapp):
@@ -278,12 +294,20 @@ def test_reads_again_when_the_controller_comes_back(make, tmp_path):
 
 def test_two_controllers_offer_a_choice(make, tmp_path):
     plug(tmp_path / "sys")
-    plug(tmp_path / "sys", "hidraw5", product=0x0CE6, bus=0x05, instance=6)
+    plug(tmp_path / "sys", "hidraw5", product=0x0CE6, bus=0x05, instance=6, battery=("40", "Discharging"),
+         players="01010")
     window = make()
-    assert window.controller_combo.isVisibleTo(window) and window.controller_combo.count() == 2
-    window.controller_combo.setCurrentIndex(1)
-    window.choose(1)
-    assert window.controller_box.value.text() == "DualSense"
+    tabs = window.controller_tabs
+    assert tabs.isVisibleTo(window) and tabs.count() == 2
+    assert [tabs.tabText(i) for i in range(2)] == ["Player 1 · Edge · USB · 100 %",
+                                                   "Player 2 · DualSense · Bluetooth · 40 %"]
+    tabs.setCurrentIndex(1)                             # a click on the second tab
+    assert window.controller_box.value.text() == "DualSense" and window.chosen == "hidraw5"
+    window.refresh()                                    # the next look keeps the choice and the tabs
+    assert tabs.currentIndex() == 1 and tabs.count() == 2
+    unplug(tmp_path / "sys", "hidraw5")
+    window.refresh()
+    assert not tabs.isVisibleTo(window) and window.controller_box.value.text() == "Edge"
 
 
 def test_backup_by_hand(make, tmp_path, monkeypatch):
@@ -608,3 +632,194 @@ def test_the_top_boxes_share_the_width_and_the_colours_follow_the_drawing(make, 
         first = window.light_buttons[0].mapTo(window, window.light_buttons[0].rect().topLeft()).x() - origin
         last = window.other_light.mapTo(window, window.other_light.rect().topRight()).x() - origin
         assert abs(first - left) <= 2 and abs(last - right) <= 2
+
+
+class FakeEditor:
+    """The profile editor, answered: *change* turns the settings it was opened with into those it returns."""
+    opened: list = []
+    change = staticmethod(lambda settings: settings)
+    accept = True
+
+    def __init__(self, slot, settings, creating, parent):
+        FakeEditor.opened.append((slot, settings, creating))
+        self.given = settings
+
+    def exec(self):
+        return main_window.QDialog.DialogCode.Accepted if FakeEditor.accept else main_window.QDialog.DialogCode.Rejected
+
+    def settings(self):
+        return FakeEditor.change(self.given)
+
+
+@pytest.fixture
+def editor(monkeypatch):
+    FakeEditor.opened, FakeEditor.change, FakeEditor.accept = [], staticmethod(lambda settings: settings), True
+    monkeypatch.setattr(main_window, "ProfileEditor", FakeEditor)
+    monkeypatch.setattr(main_window.profiles.time, "sleep", lambda seconds: None)
+    return FakeEditor
+
+
+def test_the_cards_offer_create_edit_and_clear_but_not_on_the_default(make, tmp_path):
+    from conftest import profile_reports
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    device = FakeDevice(dict(zip((0x76, 0x77, 0x78), profile_reports(0x76, "Racing"))))
+    window = make(device=device)
+    default, square, cross = window.cards[:3]
+    assert not any(b.isVisibleTo(default) for b in (default.create_button, default.edit_button, default.clear_button))
+    assert "the app does not change it" in default.toolTip()
+    assert square.create_button.isVisibleTo(square) and not square.edit_button.isVisibleTo(square)
+    assert cross.edit_button.isVisibleTo(cross) and cross.clear_button.isVisibleTo(cross)
+    assert cross.edit_button.isEnabled()
+
+
+def test_over_bluetooth_the_profiles_cannot_be_changed(make, tmp_path):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys", bus=0x05)
+    window = make()
+    square = window.cards[1]
+    assert not square.create_button.isEnabled() and "USB cable" in square.create_button.toolTip()
+
+
+def test_create_starts_from_the_default_backs_up_and_writes(make, tmp_path, editor):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    editor.change = staticmethod(
+        lambda s: main_window.dataclasses.replace(s, name="Shooter", triggers=(0, 128, 0, 255)))
+    window = make()
+    window.cards[1].create_button.click()
+    [(slot, given, creating)] = editor.opened
+    assert slot == "Square" and creating and given.name == "New profile" and given.buttons == tuple(range(16))
+    assert [r[0] for r in window.device.sent] == [0x60] * 3
+    assert window.device.sent[1][28:44] != bytes(16)                    # a new profile gets its own ID
+    square = window.cards[1]
+    assert square.name.text() == "Shooter" and "0 to 50 %" in square.details.text()
+    assert window.chosen_slot == "Square" and window.warnings == []
+    [backup] = (tmp_path / "home" / "profiles").glob("profiles-*.json")
+    assert json.loads(backup.read_text())["profiles"][1]["empty"] is True   # taken before the write
+
+
+def test_edit_keeps_the_profiles_own_bytes(make, tmp_path, editor):
+    from conftest import profile_reports
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    racing = profile_reports(0x76, "Racing")
+    racing = (racing[0], racing[1][:28] + bytes(range(1, 17)) + racing[1][44:], racing[2])
+    editor.change = staticmethod(lambda s: main_window.dataclasses.replace(s, name="Racing 2"))
+    window = make(device=FakeDevice(dict(zip((0x76, 0x77, 0x78), racing))))
+    window.cards[2].edit_button.click()
+    assert not editor.opened[0][2] and editor.opened[0][1].name == "Racing"
+    sent = window.device.sent
+    assert [r[0] for r in sent] == [0x61] * 3 and sent[1][28:44] == bytes(range(1, 17))
+    assert window.cards[2].name.text() == "Racing 2"
+
+
+def test_a_cancelled_editor_writes_nothing(make, tmp_path, editor):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    editor.accept = False
+    window = make()
+    window.cards[3].create_button.click()
+    assert window.device.sent == [] and not (tmp_path / "home" / "profiles").exists()
+
+
+def test_clear_asks_backs_up_and_empties(make, tmp_path, editor):
+    from conftest import profile_reports
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    window = make(device=FakeDevice(dict(zip((0x79, 0x7A, 0x7B), profile_reports(0x79, "Old")))))
+    window.cards[3].clear_button.click()
+    assert "Remove Old from Fn + Circle?" in window.questions[-1]
+    assert window.device.sent == [bytes([0x68, 4]) + bytes(62)]
+    assert window.cards[3].name.text() == "Empty" and window.warnings == []
+    assert list((tmp_path / "home" / "profiles").glob("profiles-*.json"))
+
+
+def test_a_write_the_controller_refuses_says_so_with_the_backup(make, tmp_path, editor):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+
+    class Deaf(FakeDevice):
+        def set_feature(self, data):
+            self.sent.append(bytes(data))
+    window = make(device=Deaf())
+    window.cards[1].create_button.click()
+    assert "did not keep the profile in Fn + Square" in window.warnings[-1]
+    assert "The profiles from before are saved in" in window.warnings[-1]
+    assert window.cards[1].name.text() == "Empty"
+
+
+def test_the_active_profile_is_marked_and_follows_fn(make, tmp_path):
+    from usb_hdcontrol.inputs import Reading
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    window = make()
+    [reader] = window.readers
+    assert not any(card.active.isVisibleTo(card) for card in window.cards)
+    reader.queue.append(Reading(profile="Triangle"))
+    window._input_ready()
+    assert [card.active.isVisibleTo(card) for card in window.cards] == [True, False, False, False]
+    reader.queue.append(Reading(profile="Square"))                     # Fn + Square
+    window._input_ready()
+    assert [card.active.isVisibleTo(card) for card in window.cards] == [False, True, False, False]
+    window.show_intro()                                                 # not read: not known
+    window.finish_intro()
+    assert not any(card.active.isVisibleTo(card) for card in window.cards)
+
+
+def test_the_drawing_shows_the_player_lights(make, tmp_path):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys", players="01010")
+    window = make()
+    assert window.view.players == (False, True, False, True, False)
+
+
+def test_the_idle_choice_is_saved_for_the_service(make, tmp_path):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    window = make()
+    combo = window.idle_combo
+    assert [combo.itemText(i) for i in range(combo.count())] == ["Never", "after 10 min", "after 30 min",
+                                                                  "after 60 min"]
+    assert combo.currentData() == 10                                    # the PS5's shortest, by default
+    combo.setCurrentIndex(combo.findData(30))
+    assert main_window.ControlSettings(main_window.INFO).get("idle_minutes") == 30
+    from usb_hdcontrol import idle
+    assert idle.minutes_setting()() == 30                               # what the service reads
+
+
+def test_the_live_pills_in_the_header(make, tmp_path):
+    from usb_hdcontrol.inputs import Reading
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys", bus=0x05)
+    MONOTONIC[0] = 5000.0
+    window = make()
+    assert window.rate_pill.value.text() == "—"
+    assert window.off_pill.value.text() == "—" and "not running" in window.off_pill.toolTip()
+    [reader] = window.readers
+    reader.queue += [Reading(profile="Square")] * 3
+    for _ in range(3):
+        window._input_ready()
+    MONOTONIC[0] += 1.0
+    window.show_state()                                 # a second's count starts here
+    reader.queue += [Reading(profile="Square")] * 250
+    for _ in range(250):
+        window._input_ready()
+    MONOTONIC[0] += 1.0
+    window.show_state()
+    assert window.rate_pill.value.text() == "250 Hz"
+    (tmp_path / "idle.json").write_text(json.dumps({"last_used": {"hidraw2": MONOTONIC[0] - 180}}))
+    window.show_state()
+    assert window.off_pill.value.text() == "7 min"                  # 10 minutes, 3 used up
+    (tmp_path / "idle.json").write_text(json.dumps({"last_used": {"hidraw2": MONOTONIC[0] - 570}}))
+    window.show_state()
+    assert window.off_pill.value.text() == "30 s"
+    window.idle_combo.setCurrentIndex(window.idle_combo.findData(0))
+    window.show_state()
+    assert window.off_pill.value.text() == "Never"
+
+
+def test_on_the_cable_the_off_pill_says_cable(make, tmp_path):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    window = make()
+    assert window.off_pill.value.text() == "Cable"

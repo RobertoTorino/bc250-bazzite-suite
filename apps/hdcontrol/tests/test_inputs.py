@@ -57,3 +57,17 @@ def test_the_reader_gives_the_newest_reading(tmp_path):
     reader.close()
     os.close(write_end)
     assert reader.fd == -1
+
+
+def test_the_edges_active_profile():
+    """Byte 49 of the USB report, as the owner's Edge sent it (23-10-2026): 0x1c on Fn + Triangle, 0x2c on Square."""
+    def with_byte_49(value, bluetooth=False):
+        data = bytearray(report(bluetooth=bluetooth))
+        data[49 + bluetooth] = value
+        return bytes(data)
+    assert inputs.parse(with_byte_49(0x1C)).profile == "Triangle"
+    assert inputs.parse(with_byte_49(0x2C)).profile == "Square"
+    assert inputs.parse(with_byte_49(0x4C)).profile == "Circle"
+    assert inputs.parse(with_byte_49(0x3C, bluetooth=True)).profile == "Cross"
+    assert inputs.parse(with_byte_49(0x00)).profile == "" and inputs.parse(with_byte_49(0x5C)).profile == ""
+    assert inputs.parse(AT_REST).profile == ""                          # its recorded bytes end at byte 11
