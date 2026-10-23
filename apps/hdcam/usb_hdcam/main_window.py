@@ -177,7 +177,8 @@ class MainWindow(QWidget):
         for key, text in VIEWS.items():
             self.view_combo.addItem(text, key)
         self.view_combo.setCurrentIndex(max(0, self.view_combo.findData(self.settings.get("view"))))
-        self.view_combo.setToolTip("A mode with both cameras sends their pictures side by side in one frame.")
+        self.view_combo.setToolTip("A mode with both cameras sends their pictures side by side in one frame. Each half "
+                                   "is the lens on that side as you face the camera.")
         self.view_combo.activated.connect(self.set_view)
         self.preview_button = QPushButton("Start preview")
         self.preview_button.setCheckable(True)

@@ -1,3 +1,29 @@
+Changelog: 23-10-2026 04:53:35
+
+Release 0.3.0.
+
+Changelog: 23-10-2026 04:33:12
+
+Added. The preview reads the camera through V4L2 itself (v4l2.py, the standard library's ioctl and mmap) instead of
+Qt Multimedia, and Qt only turns its YUYV frames into pictures. Mode now offers every frame size at each of its rates
+(25 modes on the owner's camera, where Qt listed 13): Qt reported one rate range per size and always streamed at its
+fastest, so with Reduced bandwidth the side-by-side rates that fit, 2560x800 at 30 or 15 fps and 3840x1080 and
+5148x1088 at 8, could not be chosen. A frame the driver could not complete (V4L2_BUF_FLAG_ERROR, or short) is no
+longer shown: Qt showed them, half of each frame flat red and green, at 2560x800 and 60 fps. When only damaged frames
+come for 5 s the preview stops and says the mode needs more USB bandwidth; when nothing comes, that the camera sends
+no picture in this mode; a camera another app holds is named as such. Measured on the owner's board (23-10-2026, every
+mode for 3 s with Reduced bandwidth): every one-camera mode works except 1920x1080 at 15 fps, which sends nothing, as
+do 3840x1080 and 5148x1088 at 15; 2560x800 at 60 and 3840x1080 and 5148x1088 at 30 arrive damaged; the rest works.
+Qt pads its frame rows for some widths (5148 becomes 10304 bytes a row, not 10296), so a frame is copied row by row
+then.
+
+Changelog: 23-10-2026 04:22:12
+
+Added. Show names the lens of each half of a side-by-side frame: "Left half: the lens on your left", "Right half: the
+lens on your right", as you face the camera; the list's tooltip says so. Measured on the owner's board (23-10-2026):
+with the lens on the left seen from behind covered, the right half of a 2560x800 frame went dark (mean luma 16
+against 109).
+
 Changelog: 23-10-2026 04:05:15
 
 Release 0.2.0.

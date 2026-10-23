@@ -1,3 +1,14 @@
+Changelog: 23-10-2026 04:20:59
+
+The wiki's USB HD Cam chapter says which half of a side-by-side frame is which lens: each half is the lens on that
+side as one faces the camera (owner's board, 23-10-2026: with the lens on the left seen from behind covered, the right
+half of a 2560x800 frame went dark).
+Its picture section lists the frame sizes and which modes give a picture on the BC-250 with Reduced bandwidth,
+measured mode by mode (23-10-2026).
+It also says why the exposure time cannot be used: asked directly, past uvcvideo (23-10-2026), the camera offers
+only Auto and Shutter Priority, flags the exposure time as decided by its automatic exposure in both, takes a value
+in Shutter Priority but puts it back to 1000 when a stream starts (2 ms and 30 ms gave the same picture).
+
 Changelog: 23-10-2026 03:50:44
 
 The wiki's USB HD Cam chapter says what to do after a restart: the camera keeps its power and firmware through

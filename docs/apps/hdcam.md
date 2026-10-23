@@ -133,17 +133,32 @@ When no camera is found, the window and the load service's journal say the same.
 ## The picture
 
 Once the camera is ready, the header shows its video node and the **Picture** box offers every mode the camera
-reports. The camera has two image sensors, and its modes are of two kinds:
+reports, each frame size at each of its rates. The camera has two image sensors, and its modes are of two kinds:
 
-| Kind | Modes |
+| Kind | Frame sizes |
 |---|---|
-| One camera | 1920 × 1080 at 30 fps, 1280 × 800 at 60 fps, 960 × 520 at 60 fps, 640 × 376 at 120 fps, 448 × 256 at 120 fps, 320 × 184 at 240 fps |
-| Both cameras, side by side | 3840 × 1080, 2560 × 800, 1920 × 520, 1280 × 376, 896 × 256, 640 × 184, and 5148 × 1088 |
+| One camera | 1920 × 1080, 1280 × 800, 960 × 520, 640 × 376, 448 × 256, 320 × 184 |
+| Both cameras, side by side | 3840 × 1080, 2560 × 800, 1920 × 520, 1280 × 376, 896 × 256, 640 × 184 |
+| Both cameras and smaller copies of them | 5148 × 1088 |
 
-Some modes also come at slower rates. The list shows what your camera reports, with the largest one-camera mode
-first. With Reduced bandwidth the largest side-by-side modes send no picture; the window says so after a few
-seconds, and a smaller mode or a slower rate works. For a side-by-side mode, **Show** picks the whole frame or either half. **Save picture…** saves what the
-preview shows, at the camera's own size, as a PNG.
+The list shows what your camera reports, with the largest one-camera mode first. Not every mode gives a picture.
+With Reduced bandwidth some fast side-by-side modes do not fit, and their frames arrive damaged; and at 15 fps the
+1080-line modes send nothing at all. After a few seconds the window says which, and stops the preview. Measured on
+the BC-250 with Reduced bandwidth:
+
+| Mode | Picture |
+|---|---|
+| Every one-camera mode, at every rate, but one | yes |
+| 1920 × 1080 at 15 fps | none: the camera sends nothing (at 30 and 8 fps it works) |
+| 2560 × 800 at 30, 15 or 8 fps; 1920 × 520 at 60; 1280 × 376 at 120; 896 × 256 at 120; 640 × 184 at 240 | yes |
+| 3840 × 1080 and 5148 × 1088 at 8 fps | yes |
+| 3840 × 1080 and 5148 × 1088 at 15 fps | none: the camera sends nothing |
+| 2560 × 800 at 60; 3840 × 1080 and 5148 × 1088 at 30 | frames damaged: too much for the bandwidth |
+
+For a side-by-side mode, **Show** picks the whole frame or either half. Each half is the lens on that side as you
+face the camera: the left half is the lens on your left, which is the camera's right lens seen from behind it.
+**Save picture…** saves what the preview shows, at the camera's own size, as a PNG. The preview shows up to 30 frames
+a second, fewer in the largest modes; other apps get every frame the camera sends.
 
 While the preview runs, the app holds the camera, and other apps cannot use it. **Stop preview** (or closing the
 window) gives it back.
@@ -169,8 +184,10 @@ frame, 0 to 255):
 | Auto Mode, brightness 8 | 166 | 0 % | 9 % |
 | Shutter Priority, brightness 8 | 112 | 0 % | 1 % |
 
-Gain changes the picture only in Auto Mode. The camera reports an exposure time, but keeps it at 1000 whatever is
-set, so the app shows it greyed, for completeness. Besides these, the camera has one vendor control of its own (an
+Gain changes the picture only in Auto Mode. The camera reports an exposure time, but it cannot be used, so the app
+shows it greyed, for completeness. The camera has no manual exposure: it marks the exposure time as set by its
+automatic exposure in both of its modes, Linux's driver therefore refuses it, and a value sent to the camera directly
+is put back to 1000 when the picture starts. Besides these, the camera has one vendor control of its own (an
 extension unit, 3 bytes) that nothing documents; the app leaves it alone.
 
 The camera forgets its settings when it is unplugged. The app keeps the ones you changed and sets them again each

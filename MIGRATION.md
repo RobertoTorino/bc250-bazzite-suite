@@ -720,8 +720,18 @@ colours (owner, 19-10-2026).
   nothing, not even a USB event in the kernel's log (most likely the ports' power is not cut; not measured); a replug
   brings it back. The wiki says so. A cold start (power off, then on, the
   camera left plugged in; 23-10-2026) works: the camera started as a boot loader and the login run loaded it on port
-  7-1. Open: which half of a side-by-side frame is which sensor; the release (owner):
-  `hdcam-v0.1.0`, then pin it and bump the portal (an added app needs a minor bump).
+  7-1. Which half is which lens (23-10-2026, 2560x800, the owner covering the lens on the left seen from behind):
+  the right half went dark (mean luma 16 against 109), so each half is the lens on that side as one faces the
+  camera; the wiki says so. Released (owner, 23-10-2026): hdcam-v0.1.0 with portal-v6.8.0, then hdcam-v0.2.0 (the
+  restart hint) with portal-v6.9.0. The preview now reads the camera through V4L2 itself
+  (owner's decision, 23-10-2026): Qt Multimedia offered one rate per size (the fastest) and showed damaged frames.
+  Every mode measured with Reduced bandwidth: 1080-line modes at 15 fps send nothing at all (the firmware, not the
+  bandwidth); 2560x800 at 60 and the two widest at 30 arrive damaged; the rest works. Show names the lens of each
+  half. Both wait for the next hdcam release (owner). The exposure time, asked of the camera itself past
+  uvcvideo (owner's sudo runs of a usbfs script, 23-10-2026): AE modes 2 and 4 only (GET_RES 6), exposure time flags
+  get, set, disabled by auto mode and auto-update; in mode 4 it takes 300 or 20 and keeps it through uvcvideo
+  re-attaching, but a stream start puts it back to 1000 (mean luma 51 at 30 ms and at 2 ms). Not usable; the greyed
+  row stays. Nothing else open but the PS4 Camera on the backlog.
 - **SwanStation Manager (built 21-10-2026, owner's decision; not tried on the board).** PS1, the first of six
   emulator managers the owner asked for (list below). Not standalone: SwanStation is a libretro core, so the app
   installs RetroArch from Flathub (a Flatpak, `--user`; one already installed is used) and the core from the libretro

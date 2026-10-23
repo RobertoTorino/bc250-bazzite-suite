@@ -401,3 +401,12 @@ def test_the_firmware_check_shows_green_for_a_known_file_orange_for_an_own_one(m
     window.refresh()
     assert colours[-1] == STATE_COLORS["ok"] and window.firmware_box.value.text() == "21.01"
     assert "it is the known file 21.01-03.20.00.04" in window.firmware_text.text()
+
+
+def test_show_names_the_lens_of_each_half(make, tmp_path):
+    plug(tmp_path / "sys", product="058c", address=4, videos=(2,))
+    window = make()
+    texts = {window.view_combo.itemData(i): window.view_combo.itemText(i) for i in range(window.view_combo.count())}
+    assert texts == {"both": "Whole frame", "left": "Left half: the lens on your left",
+                     "right": "Right half: the lens on your right"}
+    assert "as you face the camera" in window.view_combo.toolTip()

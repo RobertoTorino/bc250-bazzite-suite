@@ -7,7 +7,10 @@ import json
 
 from bc250_core.settings import SettingsStore
 
-VIEWS = {"both": "Whole frame", "left": "Left half", "right": "Right half"}
+# Each half of a side-by-side frame is the lens on that side as one faces the camera (owner's board, 23-10-2026: with
+# the lens on the left seen from behind covered, the right half of a 2560x800 frame went dark).
+VIEWS = {"both": "Whole frame", "left": "Left half: the lens on your left",
+         "right": "Right half: the lens on your right"}
 # The app's defaults over the camera's own: in its default Shutter Priority the PS5 HD Camera keeps the
 # picture dark even in a well-lit room (mean luma 48 of 255, 24 % near black), in Auto Mode (V4L2's 0) it is 111
 # (owner's board, 23-10-2026; the owner's choice of default).
