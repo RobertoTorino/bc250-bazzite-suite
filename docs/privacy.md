@@ -54,6 +54,8 @@ app downloads its Python packages from PyPI.
 - [USB IPS3.5](apps/ips35.md#settings) shows the weather only for a place you choose: the name you search for,
   then that place's coordinates every 30 minutes while its Weather tile is shown, go to Open-Meteo
   (`geocoding-api.open-meteo.com`, `api.open-meteo.com`), which needs no account.
+- [USB HD Cam](apps/hdcam.md#the-firmware) downloads the camera's firmware from GitHub
+  (`raw.githubusercontent.com`) only when you click Download.
 - [BC-250 ACE Queues](apps/ace.md) and [BC-250 Mesh Shaders](apps/mesh.md) download Mesa's source
   from `archive.mesa3d.org` when they build their driver.
 

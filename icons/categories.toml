@@ -109,6 +109,11 @@ category = "utilities"
 icons = ["apps/ips35/images/bc250-usb-ips35"]
 tile = "portal/images/apps/ips35.webp"
 
+[hdcam]
+category = "utilities"
+icons = ["apps/hdcam/images/bc250-usb-hdcam"]
+tile = "portal/images/apps/hdcam.webp"
+
 [mtool]
 category = "development"
 icons = ["apps/mtool/images/media-tool"]

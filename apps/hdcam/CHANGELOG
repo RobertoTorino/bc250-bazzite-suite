@@ -1,0 +1,53 @@
+Changelog: 23-10-2026 03:20:11
+
+Release 0.1.0.
+
+Changelog: 23-10-2026 01:35:37
+
+Added. First version. USB HD Cam makes the PS5 HD Camera (CFI-ZEY1) a webcam on Bazzite. The camera
+has no flash: it starts as an OmniVision OV580 boot loader (USB ID 05a9:0580) and needs its firmware at every plug-in;
+then it is a USB video camera (05a9:058c) that uvcvideo drives, so no kernel driver is needed. The app sends the
+firmware as the PS4EYECam driver and PS Move API do (512-byte vendor control transfers, then the start request), over
+usbfs with the standard library only. The firmware is Sony's and not in the suite: Download fetches the PS5 HD Camera's file
+21.01-03.20.00.04 from prosperodev/hdcamera, pinned to a commit and checked by SHA-256, or Use a file takes the user's
+own (the app knows a file by its SHA-256 and shows the check: the Firmware box green with the version for a known
+file, orange for an own one, with the hash in the window; one known for the other camera is refused). Allow access adds a udev rule
+(pkexec, once) that gives the logged-in user the boot loader (uaccess) and starts the user's load service when the
+camera is plugged in (SYSTEMD_USER_WANTS); install.sh writes that service, which also runs at login for a camera
+plugged in before, so nothing runs as root. Load it by itself (on by default) can be switched off; the window then
+loads on Load firmware, and otherwise loads once per plug-in what the service could not. The header shows the model,
+the port's USB speed (the video needs USB 3; a slower port is flagged), the firmware and the video node. The preview
+(Qt Multimedia) offers every mode the camera reports, one camera's picture or both side by side, shows a side-by-side
+frame whole or either half, and saves what it shows as a PNG; it holds the camera only while it runs. Picture
+settings beside it offers every control the camera reports (V4L2 control ioctls with the standard library; on the
+owner's board brightness, contrast, saturation, hue, gain, sharpness, automatic white balance and its
+temperature, power line frequency, and the exposure: Auto or Shutter Priority), greys one that another decides,
+and has Defaults; the values the user changed are kept and set again each time the camera is ready, by the window
+and by the load service, as the camera forgets them unplugged. Measured on the owner's board (23-10-2026, 1280x800,
+a well-lit room): mean luma 48 in the camera's default Shutter Priority (24 % near black), 111 in Auto Mode, 136
+with gain 8, 166 with brightness 8; Shutter Priority with brightness 8 gives 112 with less clipped white; gain does
+nothing in Shutter Priority, and the exposure time stays at 1000 whatever is set (its whole row shows greyed, as
+does any control the camera does not let be changed). Auto Mode is the app's default (the owner's choice, 23-10-2026),
+set at every plug-in unless the user chose otherwise; Defaults keeps it. The camera's one vendor control (extension
+unit 4, 3 bytes, undocumented) is left alone. The udev rule also keeps the camera with its firmware out of USB
+autosuspend (power/control on, for 05a9:058c and 058a): found on the owner's board, 2 s after the last program let go
+the kernel suspended it, and the camera came back in its dark default exposure (mean luma 2 instead of 113) while the
+driver still reported Auto Mode. The window offers Allow access again when it finds a rule from before this. When no
+picture comes within 5 s it says so, with the kernel's bandwidth message to look for: Qt reports no error when the
+stream cannot start. A PS4 Camera (CUH-ZEY1 or
+CUH-ZEY2, which look the same) on Sony's adapter (CFI-ZAA1, found by the adapter's hub 054c:0d0b) is handled the same
+way with its own firmware: Download gets the file of PS4 system software 1.50 to 3.15 from psxdev/luke_firmwares,
+pinned to a commit and checked by SHA-256 (the file PS Move API tested on a CUH-ZEY2; it has the same video endpoint,
+so Reduced bandwidth applies to it too), and the app names the PS4 Camera's four firmware versions that repository
+holds. The fix firmware is named when a user picks it but no longer suggested: Auto Mode is what brightens the
+picture.
+Found on the owner's board (23-10-2026): the camera enumerates in boot mode at 5 Gbit/s on port 7-1, the firmware
+loads and the camera comes back as /dev/video1 with 13 modes, but the board's USB 3 controller (AMD FCH xHCI
+1022:7814) refuses its only video endpoint (1024 bytes, burst 16, mult 3: 49152 bytes per 125 us), so no mode
+streams (VIDIOC_STREAMON: ENOSPC, "Not enough bandwidth for altsetting 1"). USB bandwidth, Reduced by default, sends
+the firmware with 2 bursts per interval instead (32768 bytes; 2 bytes of the endpoint's SuperSpeed companion in the
+copy that is sent, found by the descriptor, so the fix firmware gets it too); Full sends it as it is. With Reduced
+the owner's board streams every one-camera mode at its full rate, 2560x800 at 30 and 15 fps, 1920x520 at 60,
+1280x376 at 120, 640x184 at 240 and 3840x1080 at 8; 2560x800 at 60, 3840x1080 at 15 and 30 and 5148x1088 send no
+frame. The picture is sound: the preview at 1920x1080 showed the screen the camera was pointed at (the owner
+confirmed it, 23-10-2026); a first frame taken as the stream started was mostly dark, before the exposure settled.

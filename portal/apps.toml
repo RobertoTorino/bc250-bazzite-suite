@@ -250,6 +250,19 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-usb-ips35"]
 launch = [["Open", "~/.local/bin/bc250-usb-ips35"]]
 
+[apps.hdcam]
+name = "USB HD Cam"
+summary = "The PS5 HD Camera (CFI-ZEY1) as a webcam: loads its firmware at every plug-in and shows its picture."
+tag = "hdcam-v0.1.0"
+sha256 = ""
+required = false
+changes_board = false
+category = "utilities"
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-usb-hdcam"]
+launch = [["Open", "~/.local/bin/bc250-usb-hdcam"]]
+
 [apps.mtool]
 name = "Media Tool"
 summary = "Record a BC250 Bazzite Suite installation demo with OBS, and convert the suite's icons."

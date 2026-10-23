@@ -634,6 +634,13 @@ colours (owner, 19-10-2026).
   package from shadPS4 itself): shadPS4 is GPL-2.0-or-later, the Manager GPL-3.0-or-later, so a build with both is
   GPL-3.0; to check before starting. The quit window itself opens from any controller and keyboard since
   22-10-2026 (the Manager's quit hotkeys in shadPS4's `input_config/global.ini`).
+- **A PS4 Camera for USB HD Cam (on hold, owner 23-10-2026: when there is one at the board).** The app handles the
+  PS4 Camera on Sony's PlayStation Camera Adapter (CFI-ZAA1), but nothing of it was tried: there is no PS4 Camera at
+  the board. To try then: the adapter's hub (054c:0d0b) shows it as PS4 Camera; Download gets its firmware (PS4
+  system software 1.50 to 3.15, psxdev/luke_firmwares) and the box turns green; the load with Reduced bandwidth (the
+  file has the same video endpoint as the PS5's); the camera back as 05a9:058a with its modes and controls (PS Move
+  API: 1280x800 at 60, 640x400 at 120, 320x192 at 240); whether a CUH-ZEY1 takes the same file as a CUH-ZEY2; the
+  other PS4 firmware versions; the udev rule's power line for 058a.
 
 - **Descriptions for the games in Steam (on hold, owner 22-10-2026: after the release of the covers).** A non-Steam
   game's page shows Steam's fixed notice where a Steam game has its description, developer and release date:
@@ -670,6 +677,43 @@ colours (owner, 19-10-2026).
   portrait (22-10-2026). Open: the owner tries landscape, the themes and colours, a background picture, the clock
   options and the weather icon on the screen; the releases (owner): `ips35-v0.1.0`, core's and overlay's next ones, then pin it and bump the portal (an
   added app needs a minor bump).
+- **USB HD Cam (owner, 23-10-2026; built 23-10-2026; no "PS5" in the code, owner 23-10-2026: model keys and firmware files cfi-zey1 and cuh-zey2, the text names the
+  PS5 HD Camera and the PS4 Camera).** `apps/hdcam`, package `usb_hdcam`, Utilities: the PlayStation
+  PS5 HD Camera as a webcam. No kernel driver: the camera is an OV580 boot loader (05a9:0580) without
+  flash, which needs its firmware at every plug-in, then a UVC camera (05a9:058c). The upload (512-byte vendor control
+  transfers, then 0x5b at 0x2200/0x8018) follows PS Move API's loader, over usbfs ioctls with the standard library,
+  so the shared venv gets no libusb binding. The firmware is Sony's, so it is not in the repository: the app downloads
+  prosperodev/hdcamera's file pinned to commit 8773610 (SHA-256 checked; the same file as the owner's Windows
+  Windows driver package, SHA-1 0fa4da31…), or takes the user's own. The udev rule (pkexec, once) gives the user
+  the boot loader (uaccess) and starts a user service (SYSTEMD_USER_WANTS) that install.sh writes, so nothing runs
+  as root; the service also runs at login. Found on the owner's board (23-10-2026): boot mode at 5 Gbit/s on port
+  7-1, its node root-only until the rule is there. After the owner's Allow access (23-10-2026) the upload worked: the
+  camera came back as /dev/video1 with the 13 modes of the descriptor. But no mode streams: the board's USB 3
+  controller (AMD FCH xHCI 1022:7814) refuses the camera's only video endpoint, which the firmware declares at
+  offset 61414 as 1024 bytes, burst 16, mult 3 (49152 bytes per 125 us), with "Not enough bandwidth for altsetting
+  1" and ENOSPC on VIDIOC_STREAMON. The window now says when no picture comes. The fix firmware does not touch that
+  descriptor (its 8 bytes: a 60 to 30 fps frame interval and one setting at 66564). The owner agreed to try a smaller
+  endpoint (23-10-2026): with 2 bursts (32768 bytes) the controller takes it, and every one-camera mode streams at
+  its full rate, side by side up to 2560x800 at 30 fps and 3840x1080 at 8. The app's USB bandwidth setting does it,
+  Reduced by default, Full for controllers that allow the original (Claude's choice of default and of the setting;
+  the owner may want it otherwise). Tried with the experiment's script and the window's preview, not yet through a
+  fresh plug-in with the app itself; the owner then did that plug-in (23-10-2026), and the app loaded the firmware
+  with Reduced bandwidth by itself. The owner found the picture dark in a well-lit room (23-10-2026): Picture
+  settings offers the camera's controls, and Auto Exposure in Auto Mode brightens it (mean luma 48 to 111, measured
+  23-10-2026; the exposure time cannot be set). Auto Mode is the default (owner, 23-10-2026). USB autosuspend reset
+  the camera's settings 2 s after it was let go; the udev rule now keeps it powered (tried after the owner's Allow access
+  for the updated rule, 23-10-2026: brightness 110 after 15 s idle; the app now writes the chosen settings even when
+  they read the same, as the driver's values were stale after the earlier suspends). Another project's firmware patch (90 bytes on the same Sony original, for
+  1080p60, a depth mode and auto exposure) tried on the board with Reduced bandwidth (23-10-2026): its
+  1080p60 and 2448x1088@60 (depth) modes send no picture, as they need Full bandwidth; 2448x1088@30, every other
+  one-camera mode and its own auto exposure (with contrast 6, 50 Hz) work; it drops 1280x800@60. Not adopted for now
+  (Claude's advice: no gain on this controller); the owner's decision. Hackinside/
+  PS5_camera_files is the owner's Windows download (no license). The PS4 Camera stays (owner, 23-10-2026), with a download
+  from psxdev/luke_firmwares (the owner's find; the PS4 system software 1.50 to 3.15 file, PS Move API's tested one,
+  pinned to commit f90eead); untried, as there is no PS4 Camera at the board (on the backlog: "A PS4 Camera for
+  USB HD Cam"). The wiki no longer suggests the fix
+  firmware (owner). Open: hot-plugging with the service, the load at login, which half of a side-by-side frame is which sensor; the release (owner):
+  `hdcam-v0.1.0`, then pin it and bump the portal (an added app needs a minor bump).
 - **SwanStation Manager (built 21-10-2026, owner's decision; not tried on the board).** PS1, the first of six
   emulator managers the owner asked for (list below). Not standalone: SwanStation is a libretro core, so the app
   installs RetroArch from Flathub (a Flatpak, `--user`; one already installed is used) and the core from the libretro

@@ -1,3 +1,12 @@
+Changelog: 23-10-2026 03:20:11
+
+Release 0.15.0.
+
+Changelog: 23-10-2026 01:38:04
+
+Added. The catalogue lists USB HD Cam: its PyQt6 requirement, pkexec and udevadm for the udev rule that gives the
+user the camera's boot loader, and systemctl for its load service.
+
 Changelog: 22-10-2026 23:28:29
 
 Release 0.14.0.

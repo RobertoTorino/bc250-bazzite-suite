@@ -1,3 +1,11 @@
+Changelog: 23-10-2026 01:38:04
+
+Added. USB HD Cam (apps/hdcam, Utilities; owner, 23-10-2026): the PS5 HD Camera (CFI-ZEY1) as a
+webcam, by loading its firmware at every plug-in. Its icon, installer test, CI jobs, wiki chapter and entries in the
+Dependency Checker's catalogue and the portal's manifest; CLAUDE.md lists it and its shellcheck line. The portal's
+Utilities tab, the wiki's categories page and its home page name it. The wiki's privacy page lists its firmware
+download from GitHub, the app's only network use.
+
 Changelog: 22-10-2026 21:45:34
 
 Added. USB IPS3.5 (apps/ips35, Utilities; owner, 22-10-2026): the board's live values on a Turzx USB IPS screen,

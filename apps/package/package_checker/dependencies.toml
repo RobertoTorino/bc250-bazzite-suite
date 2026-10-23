@@ -56,6 +56,10 @@ launchers = ["~/.local/bin/bc250-system-overlay"]
 name = "USB IPS3.5"
 launchers = ["~/.local/bin/bc250-usb-ips35"]
 
+[app.hdcam]
+name = "USB HD Cam"
+launchers = ["~/.local/bin/bc250-usb-hdcam"]
+
 [app.bios]
 name = "BC-250 BIOS Reader"
 launchers = ["~/.local/bin/bc250-bios-reader"]
@@ -218,6 +222,12 @@ owner = "ips35"
 need = "required"
 usage = "Password prompt for adding the udev rule that gives your user the screen's port (Allow access)."
 anchor = "access-to-the-screen"
+
+[[tool.source]]
+owner = "hdcam"
+need = "required"
+usage = "Password prompt for adding the udev rule that gives your user the camera's boot loader (Allow access)."
+anchor = "access-to-the-camera"
 
 [[tool]]
 name = "umr"
@@ -656,6 +666,12 @@ owner = "wdriver"
 need = "required"
 usage = "Install, start and remove the Wi-Fi driver's service, which loads the driver at boot."
 
+[[tool.source]]
+owner = "hdcam"
+need = "required"
+usage = "Tell your user's systemd about the load service, which sends the camera's firmware when it is plugged in."
+anchor = "loading-by-itself"
+
 [[tool]]
 name = "journalctl"
 description = "Reads the systemd journal: the system, service and kernel logs."
@@ -1068,6 +1084,10 @@ owner = "ips35"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
+owner = "hdcam"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
 owner = "bios"
 specifier = ">=6.11,<7"
 
@@ -1252,6 +1272,12 @@ owner = "ips35"
 need = "required"
 usage = "Applies the rule that gives your user the screen's port, at once, without unplugging it."
 anchor = "access-to-the-screen"
+
+[[tool.source]]
+owner = "hdcam"
+need = "required"
+usage = "Applies the rule that gives your user the camera's boot loader, at once, without unplugging it."
+anchor = "access-to-the-camera"
 
 [[dependency]]
 name = "obsws-python"
