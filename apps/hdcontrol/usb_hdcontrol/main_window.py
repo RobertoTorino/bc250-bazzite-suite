@@ -20,7 +20,7 @@ from bc250_core import window_title
 from bc250_core.settings import restore_geometry, save_geometry
 from bc250_core.theme import GREY, STATE_COLORS
 from bc250_core.updates import UpdateChecker
-from bc250_core.widgets import AppHeader, MetricBox, StatusText, accent_button, hint_label, same_width
+from bc250_core.widgets import AppHeader, MetricBox, Pill, StatusText, hint_label, same_width
 
 from . import APP_NAME, INFO, LOGO_PATH, __version__, controller, firmware, hidraw, profiles, updater
 from .controller import Controller, FirmwareInfo
@@ -29,6 +29,9 @@ from .settings import ControlSettings
 INTERVAL_MS = 1000
 CHECK_AGE_S = 24 * 3600             # the window asks Sony's server again after a day
 PROFILE_COLUMNS = ("Profile", "Name", "Left stick", "Right stick", "L2", "R2", "Buttons")
+# The header's values, short so its boxes stay narrow; the full names are in their tooltips.
+SHORT_NAMES = {0x0CE6: "DualSense", 0x0DF2: "Edge"}
+SHORT_CONNECTIONS = {"usb": "USB", "bluetooth": "Bluetooth"}
 
 
 def _job(function: Callable, *args) -> Callable[[], object]:
@@ -77,15 +80,15 @@ class MainWindow(QWidget):
         header = AppHeader(LOGO_PATH, APP_NAME, __version__)
         self.badge = StatusText("Looking for a controller")
         header.add_state(self.badge)
-        self.update_button = accent_button("Update firmware…", "Sends the latest firmware to the controller.")
-        self.update_button.clicked.connect(self.start_update)
-        header.add_action(self.update_button)
         self.controller_box = MetricBox("Controller")
         self.connection_box = MetricBox("Connection")
         self.battery_box = MetricBox("Battery")
         self.firmware_box = MetricBox("Firmware")
         self.latest_box = MetricBox("Latest")
-        boxes = [self.controller_box, self.connection_box, self.battery_box, self.firmware_box, self.latest_box]
+        self.update_pill = Pill("Update", "Firmware")
+        self.update_pill.clicked.connect(self.start_update)
+        boxes = [self.controller_box, self.connection_box, self.battery_box, self.firmware_box, self.latest_box,
+                 self.update_pill]
         for box in boxes:
             header.add_second(box)
         same_width(boxes)
@@ -245,18 +248,38 @@ class MainWindow(QWidget):
             state = ("Ready", "ok", "Check for an update asks Sony's server for the latest firmware.")
         self.badge.set_status(*state)
 
-        self.controller_box.set_value(found.name if found else "—")
-        self.connection_box.set_value(found.connection if found else "—",
-                                      "The firmware update needs the USB cable." if found and found.bus != "usb"
-                                      else "")
+        self.controller_box.set_value(SHORT_NAMES[found.product] if found else "—", found.name if found else "")
+        self.connection_box.set_value(SHORT_CONNECTIONS.get(found.bus, found.bus) if found else "—",
+                                      found.connection + (": the firmware update needs the USB cable."
+                                                          if found.bus != "usb" else ".") if found else "")
         self._show_battery(found)
         self._show_firmware(found, latest)
         self._show_profiles(found)
-        self.update_button.setEnabled(self._can_update(found, latest))
+        self._show_update(found, latest)
         self.check_button.setEnabled(not self.check_job.running)
         self.file_button.setEnabled(found is not None and self.info is not None and found.bus == "usb"
                                     and not self.updating)
         self._show_progress()
+
+    def _show_update(self, found: Controller | None, latest: int | None) -> None:
+        """The Update pill: orange when an update can start; greyed, with the reason in its tooltip, when not."""
+        can = self._can_update(found, latest)
+        self.update_pill.setEnabled(can)
+        self.update_pill.set_colour(STATE_COLORS["warn"] if can else GREY)
+        if self.updating:
+            tip = "The update is running."
+        elif can:
+            tip = (f"Sends firmware {firmware.version_text(latest)} to the controller; it asks first. The update "
+                   "takes about half a minute.")
+        elif found is None or self.info is None:
+            tip = "No controller to update."
+        elif found.bus != "usb":
+            tip = "The firmware update needs the USB cable."
+        elif latest is None:
+            tip = "The latest version is not known yet: Check for an update asks Sony's server."
+        else:
+            tip = "The controller runs the latest firmware Sony offers."
+        self.update_pill.setToolTip(tip)
 
     def _show_battery(self, found: Controller | None) -> None:
         battery = found.battery if found else None
@@ -293,7 +316,7 @@ class MainWindow(QWidget):
             stored = firmware.read(info.target, latest, self.firmware_home) is not None
             lines.append(f"Sony offers {firmware.version_text(latest)}. "
                          + ("It is downloaded already." if stored else
-                            "Update firmware downloads it (about 1 MB) and sends it."))
+                            "Update downloads it (about 1 MB) and sends it."))
         else:
             lines.append(f"It is the latest Sony offers ({self._checked_text().lower()}).")
         if found.bus != "usb":

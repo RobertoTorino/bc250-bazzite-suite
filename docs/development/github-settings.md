@@ -51,16 +51,12 @@ Direct pushes keep working. Rules that require pull requests or passing checks w
 
 ## Environments
 
-**Settings → Environments.** The release job of `release.yml` runs in the environment `release`. GitHub creates it
-on the first release; it can also be made first with **New environment**.
+**Settings → Environments.** The release job of `release.yml` runs in no environment, so a release needs no
+approval on GitHub: a tag on a commit that CI passed is built and published at once. An environment `release` left
+from before is no longer used and can be deleted.
 
-- **Required reviewers:** yourself. Each release then waits on GitHub until you approve it: the run shows
-  *Review deployments*, and GitHub sends a notification. A tag pushed with a stolen login, or by mistake, builds and
-  publishes nothing until then.
-- **Prevent self-review:** off, or you cannot approve your own releases.
-- **Deployment branches and tags:** **Selected branches and tags**, with the tag rule `*-v*`.
-
-Without required reviewers the job runs straight on, as before.
+What guards a release: only someone who may push to the repository can push a tag, and `release.yml` builds only a
+commit that CI passed.
 
 ## Actions
 

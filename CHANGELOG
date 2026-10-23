@@ -1,3 +1,10 @@
+Changelog: 23-10-2026 07:13:18
+
+The release workflow no longer runs its release job in the environment "release", so GitHub asks no approval
+before it builds and publishes a release (owner, 23-10-2026: approving every tag took too long when one change to
+core makes many app releases). A release still builds only a commit that CI passed. The wiki's GitHub settings and
+Portal pages say so.
+
 Changelog: 23-10-2026 06:12:27
 
 Added. USB HD Control (apps/hdcontrol, Utilities; owner, 23-10-2026, who chose the name): Sony's DualSense and

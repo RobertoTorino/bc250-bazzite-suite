@@ -69,6 +69,35 @@ def test_pill_is_a_metric_box_that_clicks(qapp):
     assert theme.RED in pill.styleSheet() and "#pill:hover" in pill.styleSheet()
 
 
+def _text_lightness(pill: Pill) -> int:
+    """The bright end of the pill's text on its dark surface (inside the border; the 20th brightest pixel)."""
+    image = pill.grab().toImage()
+    return sorted(image.pixelColor(x, y).lightness() for x in range(10, image.width() - 10)
+                  for y in range(6, image.height() - 6))[-20]
+
+
+def test_a_pill_that_cannot_be_clicked_looks_muted(qapp):
+    """Only a disabled pill's text is muted (a rule on the pill's own state would mute every pill: Qt ignores an
+    ancestor's pseudo-state); enabled again, it is bright again."""
+    row = QWidget()
+    layout = QHBoxLayout(row)
+    enabled, disabled = Pill("Update", "Firmware"), Pill("Update", "Firmware")
+    disabled.setEnabled(False)
+    for pill in (enabled, disabled):
+        layout.addWidget(pill)
+    row.show()
+    qapp.processEvents()
+    assert _text_lightness(disabled) < _text_lightness(enabled)
+    disabled.setEnabled(True)
+    disabled.set_colour(theme.RED)                              # the rule survives a new colour
+    qapp.processEvents()
+    assert _text_lightness(disabled) == _text_lightness(enabled)
+    disabled.setEnabled(False)
+    qapp.processEvents()
+    assert _text_lightness(disabled) < _text_lightness(enabled)
+    row.close()
+
+
 def test_same_width_follows_the_widest(qapp):
     boxes = [Pill("A", "a"), MetricBox("Caption"), Pill("No", "Icons on Desktop")]
     same_width(boxes)

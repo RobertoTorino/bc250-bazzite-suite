@@ -1329,8 +1329,8 @@ class ReleaseWindow(QMainWindow):
 
     def tag(self) -> None:
         tags = self.tags_to_push()
-        if self.confirm_git("git tag", "Tag and push these releases; GitHub then builds and publishes them (after "
-                            "your approval, when the release environment asks for it):\n\n" + "\n".join(tags),
+        if self.confirm_git("git tag", "Tag and push these releases; GitHub then builds and publishes them:\n\n"
+                            + "\n".join(tags),
                             rp.tag_command(tags)):
             self.run_git(rp.tag_command(tags))
 

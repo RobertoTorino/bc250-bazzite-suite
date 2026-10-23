@@ -119,7 +119,11 @@ class Pill(MetricBox):
 
     def set_colour(self, colour: str) -> None:
         super().set_colour(colour)
-        self.setStyleSheet(self.styleSheet() + f"#pill:hover, #pill:focus {{ border-color:{ACCENT}; }}")
+        # A pill that cannot be clicked (setEnabled(False)) shows its text muted, as a disabled button does.
+        # The rule is on the labels' own state: Qt ignores an ancestor's pseudo-state in a selector, so
+        # "#pill:disabled QLabel" would mute every pill.
+        self.setStyleSheet(self.styleSheet() + f"#pill:hover, #pill:focus {{ border-color:{ACCENT}; }}"
+                           f"#pill QLabel:disabled {{ color:{muted()}; }}")
 
     def mouseReleaseEvent(self, event) -> None:  # noqa: N802 (Qt override)
         if event.button() == Qt.MouseButton.LeftButton and self.rect().contains(event.position().toPoint()):

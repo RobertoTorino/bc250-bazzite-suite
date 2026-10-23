@@ -401,8 +401,8 @@ version (the bump is not committed yet), while that folder has uncommitted chang
 up to an hour. A portal tag also waits for the app releases it pins: each one tagged on GitHub and pinned with its
 sha256 (step 2), as the portal's release needs them. A plain `git tag` tags whatever HEAD is at that moment, also the commit from before the bump or one
 CI failed. `release.yml` asks the same before it builds anything: a tag on a commit CI did not pass gives no
-release. With an approval set on the `release` environment (see
-[GitHub settings](development/github-settings.md#environments)), it then waits for you to approve it on GitHub.
+release. It then builds and publishes the release without an approval on GitHub (see
+[GitHub settings](development/github-settings.md#environments)).
 
 `python3 tools/release_plan.py` lists every app with its version, its last tag and its pin, without Qt.
 

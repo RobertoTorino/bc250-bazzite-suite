@@ -17,11 +17,12 @@ The header shows the controller the window is looking at:
 
 | Box | What it shows |
 |---|---|
-| **Controller** | DualSense or DualSense Edge |
-| **Connection** | USB cable or Bluetooth |
+| **Controller** | Edge for the DualSense Edge, DualSense for the plain one |
+| **Connection** | USB or Bluetooth |
 | **Battery** | the level the controller reports, in steps of 10 %, and in its tooltip whether it charges |
 | **Firmware** | the firmware's version as Sony numbers it (for example `0x0200`), with its build date in the tooltip |
 | **Latest** | the latest version Sony offers for this controller, and when the app asked |
+| **Update** | starts the firmware update: orange when one is available; its tooltip says why not when it is not |
 
 The state beside the title says whether an update is available. With more than one controller connected, a list
 in the header chooses which one the window shows.
@@ -31,7 +32,7 @@ in the header chooses which one the window shows.
 **Check for an update** asks Sony's update server (`fwupdater.dl.playstation.net`) for the latest version of each
 controller. With **Check when the window opens** on (the default), the window asks by itself, at most once a day.
 
-When a newer version is out, **Update firmware…** in the header:
+When a newer version is out, the **Update** pill in the header:
 
 1. downloads the firmware from Sony's server (about 1 MB) and keeps it, so a second try needs no network;
 2. checks that it fits: the firmware names the controller it is for (its USB product ID and its *target*), and its

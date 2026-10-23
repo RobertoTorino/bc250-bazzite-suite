@@ -1,3 +1,7 @@
+Changelog: 23-10-2026 07:13:18
+
+Fixed. The confirmation before tagging no longer mentions an approval on GitHub: the release workflow asks for none.
+
 Changelog: 21-10-2026 12:22:00
 
 Fixed. The line that says the portal's release is being built by GitHub (Bump portal and pin) is orange instead of

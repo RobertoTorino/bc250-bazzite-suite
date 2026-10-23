@@ -1,3 +1,15 @@
+Changelog: 23-10-2026 07:16:27
+
+Release 0.1.1.
+
+Changelog: 23-10-2026 06:54:24
+
+Fixed. The header's boxes are narrower: Controller says Edge or DualSense and Connection USB or Bluetooth (the full
+names in their tooltips), so the widest value no longer widens them all. The update starts from an Update pill
+(Firmware) in the same row instead of a small button beside the title (owner, 23-10-2026); it is orange when an update
+can start, greyed (core's muted text for a pill that cannot be clicked) when it cannot, and its tooltip says
+why.
+
 Changelog: 23-10-2026 06:30:17
 
 Release 0.1.0.

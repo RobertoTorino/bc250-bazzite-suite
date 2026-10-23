@@ -69,7 +69,7 @@ def wait(qapp, busy) -> None:
 
 def test_no_controller(make):
     window = make()
-    assert window.badge.text() == "No controller" and not window.update_button.isEnabled()
+    assert window.badge.text() == "No controller" and not window.update_pill.isEnabled()
     assert window.controller_box.value.text() == "—" and "No controller found" in window.firmware_text.text()
     assert window.profile_table.rowCount() == 0
 
@@ -78,9 +78,11 @@ def test_an_edge_with_an_update_waiting(make, tmp_path):
     plug(tmp_path / "sys")
     window = make()
     assert window.urls == [firmware.INFO_URL]                   # asked once at start
-    assert window.badge.text() == "Update available" and window.update_button.isEnabled()
-    assert window.controller_box.value.text() == "DualSense Edge"
-    assert window.connection_box.value.text() == "USB cable" and window.battery_box.value.text() == "100 %"
+    assert window.badge.text() == "Update available" and window.update_pill.isEnabled()
+    assert window.controller_box.value.text() == "Edge" and window.controller_box.toolTip() == "DualSense Edge"
+    assert window.connection_box.value.text() == "USB" and window.battery_box.value.text() == "100 %"
+    assert window.update_pill.value.text() == "Update" and window.update_pill.caption.text() == "Firmware"
+    assert "0x0217" in window.update_pill.toolTip()
     assert window.firmware_box.value.text() == "0x0200" and window.latest_box.value.text() == "0x0217"
     assert "Jun 21 2024" in window.firmware_text.text() and "downloads it" in window.firmware_text.text()
     assert window.profile_table.rowCount() == 4
@@ -93,7 +95,7 @@ def test_an_edge_with_an_update_waiting(make, tmp_path):
 def test_no_check_at_start_when_switched_off_or_recent(make, tmp_path):
     plug(tmp_path / "sys")
     window = make(check=False)
-    assert window.urls == [] and window.badge.text() == "Ready" and not window.update_button.isEnabled()
+    assert window.urls == [] and window.badge.text() == "Ready" and not window.update_pill.isEnabled()
     main_window.ControlSettings(main_window.INFO).set_latest({0x44: 0x0217}, time.strftime(
         "%Y-%m-%d %H:%M", time.localtime(NOW - 3600)))
     window = make()
@@ -103,7 +105,7 @@ def test_no_check_at_start_when_switched_off_or_recent(make, tmp_path):
 def test_up_to_date(make, tmp_path):
     plug(tmp_path / "sys")
     window = make(get=lambda url: json.dumps({"FwUpdate0044LatestVersion": "0x0200"}).encode())
-    assert window.badge.text() == "Up to date" and not window.update_button.isEnabled()
+    assert window.badge.text() == "Up to date" and not window.update_pill.isEnabled()
 
 
 def test_a_failed_check_is_shown(make, tmp_path):
@@ -120,7 +122,8 @@ def test_a_dualsense_over_bluetooth(make, tmp_path):
     device = FakeDevice({0x20: FakeDevice().reports[0x20][:22] + b"\x0b\x00" + FakeDevice().reports[0x20][24:]})
     window = make(device=device)
     assert window.controller_box.value.text() == "DualSense" and window.connection_box.value.text() == "Bluetooth"
-    assert not window.update_button.isEnabled() and "needs the USB cable" in window.firmware_text.text()
+    assert not window.update_pill.isEnabled() and "needs the USB cable" in window.firmware_text.text()
+    assert window.update_pill.toolTip() == "The firmware update needs the USB cable."
     assert "has no profiles" in window.profile_text.text() and window.profile_table.rowCount() == 0
     assert window.battery_box.value.text() == "10 %"
 
@@ -129,14 +132,14 @@ def test_no_access(make, tmp_path):
     plug(tmp_path / "sys")
     window = make(writable=False)
     assert window.badge.text() == "Cannot be read" and "uaccess" in window.badge.toolTip()
-    assert not window.update_button.isEnabled()
+    assert not window.update_pill.isEnabled()
 
 
 def test_update_downloads_backs_up_and_sends(make, tmp_path, qapp):
     plug(tmp_path / "sys")
     seen = []
     window = make(update=lambda dev, data, progress: seen.append(window.badge.text()))
-    window.update_button.click()
+    window.update_pill.click()
     assert "0x0217" in window.questions[0] and "downloads it from Sony's update server" in window.questions[0]
     wait(qapp, lambda: window.updating)
     assert window.updates == [image()] and window.warnings == []
@@ -151,7 +154,7 @@ def test_update_with_the_image_kept_names_its_check(make, tmp_path, qapp):
     plug(tmp_path / "sys")
     firmware.store(image(), tmp_path / "home")
     window = make()
-    window.update_button.click()
+    window.update_pill.click()
     assert "not a file the app knows" in window.questions[0]
     wait(qapp, lambda: window.updating)
     assert window.urls == [firmware.INFO_URL] and window.updates == [image()]
@@ -163,7 +166,7 @@ def test_a_failed_update_is_shown(make, tmp_path, qapp):
     def fail(dev, data, progress):
         raise updater.UpdateError("The controller could not write the image to its flash.")
     window = make(update=fail)
-    window.update_button.click()
+    window.update_pill.click()
     wait(qapp, lambda: window.updating)
     assert "could not write" in window.warnings[0] and "did not finish" in window.progress_text.text()
 
@@ -176,7 +179,7 @@ def test_update_refused_while_steam_holds_the_controller(make, tmp_path):
     (tmp_path / "proc/4242/comm").write_text("steam\n")
     (tmp_path / "proc/4242/fd/9").symlink_to(tmp_path / "dev" / "hidraw2")
     window = make()
-    window.update_button.click()
+    window.update_pill.click()
     assert "steam has the controller open" in window.warnings[0] and window.questions == []
     assert window.updates == []
 

@@ -1,3 +1,10 @@
+Changelog: 23-10-2026 07:00:42
+
+Fixed. widgets: a Pill that cannot be clicked (setEnabled(False)) shows its value and caption in the theme's muted
+text colour, as a disabled button does; before, it looked the same as one that can be clicked. The rule is on the
+labels' own disabled state, as Qt ignores an ancestor's pseudo-state in a selector. No other app disables a pill, so
+only USB HD Control's Update pill changes. Test: tests/test_widgets.py.
+
 Changelog: 22-10-2026 21:10:49
 
 Added. sensors: the board's live values from /proc and /sys without root (CPU load, clock and temperature, GPU load,

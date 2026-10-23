@@ -4,7 +4,7 @@ finds the games in the chosen folders and adds them to Steam for Game Mode."""
 
 APP_NAME = "SameBoy Manager"
 APP_ID = "bc250-sameboy-manager"
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 from pathlib import Path
 
