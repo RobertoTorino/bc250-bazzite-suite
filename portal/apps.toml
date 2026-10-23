@@ -253,8 +253,8 @@ launch = [["Open", "~/.local/bin/bc250-usb-ips35"]]
 [apps.hdcam]
 name = "USB HD Cam"
 summary = "The PS5 HD Camera (CFI-ZEY1) as a webcam: loads its firmware at every plug-in and shows its picture."
-tag = "hdcam-v0.2.0"
-sha256 = "f76e6153c290596601998d0126487315632d4b6b7ac5d61d5f2b8eb1e5eda778"
+tag = "hdcam-v0.3.0"
+sha256 = "f5c8e4454fd75bf857638fa0cc0c53a30f0f82886fdd3d81f03b79458f3b1ebb"
 required = false
 changes_board = false
 category = "utilities"
