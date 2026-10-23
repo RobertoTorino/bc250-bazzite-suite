@@ -1,3 +1,8 @@
+Changelog: 23-10-2026 16:19:42
+
+CI's Qt runtime libraries step in the test jobs runs from the repository root: the jobs work in their app's folder, where
+tools/ci-qt-libs.sh was not found, so every test job failed at that step.
+
 Changelog: 23-10-2026 15:45:14
 
 CI's Qt runtime libraries no longer ask Ubuntu's mirror in every job: tools/ci-qt-libs.sh looks the libraries up on

@@ -69,6 +69,7 @@ jobs:
 
       - name: Qt runtime libraries
         timeout-minutes: 5                    # a stalled mirror fails here, by name, not after the job's 20
+        working-directory: .                  # the script's path is from the root, not the matrix folder
         run: bash tools/ci-qt-libs.sh --pulse
 
       - name: Install
