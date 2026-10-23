@@ -71,6 +71,7 @@ nav:
       - System Overlay: apps/overlay.md
       - USB IPS3.5: apps/ips35.md
       - USB HD Cam: apps/hdcam.md
+      - USB HD Control: apps/hdcontrol.md
       - BC-250 BIOS Reader: apps/bios.md
       - BC-250 Memory Manager: apps/vram.md
       - BC-250 Fan Control: apps/fan.md

@@ -1,3 +1,12 @@
+Changelog: 23-10-2026 06:30:17
+
+Release 6.11.0. Pins hdcontrol-v0.1.0.
+
+Changelog: 23-10-2026 06:12:27
+
+Added. apps.toml lists USB HD Control under Utilities, without a pin until its first release. The Utilities tab's
+text names the DualSense's firmware.
+
 Changelog: 23-10-2026 04:59:03
 
 Release 6.10.0. Pins hdcam-v0.3.0.

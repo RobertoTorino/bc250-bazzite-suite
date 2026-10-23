@@ -48,7 +48,7 @@ jobs:
               apps/compute, apps/cores, apps/oc,
               apps/mtool, apps/package, apps/ncgui,
               apps/suite,
-              apps/overlay, apps/ips35, apps/hdcam, apps/bios, apps/ace, apps/vram, apps/cec, apps/sftp,
+              apps/overlay, apps/ips35, apps/hdcam, apps/hdcontrol, apps/bios, apps/ace, apps/vram, apps/cec, apps/sftp,
               apps/consoles, apps/clb, apps/mesh, apps/shadps4, apps/rpcs3, apps/decky,
               apps/datstation, apps/ppsspp, apps/pcsx2, apps/vita3k, apps/fan,
               apps/wdriver, apps/swanstation, apps/mgba, apps/sameboy, apps/xenia,
@@ -147,7 +147,7 @@ jobs:
       # that their own release workflows already held to it.
       - name: shellcheck (errors, all scripts)
         run: find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 shellcheck -x -S error
-      - name: shellcheck (warnings, cores, oc, acpi, overlay, ips35, hdcam, bios, ace, vram, fan, wdriver, cec, sftp, consoles, clb, mesh, shadps4, rpcs3, ppsspp, pcsx2, vita3k, swanstation, mgba, sameboy, xenia, decky, netcatgui, datstation and the suite's own scripts)
+      - name: shellcheck (warnings, cores, oc, acpi, overlay, ips35, hdcam, hdcontrol, bios, ace, vram, fan, wdriver, cec, sftp, consoles, clb, mesh, shadps4, rpcs3, ppsspp, pcsx2, vita3k, swanstation, mgba, sameboy, xenia, decky, netcatgui, datstation and the suite's own scripts)
         run: |
           shellcheck -x -S warning portal/install.sh apps/check/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \
             tools/hooks/pre-push
@@ -156,7 +156,7 @@ jobs:
           shellcheck -S warning apps/oc/bc250-gpu-oc-bisect.sh apps/oc/install.sh
           shellcheck -S warning apps/acpi/bc250-acpi-override.sh apps/acpi/install.sh
           shellcheck -S warning apps/overlay/install.sh apps/ips35/install.sh apps/hdcam/install.sh apps/bios/install.sh \
-            apps/vram/install.sh
+            apps/vram/install.sh apps/hdcontrol/install.sh
           shellcheck -S warning apps/fan/install.sh apps/wdriver/install.sh
           shellcheck -S warning apps/cec/install.sh apps/sftp/install.sh apps/consoles/install.sh \
             apps/clb/install.sh
@@ -241,6 +241,8 @@ jobs:
         run: bash tools/installer-tests/ips35.sh
       - name: hdcam installer
         run: bash tools/installer-tests/hdcam.sh
+      - name: hdcontrol installer
+        run: bash tools/installer-tests/hdcontrol.sh
       - name: bios installer
         run: bash tools/installer-tests/bios.sh
       - name: ace installer

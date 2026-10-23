@@ -64,7 +64,8 @@ beside the system Mesa.
 #### :material-television: Living room
 
 [HDMI CEC Manager](apps/cec.md) turns the TV on and off with the board, [SFTP Tools](apps/sftp.md) moves files
-between computers, [USB HD Cam](apps/hdcam.md) makes the PS5 HD Camera a webcam, and
+between computers, [USB HD Cam](apps/hdcam.md) makes the PS5 HD Camera a webcam,
+[USB HD Control](apps/hdcontrol.md) updates the DualSense's firmware, and
 [Decky Loader Manager](apps/decky.md) adds plugins to Game Mode.
 </div>
 </div>

@@ -114,6 +114,11 @@ category = "utilities"
 icons = ["apps/hdcam/images/bc250-usb-hdcam"]
 tile = "portal/images/apps/hdcam.webp"
 
+[hdcontrol]
+category = "utilities"
+icons = ["apps/hdcontrol/images/bc250-usb-hdcontrol"]
+tile = "portal/images/apps/hdcontrol.webp"
+
 [mtool]
 category = "development"
 icons = ["apps/mtool/images/media-tool"]

@@ -1,3 +1,11 @@
+Changelog: 23-10-2026 06:30:17
+
+Release 0.16.0.
+
+Changelog: 23-10-2026 06:12:27
+
+Added. The catalogue lists USB HD Control and its PyQt6 requirement; it runs no external tool.
+
 Changelog: 23-10-2026 03:20:11
 
 Release 0.15.0.

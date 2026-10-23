@@ -263,6 +263,18 @@ uninstall = ["bash install.sh --uninstall"]
 detect = ["~/.local/bin/bc250-usb-hdcam"]
 launch = [["Open", "~/.local/bin/bc250-usb-hdcam"]]
 
+[apps.hdcontrol]
+name = "USB HD Control"
+summary = "Sony's DualSense and DualSense Edge on the board: battery, firmware updates from Sony's server, and the Edge's profiles."
+tag = "hdcontrol-v0.1.0"
+required = false
+changes_board = false
+category = "utilities"
+install = ["bash install.sh"]
+uninstall = ["bash install.sh --uninstall"]
+detect = ["~/.local/bin/bc250-usb-hdcontrol"]
+launch = [["Open", "~/.local/bin/bc250-usb-hdcontrol"]]
+
 [apps.mtool]
 name = "Media Tool"
 summary = "Record a BC250 Bazzite Suite installation demo with OBS, and convert the suite's icons."

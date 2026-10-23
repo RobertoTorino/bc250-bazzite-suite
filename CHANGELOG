@@ -1,3 +1,11 @@
+Changelog: 23-10-2026 06:12:27
+
+Added. USB HD Control (apps/hdcontrol, Utilities; owner, 23-10-2026, who chose the name): Sony's DualSense and
+DualSense Edge on Bazzite, their battery, the firmware update Sony offers only for Windows and the PS5, and the Edge's
+profiles. Its icon, installer test, CI jobs, wiki chapter and entries in the Dependency Checker's catalogue and the
+portal's manifest; CLAUDE.md lists it and its shellcheck line. The portal's Utilities tab, the wiki's categories page,
+its home page and the README name it. The wiki's privacy page lists its requests to Sony's update server.
+
 Changelog: 23-10-2026 04:20:59
 
 The wiki's USB HD Cam chapter says which half of a side-by-side frame is which lens: each half is the lens on that

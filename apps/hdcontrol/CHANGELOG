@@ -1,0 +1,29 @@
+Changelog: 23-10-2026 06:30:17
+
+Release 0.1.0.
+
+Changelog: 23-10-2026 06:11:43
+
+Added. First version. USB HD Control shows Sony's DualSense (054c:0ce6) and DualSense Edge (054c:0df2) on Bazzite:
+the header has the model, the connection (USB cable or Bluetooth), the battery (hid-playstation's power_supply, in
+steps of 10 %), the firmware's update version and the latest one Sony offers; with more than one controller a list
+chooses which. The kernel's hid-playstation keeps driving the controller; the app uses its hidraw node with the
+standard library (HID feature report ioctls), every report padded to the size the report descriptor declares, as
+Windows sends them. The firmware report (0x20) is read as hid-playstation reads it. The firmware update follows
+dualsense-updater-rs (MIT, ported to Python): report 0xF4 sends the 256-byte header, the image in 32 KiB blocks of
+57-byte pieces, verify and finalize, report 0xF5 is polled for each step's status (with a 60 s limit). Check for an
+update reads Sony's info.json (fwupdater.dl.playstation.net), at window start at most once a day unless switched off;
+Update firmware downloads the image from Sony's server, keeps it, refuses an image for another controller (its USB
+product ID at 0x62 and target at 0x74) or one that is not newer (its update version at 0x78), saves a backup of the
+Edge's profiles, and sends it over USB only. It does not start while another program (Steam) has the controller
+open. Use a file sends an image of the user's own with the same checks. The images on Sony's server on 23-10-2026 are
+known by their SHA-256 (DualSense Edge 0x0217, DualSense 0x0630 and 0x0641). The Edge's four profiles (reports 0x70
+to 0x7B, layout from dualsense-edge-profile-web-application, MIT) are shown with their name, stick curves, trigger
+ranges, remapped buttons and whether their CRC-32 matches; Back up saves the reports as JSON. The app does not write
+profiles. --info prints the same without a window. Read on the owner's Edge (23-10-2026, on USB): update version
+0x0200 built 21-06-2024 (Sony offers 0x0217), target 0044, its default profile with a matching CRC and three empty
+slots, F4 64 bytes and F5 4 bytes in its descriptor. The owner updated that Edge with the window (23-10-2026,
+06:27): from 0x0200 to Sony's 0x0217 (the known image), about 20 s from the profiles' backup to the controller leaving
+USB, which came back 2 s later as firmware 0x0217 built 19-09-2025 (hid-playstation: fw_version 0x0100008b, hardware
+unchanged); its profiles read back byte for byte as the backup made before the update. The confirmation says the
+update takes about half a minute.

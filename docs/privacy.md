@@ -31,6 +31,10 @@ The servers see your IP address, as any website you open does.
   [GPU Governor Manager](apps/gpu.md) look for a newer release of what they install at start; each can be
   told not to in its settings.
 
+**Sony** (`fwupdater.dl.playstation.net`): [USB HD Control](apps/hdcontrol.md#the-firmware-update) asks Sony's
+update server for the controllers' latest firmware when its window opens (at most once a day; it can be told not
+to), and downloads the firmware when you update a controller.
+
 **PyPI and OSV.dev**: the [Dependency Checker](apps/package.md) sends the names and versions of the
 Python packages in the apps' environments, to learn whether newer ones or known vulnerabilities exist. Its
 Bazzite card and weekly reminder read Bazzite's update state on the board itself and send nothing. Installing an

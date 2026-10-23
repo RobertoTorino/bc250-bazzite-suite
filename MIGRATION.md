@@ -732,6 +732,30 @@ colours (owner, 19-10-2026).
   get, set, disabled by auto mode and auto-update; in mode 4 it takes 300 or 20 and keeps it through uvcvideo
   re-attaching, but a stream start puts it back to 1000 (mean luma 51 at 30 ms and at 2 ms). Not usable; the greyed
   row stays. Nothing else open but the PS4 Camera on the backlog.
+- **USB HD Control (owner, 23-10-2026: the name, `hdcontrol`, package `usb_hdcontrol`, Utilities; built 23-10-2026).**
+  The DualSense and DualSense Edge on Bazzite, for the owner's Edge, which Sony updates only on a PS5 and in its
+  Windows app (PlayStation Accessories, which does not run under Wine). No driver and no root: hid-playstation
+  drives the controller, the app uses its hidraw node (Bazzite gives it to the user at the board, mode 0666 plus
+  uaccess). Read on the owner's Edge (23-10-2026, USB, bottom USB 3 port): update version 0x0200 built 21-06-2024,
+  target 0044, hardware 0x01000216; Sony's info.json lists 0x0217 for 0044 (the image's header says built
+  19-09-2025). Sony serves only the latest image per target (0x0200's URL answers 404). The update protocol is
+  dualsense-updater-rs's (MIT; tested by its author on a DualSense only, not an Edge), the profile layout
+  dualsense-edge-profile-web-application's (MIT); the Edge's descriptor declares F4 64 bytes and F5 4, so the app
+  pads every report as Windows must. The profiles' CRC-32 (three parts, at part 2 bytes 56 to 59) matches on the
+  owner's default profile; the reports read back carry no per-report CRC. The app reads profiles and backs them up,
+  it does not write them (the write reports 0x60 to 0x63 and the per-report CRC the web app adds are not confirmed).
+  The firmware update works on the owner's Edge: the owner ran it from the window (23-10-2026, 06:27; Claude's own
+  run had been stopped by the session's permission check), 0x0200 to 0x0217 in about 20 s, the controller back on
+  USB 2 s later with the new firmware, its profiles byte for byte as the backup made before. Not checked: the
+  Bluetooth pairing after the update, and a plain DualSense (none at the board). The release (owner): `hdcontrol-v0.1.0`,
+  `package`'s next one, then pin it and bump the portal (an added app needs a minor bump; check_manifest says so
+  until then).
+- **Battery tests for USB HD Control (on hold, owner 23-10-2026: a later iteration).** The owner's Edge does not last
+  long on its battery. Measure it over Bluetooth (on USB it charges): log the level hid-playstation reports (steps of
+  10 %) and the time, with the light bar, the player LEDs, rumble and the adaptive triggers on and off, before and
+  after the firmware update, and see whether any of them (they are host-set: the light bar's brightness is
+  `/sys/class/leds/<input>:rgb:indicator`, root-only by default) or the update changes it. Then decide what the app
+  offers (a battery log, a power-saving setting).
 - **SwanStation Manager (built 21-10-2026, owner's decision; not tried on the board).** PS1, the first of six
   emulator managers the owner asked for (list below). Not standalone: SwanStation is a libretro core, so the app
   installs RetroArch from Flathub (a Flatpak, `--user`; one already installed is used) and the core from the libretro

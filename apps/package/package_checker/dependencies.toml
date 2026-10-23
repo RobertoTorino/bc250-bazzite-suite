@@ -60,6 +60,10 @@ launchers = ["~/.local/bin/bc250-usb-ips35"]
 name = "USB HD Cam"
 launchers = ["~/.local/bin/bc250-usb-hdcam"]
 
+[app.hdcontrol]
+name = "USB HD Control"
+launchers = ["~/.local/bin/bc250-usb-hdcontrol"]
+
 [app.bios]
 name = "BC-250 BIOS Reader"
 launchers = ["~/.local/bin/bc250-bios-reader"]
@@ -1085,6 +1089,10 @@ specifier = ">=6.11,<7"
 
 [[dependency.source]]
 owner = "hdcam"
+specifier = ">=6.11,<7"
+
+[[dependency.source]]
+owner = "hdcontrol"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]
