@@ -1,3 +1,16 @@
+Changelog: 23-10-2026 20:12:54
+
+Release 0.9.0.
+
+Changelog: 23-10-2026 19:35:48
+
+Added. The SFTP Client selects more than one file or folder (Ctrl-click, Shift-click): Upload, Download
+and Delete act on all of them, with one question for a delete. Files and folders dragged onto the remote
+list, from the local list or a file manager, upload to the open remote folder; a drop is always a copy. With
+more than one transfer, the question about an existing target offers to do the same for the others.
+
+Fixed. Upload with the parent folder row (..) selected no longer queues the whole parent folder.
+
 Changelog: 23-10-2026 07:16:27
 
 Release 0.8.1.

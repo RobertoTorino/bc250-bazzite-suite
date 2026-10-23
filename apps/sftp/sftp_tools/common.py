@@ -325,11 +325,11 @@ class ConnectionFields(QGroupBox):
         )
 
 
-def make_file_table() -> QTableWidget:
-    table = QTableWidget(0, 4)
+def make_file_table(table_class: type[QTableWidget] = QTableWidget) -> QTableWidget:
+    table = table_class(0, 4)
     table.setHorizontalHeaderLabels(["Name", "Type", "Size", "Modified"])
     table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-    table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+    table.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)
     table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
     table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
     table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)

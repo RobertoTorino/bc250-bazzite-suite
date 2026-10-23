@@ -32,9 +32,12 @@ and asks before it saves.
    the better choice; with a key, the password field holds the key's passphrase.
 2. Press **Connect**. The first time, the app shows the server's fingerprint and asks whether you trust it. Yes
    adds it to `~/.ssh/known_hosts`; no makes no connection.
-3. Double-click folders to open them, or type a path. Select a file or folder and press **Upload →** or
-   **← Download**, or use the right-click menu. The right-click menu also deletes, after a question.
-4. The lists under the folders show the queued, failed and successful transfers. Closing the app while transfers
+3. Double-click folders to open them, or type a path. Select files or folders and press **Upload →** or
+   **← Download**, or use the right-click menu. Ctrl-click and Shift-click select more than one. The right-click
+   menu also deletes, after a question.
+4. To upload, you can also drag files and folders onto the server's list, from the list on the left or from
+   your file manager. They go to the server folder that is open, and are copied, never moved.
+5. The lists under the folders show the queued, failed and successful transfers. Closing the app while transfers
    are queued or running asks first, because it cancels them.
 
 The window's header shows three states: your own system, the SFTP connection and the state of `sshd` on the host
@@ -117,7 +120,7 @@ OpenSSH client with `ssh-keygen` but no `ssh-copy-id`: to log in with a key, cop
 | TCP keep-alive | 15 s | How often to send a keep-alive on an idle connection (1 to 300). |
 | Reconnect attempts, delay | 2, 5 s | Retries after a failed connection (0 to 10), and the pause between them (1 to 60). A host key you have not trusted is never retried. |
 | Show hidden files | off | Lists names that start with a dot. |
-| If file exists | Ask | Ask, overwrite or skip when the target exists. |
+| If file exists | Ask | Ask, overwrite or skip when the target exists. With more than one file, *Ask* offers to do the same for the others. |
 | Speed limit | unlimited | Limit in KB/s per transfer. |
 | File size format | Auto, 1 decimal, separator | Auto (1024-based), binary (KiB, MiB) or decimal (KB, MB); decimals 0 to 3; thousands separator. |
 | Date format, time format | YYYY-MM-DD, HH:MM:SS | How modification times are shown. |

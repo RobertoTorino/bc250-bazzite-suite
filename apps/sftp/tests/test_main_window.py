@@ -209,3 +209,85 @@ def test_local_list_keeps_every_cell_of_a_row_together(qapp, tmp_path) -> None:
             for row in range(tab.local_table.rowCount())}
     assert rows == {"..": "Folder", "a-folder": "Folder", "b.txt": "File", "c.txt": "File"}
     assert tab.local_table.isSortingEnabled()
+
+
+def _local_tab(tmp_path, names=("a.txt", "b.txt", "c.txt")):
+    for name in names:
+        (tmp_path / name).write_text(name)
+    tab = client_tab.SftpClientTab()
+    tab.local_path.setText(str(tmp_path))
+    tab.refresh_local()
+    rows = {tab.local_table.item(row, 0).text(): row for row in range(tab.local_table.rowCount())}
+    return tab, rows
+
+
+def test_upload_queues_every_selected_row_but_the_parent(qapp, tmp_path, monkeypatch) -> None:
+    from PyQt6.QtCore import QItemSelectionModel
+    tab, rows = _local_tab(tmp_path)
+    tab._sftp = Mock()
+    tab.remote_path.setText("/var/home/user")
+    monkeypatch.setattr(client_tab, "remote_exists", lambda _sftp, _path: False)
+    enqueued = []
+    monkeypatch.setattr(tab.queue, "enqueue", enqueued.append)
+    model = tab.local_table.selectionModel()
+    for name in ("..", "a.txt", "c.txt"):
+        model.select(tab.local_table.model().index(rows[name], 0),
+                     QItemSelectionModel.SelectionFlag.Select | QItemSelectionModel.SelectionFlag.Rows)
+
+    tab.upload_selected()
+
+    assert sorted((job.source, job.destination) for job in enqueued) == [
+        (str(tmp_path / "a.txt"), "/var/home/user/a.txt"),
+        (str(tmp_path / "c.txt"), "/var/home/user/c.txt"),
+    ]
+
+
+def test_local_rows_drag_as_file_urls(qapp, tmp_path) -> None:
+    tab, rows = _local_tab(tmp_path)
+    items = [tab.local_table.item(rows[name], column) for name in ("..", "b.txt") for column in range(4)]
+
+    urls = tab.local_table.mimeData(items).urls()
+
+    assert [url.toLocalFile() for url in urls] == [str(tmp_path / "b.txt")]
+
+
+def test_files_dropped_on_the_remote_list_are_copied_while_connected(qapp, tmp_path) -> None:
+    from PyQt6.QtCore import QMimeData, QPointF, QUrl, Qt
+    from PyQt6.QtGui import QDropEvent
+    table = client_tab.RemoteFileTable(0, 4)
+    dropped = []
+    table.files_dropped.connect(dropped.append)
+    data = QMimeData()
+    data.setUrls([QUrl.fromLocalFile(str(tmp_path / "a.txt")), QUrl("https://example.org/b.txt")])
+
+    def drop() -> QDropEvent:
+        event = QDropEvent(QPointF(5, 5), Qt.DropAction.CopyAction | Qt.DropAction.MoveAction, data,
+                           Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier)
+        table.dropEvent(event)
+        return event
+
+    assert not drop().isAccepted()
+    table.accept_files = True
+    event = drop()
+    assert event.isAccepted() and event.dropAction() == Qt.DropAction.CopyAction
+    assert dropped == [[str(tmp_path / "a.txt")]]
+
+
+def test_existing_targets_ask_once_when_the_answer_holds_for_the_rest(qapp, monkeypatch) -> None:
+    tab = client_tab.SftpClientTab()
+    enqueued = []
+    monkeypatch.setattr(tab.queue, "enqueue", enqueued.append)
+    asked = []
+
+    def ask(job, more):
+        asked.append((job.source, more))
+        return "skip", True
+
+    monkeypatch.setattr(tab, "_ask_existing", ask)
+    batch = [(client_tab.TransferJob("upload", name, "/r/" + name, is_dir), lambda: True)
+             for name, is_dir in (("a", False), ("b", True), ("c", False))]
+
+    tab._submit_all(batch)
+
+    assert asked == [("a", True)]
+    assert [(job.source, job.skip_existing) for job in enqueued] == [("b", True)]

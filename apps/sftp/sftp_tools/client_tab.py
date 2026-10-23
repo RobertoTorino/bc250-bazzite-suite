@@ -10,8 +10,11 @@ from collections.abc import Callable
 from typing import Any
 
 import paramiko
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QMimeData, Qt, QUrl, pyqtSignal
+from PyQt6.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent
 from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QCheckBox,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -67,8 +70,8 @@ class SftpClientTab(QWidget):
             os.path.expanduser(current_settings().default_local_folder or "~")
         )
         self.remote_path = QLineEdit("/")
-        self.local_table = make_file_table()
-        self.remote_table = make_file_table()
+        self.local_table = make_file_table(LocalFileTable)
+        self.remote_table = make_file_table(RemoteFileTable)
         self.local_refresh_button = QPushButton("Refresh")
         self.remote_refresh_button = QPushButton("Refresh")
         self.upload_button = QPushButton("Upload →")
@@ -140,6 +143,7 @@ class SftpClientTab(QWidget):
         self.remote_refresh_button.clicked.connect(self.refresh_remote)
         self.upload_button.clicked.connect(self.upload_selected)
         self.download_button.clicked.connect(self.download_selected)
+        self.remote_table.files_dropped.connect(self.upload_paths)
         self.refresh_local()
         self.status_changed.emit("Disconnected", "neutral")
 
@@ -264,6 +268,7 @@ class SftpClientTab(QWidget):
         self.status.setText("Connected")
         get_logger().info("SFTP connected")
         self.status_changed.emit("Connected", "success")
+        self.remote_table.accept_files = True
         self.remote_path.setText(self._remote_home())
         self.refresh_remote()
 
@@ -290,6 +295,7 @@ class SftpClientTab(QWidget):
         self.connect_button.setEnabled(True)
         self.status.setText("Not connected")
         self.status_changed.emit("Disconnected", "neutral")
+        self.remote_table.accept_files = False
         self.remote_table.setRowCount(0)
 
     def refresh_local(self) -> None:
@@ -396,32 +402,43 @@ class SftpClientTab(QWidget):
         self.remote_path.setText(path)
         self.refresh_remote()
 
+    @staticmethod
+    def _selected_rows(table: QTableWidget) -> list[tuple[str, str, bool]]:
+        """The selected rows as (name, path, is folder), in list order, without the parent folder's row."""
+        rows = sorted(index.row() for index in table.selectionModel().selectedRows())
+        selected = []
+        for row in rows:
+            item, kind = table.item(row, 0), table.item(row, 1)
+            if item is None or kind is None or item.text() == "..":
+                continue
+            selected.append((item.text(), item.data(Qt.ItemDataRole.UserRole), kind.text() == "Folder"))
+        return selected
+
     def upload_selected(self) -> None:
-        item = self.local_table.item(self.local_table.currentRow(), 0)
-        if item is None or self._sftp is None:
+        self.upload_paths([path for _name, path, _is_dir in self._selected_rows(self.local_table)])
+
+    def upload_paths(self, paths: list[str]) -> None:
+        """Queue local files and folders for the remote folder that is open (the Upload button, or a drop)."""
+        if self._sftp is None:
             return
-        source = item.data(Qt.ItemDataRole.UserRole)
-        if os.path.basename(source) == "..":
-            return
-        destination = posixpath.join(self.remote_path.text(), os.path.basename(source))
-        job = TransferJob("upload", source, destination, os.path.isdir(source))
         sftp = self._sftp
-        self._submit(job, lambda: remote_exists(sftp, destination))
+        batch = []
+        for source in paths:
+            destination = posixpath.join(self.remote_path.text(), os.path.basename(source))
+            job = TransferJob("upload", source, destination, os.path.isdir(source))
+            batch.append((job, lambda destination=destination: remote_exists(sftp, destination)))
+        self._submit_all(batch)
 
     def download_selected(self) -> None:
-        item = self.remote_table.item(self.remote_table.currentRow(), 0)
-        if item is None or self._sftp is None:
+        if self._sftp is None:
             return
-        kind = self.remote_table.item(self.remote_table.currentRow(), 1)
-        if kind is None or item.text() == "..":
-            return
-        source = item.data(Qt.ItemDataRole.UserRole)
-        destination = os.path.join(
-            os.path.abspath(os.path.expanduser(self.local_path.text())),
-            posixpath.basename(source),
-        )
-        job = TransferJob("download", source, destination, kind.text() == "Folder")
-        self._submit(job, lambda: os.path.exists(destination))
+        local = os.path.abspath(os.path.expanduser(self.local_path.text()))
+        batch = []
+        for _name, source, is_dir in self._selected_rows(self.remote_table):
+            destination = os.path.join(local, posixpath.basename(source))
+            job = TransferJob("download", source, destination, is_dir)
+            batch.append((job, lambda destination=destination: os.path.exists(destination)))
+        self._submit_all(batch)
 
     def _show_menu(
         self,
@@ -432,9 +449,11 @@ class SftpClientTab(QWidget):
         delete: Callable[[], None],
     ) -> None:
         item = table.itemAt(pos)
-        if item is None or item.text() == "..":
+        if item is None or table.item(item.row(), 0).text() == "..":
             return
-        table.selectRow(item.row())
+        if not item.isSelected():
+            table.clearSelection()
+            table.selectRow(item.row())
         menu = QMenu(table)
         transfer_action = menu.addAction(transfer_label)
         transfer_action.setEnabled(self._sftp is not None)
@@ -446,74 +465,97 @@ class SftpClientTab(QWidget):
         elif chosen is delete_action:
             delete()
 
-    def _confirm_delete(self, name: str, is_dir: bool, where: str) -> bool:
-        kind = "folder" if is_dir else "file"
+    def _confirm_delete(self, selected: list[tuple[str, str, bool]], where: str) -> bool:
+        if len(selected) == 1:
+            _name, path, is_dir = selected[0]
+            kind = "folder" if is_dir else "file"
+            what, names, lost = f"this {kind}", path, f"your {kind} will be lost"
+        else:
+            what = f"these {len(selected)} files and folders"
+            names = "\n".join(path for _name, path, _is_dir in selected)
+            lost = "they will be lost"
         answer = PlainMessageBox.question(
             self,
             "Delete",
-            f"Are you sure you want to delete this {kind} ({where})?\n\n{name}\n\n"
-            f"This action is irreversible and your {kind} will be lost forever.",
+            f"Are you sure you want to delete {what} ({where})?\n\n{names}\n\n"
+            f"This action is irreversible and {lost} forever.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
         return answer == QMessageBox.StandardButton.Yes
 
     def delete_local_selected(self) -> None:
-        item = self.local_table.item(self.local_table.currentRow(), 0)
-        if item is None:
+        selected = self._selected_rows(self.local_table)
+        if not selected or not self._confirm_delete(
+            [(name, path, os.path.isdir(path) and not os.path.islink(path)) for name, path, _d in selected],
+            "on this computer",
+        ):
             return
-        path = item.data(Qt.ItemDataRole.UserRole)
-        is_dir = os.path.isdir(path) and not os.path.islink(path)
-        if not self._confirm_delete(path, is_dir, "on this computer"):
-            return
-        try:
-            delete_local(path)
-        except OSError as error:
-            get_logger().error("Could not delete %s: %s", path, error)
-            PlainMessageBox.critical(self, "Could not delete", str(error))
+        for _name, path, _is_dir in selected:
+            try:
+                delete_local(path)
+            except OSError as error:
+                get_logger().error("Could not delete %s: %s", path, error)
+                PlainMessageBox.critical(self, "Could not delete", str(error))
         self.refresh_local()
 
     def delete_remote_selected(self) -> None:
-        row = self.remote_table.currentRow()
-        item = self.remote_table.item(row, 0)
-        kind = self.remote_table.item(row, 1)
-        if item is None or kind is None or self._sftp is None:
+        selected = self._selected_rows(self.remote_table)
+        if not selected or self._sftp is None:
             return
-        path = item.data(Qt.ItemDataRole.UserRole)
-        is_dir = kind.text() == "Folder"
-        if not self._confirm_delete(path, is_dir, "on the server"):
+        if not self._confirm_delete(selected, "on the server"):
             return
         sftp = self._sftp
-        self.status.setText(f"Deleting {item.text()}…")
-        self._run(lambda: delete_remote(sftp, path), lambda _r: self.refresh_remote())
+        paths = [path for _name, path, _is_dir in selected]
+        self.status.setText(f"Deleting {selected[0][0]}…" if len(selected) == 1 else f"Deleting {len(selected)} items…")
 
-    def _submit(self, job: TransferJob, exists: Callable[[], bool]) -> None:
+        def delete_all() -> None:
+            for path in paths:
+                delete_remote(sftp, path)
+
+        self._run(delete_all, lambda _r: self.refresh_remote())
+
+    def _submit_all(self, batch: list[tuple[TransferJob, Callable[[], bool]]]) -> None:
+        """Queue the jobs; when the question about an existing target is answered for the rest, it is asked once."""
         settings = current_settings()
-        job.limit_kbps = settings.speed_limit_kbps
-        if exists():
-            mode = settings.overwrite_mode
-            if mode == "ask":
-                what = "merge into the existing folder" if job.is_dir else "overwrite it"
-                box = QMessageBox(self)
-                box.setTextFormat(Qt.TextFormat.PlainText)
-                box.setWindowTitle("Already exists")
-                box.setText(f"{job.destination} already exists. Do you want to {what}?")
-                overwrite = box.addButton("Overwrite", QMessageBox.ButtonRole.AcceptRole)
-                skip = box.addButton("Skip existing", QMessageBox.ButtonRole.DestructiveRole)
-                box.addButton(QMessageBox.StandardButton.Cancel)
-                box.exec()
-                clicked = box.clickedButton()
-                if clicked is skip:
-                    mode = "skip"
-                elif clicked is overwrite:
-                    mode = "overwrite"
-                else:
-                    return
-            if mode == "skip":
-                if not job.is_dir:
-                    return
-                job.skip_existing = True
-        self.queue.enqueue(job)
+        for_the_rest: str | None = None
+        for index, (job, exists) in enumerate(batch):
+            job.limit_kbps = settings.speed_limit_kbps
+            if exists():
+                mode = for_the_rest or settings.overwrite_mode
+                if mode == "ask":
+                    answer = self._ask_existing(job, more=index + 1 < len(batch))
+                    if answer is None:
+                        return
+                    mode, same_for_rest = answer
+                    if same_for_rest:
+                        for_the_rest = mode
+                if mode == "skip":
+                    if not job.is_dir:
+                        continue
+                    job.skip_existing = True
+            self.queue.enqueue(job)
+
+    def _ask_existing(self, job: TransferJob, more: bool) -> tuple[str, bool] | None:
+        """Overwrite or skip an existing target: the choice and whether it holds for the rest, or None to cancel."""
+        what = "merge into the existing folder" if job.is_dir else "overwrite it"
+        box = QMessageBox(self)
+        box.setTextFormat(Qt.TextFormat.PlainText)
+        box.setWindowTitle("Already exists")
+        box.setText(f"{job.destination} already exists. Do you want to {what}?")
+        overwrite = box.addButton("Overwrite", QMessageBox.ButtonRole.AcceptRole)
+        skip = box.addButton("Skip existing", QMessageBox.ButtonRole.DestructiveRole)
+        box.addButton(QMessageBox.StandardButton.Cancel)
+        if more:
+            box.setCheckBox(QCheckBox("Do the same for the other files that exist"))
+        box.exec()
+        clicked = box.clickedButton()
+        same_for_rest = box.checkBox() is not None and box.checkBox().isChecked()
+        if clicked is skip:
+            return "skip", same_for_rest
+        if clicked is overwrite:
+            return "overwrite", same_for_rest
+        return None
 
     def _transfer_finished(self, job: TransferJob) -> None:
         if job.direction == "upload":
@@ -524,6 +566,65 @@ class SftpClientTab(QWidget):
     def _play_completion_beep(self) -> None:
         if current_settings().sound_on_transfer_complete:
             play_beep()
+
+
+class LocalFileTable(QTableWidget):
+    """The local list: dragged rows carry their paths as file URLs, for the remote list or a file manager."""
+
+    def __init__(self, rows: int, columns: int) -> None:
+        super().__init__(rows, columns)
+        self.setDragEnabled(True)
+        self.setDragDropMode(QAbstractItemView.DragDropMode.DragOnly)
+
+    def mimeData(self, items: Any) -> QMimeData:
+        data = QMimeData()
+        data.setUrls([
+            QUrl.fromLocalFile(item.data(Qt.ItemDataRole.UserRole))
+            for item in items
+            if item.column() == 0 and item.text() != ".."
+        ])
+        return data
+
+    def startDrag(self, _actions: Any) -> None:
+        # Copy only: a move would let a file manager take the files and the view drop their rows.
+        super().startDrag(Qt.DropAction.CopyAction)
+
+
+class RemoteFileTable(QTableWidget):
+    """The remote list: local files and folders dropped on it, from the local list or a file manager, are
+    offered to files_dropped while it is connected."""
+
+    files_dropped = pyqtSignal(list)
+
+    def __init__(self, rows: int, columns: int) -> None:
+        super().__init__(rows, columns)
+        self.accept_files = False
+        self.setDragDropMode(QAbstractItemView.DragDropMode.DropOnly)
+
+    def _local_paths(self, event: QDragEnterEvent | QDragMoveEvent | QDropEvent) -> list[str]:
+        if not self.accept_files or not event.mimeData().hasUrls():
+            return []
+        return [os.path.normpath(url.toLocalFile()) for url in event.mimeData().urls() if url.isLocalFile()]
+
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+        # Always a copy: a file manager that is told "moved" deletes its files.
+        if self._local_paths(event):
+            event.setDropAction(Qt.DropAction.CopyAction)
+            event.accept()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event: QDragMoveEvent) -> None:
+        self.dragEnterEvent(event)
+
+    def dropEvent(self, event: QDropEvent) -> None:
+        paths = self._local_paths(event)
+        if not paths:
+            event.ignore()
+            return
+        event.setDropAction(Qt.DropAction.CopyAction)
+        event.accept()
+        self.files_dropped.emit(paths)
 
 
 class TransferPanel(QTabWidget):
