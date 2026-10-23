@@ -1,3 +1,10 @@
+Changelog: 23-10-2026 15:45:14
+
+CI's Qt runtime libraries no longer ask Ubuntu's mirror in every job: tools/ci-qt-libs.sh looks the libraries up on
+the runner (ldconfig) and installs them only when one is missing, with apt's retries and timeouts, and the step stops
+after 5 minutes. On 23-10-2026 apt-get update in that step hung the sameboy tests for 20 minutes, until the job's own
+limit failed the run, and slowed the other jobs to several minutes each.
+
 Changelog: 23-10-2026 12:44:18
 
 The wiki's USB HD Control chapter explains the player indicator, the row of lights under the touchpad: Linux lights
