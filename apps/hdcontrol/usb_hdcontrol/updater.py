@@ -50,7 +50,7 @@ VERIFY_BUSY = {0x10}
 VERIFY_ERRORS = {0x01: "The image's header failed the controller's check.",
                  0x02: "The image is not newer than the firmware the controller runs.",
                  0x03: "The image is not meant for this controller.",
-                 0x04: "The image failed the controller's check: it is damaged or not Sony's.",
+                 0x04: "The image failed the controller's check: it is damaged or not an official image.",
                  0x11: "The image's parameters are wrong."}
 AFTER_ERROR = (" Unplug the controller and plug it in again: the window then shows which firmware it runs, and the "
                "update can be tried again.")

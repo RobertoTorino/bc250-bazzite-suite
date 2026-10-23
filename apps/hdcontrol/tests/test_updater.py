@@ -81,7 +81,7 @@ def test_a_start_answered_with_retry_goes_on_as_dualsense_updater_rs_does():
     (updater.START, 0x01, "signature"),
     (updater.START, 0x05, "erase"),
     (updater.WRITE, 0x02, "could not write"),
-    (updater.VERIFY, 0x04, "damaged or not Sony's"),
+    (updater.VERIFY, 0x04, "damaged or not an official image"),
     (updater.VERIFY, 0x77, "unknown error (0x77) while verifying"),
 ])
 def test_stops_at_an_error_and_never_finalizes(command, code, text):

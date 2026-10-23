@@ -265,7 +265,7 @@ launch = [["Open", "~/.local/bin/bc250-usb-hdcam"]]
 
 [apps.hdcontrol]
 name = "USB HD Control"
-summary = "Sony's DualSense and DualSense Edge on the board: battery, firmware updates from Sony's server, and the Edge's profiles."
+summary = "The DualSense and DualSense Edge on the board: battery, firmware updates from the official server, and the Edge's profiles."
 tag = "hdcontrol-v0.1.1"
 sha256 = "b2a7c15bce72e1227f2dc7bef7f59e81e36aca3ef9def44235046cc5853cbe6b"
 required = false

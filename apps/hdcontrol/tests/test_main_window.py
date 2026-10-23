@@ -15,6 +15,39 @@ from usb_hdcontrol import firmware, main_window, updater
 from test_firmware import image
 
 NOW = 1_800_000_000.0
+
+
+class FakeReader:
+    """Input reports for the drawing: a pipe's end as its fd, so the window's notifier has something to watch."""
+
+    def __init__(self, path):
+        import os
+        self.path = path
+        self.fd, self.write_end = os.pipe()
+        self.queue: list = []
+        self.closed = False
+
+    def read(self):
+        return self.queue.pop(0) if self.queue else None
+
+    def close(self):
+        import os
+        self.closed = True
+        os.close(self.fd)
+        os.close(self.write_end)
+
+
+class FakeRumble:
+    def __init__(self, path):
+        self.path = path
+        self.played: list[tuple[int, int]] = []
+        self.closed = False
+
+    def play(self, strong, weak):
+        self.played.append((strong, weak))
+
+    def close(self):
+        self.closed = True
 LATEST = json.dumps({"FwUpdate000BLatestVersion": "0x0630", "FwUpdate0044LatestVersion": "0x0217"}).encode()
 
 
@@ -27,7 +60,7 @@ def make(qapp, tmp_path, monkeypatch):
     monkeypatch.setattr(QMessageBox, "question",
                         lambda *args: questions.append(args[2]) or QMessageBox.StandardButton.Yes)
 
-    def build(device=None, get=None, update=None, writable=True, check=True):
+    def build(device=None, get=None, update=None, writable=True, check=True, light_error=None, disconnect=None):
         main_window.ControlSettings(main_window.INFO).set("check_at_start", check)
         device = device or FakeDevice()
         updates = []
@@ -42,11 +75,28 @@ def make(qapp, tmp_path, monkeypatch):
         def fake_get(url):
             urls.append(url)
             return (get or (lambda u: LATEST if u == firmware.INFO_URL else image()))(url)
+        readers, rumbles, lights = [], [], []
+
+        def open_reader(path):
+            readers.append(FakeReader(path))
+            return readers[-1]
+
+        def open_rumble(path):
+            rumbles.append(FakeRumble(path))
+            return rumbles[-1]
+
+        def set_lightbar(path, bus, rgb, sequence):
+            if light_error:
+                raise light_error
+            lights.append((path.name, bus, rgb))
         window = main_window.MainWindow(sys_root=tmp_path / "sys", dev=tmp_path / "dev", proc=tmp_path / "proc",
                                         open_device=lambda path, sizes: device, firmware_home=tmp_path / "home",
                                         get=fake_get, update=fake_update, clock=lambda: NOW,
-                                        writable=lambda path: writable)
+                                        writable=lambda path: writable, open_reader=open_reader,
+                                        open_rumble=open_rumble, set_lightbar=set_lightbar,
+                                        disconnect=disconnect or (lambda address: ""))
         window.device, window.updates, window.urls = device, updates, urls
+        window.readers, window.rumbles, window.lights = readers, rumbles, lights
         window.warnings, window.questions = warnings, questions
         windows.append(window)
         wait(qapp, lambda: window.check_job.running)
@@ -69,33 +119,37 @@ def wait(qapp, busy) -> None:
 
 def test_no_controller(make):
     window = make()
-    assert window.badge.text() == "No controller" and not window.update_pill.isEnabled()
+    assert window.badge.text() == "No controller" and not window.latest_pill.isEnabled()
     assert window.controller_box.value.text() == "—" and "No controller found" in window.firmware_text.text()
-    assert window.profile_table.rowCount() == 0
+    assert not window.cards_row.isVisibleTo(window) and window.stack.currentWidget() is window.connect_page
 
 
 def test_an_edge_with_an_update_waiting(make, tmp_path):
     plug(tmp_path / "sys")
     window = make()
     assert window.urls == [firmware.INFO_URL]                   # asked once at start
-    assert window.badge.text() == "Update available" and window.update_pill.isEnabled()
+    assert window.badge.text() == "Update available" and window.latest_pill.isEnabled()
     assert window.controller_box.value.text() == "Edge" and window.controller_box.toolTip() == "DualSense Edge"
-    assert window.connection_box.value.text() == "USB" and window.battery_box.value.text() == "100 %"
-    assert window.update_pill.value.text() == "Update" and window.update_pill.caption.text() == "Firmware"
-    assert "0x0217" in window.update_pill.toolTip()
-    assert window.firmware_box.value.text() == "0x0200" and window.latest_box.value.text() == "0x0217"
+    assert window.connection_box.value.text() == "USB"
+    assert window.battery_icon.capacity == 100 and window.battery_icon.lit_modules() == 5
+    assert window.installed_box.value.text() == "0x0200" and window.latest_pill.value.text() == "0x0217"
+    assert window.installed_box.caption.text() == "Installed firmware"
+    assert window.latest_pill.caption.text() == "Latest firmware"
+    assert "Click to update to firmware 0x0217" in window.latest_pill.toolTip()
     assert "Jun 21 2024" in window.firmware_text.text() and "downloads it" in window.firmware_text.text()
-    assert window.profile_table.rowCount() == 4
-    assert window.profile_table.item(0, 0).text() == "Fn + Triangle"
-    assert window.profile_table.item(0, 1).text() == "Default Profile"
-    assert window.profile_table.item(0, 6).text() == "Each its own"
-    assert window.profile_table.item(1, 1).text() == "Empty"
+    first, second = window.cards[0], window.cards[1]
+    assert first.slot.text() == "Fn + △  Triangle" and first.name.text() == "Default Profile"
+    assert "Each its own" in first.details.text() and "Default" in first.details.text()
+    assert second.name.text() == "Empty" and "Create one on a PS5" in second.details.text()
 
 
-def test_no_check_at_start_when_switched_off_or_recent(make, tmp_path):
+def test_no_check_at_start_when_switched_off_or_recent(make, tmp_path, qapp):
     plug(tmp_path / "sys")
     window = make(check=False)
-    assert window.urls == [] and window.badge.text() == "Ready" and not window.update_pill.isEnabled()
+    assert window.urls == [] and window.badge.text() == "Ready" and window.latest_pill.value.text() == "—"
+    window.latest_pill.click()                        # nothing to update: a click asks the server
+    wait(qapp, lambda: window.check_job.running)
+    assert window.urls == [firmware.INFO_URL] and window.badge.text() == "Update available"
     main_window.ControlSettings(main_window.INFO).set_latest({0x44: 0x0217}, time.strftime(
         "%Y-%m-%d %H:%M", time.localtime(NOW - 3600)))
     window = make()
@@ -105,7 +159,8 @@ def test_no_check_at_start_when_switched_off_or_recent(make, tmp_path):
 def test_up_to_date(make, tmp_path):
     plug(tmp_path / "sys")
     window = make(get=lambda url: json.dumps({"FwUpdate0044LatestVersion": "0x0200"}).encode())
-    assert window.badge.text() == "Up to date" and not window.update_pill.isEnabled()
+    assert window.badge.text() == "Up to date" and window.latest_pill.value.text() == "0x0200"
+    assert "runs the latest official firmware" in window.latest_pill.toolTip() and window.updates == []
 
 
 def test_a_failed_check_is_shown(make, tmp_path):
@@ -122,25 +177,26 @@ def test_a_dualsense_over_bluetooth(make, tmp_path):
     device = FakeDevice({0x20: FakeDevice().reports[0x20][:22] + b"\x0b\x00" + FakeDevice().reports[0x20][24:]})
     window = make(device=device)
     assert window.controller_box.value.text() == "DualSense" and window.connection_box.value.text() == "Bluetooth"
-    assert not window.update_pill.isEnabled() and "needs the USB cable" in window.firmware_text.text()
-    assert window.update_pill.toolTip() == "The firmware update needs the USB cable."
-    assert "has no profiles" in window.profile_text.text() and window.profile_table.rowCount() == 0
-    assert window.battery_box.value.text() == "10 %"
+    assert "needs the USB cable" in window.firmware_text.text()
+    assert "The update needs the USB cable" in window.latest_pill.toolTip()
+    assert "has no profiles" in window.profile_text.text() and not window.cards_row.isVisibleTo(window)
+    assert window.battery_icon.capacity == 10
+    assert window.battery_icon.status == "Discharging" and window.battery_icon.lit_modules() == 1
 
 
 def test_no_access(make, tmp_path):
     plug(tmp_path / "sys")
     window = make(writable=False)
     assert window.badge.text() == "Cannot be read" and "uaccess" in window.badge.toolTip()
-    assert not window.update_pill.isEnabled()
+    assert not window.latest_pill.isEnabled()
 
 
 def test_update_downloads_backs_up_and_sends(make, tmp_path, qapp):
     plug(tmp_path / "sys")
     seen = []
     window = make(update=lambda dev, data, progress: seen.append(window.badge.text()))
-    window.update_pill.click()
-    assert "0x0217" in window.questions[0] and "downloads it from Sony's update server" in window.questions[0]
+    window.latest_pill.click()
+    assert "0x0217" in window.questions[0] and "downloads it from the official update server" in window.questions[0]
     wait(qapp, lambda: window.updating)
     assert window.updates == [image()] and window.warnings == []
     assert window.urls[-1].endswith("/fwupdate0044/0x0217/FWUPDATE0044.bin")
@@ -154,7 +210,7 @@ def test_update_with_the_image_kept_names_its_check(make, tmp_path, qapp):
     plug(tmp_path / "sys")
     firmware.store(image(), tmp_path / "home")
     window = make()
-    window.update_pill.click()
+    window.latest_pill.click()
     assert "not a file the app knows" in window.questions[0]
     wait(qapp, lambda: window.updating)
     assert window.urls == [firmware.INFO_URL] and window.updates == [image()]
@@ -166,7 +222,7 @@ def test_a_failed_update_is_shown(make, tmp_path, qapp):
     def fail(dev, data, progress):
         raise updater.UpdateError("The controller could not write the image to its flash.")
     window = make(update=fail)
-    window.update_pill.click()
+    window.latest_pill.click()
     wait(qapp, lambda: window.updating)
     assert "could not write" in window.warnings[0] and "did not finish" in window.progress_text.text()
 
@@ -179,7 +235,7 @@ def test_update_refused_while_steam_holds_the_controller(make, tmp_path):
     (tmp_path / "proc/4242/comm").write_text("steam\n")
     (tmp_path / "proc/4242/fd/9").symlink_to(tmp_path / "dev" / "hidraw2")
     window = make()
-    window.update_pill.click()
+    window.latest_pill.click()
     assert "steam has the controller open" in window.warnings[0] and window.questions == []
     assert window.updates == []
 
@@ -208,7 +264,7 @@ def test_use_a_file(make, tmp_path, qapp):
 def test_reads_again_when_the_controller_comes_back(make, tmp_path):
     plug(tmp_path / "sys")
     window = make()
-    assert window.firmware_box.value.text() == "0x0200"
+    assert window.installed_box.value.text() == "0x0200"
     unplug(tmp_path / "sys")
     window.refresh()
     assert window.badge.text() == "No controller"
@@ -217,7 +273,7 @@ def test_reads_again_when_the_controller_comes_back(make, tmp_path):
     window.device.reports[0x20] = bytes(newer)
     plug(tmp_path / "sys", instance=5)
     window.refresh()
-    assert window.firmware_box.value.text() == "0x0217" and window.badge.text() == "Up to date"
+    assert window.installed_box.value.text() == "0x0217" and window.badge.text() == "Up to date"
 
 
 def test_two_controllers_offer_a_choice(make, tmp_path):
@@ -237,3 +293,318 @@ def test_backup_by_hand(make, tmp_path, monkeypatch):
     monkeypatch.setattr(main_window.QFileDialog, "getSaveFileName", lambda *args: (str(target), ""))
     window.backup_button.click()
     assert json.loads(target.read_text())["firmware"] == "0x0200"
+
+
+def test_the_introduction_once_after_the_first_controller(make, tmp_path, qapp):
+    window = make()
+    window.show()                                       # the cable moves only while the page is on screen
+    qapp.processEvents()
+    assert window.stack.currentWidget() is window.connect_page and window.connect_page.view.timer.isActive()
+    plug(tmp_path / "sys")
+    window.refresh()
+    qapp.processEvents()
+    intro = window.intro_page
+    assert window.stack.currentWidget() is intro and not window.connect_page.view.timer.isActive()
+    assert (intro.title.text(), intro.counter.text()) == ("Your controller on the board", "1 of 3")
+    assert not intro.back_button.isEnabled()
+    intro.next_button.click()
+    assert intro.title.text() == "Up-to-date firmware" and intro.view.lit_parts == {"usb"}
+    intro.next_button.click()
+    assert intro.title.text() == "Four profiles" and intro.next_button.text() == "Start"
+    assert {"fn", "back"} <= intro.view.lit_parts and not intro.skip_button.isVisibleTo(intro)
+    intro.next_button.click()
+    assert window.stack.currentWidget() is window.main_page
+    assert main_window.ControlSettings(main_window.INFO).get("intro_seen")
+    window = make()                                     # a second start goes straight to the controller
+    assert window.stack.currentWidget() is window.main_page
+    window.intro_button.click()
+    assert window.stack.currentWidget() is window.intro_page
+    window.intro_page.skip_button.click()
+    assert window.stack.currentWidget() is window.main_page
+
+
+def test_the_introduction_of_a_dualsense_ends_with_its_battery(make, tmp_path):
+    plug(tmp_path / "sys", product=0x0CE6)
+    window = make()
+    assert window.stack.currentWidget() is window.intro_page
+    window.intro_page.go(2)
+    assert window.intro_page.title.text() == "The battery" and not window.intro_page.view.edge
+
+
+def test_a_controller_that_leaves_shows_connect_again(make, tmp_path):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    window = make()
+    assert window.stack.currentWidget() is window.main_page
+    unplug(tmp_path / "sys")
+    window.refresh()
+    assert window.stack.currentWidget() is window.connect_page
+
+
+def test_the_main_page_waits_for_the_controller_after_an_update(make, tmp_path, qapp):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    window = make()
+    window.latest_pill.click()
+    wait(qapp, lambda: window.updating)
+    unplug(tmp_path / "sys")                            # the controller restarts with its new firmware
+    window.refresh()
+    assert window.stack.currentWidget() is window.main_page and window.badge.text() == "No controller"
+
+
+def test_a_chosen_profile_lights_what_it_sets(make, tmp_path):
+    from conftest import DEFAULT_PROFILE, profile_reports
+    third = bytearray(DEFAULT_PROFILE[2][2:56])
+    third[8 + 14] = 0x10                                # the left back button sends Options
+    third[28] = 2                                       # left stick Precise
+    square = profile_reports(0x73, "Shooter", bytes(third))
+    plug(tmp_path / "sys")
+    window = make(device=FakeDevice(dict(zip((0x73, 0x74, 0x75), square))))
+    assert window.view.lit_parts == set()
+    window.cards[1].clicked.emit(window.cards[1].profile)
+    assert window.view.lit_parts == {"fn", "back", "sticks"} and window.cards[1].chosen
+    assert "Left back button → Options" in window.cards[1].details.text()
+    window.cards[0].clicked.emit(window.cards[0].profile)
+    assert window.view.lit_parts == {"fn"} and window.cards[0].chosen and not window.cards[1].chosen
+    window.cards[0].clicked.emit(window.cards[0].profile)     # a second click lets go
+    assert window.view.lit_parts == set()
+
+
+def test_the_drawing_follows_the_controller_on_the_main_page(make, tmp_path):
+    from usb_hdcontrol.inputs import Reading
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    window = make()
+    [reader] = window.readers
+    assert reader.path == tmp_path / "dev" / "hidraw2"
+    reader.queue.append(Reading(frozenset({"l1", "back_left"}), (0.5, 0.0, 0.0, 0.0), (0.3, 0.0)))
+    window._input_ready()
+    assert window.view.pressed == {"l1", "back_left"} and window.view.triggers == (0.3, 0.0)
+    window.show_intro()                                 # off the main page the drawing rests
+    assert reader.closed and window.view.pressed == set()
+    window.finish_intro()
+    assert len(window.readers) == 2 and not window.readers[1].closed
+    unplug(tmp_path / "sys")
+    window.refresh()
+    assert window.readers[1].closed and window.reader is None
+
+
+def test_a_controller_that_leaves_while_read_stops_the_reading(make, tmp_path):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    window = make()
+    def gone():
+        raise OSError(19, "No such device")
+    window.readers[0].read = gone
+    window._input_ready()
+    assert window.reader is None and window.readers[0].closed
+
+
+def test_choose_a_light_bar_colour(make, tmp_path):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    window = make()
+    assert window.lights == [] and window.view.light is None
+    window.light_buttons[1].click()                     # red
+    assert window.lights == [("hidraw2", "usb", (255, 32, 32))]
+    assert main_window.ControlSettings(main_window.INFO).get("lightbar") == "#ff2020"
+    assert window.view.light.name() == "#ff2020" and "keeps this colour" in window.controller_text.text()
+    assert window.light_name.text() == "Red"
+    unplug(tmp_path / "sys")
+    window.refresh()
+    plug(tmp_path / "sys", instance=7)                  # set again when the controller connects
+    window.refresh()
+    assert window.lights[-1] == ("hidraw2", "usb", (255, 32, 32)) and len(window.lights) == 2
+
+
+def test_a_light_bar_that_cannot_be_set_says_so(make, tmp_path):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    window = make(light_error=PermissionError(13, "Permission denied"))
+    window.choose_light("#000000")
+    assert "could not be set: Permission denied" in window.controller_text.text()
+
+
+def test_the_vibration_test_runs_each_motor_with_the_drawing_shaking(make, tmp_path, qapp, monkeypatch):
+    from usb_hdcontrol import feedback
+    monkeypatch.setattr(feedback, "VIBRATION_STEPS", ((0, "left", 100, 0), (30, "", 0, 0), (40, "right", 0, 100),
+                                                      (70, "", 0, 0)))
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    window = make()
+    assert window.vibrate_button.isEnabled()
+    window.vibrate_button.click()
+    [rumble] = window.rumbles
+    assert rumble.path == tmp_path / "dev" / "input" / "event22" and not window.vibrate_button.isEnabled()
+    sides = []
+    end = time.monotonic() + 2
+    while not rumble.closed and time.monotonic() < end:
+        qapp.processEvents()
+        sides.append(window.view.shake_side)
+        time.sleep(0.005)
+    assert rumble.closed and rumble.played == [(100, 0), (0, 100)]
+    assert "left" in sides and "right" in sides and window.view.shake_side == ""
+    assert window.vibrate_button.isEnabled()
+
+
+def test_the_update_shows_data_flowing(make, tmp_path, qapp):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    seen_progress = []
+
+    def slow(dev, data, progress):
+        progress.total, progress.done = 100, 40
+        time.sleep(0.3)
+    window = make(update=slow)
+    window.latest_pill.click()
+    end = time.monotonic() + 3
+    while window.updating and time.monotonic() < end:
+        window.show_state()
+        seen_progress.append(window.view.data_progress)
+        qapp.processEvents()
+        time.sleep(0.01)
+    assert 0.4 in seen_progress and window.view.data_progress is None
+
+
+def test_on_bluetooth_with_the_cable_in_offers_the_cable(make, tmp_path, monkeypatch):
+    from conftest import plug_held_back
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys", bus=0x05)
+    held = plug_held_back(tmp_path / "sys")
+    asked = []
+
+    def disconnect(address):
+        asked.append(address)
+        unplug(tmp_path / "sys")                    # Bluetooth lets go; the cable still has no driver
+        return ""
+    window = make(disconnect=disconnect)
+    assert window.badge.text() == "On Bluetooth, not the cable" and window.cable_button.isVisibleTo(window)
+    assert "only charges it" in window.firmware_text.text()
+    window.cable_button.click()
+    assert asked == ["aa:bb:cc:dd:ee:ff"]
+    assert window.badge.text() == "Plug the cable in again"
+    assert window.stack.currentWidget() is window.connect_page and "plug it in again" in window.connect_page.text.text()
+    import shutil
+    shutil.rmtree(held)                             # plugged in again: the kernel takes it
+    plug(tmp_path / "sys", instance=9)
+    window.refresh()
+    assert window.connection_box.value.text() == "USB" and not window.cable_button.isVisibleTo(window)
+    assert "Plug your DualSense" in window.connect_page.text.text()
+
+
+def test_use_the_cable_that_fails_says_what_to_do(make, tmp_path, monkeypatch):
+    from conftest import plug_held_back
+    warnings = []
+    monkeypatch.setattr(main_window.QMessageBox, "warning", lambda *args: warnings.append(args[2]))
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys", bus=0x05)
+    plug_held_back(tmp_path / "sys")
+    window = make(disconnect=lambda address: "Bluetooth did not let go of the controller.")
+    window.cable_button.click()
+    assert "hold the PS button for 10 s" in warnings[-1]
+
+
+def test_the_boxes_keep_their_width_from_usb_to_bluetooth(make, tmp_path):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    window = make()
+    usb = [box.minimumWidth() for box in (window.controller_box, window.connection_box, window.installed_box,
+                                          window.latest_pill)]
+    unplug(tmp_path / "sys")
+    plug(tmp_path / "sys", bus=0x05, instance=6)
+    window.refresh()
+    assert window.connection_box.value.text() == "Bluetooth"
+    assert [box.minimumWidth() for box in (window.controller_box, window.connection_box, window.installed_box,
+                                           window.latest_pill)] == usb
+    assert len(set(usb)) == 1
+
+
+def test_every_button_says_what_it_does(make, tmp_path):
+    from PyQt6.QtWidgets import QAbstractButton
+    plug(tmp_path / "sys")
+    window = make()
+    missing = [button.text() or button.styleSheet()[:40] for button in window.findChildren(QAbstractButton)
+               if not button.toolTip()]
+    assert missing == []
+    assert all(card.toolTip() for card in window.cards)
+
+
+
+def test_the_firmware_box_shows_the_kept_files_sha256_check(make, tmp_path):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    window = make()
+    assert "SHA-256" not in window.firmware_text.text()          # nothing downloaded yet
+    firmware.store(image(), tmp_path / "home")
+    window.show_state()
+    text = window.firmware_text.text()
+    assert "FWUPDATE0044-0217.bin" in text and "not a file the app knows" in text
+    assert firmware.sha256(image()) in text
+
+
+def test_a_known_file_is_named_as_such(make, tmp_path, monkeypatch):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    monkeypatch.setitem(firmware.KNOWN, firmware.sha256(image()), firmware.Known(0x44, 0x0217, len(image())))
+    firmware.store(image(), tmp_path / "home")
+    window = make()
+    assert "SHA-256 checked: it is the known file 0x0217" in window.firmware_text.text()
+
+
+def test_the_profile_cards_and_colours_say_their_own_thing(make, tmp_path):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    window = make()
+    assert window.cards[0].toolTip().startswith("Fn + Triangle: Default Profile. Click")
+    assert window.cards[1].toolTip().startswith("Fn + Square: no profile yet.")
+    tips = [button.toolTip() for button in window.light_buttons]
+    assert len(set(tips)) == len(tips) and tips[0] == "Light bar blue." and "saves some battery" in tips[-1]
+
+
+def test_the_info_sheet_shows_what_the_controller_reports(make, tmp_path, monkeypatch):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    window = make()
+    rows = dict(window.info_rows(window.current()))
+    assert rows["Model"] == "DualSense Edge" and rows["Installed firmware"].startswith("0x0200, built Jun 21 2024")
+    assert rows["Battery"] == "100 %, full"
+    assert not any("aa:bb" in value for value in rows.values())       # never the address
+    opened = []
+    monkeypatch.setattr(main_window.InfoDialog, "exec", lambda self: opened.append(self.text.text()))
+    window.info_button.click()
+    assert "CFI-ZCP1" in opened[0]
+
+
+def test_turn_off_only_over_bluetooth(make, tmp_path):
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    window = make()
+    assert not window.off_button.isEnabled()                          # on the cable it stays on
+    unplug(tmp_path / "sys")
+    plug(tmp_path / "sys", bus=0x05, instance=6)
+    asked = []
+    window.disconnect = lambda address: asked.append(address) or ""
+    window.refresh()
+    assert window.off_button.isEnabled()
+    window.off_button.click()
+    assert asked == ["aa:bb:cc:dd:ee:ff"]
+
+
+def test_the_top_boxes_share_the_width_and_the_colours_follow_the_drawing(make, tmp_path, qapp):
+    from usb_hdcontrol.pages import Section
+    main_window.ControlSettings(main_window.INFO).set("intro_seen", True)
+    plug(tmp_path / "sys")
+    window = make()
+    window.resize(1000, 720)
+    window.show()
+    for size in ((1000, 720), (1300, 800)):
+        window.resize(*size)
+        for _ in range(3):
+            qapp.processEvents()
+        boxes = {box.bar.text(): box.width() for box in window.findChildren(Section)}
+        assert abs(boxes["Controller"] - boxes["Firmware"]) <= 1
+        left, right = window.view.body_span()
+        origin = window.view.mapTo(window, window.view.rect().topLeft()).x()
+        first = window.light_buttons[0].mapTo(window, window.light_buttons[0].rect().topLeft()).x() - origin
+        last = window.other_light.mapTo(window, window.other_light.rect().topRight()).x() - origin
+        assert abs(first - left) <= 2 and abs(last - right) <= 2

@@ -22,7 +22,7 @@ from .controller import Controller, FirmwareInfo
 
 INFO_URL = "https://fwupdater.dl.playstation.net/fwupdater/info.json"
 IMAGE_URL = "https://fwupdater.dl.playstation.net/fwupdater/fwupdate{target:04X}/0x{version:04x}/FWUPDATE{target:04X}.bin"
-SOURCE = "Sony's update server (fwupdater.dl.playstation.net)"
+SOURCE = "the official update server (fwupdater.dl.playstation.net)"
 TIMEOUT = 30
 HEADER = 256
 MAX_SIZE = 4 * 1024 * 1024
@@ -78,7 +78,7 @@ def latest(get: Get = _get) -> dict[int, int]:
     try:
         data = json.loads(get(INFO_URL))
     except (OSError, ValueError) as exc:
-        raise FirmwareError(f"Sony's list of firmware versions could not be read: {exc}") from exc
+        raise FirmwareError(f"The list of firmware versions could not be read: {exc}") from exc
     versions = {}
     for key, value in (data.items() if isinstance(data, dict) else ()):
         if key.startswith("FwUpdate") and key.endswith("LatestVersion"):
@@ -87,13 +87,13 @@ def latest(get: Get = _get) -> dict[int, int]:
             except ValueError:
                 continue
     if not versions:
-        raise FirmwareError("Sony's list of firmware versions has no version in it.")
+        raise FirmwareError("The list of firmware versions has no version in it.")
     return versions
 
 
 def header(data: bytes) -> Header:
     if len(data) < HEADER or not data.startswith(b"Copyright"):
-        raise FirmwareError("This is not a controller firmware image: it has no Sony header.")
+        raise FirmwareError("This is not a controller firmware image: it has no firmware header.")
     word = lambda offset, size: int.from_bytes(data[offset:offset + size], "little")  # noqa: E731
     text = lambda offset: data[offset:offset + 16].split(b"\0", 1)[0].decode("ascii", "replace")  # noqa: E731
     return Header(text(0x40), text(0x50), word(0x62, 2), word(0x70, 4), word(0x74, 2), word(0x78, 2))
@@ -161,7 +161,7 @@ def download(target: int, version: int, home: Path | None = None, get: Get = _ge
         raise FirmwareError(f"The firmware could not be downloaded from {SOURCE}: {exc}") from exc
     head = header(data)
     if (head.target, head.update) != (target, version):
-        raise FirmwareError(f"Sony's server sent version {version_text(head.update)} for target {head.target:04X}, "
+        raise FirmwareError(f"The update server sent version {version_text(head.update)} for target {head.target:04X}, "
                             f"not {version_text(version)} for {target:04X}.")
     store(data, home)
     return data

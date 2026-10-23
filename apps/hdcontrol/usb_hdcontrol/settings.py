@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The app's settings: whether the window asks Sony's server for the latest firmware when it opens, and the last
-answer, so the window shows it without the network."""
+"""The app's settings: whether the window asks Sony's server for the latest firmware when it opens, the last
+answer, so the window shows it without the network, and whether the introduction was shown."""
 
 from __future__ import annotations
 
@@ -12,7 +12,9 @@ from bc250_core.settings import SettingsStore
 class ControlSettings(SettingsStore):
     DEFAULTS = {"check_at_start": True,     # ask Sony's server for the latest versions when the window opens
                 "latest": "",               # JSON {target (hex): update version}: the last answer
-                "checked": ""}              # when that answer came, "YYYY-MM-DD HH:MM"
+                "checked": "",              # when that answer came, "YYYY-MM-DD HH:MM"
+                "intro_seen": False,        # the introduction was shown once, after the first controller connected
+                "lightbar": ""}             # "#rrggbb": the light bar's colour, set at each connect; "": left alone
 
     def latest(self) -> dict[int, int]:
         try:

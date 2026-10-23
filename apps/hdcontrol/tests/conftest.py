@@ -110,18 +110,31 @@ def write(path: Path, text: str) -> None:
 def plug(sys_root: Path, node: str = "hidraw2", product: int = 0x0DF2, bus: int = 0x03, instance: int = 3,
          battery: tuple[str, str] | None = ("100", "Full"), vendor: int = 0x054C) -> Path:
     """A controller as the kernel shows it: /sys/class/hidraw/<node>/device links to the HID device, with its
-    uevent, report descriptor and power_supply (named after the controller's address, as hid-playstation does)."""
+    uevent, report descriptor, power_supply (named after the controller's address, as hid-playstation does) and its
+    four input devices (the controller, its motion sensors, touchpad and headset jack), each with its event node."""
     device = sys_root / "devices/usb6/6-2" / f"{bus:04X}:{vendor:04X}:{product:04X}.{instance:04X}"
     write(device / "uevent", f"DRIVER=playstation\nHID_ID={bus:04X}:{vendor:08X}:{product:08X}\n"
-                             "HID_NAME=Sony Interactive Entertainment Wireless Controller")
+                             "HID_NAME=Sony Interactive Entertainment Wireless Controller\nHID_UNIQ=aa:bb:cc:dd:ee:ff")
     (device / "report_descriptor").write_bytes(DESCRIPTOR)
     if battery:
         supply = device / "power_supply/ps-controller-battery-00:00:00:00:00:00"
         write(supply / "capacity", battery[0])
         write(supply / "status", battery[1])
+    for index, suffix in enumerate(("", " Motion Sensors", " Touchpad", " Headset Jack")):
+        number = 10 + 4 * instance + index          # the joystick first, as the kernel registers them
+        write(device / "input" / f"input{number}" / "name",
+              f"Sony Interactive Entertainment Wireless Controller{suffix}")
+        (device / "input" / f"input{number}" / f"event{number}").mkdir()
     link = sys_root / "class/hidraw" / node / "device"
     link.parent.mkdir(parents=True, exist_ok=True)
     link.symlink_to(device)
+    return device
+
+
+def plug_held_back(sys_root: Path, product: int = 0x0DF2, instance: int = 8) -> Path:
+    """A controller on the cable that no driver took: its USB HID device without a driver link."""
+    device = sys_root / "bus/hid/devices" / f"0003:054C:{product:04X}.{instance:04X}"
+    device.mkdir(parents=True)
     return device
 
 

@@ -67,3 +67,15 @@ def test_backup_keeps_the_reports(tmp_path):
 def test_backup_path(tmp_path):
     path = profiles.backup_path(tmp_path, 0)
     assert path.parent == tmp_path / "profiles" and path.name.startswith("profiles-19")
+
+
+def test_changed_parts():
+    assert profiles.changed_parts(profiles.parse("Triangle", DEFAULT_PROFILE)) == set()
+    assert profiles.changed_parts(profiles.parse("Square", empty_slot(0x73))) == set()
+    third = bytearray(DEFAULT_PROFILE[2][2:56])
+    third[2] = 40                                   # L2 starts later
+    third[8 + 0] = 0x07                             # Up sends Triangle
+    third[8 + 15] = 0x05                            # the right back button sends Cross
+    third[30] = 1                                   # right stick Quick
+    profile = profiles.parse("Circle", profile_reports(0x79, "Racing", bytes(third)))
+    assert profiles.changed_parts(profile) == {"triggers", "dpad", "back", "sticks"}

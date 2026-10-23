@@ -72,7 +72,7 @@ def test_problem_accepts_the_newer_image(edge):
     (image(target=0x000E), "target 000E"),
     (image(update=0x0200), "already runs 0x0200"),
     (image(update=0x0100), "no older or equal"),
-    (b"not firmware" + bytes(300), "no Sony header"),
+    (b"not firmware" + bytes(300), "no firmware header"),
 ])
 def test_problem_refuses(edge, data, text):
     assert text in firmware.problem(data, edge, INFO)

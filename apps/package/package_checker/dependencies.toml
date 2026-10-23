@@ -175,6 +175,17 @@ usage = "Read the BIOS flash chip; needs the internal programmer."
 anchor = "reading-the-bios-flash-chip-optional"
 
 [[tool]]
+name = "bluetoothctl"
+description = "BlueZ's command line for Bluetooth. USB HD Control uses it only to disconnect a controller from Bluetooth, so that Linux takes its USB cable instead."
+executables = ["bluetoothctl"]
+
+[[tool.source]]
+owner = "hdcontrol"
+need = "optional"
+usage = "Use the cable: disconnects a controller that stayed on Bluetooth while plugged in."
+anchor = "on-the-cable-and-over-bluetooth"
+
+[[tool]]
 name = "pkexec"
 description = "Runs one command as root after asking for your password in a desktop dialog (polkit). The apps use it for the few steps that need root, so the apps themselves run as your own user."
 executables = ["pkexec"]

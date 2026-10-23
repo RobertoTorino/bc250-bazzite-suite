@@ -2,10 +2,9 @@
 
 # USB HD Control
 
-Sony's **DualSense** and **DualSense Edge** controllers on **Bazzite**. The window shows the controller's
-connection, battery and firmware, updates its firmware from Sony's own server over a USB cable (Sony offers that only
-on a PS5 and in its PlayStation Accessories app for Windows), and shows the DualSense Edge's four profiles, with a
-backup of them. Linux's own driver keeps driving the controller; the app needs no root.
+The **DualSense** and **DualSense Edge** controllers on **Bazzite**. The window shows the controller's connection,
+battery and firmware, updates its firmware from the official update server over a USB cable (officially offered only
+on a PS5 and in an app for Windows), and shows the DualSense Edge's four profiles, with a backup of them. Linux's own driver keeps driving the controller; the app needs no root.
 
 How to install and use it: [USB HD Control in the manual](https://robertotorino.github.io/bc250-bazzite-suite/apps/hdcontrol/).
 

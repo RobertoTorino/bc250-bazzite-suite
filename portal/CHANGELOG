@@ -1,3 +1,12 @@
+Changelog: 23-10-2026 10:07:07
+
+Release 6.11.2.
+
+Changelog: 23-10-2026 09:00:00
+
+Fixed. USB HD Control's summary no longer names the controllers' maker: "firmware updates from the official
+server".
+
 Changelog: 23-10-2026 07:24:40
 
 Release 6.11.1. Pins check-v0.10.1, upscaler-v0.9.1, overlay-v0.8.1, bios-v0.8.1, ace-v0.8.1, mesh-v0.9.1, vram-v0.8.1, fan-v0.7.1, wdriver-v0.7.1, cec-v0.8.1, sftp-v0.8.1, ips35-v0.1.1, hdcam-v0.3.1, hdcontrol-v0.1.1, package-v0.16.1, ncgui-v0.8.1, rpcs3-v0.8.1, consoles-v1.8.1, clb-v0.3.1, shadps4-v0.9.1, swanstation-v0.3.1, decky-v0.9.1, datstation-v1.5.1, ppsspp-v0.8.1, pcsx2-v0.9.1, vita3k-v0.7.1, mgba-v0.3.1, sameboy-v0.3.1, xenia-v0.3.1.

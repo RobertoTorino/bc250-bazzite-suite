@@ -84,3 +84,58 @@ def test_device_pads_reports_to_the_declared_size(monkeypatch, tmp_path):
     request, data = calls[0]
     assert len(data) == 64 and data[:5] == b"\xf4\x01\x02ab" and data[5:] == bytes(59)
     assert request == (3 << 30) | (64 << 16) | (ord("H") << 8) | 0x06
+
+
+def test_event_node_is_the_controllers_own_input(tmp_path):
+    plug(tmp_path / "sys")
+    [found] = controller.find(tmp_path / "sys")
+    assert controller.event_node(found, tmp_path / "dev") == tmp_path / "dev" / "input" / "event22"
+
+
+def test_event_node_without_input_devices(tmp_path):
+    import shutil
+    device = plug(tmp_path / "sys")
+    shutil.rmtree(device / "input")
+    [found] = controller.find(tmp_path / "sys")
+    assert controller.event_node(found) is None
+
+
+def test_held_back_finds_a_cable_no_driver_took(tmp_path):
+    from conftest import plug_held_back
+    assert controller.held_back(tmp_path) == []
+    device = plug_held_back(tmp_path)
+    assert controller.held_back(tmp_path) == [0x0DF2]
+    (device / "driver").symlink_to(tmp_path)            # taken by a driver: not held back
+    assert controller.held_back(tmp_path) == []
+
+
+def test_bluetooth_address_only_over_bluetooth(tmp_path):
+    plug(tmp_path, "hidraw1", bus=0x05)
+    plug(tmp_path, "hidraw3", instance=5)
+    usb, bluetooth = controller.find(tmp_path)
+    assert controller.bluetooth_address(bluetooth) == "aa:bb:cc:dd:ee:ff"
+    assert controller.bluetooth_address(usb) == ""
+
+
+@pytest.mark.parametrize("returncode, out, problem", [(0, "Attempting to disconnect\nSuccessful disconnected", ""),
+                                                      # BlueZ 5.87 on the owner's board (23-10-2026)
+                                                      (0, "Attempting to disconnect from <mac>\n"
+                                                          "Disconnection successful\n", ""),
+                                                      (1, "Failed to disconnect", "did not let go"),
+                                                      (0, "Device not available", "did not let go")])
+def test_disconnect_bluetooth(returncode, out, problem):
+    import subprocess
+    calls = []
+
+    def run(argv, **kwargs):
+        calls.append(argv)
+        return subprocess.CompletedProcess(argv, returncode, out, "")
+    result = controller.disconnect_bluetooth("aa:bb:cc:dd:ee:ff", run)
+    assert calls == [["bluetoothctl", "disconnect", "aa:bb:cc:dd:ee:ff"]]
+    assert (problem in result) if problem else result == ""
+
+
+def test_disconnect_bluetooth_without_bluetoothctl():
+    def missing(argv, **kwargs):
+        raise FileNotFoundError(argv[0])
+    assert "not installed" in controller.disconnect_bluetooth("aa:bb:cc:dd:ee:ff", missing)

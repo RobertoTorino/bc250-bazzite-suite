@@ -81,6 +81,27 @@ def read(device: Device) -> list[Profile]:
     return profiles
 
 
+# The drawing's part (drawing.PARTS) for each input of the button map.
+INPUT_PARTS = {"Up": "dpad", "Left": "dpad", "Down": "dpad", "Right": "dpad", "Circle": "face", "Cross": "face",
+               "Square": "face", "Triangle": "face", "R1": "bumpers", "L1": "bumpers", "R2": "triggers",
+               "L2": "triggers", "R3": "sticks", "L3": "sticks", "Left back button": "back",
+               "Right back button": "back"}
+FULL_RANGE = (0, 255, 0, 255)
+
+
+def changed_parts(profile: Profile) -> set[str]:
+    """The parts of the controller a profile sets apart from their defaults, for the drawing to light: the sticks
+    for another curve, the triggers for a shorter range, and each remapped input."""
+    if profile.empty:
+        return set()
+    parts = {INPUT_PARTS[source] for source, _target in profile.remapped}
+    if (profile.left_curve, profile.right_curve) != ("Default", "Default"):
+        parts.add("sticks")
+    if profile.triggers != FULL_RANGE:
+        parts.add("triggers")
+    return parts
+
+
 def trigger_text(start: int, end: int) -> str:
     return f"{round(start * 100 / 255)} to {round(end * 100 / 255)} %"
 

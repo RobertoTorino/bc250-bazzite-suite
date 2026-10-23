@@ -6,6 +6,7 @@ firmware runs. The controller's MAC address names its battery folder and is its 
 from __future__ import annotations
 
 import os
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -121,6 +122,57 @@ def find(sys_root: Path = SYS) -> list[Controller]:
             continue
         found.append(Controller(node.name, product, BUSES[bus], device, _battery(device)))
     return sorted(found, key=lambda c: c.bus != "usb")
+
+
+def held_back(sys_root: Path = SYS) -> list[int]:
+    """The products of controllers on a USB cable that no driver took. hid-playstation drives a controller over one
+    connection only: plugged in while still connected over Bluetooth, it stays on Bluetooth and the cable only
+    charges it (owner's board, 23-10-2026: "Duplicate device found for MAC address", the USB HID device without a
+    driver)."""
+    found = []
+    for device in sorted((sys_root / "bus/hid/devices").glob("0003:054C:*")):
+        try:
+            product = int(device.name.split(":")[2].split(".")[0], 16)
+        except (IndexError, ValueError):
+            continue
+        if product in MODELS and not (device / "driver").exists():
+            found.append(product)
+    return found
+
+
+def bluetooth_address(found: Controller) -> str:
+    """The controller's Bluetooth address, for bluetoothctl only; never shown."""
+    return _uevent(found.sys_path / "uevent").get("HID_UNIQ", "") if found.bus == "bluetooth" else ""
+
+
+def disconnect_bluetooth(address: str, run=subprocess.run) -> str:
+    """Asks BlueZ to drop the controller's Bluetooth connection, as the user may; what went wrong, or ""."""
+    try:
+        result = run(["bluetoothctl", "disconnect", address], capture_output=True, text=True, timeout=20)
+    except FileNotFoundError:
+        return "bluetoothctl is not installed."
+    except subprocess.TimeoutExpired:
+        return "bluetoothctl did not answer within 20 s."
+    # BlueZ 5.87 on the owner's board answers "Disconnection successful" (23-10-2026); older ones "Successful
+    # disconnected".
+    if result.returncode != 0 or "successful" not in (result.stdout or "").lower():
+        return "Bluetooth did not let go of the controller."
+    return ""
+
+
+def event_node(found: Controller, dev: Path = DEV) -> Path | None:
+    """The controller's own input device, /dev/input/event<n> (not its motion sensors, touchpad or headset jack):
+    the one that takes force feedback."""
+    for device in sorted((found.sys_path / "input").glob("input*")):
+        try:
+            name = (device / "name").read_text().strip()
+        except OSError:
+            continue
+        if name.endswith(("Motion Sensors", "Touchpad", "Headset Jack")):
+            continue
+        for event in sorted(device.glob("event*")):
+            return dev / "input" / event.name
+    return None
 
 
 def holders(path: Path, proc: Path = PROC) -> list[str]:

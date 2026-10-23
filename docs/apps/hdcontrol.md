@@ -4,9 +4,9 @@
 
 # USB HD Control
 
-Sony's **DualSense** and **DualSense Edge** controllers on **Bazzite**: their battery, their firmware and the Edge's
-profiles. Sony updates the controllers' firmware only on a PS5 and in its PlayStation Accessories app for Windows.
-This app sends the same firmware, from Sony's own server, over a USB cable. The app changes nothing on the board.
+The **DualSense** and **DualSense Edge** controllers on **Bazzite**: their battery, their firmware and the Edge's
+profiles. Officially the controllers' firmware is updated only on a PS5 and in an app for Windows. This app sends the
+same firmware, from the official update server, over a USB cable. The app changes nothing on the board.
 
 Linux's own `hid-playstation` driver drives the controller, so games and Steam see it as usual. The app talks to
 the controller beside the driver, through its hidraw node (`/dev/hidraw<n>`).
@@ -19,28 +19,74 @@ The header shows the controller the window is looking at:
 |---|---|
 | **Controller** | Edge for the DualSense Edge, DualSense for the plain one |
 | **Connection** | USB or Bluetooth |
-| **Battery** | the level the controller reports, in steps of 10 %, and in its tooltip whether it charges |
-| **Firmware** | the firmware's version as Sony numbers it (for example `0x0200`), with its build date in the tooltip |
-| **Latest** | the latest version Sony offers for this controller, and when the app asked |
-| **Update** | starts the firmware update: orange when one is available; its tooltip says why not when it is not |
+| **Installed firmware** | the firmware the controller runs, as the update server numbers it (for example `0x0217`): green when it is the latest official firmware, orange when a newer one is out. Its tooltip has the build date |
+| **Latest firmware** | the latest official version for this controller. Orange when the controller can be updated to it, on the USB cable: a click starts the update. Otherwise a click asks the update server again. Its tooltip says when the app last asked it, and why an update cannot start |
+
+At the right end of the header, the battery stands as a phone shows it, with the percentage inside it: five modules from the
+bottom up for the level, green, orange at 20 % or less, red at 10 % or less. While the controller charges, the
+modules above its level fill one after another, upwards, in green. The controller reports its level in steps of
+10 %.
 
 The state beside the title says whether an update is available. With more than one controller connected, a list
 in the header chooses which one the window shows.
 
+Below the header, the window shows one of three pages:
+
+- **Connect your controller**, while no controller is connected: a drawing of the controller with a USB-C cable
+  going into its port. The app finds the controller by itself once it is plugged in or paired.
+- **The introduction**, after the first controller connects: three short pages on what the app does, the firmware
+  update and the Edge's profiles (the battery, on a plain DualSense). **Skip** goes straight on; **Show the
+  introduction**, at the bottom of the main page, brings it back.
+- **The main page**: the **Controller** box with a drawing of your controller, the firmware box and the profiles.
+
+## On the cable and over Bluetooth
+
+Linux drives a controller over one connection at a time. A controller that is connected over Bluetooth and then
+plugged in stays on Bluetooth: the cable only charges it, and the firmware update cannot start. A PS5 switches to the
+cable by itself; Linux does not. The window says so (**On Bluetooth, not the cable**) and offers **Use the cable**
+in the firmware box: it disconnects the controller from Bluetooth (with `bluetoothctl`, no password needed). Then
+unplug the cable and plug it in again, and Linux takes the cable. Switching the controller off (hold the PS button
+for 10 seconds) before plugging it in does the same.
+
+## The controller box
+
+The drawing is the app's own, not the official artwork, with the face buttons in the colours of the first PlayStation
+pads. The colour buttons for the light bar are under it; to its right, the light bar's colour now, and
+**Test vibration**. It follows your controller live: a button lights while you press it (the Edge's Fn and back buttons too), the
+sticks move and the triggers fill as far as you pull them. Hover over a part to see its name (Cross, L2 trigger, Left back button, Light bar).
+
+The **i** at the top left opens the controller's spec sheet: what it reports now (model, connection, firmware,
+hardware version, battery), the model's specifications with the official source of each (for the DualSense Edge its
+instruction manual and the PlayStation Blog: model CFI-ZCP1, released 26 January 2023 at $199.99, a 1,050 mAh
+battery, about 325 g), and the parts the drawing leaves out because the controller does not report them: the L2 and
+R2 stop sliders, the RELEASE latch, the reset button, the headset jack, the charging contacts, the microphone and the
+speaker. The plain DualSense has no specifications in the app yet: only facts from an official source go in. During a firmware update the drawing shows the cable plugged in, data flowing
+down it and the touchpad filling as the firmware goes in.
+
+- **Light bar**: the circles under the drawing: Blue, Red, Green, Purple, White, Off, or the colour wheel for any
+  colour. The colour is set at once and
+  again each time the controller connects while the app is open; the drawing shows it. The controller does not keep
+  it: it forgets it when it disconnects, and Steam or a game may set another. **Off** saves some battery.
+- **Turn off** switches a controller on Bluetooth off by ending its connection; the PS button switches it on again.
+  On the USB cable it stays on: the cable powers it.
+- **Test vibration** runs the left motor, then the right one, almost a second each, and the drawing shakes on that
+  side: you should feel each on its own side. A motor that stays still while the drawing shakes is worth a closer
+  look.
+
 ## The firmware update
 
-**Check for an update** asks Sony's update server (`fwupdater.dl.playstation.net`) for the latest version of each
+**Check for an update** asks the official update server (`fwupdater.dl.playstation.net`) for the latest version of each
 controller. With **Check when the window opens** on (the default), the window asks by itself, at most once a day.
 
-When a newer version is out, the **Update** pill in the header:
+When a newer version is out, **Latest firmware** in the header turns orange; a click on it:
 
-1. downloads the firmware from Sony's server (about 1 MB) and keeps it, so a second try needs no network;
+1. downloads the firmware from the update server (about 1 MB) and keeps it, so a second try needs no network;
 2. checks that it fits: the firmware names the controller it is for (its USB product ID and its *target*), and its
    version must be newer than the one the controller runs;
 3. saves a backup of the Edge's profiles (see [Profiles](#profiles));
 4. sends it to the controller, with a progress bar.
 
-It takes about half a minute. The controller then checks Sony's signature on the firmware, switches to it and
+It takes about half a minute. The controller then checks the firmware's signature, switches to it and
 restarts. It leaves USB for a moment and comes back; the header then shows the new version. The profiles stay as
 they were.
 
@@ -57,8 +103,8 @@ and plug it in again: the header then shows which firmware it runs, and the upda
 
 ### The firmware files
 
-Sony serves one file per *target* and only the latest version of it. The DualSense's target depends on its
-revision; the DualSense Edge's is `0044`. The app knows the files that were on Sony's server on 23-10-2026 by their
+The update server has one file per *target* and only the latest version of it. The DualSense's target depends on its
+revision; the DualSense Edge's is `0044`. The app knows the files that were on the update server on 23-10-2026 by their
 SHA-256:
 
 | Target | Controller | Version | SHA-256 |
@@ -68,21 +114,24 @@ SHA-256:
 | `000B` | DualSense | `0x0630` | `b66528795683d214ca06fe4672d298de75bf019bd5046442cbec63fc02974f86` |
 | `000E` | DualSense | `0x0641` | `b9c217d8ded5f09f03034e7e5037af0c174c3c77a3cbd201ee5fd219ee448fc8` |
 
-A newer file from Sony works too; the confirmation then says the app does not know it yet. The controller checks
-Sony's signature either way. The files are kept in `~/.local/share/bc250-usb-hdcontrol/firmware/`, named after their
-target and version (`FWUPDATE0044-0217.bin`).
+A newer file from the update server works too; the confirmation then says the app does not know it yet. The
+controller checks its signature either way. The files are kept in `~/.local/share/bc250-usb-hdcontrol/firmware/`, named after their
+target and version (`FWUPDATE0044-0217.bin`). The **Firmware** box names the kept file of the latest version with its SHA-256 check: a green ✓ for a file the
+app knows, an orange ! for one it does not.
 
-**Use a file…** sends a firmware file you have, for example one kept from Sony's server before. The app checks it
+**Use a file…** sends a firmware file you have, for example one kept from the update server before. The app checks it
 the same way and refuses a file for another controller or one that is not newer.
 
 ## Profiles
 
 The DualSense Edge keeps four profiles; Fn and Triangle, Square, Cross or Circle chooses one (Triangle is the
-default profile). The **Profiles** table shows them as the controller reports them: the name, each stick's curve
-(Default, Quick, Precise, Steady, Digital or Dynamic), each trigger's range, and the buttons that send something
-other than themselves (the back buttons included). A profile whose checksum does not match is marked.
+default profile). The **Profiles** box shows them side by side, a column each, as the controller reports them: the
+name, each stick's curve (Default, Quick, Precise, Steady, Digital or Dynamic), each trigger's range, and the
+buttons that send something other than themselves (the back buttons included). A profile whose checksum does not
+match is marked. Click a profile to see on the drawing what it sets: the Fn buttons, and the sticks, triggers and
+buttons it changes from their defaults. Click it again to let go.
 
-The app reads the profiles; change them on a PS5 or in Sony's app for Windows. **Back up…** saves them in a JSON
+The app reads the profiles; change them on a PS5 or in the official app for Windows. **Back up…** saves them in a JSON
 file, exactly as the controller holds them, and **Read again** reads them anew, for example after you changed them on
 a PS5. The app also saves a backup before every firmware update, in `~/.local/share/bc250-usb-hdcontrol/profiles/`.
 

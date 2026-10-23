@@ -747,9 +747,36 @@ colours (owner, 19-10-2026).
   The firmware update works on the owner's Edge: the owner ran it from the window (23-10-2026, 06:27; Claude's own
   run had been stopped by the session's permission check), 0x0200 to 0x0217 in about 20 s, the controller back on
   USB 2 s later with the new firmware, its profiles byte for byte as the backup made before. Not checked: the
-  Bluetooth pairing after the update, and a plain DualSense (none at the board). The release (owner): `hdcontrol-v0.1.0`,
+  Bluetooth pairing after the update, and a plain DualSense (none at the board). Pages after Sony's Windows app (owner, 23-10-2026;
+  built the same day, after hdcontrol-v0.1.1): Connect your controller with an animated cable, a three-page
+  introduction once after the first controller connects, the main page with a drawing of the app's own (no Sony
+  artwork) and the profiles as four cards that light on the drawing what they set. Next (owner's order, 23-10-2026):
+  profile writing, so that Create a profile and an editor can follow: first a write test on the owner's Edge that the
+  owner starts (copy the default profile to the empty Fn + Square slot through reports 0x60 to 0x63, read it back,
+  clear it with 0x68), with a backup first. Still the next step for the app (owner, 23-10-2026: in the next chat), with the
+  two items on hold below: the battery runtime test and the plain DualSense's specifications; and the idle switch-off
+  to decide. Then (owner, 23-10-2026): the drawing live from the input reports, the light bar's
+  colour, a vibration test, the update's data flow, turning with the mouse, the drawing redone (85 % wide, larger
+  d-pad and face buttons in the first pads' colours, the gaming blue). Open on the board (the owner): press every
+  button, the Edge's Fn and back buttons included (their bits, 0x10 to 0x80 of the third button byte, are from the
+  layout SDL reads, not read on the board yet), set a light bar colour (USB; Bluetooth untried), Test vibration
+  (left, then right). The owner tried it (23-10-2026): every button, the Edge's included, and both motors work. Then
+  the d-pad white with gaps, the turning removed, the battery as a phone shows it in the header, the controller box
+  rearranged (owner, 23-10-2026). Found on the owner's board (23-10-2026): the Edge plugged in while connected over
+  Bluetooth stays on Bluetooth (hid-playstation: duplicate MAC address, the USB HID device left without a driver);
+  the app now says so and offers Use the cable (bluetoothctl disconnect, then a replug). The owner tried it
+  (23-10-2026): after the fix for BlueZ 5.87's answer, Use the cable and a replug bring the Edge onto USB. The release (owner): `hdcontrol-v0.1.0`,
   `package`'s next one, then pin it and bump the portal (an added app needs a minor bump; check_manifest says so
   until then).
+- **Switching an idle controller off in USB HD Control (on hold, owner 23-10-2026: to decide in the next chat).**
+  Nothing on Linux tells a Bluetooth controller to switch off when it is idle, as a PS5 does (10, 30 or 60 minutes):
+  the owner's Edge drained its battery over a few hours idle and got a low-battery warning. The app could end the
+  Bluetooth connection after N minutes without input (as Turn off does); with the window closed that needs a small
+  background service (a user unit reading the input reports). To decide: whether, the minutes to offer, and the
+  service.
+- **Specifications of the plain DualSense in USB HD Control (on hold, owner 23-10-2026: when an official spec
+  sheet is found).** The info sheet lists only facts with an official source; Sony's DualSense manual was not found
+  online, and shops disagree on its battery. The owner will look for one.
 - **Battery tests for USB HD Control (on hold, owner 23-10-2026: a later iteration).** The owner's Edge does not last
   long on its battery. Measure it over Bluetooth (on USB it charges): log the level hid-playstation reports (steps of
   10 %) and the time, with the light bar, the player LEDs, rumble and the adaptive triggers on and off, before and
