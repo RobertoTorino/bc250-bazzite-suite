@@ -86,6 +86,7 @@ def wait_load(qapp, window):
 def test_no_camera(make, tmp_path):
     window = make()
     assert window.badge.text() == "No camera" and not window.load_button.isEnabled()
+    assert "Unplug it and plug it in again" in window.picture.text() and "restart" in window.badge.toolTip()
     assert window.camera_box.value.text() == "—" and window.firmware_box.value.text() == "None"
     assert not window.access_box.isVisibleTo(window) and not window.preview_button.isEnabled()
 
@@ -123,6 +124,12 @@ def test_boot_mode_needs_its_firmware(make, tmp_path):
     window = make()
     assert window.badge.text() == "Needs its firmware" and window.camera_box.value.text() == "PS5 HD Camera"
     assert window.usb_box.value.text() == "5 Gbit/s" and not window.load_button.isEnabled()
+
+
+def test_a_camera_that_is_there_gets_no_restart_hint(make, tmp_path):
+    plug(tmp_path / "sys")
+    window = make()
+    assert window.picture.text() == "The picture shows here once the camera is ready."
 
 
 def test_boot_mode_without_access(make, tmp_path):

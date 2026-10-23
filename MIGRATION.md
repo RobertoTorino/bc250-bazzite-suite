@@ -712,7 +712,15 @@ colours (owner, 19-10-2026).
   from psxdev/luke_firmwares (the owner's find; the PS4 system software 1.50 to 3.15 file, PS Move API's tested one,
   pinned to commit f90eead); untried, as there is no PS4 Camera at the board (on the backlog: "A PS4 Camera for
   USB HD Cam"). The wiki no longer suggests the fix
-  firmware (owner). Open: hot-plugging with the service, the load at login, which half of a side-by-side frame is which sensor; the release (owner):
+  firmware (owner). Hot-plugging works with the installed app (owner's board, 23-10-2026): with no window
+  open, the udev rule started the user's load service at plug-in, which loaded the firmware in about a second, set
+  Auto Mode and left the camera powered (Reduced endpoint, port 7-2). After a warm restart (23-10-2026, twice) the camera
+  does not come back: it kept its power and its firmware (loaded before the restart) and both USB 3 ports read "not
+  attached", so the login run found no camera; writing usb7-port*/disable 1 then 0 (the owner, with sudo) changed
+  nothing, not even a USB event in the kernel's log (most likely the ports' power is not cut; not measured); a replug
+  brings it back. The wiki says so. A cold start (power off, then on, the
+  camera left plugged in; 23-10-2026) works: the camera started as a boot loader and the login run loaded it on port
+  7-1. Open: which half of a side-by-side frame is which sensor; the release (owner):
   `hdcam-v0.1.0`, then pin it and bump the portal (an added app needs a minor bump).
 - **SwanStation Manager (built 21-10-2026, owner's decision; not tried on the board).** PS1, the first of six
   emulator managers the owner asked for (list below). Not standalone: SwanStation is a libretro core, so the app

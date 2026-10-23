@@ -19,6 +19,10 @@ READY = {"058c": "cfi-zey1", "058a": "ps4-camera"}
 ADAPTER = ("054c", "0d0b")                  # the PlayStation Camera Adapter's USB 3 hub
 MODELS = {"cfi-zey1": "PS5 HD Camera", "ps4-camera": "PS4 Camera"}      # the PS4 Camera: CUH-ZEY1 or CUH-ZEY2
 FULL_SPEED_MBPS = 5000                      # the video needs USB 3; the boot mode also runs on USB 2
+# A restart keeps the USB ports powered: the camera keeps its firmware but does not connect to the restarted system,
+# and Linux cannot power-cycle the BC-250's ports (owner's board, 23-10-2026). A replug or a cold start brings it back.
+NOT_FOUND = ("If it is plugged in: after a restart of the board the camera stays silent. Unplug it and plug it in "
+             "again, or shut the board down and switch it on again.")
 
 
 @dataclass(frozen=True)

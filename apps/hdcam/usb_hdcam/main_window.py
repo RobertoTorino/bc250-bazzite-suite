@@ -196,6 +196,7 @@ class MainWindow(QWidget):
         picture_layout.addLayout(controls)
         self.picture = QLabel()
         self.picture.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.picture.setWordWrap(True)                  # its texts: no camera, a preview that failed
         self.picture.setMinimumSize(*PICTURE_MIN)
         self.picture.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
         picture_row = QHBoxLayout()
@@ -265,7 +266,7 @@ class MainWindow(QWidget):
             state = ("Loading the firmware", "info", "The camera comes back as a camera in a few seconds.")
         elif found is None:
             state = ("No camera", "neutral", "Plug in the PS5 HD Camera, into a USB 3 port; the app finds "
-                                             "it by itself.")
+                                             f"it by itself. {camera.NOT_FOUND}")
         elif found.booted:
             state = (("Ready", "ok", f"The {found.name} is a camera: other apps can use it while the preview is off.")
                      if found.videos else ("Starting", "info", "The camera is back; its video node follows."))
@@ -525,7 +526,8 @@ class MainWindow(QWidget):
             if chosen is not None:
                 self.mode_combo.setCurrentIndex(self.mode_combo.findData(chosen.key))
         if not node:
-            self.picture.setText("The picture shows here once the camera is ready.")
+            self.picture.setText("The picture shows here once the camera is ready." if self.cameras else
+                                 f"No camera found.\n\n{camera.NOT_FOUND}")
         self.mode_combo.setEnabled(bool(self.modes))
         self.preview_button.setEnabled(bool(node))
         mode = self.mode()

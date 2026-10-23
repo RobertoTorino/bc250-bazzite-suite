@@ -35,7 +35,11 @@ def load_all(auto: bool, find=camera.find, load=loader.load, home=None, open_con
     if auto and not settings.get("autoload"):
         return 0
     bursts = loader.bursts(settings.get("bandwidth"))
-    boots = [found for found in find() if not found.booted]
+    cameras = find()
+    if not cameras:
+        print(f"No camera found. {camera.NOT_FOUND}")
+        return 0
+    boots = [found for found in cameras if not found.booted]
     if not boots:
         print("No camera waits for its firmware.")
         return 0

@@ -121,6 +121,15 @@ Without the app, the same is a terminal command:
 bc250-usb-hdcam --load      # sends the firmware to every camera that waits for it
 ```
 
+### After a restart
+
+When the board restarts, the camera may not come back at all: `lsusb` does not list it, and the load service
+finds no camera. The USB port keeps its power through a restart, so the camera keeps running its firmware, but it
+does not connect to the restarted system. Unplug it and plug it in again: it starts as a boot loader, and the load
+service sends the firmware as usual. Switching the port off and on from Linux does not bring it back on the BC-250.
+After a shutdown and power on, the camera starts fresh, and the load service sends its firmware at login.
+When no camera is found, the window and the load service's journal say the same.
+
 ## The picture
 
 Once the camera is ready, the header shows its video node and the **Picture** box offers every mode the camera

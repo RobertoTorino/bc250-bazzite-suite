@@ -24,7 +24,10 @@ def run(tmp_path, auto=False, outcome=loader.Outcome(True, "The PS5 HD Camera is
 
 def test_nothing_to_do(tmp_path, capsys):
     assert run(tmp_path) == (0, [])
-    assert "No camera waits" in capsys.readouterr().out
+    assert capsys.readouterr().out.strip() == f"No camera found. {camera.NOT_FOUND}"   # in the service's journal
+    plug(tmp_path, product="058c", address=4, videos=(2,))
+    assert run(tmp_path) == (0, [])
+    assert capsys.readouterr().out.strip() == "No camera waits for its firmware."
 
 
 def test_loads_a_waiting_camera(tmp_path, capsys):

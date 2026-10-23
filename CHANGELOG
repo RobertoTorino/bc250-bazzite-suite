@@ -1,3 +1,11 @@
+Changelog: 23-10-2026 03:50:44
+
+The wiki's USB HD Cam chapter says what to do after a restart: the camera keeps its power and firmware through
+a warm restart of the board but does not reconnect (both USB 3 ports "not attached" on the owner's board,
+23-10-2026), and switching the ports off and on from Linux (usb7-port*/disable) does not bring it back (no USB
+event at all, so most likely the ports' power is not cut), so the camera needs to be unplugged and plugged in again.
+After a shutdown and power on it starts fresh and the load service loads it at login (owner's board, 23-10-2026).
+
 Changelog: 23-10-2026 01:38:04
 
 Added. USB HD Cam (apps/hdcam, Utilities; owner, 23-10-2026): the PS5 HD Camera (CFI-ZEY1) as a

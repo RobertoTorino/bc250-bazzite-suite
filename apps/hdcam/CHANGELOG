@@ -1,3 +1,16 @@
+Changelog: 23-10-2026 04:05:15
+
+Release 0.2.0.
+
+Changelog: 23-10-2026 04:02:12
+
+Added. When no camera is found at all, the window says what to do if it is plugged in (in the picture area and the
+state's tooltip), and so does the load service in its journal ("No camera found." with the same text, where it said
+only that no camera waits for its firmware): after a restart of the board the camera stays silent, so unplug it and
+plug it in again, or shut the board down and switch it on again. Found on the owner's board (23-10-2026): a warm
+restart keeps the USB ports powered, the camera keeps its firmware but does not connect, and Linux cannot power-cycle
+the ports; a replug and a cold start both bring it back. The picture area wraps its text.
+
 Changelog: 23-10-2026 03:20:11
 
 Release 0.1.0.
