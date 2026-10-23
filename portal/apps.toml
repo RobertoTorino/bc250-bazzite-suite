@@ -266,8 +266,8 @@ launch = [["Open", "~/.local/bin/bc250-usb-hdcam"]]
 [apps.hdcontrol]
 name = "USB HD Control"
 summary = "The DualSense and DualSense Edge on the board: battery, firmware updates from the official server, and the Edge's profiles."
-tag = "hdcontrol-v0.2.0"
-sha256 = "d2e8525787a717ed10f0059c3cef5b89706517e2b1954405c29a8426306873f5"
+tag = "hdcontrol-v0.3.0"
+sha256 = "aaa9834f9e9533423f15aaecbafdd49ab6408a924a5b3995447b6fa2b701b436"
 required = false
 changes_board = false
 category = "utilities"
@@ -292,8 +292,8 @@ launch = [["Open", "~/.local/bin/media-tool"]]
 [apps.package]
 name = "Dependency Checker"
 summary = "The suite's Python packages and external tools, which apps use them, and whether newer ones exist; and whether a Bazzite update waits for a reboot."
-tag = "package-v0.17.0"
-sha256 = "fc398d44d36f58dac577695ea9d73ab5947d7ed718d8c042fa9de7fd5901cb1d"
+tag = "package-v0.18.0"
+sha256 = "295e37de163c840e84d7f94d7f1e9e583eda72cd5e6813feb6ffb5c8d7437d56"
 required = false
 changes_board = false
 category = "development"
