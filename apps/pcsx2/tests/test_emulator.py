@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Installing the pinned PCSX2 release (emulator.py) from a file made here instead of the download: checked against
-its SHA-256 first, "current" switched, older versions removed, and nothing changed when a step fails."""
+its SHA-256 first, "current" switched, older versions removed, nothing changed when a step fails, and the newer
+stable GitHub may list. (The nightly channel went, owner 24-10-2026: nothing of it is left to test.)"""
 
 from __future__ import annotations
 
@@ -52,6 +53,29 @@ def test_install_and_remove(tmp_path, pinned):
     assert sorted(p.name for p in home.iterdir()) == ["2.8.2", "current"]        # no download left behind
     emulator.remove(home)
     assert not home.exists() and emulator.installed_version(home) == ""
+
+
+def test_install_takes_pcsx2s_catalogue_out(tmp_path, pinned, monkeypatch):
+    """PCSX2's titles and patches come out of the AppImage beside it; without them the install stands all the
+    same."""
+    from pcsx2_manager import catalogue
+    taken = []
+
+    def extract(image: Path) -> None:
+        taken.append(image)
+        for name in catalogue.FILES:
+            (image.parent / name).write_text(name)
+    monkeypatch.setattr(catalogue, "extract", extract)
+    home = tmp_path / "emulator"
+    emulator.install(home, _fetch(pinned))
+    assert taken == [emulator.appimage(home)] and not catalogue.missing(emulator.appimage(home).parent)
+
+    def fails(image: Path) -> None:
+        raise OSError("no room")
+    monkeypatch.setattr(catalogue, "extract", fails)
+    other = tmp_path / "other"
+    assert emulator.install(other, _fetch(pinned)) == f"PCSX2 {emulator.VERSION} is installed."
+    assert not emulator.take_catalogue(other)
 
 
 def test_an_older_version_is_replaced(tmp_path, pinned):
@@ -121,61 +145,3 @@ def test_a_newer_pcsx2_stable():
     def offline(url: str):
         raise urllib.error.URLError("no network")
     assert emulator.newer_release(offline) is None                                # nothing to say then
-
-
-# --- The nightly channel ----------------------------------------------------------------------------------------
-
-def _build(tag: str, sha: str | None = "ab" * 32, prerelease: bool = True) -> dict:
-    """One release as GitHub lists it: the AppImage (with its digest) and the flatpak beside it."""
-    name = f"pcsx2-{tag}-linux-appimage-x64-Qt.AppImage"
-    appimage = {"name": name, "size": 60406264,
-                "browser_download_url": f"https://github.com/PCSX2/pcsx2/releases/download/{tag}/{name}"}
-    if sha is not None:
-        appimage["digest"] = f"sha256:{sha}"
-    return {"tag_name": tag, "prerelease": prerelease, "published_at": "2026-10-13T08:00:00Z",
-            "html_url": f"https://github.com/PCSX2/pcsx2/releases/tag/{tag}",
-            "assets": [appimage, {"name": f"pcsx2-{tag}-linux-flatpak-x64-Qt.flatpak", "size": 1,
-                                  "digest": "sha256:" + "cd" * 32, "browser_download_url": "x"}]}
-
-
-def _listing(*builds: dict):
-    def fetch(url: str):
-        assert url == "https://api.github.com/repos/PCSX2/pcsx2/releases?per_page=30"
-        return list(builds)
-    return fetch
-
-
-def test_the_newest_nightly_with_its_checksum():
-    nightly = emulator.latest_nightly(_listing(_build("v2.9.126"), _build("v2.9.127"),
-                                               _build("v2.8.2", prerelease=False)))
-    assert (nightly.version, nightly.tag) == ("2.9.127", "v2.9.127")             # the newest pre-release, not 2.8.2
-    assert nightly.url.endswith("v2.9.127-linux-appimage-x64-Qt.AppImage")       # the AppImage, not the flatpak
-    assert nightly.sha256 == "ab" * 32 and nightly.size == 60406264
-    assert (nightly.published, nightly.page) == ("2026-10-13", "https://github.com/PCSX2/pcsx2/releases/tag/v2.9.127")
-
-
-def test_a_nightly_needs_githubs_checksum():
-    with pytest.raises(emulator.EmulatorError, match="no nightly build with a checksum"):
-        emulator.latest_nightly(_listing(_build("v2.9.127", sha=None), _build("v2.8.2", prerelease=False)))
-    with pytest.raises(emulator.EmulatorError, match="no nightly build"):
-        emulator.latest_nightly(_listing())
-
-    def offline(url: str):
-        raise urllib.error.URLError("no network")
-    with pytest.raises(emulator.EmulatorError, match="could not be asked"):
-        emulator.latest_nightly(offline)
-
-
-def test_install_a_nightly_build(tmp_path):
-    payload = b"#!/bin/sh\necho nightly\n"
-    nightly = emulator.latest_nightly(_listing(_build("v2.9.127", sha=hashlib.sha256(payload).hexdigest())))
-    home = tmp_path / "emulator"
-    assert emulator.install_build(home, nightly, _fetch(payload)) == "PCSX2 nightly 2.9.127 is installed."
-    assert emulator.installed_version(home) == "2.9.127"
-    assert (home / "current" / ".size").read_text() == str(len(payload))
-    assert not emulator.replaced(home)                        # the expected size is the build's, not the stable's
-    emulator.appimage(home).write_bytes(payload + b"another build")
-    assert emulator.replaced(home)                            # PCSX2 updated itself over it
-    with pytest.raises(emulator.EmulatorError, match="SHA-256 differs"):
-        emulator.install_build(home, nightly, _fetch(b"something else"))
-    assert emulator.installed_version(home) == "2.9.127"      # the failed install changed nothing

@@ -4,8 +4,8 @@
 #
 #   ./install.sh                         # install or update
 #   ./install.sh --no-desktop-shortcut   # app menu entry only, no icon on the Desktop
-#   ./install.sh --uninstall             # remove the app and the PCSX2 it installed; keeps its settings
-#   ./install.sh --uninstall --purge     # also remove its settings and covers
+#   ./install.sh --uninstall             # remove the app and the PCSX2 it installed; keeps its settings and log
+#   ./install.sh --uninstall --purge     # also remove its settings, covers and log
 #
 # Run it as your own user; installing needs no root. PCSX2 itself is downloaded by the app (Install), not here.
 #  * ~/.local/share/bc250-pcsx2-manager/app: the app, with the bc250_core it was tested with (bundled in the
@@ -14,9 +14,10 @@
 #  * ~/.local/share/bc250-bazzite-suite/venv, the BC250 Bazzite Suite's shared venv with PyQt6 (the wheels bundle
 #    Qt; nothing is layered). It is removed with the last suite app that uses it.
 #  * ~/.local/bin/bc250-pcsx2-manager to start it from a terminal, plus an app menu entry and a Desktop icon.
-#  * ~/.local/bin/bc250-pcsx2-run, which starts PCSX2: the Game Mode shortcuts run it.
+#  * ~/.local/bin/bc250-pcsx2-run, which starts PCSX2: the Steam shortcuts run it.
+#  * ~/.local/share/bc250-pcsx2-manager/bc250-pcsx2-manager.log: the app's log.
 # PCSX2's own folder, ~/.config/PCSX2 (the BIOS, memory cards, saves, settings), is never removed, nor are the
-# games; the Game Mode shortcuts stay in Steam (take them out in the app first).
+# games; the Steam shortcuts stay in Steam (take them out in the app first).
 set -euo pipefail
 
 APP_ID="bc250-pcsx2-manager"
@@ -74,8 +75,8 @@ if $UNINSTALL; then
         rm -rf "$VENV"
     fi
     if $PURGE; then
-        info "Removing the settings and the covers found on SteamGridDB"
-        rm -rf "${CONFIG_DIR:?}/$APP_ID" "${DATA_DIR:?}/$APP_ID/covers"
+        info "Removing the settings, the covers found on SteamGridDB and the log"
+        rm -rf "${CONFIG_DIR:?}/$APP_ID" "${DATA_DIR:?}/$APP_ID"
     fi
     rmdir "${DATA_DIR:?}/$APP_ID" 2>/dev/null || true
     info "$APP_NAME is uninstalled. PCSX2's own folder ($CONFIG_DIR/PCSX2) and your games were left as they are."
@@ -140,12 +141,12 @@ Type=Application
 Version=1.0
 Name=$APP_NAME
 GenericName=PS2 emulator manager
-Comment=Install PCSX2, find your PS2 games and add them to Steam for Game Mode
+Comment=Install and set up PCSX2, find your PS2 games and add them to Steam
 Exec=$LAUNCHER
 Icon=$APP_DIR/images/$APP_ID-128.png
 Terminal=false
 Categories=Game;Emulator;
-Keywords=BC-250;Bazzite;PCSX2;PS2;emulator;Game Mode;
+Keywords=BC-250;Bazzite;PCSX2;PS2;emulator;Steam;
 StartupNotify=true
 StartupWMClass=$APP_ID"
 

@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The game scan (games.py): SYSTEM.CNF read out of an ISO, the serial as PCSX2 shows it, the compressed formats
-under their own name, a game found twice, and depth."""
+"""The game scan (games.py): SYSTEM.CNF read out of an ISO, the serial as PCSX2 shows it, the boot program's CRC as
+PCSX2 computes it, the title from PCSX2's catalogue or the file's name without a serial, the compressed formats under
+their own name, a game found twice, and depth."""
 
 from __future__ import annotations
 
 from conftest import iso_bytes, make_disc, system_cnf
 
-from pcsx2_manager.games import Game, iso_file, read_disc, read_system_cnf, scan, serial_of
+from pcsx2_manager.games import Game, elf_crc, file_title, iso_file, read_disc, read_system_cnf, scan, serial_of
 
 
 def test_system_cnf_is_read():
@@ -65,3 +66,32 @@ def test_scan_finds_games_sorted_once_and_not_too_deep(tmp_path):
     assert [g.title for g in games] == ["alpha", "Compressed", "five", "Zeta"]
     assert [g.serial for g in games] == ["SLUS-00001", "", "SLUS-00004", "SLUS-00003"]
     assert [g.kind for g in games] == ["iso", "chd", "iso", "iso"]
+
+
+def test_the_crc_as_pcsx2_computes_it(tmp_path):
+    """Every 32-bit word XORed; the bytes after the last whole word left out. Lumines Plus (SLUS-21553), whose
+    program PCSX2 logged as 93262D20, came out the same on the board."""
+    assert elf_crc(b"") == 0
+    assert elf_crc(bytes.fromhex("01000000 02000000 04000000 ff")) == 7
+    program = b"\x7fELF" + bytes(range(1, 200))
+    iso = make_disc(tmp_path / "game.iso", "SLUS_123.45", program=program)
+    assert read_disc(iso).crc == elf_crc(program) != 0
+    assert read_disc(make_disc(tmp_path / "no program.iso")).crc == 0                    # not on the disc
+
+
+def test_the_title_from_pcsx2s_catalogue_or_the_file(tmp_path):
+    iso = make_disc(tmp_path / "SLUS_215.53.Lumines Plus.iso", "SLUS_215.53")
+    assert read_disc(iso, {"SLUS-21553": "Lumines Plus"}).title == "Lumines Plus"
+    assert read_disc(iso).title == "Lumines Plus"                                          # the serial cut off
+    other = make_disc(tmp_path / "Mine.iso", "SLUS_215.53")
+    assert read_disc(other, {"SLUS-21553": "Lumines Plus"}).title == "Lumines Plus"       # PCSX2's over the file's
+    assert scan([tmp_path], {"SLUS-21553": "Lumines Plus"})[0].title == "Lumines Plus"
+
+
+def test_a_serial_is_cut_out_of_a_files_name():
+    assert file_title("SLUS_215.53.Lumines Plus") == "Lumines Plus"
+    assert file_title("SCUS-97328 Gran Turismo 4") == "Gran Turismo 4"
+    assert file_title("Lumines Plus [SLUS-21553]") == "Lumines Plus"
+    assert file_title("Gran Turismo 4 (USA) (SCUS-97328)") == "Gran Turismo 4 (USA)"
+    assert file_title("Gran Turismo 4 (USA)") == "Gran Turismo 4 (USA)"
+    assert file_title("SLUS_215.53") == "SLUS_215.53"                                      # nothing else left

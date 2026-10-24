@@ -18,8 +18,8 @@
 """The PS2 memory card code of mymc++ (github.com/Adubbz/mymcplusplus, GPL-3.0-or-later, by Adubbz, based on mymc+
 by Florian Märkl and mymc by Ross Ridge), kept as it is at commit 3247c9c0afac2b88b489f8d65f3e106176e0c859
 (28-07-2026, version 3.2.0): the card's file system with its ECC, icon.sys and the 3D icon, and the save formats
-with LZARI. Its command line, its wxPython window and its OpenGL icon viewer are not here: the Memory cards window
-(memcard_dialog.py, on memcards.py) takes their place.
+with LZARI. Its command line, its wxPython window and its OpenGL icon viewer are not here: the Memory cards tab
+(memcard_page.py, on memcards.py) takes their place.
 
 Every line changed from that commit carries a "bc250:" comment:
 

@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""PS2 games on the BC-250 with PCSX2: installs a pinned PCSX2 release, checks the PS2 BIOS, finds the games in the
-chosen folders and adds them to Steam for Game Mode."""
+"""PS2 games on the BC-250 with PCSX2: installs a pinned PCSX2 release and sets it up, takes the PS2 BIOS, finds the
+games in the chosen folders and adds them to Steam, where a game is started."""
 
 APP_NAME = "PCSX2 Manager"
 APP_ID = "bc250-pcsx2-manager"
-__version__ = "0.9.1"
+__version__ = "1.0.0"
 
 from pathlib import Path
 

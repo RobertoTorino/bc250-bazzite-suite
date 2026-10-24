@@ -576,6 +576,164 @@ colours (owner, 19-10-2026).
 - Next (owner): try the three themes on the board. A release of core and of every app that changed (the handover
   lists them).
 
+## Game managers from scratch (owner, 23-10-2026)
+
+The principle (owner): the emulator only runs the game; the manager does everything else, so a game started from
+Steam works without the emulator's own window. The method (owner): one manager at a time, started from scratch
+(only the manager installed), following only what its window says; every issue met on the way is noted here, and
+the manager that works as it should is the blueprint for the others. PCSX2 Manager first, then RPCS3 Manager.
+
+Found before the round (23-10-2026, RPCS3 Manager, Lumines Supernova):
+
+- RPCS3 chose the pad by itself: its DualSense handler, and with two controllers connected the USB one as player
+  1. That controller's Edge profile sent Circle for Cross (read on hidraw), so Cross never arrived and the home menu
+  closed at every press. With only the Bluetooth controller and the SDL handler, a Steam start works. The manager
+  does not touch RPCS3's pad setup; RPCS3 has `--input-config` for a pad file of the manager's own.
+- A PKG game is installed in RPCS3's own window; RPCS3 has `--installpkg` (GUI mode, as `--installfw`), and a
+  PSN game also needs its `.rap` license.
+- USB HD Control: the light bar stayed off and the app's colour did not stay while it was off; after a reconnect it
+  came back. Another program (Steam, or SDL in PCSX2) likely overrode it. The app has no log; a log (connects, each
+  light bar report and its result, the programs that have the controller's hidraw node open) and a round over USB
+  and Bluetooth, with and without Steam, after PCSX2 and after RPCS3, were proposed (owner to decide).
+
+The PCSX2 round (23-10-2026). Set aside first, nothing deleted, in `~/bc250-set-aside/pcsx2-23-10-2026/`: PCSX2
+2.8.2, `~/.config/PCSX2`, the manager's settings and covers, the Lumines Plus shortcut (taken out with the
+manager's own code; shortcuts.vdf and the artwork kept).
+
+1. Install: the app installs the PCSX2 it was tried with (2.8.2, also PCSX2's newest stable on 23-10-2026); the
+   owner wondered why a fixed version. The window could say it plainly.
+2. BIOS: the app opens PCSX2's bios folder and asks for a copy, then says "press Refresh" in its status line; it
+   does not see the copied files by itself, so it went on saying there is no BIOS (owner). Owner's suggestion: point
+   the manager to a BIOS folder (or file) instead of copying into an open folder. Only the .bin is needed; the
+   .MEC and .NVM beside it are optional.
+3. Game folders: choosing a folder is natural (owner), the way the BIOS step could work. The owner asked for a
+   recursive search; the app already looks five folders deep (games.py, MAX_DEPTH), but the window does not say so.
+4. The games in Steam: adding to Steam is the manager's purpose, Steam is where a game starts (owner, understood
+   on the way). The buttons' names: "Update Game Mode" does not say what it does (it adds the ticked games to
+   Steam's library and takes the others out, also seen in desktop Steam), "Covers…" neither (artwork from
+   SteamGridDB). The suite's SteamGridDB key was set aside too, for a start as a new user would make it.
+5. Covers: with the key set, Lumines Plus got only the drawn artwork. The lookup ran (SLUS-21553.done) and found
+   nothing: a game's title is its file name ("SLUS_215.53.Lumines Plus"), which SteamGridDB does not know. The
+   app reads the serial; PCSX2's own game database (in its AppImage) has the name for it ("Lumines Plus"), for
+   Steam's name and the lookup alike. The owner wants the game ID off the name in Steam ("[PS2] Lumines Plus");
+   for a game the database lacks, the file name without the serial in front.
+6. The controller, before the first start: plugged in over USB while still connected over Bluetooth, the kernel
+   refused the USB device (hid-playstation: duplicate MAC address, error -17); then the Bluetooth link went too, so
+   the controller was on USB without a driver: no light, no input, no sign whether it is on (owner). Unplugging and
+   plugging in again fixes it. Nothing in the suite says so yet. The journal shows why the Bluetooth link went:
+   USB HD Control's idle service switched the controller off at 22:14 ("on Bluetooth unused for 10 minutes")
+   while its cable was in. Plugging in mid-game itself works: the controller charges and stays on Bluetooth. A
+   real case (owner): plugging in to charge and playing on. The idle service switched a controller off six times
+   on 23-10-2026, each in a pause of the investigation, the disconnects the owner met that evening. Proposed (owner
+   to decide): no switch-off while the cable is in, maybe none (or later) while a game runs, and a note in the app
+   when the kernel refuses the USB device.
+7. The first start from Steam (desktop Steam; its desktop window takes no controller, Steam's design) showed
+   PCSX2's setup wizard (screenshots by the owner, 23-10-2026). Its pages: language and theme with "Enable
+   Automatic Updates" ticked (the only box; the wizard does not come back after Finish, SetupWizardIncomplete =
+   false); BIOS (it found SCPH10000.BIN in its bios folder, to be selected); game directories (empty; not needed
+   for a Steam start, which names the file); controller setup ("Default (Keyboard)": "To use an external
+   controller, you must map it first"); RetroAchievements (optional); complete (desktop shortcut and menu entry,
+   left off). After Finish the game started; PCSX2 opened the controller over SDL (the run wrapper's Steam fix
+   works) and player 1 stayed on the keyboard, so the controller did nothing. What the manager would write into
+   PCSX2.ini before the first start: the wizard done, the BIOS, automatic updates off (PCSX2 would replace the
+   pinned build), player 1 on SDL-0; the game folder optional. A second start went straight into the game, no
+   wizard (owner). Then player 1 was bound by hand to SDL-0 in PCSX2.ini, as PCSX2's Automatic Mapping writes it
+   (DPadUp…, FaceSouth for Cross, Back/Start, LeftShoulder, +LeftTrigger, LeftStick, ±LeftX/Y, ±RightX/Y, Guide for
+   Analog, LargeMotor/SmallMotor; the file before it kept beside the set-aside folder): from Steam, the controller
+   works in the game (owner, 23-10-2026). The recipe for PCSX2 Manager is complete. Over Bluetooth too (cable
+   out), the same binding works (owner). SDL-0 is the first controller of any model SDL knows, by position (Cross
+   the bottom button); with two connected, the first is SDL's choice.
+8. Earlier, before the round: PCSX2's first start shows its setup wizard (PCSX2's design: once, until Finish; see
+   7), and it asks again for the BIOS and the game folder the manager already knows. Player 1 is bound
+   to the keyboard only (PCSX2's default); PCSX2 opens the controller as SDL-0, nothing is bound to it, so the
+   controller does nothing in the game.
+9. Fit the screen (owner): a 4:3 game has borders left and right on a 16:9 screen; the manager should set it, or
+   offer it as an option. PCSX2 has the aspect ratio ([EmuCore/GS] AspectRatio: Auto 4:3/3:2, 4:3, 16:9, Stretch)
+   and widescreen patches ([EmuCore] EnableWideScreenPatches) for the games that have one. Decided (owner,
+   23-10-2026): an option per game, since not every game has a widescreen patch; the owner fills the screen. PCSX2
+   keeps per-game settings in `gamesettings/<serial>_<CRC>.ini`, which the manager can write.
+
+Built (23-10-2026, local, uncommitted; PCSX2 Manager's CHANGELOG has it): items 1 to 5, 7 and 9. The app keeps
+PCSX2.ini at what it owns while PCSX2 is installed and not running (wizard done, PCSX2's update check off, the
+BIOS, player 1 on SDL-0 while no controller is mapped), starting from PCSX2 2.8.2's own defaults when there is no
+file (pcsx2_defaults.ini, made from the first-start file on the board without the window's places, the BIOS and the
+game folder path). Choose BIOS… copies the dump with its companions. Titles from PCSX2's GameIndex.yaml, taken out of
+the AppImage with --appimage-extract, else the file's name without a serial. A Screen column per game (Original,
+Widescreen when patches.zip has one for `<serial>_<CRC>`, Fill screen) in `gamesettings/<serial>_<CRC>.ini`; the CRC
+computed from the ISO matched PCSX2's (93262D20). Buttons: Update Steam, Steam artwork…, In Steam. Not built: the
+game folder in PCSX2's own game list (not needed for a Steam start). Open (owner): the round again from scratch on
+the board (set ~/.config/PCSX2, the manager's settings and PCSX2 aside, then follow the window): no wizard, no
+reset question from PCSX2 on the file made from its defaults, the controller in the game at the first start, Esc
+opens the pause menu, Fill screen fills it; a game with a widescreen patch, when one is at hand. Then a release of
+pcsx2 (a feature: the number is the owner's). Second round set up (23-10-2026): everything set aside again in
+`~/bc250-set-aside/pcsx2-round2/` (PCSX2, ~/.config/PCSX2 with the hand-made SDL-0 mapping, the manager's settings,
+the Lumines Plus shortcut, taken out with the manager's code; shortcuts.vdf and its artwork kept); the first
+round's in `~/bc250-set-aside/pcsx2-23-10-2026/`, with the SteamGridDB key, still aside. The new app runs from the
+checkout (`cd apps/pcsx2 && PYTHONPATH=../../core ~/.local/share/bc250-bazzite-suite/venv/bin/python -m
+pcsx2_manager`); the installed one is 0.9.1. 
+
+The owner's conclusions (24-10-2026) and what followed, all built the same day (local, uncommitted; PCSX2 Manager's
+CHANGELOG has it): the nightly channel removed; Refresh a pill; no Play button and no PCSX2 settings button, every
+PCSX2 setting through the manager (a Settings tab: renderer, internal resolution, filtering, FXAA, integer scaling,
+VSync, FPS, fast boot, cheats, volume, vibration, player 2); the mouse hidden in a game (HideMouseCursor, owned by
+the app); the BIOS and the game folders by name, paths in the tooltips; a log per app (core's applog, a Log tab);
+Big Picture Mode is Steam's name on the desktop, Game Mode the handheld's session, the texts say so; the memory
+cards in the manager (a tab, with the slot choice PCSX2's own window held before). "What is in it" (the owner
+asked what it is: the link to PCSX2's GitHub release page) is "PCSX2's release notes".
+
+The owner's third round (24-10-2026, from the board; built the same day, local, uncommitted; PCSX2 Manager's
+CHANGELOG has it): the steps as six pills (Install and Remove for PCSX2 and for a BIOS, Add folder and Remove
+folder), the Refresh pill with the blue left edge only, the release notes linked in the introduction, the table's
+columns renamed, the Settings boxes no longer over each other (found by rendering the window offscreen: the Sound
+box lay on the Picture box), the Memory cards details in a box with margins, more in the log (the game started, by
+the run wrapper; PCSX2's last run from its own emulog.txt: game, play time, controller), Quit a game with Select +
+Start (PCSX2's ShutdownVM hotkey on a controller chord, off by default), and three settings more from PCSX2.ini
+(Blending accuracy, Video (FMV) shape, No-interlacing patches). Decided by the owner's questions, not built: the
+Mesh Shaders driver does nothing for PCSX2 (its Vulkan renderer uses no mesh shaders; the internal resolution is
+GPU fill rate); a screenshot button in the app is not possible while a game runs from Steam (PCSX2's PINE has no
+such command), Steam's overlay takes and shares screenshots, and the wiki says so. Noted from PCSX2 2.8.2's source
+while checking the per-game widescreen key: PCSX2 calls the per-game EnableWideScreenPatches "deprecated in
+favor of patches" (its own dialog writes [Patches] Enable = Widescreen 16:9 into the game's settings) and deletes
+the key when the global settings are copied into a game's; on the board the key the app writes did enable the
+patch (emulog: "Enabled patch: Widescreen 16:9", 24-10-2026), so it stays; a code path to check again when the
+pinned PCSX2 moves. Set aside for the owner's next round (24-10-2026, nothing deleted) in
+`~/bc250-set-aside/pcsx2-round4/` (`pcsx2-round3/` was already taken by a set-aside earlier that morning): PCSX2
+2.8.2 with its catalogue (share/emulator), the covers and the app's log (share/), `~/.config/PCSX2` (BIOS, memory
+cards with Lumines Plus's save, the two game settings files, emulog.txt), the manager's settings, the suite's
+SteamGridDB key (steamgriddb-key: copy it back to `~/.config/bc250-bazzite-suite/` to have the covers again), and
+Steam's shortcuts.vdf with the artwork of the two shortcuts (steam/), which were taken out with the app's own code
+(Steam closed for it and started again). The installed app stays 0.9.1 (the round runs the new app from the
+checkout, as before); only the run wrapper in `~/.local/bin` is the checkout's, so a game started from Steam
+writes its line into the app's log (the next portal install writes the released one over it). From the owner's
+first look at the new window (24-10-2026, settled after three tries): the pills the header pills' size, spread
+over the window's width in equal parts, what each is for on top (PCSX2, BIOS, Games) and what it does under it
+(Install, Uninstall, Add folder, Remove folder); the game folders' line without the "subfolders, five deep"
+sentence; the Screen setting as the table's last column and the choice boxes flat with a thin chevron (the owner
+found the old-style drop-downs out of place); the intro's link says Wiki; no frame around the tabs' page; a Play time box in the header from PCSX2's
+playtime.dat (the sum; per game in the tip) in place of the BIOS count box, the header's pills spread over the
+width like the action pills; the tabs the pills' size. The owner asked whether a newer
+PCSX2 is still announced: yes, the window asks GitHub at every start and says so in the PCSX2 line, with a link;
+the app installs only the release it was tried with, a newer one comes with a newer app through the portal. The
+owner's Lumines Plus runs at 08:24 and 08:25 had no controller at all (USB HD Control's idle service had switched
+the DualSense Edge off at 07:48, PCSX2 opened no gamepad), so Select + Start could not quit; asked for by the owner
+and built: a controller state beside the title (looked at every 3 s) and a desktop notification from the run
+wrapper when Steam starts a game without one; the wrapper's log line says whether one was there. To check on the
+board: the state turns green when the controller wakes, the notification shows on the desktop, and the chord quits
+a game with the controller connected. Confirmed on the board by the owner (24-10-2026): Quit a game with Select + Start ends the
+game; in Big Picture Mode the PS button opens Steam's menu over the game and, pressed again there, the power menu
+with Exit game and the way out of Big Picture Mode (the wiki says so). The quit chord is on by default (owner, 24-10-2026):
+prepare() sets it while PCSX2.ini has no ShutdownVM line; the switch's off leaves the line empty (PCSX2: no
+binding), so off stays off; the wiki says so. The owner's verdict (24-10-2026, after the round): a good first base for
+the other managers; released next as a major update (the number is the owner's; the CHANGELOG's first entry since
+the last tag is Breaking, so Suite Releases offers major first), with core (Added: applog; Fixed: the Covers
+dialog) and the portal's pin and summary for pcsx2 (the owner's). Still open after the release: the round from scratch on the board
+with the new window: no wizard, the controller in the game at the first start, a setting changed in the tab seen in
+the game (the internal resolution is the easiest to see), the slot choice seen by PCSX2 (a save lands on the card
+chosen for slot 1), Select + Start ending a game started from Steam, the log's lines after a game. Then a release
+of pcsx2 (Breaking: the buttons and the channel went) and of core (Added: applog); the numbers are the owner's.
+The portal's summary for pcsx2 in apps.toml still says "added to Game Mode" (a portal change, with its bump: the
+owner's).
+
 ## Done
 
 | Step | What | State |
@@ -785,7 +943,8 @@ colours (owner, 19-10-2026).
   colour, a vibration test, the update's data flow, turning with the mouse, the drawing redone (85 % wide, larger
   d-pad and face buttons in the first pads' colours, the gaming blue). Open on the board (the owner): press every
   button, the Edge's Fn and back buttons included (their bits, 0x10 to 0x80 of the third button byte, are from the
-  layout SDL reads, not read on the board yet), set a light bar colour (USB; Bluetooth untried), Test vibration
+  layout SDL reads, not read on the board yet), set a light bar colour (USB; over Bluetooth the app's report, sent from the board outside the window, turned it
+  green, 23-10-2026), Test vibration
   (left, then right). The owner tried it (23-10-2026): every button, the Edge's included, and both motors work. Then
   the d-pad white with gaps, the turning removed, the battery as a phone shows it in the header, the controller box
   rearranged (owner, 23-10-2026). Found on the owner's board (23-10-2026): the Edge plugged in while connected over

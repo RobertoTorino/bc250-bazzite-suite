@@ -47,4 +47,30 @@ if [ -n "${SteamGameId:-}" ] && [ -n "${WAYLAND_DISPLAY:-}" ] && [ -n "${DISPLAY
    [ -z "${QT_QPA_PLATFORM:-}" ]; then
     export QT_QPA_PLATFORM=xcb
 fi
+# The game started goes to the app's log (the Log tab), in the app's own form, by its file's name and from where
+# (Steam sets SteamGameId); nothing else is known here. PCSX2 logs the rest of the run itself (the game, the
+# controllers, the play time), which the app reads into its log the next time it looks.
+LOG="${XDG_DATA_HOME:-$HOME/.local/share}/bc250-pcsx2-manager/bc250-pcsx2-manager.log"
+game=""
+for arg in "$@"; do game=$arg; done
+if [ -n "$game" ] && [ "${game#-}" = "$game" ]; then
+    from="from a terminal"
+    [ -n "${SteamGameId:-}" ] && from="from Steam"
+    if real_controller; then
+        pad="with a controller"
+    else
+        pad="without a controller"
+        # Said on the desktop too (a controller switched off by its idle timer; owner, 24-10-2026): the game is
+        # starting, so the window is not where the eyes are.
+        if [ -n "${SteamGameId:-}" ] && command -v notify-send >/dev/null 2>&1; then
+            notify-send -a "PCSX2 Manager" -i input-gaming "No controller connected" \
+                "Switch your controller on, or press its PS button to wake it. PCSX2 plays with the keyboard only until then." \
+                2>/dev/null || true
+        fi
+    fi
+    if [ -d "${LOG%/*}" ]; then
+        printf -v stamp '%(%d-%m-%Y %H:%M:%S)T' -1
+        printf '%s INFO Started %s %s, %s.\n' "$stamp" "${game##*/}" "$from" "$pad" >>"$LOG" 2>/dev/null || true
+    fi
+fi
 exec "$APPIMAGE" "$@"

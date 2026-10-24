@@ -1,35 +1,32 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The PCSX2 this version of the app installs. Two channels, chosen in the window:
-
-* the stable release, pinned: the Linux AppImage of a stable release on GitHub, checked against the SHA-256 this
-  version of the app was tried with. A newer stable comes with a new version of the app, so the launch line and the
-  advice in the app are tried with the release they are for; the app says when there is a newer one.
-* the nightly builds (owner's decision 15-10-2026): PCSX2 publishes a pre-release for almost every change, and
-  those builds are mostly stable. Install then downloads the newest one and checks it against the SHA-256 GitHub
-  computed for that build (the asset's digest in the API): the download is whole, but the build is not one this app
-  was tried with, and the window says so.
+"""The PCSX2 this version of the app installs: the Linux AppImage of one stable release on GitHub, pinned, checked
+against the SHA-256 this version of the app was tried with. A newer stable comes with a new version of the app, so
+the launch line and the settings the app writes are tried with the release they are for; the app says when there is
+a newer one. (The nightly channel of before went on the owner's decision, 24-10-2026: the app installs the release
+it was tried with and nothing else.)
 
 It goes to ~/.local/share/bc250-pcsx2-manager/emulator/<version>/pcsx2.AppImage, with "current" pointing to it and
-the build's size beside it (.size), so replaced() knows the expected size whatever the channel. The run wrapper
+the build's size beside it (.size), so replaced() knows the expected size. The run wrapper
 (~/.local/bin/bc250-pcsx2-run) starts "current", so the Steam shortcuts keep working when the version changes.
-PCSX2's own window offers its updates when it opens, and replaces the AppImage with another build when asked to;
-the app then says so (replaced()), and Install puts the channel's build back."""
+Install also takes PCSX2's catalogue out of the AppImage, beside it (catalogue.py). PCSX2's own window offers its
+updates when it opens, and replaces the AppImage with another build when asked to; the app then says so
+(replaced()), and Install puts the pinned release back."""
 
 from __future__ import annotations
 
 import hashlib
 import os
 import shutil
+import subprocess
 import urllib.error
 import urllib.request
 from collections.abc import Callable
-from dataclasses import dataclass
 from pathlib import Path
 
 from bc250_core.platform import data_home
-from bc250_core.updates import Fetch, ReleaseInfo, github_fetch, latest_release, version_tuple
+from bc250_core.updates import Fetch, ReleaseInfo, latest_release, version_tuple
 
-from . import APP_ID, __version__
+from . import APP_ID, __version__, catalogue
 
 VERSION = "2.8.2"
 TAG = f"v{VERSION}"
@@ -71,8 +68,8 @@ def installed_version(home: Path) -> str:
 
 def replaced(home: Path) -> bool:
     """Whether the installed AppImage is no longer the installed build: PCSX2 updated itself in its own window (it
-    writes the new build over the AppImage it runs from). The expected size is the .size written at install (a
-    nightly's differs per build); the pinned stable's without it."""
+    writes the new build over the AppImage it runs from). The expected size is the .size written at install; the
+    pinned release's without it (an install from before the file was written)."""
     image = appimage(home)
     try:
         size = image.stat().st_size
@@ -83,6 +80,17 @@ def replaced(home: Path) -> bool:
     except (OSError, ValueError):
         expected = SIZE
     return size != expected
+
+
+def take_catalogue(home: Path) -> bool:
+    """PCSX2's catalogue (game titles, patches) out of the installed AppImage, beside it (catalogue.py); whether it
+    is there afterwards. Without it the app goes on with the files' names."""
+    image = appimage(home)
+    try:
+        catalogue.extract(image)
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return not catalogue.missing(image.parent)
 
 
 def download(url: str, dest: Path, progress: Progress | None = None) -> None:
@@ -105,10 +113,9 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _install(home: Path, version: str, url: str, asset: str, checksum: str, refused: str,
-             fetch: Download, progress: Progress | None) -> None:
-    """Downloads one build, checks it against *checksum* and installs it as "current"; other versions go. Nothing
-    changes when a step fails (EmulatorError)."""
+def install(home: Path, fetch: Download = download, progress: Progress | None = None) -> str:
+    """Downloads the pinned release, checks it against the SHA-256 this app was tried with and installs it as
+    "current"; other versions go. Nothing changes when a step fails (EmulatorError). Returns what was done."""
     home.mkdir(parents=True, exist_ok=True)
     work = home / f".download-{os.getpid()}"
     shutil.rmtree(work, ignore_errors=True)
@@ -116,34 +123,31 @@ def _install(home: Path, version: str, url: str, asset: str, checksum: str, refu
     try:
         image = work / MEMBER
         try:
-            fetch(url, image, progress)
+            fetch(URL, image, progress)
         except urllib.error.HTTPError as error:
-            raise EmulatorError(f"GitHub answered {error.code} for {asset}.") from error
+            raise EmulatorError(f"GitHub answered {error.code} for {ASSET}.") from error
         except (urllib.error.URLError, OSError) as error:
             reason = str(getattr(error, "reason", error))
             raise EmulatorError(f"The download failed: {reason}.") from error
-        if sha256(image) != checksum:
-            raise EmulatorError(f"{asset} is not the file {refused} (its SHA-256 differs); nothing was installed.")
+        if sha256(image) != SHA256:
+            raise EmulatorError(f"{ASSET} is not the file this app was tested with (its SHA-256 differs); nothing "
+                                "was installed.")
         image.chmod(0o755)
-        target = home / version
+        target = home / VERSION
         shutil.rmtree(target, ignore_errors=True)
         target.mkdir()
         (target / ".size").write_text(str(image.stat().st_size))    # replaced() compares against the installed build
         image.replace(target / MEMBER)
         link = home / ".current-new"
         link.unlink(missing_ok=True)
-        link.symlink_to(version)
+        link.symlink_to(VERSION)
         link.replace(home / "current")
     finally:
         shutil.rmtree(work, ignore_errors=True)
+    take_catalogue(home)
     for other in home.iterdir():
-        if other.is_dir() and not other.is_symlink() and other.name != version and not other.name.startswith("."):
+        if other.is_dir() and not other.is_symlink() and other.name != VERSION and not other.name.startswith("."):
             shutil.rmtree(other, ignore_errors=True)
-
-
-def install(home: Path, fetch: Download = download, progress: Progress | None = None) -> str:
-    """The pinned stable release, checked against the SHA-256 this app was tried with. Returns what was done."""
-    _install(home, VERSION, URL, ASSET, SHA256, "this app was tested with", fetch, progress)
     return f"PCSX2 {VERSION} is installed."
 
 
@@ -160,63 +164,3 @@ def newer_release(fetch: Fetch | None = None) -> ReleaseInfo | None:
     if latest.error or version_tuple(latest.version) <= version_tuple(VERSION):
         return None
     return latest
-
-
-# --- The nightly channel ----------------------------------------------------------------------------------------
-
-NIGHTLY_ASSET_END = "-linux-appimage-x64-Qt.AppImage"
-
-
-@dataclass(frozen=True)
-class Nightly:
-    """One nightly build as GitHub publishes it: a pre-release whose AppImage carries GitHub's own SHA-256 (the
-    asset's digest). That checksum says the download is whole, not that the build was tried on the board."""
-    version: str                        # "2.9.127"
-    tag: str                            # "v2.9.127"
-    url: str                            # the AppImage
-    sha256: str
-    size: int
-    published: str                      # YYYY-MM-DD
-    page: str                           # the release page
-
-
-def latest_nightly(fetch: Fetch | None = None) -> Nightly:
-    """PCSX2's newest nightly build with its checksum. EmulatorError when GitHub cannot be asked, or when no
-    nightly with a checksum is found (nothing to install then)."""
-    fetch = fetch or github_fetch(f"{APP_ID}/{__version__}")
-    try:
-        data = fetch(f"https://api.github.com/repos/{REPO}/releases?per_page=30")
-        if not isinstance(data, list):
-            raise ValueError("not a release list")
-    except urllib.error.HTTPError as error:
-        raise EmulatorError(f"GitHub answered {error.code}.") from error
-    except (urllib.error.URLError, OSError, ValueError) as error:
-        reason = str(getattr(error, "reason", error))
-        raise EmulatorError(f"GitHub could not be asked for the nightly builds: {reason}.") from error
-    found: list[tuple[tuple[int, ...], Nightly]] = []
-    for item in data:
-        if item.get("draft") or not item.get("prerelease"):
-            continue
-        tag = str(item.get("tag_name", ""))
-        version = version_tuple(tag)
-        if not version:
-            continue
-        for asset in item.get("assets", []):
-            name = str(asset.get("name", ""))
-            digest = str(asset.get("digest") or "")
-            if name.endswith(NIGHTLY_ASSET_END) and digest.startswith("sha256:"):
-                found.append((version, Nightly(".".join(map(str, version)), tag,
-                                               str(asset.get("browser_download_url", "")), digest[len("sha256:"):],
-                                               int(asset.get("size") or 0), str(item.get("published_at", ""))[:10],
-                                               str(item.get("html_url", "")))))
-    if not found:
-        raise EmulatorError("GitHub lists no nightly build with a checksum.")
-    return max(found, key=lambda pair: pair[0])[1]
-
-
-def install_build(home: Path, build: Nightly, fetch: Download = download, progress: Progress | None = None) -> str:
-    """Downloads one nightly build and checks it against GitHub's checksum for it. Returns what was done;
-    EmulatorError when a step fails (nothing changes then)."""
-    _install(home, build.version, build.url, build.url.rsplit("/", 1)[-1], build.sha256,
-             "GitHub published for this build", fetch, progress)
-    return f"PCSX2 nightly {build.version} is installed."

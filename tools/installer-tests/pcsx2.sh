@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Exercise apps/pcsx2/install.sh: install from the checkout (core bundled, shared venv, the run wrapper,
 # no sudo), a staged release replacing it, the refusals, uninstall with another venv user (the installed PCSX2
-# removed; PCSX2's own folder, the games and the settings kept) and --purge as the last venv user (the settings
-# removed).
+# removed; PCSX2's own folder, the games, the settings and the log kept) and --purge as the last venv user (the
+# settings, covers and log removed).
 # Runs with the shims from shims.sh (CI, or WSL on Windows).
 set -u
 SUITE=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
@@ -25,7 +25,8 @@ check "exit 0" "[ $rc -eq 0 ]"
 check "no sudo used" "! grep -q 'sudo called' $T/log1 && [ -z \"\$(ls -A $T/opt)\" ]"
 check "app copied" "[ -f $A/pcsx2_manager/main_window.py ] && [ -f $A/images/$APP.webp ] && [ -f $A/images/$APP-128.png ]"
 check "core bundled from checkout" "[ -f $A/bc250_core/steam.py ]"
-check "memory card code copied" "[ -f $A/pcsx2_manager/memcard_dialog.py ] && [ -f $A/pcsx2_manager/mymc/save/lzari.py ]"
+check "memory card code copied" "[ -f $A/pcsx2_manager/memcard_page.py ] && [ -f $A/pcsx2_manager/mymc/save/lzari.py ]"
+check "settings tab and core's log copied" "[ -f $A/pcsx2_manager/settings_page.py ] && [ -f $A/bc250_core/applog.py ]"
 check "no tests or caches copied" "[ ! -d $A/tests ] && ! find $A -name __pycache__ | grep -q ."
 check "shared venv and its user marker" "[ -x $D/bc250-bazzite-suite/venv/bin/python ] && [ -f $D/bc250-bazzite-suite/venv-users/$APP ]"
 check "launcher uses shared venv" "grep -qF 'bc250-bazzite-suite/venv/bin/python\" -m pcsx2_manager' $HOME/.local/bin/$APP"
@@ -44,6 +45,7 @@ chmod +x "$D/$APP/emulator/2.8.2/pcsx2.AppImage"
 ln -sfn 2.8.2 "$D/$APP/emulator/current"
 bash "$RUN" -nogui -fullscreen -- "/games/My Game.iso" > "$T/run.log" 2>&1; rc=$?
 check "starts the current PCSX2 with the arguments as given" "[ $rc -eq 0 ] && grep -qxF 'args: -nogui -fullscreen -- /games/My Game.iso' $T/run.log"
+check "the game started goes to the app's log, by name" "grep -q ' INFO Started My Game.iso from a terminal, with' $D/$APP/$APP.log && ! grep -q '/games/' $D/$APP/$APP.log"
 
 echo "== 3. install a staged release (core bundled in the tarball) without the Desktop icon"
 rm -rf "$T/stage"; /usr/bin/python3 "$SUITE/tools/stage_app.py" pcsx2 "$T/stage" > /dev/null
@@ -63,14 +65,16 @@ check "--purge alone refused" "[ $rc -ne 0 ] && grep -q 'only goes with --uninst
 bash "$T/stage/install.sh" --bogus > "$T/log4" 2>&1; rc=$?
 check "unknown option refused" "[ $rc -ne 0 ] && grep -q 'Unknown option: --bogus' $T/log4"
 
-echo "== 5. uninstall while another suite app uses the venv: PCSX2's own folder and the settings kept"
+echo "== 5. uninstall while another suite app uses the venv: PCSX2's own folder, the settings and the log kept"
 touch "$D/bc250-bazzite-suite/venv-users/bc250-bazzite-test"
 mkdir -p "$XDG_CONFIG_HOME/PCSX2/bios" "$XDG_CONFIG_HOME/$APP" && touch "$XDG_CONFIG_HOME/PCSX2/bios/SCPH-70012.bin" "$XDG_CONFIG_HOME/$APP/$APP.ini"
+echo "24-10-2026 04:00:00 INFO PCSX2 Manager started" > "$D/$APP/$APP.log"
 bash "$T/stage/install.sh" --uninstall > "$T/log5" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "app and installed PCSX2 gone" "[ ! -e $A ] && [ ! -e $D/$APP/emulator ]"
 check "launchers and menu entry gone" "[ ! -e $HOME/.local/bin/$APP ] && [ ! -e $RUN ] && [ ! -e $D/applications/$APP.desktop ]"
 check "PCSX2's own folder and the settings kept" "[ -f $XDG_CONFIG_HOME/PCSX2/bios/SCPH-70012.bin ] && [ -d $XDG_CONFIG_HOME/PCSX2/bios ] && [ -f $XDG_CONFIG_HOME/$APP/$APP.ini ]"
+check "the log kept" "[ -f $D/$APP/$APP.log ]"
 check "venv kept, own marker gone" "[ -x $D/bc250-bazzite-suite/venv/bin/python ] && [ ! -e $D/bc250-bazzite-suite/venv-users/$APP ]"
 
 echo "== 6. reinstall, then uninstall --purge as the last venv user"
@@ -79,7 +83,7 @@ mkdir -p "$D/$APP/covers" && touch "$D/$APP/covers/CUSA00001p.png"       # cover
 bash "$T/stage/install.sh" > "$T/log6" 2>&1 && bash "$T/stage/install.sh" --uninstall --purge >> "$T/log6" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "venv removed" "[ ! -e $D/bc250-bazzite-suite/venv ] && [ ! -e $D/bc250-bazzite-suite/venv-users ]"
-check "settings and covers removed" "[ ! -e $XDG_CONFIG_HOME/$APP ] && [ ! -e $D/$APP ]"
+check "settings, covers and log removed" "[ ! -e $XDG_CONFIG_HOME/$APP ] && [ ! -e $D/$APP ]"
 check "PCSX2's own folder still there" "[ -f $XDG_CONFIG_HOME/PCSX2/bios/SCPH-70012.bin ]"
 
 [ $fail -eq 0 ] && echo "ALL OK" || for n in 1 3 4 5 6; do echo "--- log$n"; cat "$T/log$n"; done

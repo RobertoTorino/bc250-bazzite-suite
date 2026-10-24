@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The Memory cards window: PCSX2's cards, the saves on the chosen one with the selected save's 3D icon as a still
-picture, and import, export, copy to another card, delete, a new card, format and check (memcards.py on mymc++'s
-card code). What mymc++'s own window does, on the folder PCSX2 keeps its cards in. Changes, checks and the
-pictures run off the GUI thread; a .max save is packed and unpacked in Python, which takes a moment."""
+"""The Memory cards tab: PCSX2's cards, the slot each is in, the saves on the chosen one with the selected save's 3D
+icon as a still picture, and import, export, copy to another card, delete, a new card, format and check
+(memcards.py on mymc++'s card code). What mymc++'s own window does, on the folder PCSX2 keeps its cards in, and
+which card PCSX2 uses in each slot (owner, 24-10-2026: the cards in the manager, PCSX2's own window is not
+opened). Changes, checks and the pictures run off the GUI thread; a .max save is packed and unpacked in Python,
+which takes a moment."""
 
 from __future__ import annotations
 
+import logging
 import unicodedata
 from collections.abc import Callable
 from html import escape
@@ -13,21 +16,23 @@ from pathlib import Path
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout,
+from PyQt6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QFileDialog, QFormLayout, QFrame, QHBoxLayout,
                              QHeaderView, QInputDialog, QLabel, QLineEdit, QMessageBox, QPushButton, QTableWidget,
-                             QTableWidgetItem, QVBoxLayout)
+                             QTableWidgetItem, QVBoxLayout, QWidget)
 
 from bc250_core import window_title
+from bc250_core.theme import surface_style
 from bc250_core.updates import UpdateChecker
 from bc250_core.widgets import hint_label
 
-from . import memcard_icon, memcards, style
+from . import memcard_icon, memcards, pcsx2_settings, style
 from .memcards import Card, CardError, Save
 
-PICTURE = memcard_icon.SIZE
+PICTURE = 96                            # the icon shown at this size (drawn at memcard_icon.SIZE, scaled down)
 RUNNING = "PCSX2 is running: close it before changing a card, it would write its own copy over the change."
 EXPORT_FILTERS = ";;".join(f"{name} (*{suffix})" for suffix, name in memcards.EXPORT_KINDS.items())
 IMPORT_FILTER = "PS2 saves (" + " ".join(f"*{s}" for s in memcards.IMPORT_SUFFIXES) + ")"
+SLOTS = {0: "Not in a slot", 1: "Slot 1", 2: "Slot 2"}
 
 
 def shown(title: str) -> str:
@@ -68,18 +73,20 @@ class NewCardDialog(QDialog):
         return self.name_edit.text().strip(), int(self.size_combo.currentData())
 
 
-class MemcardDialog(QDialog):
-    """*folder*: PCSX2's memory card folder; *slots*: {card file: slot} from PCSX2's settings; *running*: whether
-    PCSX2 runs (tests pass their own)."""
+class MemcardPage(QWidget):
+    """*pcsx2_home*: PCSX2's own folder, with its memory card folder and the slots in its settings; *running*:
+    whether PCSX2 runs (tests pass their own); *log*: the app's log, for what the page does."""
 
-    def __init__(self, folder: Path, slots: dict[str, int] | None = None,
-                 running: Callable[[], bool] = memcards.pcsx2_running, parent=None):
+    WIDTH = 720                                     # the block's width at most
+
+    def __init__(self, pcsx2_home: Path, running: Callable[[], bool] = memcards.pcsx2_running,
+                 log: logging.Logger | None = None, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(window_title("Memory cards"))
-        self.resize(920, 600)
-        self.folder = folder
-        self.slots = slots or {}
+        self.pcsx2_home = pcsx2_home
+        self.folder = memcards.card_folder(pcsx2_home)
+        self.slots: dict[str, int] = {}
         self.running = running
+        self.log = log or logging.getLogger(__name__)
         self.cards: list[Card] = []
         self.worker = UpdateChecker(self)               # one change or check at a time
         self.worker.finished.connect(self._job_done)
@@ -91,6 +98,12 @@ class MemcardDialog(QDialog):
         self.card_combo = QComboBox()
         self.card_combo.setMinimumWidth(260)
         self.card_combo.currentIndexChanged.connect(self._card_changed)
+        self.slot_combo = QComboBox()
+        for slot, text in SLOTS.items():
+            self.slot_combo.addItem(text, slot)
+        self.slot_combo.setToolTip("The slot of the PS2 this card is in: a game saves to the card in slot 1, and "
+                                   "some use slot 2 too. A card is in one slot at most.")
+        self.slot_combo.currentIndexChanged.connect(self._slot_chosen)
         self.new_button = QPushButton("New card…")
         self.new_button.setToolTip("Make a new, empty card in PCSX2's memory card folder")
         self.new_button.clicked.connect(self.on_new)
@@ -105,6 +118,7 @@ class MemcardDialog(QDialog):
         label.setStyleSheet("font-weight:700;")
         top.addWidget(label)
         top.addWidget(self.card_combo, 1)
+        top.addWidget(self.slot_combo)
         top.addWidget(self.new_button)
         top.addWidget(self.format_button)
         top.addWidget(self.check_button)
@@ -128,20 +142,31 @@ class MemcardDialog(QDialog):
             head.setSectionResizeMode(column, mode)
         self.table.itemSelectionChanged.connect(self._selection_changed)
 
+        # The selected save beside the table: its icon and a few lines about it, in a box of the picture's width
+        # with room around the text, shown while there is a save to show (owner, 24-10-2026: the text sat on the
+        # edge and the block was too wide).
         self.picture = QLabel()
         self.picture.setFixedSize(PICTURE, PICTURE)
         self.picture.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.details = QLabel()
         self.details.setWordWrap(True)
-        self.details.setFixedWidth(PICTURE + 40)
+        self.details.setFixedWidth(PICTURE)
         self.details.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self.details.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        side = QVBoxLayout()
+        self.side = QFrame()
+        self.side.setObjectName("side")
+        self.side.setStyleSheet(surface_style(style.BLUE, "QFrame#side")
+                                + "#side QLabel { background:transparent; border:none; }")
+        side = QVBoxLayout(self.side)
+        side.setContentsMargins(9, 12, 12, 12)                  # 12 all round inside the border
+        side.setSpacing(10)
         side.addWidget(self.picture, 0, Qt.AlignmentFlag.AlignHCenter)
         side.addWidget(self.details, 1)
+        self.side.setFixedWidth(PICTURE + 9 + 12 + 5)           # the margins and the border
         middle = QHBoxLayout()
+        middle.setSpacing(10)
         middle.addWidget(self.table, 1)
-        middle.addLayout(side)
+        middle.addWidget(self.side, 0, Qt.AlignmentFlag.AlignTop)
 
         self.import_button = style.primary_button("Import…", "Put save files on the card (.max, .psu, .sps, "
                                                              ".xps, .cbs, .psv)")
@@ -156,37 +181,46 @@ class MemcardDialog(QDialog):
         self.delete_button.setToolTip("Delete the selected saves from the card (its backup keeps them)")
         self.delete_button.clicked.connect(self.on_delete)
         self.space = QLabel()
-        close_button = QPushButton("Close")
-        close_button.clicked.connect(self.accept)
         buttons = QHBoxLayout()
         for button in (self.import_button, self.export_button, self.copy_button, self.delete_button):
             buttons.addWidget(button)
         buttons.addStretch(1)
         buttons.addWidget(self.space)
-        buttons.addWidget(close_button)
 
         self.status = QLabel()
         self.status.setWordWrap(True)
         self.status.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
 
-        lay = QVBoxLayout(self)
+        # The tab's contents in a block of WIDTH at most, on the left: a card's list needs no more, and across the
+        # whole window it was out of proportion (owner, 24-10-2026).
+        block = QWidget()
+        block.setMaximumWidth(self.WIDTH)
+        lay = QVBoxLayout(block)
+        lay.setContentsMargins(0, 8, 0, 0)
         lay.addLayout(top)
-        lay.addWidget(hint_label(
-            f"The cards in {folder}, the folder PCSX2 keeps them in. Before every change a card is copied beside "
-            f"it (name.date.bak, the newest {memcards.BACKUPS_KEPT} kept), and nothing is written while PCSX2 "
-            "runs."))
+        self.hint = hint_label("")
+        lay.addWidget(self.hint)
         lay.addWidget(self.warning)
         lay.addLayout(middle, 1)
         lay.addLayout(buttons)
         lay.addWidget(self.status)
-        style.apply(self)
+        outer = QHBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.addWidget(block, 1)
+        outer.addStretch(1)
         self.load()
 
     # --- State ------------------------------------------------------------------------------------------------
 
     def load(self, keep: str = "") -> None:
-        """Reads the cards again; the card named *keep* (or the one chosen, or slot 1's) stays chosen."""
+        """Reads PCSX2's folder, slots and cards again; the card named *keep* (or the one chosen, or slot 1's)
+        stays chosen."""
         keep = keep or (self.card().name if self.card() else "")
+        self.folder = memcards.card_folder(self.pcsx2_home)
+        self.slots = memcards.slot_cards(self.pcsx2_home)
+        self.hint.setText(f"The cards in {self.folder}, the folder PCSX2 keeps them in. Before every change a card "
+                          f"is copied beside it (name.date.bak, the newest {memcards.BACKUPS_KEPT} kept), and "
+                          "nothing is written while PCSX2 runs.")
         if not keep:
             keep = next((name for name, slot in sorted(self.slots.items(), key=lambda s: s[1])), "")
         self.cards = memcards.find_cards(self.folder)
@@ -221,6 +255,9 @@ class MemcardDialog(QDialog):
             for column, text in enumerate((save.name, memcards.kib(save.size), memcards.when(save.modified)),
                                           start=1):
                 self.table.setItem(row, column, QTableWidgetItem(text))
+        self.slot_combo.blockSignals(True)
+        self.slot_combo.setCurrentIndex(self.slot_combo.findData(self.slots.get(card.name, 0) if card else 0))
+        self.slot_combo.blockSignals(False)
         if card is None:
             self.space.setText("")
             self.status.setText(f"No memory cards in {self.folder} yet: New card makes one. PCSX2 also makes "
@@ -251,6 +288,7 @@ class MemcardDialog(QDialog):
         self.warning.setText(RUNNING if running else "")
         self.warning.setVisible(running)
         self.card_combo.setEnabled(idle)
+        self.slot_combo.setEnabled(idle and card is not None and not running)
         self.new_button.setEnabled(idle)
         self.check_button.setEnabled(idle and readable)
         ps2_file = card is not None and card.path.suffix in memcards.PS2_SUFFIXES and card.path.is_file()
@@ -267,14 +305,16 @@ class MemcardDialog(QDialog):
 
     def _show_details(self, save: Save | None, count: int) -> None:
         card = self.card()
+        self.side.setVisible(card is not None and bool(card.saves))     # nothing to show on an empty card
         if save is None or card is None:
             self.picture.setPixmap(QPixmap())
             self.picture.setText("" if count == 0 else f"{count} saves")
             self.details.setText("")
             return
         kind = "A PS1 save" if save.ps1 else "A PS2 save"
-        self.details.setText(f"<b>{escape(shown(save.label))}</b><br>{kind}<br>{escape(save.name)}<br>"
-                             f"{memcards.kib(save.size)}, saved {memcards.when(save.modified)}")
+        # The save's folder is in the table; here it would be cut off, as it has no space to wrap at.
+        self.details.setText(f"<b>{escape(shown(save.label))}</b><br>{kind}<br>{memcards.kib(save.size)}, saved "
+                             f"{memcards.when(save.modified)}")
         if save.ps1:
             self.picture.setPixmap(QPixmap())
             self.picture.setText("PS1")
@@ -318,9 +358,15 @@ class MemcardDialog(QDialog):
             self.picture.setText("No icon")
         else:
             self.picture.setText("")
-            self.picture.setPixmap(pixmap)
+            self.picture.setPixmap(pixmap.scaled(PICTURE, PICTURE, Qt.AspectRatioMode.KeepAspectRatio,
+                                                 Qt.TransformationMode.SmoothTransformation))
 
     # --- Jobs -------------------------------------------------------------------------------------------------
+
+    def _say(self, text: str, ok: bool = True) -> None:
+        self.status.setStyleSheet("" if ok else "font-weight:600;color:#c62828;")
+        self.status.setText(text)
+        (self.log.info if ok else self.log.error)("Memory cards: %s", text)
 
     def _start(self, text: str, job: Callable[[], str], keep: str = "") -> None:
         """*job* off the GUI thread; it returns what happened in words, or raises CardError."""
@@ -340,14 +386,12 @@ class MemcardDialog(QDialog):
         ok, message, keep = result
         self._picture_cache.clear()
         self.load(keep)
-        self.status.setStyleSheet("" if ok else "font-weight:600;color:#c62828;")
-        self.status.setText(message)
+        self._say(message, ok)
 
     def _refuse_while_running(self) -> bool:
         if self.running():
             self._update_buttons()
-            self.status.setStyleSheet("font-weight:600;color:#c62828;")
-            self.status.setText(RUNNING)
+            self._say(RUNNING, ok=False)
             return True
         return False
 
@@ -355,6 +399,29 @@ class MemcardDialog(QDialog):
         return QMessageBox.question(self, window_title(title), text) == QMessageBox.StandardButton.Yes
 
     # --- Actions ----------------------------------------------------------------------------------------------
+
+    def _slot_chosen(self, _index: int) -> None:
+        card = self.card()
+        if card is not None:
+            self.set_slot(card, int(self.slot_combo.currentData()))
+
+    def set_slot(self, card: Card, slot: int) -> None:
+        """The card into PCSX2's slot 1 or 2, or out of its slot (0); written in PCSX2's settings."""
+        if self._refuse_while_running():
+            self.slot_combo.blockSignals(True)          # the choice back to the slot the card is in
+            self.slot_combo.setCurrentIndex(self.slot_combo.findData(self.slots.get(card.name, 0)))
+            self.slot_combo.blockSignals(False)
+            return
+        try:
+            if slot:
+                pcsx2_settings.set_slot(self.pcsx2_home, slot, card.name)
+            elif card.name in self.slots:
+                pcsx2_settings.set_slot(self.pcsx2_home, self.slots[card.name], "")
+        except OSError as error:
+            self._say(f"The slot was not changed: {error}", ok=False)
+            return
+        self.load(card.name)
+        self._say(f"{card.name} is in slot {slot} now." if slot else f"{card.name} is in no slot now.")
 
     def on_import(self) -> None:
         files, _ = QFileDialog.getOpenFileNames(self, window_title("Import saves"), str(Path.home()),
@@ -378,7 +445,7 @@ class MemcardDialog(QDialog):
             try:
                 name = memcards.export_name(card.path, chosen[0].name, ".psu")
             except CardError as error:
-                self.status.setText(str(error))
+                self._say(str(error), ok=False)
                 return
             target, picked = QFileDialog.getSaveFileName(self, window_title("Export a save"),
                                                          str(Path.home() / name), EXPORT_FILTERS)
@@ -474,8 +541,7 @@ class MemcardDialog(QDialog):
 
         def job() -> str:
             path = memcards.new_card(folder, name, size_mb)
-            return (f"{path.name} was made ({size_mb} MB). PCSX2 puts a card in a slot in its own settings "
-                    "(Settings > Memory Cards).")
+            return f"{path.name} was made ({size_mb} MB). Slot puts it in one of the PS2's slots."
         shown_name = name if Path(name).suffix in memcards.PS2_SUFFIXES else name + ".ps2"
         self._start(f"Making {shown_name}…", job, shown_name)
 
@@ -507,11 +573,8 @@ class MemcardDialog(QDialog):
             return report
         self._start(f"Checking {card.name}…", job, card.name)
 
-    def done(self, result: int) -> None:
-        """Close, Escape and the window's own close button all end here."""
-        if self.worker.running and not self._ask("Close", "A change to a card is still running. Close anyway? "
-                                                          "A card it does not finish stays as it was."):
-            return
+    def stop(self) -> None:
+        """When the window closes: a change still running finishes or not, the card stays whole either way (a
+        change is made on a copy that takes the card's place only when finished)."""
         self.worker.stop()
         self.pictures.stop()
-        super().done(result)

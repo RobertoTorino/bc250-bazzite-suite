@@ -69,10 +69,14 @@ def system_cnf(boot: str = "cdrom0:\\SLUS_123.45;1", version: str = "1.00") -> b
     return f"BOOT2 = {boot}\r\nVER = {version}\r\nVMODE = NTSC\r\n".encode()
 
 
-def make_disc(path: Path, serial_file: str = "SLUS_123.45", version: str = "1.00") -> Path:
-    """A PS2 disc image on disk: an ISO whose SYSTEM.CNF boots *serial_file*."""
+def make_disc(path: Path, serial_file: str = "SLUS_123.45", version: str = "1.00", program: bytes = b"") -> Path:
+    """A PS2 disc image on disk: an ISO whose SYSTEM.CNF boots *serial_file*, with *program* as that file when
+    given (its CRC is the game's)."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(iso_bytes({"SYSTEM.CNF": system_cnf(f"cdrom0:\\{serial_file};1", version)}))
+    files = {"SYSTEM.CNF": system_cnf(f"cdrom0:\\{serial_file};1", version)}
+    if program:
+        files[serial_file] = program
+    path.write_bytes(iso_bytes(files))
     return path
 
 

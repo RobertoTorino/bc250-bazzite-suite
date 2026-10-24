@@ -1,14 +1,23 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The app's look: one blue, #0A55B0, the blue of the app's icon (owner, 17-10-2026), on core's widgets. The style
-sheet goes on the main window, so everything in it takes the blue and the rest of the suite keeps core's purple."""
+sheet goes on the main window, so everything in it takes the blue and the rest of the suite keeps core's purple.
+The tabs are the size of the pills above them, the chosen one filled blue, and the choice boxes (the table's
+screen settings, the Settings tab) are flat, outlined like the buttons, on no background of their own (owner,
+24-10-2026)."""
 
 from __future__ import annotations
+
+from pathlib import Path
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QPalette
 from PyQt6.QtWidgets import QLabel, QPushButton, QWidget
 
+from bc250_core.theme import THEME
+from bc250_core.widgets import Pill
+
 BLUE = "#0A55B0"
+ARROW = (Path(__file__).resolve().parent / "arrow-down.svg").as_posix()     # a choice box's arrow, a thin chevron
 BLUE_HOVER = "#2A6CC4"
 BLUE_PRESSED = "#08448D"
 BLUE_TINT = "#1A0A55B0"                 # #AARRGGBB: 10 % blue, for hover and every other table row
@@ -27,13 +36,25 @@ QPushButton[primary="true"]:hover {{ background:{BLUE_HOVER}; border-color:{BLUE
 QPushButton[primary="true"]:pressed {{ background:{BLUE_PRESSED}; border-color:{BLUE_PRESSED}; }}
 QPushButton[primary="true"]:disabled {{ background:palette(window); border-color:{DISABLED};
                                         color:{DISABLED}; }}
-QLabel[step="true"] {{ background:{BLUE}; color:white; font-weight:800; border-radius:12px; }}
 QTableWidget {{ border:1px solid {BLUE_LINE}; border-radius:6px; gridline-color:{BLUE_TINT};
                 alternate-background-color:{BLUE_TINT}; selection-background-color:{BLUE};
                 selection-color:white; }}
 QHeaderView::section {{ background:{BLUE}; color:white; font-weight:700; border:none;
                         border-right:1px solid {BLUE_HOVER}; padding:5px 8px; }}
 QPlainTextEdit {{ border:1px solid {BLUE_LINE}; border-radius:6px; }}
+QComboBox {{ border:1px solid {BLUE_LINE}; border-radius:6px; padding:3px 8px; background:transparent; }}
+QComboBox:hover {{ border-color:{BLUE}; background:{BLUE_TINT}; }}
+QComboBox:disabled {{ color:{DISABLED}; border-color:{DISABLED}; background:palette(window); }}
+QComboBox::drop-down {{ border:none; width:24px; subcontrol-origin:padding; subcontrol-position:center right; }}
+QComboBox::down-arrow {{ image:url({ARROW}); width:10px; height:10px; }}
+QComboBox QAbstractItemView {{ border:1px solid {BLUE_LINE}; selection-background-color:{BLUE};
+                               selection-color:white; }}
+QTabWidget::pane {{ border:none; }}
+QTabBar::tab {{ padding:17px 26px; min-width:120px; font-size:17px; font-weight:700; border:1px solid {BLUE_LINE};
+                border-bottom:none; border-top-left-radius:8px; border-top-right-radius:8px; margin-right:6px;
+                background:palette(button); }}
+QTabBar::tab:selected {{ background:{BLUE}; color:white; border-color:{BLUE}; }}
+QTabBar::tab:hover:!selected {{ background:{BLUE_TINT}; border-color:{BLUE}; }}
 """
 
 
@@ -62,10 +83,11 @@ def primary_button(text: str, tooltip: str = "") -> QPushButton:
     return button
 
 
-def step_badge(number: int) -> QLabel:
-    """The number of a step in a blue circle."""
-    badge = QLabel(str(number))
-    badge.setProperty("step", True)
-    badge.setFixedSize(24, 24)
-    badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    return badge
+def action_pill(value: str, caption: str, tooltip: str) -> Pill:
+    """A pill that does something (Refresh, Install PCSX2…), as the boxes beside it: the blue left edge only,
+    also under the mouse and the keyboard focus (owner, 24-10-2026: no border all round); the blue tint says it
+    can be clicked, as a button's hover does."""
+    pill = Pill(value, caption, tooltip, BLUE)
+    pill.setStyleSheet(pill.styleSheet() + f"#pill:hover, #pill:focus {{ border-color:{THEME.edge}; "
+                                           f"border-left-color:{BLUE}; background:{BLUE_TINT}; }}")
+    return pill

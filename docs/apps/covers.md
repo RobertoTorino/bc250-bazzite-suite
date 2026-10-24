@@ -2,7 +2,8 @@
 
 # Covers from SteamGridDB
 
-The game managers put your games in Steam, so they start from Game Mode. Steam shows every game with four pictures:
+The game managers put your games in Steam, so they start from there, also from Steam's Big Picture Mode (Game Mode
+on a handheld). Steam shows every game with four pictures:
 
 | Picture | Where Steam shows it |
 |---|---|
@@ -31,13 +32,13 @@ The key is free. To get one:
 Signed in, the API page is also at
 [steamgriddb.com/profile/preferences/api](https://www.steamgriddb.com/profile/preferences/api).
 
-In any of these managers press **Covers…** and paste it. It is one key for the whole suite: the other managers use it too. It is kept in
+In any of these managers press **Covers…** (in PCSX2 Manager **Steam artwork…**) and paste it. It is one key for the whole suite: the other managers use it too. It is kept in
 `~/.config/bc250-bazzite-suite/steamgriddb-key`, which only you can read, and is sent only to SteamGridDB. Leave
 it empty to look nothing up.
 
 ## How a game is looked up
 
-The next **Update Game Mode** looks up each ticked game by its title, without tags such as `(USA)` or `[!]` from a
+The next **Update Game Mode** (in PCSX2 Manager **Update Steam**) looks up each ticked game by its title, without tags such as `(USA)` or `[!]` from a
 file name. It takes the game with exactly that name, else the first one SteamGridDB finds, and of each picture the
 one with the most votes, leaving out pictures marked as adult, humour or epilepsy. A picture SteamGridDB does not
 have stays drawn.
@@ -57,6 +58,6 @@ that name, in place of the one there; the next change to Steam takes it. A game 
 made from its title.
 
 A picture chosen in Steam's own settings (the game's page, the gear, **Properties**, **Customization**) is replaced
-by the next **Update Game Mode**.
+by the next **Update Game Mode** (**Update Steam**).
 
 To look a game up again, delete its `<ID>.done` file in the covers folder.

@@ -4,7 +4,7 @@ folders and adds them to Steam for Game Mode."""
 
 APP_NAME = "mGBA Manager"
 APP_ID = "bc250-mgba-manager"
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 
 from pathlib import Path
 

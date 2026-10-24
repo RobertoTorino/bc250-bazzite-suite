@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""A Steam shortcut per game, for Game Mode: a non-Steam game that runs the run wrapper with PCSX2's launch line,
+"""A Steam shortcut per game, where a game is started (on the desktop or in Steam's Big Picture Mode): a non-Steam
+game that runs the run wrapper with PCSX2's launch line,
 the game alone and full screen (bc250-pcsx2-run -nogui -fullscreen -- "<game>"; -nogui also makes PCSX2 exit when
 the game does).
 

@@ -1,3 +1,18 @@
+Changelog: 24-10-2026 07:20:00
+
+Fixed. covers: the Covers dialog (the SteamGridDB key) wraps its text at a readable width; as one line it made the
+dialog as wide as the screen (owner, 24-10-2026, from PCSX2 Manager). Its text names the app's button for Steam
+through a new edit_key(button=...) argument, "Update Game Mode" as before unless the app says otherwise; PCSX2
+Manager says Update Steam. Test: the button's name in the dialog's text.
+
+Changelog: 24-10-2026 05:06:10
+
+Added. applog: a log file per app (owner, 24-10-2026), ~/.local/share/<app id>/<app id>.log, one line per thing the
+app says or does with the time (DD-MM-YYYY HH:MM:SS), and every uncaught error with its traceback; the file turns
+over at 1 MB with three older kept, and goes to stderr when its folder cannot be made. setup(app_id) once at start,
+logger(app_id) wherever the app logs, tail() for a Log tab. PCSX2 Manager uses it first; the other apps can follow.
+Test: tests/test_applog.py.
+
 Changelog: 23-10-2026 07:00:42
 
 Fixed. widgets: a Pill that cannot be clicked (setEnabled(False)) shows its value and caption in the theme's muted

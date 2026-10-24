@@ -1,3 +1,99 @@
+Changelog: 24-10-2026 10:26:20
+
+Release 1.0.0.
+
+Changelog: 24-10-2026 07:05:00
+
+Added. The owner's third round of remarks (24-10-2026). The three numbered steps with their buttons are a row of
+six pills under the introduction, the header pills' size, spread over the window's width in equal parts, what
+each is for in large type and what it does under it (owner, after a first look): PCSX2 Install and Uninstall, BIOS Install and Uninstall (new:
+it takes a dump out of PCSX2's bios folder with the files beside it, after a question, and PCSX2 uses another
+dump when there is one), Games Add folder and Remove folder; the state of each (PCSX2, the BIOS, the game folders)
+stands in a line below; the game folders' line no longer says that subfolders are searched (the wiki does). A Play
+time box in the header: the time spent in all games together as PCSX2 counts it (inis/playtime.dat), each game's
+time and when it was last played in the tip (owner, 24-10-2026); the BIOS box went from the header (the BIOS
+line says which dump PCSX2 uses), the header's pills spread over the window's width in equal parts, as the action
+pills do, and the states beside the title (Ready, the controller) stand on the right, ending at the middle of
+the last pill. The header boxes are PCSX2 version, Your games, Available in Steam and Play time, and the Games
+tab is Your games (owner, 24-10-2026). The tabs' page has no frame around it any more (the
+table and the log have their own), and the tabs are the pills' size, the chosen one filled blue. The controller's
+state beside the title (owner, 24-10-2026, after a controller switched off by its idle timer left a game without
+one): Controller connected (the names in the tip) or No controller, with what to do, read from the kernel's list
+of input devices (controllers.py, the run wrapper's rule: a joystick that is not Steam's virtual one) every three
+seconds. The run wrapper's log line says whether a controller was there, and when Steam starts a game without one
+it says so in a desktop notification (notify-send, where there is one). The introduction's link to the manual is called
+Wiki, as everywhere in the suite. The Refresh pill and the new ones keep the blue
+left edge only, also under the mouse (a blue tint says they can be clicked), no border all round. The introduction
+links to PCSX2's release notes; the PCSX2 line no longer does. The games table's columns are In Steam, Game title,
+Id, Type, File name and Screen setting (last, after a look at it), and every choice box in the window is flat,
+outlined like the buttons on a see-through background, with a thin chevron (arrow-down.svg in the package) in
+place of the old-style drop-down. The Settings tab's boxes stood over each other (the Sound box lay on the
+Picture box and hid its lower rows): the Picture box is on the left, the three others under each other on the
+right. New settings: Blending accuracy, Video (FMV) shape, No-interlacing patches, and Quit a game with Select +
+Start, which binds PCSX2's shutdown to the first controller's Back and Start together ([Hotkeys] ShutdownVM) and
+turns PCSX2's question before shutting down off; on by default (owner, 24-10-2026, after trying it on the board):
+the app sets it with PCSX2's other settings while PCSX2.ini has no ShutdownVM line, and the switch's off leaves the
+line empty, which PCSX2 reads as no binding, so off stays off. The Memory cards tab's picture and
+details stand in a box of the picture's width with room around the text. The log says more about the games: the
+run wrapper writes the game started (by its file's name, from Steam or a terminal) into the app's log, and the
+window sums up PCSX2's own log of its last run once, the next time it looks: the game (named from the catalogue),
+how long it was played (PCSX2's count, or about the log's last time stamp when PCSX2 did not shut down by itself),
+until when and with which controller. The wiki says Steam's overlay takes and shares screenshots (F12, or Steam +
+R1 in Big Picture Mode). From the owner's screenshots, after: the Memory cards tab is a block of 720 px at most on
+the left, not the window's width; its box shows the icon at 96 px, only while the card has a save, and without the
+save's folder (it is in the table, and it was cut off); the Covers dialog says Update Steam, not Update Game Mode,
+and wraps its text at a readable width (core). Tests: the pills, the BIOS removed, the column names, the boxes' places, the new
+settings and the quit switch, the last run logged once, the wrapper's log line (also in the installer test), and
+PCSX2's log read.
+
+Changelog: 24-10-2026 05:06:10
+
+Breaking. Everything about PCSX2 is done in the app (owner, 24-10-2026, after the second round from scratch on the
+board): the Play button and the PCSX2 settings button are gone, a game is started from Steam and PCSX2's own window
+is not opened, and the nightly channel is gone with its checkbox, its GitHub lookup and its portal notice (the app
+installs the stable release it was tried with and nothing else; a notice from before is cleared). The window has
+four tabs under the steps: Games (the table, Steam artwork… and Update Steam), Settings, Memory cards and Log.
+Settings holds PCSX2's settings that matter for playing, each written into PCSX2.ini the moment it changes and
+never while PCSX2 runs: the renderer, the internal resolution, texture and anisotropic filtering, FXAA, integer
+scaling, VSync and Show FPS; fast boot and cheats; the volume; vibration and player 2 on the second controller
+(SDL-1, the same buttons as player 1). A value PCSX2 holds that the app does not offer is shown as it is. The
+Memory cards window is the Memory cards tab, with a Slot choice that puts the chosen card in slot 1 or 2 or takes
+it out (a card is in one slot at most), written in PCSX2.ini; before, the slot was set in PCSX2's own window. The
+app owns one more setting: the mouse pointer hidden over a full-screen game ([UI] HideMouseCursor). The app has a
+log (core's new applog): everything it said and did, with the time, in the Log tab and in
+~/.local/share/bc250-pcsx2-manager/bc250-pcsx2-manager.log (1 MB, three older kept); install.sh --uninstall keeps
+it, --purge removes it, and the installer test checks both. Refresh is a pill in the header, as in Suite Releases.
+The BIOS step shows the dump's name and the Game folders step the folders' names, the paths in their tooltips; the
+File column shows the image's name the same way. "What is in it" is "PCSX2's release notes". Steam's full-screen
+mode is called Big Picture Mode in the texts (Game Mode is the handheld's session); the Update Steam tooltip in that
+session says so. Tests: the tabs, the Settings tab on the defaults and on a file, player 2, the slot, the log tab,
+the names without paths, the buttons gone; the nightly tests went with the channel.
+
+Changelog: 23-10-2026 23:12:53
+
+Added. The app sets PCSX2 up, so a game started from Steam goes straight into the game (owner, 23-10-2026: the
+emulator only runs the game, the manager does the rest; found in a round from scratch on the board). While PCSX2 is
+installed and not running, the app keeps in PCSX2.ini: the setup wizard done, PCSX2's own update check off (it would
+replace the pinned build), the BIOS chosen in the app, and player 1 on the first controller (SDL-0, the buttons by
+their places as PCSX2's Automatic Mapping binds them; PCSX2 itself maps only the keyboard, so a controller did
+nothing in a game). A mapping made in PCSX2's window stays: player 1 is left alone once a controller is bound to it.
+Without a PCSX2.ini the app starts from PCSX2 2.8.2's own defaults (pcsx2_defaults.ini, the file PCSX2 wrote at its
+first start on the board, without the window's places, the BIOS and the game folder), since PCSX2 asks to reset a
+file without its settings version and only its reset writes the hotkeys such as Esc for the pause menu. Every other
+line of PCSX2.ini stays as it is. Choose BIOS… replaces Open folder: it copies the chosen dump, with the files beside
+it under the same name, into PCSX2's bios folder and makes it the one PCSX2 uses, without a Refresh. A game is named
+as PCSX2's catalogue names it (GameIndex.yaml, taken out of the AppImage beside it at install, and when the window
+opens for a PCSX2 installed before), else by its file's name without a serial in it ("SLUS_215.53.Lumines Plus" is
+"Lumines Plus"); the name in Steam follows, and so does the SteamGridDB lookup, which found nothing for a file's name
+with a serial in it. A new Screen column sets per game how it fills the screen: Original, Widescreen (PCSX2's
+widescreen patch, offered when patches.zip has one for the game) or Fill screen (stretched), kept in the game's own
+settings in PCSX2 (gamesettings/<serial>_<CRC>.ini); the CRC is the boot program's, computed as PCSX2 does
+(93262D20 for Lumines Plus, as PCSX2 logged it). Update Game Mode is now Update Steam, Covers… is Steam artwork…, and
+the In Game Mode box and column are In Steam; the first step says it installs the stable release the app was tried
+with, the game folders step that subfolders are searched five deep. Tests: the settings on a first start and on an
+existing file, a mapped controller left alone, the BIOS choice, the titles, the patches looked up as PCSX2 does, the
+CRC, the screen per game, nothing written while PCSX2 runs, and the catalogue taken out at install.
+
 Changelog: 23-10-2026 07:16:27
 
 Release 0.9.1.

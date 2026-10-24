@@ -4,7 +4,7 @@ app uploads; then it is an ordinary USB video camera (uvcvideo)."""
 
 APP_NAME = "USB HD Cam"
 APP_ID = "bc250-usb-hdcam"
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 
 from pathlib import Path
 

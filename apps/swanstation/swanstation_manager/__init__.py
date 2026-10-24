@@ -4,7 +4,7 @@ BIOS, finds the games in the chosen folders and adds them to Steam for Game Mode
 
 APP_NAME = "SwanStation Manager"
 APP_ID = "bc250-swanstation-manager"
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 
 from pathlib import Path
 

@@ -74,6 +74,15 @@ def test_the_key_dialog(tmp_path, qapp, monkeypatch):
     assert not covers.edit_key(path=path)                                       # unchanged
     monkeypatch.setattr(QInputDialog, "exec", lambda self: 0)
     assert not covers.edit_key(path=path) and covers.read_key(path) == KEY     # cancelled
+    # The text names the app's button for Steam and wraps (owner, 24-10-2026: one line was as wide as the screen).
+    from PyQt6.QtWidgets import QLabel
+    seen = []                                           # (text, wraps) while the dialog is there
+    monkeypatch.setattr(QInputDialog, "exec", lambda self: (seen.append((self.findChild(QLabel).text(),
+                                                                         self.findChild(QLabel).wordWrap())), 0)[1])
+    covers.edit_key(path=path, button="Update Steam")
+    assert "Update Steam looks each game up" in seen[0][0] and seen[0][1]
+    covers.edit_key(path=path)
+    assert "Update Game Mode looks each game up" in seen[1][0]
 
 
 def test_names_and_titles():

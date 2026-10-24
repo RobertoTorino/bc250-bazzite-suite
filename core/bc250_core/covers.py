@@ -81,18 +81,25 @@ def write_key(key: str, path: Path | None = None) -> None:
     part.replace(path)
 
 
-def edit_key(parent=None, path: Path | None = None) -> bool:
-    """Asks for the key in a dialog; True when it was changed."""
-    from PyQt6.QtWidgets import QInputDialog, QLineEdit
+def edit_key(parent=None, path: Path | None = None, button: str = "Update Game Mode") -> bool:
+    """Asks for the key in a dialog; True when it was changed. *button*: the app's name for the button that puts
+    the games in Steam, as the text names it (PCSX2 Manager's is Update Steam; owner, 24-10-2026)."""
+    from PyQt6.QtWidgets import QInputDialog, QLabel, QLineEdit
     dialog = QInputDialog(parent)
     dialog.setWindowTitle("Covers")
     dialog.setLabelText(
         "Steam's library shows each game with a cover, its page with a banner. Where a game brings no pictures in "
-        "Steam's shapes, the app draws them. With a SteamGridDB API key, Update Game Mode looks each game up on "
+        f"Steam's shapes, the app draws them. With a SteamGridDB API key, {button} looks each game up on "
         "SteamGridDB by its title and takes the pictures with the most votes instead.\n\n"
         "The key is free with a SteamGridDB account: in your account click Preferences, then the API tab at the "
         f"top, then Generate API Key, and copy the key ({KEY_PAGE}).\n"
         "It is one key for every app of the suite. Leave it empty to look nothing up.")
+    # The text wrapped at a readable width, which also sets the field's width; as one line it made the dialog as
+    # wide as the screen (owner, 24-10-2026). QInputDialog makes its label when the text is set.
+    label = dialog.findChild(QLabel)
+    if label is not None:
+        label.setWordWrap(True)
+        label.setMinimumWidth(460)
     dialog.setTextEchoMode(QLineEdit.EchoMode.Password)
     old = read_key(path)
     dialog.setTextValue(old)
