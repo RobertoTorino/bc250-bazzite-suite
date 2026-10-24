@@ -1,3 +1,18 @@
+Changelog: 24-10-2026 19:49:22
+
+Release 0.5.0.
+
+Changelog: 24-10-2026 19:16:17
+
+Added. The idle service leaves every controller on while a game started from Steam runs (owner, 24-10-2026): on the
+board it switched the DualSense Edge off ten minutes into a game, and RPCS3's build of the time did not pick the
+controller up again when it came back (it matches a known controller by name, device path and serial, and a
+Bluetooth reconnect brings a new path), so the game had lost its controller. A game is known by SteamGameId in a
+process's environment, which Steam gives the games it starts and /proc shows for the user's own processes; it is
+looked for once per look for controllers, while one is there. The journal says when the service saw a game start
+and end, and the wait starts over when the game ends. The tooltip and the wiki say so. Tests: the game keeps the
+controller on and the wait starts over; the environment check with a fake /proc.
+
 Changelog: 24-10-2026 10:26:20
 
 Release 0.4.0.

@@ -208,9 +208,6 @@ Where the pictures come from depends on what the app has:
 | Bazzite DatStation | Drawn from the app's icon (`steam_art`), with the app's name |
 | shadPS4 Manager | The game's own pictures (`icon0.png`, `pic1.png`), its icon as the logo |
 | RPCS3 Manager | The game's own pictures (`ICON0.PNG`, `PIC1.PNG`), its icon as the logo |
-| SwanStation Manager | Drawn from the app's icon (`steam_art`), with the game's title: a PS1 disc has no pictures |
-| mGBA Manager | Drawn from the app's icon (`steam_art`), with the game's title: a cartridge has no pictures |
-| SameBoy Manager | Drawn from the app's icon (`steam_art`), with the game's title: a cartridge has no pictures |
 | Xenia Manager | Drawn from the app's icon (`steam_art`), with the game's title |
 | PPSSPP Manager | The game's own pictures (`ICON0.PNG`, `PIC1.PNG`), its icon as the logo |
 | Vita3K Manager | The game's own pictures (`icon0.png`, `pic0.png`), its icon as the logo |

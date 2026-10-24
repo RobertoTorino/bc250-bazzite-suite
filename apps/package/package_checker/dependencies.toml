@@ -124,18 +124,6 @@ launchers = ["~/.local/bin/bc250-pcsx2-manager"]
 name = "Vita3K Manager"
 launchers = ["~/.local/bin/bc250-vita3k-manager"]
 
-[app.swanstation]
-name = "SwanStation Manager"
-launchers = ["~/.local/bin/bc250-swanstation-manager"]
-
-[app.mgba]
-name = "mGBA Manager"
-launchers = ["~/.local/bin/bc250-mgba-manager"]
-
-[app.sameboy]
-name = "SameBoy Manager"
-launchers = ["~/.local/bin/bc250-sameboy-manager"]
-
 [app.xenia]
 name = "Xenia Manager"
 launchers = ["~/.local/bin/bc250-xenia-manager"]
@@ -950,24 +938,6 @@ usage = "Update Game Mode (a Steam shortcut per game) closes Steam with steam -s
 anchor = "game-mode"
 
 [[tool.source]]
-owner = "swanstation"
-need = "optional"
-usage = "Update Game Mode (a Steam shortcut per game) closes Steam with steam -shutdown and starts it again with bazzite-steam."
-anchor = "game-mode"
-
-[[tool.source]]
-owner = "mgba"
-need = "optional"
-usage = "Update Game Mode (a Steam shortcut per game) closes Steam with steam -shutdown and starts it again with bazzite-steam."
-anchor = "game-mode"
-
-[[tool.source]]
-owner = "sameboy"
-need = "optional"
-usage = "Update Game Mode (a Steam shortcut per game) closes Steam with steam -shutdown and starts it again with bazzite-steam."
-anchor = "game-mode"
-
-[[tool.source]]
 owner = "xenia"
 need = "optional"
 usage = "Update Game Mode (a Steam shortcut per game) closes Steam with steam -shutdown and starts it again with bazzite-steam."
@@ -980,23 +950,6 @@ usage = "Add to Steam and Remove from Steam (the app's own shortcut) close Steam
 anchor = "install"
 
 [[tool]]
-name = "flatpak"
-description = "Installs and starts Flatpak apps. SwanStation Manager and SameBoy Manager install RetroArch (org.libretro.RetroArch) with it, and their run wrappers start RetroArch through it."
-executables = ["flatpak"]
-
-[[tool.source]]
-owner = "swanstation"
-need = "required"
-usage = "RetroArch, which runs the SwanStation core, is a Flatpak: the app installs it for your user and starts it with flatpak run."
-anchor = "what-you-need"
-
-[[tool.source]]
-owner = "sameboy"
-need = "required"
-usage = "RetroArch, which runs the SameBoy core, is a Flatpak: the app installs it for your user and starts it with flatpak run."
-anchor = "what-you-need"
-
-[[tool]]
 name = "FUSE 2"
 description = "The FUSE 2 library (libfuse.so.2), with which an AppImage mounts itself. Checked by its library file."
 executables = []
@@ -1007,12 +960,6 @@ probe = "path"
 owner = "shadps4"
 need = "optional"
 usage = "shadPS4 is an AppImage; without the library it unpacks itself to a temporary folder on every start, which is slower."
-anchor = "what-you-need"
-
-[[tool.source]]
-owner = "mgba"
-need = "optional"
-usage = "mGBA is an AppImage; without the library it unpacks itself to a temporary folder on every start, which is slower."
 anchor = "what-you-need"
 
 [[tool]]
@@ -1148,18 +1095,6 @@ specifier = ">=6.11,<7"
 
 [[dependency.source]]
 owner = "vita3k"
-specifier = ">=6.11,<7"
-
-[[dependency.source]]
-owner = "swanstation"
-specifier = ">=6.11,<7"
-
-[[dependency.source]]
-owner = "mgba"
-specifier = ">=6.11,<7"
-
-[[dependency.source]]
-owner = "sameboy"
 specifier = ">=6.11,<7"
 
 [[dependency.source]]

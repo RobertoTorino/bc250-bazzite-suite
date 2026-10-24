@@ -26,7 +26,7 @@ from PyQt6.QtWidgets import (QAbstractItemView, QComboBox, QFileDialog, QGridLay
                              QInputDialog, QLabel, QMainWindow, QMessageBox, QPushButton, QSizePolicy,
                              QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
 
-from bc250_core import SUITE_MANUAL_URL, applog, covers, steam, upstream, window_title
+from bc250_core import SUITE_MANUAL_URL, applog, covers, sound, steam, upstream, window_title
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import bin_home
 from bc250_core.settings import SettingsStore
@@ -38,6 +38,7 @@ from . import pcsx2_settings
 from . import shortcuts, style, userdata
 from .games import Game, scan
 from .memcard_page import MemcardPage
+from . import settings_page
 from .settings_page import SettingsPage
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/pcsx2/"
@@ -62,14 +63,15 @@ class MainWindow(QMainWindow):
                  newer_release=emulator.newer_release, pcsx2_running=memcards.pcsx2_running,
                  covers_home: Path | None = None, covers_get: covers.Get = covers._get,
                  covers_key: Path | None = None, log_path: Path | None = None,
-                 devices: Path = controllers.DEVICES):
+                 devices: Path = controllers.DEVICES, sound_state: Path | None = None):
         """*home*: where the app installs PCSX2; *pcsx2_home*: PCSX2's own folder; *steam_dir*: Steam's folder
         (None: looked up); *run*: the run wrapper the shortcuts start; *fetch*: the download; *steam_closed* and
         *steam_running*: closing Steam for a change and asking whether it runs; *newer_release*: asks GitHub for a
         newer stable; *pcsx2_running*: whether PCSX2 runs (its settings are not written then); *covers_home*,
         *covers_get* and *covers_key*: where the SteamGridDB pictures are kept, how SteamGridDB is asked and the
         suite's key file (tests never touch the real ones); *log_path*: the app's log file, as the Log tab shows
-        it (__main__ set it up); *devices*: the kernel's list of input devices, for the controller state."""
+        it (__main__ set it up); *devices*: the kernel's list of input devices, for the controller state;
+        *sound_state*: WirePlumber's file with the volume the desktop remembers for PCSX2 (tests pass their own)."""
         super().__init__()
         self.resize(980, 800)
         self.home = home or emulator.emulator_home()
@@ -85,6 +87,9 @@ class MainWindow(QMainWindow):
         self.pcsx2_running = pcsx2_running
         self.log_path = log_path or applog.log_file(APP_ID)
         self.devices = devices
+        self.sound_state = sound_state or sound.stream_properties()
+        self.sound: tuple[float, bool] | None = None    # (volume, muted) Bazzite remembers for PCSX2; None: unknown
+        self._sound_said = False                        # said once while it stays off
         self.controllers: list[str] | None = None       # the controllers last seen; None before the first look
         self.log = applog.logger(APP_ID)
         self._newer_release = newer_release
@@ -293,6 +298,16 @@ class MainWindow(QMainWindow):
         self.settings_page.load()
         self.memcard_page.load()
         self.show_controller()
+        self.show_sound()
+
+    def show_sound(self) -> None:
+        """The volume Bazzite remembers for PCSX2 (muted or turned down, a game plays without a sound; owner,
+        24-10-2026, as RPCS3 Manager's): in the Settings tab's Sound box, and said once while it stays off."""
+        self.sound = sound.stream_sound(settings_page.STREAM, self.sound_state)
+        text, off = self.settings_page.show_sound(self.sound)
+        if off and not self._sound_said:
+            self.say(text, ok=False)
+        self._sound_said = off
 
     def show_controller(self) -> None:
         """The controller state beside the title: a game started from Steam reads the controller that is there

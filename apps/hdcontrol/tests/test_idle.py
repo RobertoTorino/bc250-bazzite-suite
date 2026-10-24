@@ -192,6 +192,52 @@ def test_the_last_used_times_go_to_the_state_file_for_the_window(tmp_path):
     assert idle.read_state(state) == {}
 
 
+def test_while_a_game_from_steam_runs_the_controllers_stay_on(tmp_path):
+    """A game Steam started (SteamGameId in a process's environment) keeps every controller on, used or not; the
+    wait starts over when it ends. Looked for only while a controller is there, once per LOOK."""
+    plug(tmp_path / "sys", bus=0x05)
+    game = [False]
+    looks = []
+    w, opened, asked, logged, clock = watcher(tmp_path)
+    w.game = lambda: looks.append(clock.now) or game[0]
+    w.step()
+    clock.now += 9 * 60
+    game[0] = True
+    w.step()
+    assert logged == ["A game started from Steam runs: the controllers stay on."]
+    clock.now += 60 * 60
+    w.step()
+    assert asked == []                                                      # an hour unused in the game: on
+    game[0] = False
+    clock.now += idle.LOOK
+    w.step()
+    assert logged[-1] == "The game ended: a controller unused from now on is switched off after the wait."
+    clock.now += 9 * 60
+    w.step()
+    assert asked == []                                                      # the wait started over
+    clock.now += 60
+    w.step()
+    assert asked == ["aa:bb:cc:dd:ee:ff"]
+    assert len(looks) == 6 and len(set(looks)) == 6                        # once per step here: each a LOOK apart
+
+
+def test_a_game_from_steam_is_known_by_its_environment(tmp_path):
+    proc = tmp_path / "proc"
+    for pid, environ in (("100", b"HOME=/home/x\0SHELL=/bin/bash\0"), ("200", b"STEAM_RUNTIME=1\0")):
+        (proc / pid).mkdir(parents=True)
+        (proc / pid / "environ").write_bytes(environ)
+    (proc / "self").mkdir()
+    assert not idle.game_running(proc)
+    (proc / "300").mkdir()
+    (proc / "300" / "environ").write_bytes(b"SteamGameId=3710761059\0SteamAppId=0\0")
+    assert idle.game_running(proc)
+    (proc / "400").mkdir()                                                  # another user's: not readable
+    (proc / "400" / "environ").write_bytes(b"SteamGameId=1\0")
+    (proc / "400" / "environ").chmod(0)
+    (proc / "300" / "environ").unlink()
+    assert not idle.game_running(proc) or os.getuid() == 0
+
+
 def test_read_state_without_the_service(tmp_path):
     assert idle.read_state(tmp_path / "none.json") == {}
     (tmp_path / "bad.json").write_text("not json")

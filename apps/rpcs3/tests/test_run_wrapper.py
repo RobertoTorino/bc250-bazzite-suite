@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The run wrapper (bc250-rpcs3-run) with a fake RPCS3 that prints its arguments and SDL's controller lists: Steam's
 list of controllers to ignore replaced while a real controller is there, left alone otherwise; a game Steam starts on
-a Wayland desktop opened through XWayland, so Steam's overlay works over it; unpacking when there is no fusermount."""
+a Wayland desktop opened through XWayland, so Steam's overlay works over it; unpacking when there is no fusermount;
+the game started written into the app's log."""
 
 from __future__ import annotations
 
@@ -104,6 +105,28 @@ def test_started_by_steam_on_a_wayland_desktop(run):
 def test_without_fusermount_it_unpacks_itself(run, tmp_path):
     run(DS4_AND_STEAM)                                                  # makes the tools folder
     assert run(DS4_AND_STEAM, path=str(tmp_path / "tools"))["extract"] == "1"
+
+
+def test_the_game_started_goes_to_the_apps_log(run, tmp_path):
+    """One line in the app's log file, in its form, with the game's folder name (the disc's, or the installed
+    game's ID; not its path) and from where; a start without a game (RPCS3's window, the firmware, the packages)
+    says nothing."""
+    import re
+    log = tmp_path / "data" / "bc250-rpcs3-manager" / "bc250-rpcs3-manager.log"
+    run(DS4_AND_STEAM)
+    run(DS4_AND_STEAM, "--installfw", "/downloads/PS3UPDAT.PUP")
+    run(DS4_AND_STEAM, "--installpkg", "/downloads/packages")                 # a folder of packages: no game
+    run(DS4_AND_STEAM, "--headless", "--installpkg", "/downloads/a.pkg")      # one package, headless: no game
+    assert not log.exists()
+    run(DS4_AND_STEAM, "--no-gui", "--fullscreen", GAME, SteamGameId="3710761059")
+    run(DS4_AND_STEAM, "--no-gui", "/rpcs3/dev_hdd0/game/NPUB30001/USRDIR/EBOOT.BIN")
+    run(STEAM_ONLY, "--no-gui", GAME, SteamGameId="3710761059")                 # no real controller: said
+    lines = log.read_text().splitlines()
+    assert [line[20:] for line in lines] == ["INFO Started a b from Steam, with a controller.",
+                                             "INFO Started NPUB30001 from a terminal, with a controller.",
+                                             "INFO Started a b from Steam, without a controller."]
+    assert all(re.fullmatch(r"\d\d-\d\d-\d{4} \d\d:\d\d:\d\d", line[:19]) for line in lines)
+    assert "/games/" not in log.read_text() and "EBOOT" not in log.read_text()
 
 
 def test_not_installed(tmp_path):

@@ -1,3 +1,10 @@
+Changelog: 24-10-2026 19:31:59
+
+The SwanStation, mGBA and SameBoy Managers are dropped (owner, 24-10-2026): their folders under apps/, their wiki
+chapters and nav entries, their portal entries and tile icons, their installer tests and CI steps, the shellcheck
+lines and the lists in README.md and CLAUDE.md are removed. Their releases on GitHub stay as history; a copy
+installed on a board is taken out with its own install.sh --uninstall.
+
 Changelog: 23-10-2026 16:19:42
 
 CI's Qt runtime libraries step in the test jobs runs from the repository root: the jobs work in their app's folder, where

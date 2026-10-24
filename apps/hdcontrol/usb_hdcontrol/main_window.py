@@ -377,8 +377,9 @@ class MainWindow(QWidget):
             self.idle_combo.addItem(f"after {minutes} min" if minutes else "Never", minutes)
         self.idle_combo.setCurrentIndex(max(0, self.idle_combo.findData(self.settings.get("idle_minutes"))))
         self.idle_combo.setToolTip("Switches a controller on Bluetooth off when no button, stick or trigger was used "
-                                   "this long, as a PS5 does; on the USB cable it stays on. A small service that "
-                                   "install.sh adds does it, also with the window closed.")
+                                   "this long, as a PS5 does; on the USB cable it stays on, and while a game started "
+                                   "from Steam runs. A small service that install.sh adds does it, also with the "
+                                   "window closed.")
         self.idle_combo.currentIndexChanged.connect(
             lambda _index: self.settings.set("idle_minutes", self.idle_combo.currentData()))
         # The two buttons and the choice equally wide, spread down the column (owner, 23-10-2026).

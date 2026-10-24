@@ -102,6 +102,8 @@ def settings_dir(tmp_path, monkeypatch):
     QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(tmp_path / "settings"))
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "cache"))      # RPCS3's log
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))      # WirePlumber's stream volumes
     monkeypatch.setenv("XDG_CURRENT_DESKTOP", "KDE")
     return tmp_path / "settings"
 

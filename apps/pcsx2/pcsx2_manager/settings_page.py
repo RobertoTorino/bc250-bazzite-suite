@@ -3,7 +3,9 @@
 the manager, PCSX2's own window is not opened). One box per group (pcsx2_settings.SETTINGS: the picture, the
 emulation, the sound, the controllers), each setting a choice, a switch or a percentage, read from PCSX2.ini and
 written the moment it is changed, while PCSX2 does not run. Player 2 on the second controller and quitting a game
-with Select + Start are here too, each written with its own function."""
+with Select + Start are here too, each written with its own function. The Sound box also shows, beside PCSX2's
+volume, the volume Bazzite's sound settings remember for PCSX2 (core's sound; owner, 24-10-2026: as RPCS3
+Manager's): read only, the window passes it (show_sound)."""
 
 from __future__ import annotations
 
@@ -12,15 +14,19 @@ from collections.abc import Callable
 from pathlib import Path
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QGridLayout, QGroupBox, QLabel, QSpinBox,
-                             QVBoxLayout, QWidget)
+from PyQt6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QGridLayout, QGroupBox, QHBoxLayout, QLabel,
+                             QSpinBox, QVBoxLayout, QWidget)
 
+from bc250_core import sound
 from bc250_core.widgets import hint_label
 
 from . import memcards, pcsx2_settings
 from .pcsx2_settings import CHOICE, PERCENT, SWITCH, Setting
 
 RUNNING = "PCSX2 is running: close it first, it would write its own settings over the change."
+STREAM = "PCSX2"                        # PCSX2's sound stream, as PipeWire names it (core's sound)
+SOUND_MUTED = sound.muted_text(STREAM)
+SOUND_DOWN = sound.down_text(STREAM)
 PLAYER2 = Setting("player2", pcsx2_settings.CONTROLLERS, "Player 2 on the second controller", "Pad2", ("Type",),
                   SWITCH, tip="A second controller connected is player 2, with the same buttons as player 1. Off, "
                               "PCSX2 has no player 2.")
@@ -63,13 +69,27 @@ class SettingsPage(QWidget):
                 grid.addWidget(box, n - 1, 1, Qt.AlignmentFlag.AlignTop)
         grid.setColumnStretch(0, 1)
         grid.setColumnStretch(1, 1)
+        self.system_sound = QLabel("—")             # Bazzite's volume for PCSX2, read only (show_sound)
+        self.system_sound.setToolTip(sound.tip(STREAM))
         for setting in (*pcsx2_settings.SETTINGS, *OWN):
             widget = self._widget(setting)
             widget.setToolTip(setting.tip)
             self.widgets[setting.key] = widget
             label = QLabel(setting.label)
             label.setToolTip(setting.tip)
-            groups[setting.group].addRow(label, widget)
+            field: QWidget = widget
+            if setting.key == "volume":             # beside PCSX2's volume, on the same row (the tab's height)
+                field = QWidget()
+                row = QHBoxLayout(field)
+                row.setContentsMargins(0, 0, 0, 0)
+                row.setSpacing(8)
+                row.addWidget(widget)
+                system_label = QLabel("Bazzite's volume for PCSX2:")
+                system_label.setToolTip(sound.tip(STREAM))
+                row.addWidget(system_label)
+                row.addWidget(self.system_sound)
+                row.addStretch(1)
+            groups[setting.group].addRow(label, field)
 
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 8, 0, 0)
@@ -80,6 +100,14 @@ class SettingsPage(QWidget):
         lay.addStretch(1)
         lay.addWidget(self.status)
         self.load()
+
+    def show_sound(self, state: tuple[float, bool] | None) -> tuple[str, bool]:
+        """*state*: (volume, muted) as Bazzite remembers it for PCSX2, None while it has none (PCSX2 has not played
+        yet). Returns (what is wrong in words, whether something is: muted, or turned down to nothing)."""
+        text, problem = sound.describe(STREAM, state)
+        self.system_sound.setStyleSheet("font-weight:600;color:#c62828;" if problem else "")
+        self.system_sound.setText(text)
+        return problem, bool(problem)
 
     def _widget(self, setting: Setting) -> QWidget:
         if setting.kind == CHOICE:

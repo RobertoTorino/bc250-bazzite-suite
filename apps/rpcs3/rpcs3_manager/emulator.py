@@ -27,12 +27,14 @@ from bc250_core.updates import Fetch, ReleaseInfo, latest_release, version_tuple
 from . import APP_ID, __version__
 
 LANDMARK = "0.0.43"                     # the tagged version (v0.0.43) the build is of
-BUILD = 20133                           # RPCS3's build number, counted over its whole history
+BUILD = 20395                           # RPCS3's build number, counted over its whole history (24-10-2026: the
+#                                         first pin after 19-10-2026, when RPCS3 began to re-attach a controller
+#                                         that reconnects with a new device path; owner)
 VERSION = f"{LANDMARK}-{BUILD}"         # as RPCS3 names its builds; also the folder it is installed in
-COMMIT = "53d44aa4a1c2cdba3601938a48ee3b86b73b8e3c"
+COMMIT = "46b7fb670b280d08036c7670270b713daef912c2"
 ASSET = f"rpcs3-v{VERSION}-{COMMIT[:8]}_linux64.AppImage"
-SHA256 = "d26adeba450bd05fc47a1fcd0ef6578ff2197ffb9db084dcb329490d462d241a"
-SIZE = 94049343                         # bytes: how the app tells that RPCS3 replaced it with another build
+SHA256 = "9df18bd0af25e94c5a03936b04b3e5a332a5c22e6fa61e6ab93376b027817a5c"
+SIZE = 83180532                         # bytes: how the app tells that RPCS3 replaced it with another build
 SIZE_MB = round(SIZE / (1 << 20))       # for the question before downloading
 MEMBER = "rpcs3.AppImage"               # the name it is installed under, the same for every version
 REPO = "RPCS3/rpcs3"

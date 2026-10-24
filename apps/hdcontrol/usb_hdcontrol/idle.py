@@ -5,7 +5,12 @@ installed by install.sh) reads the input reports of every controller on Bluetoot
 after the minutes chosen in
 the window without a button, a stick moved off its middle or a trigger pulled, ends its Bluetooth connection as Turn
 off does, and says so in a desktop notification (owner, 23-10-2026) and the journal. On the USB cable a controller is
-left alone: the cable powers it. The motion sensors do not count, so a controller lying on a table is idle."""
+left alone: the cable powers it. The motion sensors do not count, so a controller lying on a table is idle.
+
+While a game Steam started runs, every controller is left on (owner, 24-10-2026): a controller switched off during
+a game is not picked up again by every game when it comes back (RPCS3's build of the time lost it for the rest of
+the session), and the wait starts over when the game ends. Steam gives a game's process SteamGameId in its
+environment (the suite's run wrappers read it too), which /proc shows for the user's own processes."""
 
 from __future__ import annotations
 
@@ -28,6 +33,7 @@ NOTIFY_TIMEOUT = 10
 PERIOD = 0.2                        # the kernel keeps 64 reports, about 0.25 s over Bluetooth: none is missed
 SAVE = 5.0                          # the last-used times go to STATE at most this often
 LOOK = 2.0                          # how often /sys is searched for controllers, and the pause while none is watched
+GAME_MARK = b"SteamGameId="         # in the environment of a process Steam started as a game
 
 
 def active(reading: inputs.Reading) -> bool:
@@ -49,6 +55,18 @@ def read_state(path: Path) -> dict[str, float]:
         return {str(node): float(last) for node, last in data.get("last_used", {}).items()}
     except (OSError, ValueError, AttributeError, TypeError):
         return {}
+
+
+def game_running(proc: Path = controller.PROC) -> bool:
+    """Whether a game Steam started runs: a process (the user's own, which /proc lets it read) with SteamGameId in
+    its environment. Steam's own processes do not have it."""
+    for process in proc.glob("[0-9]*"):
+        try:
+            if GAME_MARK in (process / "environ").read_bytes():
+                return True
+        except OSError:
+            continue
+    return False
 
 
 def notify(summary: str, body: str, run=subprocess.run, which=shutil.which) -> bool:
@@ -101,9 +119,11 @@ class Watcher:
 
     def __init__(self, minutes: Callable[[], int], find=controller.find, open_reports=Reports,
                  disconnect=controller.disconnect_bluetooth, clock=time.monotonic, log=print, notify=notify,
-                 dev: Path = controller.DEV, state: Path | None = None):
+                 dev: Path = controller.DEV, state: Path | None = None, game=game_running):
         self.minutes, self.find, self.open_reports = minutes, find, open_reports
         self.disconnect, self.clock, self.log, self.notify, self.dev = disconnect, clock, log, notify, dev
+        self.game = game
+        self.in_game = False                                    # a game Steam started runs: nothing goes off
         self.watched: dict[str, tuple[object, float]] = {}      # node -> (its reports, last used)
         self.present: dict[str, controller.Controller] = {}
         self.looked = float("-inf")
@@ -122,6 +142,11 @@ class Watcher:
             for node in list(self.watched):
                 if node not in self.present:
                     self.watched.pop(node)[0].close()
+            in_game = bool(self.present) and self.game()        # looked for only while a controller is there
+            if in_game != self.in_game:
+                self.log("A game started from Steam runs: the controllers stay on." if in_game else
+                         "The game ended: a controller unused from now on is switched off after the wait.")
+            self.in_game = in_game
         for node, found in self.present.items():
             if node not in self.watched:
                 try:
@@ -130,7 +155,7 @@ class Watcher:
                     continue
             reports, last = self.watched[node]
             try:
-                if reports.in_use():
+                if reports.in_use() or self.in_game:                # a game runs: as good as in use
                     last = now
             except OSError:                 # it left between the look in /sys and the read
                 self.watched.pop(node)[0].close()

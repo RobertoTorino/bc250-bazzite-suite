@@ -449,8 +449,22 @@ def test_the_blue_look(qapp, folders):
     for pill in (window.refresh_pill, *window.actions):
         sheet = pill.styleSheet()                       # the blue left edge only, also under the mouse (owner)
         assert sheet.rfind(f"border-left-color:{style.BLUE}") > sheet.rfind(ACCENT), pill.caption.text()
-        assert style.BLUE_TINT in sheet
+        assert style.HOVER_SHEEN in sheet and style.BLUE_TINT not in sheet
     assert all(p.value.styleSheet() == window.refresh_pill.value.styleSheet() for p in window.actions)  # same type
+    # The Refresh pill has the keyboard focus when the window opens; it looks as the boxes beside it all the same
+    # (owner, 24-10-2026: it showed another background colour).
+    window.show()
+    qapp.processEvents()
+    assert window.focusWidget() is window.refresh_pill
+    image = window.grab().toImage()
+    for widget in (window.refresh_pill, window.emulator_box):
+        corner = widget.mapTo(window, widget.rect().topLeft())
+        samples = [image.pixelColor(corner.x() + widget.width() - 6, corner.y() + dy).name()
+                   for dy in (6, widget.height() // 2, widget.height() - 6)]
+        if widget is window.refresh_pill:
+            refresh = samples
+        else:
+            assert samples == refresh
     window.close()
 
 
@@ -609,4 +623,26 @@ def test_covers_with_the_suites_key(qapp, folders, monkeypatch, tmp_path):
     for suffix in ("p", "", "_hero", "_logo"):
         assert QImage(str(grid / f"{number}{suffix}.png")).pixelColor(10, 10).name() == "#0000ff", suffix
     assert window.no_cover == set() and not window.steam_button.isEnabled()
+    window.close()
+
+
+def test_bazzites_volume_for_pcsx2(qapp, folders, tmp_path):
+    """The volume Bazzite remembers for PCSX2 (WirePlumber's stream-properties, core's sound): in the Settings tab's
+    Sound box, and said once while PCSX2 is muted there (owner, 24-10-2026, as RPCS3 Manager's)."""
+    from pcsx2_manager.settings_page import SOUND_MUTED
+    state = tmp_path / "state" / "wireplumber" / "stream-properties"
+    state.parent.mkdir(parents=True)
+    window = _window(folders, sound_state=state)
+    assert window.settings_page.system_sound.text() == "— (PCSX2 has not played yet)"
+    state.write_text('[stream-properties]\nOutput/Audio:application.name:PCSX2={"volume":1.000000, "mute":true, '
+                     '"channelVolumes":[1.000000, 1.000000], "channelMap":["FL", "FR"]}\n')
+    window.refresh()
+    assert window.settings_page.system_sound.text() == "Muted" and window.running.text() == SOUND_MUTED
+    window.say("something else")
+    window.refresh()
+    assert window.running.text() == "something else"                            # said once
+    state.write_text('[stream-properties]\nOutput/Audio:application.name:PCSX2={"volume":0.700000, "mute":false}\n')
+    window.refresh()
+    assert window.settings_page.system_sound.text() == "70 %" and window.settings_page.system_sound.styleSheet() == ""
+    assert window.output.toPlainText().count("muted in Bazzite") == 1
     window.close()

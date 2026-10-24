@@ -83,11 +83,28 @@ def primary_button(text: str, tooltip: str = "") -> QPushButton:
     return button
 
 
+def tinted(colour: str, amount: float = 0.1) -> str:
+    """*colour* with *amount* of the blue mixed in, opaque: a tint that keeps the surface it is on."""
+    base, blue = QColor(colour), QColor(BLUE)
+    mixed = QColor.fromRgbF(*(b * (1 - amount) + a * amount for a, b in zip(blue.getRgbF()[:3], base.getRgbF()[:3])))
+    return mixed.name()
+
+
+# The pill's surface under the mouse: the theme's sheen with the blue tint mixed into both of its stops, so it
+# stays a sheen (a translucent tint over the pill showed the window behind it instead; owner, 24-10-2026).
+HOVER_SHEEN = (f"qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {tinted(THEME.button)}, "
+               f"stop:1 {tinted(THEME.button_low)})")
+
+
 def action_pill(value: str, caption: str, tooltip: str) -> Pill:
     """A pill that does something (Refresh, Install PCSX2…), as the boxes beside it: the blue left edge only,
-    also under the mouse and the keyboard focus (owner, 24-10-2026: no border all round); the blue tint says it
-    can be clicked, as a button's hover does."""
+    also under the mouse and the keyboard focus (owner, 24-10-2026: no border all round); the blue tint under the
+    mouse says it can be clicked, as a button's hover does. The keyboard focus alone changes nothing: the first
+    pill has it when the window opens, and showed another background than the boxes beside it (owner,
+    24-10-2026)."""
     pill = Pill(value, caption, tooltip, BLUE)
-    pill.setStyleSheet(pill.styleSheet() + f"#pill:hover, #pill:focus {{ border-color:{THEME.edge}; "
-                                           f"border-left-color:{BLUE}; background:{BLUE_TINT}; }}")
+    pill.setStyleSheet(pill.styleSheet()
+                       + f"#pill:focus {{ border-color:{THEME.edge}; border-left-color:{BLUE}; }}"
+                       f"#pill:hover {{ border-color:{THEME.edge}; border-left-color:{BLUE}; "
+                       f"background:{HOVER_SHEEN}; }}")
     return pill

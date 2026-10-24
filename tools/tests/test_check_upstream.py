@@ -2,7 +2,7 @@
 """tools/check_upstream.py on a fake GitHub: in step, a newer Decky release, a replaced asset, a changed service unit
 (at the pinned tag or only on main), no network; the same for shadPS4's pin, read from emulator.py; and HelixSR
 against what acquire.py knows (a newer release, another fallback in the notes, a fallback without its zip); the pins
-of PPSSPP, PCSX2, RPCS3, mGBA and DirectMesh against a newer release; and the report for the Upstream review
+of PPSSPP, PCSX2, RPCS3 and DirectMesh against a newer release; and the report for the Upstream review
 issue."""
 
 from __future__ import annotations
@@ -206,10 +206,10 @@ def test_a_fallback_without_its_zip():
     assert "is gone from GitHub" in check_upstream.check_helixsr(HELIX, helix_github(fallback_gone=True)).drift[0]
 
 
-# --- PPSSPP, PCSX2, RPCS3, mGBA and DirectMesh: a pin a newer release moves -------------------------------------
+# --- PPSSPP, PCSX2, RPCS3 and DirectMesh: a pin a newer release moves -------------------------------------
 
 @pytest.mark.parametrize("name, constant", [("ppsspp", "VERSION"), ("pcsx2", "VERSION"), ("rpcs3", "LANDMARK"),
-                                            ("mgba", "VERSION"), ("directmesh", "DIRECTMESH")])
+                                            ("directmesh", "DIRECTMESH")])
 def test_the_pins_are_read_from_the_apps(name, constant):
     pin = check_upstream.load_release(name)
     assert pin.pinned and pin.repo.count("/") == 1 and pin.where.startswith(constant)
@@ -221,7 +221,7 @@ def latest_github(pin, tag: str):
     return {f"{check_upstream.API.format(repo=pin.repo)}/releases/latest": answer}
 
 
-@pytest.mark.parametrize("name", ["ppsspp", "pcsx2", "rpcs3", "mgba"])
+@pytest.mark.parametrize("name", ["ppsspp", "pcsx2", "rpcs3"])
 def test_a_newer_release_moves_a_pin(name):
     pin = check_upstream.load_release(name)
     answers = latest_github(pin, f"v{pin.pinned}")

@@ -161,10 +161,10 @@ The shadPS4 Manager installs one shadPS4 release, pinned in `apps/shadps4/shadps
 SHA-256 GitHub publishes for it that a new pin needs, and the SHA-256 of the pinned zip. A new shadPS4 can change
 what the app relies on (its `config.json`, the shadNet protocol), so a new pin also needs a look at what changed.
 
-The PPSSPP, PCSX2 (its stable channel), RPCS3 and mGBA Managers and Mesh Shaders each pin one release: `VERSION` or
-`LANDMARK` in the app's `emulator.py`, and `DIRECTMESH` in `apps/mesh/bc250-mesh-shaders.sh`. mGBA can update itself
-from its own window; its `emulator.py` also holds the size of the pinned AppImage (`SIZE`), by which the app sees
-that, so a new pin moves it too.
+The PPSSPP, PCSX2 (its stable channel) and RPCS3 Managers and Mesh Shaders each pin one release: `VERSION` or
+`LANDMARK` in the app's `emulator.py`, and `DIRECTMESH` in `apps/mesh/bc250-mesh-shaders.sh`. RPCS3's `emulator.py`
+also holds the size of the pinned AppImage (`SIZE`), by which the app sees that RPCS3 replaced itself with another
+build, so a new pin moves it too.
 The same tool reports a newer stable release than the pin (for DirectMesh the newest `directmesh-v*` tag); the apps
 check the checksum of what they download themselves. The governor has no pin in the repository (its version is the
 one COPR built); the GPU Governor Manager compares the installed package with filippor's latest release.
@@ -209,12 +209,9 @@ app relies on in Xenia's source at the new commit: the `--fullscreen` option and
 (`src/xenia/vfs/devices/disc_image_device.cc`, which `GAME_PARTITIONS` in the app's `games.py` copies), and GTK on
 X11 (`GDK_BACKEND` in `src/xenia/ui/windowed_app_main_posix.cc`).
 
-SwanStation and SameBoy Managers pin nothing: their cores come from libretro's build server, which keeps only the
-newest build, and the apps say when there is a newer one. RetroArch is a Flatpak that Flatpak updates.
-
 ```bash
 python3 tools/check_upstream.py            # all of them
-python3 tools/check_upstream.py helixsr    # one: decky, shadps4, helixsr, ppsspp, pcsx2, rpcs3, mgba or directmesh
+python3 tools/check_upstream.py helixsr    # one: decky, shadps4, helixsr, ppsspp, pcsx2, rpcs3 or directmesh
 ```
 
 ## bc250_core

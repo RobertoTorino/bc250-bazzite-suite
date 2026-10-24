@@ -734,6 +734,143 @@ of pcsx2 (Breaking: the buttons and the channel went) and of core (Added: applog
 The portal's summary for pcsx2 in apps.toml still says "added to Game Mode" (a portal change, with its bump: the
 owner's).
 
+RPCS3 Manager, the second (24-10-2026, built the same day, local, uncommitted; its CHANGELOG has it): the window
+rebuilt on PCSX2 Manager's, the same structure throughout (the header pills spread over the width with a Play time
+box from RPCS3's persistent_settings.dat, the states on the right ending at the last pill's middle, the controller
+state, five action pills, the state lines, the tabs the pills' size, a Log tab on core's applog, Update Steam and
+Steam artwork…, Wiki, the flat choice boxes), the run wrapper's log line and no-controller notification, the log
+kept and purged by the installer as PCSX2's; the Play button went. Verified from RPCS3 0.0.43's source
+(gui_application.cpp, persistent_settings.cpp, settings.cpp): the play time is milliseconds per serial under
+[Playtime] in `~/.config/rpcs3/GuiConfigs/persistent_settings.dat` (an INI file), the last-played date under
+[LastPlayed] in ISO form (older RPCS3 wrote "October 24, 2026" and "October 24 2026", read too). Decided on the
+way, the owner to confirm: RPCS3 settings stays as a button under the games (RPCS3's own window is still where its
+settings, the pads and game updates are set; the manager does not own RPCS3's settings yet, unlike PCSX2's
+Settings tab), so there are five pills, not six (a Firmware Uninstall would delete dev_flash, a Games Install
+package would run `--installpkg` in RPCS3's window: either is the owner's); controllers.py is a copy of PCSX2
+Manager's (shared code belongs in core; moving it there, with PCSX2's, is a core change for the owner's go-ahead);
+RPCS3's own log (RPCS3.log) is not read into the app's log as PCSX2's emulog.txt is, since no log from the board
+was at hand to read it by: a code path for after the owner's round. Set aside for the round (24-10-2026, nothing
+deleted) in `~/bc250-set-aside/rpcs3-24-10-2026/`: RPCS3 0.0.43-20133 and the covers (share/), `~/.config/rpcs3`
+(the firmware, Lumines Supernova installed, RPCS3's settings; rpcs3/), the manager's settings
+(bc250-rpcs3-manager/), and the Lumines Supernova shortcut, taken out with the app's own code (Steam closed for it
+and started again; shortcuts.vdf and its four pictures in steam/). The suite's SteamGridDB key stays in place
+(owner). The installed app stays 0.9.0; the round runs the new app from the checkout (`cd apps/rpcs3 &&
+PYTHONPATH=../../core ~/.local/share/bc250-bazzite-suite/venv/bin/python -m rpcs3_manager`), with the checkout's
+run wrapper copied to `~/.local/bin` if the log line and the notification are to be seen.
+
+The RPCS3 round (24-10-2026, the owner, Gran Turismo 5 Prologue from a disc folder, Lumines Supernova from a
+package) and its remarks, built the same day (local, uncommitted; the CHANGELOG has it): the Refresh pill's other
+background colour (seen in PCSX2 Manager, the same in RPCS3's: the pill holds the keyboard focus when the window
+opens and the focus style painted a translucent tint over the window; fixed in both, the focus changes nothing
+now); Games Remove folder became Games Install (a folder with .pkg and .rap files, `--installpkg <folder>` in
+RPCS3's window, which installs every package below it and copies the licenses into exdata; the window watches
+RPCS3's games and licenses as it watches the firmware), Remove a folder is a link in the Disc games line; the
+state lines short (RPCS3 0.0.43, Firmware 4.93, Disc games, PKG games; the build and a newer landmark in the
+tooltip); the welcome dialog ("Show at startup" to untick, "I have read the Quickstart guide" to tick) off by
+writing RPCS3's GUI settings (GuiConfigs/CurrentSettings.ini, `infoBoxEnabledWelcome=false`), and with it RPCS3's
+own update check off (`[Meta] checkUpdateStart=false`): the round's RPCS3.log shows the owner's RPCS3 updated
+itself twice in its window (20133 → 20391 → 20392), and the popup the owner met is RPCS3's "Remove obsolete
+settings?" question (settings_dialog::open, `confirmationObsoleteCfg`), asked because the config.yml of one build
+holds keys the other does not know (the round's config.yml against the set-aside one: MFC Commands Timeout and
+the SPU LLVM bounds went, five keys came); it is not the app's doing and goes once the builds stay in step. The
+controller not working: RPCS3's log says "Input configuration empty. Adding default keyboard pad handler": the
+pad file (input_configs/global/Default.yml) was empty, so RPCS3 played with the keyboard; the earlier DualSense
+handler came from the set-aside file, which the owner's Pads settings had written. The app writes player 1 (and
+2) on the controllers connected, through RPCS3's SDL handler with RPCS3's own default mapping for it, verified in
+RPCS3 0.0.43's source (pad_config.h, sdl_pad_handler::init_config; cfg::decode keeps the defaults for what a
+partial file leaves out): RPCS3 names a controller as SDL does, with " 1" after it (sdl_pad_handler::
+enumerate_devices; a name not yet seen is kept and attached when a controller whose SDL name it starts with
+appears), and SDL's name is not the kernel's (the Edge over USB is "Sony Interactive Entertainment DualSense Edge
+Wireless Controller" to the kernel, "DualSense Edge Wireless Controller" to SDL), so the app asks Bazzite's
+libSDL3 (RPCS3 links SDL3 in statically; the AppImage ships no library) through ctypes in a process of the app's
+own, once per change of the controllers, and falls back on the kernel's name without SDL3; a pad file RPCS3's own
+Pads wrote is never touched (no comment of the app's at its top). A Screen setting column per game, as PCSX2's,
+in RPCS3's custom_configs/config_<Id>.yml (`Video: Aspect ratio` 16:9 or 4:3, `Stretch To Display Area`), the
+rest of a file RPCS3 wrote kept; windowed is `--fullscreen` left out, the shortcut's, not per game (owner to
+decide whether a Windowed choice should change the launch options). A Steam link under the table
+(steam://open/games). Not built, the owner's to decide (24-10-2026): RPCN sign-in (RPCS3's rpcn.yml holds the
+host, NPID, password and token; the account is made in RPCS3's RPCN dialog with an e-mail token, and config.yml's
+`Net: PSN status: RPCN` turns it on; the app could write the status and open RPCS3's dialog for the account, not
+more without keeping a password); a "Use cheats" column (dropped by the owner the same day: RPCS3 has no cheats
+switch, its game patches are enabled per patch and serial in patches/patch_config.yml through its Manage Game
+Patches window; the owner looks into how that file is loaded, a global Enable patches switch in the Settings tab
+may follow). Built after the owner's screenshots (24-10-2026, the welcome dialog and the obsolete-settings
+question, as found): a Settings tab as PCSX2 Manager's (rpcs3_settings.py, settings_page.py): the picture
+(Renderer, Resolution Scale, Anisotropic Filter Override, MSAA, VSync Mode, Frame limit, Output Scaling Mode,
+Stretch To Display Area as the default), the emulation (PPU and SPU Decoder), the sound (Audio Renderer, Master
+Volume, Enable Buffering) and the messages (trophy popups, the shader compilation hint), each one line of
+config.yml, values and defaults from system_config.h and system_config_types.cpp; and RPCS3's dark style chosen
+once in its GUI settings when the suite's theme is dark (the welcome dialog's "Use Dark Theme" tick). Asked the
+same day: quit a game with Options + Share, as PCSX2's Select + Start. RPCS3 has no such chord
+(gs_frame::handle_shortcut knows keyboard shortcuts only; pad_thread's only pad action is the home menu, whose
+Exit Game calls Emu.GracefulShutdown): the app's mapping already opens that menu with Share + Options (RPCS3's
+PS Button default "Back&Start,Guide"), said in the tooltip and the wiki; a direct chord would need a change in
+RPCS3. On this board SDL3 is at /usr/lib64/libSDL3.so.0 (3.4.18).
+Open (owner): the round again from scratch with the new window (the pad file written for the Edge as SDL names
+it, Cross in the home menu, Install of a package folder, the screen setting seen in a game, the Steam link), the
+notification when Steam starts a game without a controller, the Play time box against RPCS3's own game list, then
+a release of rpcs3 (Breaking: the Play button went; the number is the owner's) and of pcsx2 (Fixed: the Refresh
+pill); the portal's summary for rpcs3 in apps.toml still says "added to Game Mode" (a portal change, with its
+bump: the owner's). RPCS3's own config.yml on the board now holds 20392's keys: the first RPCS3 Settings opened on
+the pinned 20133 asks the obsolete-settings question once more.
+
+The owner's remarks after the package install and a game (24-10-2026, built the same day, local, uncommitted; the
+CHANGELOG has it). The state lines: Disc games is the folder's name alone (a link that takes the folder out, after
+a question), PKG games is RPCS3's games folder as dev_hdd0/game/ or — while nothing is installed. The package
+install without RPCS3's window: the owner's screenshot shows RPCS3's PKG Installation dialog (the three Lumines
+packages, Precompile caches ticked, Install to click), and RPCS3 0.0.43's rpcs3.cpp supports `--headless
+--installpkg` (create_application makes a headless_application for --headless, then
+main_window::InstallPackages(nullptr, …) runs and run_rpcs3 returns; `--no-gui` refuses an install); tried on the
+board with an empty folder and a dummy .pkg (nothing installed, nothing in exdata): no window, the lines in
+RPCS3.log, the process ends after some 10 s with RPCS3's own fatal "Verification failed … ~manual_typemap …
+process teardown" and exit code 143, so the exit code says nothing and the app reads RPCS3.log (gui_log's
+"Successfully installed", "Failed to install", "Cannot install invalid package", "Successfully copied rap file").
+Found on the way: RPCS3 takes a folder's own files only (gui::utils::get_dir_entries, QDir::Files), in name
+order, and package_reader::extract_data stops at the first failure, while check_target_app_version refuses an
+update (category GD with a TARGET_APP_VER) whose game has no PARAM.SFO yet; the Lumines update's name
+("…001-A0102-V0100-PE.pkg") sorts before the game's ("…001.pkg"), so one headless run with the folder would
+install nothing on a fresh RPCS3 (the GUI dialog sorts by its display text, DLC, HDD Game, Update, which happened
+to work). The app therefore runs RPCS3 once per file, the licenses first, then the packages with the updates
+last, told apart by the PATCH flag (0x10) in the package type of the PKG's unencrypted metadata (unpkg.h, item
+0x3; the first 288 bytes of the owner's three packages are test fixtures): the update is 0x5e, the game 0x4e, the
+DLC content type 4 with 0x8. RPCS3's "Precompile caches" of the dialog is not done headless (RPCS3 compiles the
+caches when the game first starts). The sound: the owner found RPCS3 muted in Bazzite's sound settings;
+WirePlumber keeps a volume and a mute per application in ~/.local/state/wireplumber/stream-properties (on the
+board shadPS4 is muted there right now), so the Settings tab shows Bazzite's volume for RPCS3 beside RPCS3's own
+and says when it is muted; the app only reads it (the file is WirePlumber's, and a stream can only be changed in
+the applet while it plays). shadPS4 Manager and the other managers could show the same (owner to decide). The
+controller after the idle switch-off: the journal shows USB HD Control's idle service switching the Edge off at
+17:06:46 ("unused for 10 minutes"), the controller back at 17:11:26 and again 17:12:04 with new kernel nodes
+(hidraw2 became hidraw0, new event numbers); RPCS3's log of that game session was already rotated away (RPCS3
+keeps the current log and one before it), but RPCS3 0.0.43's sdl_pad_handler::get_device_by_gamepad matches a
+known real controller by name, device path and serial together, and a reconnected controller with a new path
+matches nothing, so the pad stays disconnected until the game is started again; upstream fixed it on 19-10-2026
+(1b1b7dea, "SDL: re-attach a reconnected controller even if its path changed"; also 1c460fdd, 01-10-2026, a
+reconnect try once a second), after the pinned build (53d44aa4, 30-09-2026). Said in the controller tooltip and
+the wiki (quit the game and start it again); the fix comes with a later RPCS3 build, whose pin is the owner's.
+Decided by the owner the same evening (24-10-2026) and built (local, uncommitted): the RPCS3 pin moves to
+0.0.43-20395 (46b7fb67, built 24-10-2026, 58 commits after the reconnect fix; the AppImage is 83,180,532 bytes,
+SHA-256 9df18bd0af25e94c5a03936b04b3e5a332a5c22e6fa61e6ab93376b027817a5c, downloaded into the session's
+scratchpad to check it, not installed), tried headless with the dummy package as 20133 was (the same lines, the
+same teardown error, nothing changed in RPCS3's folder); the board test with a game and a controller that comes
+back is the owner's, then the rpcs3 release. USB HD Control's idle service leaves every controller on while a
+game Steam started runs (SteamGameId in a process's environment, as the run wrappers read it; looked for once per
+look for controllers), the wait starting over when the game ends; a game started from an emulator's own window
+or a terminal is not seen (owner to say if it should be: the controller's node holders would be the way). Asked
+(owner): what "Precompile caches" of RPCS3's dialog means for a headless install (nothing is precompiled; RPCS3
+compiles the PPU modules when the game first starts, as for a disc game; the dialog's option runs the game list's
+Create caches for the games installed, which has no command-line form), and whether the .rap files are copied
+(RPCS3 does, one headless run per .rap or .edat file, into dev_hdd0/home/<its user>/exdata; the app passes each
+file in the chosen folder, not a subfolder's). The Bazzite-volume row for every manager (owner, 24-10-2026,
+the same evening): the reading moved to core (`bc250_core/sound.py`: stream_sound, describe, the words; a core
+change the owner's wish for every manager asked for), PCSX2 Manager has the row beside its Volume (its stream is
+"PCSX2", seen on the board), RPCS3 Manager reads the same code; the seven managers without a Settings tab yet
+(shadPS4, PPSSPP, Vita3K, Xenia; SwanStation, mGBA and SameBoy were dropped the same evening) take the row when
+they are rebuilt on the blueprint,
+each with its stream's name as PipeWire reports it (shadPS4's is "shadPS4", seen on the board; the others are
+read from the board's stream-properties once each has played). The core change asks for a core release and
+PCSX2's and RPCS3's bundles follow at their own (the owner's).
+
 ## Done
 
 | Step | What | State |
@@ -988,6 +1125,12 @@ owner's).
   controllers' test interface (feature reports 0x80 and 0x81, the battery read of community testers) gives 3.709 V at
   100 % (Full) and 3.723 V at 95 %, so it does not follow the charge as a cell's voltage would (4.1 to 4.2 V when
   full) and is not used; the 10 % steps stay the measure.
+- **SwanStation, mGBA and SameBoy Managers dropped (owner, 24-10-2026).** Their folders, wiki chapters, portal
+  entries, icons, Dependency Checker entries (with the Flatpak tool only they used), installer tests, CI steps and
+  the mGBA pin check in tools/check_upstream.py are removed from the checkout; their releases and tags on GitHub
+  stay as history. A copy installed on a board stays installed with its launcher (its own `install.sh --uninstall`
+  takes it out; the portal no longer lists it). The next portal release drops the three pins (check_manifest asks
+  for the minor bump; the owner's). The two entries below are history.
 - **SwanStation Manager (built 21-10-2026, owner's decision; not tried on the board).** PS1, the first of six
   emulator managers the owner asked for (list below). Not standalone: SwanStation is a libretro core, so the app
   installs RetroArch from Flathub (a Flatpak, `--user`; one already installed is used) and the core from the libretro

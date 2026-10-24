@@ -79,7 +79,10 @@ down it and the touchpad filling as the firmware goes in.
   a controller on Bluetooth is switched off the same way, as a PS5 does; **Never** leaves it on. 10 minutes is the
   default. Nothing in Linux does this by itself, and a controller left on drains its battery in a few hours. A small
   service that the installer adds does it, also while the window is closed. It ignores the motion sensors, so a
-  controller lying on a table counts as unused, and it leaves controllers on the USB cable alone.
+  controller lying on a table counts as unused, and it leaves controllers on the USB cable alone. While a game
+  started from Steam runs, every controller stays on, whether it is used or not: a game does not always pick a
+  controller up again that went away and came back, so the wait starts over when the game ends. The journal says
+  when the service saw a game start and end.
 
     With several controllers connected, each has its own wait: one in use stays on while an unused one goes off. A
     desktop notification says which one, by the player number its lights showed, for example **DualSense Edge

@@ -51,7 +51,7 @@ jobs:
               apps/overlay, apps/ips35, apps/hdcam, apps/hdcontrol, apps/bios, apps/ace, apps/vram, apps/cec, apps/sftp,
               apps/consoles, apps/clb, apps/mesh, apps/shadps4, apps/rpcs3, apps/decky,
               apps/datstation, apps/ppsspp, apps/pcsx2, apps/vita3k, apps/fan,
-              apps/wdriver, apps/swanstation, apps/mgba, apps/sameboy, apps/xenia,
+              apps/wdriver, apps/xenia,
               tools/installer-tests/gui]   # every folder with tests/
     defaults:
       run:
@@ -147,7 +147,7 @@ jobs:
       # that their own release workflows already held to it.
       - name: shellcheck (errors, all scripts)
         run: find apps portal tools test.sh install.sh -name '*.sh' -print0 | xargs -0 shellcheck -x -S error
-      - name: shellcheck (warnings, cores, oc, acpi, overlay, ips35, hdcam, hdcontrol, bios, ace, vram, fan, wdriver, cec, sftp, consoles, clb, mesh, shadps4, rpcs3, ppsspp, pcsx2, vita3k, swanstation, mgba, sameboy, xenia, decky, netcatgui, datstation and the suite's own scripts)
+      - name: shellcheck (warnings, cores, oc, acpi, overlay, ips35, hdcam, hdcontrol, bios, ace, vram, fan, wdriver, cec, sftp, consoles, clb, mesh, shadps4, rpcs3, ppsspp, pcsx2, vita3k, xenia, decky, netcatgui, datstation and the suite's own scripts)
         run: |
           shellcheck -x -S warning portal/install.sh apps/check/install.sh tools/*.sh tools/installer-tests/*.sh test.sh install.sh \
             tools/hooks/pre-push
@@ -169,9 +169,6 @@ jobs:
           shellcheck -S warning apps/ppsspp/install.sh apps/ppsspp/bc250-ppsspp-run
           shellcheck -S warning apps/pcsx2/install.sh apps/pcsx2/bc250-pcsx2-run
           shellcheck -S warning apps/vita3k/install.sh apps/vita3k/bc250-vita3k-run
-          shellcheck -S warning apps/swanstation/install.sh apps/swanstation/bc250-swanstation-run
-          shellcheck -S warning apps/mgba/install.sh apps/mgba/bc250-mgba-run
-          shellcheck -S warning apps/sameboy/install.sh apps/sameboy/bc250-sameboy-run
           shellcheck -S warning apps/xenia/install.sh apps/xenia/bc250-xenia-run
           shellcheck -S warning apps/decky/install.sh
           shellcheck -S warning apps/mtool/install.sh
@@ -259,12 +256,6 @@ jobs:
         run: bash tools/installer-tests/pcsx2.sh
       - name: vita3k installer
         run: bash tools/installer-tests/vita3k.sh
-      - name: swanstation installer
-        run: bash tools/installer-tests/swanstation.sh
-      - name: mgba installer
-        run: bash tools/installer-tests/mgba.sh
-      - name: sameboy installer
-        run: bash tools/installer-tests/sameboy.sh
       - name: xenia installer
         run: bash tools/installer-tests/xenia.sh
       - name: decky installer

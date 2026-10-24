@@ -18,7 +18,7 @@ A game rarely brings these itself, so the managers draw them. With a SteamGridDB
 | Managers | What comes from SteamGridDB |
 |---|---|
 | shadPS4, RPCS3, Vita3K, PPSSPP | the cover. The banner, wide picture and logo stay the game's own pictures. |
-| PCSX2, SwanStation, mGBA, SameBoy, Xenia | all four. Their games bring no pictures, so the app draws them from its own icon and the game's title. |
+| PCSX2, Xenia | all four. Their games bring no pictures, so the app draws them from its own icon and the game's title. |
 
 ## The key
 
@@ -38,7 +38,7 @@ it empty to look nothing up.
 
 ## How a game is looked up
 
-The next **Update Game Mode** (in PCSX2 Manager **Update Steam**) looks up each ticked game by its title, without tags such as `(USA)` or `[!]` from a
+The next **Update Game Mode** (in PCSX2 Manager and RPCS3 Manager **Update Steam**) looks up each ticked game by its title, without tags such as `(USA)` or `[!]` from a
 file name. It takes the game with exactly that name, else the first one SteamGridDB finds, and of each picture the
 one with the most votes, leaving out pictures marked as adult, humour or epilepsy. A picture SteamGridDB does not
 have stays drawn.

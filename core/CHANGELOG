@@ -1,3 +1,14 @@
+Changelog: 24-10-2026 19:23:03
+
+Added. sound: the volume the desktop remembers per application (owner, 24-10-2026: every manager shows it; found
+on the board with RPCS3 muted in Bazzite's sound settings, a game playing without a sound). WirePlumber's
+restore-stream module keeps a volume and a mute per application in ~/.local/state/wireplumber/stream-properties,
+also once the application is closed; stream_sound(name) reads the line of an application's output stream, and
+describe(app, sound) gives the words a manager's Settings tab shows beside the emulator's own volume (Muted, 0 %
+or the percentage, in red when a game would play without a sound) and the advice (the sound applet while a game
+plays). Read only. Moved here from RPCS3 Manager, which found it; PCSX2 Manager takes it the same day. Tests: the
+file as the board writes it (a space in a name, another stream's line, broken JSON), the state folder, the words.
+
 Changelog: 24-10-2026 07:20:00
 
 Fixed. covers: the Covers dialog (the SteamGridDB key) wraps its text at a readable width; as one line it made the

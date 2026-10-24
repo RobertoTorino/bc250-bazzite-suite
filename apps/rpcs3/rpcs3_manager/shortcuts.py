@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""A Steam shortcut per game, for Game Mode: a non-Steam game that runs the run wrapper with RPCS3's launch line,
-the game alone and full screen (bc250-rpcs3-run --no-gui --fullscreen "<EBOOT.BIN>"), with the game's own pictures as
-its artwork. RPCS3's own Steam shortcuts start a game with --no-gui too; --fullscreen goes only with it.
+"""A Steam shortcut per game, where a game is started (on the desktop or in Steam's Big Picture Mode): a non-Steam
+game that runs the run wrapper with RPCS3's launch line, the game alone and full screen (bc250-rpcs3-run --no-gui
+--fullscreen "<EBOOT.BIN>"), with the game's own pictures as its artwork. RPCS3's own Steam shortcuts start a game with --no-gui too; --fullscreen goes only with it.
 
 The file and its format are core's (bc250_core.steam). The shortcut runs the wrapper, not the AppImage, so its
 Steam number (from the program and the name) stays the same when the app brings another RPCS3. The artwork comes

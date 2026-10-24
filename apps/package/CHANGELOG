@@ -1,3 +1,13 @@
+Changelog: 24-10-2026 19:49:22
+
+Release 1.0.0.
+
+Changelog: 24-10-2026 19:31:59
+
+Breaking. The SwanStation, mGBA and SameBoy Managers leave dependencies.toml (owner, 24-10-2026: the three
+managers are dropped), with the Flatpak tool, which only they used, and their lines under the Steam and FUSE 2
+tools.
+
 Changelog: 24-10-2026 10:26:20
 
 Release 0.19.0.

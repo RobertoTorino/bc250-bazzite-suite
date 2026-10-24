@@ -1,3 +1,119 @@
+Changelog: 24-10-2026 19:49:22
+
+Release 1.0.0.
+
+Changelog: 24-10-2026 18:16:35
+
+Added. The pinned RPCS3 moves to build 0.0.43-20395 (46b7fb67, 24-10-2026; owner, 24-10-2026: the first pin
+after 19-10-2026, when RPCS3 began to re-attach a controller that reconnects with a new device path: a Bluetooth
+controller switched off during a game and woken again is read again). Its AppImage is 83,180,532 bytes
+(SHA-256 9df18bd0…817a5c), checked before it is installed; "about 80 MB" in the wiki. The headless package
+install was tried with it on the board as with 20133 (a dummy package: no window, the lines in RPCS3's log). The
+board test with a game is the owner's.
+
+Added. The owner's remarks after the package install and a game (24-10-2026). Games Install no longer opens
+RPCS3's window: RPCS3 installs the packages headless (--headless --installpkg, which this build supports; proved
+on the board with a dummy package), once per file, as the window's job off the GUI thread with the pills disabled
+meanwhile: the .rap and .edat licenses first (RPCS3 copies them into its exdata), then the packages in the app's
+order, the games and DLC by name and the updates last, read from each package's unencrypted header (the PATCH
+flag in its package type; RPCS3's own check refuses an update whose game is not installed, and one run of RPCS3
+with the whole folder takes its files in name order and stops at the first failure, an update's name sorting
+before its game's). RPCS3's exit code says nothing (the build ends a headless run with an error of its own once
+the work is done), so the result comes from RPCS3's own log (~/.cache/rpcs3/RPCS3.log: the titles installed, the
+packages it could not install, the files that are no package, the licenses copied), and the games and licenses
+that came are counted when the log says nothing. Only the folder's own files are taken, as RPCS3 takes them. The
+state lines (owner): Disc games shows the folders' names alone, each a link that takes the folder out after a
+question (the paths and the count in the tooltip; Remove a folder… went); PKG games shows RPCS3's games folder as
+dev_hdd0/game/ while a game is installed and — while none is, the count and what Install takes in the tooltip.
+The Settings tab's Sound box shows Bazzite's volume for RPCS3, the one its sound settings remember per application
+(WirePlumber's stream-properties, read only; the owner found RPCS3 muted there): Muted or 0 % in red, said once
+in the status line and the log. The controller tooltip and the wiki say that a controller switched off during a
+game (USB HD Control's idle timer did it on the board, after 10 minutes) is not picked up again by this RPCS3
+build when it comes back: RPCS3 matches a known controller by name, device path and serial, and a Bluetooth
+reconnect brings a new path; RPCS3 changed this on 19-10-2026, after the pinned build (30-09-2026). The run
+wrapper knows --headless (no game logged) and lists it in its help. Tests: the headless install with a fake RPCS3
+(the order, the log read, nothing while RPCS3 runs), the package header (the first bytes of the owner's three
+Lumines Supernova packages as fixtures), the install order, the report from RPCS3's log, the saved volume, the
+Sound row, the state lines, the folder link (No keeps it), the wrapper and the installer test. The reading of
+Bazzite's volume moved to core (sound.py) the same day, for every manager; the Sound row reads the same.
+
+Changelog: 24-10-2026 15:22:00
+
+Added. The owner's remarks on the rebuilt window and the round from scratch (24-10-2026). Games Install, a pill in
+place of Games Remove folder: it takes the folder with your .pkg files and hands it to RPCS3 (--installpkg with the
+folder, in RPCS3's own window), which installs every package below it and copies the .rap and .edat licenses beside
+them into its exdata; the window follows RPCS3's games and licenses until they change, as it follows the firmware,
+and says what was installed. Remove a folder is a link in the Disc games line. The state lines are short (owner):
+RPCS3 shows the version alone, the build and a newer landmark in the tooltip (the newer one also in the log once);
+Firmware the version; Disc games the folders with the number of disc games found (or that RPCS3 knows); PKG games
+the number installed in RPCS3. A Screen setting column in the table, as PCSX2 Manager's: 16:9 (RPCS3's default),
+4:3 or Fill screen, written into the game's own settings in RPCS3 (custom_configs/config_<Id>.yml, the two Video
+lines, the rest of a file RPCS3 wrote kept), not while RPCS3 runs. The app sets RPCS3 up while it is installed and
+not running (userdata.py, as PCSX2 Manager's pcsx2_settings): RPCS3's welcome dialog off and its own update check
+off in GuiConfigs/CurrentSettings.ini (the dialog waited for a tick in "I have read the Quickstart guide" before
+RPCS3's window opened; the update replaced the installed build with a newer one on the board, after which RPCS3's
+Settings asked to remove "obsolete settings", since the two builds know different settings), and player 1 (and 2)
+on the controllers connected in input_configs/global/Default.yml, through RPCS3's SDL handler with RPCS3's own
+default mapping: the round found RPCS3 playing with the keyboard, its pad file empty. RPCS3 knows a controller by
+SDL's name, so the app asks the system's SDL3 (Bazzite's, the library RPCS3 builds in) in a process of its own
+whenever the controllers connected change, and falls back on the kernel's name without it; the file starts with a
+comment of the app's and a pad file RPCS3's own Pads settings wrote is never touched. The hint under the table
+links to Steam (steam://open/games: Steam's library, Steam started when it does not run). The run wrapper knows
+--installpkg (no game logged for it) and lists it in its help. Fixed. The Refresh pill had another background
+than the boxes beside it when the window opened: it holds the keyboard focus then, and the focus style painted a
+translucent tint over the window instead of the pill's sheen (seen by the owner in PCSX2 Manager, the same here);
+the focus now changes nothing and the mouse's tint is the sheen with the blue mixed in. Tests: the set-up and the
+pad file (RPCS3's own left alone, the kernel's names without SDL3), the packages and the watch, the screen column,
+the Steam link, the short state lines, the look (the focused Refresh pill's pixels against the box beside it), the
+SDL probe, the wrapper's --installpkg (also in the installer test). The wiki says it all.
+
+Added. A Settings tab, as PCSX2 Manager's (owner, 24-10-2026, after the screenshots: the picture settings PCSX2
+Manager has, at least): the picture (the renderer, the resolution scale, anisotropic filtering, MSAA, VSync, the
+frame limit, output scaling, Fill the screen as the default for games without a Screen setting), the emulation
+(the PPU and SPU decoders), the sound (the output library, the volume up to 200 %, buffering) and the messages in
+a game (trophies, shader compilation), each one line of RPCS3's config.yml (rpcs3_settings.py, the values and
+defaults from RPCS3 0.0.43's source), written the moment it is changed while RPCS3 does not run, every other line
+kept; a value the app does not know is shown as it is (settings_page.py). With the GUI settings the app now also
+chooses RPCS3's dark style once, while none is chosen and the suite's theme is dark: the welcome dialog, now off,
+would have ticked it. Tests: the model (defaults, a line in a file RPCS3 wrote, the values RPCS3 spells), the tab
+(a change, an unknown value, nothing while RPCS3 runs, a widget per kind) and the window's tab following the file.
+Quitting a game on the controller (owner, 24-10-2026, asked for Options + Share as PCSX2 Manager's Select +
+Start): RPCS3 has no chord that quits a game outright; its home menu, with Exit Game in it, is the pad's way out,
+and the mapping the app writes opens it with Share + Options together (RPCS3's default for the PS Button,
+"Back&Start,Guide") or the Guide button. The controller's tooltip and the wiki say so.
+
+Changelog: 24-10-2026 11:24:12
+
+Breaking. The window is built as PCSX2 Manager's (owner, 24-10-2026: the manager that works as it should is the
+blueprint for the others). The Play button is gone, with the double-click that started a game: a game is started
+from Steam. The three numbered steps with their buttons are a row of five pills under the introduction, the header
+pills' size, spread over the window's width in equal parts, what each is for in large type and what it does under
+it: RPCS3 Install and Uninstall, Firmware Install, Games Add folder and Remove folder; the state of each (RPCS3,
+the firmware, the game folders) stands in a line below, the firmware's folder and the game folders' paths in the
+tooltips, the folders and the firmware's version by name. The header's boxes are RPCS3 version, Your games,
+Available in Steam and a new Play time: the time spent in all games together as RPCS3 counts it
+(GuiConfigs/persistent_settings.dat, milliseconds per serial, its last-played date in RPCS3's ISO form or the
+older spelled-out ones), each game's time and when it was last played in the tip; the Firmware box went (the
+Firmware line says which version). The header's pills spread over the window's width as the action pills do, and
+the states beside the title stand on the right, ending at the middle of the last pill: the app's state and, new,
+the controller's (Controller connected, the names in the tip, or No controller with what to do), read from the
+kernel's list of input devices (controllers.py, the run wrapper's rule: a joystick that is not Steam's virtual one)
+every three seconds. Two tabs the pills' size, the chosen one filled blue: Your games (the table, its columns In
+Steam, Game title, Id, Version and Folder, the folder by name with the path in the tip; RPCS3 settings, Steam
+artwork… and Update Steam under it) and Log. The app has a log (core's applog): everything it said and did, with
+the time, in the Log tab and in ~/.local/share/bc250-rpcs3-manager/bc250-rpcs3-manager.log (1 MB, three older
+kept); the run wrapper writes the game started into it (by its folder's name, from Steam or a terminal, with or
+without a controller), and when Steam starts a game without a controller it says so in a desktop notification
+(notify-send, where there is one). install.sh --uninstall keeps the log, --purge removes it; the installer test
+checks both. The texts say Steam, not Game Mode: Update Steam (was Update Game Mode), Steam artwork… (was
+Covers…), In Steam and Available in Steam (was In Game Mode); Big Picture Mode is Steam's name on the desktop, Game
+Mode the handheld's session. The introduction links to RPCS3's release notes (the RPCS3 line no longer does) and
+its link to the manual is called Wiki. Refresh and the new pills keep the blue left edge only, also under the
+mouse, and every choice box is flat with a thin chevron (arrow-down.svg in the package). RPCS3 settings stays, as
+a button under the games: RPCS3's own window is still where its settings, the controllers and game updates are
+set; the owner decides when it goes. Tests: the pills, the header boxes, the play time, the controller state, the
+Log tab, the wrapper's log line (also in the installer test) and the window's look; the Play tests went.
+
 Changelog: 24-10-2026 10:26:20
 
 Release 0.9.0.

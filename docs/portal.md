@@ -71,10 +71,10 @@ checkout uses its own checkout.
   says **Portal x.y.z available**.
 - **Outside the suite**, in orange below the updates: a newer release of a program that an installed app installs
   in its newest version, so the app can install it now, for example **BC-250 Upscaler Manager (Graphics): HelixSR 1.9.3
-  is out**, with what to do in the app. Today these are HelixSR (the BC-250 Upscaler Manager) and the cores of the
-  SwanStation and SameBoy Managers. The portal shows what the app found the last time it looked, so open
+  is out**, with what to do in the app. Today this is HelixSR (the BC-250 Upscaler Manager). The portal shows what
+  the app found the last time it looked, so open
   the app now and then; when you come back to the portal, the notice follows. Programs an app pins (Decky Loader,
-  shadPS4, PPSSPP, RPCS3, Vita3K, PCSX2's stable release, mGBA, Xenia, DirectMesh) are not listed: a newer one
+  shadPS4, PPSSPP, RPCS3, Vita3K, PCSX2's stable release, Xenia, DirectMesh) are not listed: a newer one
   comes with a new version of the app, as an update above.
 - **Restart: portal x.y.z is installed:** a portal window that is open while you install a newer portal keeps
   running the old one, with its old app versions, and starting the portal again only brings that window to the

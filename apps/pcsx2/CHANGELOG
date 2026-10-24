@@ -1,3 +1,24 @@
+Changelog: 24-10-2026 19:49:22
+
+Release 1.1.0.
+
+Changelog: 24-10-2026 19:23:03
+
+Added. Bazzite's volume for PCSX2 in the Settings tab's Sound box, beside PCSX2's own volume (owner, 24-10-2026:
+every manager shows it, as RPCS3 Manager does): the volume and mute Bazzite's sound settings remember per
+application (core's sound, WirePlumber's stream-properties), Muted or 0 % in red and said once in the status line
+and the log, since a game then plays without a sound; the app only reads it, the sound applet changes it while a
+game plays. On the same row as the volume so the tab keeps its height. Tests: the row's words and the window
+reading the file.
+
+Changelog: 24-10-2026 15:22:00
+
+Fixed. The Refresh pill had another background colour than the boxes beside it when the window opened (owner,
+24-10-2026): it holds the keyboard focus then, and the pill's focus style painted a translucent blue tint over the
+window instead of the pill's sheen. The keyboard focus now changes nothing, and the tint under the mouse is the
+pill's own sheen with the blue mixed in, so it stays a sheen. Test: the focused Refresh pill's pixels against the
+box beside it, after the window is shown.
+
 Changelog: 24-10-2026 10:26:20
 
 Release 1.0.0.

@@ -8,7 +8,7 @@ from __future__ import annotations
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QSpinBox
 
 from pcsx2_manager import pcsx2_settings
-from pcsx2_manager.settings_page import OWN, PLAYER2, SettingsPage
+from pcsx2_manager.settings_page import OWN, PLAYER2, SOUND_DOWN, SOUND_MUTED, SettingsPage
 
 
 def _ini(home):
@@ -116,3 +116,16 @@ def test_every_setting_has_a_widget_of_its_kind(qapp, tmp_path):
         assert widget.toolTip() == setting.tip and setting.tip, setting.key
         if setting.kind == pcsx2_settings.CHOICE:
             assert [widget.itemData(i) for i in range(widget.count())] == [v for v, _ in setting.choices]
+
+
+def test_bazzites_volume_for_pcsx2(qapp, tmp_path):
+    """Beside PCSX2's volume: the volume Bazzite remembers for PCSX2, as the window passes it (core's sound); muted
+    or turned down to nothing is a problem, said in words."""
+    page = SettingsPage(tmp_path, running=lambda: False)
+    assert page.system_sound.text() == "—"
+    assert page.show_sound(None) == ("", False) and page.system_sound.text() == "— (PCSX2 has not played yet)"
+    assert page.show_sound((0.7, False)) == ("", False) and page.system_sound.text() == "70 %"
+    assert page.show_sound((1.0, True)) == (SOUND_MUTED, True) and page.system_sound.text() == "Muted"
+    assert "c62828" in page.system_sound.styleSheet()
+    assert page.show_sound((0.0, False)) == (SOUND_DOWN, True) and page.system_sound.text() == "0 %"
+    assert page.show_sound((1.0, False)) == ("", False) and page.system_sound.styleSheet() == ""

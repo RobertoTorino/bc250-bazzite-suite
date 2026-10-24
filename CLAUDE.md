@@ -14,8 +14,8 @@ its manifest. **check** (BC-250 Bazzite Test) is always installed and always lis
 tile. Standalone apps may live under `apps/` without appearing in the portal.
 
 - `apps/<name>/`: check, gpu, upscaler, compute, cores, oc, acpi,
-  overlay, ips35, hdcam, hdcontrol, bios, ace, mesh, vram, fan, wdriver, cec, sftp, consoles, clb, shadps4, rpcs3, ppsspp, pcsx2, vita3k, swanstation,
-  mgba, sameboy, xenia, decky, mtool, package, ncgui, datstation, suite. Each has its
+  overlay, ips35, hdcam, hdcontrol, bios, ace, mesh, vram, fan, wdriver, cec, sftp, consoles, clb, shadps4, rpcs3, ppsspp, pcsx2, vita3k,
+  xenia, decky, mtool, package, ncgui, datstation, suite. Each has its
   own VERSION, CHANGELOG, LICENSE (acpi is MIT; consoles is AGPL-3.0, its protocol code ported from
   chiaki-ng: those files AGPL-3.0-only, its own AGPL-3.0-or-later; ncgui is GPL-2.0-only, a port of NetcatGUI; clb
   (Console LinkB, Xbox) is GPL-3.0-or-later with protocol code ported from Greenlight and xal-node, MIT, whose notice
@@ -159,9 +159,7 @@ shellcheck -S warning apps/rpcs3/install.sh apps/rpcs3/bc250-rpcs3-run
 shellcheck -S warning apps/ppsspp/install.sh apps/ppsspp/bc250-ppsspp-run \
   apps/pcsx2/install.sh apps/pcsx2/bc250-pcsx2-run apps/vita3k/install.sh \
   apps/vita3k/bc250-vita3k-run
-shellcheck -S warning apps/swanstation/install.sh apps/swanstation/bc250-swanstation-run \
-  apps/mgba/install.sh apps/mgba/bc250-mgba-run apps/sameboy/install.sh apps/sameboy/bc250-sameboy-run \
-  apps/xenia/install.sh apps/xenia/bc250-xenia-run
+shellcheck -S warning apps/xenia/install.sh apps/xenia/bc250-xenia-run
 shellcheck -S warning apps/decky/install.sh apps/ncgui/install.sh \
   apps/datstation/install.sh
 for t in tools/installer-tests/*.sh; do [ "${t##*/}" = shims.sh ] || bash "$t"; done   # every installer test
