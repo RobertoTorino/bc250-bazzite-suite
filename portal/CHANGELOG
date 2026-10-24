@@ -1,3 +1,7 @@
+Changelog: 24-10-2026 10:47:48
+
+Release 7.0.0. Pins check-v0.11.0, upscaler-v0.10.0, overlay-v0.9.0, bios-v0.9.0, ace-v0.9.0, mesh-v0.10.0, vram-v0.9.0, fan-v0.8.0, wdriver-v0.8.0, cec-v0.9.0, sftp-v0.10.0, ips35-v0.2.0, hdcam-v0.4.0, hdcontrol-v0.4.0, package-v0.19.0, ncgui-v0.9.0, rpcs3-v0.9.0, consoles-v1.9.0, clb-v0.4.0, shadps4-v0.10.0, swanstation-v0.4.0, decky-v0.10.0, datstation-v1.6.0, ppsspp-v0.9.0, pcsx2-v1.0.0, vita3k-v0.8.0, mgba-v0.4.0, sameboy-v0.4.0, xenia-v0.4.0.
+
 Changelog: 23-10-2026 20:22:33
 
 Release 6.15.0. Pins sftp-v0.9.0.
