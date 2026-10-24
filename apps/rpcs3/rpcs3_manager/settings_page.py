@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The Settings tab: RPCS3's settings that matter for playing, in the app (owner, 24-10-2026: the picture settings
-PCSX2 Manager has, at least). One box per group (rpcs3_settings.SETTINGS: the picture, the emulation, the sound,
-the messages in a game), each setting a choice, a switch or a percentage, read from config.yml and written the
-moment it is changed, while RPCS3 does not run. Built as PCSX2 Manager's settings_page. The Sound box also shows,
-beside RPCS3's volume, the volume Bazzite's sound settings remember for RPCS3 (muted there, a game plays without
-a sound; found on the board, 24-10-2026): read only, the window passes it (show_sound)."""
+PCSX2 Manager has, at least). One box per group (rpcs3_settings.SETTINGS: the picture, the emulation, the sound, the
+messages in a game), each setting a choice, a switch or a percentage, read from config.yml and written the moment it
+is changed, while RPCS3 does not run. Built as PCSX2 Manager's settings_page. The Sound box also shows, beside
+RPCS3's volume, the volume Bazzite's sound settings remember for RPCS3 (muted there, a game plays without a sound;
+found on the board, 24-10-2026): the window passes it (show_sound), and Unmute beside it turns a muted one on again
+(core's sound.unmute; owner, 24-10-2026)."""
 
 from __future__ import annotations
 
@@ -12,11 +13,12 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QGridLayout, QGroupBox, QHBoxLayout, QLabel,
-                             QSpinBox, QVBoxLayout, QWidget)
+                             QPushButton, QSpinBox, QVBoxLayout, QWidget)
 
 from bc250_core import sound
+from bc250_core.updates import UpdateChecker
 from bc250_core.widgets import hint_label
 
 from . import rpcs3_settings, userdata
@@ -33,9 +35,20 @@ class SettingsPage(QWidget):
     """*rpcs3_home*: RPCS3's own folder; *running*: whether RPCS3 runs (tests pass their own); *log*: the app's
     log."""
 
+    sound_changed = pyqtSignal()            # Unmute changed Bazzite's volume for the emulator
+
     def __init__(self, rpcs3_home: Path, running: Callable[[], bool] = userdata.rpcs3_running,
                  log: logging.Logger | None = None, parent=None):
         super().__init__(parent)
+        self.sound_path: Path | None = None         # WirePlumber's file (the window's, for the tests' own)
+        self.unmute = sound.unmute                  # tests pass their own
+        self.unmuting = UpdateChecker(self)         # off the GUI thread: it takes a moment or two
+        self.unmuting.finished.connect(self._unmuted)
+        self.unmute_button = QPushButton("Unmute")
+        self.unmute_button.setToolTip(f"Turn {STREAM}'s sound on again in Bazzite's sound settings, which keep it "
+                                      "muted for every game until it is turned on")
+        self.unmute_button.clicked.connect(self.on_unmute)
+        self.unmute_button.hide()                   # while it is muted only
         self.rpcs3_home = rpcs3_home
         self.running = running
         self.log = log or logging.getLogger(__name__)
@@ -80,6 +93,7 @@ class SettingsPage(QWidget):
                 system_label.setToolTip(SOUND_TIP)
                 row.addWidget(system_label)
                 row.addWidget(self.system_sound)
+                row.addWidget(self.unmute_button)
                 row.addStretch(1)
             groups[setting.group].addRow(label, field)
 
@@ -100,7 +114,35 @@ class SettingsPage(QWidget):
         text, problem = sound.describe(STREAM, state)
         self.system_sound.setStyleSheet("font-weight:600;color:#c62828;" if problem else "")
         self.system_sound.setText(text)
+        self.unmute_button.setVisible(bool(state and state[1]))
         return problem, bool(problem)
+
+    def on_unmute(self) -> None:
+        name, path, unmute = STREAM, self.sound_path, self.unmute
+
+        def job():
+            try:
+                return True, unmute(name, path)
+            except sound.SoundError as error:
+                return False, str(error)
+        if self.unmuting.start(job):
+            self.unmute_button.setEnabled(False)
+            self.status.setStyleSheet("")
+            self.status.setText(f"Unmuting {STREAM}…")
+
+    def _unmuted(self, result: tuple[bool, object]) -> None:
+        ok, detail = result
+        self.unmute_button.setEnabled(True)
+        if ok and detail is not None and not detail[1]:
+            text = f"{STREAM}'s sound is on again in Bazzite's sound settings."
+            self.status.setStyleSheet("")
+            self.log.info("Settings: %s", text)
+        else:
+            text = detail if not ok else f"{STREAM}'s sound did not come on in Bazzite's sound settings."
+            self.status.setStyleSheet("font-weight:600;color:#c62828;")
+            self.log.error("Settings: %s", text)
+        self.status.setText(str(text))
+        self.sound_changed.emit()
 
     def _widget(self, setting: Setting) -> QWidget:
         if setting.kind == CHOICE:

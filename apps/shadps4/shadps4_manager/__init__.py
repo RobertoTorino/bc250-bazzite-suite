@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """PS4 games on the BC-250 with shadPS4: installs a pinned shadPS4 release, checks the system modules, finds the
-games in the chosen folders and adds them to Steam for Game Mode."""
+games in the chosen folders and adds them to Steam, so a game starts from Steam on the desktop or in Big Picture
+Mode."""
 
 APP_NAME = "shadPS4 Manager"
 APP_ID = "bc250-shadps4-manager"
-__version__ = "0.11.1"
+__version__ = "1.0.0"
 
 from pathlib import Path
 

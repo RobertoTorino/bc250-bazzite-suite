@@ -220,6 +220,8 @@ class MainWindow(QMainWindow):
         games.addLayout(buttons)
 
         self.settings_page = SettingsPage(self.pcsx2_home, self.pcsx2_running, self.log)
+        self.settings_page.sound_path = self.sound_state
+        self.settings_page.sound_changed.connect(self.show_sound)
         self.memcard_page = MemcardPage(self.pcsx2_home, self.pcsx2_running, self.log)
         self.output = Terminal()
         self.output.setPlaceholderText("What the app did, with the time, appears here.")
@@ -267,7 +269,10 @@ class MainWindow(QMainWindow):
     @staticmethod
     def _state_label() -> QLabel:
         label = WrappedLabel()                  # its lines count in the window's minimum height
-        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        # Its links take a click too: without the second flag a click on one did nothing (owner, 24-10-2026, in
+        # shadPS4 Manager's window, built the same way).
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse
+                                      | Qt.TextInteractionFlag.LinksAccessibleByMouse)
         return label
 
     # --- State ------------------------------------------------------------------------------------------------
@@ -717,6 +722,7 @@ class MainWindow(QMainWindow):
         self.release_check.stop()
         self.memcard_page.stop()
         self.controller_timer.stop()
+        self.settings_page.unmuting.stop()
         self.settings.set_window_state("geometry", self.saveGeometry())
         self.settings.sync()
         super().closeEvent(event)

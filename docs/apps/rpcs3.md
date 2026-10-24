@@ -142,11 +142,12 @@ each does.
   (bilinear, nearest or AMD's FidelityFX Super Resolution) and **Fill the screen**, the stretch for every game
   without a Screen setting of its own.
 - **Emulation**: the PPU and SPU decoders (the recompilers are the fast ones, the interpreters exact and slow).
-- **Sound**: the sound output library, the volume (up to 200 %) and buffering. Beside the volume stands
-  **Bazzite's volume for RPCS3**, which is not RPCS3's: Bazzite's sound settings remember a volume and a mute per
-  application, also once it is closed, so a game plays without a sound while RPCS3 is muted there. The app only reads it and says so, in
-  red, when RPCS3 is muted or turned down to nothing; change it in the sound applet (the speaker in the panel,
-  under Applications) while a game plays.
+- **Sound**: the sound output library, the volume (up to 200 %) and buffering. Beside the volume stands **Bazzite's
+  volume for RPCS3**, which is not RPCS3's: Bazzite's sound settings remember a volume and a mute per application,
+  also once it is closed, so a game plays without a sound while RPCS3 is muted there. The app says so, in red, when
+  RPCS3 is muted or turned down to nothing. **Unmute** beside it turns a muted RPCS3 on again, and Bazzite keeps it
+  on from then on; a volume turned down is changed in the sound applet (the speaker in the panel, under
+  Applications) while a game plays.
 - **Messages in a game**: the trophy message and the shader compilation message.
 
 A value RPCS3 knows and the app does not is shown as it is. Everything else RPCS3 can set stays in RPCS3's own

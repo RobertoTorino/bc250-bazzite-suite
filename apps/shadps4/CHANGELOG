@@ -1,3 +1,57 @@
+Changelog: 24-10-2026 23:29:22
+
+Release 1.0.0.
+
+Changelog: 24-10-2026 23:19:01
+
+Added. Unmute beside Bazzite's volume for shadPS4 in the Settings tab (owner, 24-10-2026), shown while shadPS4 is
+muted there: core's unmute runs off the window, the row follows what WirePlumber stored, a failure is said in red
+and logged, and the status line's message names the button. Test: the button shown while muted, a click, and a
+failure.
+
+Changelog: 24-10-2026 22:59:30
+
+Added. The owner's remarks on the rebuilt window (24-10-2026). The pills in the owner's order: shadPS4 Install and
+Uninstall, Modules Install, Games Install (Extract PKG, which was Games Extract PKG) and Games Add folder, shadNet
+Account. The system modules line is Sys modules, Ok in bold green or Missing sys modules in bold red, the count,
+the folder and what is missing in its tooltip (its link to the folder went). The shadNet line is the nickname that
+signs in alone, Off without one, — before shadPS4 has run, the rest in its tooltip.
+
+Fixed. A click on a link in a state line (a game folder's name) did nothing: the lines allowed text selection only,
+not links. Test: a real mouse click on a folder's name asks to take it out.
+
+Changelog: 24-10-2026 22:18:32
+
+Breaking. The window rebuilt on PCSX2 Manager's and RPCS3 Manager's (owner, 24-10-2026: PCSX2 Manager is the
+pattern for the other managers). The Play button went: a game starts from Steam. The nightly channel went, as it
+went in PCSX2 Manager: the app installs the shadPS4 release it was tried with (an installed nightly build shows as
+another version, which Install replaces). Update Game Mode is Update Steam, Covers… is Steam artwork…, the Manual
+link is Wiki, and the table's columns are In Steam, Game title, Id, Version and Folder (the folder's name, the path
+in its tooltip).
+
+Added. The header's pills spread over the width: Refresh, shadPS4 version, Your games, Available in Steam and Play
+time, the time spent in all games as shadPS4 counts it in play_time.txt (per game, with the last start, in the
+tooltip; the System modules box went, its line says it). The states beside the title end at the last pill's middle:
+the app's, shadNet's and the controller's (looked at every 3 s; a game started from Steam reads the controller there
+when it starts). The four numbered steps are six pills: shadPS4 Install and Uninstall, Modules Install (the .sprx
+files of a chosen folder copied into shadPS4's module folder, as the owner asked of PCSX2 Manager's BIOS step),
+Games Add folder and Extract PKG, shadNet Account. The state lines are short, with more in their tooltips: the
+version alone, the modules as a count with a link that opens the folder, the game folders by name, each a link that
+takes the folder out of shadPS4's game folders after a question (config.json's install_dirs, as shadPS4's own
+Remove Folder does; not while shadPS4 runs). Three tabs the pills' size: Your games, Settings and Log. The
+Settings tab holds the settings shadPS4 0.20.0's own window offers for every game (VSync, FSR and its RCAS
+sharpening, HDR, the frame rate counter, the sound output and volume, motion controls, the mouse pointer, the
+system language, trophy messages, the splash screen), each one key of config.json written the moment it is
+changed, the rest of the file kept, never while shadPS4 runs, with Bazzite's volume for shadPS4 beside its volume
+(core's sound: on the board shadPS4 is muted there). The Log tab shows the app's log (core's applog), and the run
+wrapper writes each game started into it, by its folder's name, with whether a controller was connected; a game
+Steam starts without one also gets a desktop notification. The quit hotkeys the app adds are logged. The flat
+choice boxes with the thin chevron, and the Steam link under the table, as in the other managers. shadPS4
+settings stays under the games, for what the Settings tab does not set (the controller's buttons, a game's own
+settings). Tests: the window's layout, the pills and the states, the modules copied, a game folder taken out, the
+Settings tab against config.json, Bazzite's volume, the play time from the board's play_time.txt, the controller
+state, the log, the run wrapper's log line, and the installer test.
+
 Changelog: 24-10-2026 21:15:56
 
 Release 0.11.1.

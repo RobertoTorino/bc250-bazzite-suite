@@ -342,15 +342,16 @@ def manager(qapp, tmp_path, state):
                                                                                  "path": str(games)}]}}))
     win = MainWindow(home=tmp_path / "emulator", shad_home=shad, steam_dir=tmp_path / "Steam",
                      run=tmp_path / "bin" / "bc250-shadps4-run", newer_release=lambda: None,
-                     latest_nightly=lambda: None)
+                     devices=tmp_path / "no-devices", sound_state=tmp_path / "no-sound")
     win.release_check.stop()
     yield win, games
     win.close()
 
 
-def test_extract_pkg_in_the_game_folders_step(manager):
+def test_extract_pkg_is_games_install(manager):
     win, games = manager
-    assert win.extract_button.text() == "Extract PKG…" and win.extract_button.isEnabled()   # needs no shadPS4
+    assert (win.package_pill.value.text(), win.package_pill.caption.text()) == ("Games", "Install")
+    assert win.package_pill.isEnabled()                                         # needs no shadPS4
 
 
 def test_an_extracted_game_shows_up(qapp, manager, built_pkg, monkeypatch):

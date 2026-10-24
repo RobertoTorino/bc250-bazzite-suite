@@ -54,7 +54,8 @@ def run(tmp_path):
         environ = {k: v for k, v in os.environ.items()
                    if not k.startswith("SDL_") and k not in ("SteamGameId", "WAYLAND_DISPLAY", "DISPLAY")}
         environ.update(XDG_DATA_HOME=str(tmp_path / "data"), BC250_INPUT_DEVICES=str(devices), **env)
-        done = subprocess.run(["bash", str(WRAPPER), *args], capture_output=True, text=True, env=environ, check=True)
+        done = subprocess.run(["/bin/bash", str(WRAPPER), *args], capture_output=True, text=True, env=environ,
+                              check=True)
         return dict(line.split("=", 1) for line in done.stdout.splitlines())
     return go
 
@@ -84,3 +85,29 @@ def test_started_by_steam_on_a_wayland_desktop(run):
     assert run(DS4_AND_STEAM, "-g", "x", SteamGameId="1", DISPLAY=":0")["video"] == "unset"  # X11 only
     assert run(DS4_AND_STEAM, "-g", "x", SteamGameId="1", SDL_VIDEO_DRIVER="wayland",
                **desktop)["video"] == "wayland"                                             # a choice of the user's
+
+
+def test_the_game_started_goes_to_the_apps_log(run, tmp_path):
+    """One line in the app's log file, in its form, with the game's folder name (its ID as Extract PKG names it;
+    not its path) and from where; a start without a game (shadPS4's own window) says nothing. Only the tools the
+    wrapper needs on the PATH, so no real desktop notification is sent."""
+    import re
+    tools = tmp_path / "tools"
+    tools.mkdir()
+    for name in ("awk", "dirname", "grep", "ldconfig"):
+        found = subprocess.run(["bash", "-c", f"command -v {name}"], capture_output=True, text=True)
+        if found.stdout.strip():
+            (tools / name).symlink_to(found.stdout.strip())
+    path = str(tools)
+    log = tmp_path / "data" / "bc250-shadps4-manager" / "bc250-shadps4-manager.log"
+    run(DS4_AND_STEAM, "-b", PATH=path)
+    assert not log.exists()
+    run(DS4_AND_STEAM, "-f", "true", "-g", "/games/a b/CUSA11624/eboot.bin", SteamGameId="3710761059", PATH=path)
+    run(DS4_AND_STEAM, "--game", "/games/CUSA00001/eboot.bin", PATH=path)
+    run(STEAM_ONLY, "-g", "/games/CUSA00002/eboot.bin", SteamGameId="3710761059", PATH=path)   # no real controller
+    lines = log.read_text().splitlines()
+    assert [line[20:] for line in lines] == ["INFO Started CUSA11624 from Steam, with a controller.",
+                                             "INFO Started CUSA00001 from a terminal, with a controller.",
+                                             "INFO Started CUSA00002 from Steam, without a controller."]
+    assert all(re.fullmatch(r"\d\d-\d\d-\d{4} \d\d:\d\d:\d\d", line[:19]) for line in lines)
+    assert "/games/" not in log.read_text() and "eboot" not in log.read_text()

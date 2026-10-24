@@ -871,6 +871,63 @@ each with its stream's name as PipeWire reports it (shadPS4's is "shadPS4", seen
 read from the board's stream-properties once each has played). The core change asks for a core release and
 PCSX2's and RPCS3's bundles follow at their own (the owner's).
 
+shadPS4 Manager, the third (24-10-2026, built the same evening, local, uncommitted; its CHANGELOG has it): the window
+rebuilt on PCSX2 Manager's and RPCS3 Manager's, the same structure throughout (the header pills spread over the
+width with a Play time box from shadPS4's play_time.txt, the states on the right ending at the last pill's middle,
+with shadNet's state between the app's and the controller's, six action pills, four short state lines, the tabs
+the pills' size, a Log tab on core's applog, Update Steam and Steam artwork…, Wiki, the flat choice boxes, the
+Steam link), the run wrapper's log line and no-controller notification. Verified from shadPS4 v.0.20.0's source
+(commit 529ceb32, the config_version in the board's config.json): play_time.txt is "<Id> H:MM:SS <Unix time>" per
+game (Emulator::UpdatePlayTime); config.json is merged with shadPS4's defaults when it starts and written whole,
+unknown keys kept, also when it ends (EmulatorSettingsImpl::Load and Save), so the app writes one key at a time
+while shadPS4 does not run; the Settings tab holds what shadPS4's own Big Picture settings window offers for every
+game (settings_dialog_imgui: present mode, FSR, RCAS, HDR, FPS counter, audio backend, volume up to 500, motion
+controls, the cursor, the language, trophy popups, the splash), RCAS only runs inside the FSR pass (fsr_pass.cpp),
+and the window size and display mode stay out (a Steam start passes -f true; "Fullscreen" is exclusive, any other
+mode borderless, sdl_window.cpp). The sound stream is "shadPS4", which the board's stream-properties has muted
+right now, so the Settings tab shows it in red. Decided on the way, for the owner to confirm (24-10-2026): the
+nightly channel went, as in PCSX2 Manager (the owner had chosen it for shadPS4 on 15-10-2026; an installed nightly
+shows as another version, which Install replaces); Modules Install copies the .sprx files of a chosen folder into
+shadPS4's module folder (the owner's BIOS remark for PCSX2 Manager, item 2 above); a game folder is taken out by its name in the Game folders line, written into config.json
+as shadPS4's own Remove Folder does; shadPS4 settings stays under the games, as RPCS3 settings does in RPCS3
+Manager (shadPS4's Big Picture window holds the controller's buttons and a game's own settings); no Screen setting
+column, since a PS4 game draws for a wide screen itself. Not known yet: whether shadPS4 picks up a controller that
+reconnects mid-game (the RPCS3 finding); the tooltip says nothing of it. Open (owner): the round from scratch with
+the new window (nothing was set aside for it: ~/.local/share/shadPS4, the manager's settings and the shortcuts are
+as they were), the settings seen in a game (FSR is the easiest), the log line and the notification from a Steam
+start, then a release of shadps4 (Breaking: the Play button and the nightly channel went; the number is the
+owner's); the portal's summary for shadps4 in apps.toml says "added to Game Mode" (a portal change, with its bump:
+the owner's). Three managers remain (PPSSPP, Vita3K, Xenia).
+The owner's first look (24-10-2026, built the same evening, local, uncommitted): a game folder's name in the
+Game folders line took no click. A state line allowed text selection only, not links (QLabel's
+LinksAccessibleByMouse missing), and the tests had emitted the link's signal instead of clicking; the same held in
+RPCS3 Manager (the Disc games folders, the firmware page link) and PCSX2 Manager (the release notes and BIOS page
+links), released that way. Fixed in all three, with a real mouse click in the tests of shadPS4 and RPCS3 (each
+failed without the fix): a Fixed release of rpcs3 and pcsx2 (the owner's). The pills in the owner's order: shadPS4
+Install, Uninstall, Modules Install, Games Install (Extract PKG), Games Add folder, shadNet Account. The modules
+line is Sys modules, Ok in bold green or Missing sys modules in bold red (its link to the folder went; the folder
+is in the tooltip); the shadNet line is the nickname alone. Asked: whether a game and its update go into the same
+folder, since Extract PKG refuses a folder that is not empty. They do not: the empty-folder rule is for the
+package's own TITLE_ID folder under the chosen game folder, which may hold other games; an update whose game is
+there goes into TITLE_ID-UPDATE beside it (shadPS4 0.20.0 lays it over the game, fs.cpp), and an update folder that
+is there already is replaced after a question, the new one extracted beside it first (extraction_target in
+extract_dialog.py, test_an_update_goes_beside_its_game).
+The muted sound (24-10-2026, the owner: "I did not mute anything"; earlier that afternoon the system had gone to
+Do Not Disturb). WirePlumber's stream-properties held shadPS4 muted that evening (RPCS3 too, earlier the same day)
+and unmuted from 22:49:14, one second after a Lumines Remastered session from Steam ended. What set the mute is not
+known: WirePlumber keeps only the current value, the journal has no trace, and nothing found sets it on its own.
+shadPS4 0.20.0 sets its loudness inside SDL (SDL_SetAudioStreamGain), not on its PipeWire stream; no suite app
+mutes a stream; KDE's Do Not Disturb holds back notifications and their sound, and the stored notification role
+stays unmuted. A mute on a program's stream is what the sound applet's per-application button, or the speaker shown
+on a playing window's taskbar entry, stores; a click there need not have been noticed. Built at the owner's request
+(local, uncommitted): Unmute beside Bazzite's volume in the Settings tab of PCSX2, RPCS3 and shadPS4 Manager, shown
+while muted, on core's sound.unmute: the program's playing streams unmuted through pactl, or without one a silent
+two-second stream opened under its name with paplay and unmuted, which WirePlumber stores (proved on the board:
+about 2 s; wpctl set-mute hung on such a stream there, so pactl). While trying it, shadPS4's stored sound was muted
+by the test for a few minutes and is unmuted again (checked in the file). A core release and the three managers'
+releases are the owner's. Open (owner): whether the app should watch for the mute coming back, to find what sets it
+(a log line when stream-properties changes to muted, with the time and what was running).
+
 ## Done
 
 | Step | What | State |

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Starts the shadPS4 that shadPS4 Manager installed, with the arguments given:
 #
-#   bc250-shadps4-run -f true -g /path/to/game/eboot.bin   a game, full screen (the Game Mode shortcuts)
+#   bc250-shadps4-run -f true -g /path/to/game/eboot.bin   a game, full screen (the Steam shortcuts)
 #   bc250-shadps4-run -g /path/to/game/eboot.bin           a game, as shadPS4's settings say
 #   bc250-shadps4-run -b                                   shadPS4's own window (Big Picture), for its settings
 #
@@ -49,5 +49,37 @@ fi
 if [ -n "${SteamGameId:-}" ] && [ -n "${WAYLAND_DISPLAY:-}" ] && [ -n "${DISPLAY:-}" ] &&
    [ -z "${SDL_VIDEO_DRIVER:-}" ]; then
     export SDL_VIDEO_DRIVER=x11
+fi
+# The game started goes to the app's log (the Log tab), in the app's own form, by its folder's name (the game's ID
+# as Extract PKG names it) and from where (Steam sets SteamGameId); nothing else is known here. As PCSX2 Manager's
+# wrapper does (owner, 24-10-2026).
+LOG="${XDG_DATA_HOME:-$HOME/.local/share}/bc250-shadps4-manager/bc250-shadps4-manager.log"
+game=""
+previous=""
+for arg in "$@"; do
+    case $previous in -g|--game) game=$arg ;; esac
+    previous=$arg
+done
+if [ -n "$game" ]; then
+    name=${game%/*}
+    name=${name##*/}
+    from="from a terminal"
+    [ -n "${SteamGameId:-}" ] && from="from Steam"
+    if real_controller; then
+        pad="with a controller"
+    else
+        pad="without a controller"
+        # Said on the desktop too (a controller switched off by its idle timer; owner, 24-10-2026): the game is
+        # starting, so the window is not where the eyes are.
+        if [ -n "${SteamGameId:-}" ] && command -v notify-send >/dev/null 2>&1; then
+            notify-send -a "shadPS4 Manager" -i input-gaming "No controller connected" \
+                "Switch your controller on, or press its PS button to wake it. shadPS4 plays with the keyboard only until then." \
+                2>/dev/null || true
+        fi
+    fi
+    if [ -d "${LOG%/*}" ]; then
+        printf -v stamp '%(%d-%m-%Y %H:%M:%S)T' -1
+        printf '%s INFO Started %s %s, %s.\n' "$stamp" "${name:-$game}" "$from" "$pad" >>"$LOG" 2>/dev/null || true
+    fi
 fi
 exec "$APPIMAGE" "$@"

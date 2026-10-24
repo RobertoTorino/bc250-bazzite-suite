@@ -1,3 +1,19 @@
+Changelog: 24-10-2026 23:29:22
+
+Release 1.2.0.
+
+Changelog: 24-10-2026 23:19:01
+
+Added. Unmute beside Bazzite's volume for PCSX2 in the Settings tab (owner, 24-10-2026), shown while PCSX2 is muted
+there: core's unmute runs off the window, the row follows what WirePlumber stored, a failure is said in red and
+logged, and the status line's message names the button. Test: the button shown while muted, a click, and a failure.
+
+Changelog: 24-10-2026 22:59:30
+
+Fixed. A click on a link in a state line did nothing (the owner found it in shadPS4 Manager's window, built the
+same way, 24-10-2026): the lines allowed text selection only, not links, so the release notes link in the PCSX2
+line and PCSX2's BIOS page link in the BIOS line did not open. Test: the state lines take a click on a link.
+
 Changelog: 24-10-2026 21:15:56
 
 Release 1.1.1.

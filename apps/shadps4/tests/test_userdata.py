@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""shadPS4's own folder (userdata.py): config.json as shadPS4 0.19.0 and 0.20.0 write it, the system modules, and the
-users with their shadNet accounts, read and written as shadPS4 writes them."""
+"""shadPS4's own folder (userdata.py): config.json as shadPS4 0.19.0 and 0.20.0 write it, the system modules, the
+play time, and the users with their shadNet accounts, read and written as shadPS4 writes them."""
 
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -135,3 +136,53 @@ def test_the_quit_hotkeys(tmp_path):
     assert userdata.add_quit_bindings(tmp_path) == ["hotkey_quit = lctrl, lshift, kp1", "hotkey_quit = back, options"]
     assert path.read_text() == (written + "\nhotkey_quit = lctrl, lshift, kp1\nhotkey_quit = back, options\n")
     assert userdata.add_quit_bindings(tmp_path) == []
+
+
+def test_one_setting_written_the_rest_kept(tmp_path):
+    """write_config sets one key as shadPS4 writes the file (indented by two, no newline at the end); a missing
+    file is made, an unreadable one is never written over."""
+    home = tmp_path / "shadPS4"
+    userdata.write_config(home, "GPU", "fsr_enabled", True)
+    assert (home / "config.json").read_text() == '{\n  "GPU": {\n    "fsr_enabled": true\n  }\n}'
+    userdata.write_config(home, "General", "volume_slider", 150)
+    userdata.write_config(home, "GPU", "present_mode", "Fifo")
+    assert json.loads((home / "config.json").read_text()) == {
+        "GPU": {"fsr_enabled": True, "present_mode": "Fifo"}, "General": {"volume_slider": 150}}
+    (home / "config.json").write_text("{ broken")
+    with pytest.raises(userdata.UserDataError, match="could not be read"):
+        userdata.write_config(home, "GPU", "hdr_allowed", True)
+    assert (home / "config.json").read_text() == "{ broken"
+
+
+def test_a_game_folder_taken_out(tmp_path):
+    home = tmp_path / "shadPS4"
+    home.mkdir()
+    (home / "config.json").write_text(json.dumps({"General": {"install_dirs": [
+        {"enabled": True, "path": "/games/a"}, {"enabled": False, "path": "/games/b"}], "volume_slider": 90}}))
+    userdata.remove_game_folder(home, Path("/games/a"))
+    assert json.loads((home / "config.json").read_text()) == {
+        "General": {"install_dirs": [{"enabled": False, "path": "/games/b"}], "volume_slider": 90}}
+    userdata.remove_game_folder(home, Path("/games/none"))                      # not there: nothing changes
+    assert len(json.loads((home / "config.json").read_text())["General"]["install_dirs"]) == 1
+
+
+def test_modules_copied_from_a_folder(tmp_path):
+    source = tmp_path / "dump"
+    source.mkdir()
+    assert userdata.install_modules(source, tmp_path / "target") == [] and not (tmp_path / "target").exists()
+    (source / "libSceNgs2.sprx").write_bytes(b"a")
+    (source / "LIBSCEULT.SPRX").write_bytes(b"b")
+    (source / "readme.txt").write_text("")
+    assert userdata.install_modules(source, tmp_path / "target") == ["libSceNgs2.sprx", "LIBSCEULT.SPRX"]
+    assert sorted(p.name for p in (tmp_path / "target").iterdir()) == ["LIBSCEULT.SPRX", "libSceNgs2.sprx"]
+    assert userdata.install_modules(source, source) == ["libSceNgs2.sprx", "LIBSCEULT.SPRX"]   # the folder itself
+
+
+def test_play_time_as_shadps4_writes_it(tmp_path):
+    """play_time.txt as shadPS4 0.20.0 writes it, from the owner's board (24-10-2026)."""
+    assert userdata.play_times(tmp_path) == {}
+    (tmp_path / "play_time.txt").write_text("CUSA11624 1:22:47 1792613335\nCUSA53672 0:43:31 1792710015\n"
+                                            "CUSA00001 0:01:02\nnonsense\nCUSA00002 x:y:z 1\n")
+    assert userdata.play_times(tmp_path) == {"CUSA11624": (4967, 1792613335.0), "CUSA53672": (2611, 1792710015.0),
+                                             "CUSA00001": (62, 0.0)}
+    assert [userdata.played(s) for s in (4967, 2611, 62, 40)] == ["1 h 22 min", "43 min 31 s", "1 min 2 s", "40 s"]

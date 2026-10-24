@@ -1,3 +1,14 @@
+Changelog: 24-10-2026 23:19:01
+
+Added. sound: unmute(), the sound of an application unmuted in Bazzite's sound settings (owner, 24-10-2026: an
+Unmute button beside Bazzite's volume in the managers; shadPS4 was found muted there, and the owner had muted
+nothing). WirePlumber keeps the remembered mute in memory and writes its file itself, so the file is never
+written: the application's playing streams are unmuted through PipeWire's PulseAudio interface (pactl), and
+without one a silent stream of two seconds is opened under its name (paplay), unmuted and closed, which
+WirePlumber stores as it stores a change in the sound applet; the stored value is read back. Proved on the board:
+muted to stored unmuted in about 2 s, nothing left running (wpctl set-mute hung on such a stream there, so pactl
+it is). The muted message names the button. Tests: with a stream playing, without one, and the failures.
+
 Changelog: 24-10-2026 20:46:27
 
 Fixed. widgets: WrappedLabel, a word-wrapped label whose minimum height follows its width, and

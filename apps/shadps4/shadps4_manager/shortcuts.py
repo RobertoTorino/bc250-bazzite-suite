@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""A Steam shortcut per game, for Game Mode: a non-Steam game that runs the run wrapper with shadPS4's launch line,
+"""A Steam shortcut per game: a non-Steam game that runs the run wrapper with shadPS4's launch line,
 full screen (bc250-shadps4-run -f true -g "<eboot.bin>"), with the game's own pictures as its artwork.
 
 The file and its format are core's (bc250_core.steam). The shortcut runs the wrapper, not the AppImage, so its

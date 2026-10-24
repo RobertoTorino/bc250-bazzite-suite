@@ -47,6 +47,7 @@ bash "$SUITE/apps/shadps4/install.sh" > "$T/log1" 2>&1; rc=$?
 check "exit 0" "[ $rc -eq 0 ]"
 check "no sudo used" "! grep -q 'sudo called' $T/log1 && [ -z \"\$(ls -A $T/opt)\" ]"
 check "app copied, with the package extractor" "[ -f $A/shadps4_manager/main_window.py ] && [ -f $A/shadps4_manager/extract_dialog.py ] && [ -f $A/shadps4_manager/pkgxtractor/cli.py ] && [ -f $A/images/$APP.webp ] && [ -f $A/images/$APP-128.png ]"
+check "controller state, settings and core's log copied" "[ -f $A/shadps4_manager/controllers.py ] && [ -f $A/shadps4_manager/settings_page.py ] && [ -f $A/shadps4_manager/arrow-down.svg ] && [ -f $A/bc250_core/applog.py ]"
 check "core bundled from checkout" "[ -f $A/bc250_core/steam.py ]"
 check "no tests or caches copied" "[ ! -d $A/tests ] && ! find $A -name __pycache__ | grep -q ."
 check "own venv" "[ -x $D/$APP/venv/bin/python ]"
@@ -80,6 +81,9 @@ ln -sfn 0.19.0 "$D/$APP/emulator/current"
 (cd "$T" && bash "$RUN" -f true -g "/games/My Game/eboot.bin") > "$T/run.log" 2>&1; rc=$?
 check "starts the current shadPS4 with the arguments as given" "[ $rc -eq 0 ] && grep -qxF 'args: -f true -g /games/My Game/eboot.bin' $T/run.log"
 check "started beside the AppImage (no portable user folder)" "grep -qxF \"dir: $D/$APP/emulator/0.19.0\" $T/run.log || grep -qxF \"dir: $D/$APP/emulator/current\" $T/run.log"
+check "the game started goes to the app's log, by its folder's name" "grep -q ' INFO Started My Game from a terminal, with' $D/$APP/$APP.log && ! grep -q '/games/' $D/$APP/$APP.log"
+(cd "$T" && bash "$RUN" -b) > "$T/run.log" 2>&1; rc=$?
+check "shadPS4's own window is passed on and not logged as a game" "[ $rc -eq 0 ] && grep -qxF 'args: -b' $T/run.log && [ \$(grep -c Started $D/$APP/$APP.log) -eq 1 ]"
 
 echo "== 3. install a staged release (core bundled in the tarball) without the Desktop icon"
 rm -rf "$T/stage"; /usr/bin/python3 "$SUITE/tools/stage_app.py" shadps4 "$T/stage" > /dev/null

@@ -1,60 +1,86 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The main window: shadPS4 itself, the system modules, the game folders and shadNet as four steps with their state
-and buttons, then the games found, each with a box for Game Mode. Downloading shadPS4, asking GitHub for a newer one
-and changing Steam's files run off the GUI thread; nothing here needs root. The look is the app's own blue
-(style.py). Extract PKG… (or a package dropped on the window, or given to the app) opens the package extractor
-(extract_dialog.py) on the game folders. Covers… takes the suite's SteamGridDB API key, with which Update Game Mode
-looks up a cover for each game's portrait first (core's covers)."""
+"""The main window, built as PCSX2 Manager's and RPCS3 Manager's (owner, 24-10-2026: the manager that works is the
+pattern for the others): the header with the Refresh pill and the state boxes, a row of action pills (Install and
+Uninstall for shadPS4, Install for the system modules, Install (Extract PKG) and Add folder for the games, Account
+for shadNet; the owner's order, 24-10-2026) in place of the four numbered steps with buttons, the state of each
+(shadPS4, the system modules, the game folders, shadNet) in a short line, then three tabs: the games found, each
+with a box for Steam; shadPS4's settings (settings_page.py); and the app's log. Downloading shadPS4, asking GitHub
+for a newer one and changing Steam's files run off the GUI thread; nothing here needs root. The look is the app's
+own blue (style.py). Games Install (or a package dropped on the window, or given to the app) opens the package
+extractor (extract_dialog.py) on the game folders. Steam artwork… takes the suite's SteamGridDB API key, with which
+Update Steam looks up a cover for each game's portrait first (core's covers).
+
+The app has no Play button: a game is started from Steam. The window keeps what the app owns in shadPS4's files
+(userdata.py): the quit hotkeys. shadPS4's own window (Big Picture, shadPS4 settings under the games) stays for what
+the Settings tab does not set. The window also reads the volume Bazzite remembers for shadPS4 and says when it is
+muted (seen on the board). What the window says it also writes to the app's log (core's applog), shown in the Log
+tab."""
 
 from __future__ import annotations
 
+import re
 import subprocess
+import time
 from html import escape
 from pathlib import Path
 
 from PyQt6.QtCore import QProcess, Qt, QTimer
-from PyQt6.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent
-from PyQt6.QtWidgets import (QAbstractItemView, QCheckBox, QFileDialog, QGridLayout, QHBoxLayout, QHeaderView,
-                             QLabel, QMainWindow, QMessageBox, QPushButton, QTableWidget, QTableWidgetItem,
-                             QVBoxLayout, QWidget)
+from PyQt6.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent, QResizeEvent
+from PyQt6.QtWidgets import (QAbstractItemView, QFileDialog, QGridLayout, QHBoxLayout, QHeaderView, QLabel,
+                             QMainWindow, QMessageBox, QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem,
+                             QTabWidget, QVBoxLayout, QWidget)
 
-from bc250_core import SUITE_MANUAL_URL, covers, steam, window_title
+from bc250_core import SUITE_MANUAL_URL, applog, covers, sound, steam, window_title
 from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import bin_home, xdg_open
+from bc250_core.theme import GREEN, RED
 from bc250_core.settings import SettingsStore
 from bc250_core.updates import ReleaseInfo, UpdateChecker
-from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, hint_label
+from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, WrappedLabel, hint_label
 
-from . import APP_ID, APP_NAME, INFO, LOGO_PATH, ROOT, __version__, emulator, shadnet, shortcuts, style, userdata
-from .games import Game, scan
+from . import (APP_ID, APP_NAME, INFO, LOGO_PATH, ROOT, __version__, controllers, emulator, settings_page, shadnet,
+               shortcuts, style, userdata)
+from .games import MAX_DEPTH, Game, scan
+from .settings_page import SettingsPage
 from .shadnet_dialog import ShadNetDialog
 
 MANUAL_URL = f"{SUITE_MANUAL_URL}apps/shadps4/"
 FOLDER_TIMEOUT = 60
 SHADNET_WATCH_MS = 5000
 STEAM_TIP = "Add the ticked games to Steam and take out the others; Steam closes for it and starts again"
+RUNNING = "shadPS4 is running: close it first, it writes its own settings over the change when it closes."
+STEAM_URL = "steam://open/games"        # Steam's library; Steam starts when it does not run
+STEAM, GAME, SERIAL, VERSION, FOLDER = range(5)             # the table's columns
+GAMES, SETTINGS, LOG = range(3)                             # the tabs
+_NUMBERED = re.compile(r"\d+(\.\d+)*")
 
 
 class ShadSettings(SettingsStore):
-    DEFAULTS: dict = {"nightly": False}     # the channel: the pinned stable, or shadPS4's nightly builds
+    DEFAULTS: dict = {}
 
 
 class MainWindow(QMainWindow):
+    CONTROLLER_POLL = 3000                  # ms: how often the window looks for a controller
+
     def __init__(self, home: Path | None = None, shad_home: Path | None = None, steam_dir: Path | None = None,
                  run: Path | None = None, fetch: emulator.Download = emulator.download,
                  steam_closed=steam.with_steam_closed, steam_running=steam.steam_running,
-                 newer_release=emulator.newer_release, latest_nightly=emulator.latest_nightly,
-                 shadnet_connect: shadnet.Connect = shadnet._connect,
+                 newer_release=emulator.newer_release, shadnet_connect: shadnet.Connect = shadnet._connect,
                  shad_running=userdata.shadps4_running, covers_home: Path | None = None,
-                 covers_get: covers.Get = covers._get, covers_key: Path | None = None):
+                 covers_get: covers.Get = covers._get, covers_key: Path | None = None,
+                 log_path: Path | None = None, devices: Path = controllers.DEVICES, open_url=xdg_open,
+                 sound_state: Path | None = None):
         """*home*: where the app installs shadPS4; *shad_home*: shadPS4's own folder; *steam_dir*: Steam's folder
         (None: looked up); *run*: the run wrapper the shortcuts start; *fetch*: the download; *steam_closed* and
-        *steam_running*: closing Steam for a change and asking whether it runs; *newer_release* and
-        *latest_nightly*: ask GitHub for a newer stable and for the newest nightly build; *shadnet_connect*: opens a connection to a shadNet server; *shad_running*: whether shadPS4
-        runs; *covers_home*, *covers_get* and *covers_key*: where the covers are kept, how SteamGridDB is asked and
-        the suite's key file (tests never touch the real ones)."""
+        *steam_running*: closing Steam for a change and asking whether it runs; *newer_release*: asks GitHub for a
+        newer shadPS4; *shadnet_connect*: opens a connection to a shadNet server; *shad_running*: whether shadPS4
+        runs (its files are not written then); *covers_home*, *covers_get* and *covers_key*: where the covers are
+        kept, how SteamGridDB is asked and the suite's key file (tests never touch the real ones); *log_path*: the
+        app's log file, as the Log tab shows it (__main__ set it up); *devices*: the kernel's list of input
+        devices, for the controller state; *open_url*: opens a URL on the desktop (the Steam link); *sound_state*:
+        WirePlumber's file with the volume the desktop remembers for shadPS4 (tests pass their own)."""
         super().__init__()
-        self.resize(980, 760)
+        self.resize(980, 800)
         self.home = home or emulator.emulator_home()
         self.shad_home = shad_home or userdata.shadps4_home()
         self.steam_dir = steam_dir if steam_dir is not None else steam.find_steam()
@@ -67,6 +93,15 @@ class MainWindow(QMainWindow):
         self.covers_home = covers_home or covers.covers_home(APP_ID)
         self.covers_get = covers_get
         self.covers_key = covers_key
+        self.log_path = log_path or applog.log_file(APP_ID)
+        self.devices = devices
+        self.open_url = open_url
+        self.sound_state = sound_state or sound.stream_properties()
+        self.sound: tuple[float, bool] | None = None    # (volume, muted) Bazzite remembers for shadPS4; None: unknown
+        self._sound_said = False                        # said once while it stays off
+        self._pin_noted = False                         # another version installed than the app brings: logged once
+        self.controllers: list[str] | None = None       # the controllers last seen; None before the first look
+        self.log = applog.logger(APP_ID)
         self.shadnet_check = UpdateChecker(self)        # whether the shadNet server answers, off the GUI thread
         self.shadnet_check.finished.connect(self._server_checked)
         self.shadnet_watch = QTimer(self)               # while shadPS4 runs: its log says whether it signed in
@@ -74,10 +109,7 @@ class MainWindow(QMainWindow):
         self.shadnet_watch.timeout.connect(self._watch_shadnet)
         self._shad_was_running = False
         self._newer_release = newer_release
-        self._latest_nightly = latest_nightly
         self.newer: ReleaseInfo | None = None           # shadPS4's newest stable, when newer than the pinned one
-        self.latest: emulator.Nightly | None = None     # the newest nightly build, on the nightly channel
-        self._checking = ""                             # which channel the running check asks for
         self.release_check = UpdateChecker(self)        # apart from the worker: it runs while the window opens
         self.release_check.finished.connect(self._release_found)
         self.settings = ShadSettings(INFO, self)
@@ -91,85 +123,95 @@ class MainWindow(QMainWindow):
         self.version = ""
         self.config: dict = {}
         self.users: list[userdata.User] = []
+        self.folders: list[Path] = []
 
         header = AppHeader(LOGO_PATH, APP_NAME, __version__)
+        # The states on the right of the title row, ending at the middle of the last pill below them (owner,
+        # 24-10-2026): a spacer of half that pill's width after them, set whenever the window's size changes.
         self.pill = StatusText()
-        header.add_state(self.pill)
-        self.shadnet_pill = StatusText()
-        header.add_state(self.shadnet_pill)
-        self.refresh_button = QPushButton("Refresh")
-        self.refresh_button.setToolTip("Read the state again and look for games")
-        self.refresh_button.clicked.connect(self.refresh)
-        header.add_action(self.refresh_button)
-        self.emulator_box = MetricBox("shadPS4", style.BLUE)
-        self.modules_box = MetricBox("System modules", style.BLUE)
-        self.games_box = MetricBox("Games", style.BLUE)
-        self.steam_box = MetricBox("In Game Mode", style.BLUE)
-        for box in (self.emulator_box, self.modules_box, self.games_box, self.steam_box):
-            header.add_second(box)
-        intro = hint_label(
+        header.add_action(self.pill)
+        self.shadnet_pill = StatusText()                # shadNet Online, Offline or Off
+        header.add_action(self.shadnet_pill)
+        self.controller = StatusText()                  # beside them: whether a controller is connected
+        header.add_action(self.controller)
+        self.states_spacer = QWidget()
+        self.states_spacer.setFixedSize(0, 1)
+        header.add_action(self.states_spacer)
+        self.controller_timer = QTimer(self)
+        self.controller_timer.setInterval(self.CONTROLLER_POLL)
+        self.controller_timer.timeout.connect(self.show_controller)
+        self.controller_timer.start()
+        self.refresh_pill = style.action_pill("Refresh", "Click to refresh", "Read the state again and look for games")
+        self.refresh_pill.clicked.connect(self.refresh)
+        self.emulator_box = MetricBox("shadPS4 version", style.BLUE)
+        self.games_box = MetricBox("Your games", style.BLUE)
+        self.steam_box = MetricBox("Available in Steam", style.BLUE)
+        self.time_box = MetricBox("Play time", style.BLUE)      # all games together, as shadPS4 counts it
+        # The header's pills spread over the window's width in equal parts, as the action pills below (owner,
+        # 24-10-2026). (The System modules box went: the System modules line below says how many there are.)
+        self.header_pills = [self.refresh_pill, self.emulator_box, self.games_box, self.steam_box, self.time_box]
+        for box in self.header_pills:
+            box.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            header.add_second(box, 1)
+        self.intro = hint_label(
             "PS4 games on the BC-250 with the shadPS4 emulator. The app installs the shadPS4 release it was tried "
-            "with, finds your games and puts them in Steam, so they start from Game Mode. Games, saves and system "
-            "modules come from your own PS4; the app never downloads them. " + style.link(self, MANUAL_URL, "Manual"))
+            "with, finds your games (or unpacks them from .pkg files) and puts them in Steam, so a game starts "
+            "straight away, also from Steam's Big Picture Mode. Games, saves and system modules come from your own "
+            "PS4; the app never downloads them. " + style.link(self, emulator.RELEASE_PAGE, "shadPS4's release notes")
+            + " · " + style.link(self, MANUAL_URL, "Wiki"), follow_height=True)   # its lines count in the minimum
 
-        grid = QGridLayout()
-        grid.setColumnStretch(2, 1)
-        grid.setHorizontalSpacing(14)
-        grid.setVerticalSpacing(10)
-        self.emulator_state, self.modules_state, self.folders_state = (self._state_label() for _ in range(3))
-        centre = Qt.AlignmentFlag.AlignVCenter
-        self.nightly_check = QCheckBox("Nightly builds")
-        self.nightly_check.setToolTip("Install shadPS4's newest nightly build instead of the tested stable release. "
-                                      "It is checked against the checksum GitHub publishes for that build, but it "
-                                      "is not the release this app was tried with.")
-        self.nightly_check.setChecked(bool(self.settings.get("nightly")))
-        self.nightly_check.toggled.connect(self.on_channel_changed)
-        self.emulator_state.setAlignment(Qt.AlignmentFlag.AlignLeft | centre)
-        emulator_cell = QWidget()
-        cell = QVBoxLayout(emulator_cell)
-        cell.setContentsMargins(0, 0, 0, 0)
-        cell.setSpacing(2)
-        cell.addWidget(self.emulator_state)
-        cell.addWidget(self.nightly_check)
-        self.install_button = style.primary_button("Install", f"Download shadPS4 {emulator.VERSION} from GitHub "
-                                                              f"(about {emulator.SIZE_MB} MB) and check it")
-        self.install_button.clicked.connect(self.on_install)
-        self.remove_button = QPushButton("Remove")
-        self.remove_button.setToolTip("Remove the installed shadPS4; its own folder (saves, settings) stays")
-        self.remove_button.clicked.connect(self.on_remove)
-        self.modules_button = QPushButton("Open folder")
-        self.modules_button.setToolTip("Open the folder the system modules go in")
-        self.modules_button.clicked.connect(self.open_modules_folder)
-        self.folder_button = QPushButton("Add folder…")
-        self.folder_button.setToolTip("Add a folder with games to shadPS4's game folders")
-        self.folder_button.clicked.connect(self.on_add_folder)
-        self.extract_button = QPushButton("Extract PKG…")
-        self.extract_button.setToolTip("Unpack a package file (.pkg: a game, a patch or add-on content) into a game "
-                                       "folder, in the layout shadPS4 loads")
-        self.extract_button.clicked.connect(lambda: self.open_extract())
+        # What there is to do, as pills the size of the header's, spread over the window's width (owner,
+        # 24-10-2026): what it is for in large type (shadPS4, Modules, Games, shadNet), what the pill does under it.
+        self.install_pill = style.action_pill("shadPS4", "Install", f"Download shadPS4 {emulator.VERSION} from "
+                                                                    f"GitHub (about {emulator.SIZE_MB} MB) and "
+                                                                    "check it")
+        self.install_pill.clicked.connect(self.on_install)
+        self.remove_pill = style.action_pill("shadPS4", "Uninstall", "Remove the installed shadPS4; its own folder "
+                                                                     "(saves, settings, system modules) stays")
+        self.remove_pill.clicked.connect(self.on_remove)
+        self.modules_pill = style.action_pill("Modules", "Install", "Choose the folder with the system modules "
+                                                                    "(.sprx) from your own PS4's firmware; the app "
+                                                                    "copies them into shadPS4's module folder")
+        self.modules_pill.clicked.connect(self.on_install_modules)
+        self.package_pill = style.action_pill("Games", "Install", "Choose a package file (.pkg: a game, its update "
+                                                                  "or add-on content); Extract PKG unpacks it into "
+                                                                  "a game folder, in the layout shadPS4 loads")
+        self.package_pill.clicked.connect(lambda: self.open_extract())
         self.extract_dialog = None                      # the Extract PKG window while it is open
-        self.shadnet_state = self._state_label()
-        self.shadnet_button = QPushButton("Account…")
-        self.shadnet_button.setToolTip("Your shadNet account: create one, try it, and have shadPS4 sign in with it")
-        self.shadnet_button.clicked.connect(self.on_shadnet)
-        rows = [("shadPS4", emulator_cell, [self.install_button, self.remove_button]),
-                ("System modules", self.modules_state, [self.modules_button]),
-                ("Game folders", self.folders_state, [self.extract_button, self.folder_button]),
-                ("shadNet", self.shadnet_state, [self.shadnet_button])]
-        for row, (name, state, buttons) in enumerate(rows):
+        self.folder_pill = style.action_pill("Games", "Add folder", "Add a folder with your games (each in a folder "
+                                                                    "of its own, with eboot.bin) to shadPS4's game "
+                                                                    "folders")
+        self.folder_pill.clicked.connect(self.on_add_folder)
+        self.account_pill = style.action_pill("shadNet", "Account", "Your shadNet account: create one, try it, and "
+                                                                    "have shadPS4 sign in with it")
+        self.account_pill.clicked.connect(self.on_shadnet)
+        self.actions = [self.install_pill, self.remove_pill, self.modules_pill, self.package_pill, self.folder_pill,
+                        self.account_pill]                  # in the owner's order (24-10-2026)
+        actions = QHBoxLayout()
+        actions.setSpacing(8)
+        for pill in self.actions:                       # each a sixth of the width, whatever the window's
+            pill.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            actions.addWidget(pill, 1)
+
+        grid = QGridLayout()        # the state of each: shadPS4, the system modules, the game folders, shadNet
+        grid.setColumnStretch(1, 1)
+        grid.setHorizontalSpacing(14)
+        grid.setVerticalSpacing(6)
+        self.emulator_state, self.modules_state, self.folders_state, self.shadnet_state = (self._state_label()
+                                                                                           for _ in range(4))
+        self.folders_state.setOpenExternalLinks(False)  # a folder's name is a link that takes it out
+        self.folders_state.linkActivated.connect(self.on_forget_folder)
+        for row, (name, state) in enumerate((("shadPS4", self.emulator_state),
+                                             ("Sys modules", self.modules_state),
+                                             ("Game folders", self.folders_state), ("shadNet", self.shadnet_state))):
             label = QLabel(name)
             label.setStyleSheet("font-weight:700;")
-            for text in (label, state):
-                if isinstance(text, QLabel):            # the shadPS4 cell holds its state and the channel box
-                    text.setAlignment(Qt.AlignmentFlag.AlignLeft | centre)
-            grid.addWidget(style.step_badge(row + 1), row, 0, centre)
-            grid.addWidget(label, row, 1)
-            grid.addWidget(state, row, 2)
-            for column, button in zip((4, 3), reversed(buttons)):
-                grid.addWidget(button, row, column, centre)
+            label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+            grid.addWidget(label, row, 0)
+            grid.addWidget(state, row, 1)
 
         self.table = QTableWidget(0, 5)
-        self.table.setHorizontalHeaderLabels(["Game Mode", "Game", "ID", "Version", "Folder"])
+        self.table.setHorizontalHeaderLabels(["In Steam", "Game title", "Id", "Version", "Folder"])
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -182,75 +224,84 @@ class MainWindow(QMainWindow):
                                        QHeaderView.ResizeMode.ResizeToContents, QHeaderView.ResizeMode.Stretch)):
             head.setSectionResizeMode(column, mode)
         self.table.itemChanged.connect(lambda _item: self._update_buttons())
-        self.table.itemSelectionChanged.connect(self._update_buttons)
-        self.table.doubleClicked.connect(lambda _index: self.on_play())
 
-        self.play_button = QPushButton("Play")
-        self.play_button.setToolTip("Start the chosen game in shadPS4, here on the desktop")
-        self.play_button.clicked.connect(self.on_play)
         self.shad_button = QPushButton("shadPS4 settings")
-        self.shad_button.setToolTip("Open shadPS4's own window (Big Picture): its settings and game list")
+        self.shad_button.setToolTip("Open shadPS4's own window (Big Picture) for what the app does not set: the "
+                                    "controller's buttons, a game's own settings, its game list")
         self.shad_button.clicked.connect(self.on_open_shadps4)
-        self.covers_button = QPushButton("Covers…")
-        self.covers_button.setToolTip("The SteamGridDB API key, one for the whole suite: with it, Update Game Mode "
-                                      "gives each game a cover from SteamGridDB in Steam's library")
+        self.covers_button = QPushButton("Steam artwork…")
+        self.covers_button.setToolTip("The SteamGridDB API key, one for the whole suite: with it, Update Steam "
+                                      "gives each game its cover from SteamGridDB in Steam; the wide picture, the "
+                                      "banner and the logo stay the game's own")
         self.covers_button.clicked.connect(self.on_covers)
-        self.steam_button = style.primary_button("Update Game Mode", STEAM_TIP)
+        self.steam_button = style.primary_button("Update Steam", STEAM_TIP)
         self.steam_button.clicked.connect(self.on_update_steam)
         buttons = QHBoxLayout()
-        buttons.addWidget(self.play_button)
+        self.steam_hint = hint_label(f"Tick a game to put it in Steam. A game is started from "
+                                     f"{style.link(self, STEAM_URL, 'Steam')}.")
+        self.steam_hint.setOpenExternalLinks(False)      # the app opens Steam itself (open_steam)
+        self.steam_hint.linkActivated.connect(lambda _url: self.open_steam())
+        buttons.addWidget(self.steam_hint, 1)
         buttons.addWidget(self.shad_button)
-        buttons.addStretch(1)
         buttons.addWidget(self.covers_button)
         buttons.addWidget(self.steam_button)
+        games_page = QWidget()
+        games = QVBoxLayout(games_page)
+        games.setContentsMargins(0, 8, 0, 0)
+        games.addWidget(self.table, 1)
+        games.addLayout(buttons)
 
-        self.running = QLabel()
+        self.settings_page = SettingsPage(self.shad_home, self.shad_running, self.log)
+        self.settings_page.sound_path = self.sound_state
+        self.settings_page.sound_changed.connect(self.show_sound)
+        self.output = Terminal()
+        self.output.setPlaceholderText("What the app did, with the time, appears here.")
+        self.output.set_text(applog.tail(self.log_path))
+        log_page = QWidget()
+        log = QVBoxLayout(log_page)
+        log.setContentsMargins(0, 8, 0, 0)
+        log.addWidget(hint_label(f"Everything the app said and did, newest last, and each game started from Steam; "
+                                 f"the same lines are in {escape(str(self.log_path))}, which turns over at 1 MB."))
+        log.addWidget(self.output, 1)
+        self.tabs = QTabWidget()
+        self.tabs.addTab(games_page, "Your games")
+        self.tabs.addTab(self.settings_page, "Settings")
+        self.tabs.addTab(log_page, "Log")
+
+        self.running = WrappedLabel()
         self.running.setStyleSheet("font-weight:600;")
         self.running.setWordWrap(True)
-        self.output = Terminal()
-        self.output.setPlaceholderText("Messages appear here.")
-        self.output.setMaximumHeight(120)
 
         central = QWidget()
         lay = QVBoxLayout(central)
         lay.addLayout(header)
-        lay.addWidget(intro)
-        lay.addSpacing(6)
+        lay.addWidget(self.intro)
+        lay.addSpacing(4)
+        lay.addLayout(actions)
+        lay.addSpacing(4)
         lay.addLayout(grid)
         lay.addSpacing(6)
-        lay.addWidget(self.table, 1)
-        lay.addLayout(buttons)
+        lay.addWidget(self.tabs, 1)
         lay.addWidget(self.running)
-        lay.addWidget(self.output)
         version = QLabel(f"{APP_NAME} {__version__} · core {CORE_VERSION} · shadPS4 {emulator.VERSION}")
         version.setStyleSheet("color:palette(placeholder-text);")
         lay.addWidget(version, 0, Qt.AlignmentFlag.AlignRight)
         self.setCentralWidget(central)
         style.apply(self)
-        # As in BC-250 Mesh Shaders: the buttons of the steps the size of the widest, in two columns on the right.
-        # Sized here, in the window, so their size includes the style sheet's padding.
-        steps = [b for _, _, buttons in rows for b in buttons]
-        for button in steps:
-            button.ensurePolished()
-        width = max(b.sizeHint().width() for b in steps)
-        height = max(b.sizeHint().height() for b in steps)
-        for row in range(len(rows)):
-            grid.setRowMinimumHeight(row, height)
-        for button in steps:
-            button.setFixedSize(width, height)
 
         self.setAcceptDrops(True)                       # a .pkg dropped on the window opens Extract PKG
         geometry = self.settings.window_state("geometry")
         if geometry is not None:
             self.restoreGeometry(geometry)
         self.refresh()
-        self._start_release_check()
+        self.release_check.start(self._newer_release)
 
     @staticmethod
     def _state_label() -> QLabel:
-        label = QLabel()
-        label.setWordWrap(True)
-        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        label = WrappedLabel()                  # its lines count in the window's minimum height
+        # Its links take a click too: without the second flag a click on one did nothing (owner, 24-10-2026).
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse
+                                      | Qt.TextInteractionFlag.LinksAccessibleByMouse)
         return label
 
     # --- State ------------------------------------------------------------------------------------------------
@@ -261,10 +312,7 @@ class MainWindow(QMainWindow):
         self.modules = userdata.check_modules(userdata.modules_folder(self.shad_home, self.config))
         self.folders = userdata.game_folders(self.config)
         self.users = userdata.read_users(self.shad_home)
-        try:
-            userdata.add_quit_bindings(self.shad_home)          # the quit window from any keyboard or controller
-        except OSError:
-            pass
+        self.prepare_shadps4()
         self.games = scan(self.folders)
         try:
             self.in_steam = shortcuts.in_steam(self.steam_dir) if self.steam_dir else {}
@@ -278,55 +326,117 @@ class MainWindow(QMainWindow):
             self.in_steam, self.no_logo, self.old_tags, self.no_cover = {}, set(), set(), set()
         self._show_state()
         self._fill_table()
+        self.settings_page.load()
+        self.show_controller()
+        self.show_sound()
+
+    def prepare_shadps4(self) -> None:
+        """shadPS4's files brought to what the app owns: the quit hotkeys in input_config/global.ini, which shadPS4
+        reads when a game starts (so it may run meanwhile); what was added goes to the log."""
+        try:
+            added = userdata.add_quit_bindings(self.shad_home)
+        except OSError as error:
+            self.note(f"shadPS4's quit hotkeys could not be written: {error}", ok=False)
+            return
+        if added:
+            self.note("shadPS4 set up: Share + Options (Back + Start) and Ctrl+Shift+End open its quit window.")
+
+    def show_sound(self) -> None:
+        """The volume Bazzite remembers for shadPS4 (muted or turned down, a game plays without a sound): in the
+        Settings tab's Sound box, and said once while it stays off."""
+        self.sound = sound.stream_sound(settings_page.STREAM, self.sound_state)
+        text, off = self.settings_page.show_sound(self.sound)
+        if off and not self._sound_said:
+            self.say(text, ok=False)
+        self._sound_said = off
+
+    def show_controller(self) -> None:
+        """The controller state beside the title: a game started from Steam reads the controller that is there
+        when it starts, so the window says when none is (switched off, asleep, not paired)."""
+        found = controllers.connected(self.devices)
+        if found == self.controllers:
+            return
+        self.controllers = found
+        if found:
+            self.controller.set_status("Controller connected" if len(found) == 1 else f"{len(found)} controllers",
+                                       "ok", "Connected: " + ", ".join(found) + ". A game started from Steam "
+                                       "reads it; Share + Options together open shadPS4's quit window in the "
+                                       "game.")
+        else:
+            self.controller.set_status("No controller", "warn",
+                                       "No controller is connected: switch it on, or press its PS button to wake "
+                                       "it, before starting a game from Steam. Without one, shadPS4 plays with the "
+                                       "keyboard only.")
+
+    def say(self, text: str, ok: bool = True) -> None:
+        """What the window has to say: the line under the tabs, the Log tab and the log file."""
+        self.running.setStyleSheet("font-weight:600;" + ("" if ok else "color:#c62828;"))
+        self.running.setText(text)
+        self.note(text, ok)
+
+    def note(self, text: str, ok: bool = True) -> None:
+        """Into the Log tab and the log file only: something that happened, not what the window is doing now."""
+        (self.log.info if ok else self.log.error)(text)
+        stamp = time.strftime(applog.DATE)
+        self.output.appendPlainText(f"{stamp} {'INFO' if ok else 'ERROR'} {text}")
 
     def _show_state(self) -> None:
         pinned = emulator.VERSION
-        if self.nightly_check.isChecked():
-            self._show_nightly_state()
-        elif not self.version:
+        if not self.version:
             self.emulator_state.setText(f"Not installed. Install downloads shadPS4 {pinned}, the release this "
-                                        "version of the app was tried with, and checks it before unpacking.")
+                                        "version of the app was tried with, and checks it before unpacking. The "
+                                        "app says when a newer shadPS4 is out.")
             self.emulator_box.set_value("—")
-        elif self.version != pinned:
-            self.emulator_state.setText(f"shadPS4 {escape(self.version)} is installed; this version of the app "
-                                        f"brings {pinned}: <b>install it</b> to use it.")
-            self.emulator_box.set_value(self.version)
-        else:
-            self.emulator_state.setText(f"shadPS4 {pinned} is installed. "
-                                        + style.link(self, emulator.RELEASE_PAGE, "Release notes"))
-            self.emulator_box.set_value(pinned)
-        if self.newer is not None and not self.nightly_check.isChecked():
-            self.emulator_state.setText(
-                self.emulator_state.text() + f"<br>shadPS4 {escape(self.newer.version)} is out "
-                f"({escape(self.newer.published)}). A later version of this app brings it, once it has been tried "
-                "on the board. " + style.link(self, self.newer.url, "What is new"))
-        self.emulator_state.setOpenExternalLinks(True)
+        else:                                   # the version alone (owner, 24-10-2026), the advice in the tip
+            self.emulator_state.setText(f"<b>{escape(self.version)}</b>")
+            # The box is not wide enough for a nightly build's name (date and commit) from before the channel went.
+            self.emulator_box.set_value(self.version if _NUMBERED.fullmatch(self.version) else "other")
+            if self.version != pinned and not self._pin_noted:
+                self.note(f"shadPS4 {self.version} is installed; this version of the app brings {pinned}: Install "
+                          "puts it in.")
+                self._pin_noted = True
+        tip = f"shadPS4 {pinned}, the release this version of the app was tried with"
+        if self.version and self.version != pinned:
+            tip = f"shadPS4 {self.version} is installed; this version of the app brings {pinned}: Install puts it in."
+        if self.newer is not None:              # in the tip and the log, so the line stays the version (owner)
+            tip += (f"\nshadPS4 {self.newer.version} is out ({self.newer.published}). A later version of this app "
+                    f"brings it, once it has been tried on the board: {self.newer.url}")
+        self.emulator_state.setToolTip(tip)
 
-        m = self.modules
-        folder = f"<code>{escape(str(m.folder))}</code>"
+        m = self.modules                        # Ok in green or Missing sys modules in red (owner, 24-10-2026)
+        needed = len(userdata.NEEDED)
         if m.complete:
-            text = f"All {len(userdata.NEEDED)} modules that shadPS4 cannot do without are in {folder}."
-        elif not m.needed and not m.optional:
-            text = (f"None in {folder}. Many games run without them; others need modules from your own PS4's "
-                    "firmware. Copy them into that folder.")
+            self.modules_state.setText(f"<b style='color:{GREEN};'>Ok</b>")
         else:
-            text = (f"{len(m.needed)} of the {len(userdata.NEEDED)} modules shadPS4 cannot do without are in "
-                    f"{folder}; a game that needs a missing one does not start.")
-        self.modules_state.setText(text)
-        self.modules_state.setToolTip("Missing: " + ", ".join(m.missing) if m.missing else "")
-        self.modules_box.set_value(f"{len(m.needed)} / {len(userdata.NEEDED)}")
+            self.modules_state.setText(f"<b style='color:{RED};'>Missing sys modules</b>")
+        tip = (f"{len(m.needed)} of the {needed} modules shadPS4 cannot do without are in its module folder: "
+               f"{m.folder}")
+        if m.missing:
+            tip += ("\nMany games run without them; a game that needs a missing one does not start. Modules Install "
+                    "takes those of your own PS4. Missing: " + ", ".join(m.missing))
+        self.modules_state.setToolTip(tip)
 
-        if self.folders:
-            self.folders_state.setText("<br>".join(f"<code>{escape(str(f))}</code>" for f in self.folders))
+        if self.folders:                        # the folders' names alone (owner, 24-10-2026), each a link that
+            self.folders_state.setText(", ".join(  # takes the folder out; the paths and the count in the tip
+                f"<b>{style.link(self, f'forget:{n}', escape(f.name or str(f)))}</b>"
+                for n, f in enumerate(self.folders)))
+            self.folders_state.setToolTip("\n".join(str(f) for f in self.folders)
+                                          + f"\n{len(self.games)} game(s) found, up to {MAX_DEPTH} folders "
+                                          "deep. Click a folder to stop looking for games in it; its games stay "
+                                          "where they are.")
         elif not self.version:
-            self.folders_state.setText("None yet: install shadPS4 first, then add the folder with your games.")
+            self.folders_state.setText("None yet: install shadPS4 first, then Add folder takes the folder with your "
+                                       "games.")
+            self.folders_state.setToolTip("")
         else:
-            self.folders_state.setText("None yet: add the folder with your games (each game in a folder of its own, "
-                                       "with eboot.bin).")
+            self.folders_state.setText("None yet: Add folder takes the folder with your games (each in a folder of "
+                                       "its own, with eboot.bin); Games Install unpacks a package into one.")
+            self.folders_state.setToolTip("")
         self._show_shadnet()
         self.games_box.set_value(str(len(self.games)))
         found = {str(g.eboot) for g in self.games}
         self.steam_box.set_value(str(len(found & set(self.in_steam))))
+        self._show_play_time()
 
         if not self.version:
             self.pill.set_status("Not installed", "warn", "Install shadPS4 first.")
@@ -337,18 +447,36 @@ class MainWindow(QMainWindow):
         else:
             self.pill.set_status("Ready", "ok", "shadPS4 is installed and games were found.")
 
+    def _show_play_time(self) -> None:
+        """The time spent in all games together, as shadPS4 counts it (its play_time.txt); per game in the tip."""
+        times = userdata.play_times(self.shad_home)
+        total = sum(seconds for seconds, _ in times.values())
+        if not total:
+            self.time_box.set_value("—", "shadPS4 counts the time spent in each game; none yet.")
+            return
+        titles = {g.title_id: g.title for g in self.games if g.title_id}
+        lines = [f"{titles.get(serial, serial)}: {userdata.played(seconds)}"
+                 + (f", last played {time.strftime('%d-%m-%Y %H:%M', time.localtime(last))}" if last else "")
+                 for serial, (seconds, last) in sorted(times.items(), key=lambda t: -t[1][0]) if seconds]
+        self.time_box.set_value(userdata.played(total), "The time spent in each game, as shadPS4 counts it:\n"
+                                + "\n".join(lines))
+
     def _show_shadnet(self) -> None:
-        signing_in = [u for u in self.users if u.shadnet and u.npid] if userdata.shadnet_on(self.config) else []
-        server = escape(userdata.shadnet_server(self.config))
+        """The nickname that signs in alone (owner, 24-10-2026), the rest in the tooltip."""
+        signing_in = self._signing_in()
+        server = userdata.shadnet_server(self.config)
         if not self.users:
-            text = "shadPS4 has not run yet: start it once (shadPS4 settings), then set up your account."
+            self.shadnet_state.setText("—")
+            self.shadnet_state.setToolTip("shadPS4 has not run yet: start it once (shadPS4 settings), then set up "
+                                          "your account with shadNet Account.")
         elif signing_in:
-            names = ", ".join(f"<b>{escape(u.npid)}</b> ({escape(u.name)})" for u in signing_in)
-            text = f"On: {names} signs in to {server} when a game starts."
+            self.shadnet_state.setText(", ".join(f"<b>{escape(u.npid)}</b>" for u in signing_in))
+            self.shadnet_state.setToolTip("\n".join(f"{u.npid} ({u.name}) signs in to {server} when a game starts."
+                                                     for u in signing_in))
         else:
-            text = ("Off. shadPS4's online service, for online trophies, friends and online play in the games it "
-                    "supports: set up an account to use it.")
-        self.shadnet_state.setText(text)
+            self.shadnet_state.setText("Off")
+            self.shadnet_state.setToolTip("shadPS4's online service, for online trophies, friends and online play in "
+                                          "the games it supports: shadNet Account sets it up.")
         self._show_shadnet_pill()
 
     def _signing_in(self) -> list[userdata.User]:
@@ -361,7 +489,7 @@ class MainWindow(QMainWindow):
         names = ", ".join(u.npid for u in self._signing_in())
         if not names:
             self.shadnet_watch.stop()
-            self.shadnet_pill.set_status("shadNet Off", "neutral", "shadNet is off: set it up with Account… in step 4.")
+            self.shadnet_pill.set_status("shadNet Off", "neutral", "shadNet is off: set it up with shadNet Account.")
             return
         self.shadnet_watch.start()
         server = userdata.shadnet_server(self.config)
@@ -403,68 +531,13 @@ class MainWindow(QMainWindow):
         if self.shad_running() or self._shad_was_running:
             self._show_shadnet_pill()
 
-    def _show_nightly_state(self) -> None:
-        """The first step on the nightly channel: what is installed, the newest build GitHub lists, and that a
-        nightly is not the release the app was tried with."""
-        tried = "A nightly build is not the release this app was tried with."
-        if not self.version:
-            self.emulator_state.setText("Not installed. Install downloads shadPS4's newest nightly build and checks "
-                                        f"it against the checksum GitHub publishes for that build. {tried}")
-            self.emulator_box.set_value("—")
-            return
-        if self.version == emulator.VERSION:
-            text = f"shadPS4 {emulator.VERSION} (the stable release) is installed. {tried}"
-        else:
-            text = f"shadPS4 nightly {escape(self.version)} is installed. {tried}"
-        if self.latest is not None and self.latest.version != self.version:
-            text += (f"<br>The newest nightly build is {escape(self.latest.version)} "
-                     f"({escape(self.latest.published)}): <b>Install</b> brings it. "
-                     + style.link(self, self.latest.page, "What is in it"))
-        elif self.latest is not None:
-            text += " " + style.link(self, self.latest.page, "What is in it")
-        self.emulator_state.setText(text)
-        self.emulator_box.set_value(self.version)
-
-    def _channel(self) -> str:
-        return "nightly" if self.nightly_check.isChecked() else "stable"
-
-    def _release_found(self, result) -> None:
-        """A finished check: the newer stable (ReleaseInfo), the newest nightly (Nightly), or None. A result of the
-        other channel (the user switched while it ran) is kept; _show_state shows only the channel's own."""
-        if isinstance(result, emulator.Nightly):
-            self.latest = result
-        else:
-            self.newer = result
-        if result is not None:
+    def _release_found(self, release: ReleaseInfo | None) -> None:
+        self.newer = release
+        if release is not None:
             self._show_state()
             self._update_buttons()
-        if self._checking != self._channel():           # switched while it ran: ask for the new channel's now
-            self._start_release_check()
-
-    def _start_release_check(self) -> None:
-        """Asks GitHub off the GUI thread: on the stable channel for a newer stable, on the nightly channel for the
-        newest nightly build (None when it cannot be asked: nothing to say then). While a check runs, a switch of
-        the channel waits for it; _release_found then starts the right one."""
-        if self.release_check.running:
-            return
-        self._checking = self._channel()
-        if self._checking == "nightly":
-            latest = self._latest_nightly
-
-            def job() -> emulator.Nightly | None:
-                try:
-                    return latest()
-                except emulator.EmulatorError:
-                    return None
-            self.release_check.start(job)
-        else:
-            self.release_check.start(self._newer_release)
-
-    def on_channel_changed(self, checked: bool) -> None:
-        self.settings.set("nightly", checked)
-        self._show_state()
-        self._update_buttons()
-        self._start_release_check()
+            self.note(f"shadPS4 {release.version} is out ({release.published}); a later version of this app brings "
+                      f"it, once it has been tried on the board: {release.url}")
 
     def _fill_table(self) -> None:
         self.table.blockSignals(True)
@@ -473,20 +546,18 @@ class MainWindow(QMainWindow):
             box = QTableWidgetItem()
             box.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
             box.setCheckState(Qt.CheckState.Checked if str(game.eboot) in self.in_steam else Qt.CheckState.Unchecked)
-            box.setToolTip("In Steam for Game Mode" if str(game.eboot) in self.in_steam else "Not in Steam")
-            self.table.setItem(row, 0, box)
-            for column, text in enumerate((game.title, game.title_id, game.version, str(game.folder)), start=1):
+            box.setToolTip("In Steam" if str(game.eboot) in self.in_steam else "Not in Steam")
+            self.table.setItem(row, STEAM, box)
+            for column, text in ((GAME, game.title), (SERIAL, game.title_id), (VERSION, game.version),
+                                 (FOLDER, game.folder.name or str(game.folder))):
                 self.table.setItem(row, column, QTableWidgetItem(text))
+            self.table.item(row, FOLDER).setToolTip(str(game.folder))     # the folder's name; the path as the tip
         self.table.blockSignals(False)
         self._update_buttons()
 
     def ticked(self) -> list[Game]:
         return [g for row, g in enumerate(self.games)
-                if self.table.item(row, 0).checkState() == Qt.CheckState.Checked]
-
-    def chosen(self) -> Game | None:
-        rows = self.table.selectionModel().selectedRows()
-        return self.games[rows[0].row()] if rows else None
+                if self.table.item(row, STEAM).checkState() == Qt.CheckState.Checked]
 
     def steam_plan(self) -> tuple[list[Game], list[Game]]:
         """(games to add or bring up to date, games to take out): the ticked ones in, the others out, and the
@@ -500,25 +571,15 @@ class MainWindow(QMainWindow):
     def _update_buttons(self) -> None:
         idle = not self.worker.running
         installed = bool(self.version)
-        self.refresh_button.setEnabled(idle)
-        if self.nightly_check.isChecked():
-            # The newest nightly when it is known; without it Install asks GitHub itself.
-            can_install = self.latest is None or self.version != self.latest.version
-            self.install_button.setToolTip("Download shadPS4's newest nightly build from GitHub and check it "
-                                           "against the checksum GitHub publishes for it")
-        else:
-            can_install = self.version != emulator.VERSION
-            self.install_button.setToolTip(f"Download shadPS4 {emulator.VERSION} from GitHub "
-                                           f"(about {emulator.SIZE_MB} MB) and check it")
-        self.install_button.setEnabled(idle and can_install)
-        self.nightly_check.setEnabled(idle)
-        self.remove_button.setEnabled(idle and installed)
-        self.folder_button.setEnabled(idle and installed)
-        self.extract_button.setEnabled(idle)
-        self.shadnet_button.setEnabled(idle)
-        self.covers_button.setEnabled(idle)
-        self.play_button.setEnabled(idle and installed and self.chosen() is not None)
+        self.refresh_pill.setEnabled(idle)
+        self.install_pill.setEnabled(idle and self.version != emulator.VERSION)
+        self.remove_pill.setEnabled(idle and installed)
+        self.modules_pill.setEnabled(idle)
+        self.folder_pill.setEnabled(idle and installed)
+        self.package_pill.setEnabled(idle)
+        self.account_pill.setEnabled(idle)
         self.shad_button.setEnabled(idle and installed)
+        self.covers_button.setEnabled(idle)
         add, remove = self.steam_plan()
         stale = self.no_logo | self.old_tags | self.no_cover
         named = shortcuts.names(add)        # a name in Steam that differs (one from before the prefix) is renamed
@@ -528,7 +589,8 @@ class MainWindow(QMainWindow):
         if self.steam_dir is None:
             self.steam_button.setToolTip("Steam was never started on this system: start it once first")
         elif steam.game_mode():
-            self.steam_button.setToolTip("In Game Mode Steam is the session itself: change it in Desktop Mode")
+            self.steam_button.setToolTip("In Game Mode (a handheld's Steam session) Steam is the session itself: "
+                                         "change it in Desktop Mode")
         else:
             self.steam_button.setToolTip(STEAM_TIP)
 
@@ -540,41 +602,22 @@ class MainWindow(QMainWindow):
 
     def _start(self, text: str, job) -> None:
         if self.worker.start(job):
+            self.running.setStyleSheet("font-weight:600;")
             self.running.setText(text)
+            self.log.info(text)
             self._update_buttons()
 
     def _job_done(self, result: tuple[bool, str]) -> None:
         ok, message = result
-        self.running.setText(message)
-        self.output.appendPlainText(message)
         self.refresh()
-        if not ok:
-            self.running.setStyleSheet("font-weight:600;color:#c62828;")
-        else:
-            self.running.setStyleSheet("font-weight:600;")
+        self.say(message, ok)
 
     def on_install(self) -> None:
-        home, fetch = self.home, self.fetch
-        if self.nightly_check.isChecked():
-            size = round(self.latest.size / (1 << 20)) if self.latest else emulator.SIZE_MB
-            if not self._ask("Install", f"Download shadPS4's newest nightly build from GitHub (about {size} MB)?"
-                                        "\n\nIt is checked against the checksum GitHub publishes for that build "
-                                        f"before it is unpacked into {home}. A nightly build is not the release "
-                                        "this app was tried with."):
-                return
-            latest = self._latest_nightly
-
-            def nightly_job() -> tuple[bool, str]:
-                try:
-                    return True, emulator.install_build(home, latest(), fetch)
-                except (emulator.EmulatorError, OSError) as error:
-                    return False, f"shadPS4 was not installed: {error}"
-            self._start("Downloading shadPS4's newest nightly build…", nightly_job)
-            return
         if not self._ask("Install", f"Download shadPS4 {emulator.VERSION} from GitHub (about {emulator.SIZE_MB} MB)?"
                                     "\n\nIt is checked against the SHA-256 this app was tried with before it is "
                                     f"unpacked into {self.home}."):
             return
+        home, fetch = self.home, self.fetch
 
         def job() -> tuple[bool, str]:
             try:
@@ -586,16 +629,34 @@ class MainWindow(QMainWindow):
     def on_remove(self) -> None:
         text = "Remove the installed shadPS4?\n\nIts own folder, with your saves, settings and system modules, stays."
         if self.in_steam:
-            text += "\nThe games in Game Mode no longer start until it is installed again."
+            text += "\nThe games in Steam no longer start until it is installed again."
         if self._ask("Remove", text):
             emulator.remove(self.home)
-            self.output.appendPlainText("shadPS4 was removed.")
             self.refresh()
+            self.say("shadPS4 was removed.")
 
-    def open_modules_folder(self) -> None:
-        self.modules.folder.mkdir(parents=True, exist_ok=True)
-        if not xdg_open(self.modules.folder):
-            self.output.appendPlainText(f"The system modules go in {self.modules.folder}")
+    def on_install_modules(self) -> None:
+        folder = QFileDialog.getExistingDirectory(self, window_title("Install the system modules"),
+                                                  str(Path.home()))
+        if folder:
+            self.install_modules(Path(folder))
+
+    def install_modules(self, source: Path) -> None:
+        """The .sprx files of *source* copied into shadPS4's module folder, which shadPS4 reads when a game asks
+        for a module (so it may run meanwhile); the state follows at once."""
+        target = self.modules.folder
+        try:
+            copied = userdata.install_modules(source, target)
+        except OSError as error:
+            self.say(f"The system modules were not copied: {error}", ok=False)
+            return
+        if not copied:
+            self.say(f"No system module (.sprx) in {source.name or source}.", ok=False)
+            return
+        self.refresh()
+        m = self.modules
+        self.say(f"{len(copied)} system module(s) copied into shadPS4's module folder: {len(m.needed)} of the "
+                 f"{len(userdata.NEEDED)} it cannot do without are there now.")
 
     def on_add_folder(self) -> None:
         folder = QFileDialog.getExistingDirectory(self, window_title("Add a game folder"), str(Path.home()))
@@ -608,11 +669,37 @@ class MainWindow(QMainWindow):
             done = subprocess.run(self.shadps4_command("--add-game-folder", str(folder)), capture_output=True,
                                   text=True, timeout=FOLDER_TIMEOUT, cwd=self.home)
             ok = done.returncode == 0
-            message = f"{folder} is a game folder now." if ok else \
+            message = "" if ok else \
                 f"shadPS4 did not add {folder} (exit code {done.returncode}): {done.stderr.strip()[-300:]}"
         except (OSError, subprocess.SubprocessError) as error:
             ok, message = False, f"shadPS4 did not add {folder}: {error}"
-        self._job_done((ok, message))
+        self.refresh()
+        if ok:
+            message = f"{folder.name or folder} is a game folder now: {len(scan([folder]))} game(s) in it."
+        self.say(message, ok)
+
+    def on_forget_folder(self, url: str) -> None:
+        """A folder's name in the Game folders line was clicked ("forget:<n>"): asked first."""
+        try:
+            folder = self.folders[int(url.partition(":")[2])]
+        except (ValueError, IndexError):
+            return
+        if self._ask("Remove a game folder", f"Stop looking for games in {folder}?\n\nIts games stay where they "
+                                             "are."):
+            self.forget_folder(folder)
+
+    def forget_folder(self, folder: Path) -> None:
+        """Out of shadPS4's game folders, as shadPS4's own Remove Folder does; not while shadPS4 runs."""
+        if self.shad_running():
+            self.say(RUNNING, ok=False)
+            return
+        try:
+            userdata.remove_game_folder(self.shad_home, folder)
+        except userdata.UserDataError as error:
+            self.say(f"{folder.name or folder} was not taken out: {error}", ok=False)
+            return
+        self.refresh()
+        self.say(f"{folder.name or folder} is no longer a game folder; its games stay where they are.")
 
     def open_extract(self, pkg: str | None = None) -> None:
         """The Extract PKG window, with *pkg* loaded; when it is open already, *pkg* goes into it."""
@@ -625,8 +712,8 @@ class MainWindow(QMainWindow):
         try:
             from .extract_dialog import ExtractDialog
         except ImportError as error:                    # cryptography missing: an install from before it
-            self._job_done((False, f"Extract PKG needs the cryptography package ({error}): install {APP_NAME} "
-                                   "again through the portal."))
+            self.say(f"Extract PKG needs the cryptography package ({error}): install {APP_NAME} again through the "
+                     "portal.", ok=False)
             return
         self.extract_dialog = ExtractDialog(self.settings, self.folders, self, pkg)
         try:
@@ -636,6 +723,7 @@ class MainWindow(QMainWindow):
             self.extract_dialog = None
         if extracted:
             self.refresh()
+            self.note("Extract PKG extracted a package; the games were looked for again.")
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:  # noqa: N802 (Qt override)
         if any(url.toLocalFile().lower().endswith(".pkg") for url in event.mimeData().urls()):
@@ -656,39 +744,38 @@ class MainWindow(QMainWindow):
         self.refresh()
         dialog = ShadNetDialog(self.shad_home, self.config, self.users, self, self.shadnet_connect)
         if dialog.exec():
-            self.output.appendPlainText("shadNet settings saved in shadPS4's own files.")
             self.refresh()
+            self.say("shadNet settings saved in shadPS4's own files.")
 
-    def on_play(self) -> None:
-        game = self.chosen()
-        if game is None or not self.version:
-            return
-        command = self.shadps4_command("-g", str(game.eboot))
-        if QProcess.startDetached(command[0], command[1:], str(game.folder))[0]:
-            self.running.setText(f"Started {game.title}.")
+    def open_steam(self) -> None:
+        """The Steam link: Steam's library on the desktop (Steam starts when it does not run)."""
+        if self.open_url(STEAM_URL):
+            self.note("Steam was opened.")
         else:
-            self.running.setText(f"{game.title} could not be started: {command[0]} did not run.")
+            self.say("Steam could not be opened: xdg-open is missing.", ok=False)
 
     def on_open_shadps4(self) -> None:
         command = self.shadps4_command("-b")
-        if not QProcess.startDetached(command[0], command[1:])[0]:
-            self.running.setText(f"shadPS4 could not be started: {command[0]} did not run.")
+        if QProcess.startDetached(command[0], command[1:])[0]:
+            self.note("shadPS4's own window was opened.")
+        else:
+            self.say(f"shadPS4 could not be started: {command[0]} did not run.", ok=False)
 
     def on_update_steam(self) -> None:
         if self.steam_dir is None:
             return
         if not self.run_path.is_file():
-            self.running.setText(f"The shortcuts run {self.run_path}, which is not there: install "
-                                 f"{APP_NAME} through the portal first.")
+            self.say(f"The shortcuts run {self.run_path}, which is not there: install {APP_NAME} through the "
+                     "portal first.", ok=False)
             return
         add, remove = self.steam_plan()
         if add and not self.version:
-            self.running.setText("Install shadPS4 first: the games in Game Mode start it.")
+            self.say("Install shadPS4 first: the games in Steam start it.", ok=False)
             return
-        text = f"{len(add)} game(s) in Game Mode" + (f", {len(remove)} taken out." if remove else ".")
+        text = f"{len(add)} game(s) in Steam" + (f", {len(remove)} taken out." if remove else ".")
         if self.steam_running():
             text += "\n\nSteam closes for it and starts again in the background."
-        if not self._ask("Game Mode", text):
+        if not self._ask("Steam", text):
             return
         folder, closed, run, existing = self.steam_dir, self.steam_closed, self.run_path, self.in_steam
         key, home, get = covers.read_key(self.covers_key), self.covers_home, self.covers_get
@@ -711,8 +798,18 @@ class MainWindow(QMainWindow):
 
     def on_covers(self) -> None:
         """Asks for the suite's SteamGridDB API key; empty turns the lookup off (the covers kept stay in use)."""
-        if covers.edit_key(self, self.covers_key):
+        if covers.edit_key(self, self.covers_key, "Update Steam"):
             self.refresh()
+            self.say("The SteamGridDB key was changed." if covers.read_key(self.covers_key) else
+                     "The SteamGridDB key was taken out; the covers kept stay in use.")
+
+    def resizeEvent(self, event: QResizeEvent) -> None:  # noqa: N802 (Qt override)
+        super().resizeEvent(event)
+        QTimer.singleShot(0, self.place_states)         # once the pills below have their new width
+
+    def place_states(self) -> None:
+        """The states end at the middle of the last header pill: the spacer after them is half its width."""
+        self.states_spacer.setFixedWidth(max(0, self.time_box.width() // 2))
 
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 (Qt override)
         if self.worker.running and not self._ask("Close", "A download or a change to Steam is still running. "
@@ -723,6 +820,9 @@ class MainWindow(QMainWindow):
         self.release_check.stop()
         self.shadnet_watch.stop()
         self.shadnet_check.stop()
+        self.controller_timer.stop()
+        self.settings_page.unmuting.stop()
         self.settings.set_window_state("geometry", self.saveGeometry())
         self.settings.sync()
         super().closeEvent(event)
+

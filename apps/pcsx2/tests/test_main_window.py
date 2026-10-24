@@ -658,3 +658,60 @@ def test_the_tabs_are_not_squeezed_under_the_introduction(qapp, folders):
     assert window.intro.minimumHeight() == window.intro.heightForWidth(window.intro.width()) > 0
     assert window.tabs.height() >= window.tabs.minimumSizeHint().height()
     window.close()
+
+
+def test_the_state_lines_links_take_a_click(qapp, folders):
+    """The PCSX2 and BIOS lines hold links (the release notes, PCSX2's BIOS page): a state line takes a click on a
+    link, not only a selection of its text (owner, 24-10-2026: found in shadPS4 Manager's window, built the same
+    way, where a click on a link did nothing)."""
+    window = _window(folders)
+    for label in (window.emulator_state, window.bios_state, window.folders_state):
+        assert label.textInteractionFlags() & Qt.TextInteractionFlag.LinksAccessibleByMouse
+        assert label.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
+    window.close()
+
+
+def test_unmute_bazzites_volume(qapp, folders, tmp_path):
+    """Unmute beside Bazzite's volume (owner, 24-10-2026): shown while PCSX2 is muted there only; a click runs
+    core's unmute off the window and the row follows what WirePlumber stored; a failure is said in red."""
+    state = tmp_path / "state" / "wireplumber" / "stream-properties"
+    state.parent.mkdir(parents=True)
+    state.write_text('[stream-properties]\nOutput/Audio:application.name:PCSX2={"volume":1.000000, "mute":true}\n')
+    window = _window(folders, sound_state=state)
+    page = window.settings_page
+    window.tabs.setCurrentIndex(1)
+    window.show()
+    qapp.processEvents()
+    assert page.sound_path == state and page.unmute_button.isVisible()
+    asked = []
+
+    def unmute(name, path):
+        asked.append((name, path))
+        path.write_text('[stream-properties]\nOutput/Audio:application.name:PCSX2={"volume":1.000000, "mute":false}\n')
+        return 1.0, False
+    page.unmute = unmute
+    page.unmute_button.click()
+    deadline = time.monotonic() + 10
+    while page.unmuting.running and time.monotonic() < deadline:
+        qapp.processEvents()
+        time.sleep(0.01)
+    qapp.processEvents()
+    assert asked == [("PCSX2", state)]
+    assert page.status.text() == "PCSX2's sound is on again in Bazzite's sound settings."
+    assert page.system_sound.text() == "100 %" and not page.unmute_button.isVisible()
+
+    def refused(name, path):
+        from bc250_core import sound
+        raise sound.SoundError("pactl is not installed: Unmute needs PipeWire's PulseAudio tools (pactl and paplay).")
+    state.write_text('[stream-properties]\nOutput/Audio:application.name:PCSX2={"volume":1.000000, "mute":true}\n')
+    window.refresh()
+    page.unmute = refused
+    page.unmute_button.click()
+    deadline = time.monotonic() + 10
+    while page.unmuting.running and time.monotonic() < deadline:
+        qapp.processEvents()
+        time.sleep(0.01)
+    qapp.processEvents()
+    assert page.status.text().startswith("pactl is not installed") and "c62828" in page.status.styleSheet()
+    assert page.unmute_button.isVisible() and page.unmute_button.isEnabled()
+    window.close()

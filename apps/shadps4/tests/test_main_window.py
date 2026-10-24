@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The window on folders made in a temp folder: the states before and after installing, the games in the table, the
-plan for Game Mode, installing through the worker, Steam's shortcuts changed with a fake "close Steam", and the
-blue look."""
+"""The window on folders made in a temp folder: the states before and after installing, the system modules, the
+games in the table, the game folders, the plan for Steam, installing through the worker, Steam's shortcuts changed
+with a fake "close Steam", shadNet, the controller state, the play time, the Settings and Log tabs, the Steam link
+and the blue look; built as PCSX2 Manager's and RPCS3 Manager's window (owner, 24-10-2026)."""
 
 from __future__ import annotations
 
@@ -13,15 +14,18 @@ import zipfile
 from pathlib import Path
 
 import pytest
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtCore import QPoint, Qt
+from PyQt6.QtTest import QTest
+from PyQt6.QtWidgets import QLabel, QMessageBox
 
 from conftest import make_game
 
 from bc250_core import steam
+from bc250_core.theme import GREEN, RED
 from shadps4_manager import LOGO_PATH, emulator, shortcuts, style, userdata
 from shadps4_manager.games import Game
-from shadps4_manager.main_window import MainWindow
+from shadps4_manager.main_window import RUNNING, STEAM_URL, MainWindow
+from shadps4_manager.settings_page import SOUND_MUTED
 
 
 @pytest.fixture
@@ -38,7 +42,10 @@ def folders(tmp_path):
     run = tmp_path / "bin" / "bc250-shadps4-run"
     run.parent.mkdir()
     run.write_text("#!/bin/sh\n")
-    return {"home": tmp_path / "emulator", "shad_home": shad, "steam_dir": tmp_path / "Steam", "run": run}
+    log = tmp_path / "data" / "bc250-shadps4-manager" / "bc250-shadps4-manager.log"
+    log.parent.mkdir(parents=True)
+    return {"home": tmp_path / "emulator", "shad_home": shad, "steam_dir": tmp_path / "Steam", "run": run,
+            "log_path": log}
 
 
 def _install(home: Path) -> None:
@@ -55,15 +62,20 @@ def _wait(window, qapp) -> None:
     qapp.processEvents()
 
 
-def _no_nightly() -> emulator.Nightly:
-    raise emulator.EmulatorError("no GitHub in a test")
+def _click_link(qapp, label: QLabel) -> None:
+    """A real mouse click on the first link of *label* (at its left edge): the signal alone proves nothing, a
+    state line's link once took no click at all (owner, 24-10-2026)."""
+    QTest.mouseClick(label, Qt.MouseButton.LeftButton, pos=QPoint(4, label.height() // 2))
+    qapp.processEvents()
 
 
 def _window(folders, **kwargs) -> MainWindow:
     closed = kwargs.pop("closed", [])
     kwargs.setdefault("newer_release", lambda: None)                         # never GitHub in a test
-    kwargs.setdefault("latest_nightly", _no_nightly)
     kwargs.setdefault("shad_running", lambda: False)
+    kwargs.setdefault("devices", folders["home"].parent / "no-devices")       # no controller, no file
+    kwargs.setdefault("open_url", lambda url: True)
+    kwargs.setdefault("sound_state", folders["home"].parent / "no-sound")
     return MainWindow(**folders, steam_closed=lambda change: (closed.append(1), change())[0] and False,
                       steam_running=lambda: False, **kwargs)
 
@@ -72,9 +84,38 @@ def test_before_installing(qapp, folders):
     window = _window(folders)
     assert window.pill.text() == "Not installed"
     assert "Not installed" in window.emulator_state.text()
-    assert window.install_button.isEnabled() and not window.remove_button.isEnabled()
-    assert not window.folder_button.isEnabled() and not window.shad_button.isEnabled()
+    assert window.install_pill.isEnabled() and not window.remove_pill.isEnabled()
+    assert not window.folder_pill.isEnabled() and not window.shad_button.isEnabled()
+    assert window.refresh_pill.isEnabled() and window.modules_pill.isEnabled() and window.package_pill.isEnabled()
     assert window.table.rowCount() == 2                                         # the folders are read all the same
+    assert [window.tabs.tabText(i) for i in range(window.tabs.count())] == ["Your games", "Settings", "Log"]
+    assert [b.caption.text() for b in window.header_pills[1:]] == ["shadPS4 version", "Your games",
+                                                                    "Available in Steam", "Play time"]
+    for name in ("play_button", "nightly_check", "refresh_button", "install_button", "remove_button",
+                 "modules_button", "folder_button", "extract_button", "shadnet_button", "modules_box", "latest",
+                 "extract_pill"):
+        assert not hasattr(window, name), name                               # gone (the PCSX2 pattern, the owner)
+    # The action pills: what it is for in large type, what the pill does under it, the header pills' size and all
+    # one width, in the owner's order (24-10-2026).
+    assert [(p.value.text(), p.caption.text()) for p in window.actions] == [
+        ("shadPS4", "Install"), ("shadPS4", "Uninstall"), ("Modules", "Install"), ("Games", "Install"),
+        ("Games", "Add folder"), ("shadNet", "Account")]
+    assert all(p.sizeHint().height() == window.refresh_pill.sizeHint().height() for p in window.actions)
+    window.show()                                       # spread over the width: all one width, no gap at the end
+    window.centralWidget().layout().activate()
+    assert len({p.width() for p in window.actions}) <= 2            # equal but for a pixel of rounding
+    assert abs(window.tabs.tabBar().tabRect(0).height() - window.install_pill.height()) <= 2   # tabs as big
+    assert window.account_pill.geometry().right() >= window.tabs.geometry().right() - 1
+    assert len({p.width() for p in window.header_pills}) <= 2       # the header's pills spread the same way
+    assert window.time_box.geometry().right() >= window.tabs.geometry().right() - 1
+    window.place_states()                               # the states end at the middle of the last pill (owner)
+    window.centralWidget().layout().activate()
+    centre = window.time_box.mapTo(window, window.time_box.rect().center()).x()
+    right = window.controller.mapTo(window, window.controller.rect().topRight()).x()
+    assert abs(right - centre) <= 8 and window.pill.x() < window.shadnet_pill.x() < window.controller.x()
+    assert "shadPS4's release notes" in window.intro.text() and emulator.RELEASE_PAGE in window.intro.text()
+    assert ">Wiki</a>" in window.intro.text() and "Manual" not in window.intro.text()
+    assert "Game Mode" not in window.intro.text() and "Big Picture Mode" in window.intro.text()
     window.close()
 
 
@@ -83,21 +124,55 @@ def test_installed_with_games(qapp, folders):
     window = _window(folders)
     assert window.pill.text() == "Modules missing"
     assert window.emulator_box.value.text() == emulator.VERSION
-    assert window.modules_box.value.text() == f"0 / {len(userdata.NEEDED)}"
+    assert window.emulator_state.text() == f"<b>{emulator.VERSION}</b>"           # the version alone (owner)
+    assert window.emulator_state.toolTip() == (f"shadPS4 {emulator.VERSION}, the release this version of the app "
+                                               "was tried with")
+    # Ok in green or Missing sys modules in red (owner, 24-10-2026), the count and the folder in the tooltip.
+    assert window.modules_state.text() == f"<b style='color:{RED};'>Missing sys modules</b>"
+    assert str(folders["shad_home"] / "sys_modules") in window.modules_state.toolTip()
     assert window.games_box.value.text() == "2" and window.steam_box.value.text() == "0"
+    head = window.table.horizontalHeader().model()
+    assert [head.headerData(c, Qt.Orientation.Horizontal) for c in range(5)] == [
+        "In Steam", "Game title", "Id", "Version", "Folder"]
     assert [window.table.item(r, 1).text() for r in range(2)] == ["One", "Two"]
-    assert window.table.item(0, 2).text() == "CUSA00001"
-    assert not window.install_button.isEnabled() and window.remove_button.isEnabled()
-    assert not window.play_button.isEnabled()                                   # nothing chosen yet
-    window.table.selectRow(1)
-    assert window.play_button.isEnabled() and window.chosen().title == "Two"
+    assert window.table.item(0, 2).text() == "CUSA00001" and window.table.item(0, 4).text() == "one"
+    assert window.table.item(0, 4).toolTip() == str(folders["shad_home"].parent / "games" / "one")
+    assert not window.install_pill.isEnabled() and window.remove_pill.isEnabled() and window.folder_pill.isEnabled()
     assert not window.steam_button.isEnabled()                                  # nothing to change
     modules = folders["shad_home"] / "sys_modules"
     modules.mkdir()
+    for name in userdata.NEEDED[:3]:
+        (modules / name).touch()
+    window.refresh()
+    assert window.modules_state.text() == f"<b style='color:{RED};'>Missing sys modules</b>"
+    assert window.modules_state.toolTip().startswith(f"3 of the {len(userdata.NEEDED)} modules")
+    assert "Missing: " + userdata.NEEDED[3] in window.modules_state.toolTip()
     for name in userdata.NEEDED:
         (modules / name).touch()
     window.refresh()
-    assert window.pill.text() == "Ready" and "All 24 modules" in window.modules_state.text()
+    assert window.pill.text() == "Ready" and window.modules_state.text() == f"<b style='color:{GREEN};'>Ok</b>"
+    window.close()
+
+
+def test_system_modules_installed_from_a_folder(qapp, folders, tmp_path):
+    """Modules Install copies the .sprx files of the chosen folder into shadPS4's module folder (owner's BIOS
+    remark for PCSX2 Manager, 23-10-2026: point the app at the files rather than copy them into an open folder);
+    the state follows at once."""
+    _install(folders["home"])
+    window = _window(folders)
+    dump = tmp_path / "my ps4" / "sys_modules"
+    dump.mkdir(parents=True)
+    window.install_modules(dump)
+    assert window.running.text() == "No system module (.sprx) in sys_modules."
+    for name in (*userdata.NEEDED[:2], "libSceNgs2.sprx"):
+        (dump / name).write_bytes(b"module")
+    (dump / "notes.txt").write_text("")
+    window.install_modules(dump)
+    assert window.running.text() == (f"3 system module(s) copied into shadPS4's module folder: 2 of the "
+                                     f"{len(userdata.NEEDED)} it cannot do without are there now.")
+    target = folders["shad_home"] / "sys_modules"
+    assert sorted(p.name for p in target.iterdir()) == sorted((*userdata.NEEDED[:2], "libSceNgs2.sprx"))
+    assert window.modules_state.toolTip().startswith("2 of the 24 modules")
     window.close()
 
 
@@ -109,14 +184,31 @@ def test_install_runs_off_the_window(qapp, folders, monkeypatch):
     monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
     window = _window(folders, fetch=lambda url, dest, progress=None: dest.write_bytes(payload.getvalue()))
     window.on_install()
-    assert not window.install_button.isEnabled()                                # busy
+    assert not window.install_pill.isEnabled() and not window.refresh_pill.isEnabled()        # busy
     _wait(window, qapp)
     assert window.running.text() == f"shadPS4 {emulator.VERSION} is installed."
     assert window.version == emulator.VERSION and window.pill.text() == "Modules missing"
+    assert window.refresh_pill.isEnabled()
     window.close()
 
 
-def test_game_mode_added_and_taken_out(qapp, folders, monkeypatch):
+def test_another_version_installed_than_the_app_brings(qapp, folders):
+    """The line and box show the version alone, the advice in the tooltip and the log once (as RPCS3 Manager's); a
+    nightly build from before the channel went is too long for the box."""
+    (folders["home"] / "2026-10-15-b2d7ec7").mkdir(parents=True)
+    (folders["home"] / "2026-10-15-b2d7ec7" / emulator.MEMBER).write_text("")
+    (folders["home"] / "current").symlink_to("2026-10-15-b2d7ec7")
+    window = _window(folders)
+    assert window.emulator_state.text() == "<b>2026-10-15-b2d7ec7</b>" and window.emulator_box.value.text() == "other"
+    assert window.emulator_state.toolTip() == (f"shadPS4 2026-10-15-b2d7ec7 is installed; this version of the app "
+                                               f"brings {emulator.VERSION}: Install puts it in.")
+    assert window.install_pill.isEnabled()
+    window.refresh()
+    assert window.output.toPlainText().count("Install puts it in") == 1                # once
+    window.close()
+
+
+def test_steam_added_and_taken_out(qapp, folders, monkeypatch):
     _install(folders["home"])
     monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
     closed = []
@@ -130,7 +222,7 @@ def test_game_mode_added_and_taken_out(qapp, folders, monkeypatch):
     assert closed == [1] and window.running.text().startswith("1 game(s) in Steam")
     assert list(shortcuts.in_steam(folders["steam_dir"]).values()) == ["[PS4] One"]
     assert window.steam_box.value.text() == "1" and window.table.item(0, 0).checkState() == Qt.CheckState.Checked
-    # The game's folder is gone: its shortcut is taken out with the next change.
+    assert window.table.item(0, 0).toolTip() == "In Steam"
     window.table.item(0, 0).setCheckState(Qt.CheckState.Unchecked)
     add, remove = window.steam_plan()
     assert add == [] and [g.title for g in remove] == ["One"]
@@ -141,7 +233,7 @@ def test_game_mode_added_and_taken_out(qapp, folders, monkeypatch):
 
 
 def test_a_shortcut_without_its_logo_is_brought_up_to_date(qapp, folders, monkeypatch):
-    """A shortcut made before the app set a logo: Update Game Mode is on for it until the logo is there."""
+    """A shortcut made before the app set a logo: Update Steam is on for it until the logo is there."""
     _install(folders["home"])
     game = Game(make_game(folders["shad_home"].parent / "games" / "three", "Three", "CUSA00003", pictures=True),
                 "Three", "CUSA00003", "01.00")
@@ -156,7 +248,7 @@ def test_a_shortcut_without_its_logo_is_brought_up_to_date(qapp, folders, monkey
 
 
 def test_a_shortcut_with_the_tags_of_the_old_name_is_brought_up_to_date(qapp, folders, monkeypatch):
-    """A shortcut made while the app was called BC-250 shadPS4 Manager: Update Game Mode is on for it until it has
+    """A shortcut made while the app was called BC-250 shadPS4 Manager: Update Steam is on for it until it has
     the tags of now."""
     _install(folders["home"])
     game = Game(make_game(folders["shad_home"].parent / "games" / "four", "Four", "CUSA00004"), "Four", "CUSA00004",
@@ -175,7 +267,7 @@ def test_a_shortcut_with_the_tags_of_the_old_name_is_brought_up_to_date(qapp, fo
 
 
 def test_a_shortcut_named_before_the_system_prefix_is_renamed(qapp, folders, monkeypatch):
-    """A shortcut named by the title alone, as before "[PS4] ": Update Game Mode is on for it and renames it, with
+    """A shortcut named by the title alone, as before "[PS4] ": Update Steam is on for it and renames it, with
     its play time; the artwork under its old number goes."""
     _install(folders["home"])
     monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
@@ -238,87 +330,233 @@ def test_add_folder_through_shadps4(qapp, folders, tmp_path):
     folders["run"].write_text(f'#!/bin/sh\necho "$@" > "{log}"\n')
     folders["run"].chmod(0o755)
     window = _window(folders)
-    window.add_folder(tmp_path / "more games")
-    assert log.read_text().strip() == f"--add-game-folder {tmp_path / 'more games'}"
-    assert window.running.text().endswith("is a game folder now.")
+    window.add_folder(tmp_path / "games")
+    assert log.read_text().strip() == f"--add-game-folder {tmp_path / 'games'}"
+    assert window.running.text() == "games is a game folder now: 2 game(s) in it."
     folders["run"].write_text("#!/bin/sh\necho no >&2\nexit 3\n")
     window.add_folder(tmp_path / "x")
     assert "exit code 3" in window.running.text() and "no" in window.running.text()
+    assert "c62828" in window.running.styleSheet()
+    window.close()
+
+
+def test_game_folders_by_name_and_taken_out(qapp, folders, tmp_path):
+    """The Game folders line: the folders' names alone, each a link that takes it out of shadPS4's game folders
+    after a question (as RPCS3 Manager's Disc games line, owner, 24-10-2026); the rest of config.json stays, and
+    nothing is written while shadPS4 runs."""
+    _install(folders["home"])
+    config_path = folders["shad_home"] / "config.json"
+    config = json.loads(config_path.read_text())
+    config["General"]["install_dirs"].append({"enabled": True, "path": str(tmp_path / "more")})
+    config["GPU"] = {"present_mode": "Fifo"}
+    config_path.write_text(json.dumps(config, indent=2))
+    running = [False]
+    window = _window(folders, shad_running=lambda: running[0])
+    assert window.folders_state.text() == ", ".join(f"<b>{style.link(window, f'forget:{n}', name)}</b>"
+                                                   for n, name in enumerate(("games", "more")))
+    assert window.folders_state.toolTip().startswith(f"{tmp_path / 'games'}\n{tmp_path / 'more'}\n2 game(s) found")
+    asked = []
+    original = QMessageBox.question
+    QMessageBox.question = staticmethod(lambda *a, **k: (asked.append(a[2]), QMessageBox.StandardButton.No)[1])
+    try:
+        window.show()
+        _click_link(qapp, window.folders_state)                                 # a real click on "games"
+        assert asked == [f"Stop looking for games in {tmp_path / 'games'}?\n\nIts games stay where they are."]
+        asked.clear()
+        window.folders_state.linkActivated.emit("forget:1")
+        assert len(window.folders) == 2                                         # No: kept
+        QMessageBox.question = staticmethod(lambda *a, **k: QMessageBox.StandardButton.Yes)
+        window.folders_state.linkActivated.emit("forget:7")                     # no such folder: nothing
+        running[0] = True
+        window.folders_state.linkActivated.emit("forget:1")
+        assert window.running.text() == RUNNING and len(window.folders) == 2
+        running[0] = False
+        window.folders_state.linkActivated.emit("forget:1")
+    finally:
+        QMessageBox.question = original
+    assert asked == [f"Stop looking for games in {tmp_path / 'more'}?\n\nIts games stay where they are."]
+    assert window.folders == [tmp_path / "games"] and window.table.rowCount() == 2
+    assert window.running.text() == "more is no longer a game folder; its games stay where they are."
+    saved = json.loads(config_path.read_text())
+    assert saved["GPU"] == {"present_mode": "Fifo"} and not config_path.read_text().endswith("\n")   # as shadPS4's
+    window.close()
+
+
+def test_the_settings_tab_follows_shadps4s_file(qapp, folders):
+    """The Settings tab reads config.json (shadPS4's defaults where a key is missing) and writes one key the moment
+    it is changed, the rest of the file kept; not while shadPS4 runs."""
+    _install(folders["home"])
+    running = [False]
+    window = _window(folders, shad_running=lambda: running[0])
+    page = window.settings_page
+    assert page.widgets["present"].currentData() == "Mailbox" and page.widgets["volume"].value() == 100
+    assert page.widgets["trophies"].isChecked() and page.widgets["language"].currentText() == "English (United States)"
+    config_path = folders["shad_home"] / "config.json"
+    config = json.loads(config_path.read_text())
+    config["General"].update(volume_slider=250, trophy_popup_disabled=True, console_language=6)
+    config["GPU"] = {"present_mode": "Fifo", "fsr_enabled": True}
+    config_path.write_text(json.dumps(config, indent=2))
+    window.refresh()
+    assert page.widgets["present"].currentText() == "On" and page.widgets["fsr"].isChecked()
+    assert page.widgets["volume"].value() == 250 and not page.widgets["trophies"].isChecked()
+    assert page.widgets["language"].currentText() == "Dutch"
+    page.widgets["trophies"].setChecked(True)                    # the key turns them off: written the other way
+    page.widgets["present"].setCurrentIndex(page.widgets["present"].findData("Immediate"))
+    page.widgets["cursor"].setCurrentIndex(page.widgets["cursor"].findData(2))
+    saved = json.loads(config_path.read_text())
+    assert saved["General"]["trophy_popup_disabled"] is False and saved["General"]["volume_slider"] == 250
+    assert saved["GPU"] == {"present_mode": "Immediate", "fsr_enabled": True} and saved["Input"] == {"cursor_state": 2}
+    assert saved["General"]["install_dirs"] == config["General"]["install_dirs"]
+    assert page.status.text() == "Hide the mouse pointer: Always."
+    running[0] = True
+    page.widgets["fsr"].setChecked(False)
+    assert page.status.text() == RUNNING and json.loads(config_path.read_text())["GPU"]["fsr_enabled"] is True
+    assert page.widgets["fsr"].isChecked()                                      # back to what the file says
+    window.close()
+
+
+def test_bazzites_volume_for_shadps4(qapp, folders, tmp_path):
+    """The volume Bazzite remembers for shadPS4 (WirePlumber's stream-properties): in the Settings tab's Sound box,
+    and said once while shadPS4 is muted there (as on the board, 24-10-2026)."""
+    state = tmp_path / "state" / "wireplumber" / "stream-properties"
+    state.parent.mkdir(parents=True)
+    window = _window(folders, sound_state=state)
+    assert window.settings_page.system_sound.text() == "— (shadPS4 has not played yet)"
+    state.write_text('[stream-properties]\nOutput/Audio:application.name:shadPS4={"volume":1.000000, '
+                     '"channelMap":["FL", "FR"], "channelVolumes":[1.000000, 1.000000], "mute":true}\n')
+    window.refresh()
+    assert window.settings_page.system_sound.text() == "Muted" and window.running.text() == SOUND_MUTED
+    window.say("something else")
+    window.refresh()
+    assert window.running.text() == "something else"                            # said once
+    state.write_text('[stream-properties]\nOutput/Audio:application.name:shadPS4={"volume":0.700000, "mute":false}\n')
+    window.refresh()
+    assert window.settings_page.system_sound.text() == "70 %"
+    window.close()
+
+
+def test_the_play_time_in_the_header(qapp, folders):
+    """The time spent in all games together, as shadPS4 counts it in play_time.txt (H:MM:SS and the last start per
+    Id), with each game in the tip; a dash while there is none."""
+    window = _window(folders)
+    assert window.time_box.value.text() == "—" and "none yet" in window.time_box.toolTip()
+    last = time.mktime((2026, 10, 24, 20, 15, 0, 0, 0, -1))
+    (folders["shad_home"] / userdata.PLAY_TIME).write_text(
+        f"CUSA00002 0:24:42 {last:.0f}\nCUSA99999 0:40:00\nCUSA00000 0:00:00 1\nbad line\n")
+    window.refresh()
+    assert window.time_box.value.text() == "1 h 4 min"
+    tip = window.time_box.toolTip().splitlines()
+    assert tip[1] == "CUSA99999: 40 min"
+    assert tip[2] == "Two: 24 min 42 s, last played 24-10-2026 20:15"           # named from the table
+    assert len(tip) == 3                                                        # a game never played is left out
+    window.close()
+
+
+def test_the_controller_state(qapp, folders, tmp_path):
+    """Beside the title: whether a controller is connected, from the kernel's list, looked at again every few
+    seconds (owner, 24-10-2026: a controller switched off by its idle timer left a game without one)."""
+    from test_run_wrapper import DS4_AND_STEAM, STEAM_ONLY
+    devices = tmp_path / "devices"
+    devices.write_text(STEAM_ONLY)
+    window = _window(folders, devices=devices)
+    assert window.controller.text() == "No controller" and window.controller.kind == "warn"
+    assert "PS button" in window.controller.toolTip() and window.controller_timer.isActive()
+    devices.write_text(DS4_AND_STEAM)
+    window.show_controller()                                                    # as the timer does
+    assert window.controller.text() == "Controller connected" and window.controller.kind == "ok"
+    assert "Share + Options together open shadPS4's quit window" in window.controller.toolTip()
+    window.close()
+    assert not window.controller_timer.isActive()
+
+
+def test_the_quit_hotkeys_are_set_up_and_logged(qapp, folders):
+    window = _window(folders)
+    text = (folders["shad_home"] / "input_config" / "global.ini").read_text()
+    assert all(line in text for line in userdata.QUIT_BINDINGS)
+    assert window.output.toPlainText().count("open its quit window") == 1
+    window.refresh()
+    assert window.output.toPlainText().count("open its quit window") == 1        # nothing more to add
+    window.close()
+
+
+def test_the_steam_link(qapp, folders):
+    opened = []
+    window = _window(folders, open_url=lambda url: (opened.append(url), True)[1])
+    assert f"href='{STEAM_URL}'" in window.steam_hint.text()
+    window.steam_hint.linkActivated.emit(STEAM_URL)
+    assert opened == [STEAM_URL] and "Steam was opened." in window.output.toPlainText()
+    window.close()
+
+
+def test_shadps4s_window(qapp, folders, tmp_path):
+    """shadPS4 settings opens shadPS4's own window (Big Picture) through the run wrapper."""
+    _install(folders["home"])
+    log = tmp_path / "args"
+    folders["run"].write_text(f'#!/bin/sh\necho "$@" >> "{log}"\n')
+    folders["run"].chmod(0o755)
+    window = _window(folders)
+    window.on_open_shadps4()
+    deadline = time.monotonic() + 10
+    while not log.exists() and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert log.read_text().splitlines() == ["-b"]
+    assert "shadPS4's own window was opened." in window.output.toPlainText()
+    window.close()
+
+
+def test_the_log_tab(qapp, folders, tmp_path):
+    """What the window says goes to the Log tab with the time, after what the log file held already."""
+    folders["log_path"].write_text("24-10-2026 22:14:00 INFO shadPS4 Manager 0.11.1 started\n")
+    window = _window(folders)
+    lines = window.output.toPlainText().splitlines()
+    assert lines[0] == "24-10-2026 22:14:00 INFO shadPS4 Manager 0.11.1 started"
+    window.say("Steam was not changed: no Steam", ok=False)
+    lines = window.output.toPlainText().splitlines()
+    assert lines[-1].endswith(" ERROR Steam was not changed: no Steam") and "c62828" in window.running.styleSheet()
+    assert lines[-1][:19].count("-") == 2 and lines[-1][10] == " "               # DD-MM-YYYY HH:MM:SS
+    assert str(folders["log_path"]) in window.tabs.widget(2).findChildren(QLabel)[0].text()
     window.close()
 
 
 def test_the_blue_look(qapp, folders):
     _install(folders["home"])
     window = _window(folders)
+    from bc250_core.theme import ACCENT
     assert style.BLUE in window.styleSheet()
-    assert window.install_button.property("primary") and window.steam_button.property("primary")
-    assert style.BLUE in window.emulator_box.styleSheet()
-    assert f"color:{style.BLUE}" in window.emulator_state.text()                   # the release notes link
-    steps = (window.install_button, window.remove_button, window.modules_button, window.folder_button)
-    assert len({(b.width(), b.height()) for b in steps}) == 1                       # one size, padding included
-    assert window.install_button.width() >= window.install_button.sizeHint().width()
+    assert window.covers_button.property("primary") is None and window.steam_button.property("primary")
+    assert style.BLUE in window.emulator_box.styleSheet() and style.BLUE in window.refresh_pill.styleSheet()
+    assert f"color:{style.BLUE}" in window.intro.text()                             # the release link
+    for pill in (window.refresh_pill, *window.actions):
+        sheet = pill.styleSheet()                       # the blue left edge only, also under the mouse (owner)
+        assert sheet.rfind(f"border-left-color:{style.BLUE}") > sheet.rfind(ACCENT), pill.caption.text()
+        assert style.HOVER_SHEEN in sheet and style.BLUE_TINT not in sheet
+    assert "QTabBar::tab" in window.styleSheet() and "QComboBox" in window.styleSheet()
+    window.show()                                       # the focused Refresh pill looks as the boxes beside it
+    qapp.processEvents()
+    image = window.grab().toImage()
+    for widget in (window.refresh_pill, window.emulator_box):
+        corner = widget.mapTo(window, widget.rect().topLeft())
+        samples = [image.pixelColor(corner.x() + widget.width() - 6, corner.y() + dy).name()
+                   for dy in (6, widget.height() // 2, widget.height() - 6)]
+        if widget is window.refresh_pill:
+            refresh = samples
+        else:
+            assert samples == refresh
     window.close()
 
 
-def test_the_nightly_channel(qapp, folders, monkeypatch):
-    payload = io.BytesIO()
-    with zipfile.ZipFile(payload, "w") as packed:
-        packed.writestr(emulator.MEMBER, b"#!/bin/sh\necho nightly\n")
-    payload = payload.getvalue()
-    nightly = emulator.Nightly("2026-10-15-b2d7ec7", "Pre-release-shadPS4-2026-10-15-b2d7ec7d31f9",
-                               "https://github.com/x/nightly.zip", "shadps4-linux-sdl-2026-10-15-b2d7ec7.zip",
-                               hashlib.sha256(payload).hexdigest(), len(payload), "2026-10-15",
-                               "https://github.com/shadps4-emu/shadPS4/releases/tag/Pre-release-shadPS4")
-    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
-    window = _window(folders, latest_nightly=lambda: nightly,
-                     fetch=lambda url, dest, progress=None: dest.write_bytes(payload))
-    assert not window.nightly_check.isChecked()                                 # the tested stable is the default
-    window.nightly_check.setChecked(True)
-    assert window.settings.get("nightly") is True
-    assert "newest nightly build" in window.emulator_state.text()
-    assert "not the release this app was tried with" in window.emulator_state.text()
-    assert window.install_button.isEnabled()
-    window.on_install()
-    _wait(window, qapp)
-    assert window.running.text() == "shadPS4 nightly 2026-10-15-b2d7ec7 is installed."
-    assert window.version == "2026-10-15-b2d7ec7"
-    deadline = time.monotonic() + 10
-    while window.latest is None and time.monotonic() < deadline:                # the open check, off the thread
-        qapp.processEvents()
-        time.sleep(0.01)
-    window._show_state()
-    assert "shadPS4 nightly 2026-10-15-b2d7ec7 is installed" in window.emulator_state.text()
-    assert not window.install_button.isEnabled()                                # already the newest nightly
-    window.close()
-    window = _window(folders, latest_nightly=lambda: nightly)                   # the channel is remembered
-    assert window.nightly_check.isChecked()
-    window.close()
-
-
-def test_the_nightly_channel_says_when_a_newer_build_is_out(qapp, folders):
-    _install(folders["home"])                                                   # the stable release
-    nightly = emulator.Nightly("2026-10-16-fffffff", "Pre-release-shadPS4-2026-10-16-fffffff",
-                               "https://github.com/x/nightly.zip", "shadps4-linux-sdl-2026-10-16-fffffff.zip",
-                               "ab" * 32, 33253746, "2026-10-16",
-                               "https://github.com/shadps4-emu/shadPS4/releases/tag/Pre-release-shadPS4")
-    window = _window(folders, latest_nightly=lambda: nightly)
-    window.nightly_check.setChecked(True)
-    deadline = time.monotonic() + 10
-    while window.latest is None and time.monotonic() < deadline:
-        qapp.processEvents()
-        time.sleep(0.01)
-    window._show_state()
-    text = window.emulator_state.text()
-    assert f"shadPS4 {emulator.VERSION} (the stable release) is installed" in text
-    assert "The newest nightly build is 2026-10-16-fffffff (2026-10-16)" in text
-    assert window.install_button.isEnabled()
-    # The newer-stable notice belongs to the stable channel only.
-    from bc250_core.updates import ReleaseInfo
-    window.newer = ReleaseInfo("0.21.0", "v.0.21.0", "https://github.com/x/v.0.21.0", "2026-11-20")
-    window._show_state()
-    assert "is out" not in window.emulator_state.text()
-    window.nightly_check.setChecked(False)
-    assert "shadPS4 0.21.0 is out" in window.emulator_state.text()
+def test_the_settings_tab_is_not_squeezed(qapp, folders):
+    """The introduction and the state lines may wrap; their minimum heights count, so the tabs below get their
+    minimum and the Settings tab's rows keep their height (as RPCS3 Manager's)."""
+    _install(folders["home"])
+    window = _window(folders)
+    window.tabs.setCurrentIndex(1)
+    window.show()
+    qapp.processEvents()
+    assert window.tabs.height() >= window.tabs.minimumSizeHint().height()
+    page = window.settings_page
+    for key in ("language", "volume", "cursor", "present"):
+        assert page.widgets[key].height() >= page.widgets[key].sizeHint().height(), key
     window.close()
 
 
@@ -332,9 +570,11 @@ def test_a_newer_shadps4_is_mentioned(qapp, folders):
     while window.newer is None and time.monotonic() < deadline:
         qapp.processEvents()
         time.sleep(0.01)
-    text = window.emulator_state.text()
-    assert "shadPS4 0.21.0 is out (2026-11-20)" in text and "releases/tag/v.0.21.0" in text
-    assert window.install_button.isEnabled() is False                              # it never installs that one
+    tip = window.emulator_state.toolTip()                   # the line stays the version; the tip and the log say
+    assert window.emulator_state.text() == f"<b>{emulator.VERSION}</b>"
+    assert "shadPS4 0.21.0 is out (2026-11-20)" in tip and "releases/tag/v.0.21.0" in tip
+    assert "shadPS4 0.21.0 is out (2026-11-20)" in window.output.toPlainText()
+    assert window.install_pill.isEnabled() is False                                # it never installs that one
     window.close()
 
 
@@ -344,11 +584,9 @@ def test_shadnet_set_up_from_the_window(qapp, folders, monkeypatch):
     shad_files = write_shad_files(folders["shad_home"])
     fake = FakeShadNet()
     window = _window(folders, shadnet_connect=fake.connect)
-    assert window.shadnet_state.text().startswith("Off.") and window.shadnet_button.isEnabled()
-    dialogs = []
+    assert window.shadnet_state.text() == "Off" and window.account_pill.isEnabled()
 
     def fill_in(dialog):
-        dialogs.append(dialog)
         dialog.running = lambda: False
         dialog.use.setChecked(True)
         dialog.npid.setText("Player_1")
@@ -366,9 +604,11 @@ def test_shadnet_set_up_from_the_window(qapp, folders, monkeypatch):
     monkeypatch.setattr(shadnet_dialog.ShadNetDialog, "exec", fill_in)
     window.on_shadnet()
     assert fake.requests[0][1] == {1: "Player_1", 2: "secret", 4: "me@example.com"}
-    assert window.shadnet_state.text() == ("On: <b>Player_1</b> (shadPS4) signs in to srv.shadps4.net:31313 when "
-                                           "a game starts.")
+    assert window.shadnet_state.text() == "<b>Player_1</b>"                    # the nickname alone (owner)
+    assert window.shadnet_state.toolTip() == "Player_1 (shadPS4) signs in to srv.shadps4.net:31313 when a game starts."
     assert userdata.shadnet_on(userdata.read_config(shad_files))
+    assert window.running.text() == "shadNet settings saved in shadPS4's own files."
+    assert "secret" not in window.output.toPlainText()
     window.close()
 
 
@@ -445,8 +685,8 @@ def test_shadnet_pill_from_shadps4_while_it_runs(qapp, folders):
 
 
 def test_covers_with_the_suites_key(qapp, folders, monkeypatch, tmp_path):
-    """Covers… keeps the suite's key; Update Game Mode then looks up the games and puts the cover on the portrait,
-    and a game in Steam not looked up yet makes the button do something again."""
+    """Steam artwork… keeps the suite's key; Update Steam then looks up the games and puts the cover on the
+    portrait, and a game in Steam not looked up yet makes the button do something again."""
     from PyQt6.QtGui import QColor, QImage
     from PyQt6.QtWidgets import QInputDialog
 
@@ -474,6 +714,7 @@ def test_covers_with_the_suites_key(qapp, folders, monkeypatch, tmp_path):
     monkeypatch.setattr(QInputDialog, "exec", lambda self: (self.setTextValue("0123456789abcdef"), 1)[1])
     window.on_covers()
     assert key.read_text() == "0123456789abcdef\n"
+    assert window.running.text() == "The SteamGridDB key was changed."
     assert window.no_cover == {str(window.games[0].eboot)} and window.steam_button.isEnabled()
     window.on_update_steam()
     _wait(window, qapp)
@@ -484,4 +725,50 @@ def test_covers_with_the_suites_key(qapp, folders, monkeypatch, tmp_path):
     grid = steam.user_folders(folders["steam_dir"])[0] / "grid"
     assert QImage(str(grid / f"{number}p.png")).pixelColor(300, 450).name() == "#0000ff"
     assert window.no_cover == set() and not window.steam_button.isEnabled()
+    window.close()
+
+
+def test_unmute_bazzites_volume(qapp, folders, tmp_path):
+    """Unmute beside Bazzite's volume (owner, 24-10-2026): shown while shadPS4 is muted there only; a click runs
+    core's unmute off the window and the row follows what WirePlumber stored; a failure is said in red."""
+    state = tmp_path / "state" / "wireplumber" / "stream-properties"
+    state.parent.mkdir(parents=True)
+    state.write_text('[stream-properties]\nOutput/Audio:application.name:shadPS4={"volume":1.000000, "mute":true}\n')
+    window = _window(folders, sound_state=state)
+    page = window.settings_page
+    window.tabs.setCurrentIndex(1)
+    window.show()
+    qapp.processEvents()
+    assert page.sound_path == state and page.unmute_button.isVisible()
+    asked = []
+
+    def unmute(name, path):
+        asked.append((name, path))
+        path.write_text('[stream-properties]\nOutput/Audio:application.name:shadPS4={"volume":1.000000, "mute":false}\n')
+        return 1.0, False
+    page.unmute = unmute
+    page.unmute_button.click()
+    deadline = time.monotonic() + 10
+    while page.unmuting.running and time.monotonic() < deadline:
+        qapp.processEvents()
+        time.sleep(0.01)
+    qapp.processEvents()
+    assert asked == [("shadPS4", state)]
+    assert page.status.text() == "shadPS4's sound is on again in Bazzite's sound settings."
+    assert page.system_sound.text() == "100 %" and not page.unmute_button.isVisible()
+
+    def refused(name, path):
+        from bc250_core import sound
+        raise sound.SoundError("pactl is not installed: Unmute needs PipeWire's PulseAudio tools (pactl and paplay).")
+    state.write_text('[stream-properties]\nOutput/Audio:application.name:shadPS4={"volume":1.000000, "mute":true}\n')
+    window.refresh()
+    page.unmute = refused
+    page.unmute_button.click()
+    deadline = time.monotonic() + 10
+    while page.unmuting.running and time.monotonic() < deadline:
+        qapp.processEvents()
+        time.sleep(0.01)
+    qapp.processEvents()
+    assert page.status.text().startswith("pactl is not installed") and "c62828" in page.status.styleSheet()
+    assert page.unmute_button.isVisible() and page.unmute_button.isEnabled()
     window.close()

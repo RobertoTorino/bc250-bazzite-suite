@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """shadPS4's own folder, ~/.local/share/shadPS4 (its saves, settings and system modules): the game folders and the
-system module folder from its config.json, which system modules are there, and the users and shadNet settings (its
-users.json). shadPS4 writes these files; the app writes only the shadNet settings, which shadPS4 has no place for
-(a game folder is added through shadPS4's own --add-game-folder), and the quit hotkeys in input_config/global.ini.
-Both JSON files are written as shadPS4 writes them (indented by two, no newline at the end), and every other setting
-in them stays as it is.
+system module folder from its config.json, which system modules are there, the time spent in each game (its
+play_time.txt), and the users and shadNet settings (its users.json). shadPS4 writes these files; the app writes the
+shadNet settings, which shadPS4 has no place for, the settings of the Settings tab (shadps4_settings.py), a game
+folder taken out (one is added through shadPS4's own --add-game-folder), and the quit hotkeys in
+input_config/global.ini. Both JSON files are written as shadPS4 writes them (indented by two, no newline at the
+end), and every other setting in them stays as it is; never while shadPS4 runs, which writes its own copy back.
 
 System modules are libraries of the PS4's firmware (.sprx), which the app cannot ship: they come from the user's own
 console. shadPS4 0.20.0 loads these from the folder when a game asks for them (sysmodule_internal.cpp); for some it
@@ -14,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -101,6 +103,62 @@ def check_modules(folder: Path) -> Modules:
     except OSError:
         present = set()
     return Modules(folder, tuple(n for n in NEEDED if n in present), tuple(n for n in OPTIONAL if n in present))
+
+
+def install_modules(source: Path, target: Path) -> list[str]:
+    """The system modules (.sprx) in the folder *source* (a copy of the PS4's firmware libraries) copied into
+    shadPS4's module folder *target*, made when it is not there; a file there of the same name is replaced. Returns
+    the names copied, sorted. OSError when a file cannot be read or written."""
+    found = sorted((entry for entry in source.iterdir() if entry.is_file() and entry.suffix.lower() == ".sprx"),
+                   key=lambda entry: entry.name.casefold())
+    if not found:
+        return []
+    target.mkdir(parents=True, exist_ok=True)
+    copied = []
+    for module in found:
+        destination = target / module.name
+        if not (destination.exists() and destination.samefile(module)):
+            shutil.copy2(module, destination)
+        copied.append(module.name)
+    return copied
+
+
+# --- Play time -------------------------------------------------------------------------------------------------
+
+PLAY_TIME = "play_time.txt"
+
+
+def play_times(home: Path) -> dict[str, tuple[int, float]]:
+    """The time spent in each game, as shadPS4 0.20.0 counts it (Emulator::UpdatePlayTime): play_time.txt in its
+    folder, a line per game, "<Id> <hours>:<mm>:<ss> <last played, Unix time>" (an older line without the last
+    time is read too). Id to (seconds, last played or 0); {} without the file."""
+    try:
+        lines = (home / PLAY_TIME).read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return {}
+    times = {}
+    for line in lines:
+        words = line.split()
+        if len(words) < 2:
+            continue
+        try:
+            hours, minutes, seconds = (int(part) for part in words[1].split(":"))
+            last = float(words[2]) if len(words) > 2 else 0.0
+        except ValueError:
+            continue
+        times[words[0]] = (hours * 3600 + minutes * 60 + seconds, last)
+    return times
+
+
+def played(seconds: int) -> str:
+    """A play time in words: "3 h 5 min", "12 min", "40 s"."""
+    hours, rest = divmod(seconds, 3600)
+    minutes, secs = divmod(rest, 60)
+    if hours:
+        return f"{hours} h {minutes} min"
+    if minutes:
+        return f"{minutes} min" + (f" {secs} s" if secs else "")
+    return f"{secs} s"
 
 
 # --- Quit hotkeys ----------------------------------------------------------------------------------------------
@@ -198,6 +256,54 @@ def _write_json(path: Path, data: dict) -> None:
     temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
     temporary.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     temporary.replace(path)
+
+
+def _read_for_writing(path: Path) -> dict:
+    """A JSON file of shadPS4's to change: {} when it is not there; UserDataError when it cannot be read or is not
+    what shadPS4 writes (it is never written over then)."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError) as error:
+        raise UserDataError(f"shadPS4's settings could not be read: {error}") from error
+    if not isinstance(data, dict):
+        raise UserDataError("shadPS4's settings are not what shadPS4 writes.")
+    return data
+
+
+def write_config(home: Path, section: str, name: str, value) -> None:
+    """One key of config.json set, every other key kept; the file made when there is none (shadPS4 adds its
+    defaults to it when it starts). UserDataError when it cannot be read or written; the caller makes sure shadPS4
+    does not run."""
+    path = home / "config.json"
+    config = _read_for_writing(path)
+    group = config.setdefault(section, {})
+    if not isinstance(group, dict):
+        raise UserDataError("shadPS4's settings are not what shadPS4 writes.")
+    group[name] = value
+    try:
+        home.mkdir(parents=True, exist_ok=True)
+        _write_json(path, config)
+    except OSError as error:
+        raise UserDataError(f"shadPS4's settings could not be written: {error}") from error
+
+
+def remove_game_folder(home: Path, folder: Path) -> None:
+    """*folder* taken out of shadPS4's game folders (General.install_dirs in config.json), as shadPS4's own Remove
+    Folder does; its games stay where they are. UserDataError as write_config."""
+    path = home / "config.json"
+    config = _read_for_writing(path)
+    general = config.get("General")
+    folders = general.get("install_dirs") if isinstance(general, dict) else None
+    if not isinstance(folders, list):
+        return
+    general["install_dirs"] = [item for item in folders
+                               if not (isinstance(item, dict) and item.get("path") == str(folder))]
+    try:
+        _write_json(path, config)
+    except OSError as error:
+        raise UserDataError(f"shadPS4's settings could not be written: {error}") from error
 
 
 def save_shadnet(home: Path, user_id: int, npid: str, password: str, email: str, on: bool, server: str) -> None:

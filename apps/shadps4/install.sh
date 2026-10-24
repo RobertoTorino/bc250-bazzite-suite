@@ -4,8 +4,8 @@
 #
 #   ./install.sh                         # install or update
 #   ./install.sh --no-desktop-shortcut   # app menu entry only, no icon on the Desktop
-#   ./install.sh --uninstall             # remove the app and the shadPS4 it installed; keeps its settings
-#   ./install.sh --uninstall --purge     # also remove its settings
+#   ./install.sh --uninstall             # remove the app and the shadPS4 it installed; keeps its settings and log
+#   ./install.sh --uninstall --purge     # also remove its settings, covers and logs
 #
 # Run it as your own user; installing needs no root. shadPS4 itself is downloaded by the app (Install), not here.
 #  * ~/.local/share/bc250-shadps4-manager/app: the app, with the bc250_core it was tested with (bundled in the
@@ -18,9 +18,10 @@
 #    progress checkpoint of Extract PKG.
 #  * ~/.local/bin/bc250-shadps4-manager to start it from a terminal (with a .pkg: in Extract PKG), plus an app menu
 #    entry and a Desktop icon; ~/.local/bin/bc250-shadps4-pkg-cli, the terminal package extractor.
-#  * ~/.local/bin/bc250-shadps4-run, which starts shadPS4: the Game Mode shortcuts run it.
+#  * ~/.local/bin/bc250-shadps4-run, which starts shadPS4: the Steam shortcuts run it.
+#  * ~/.local/share/bc250-shadps4-manager/bc250-shadps4-manager.log: the app's log.
 # shadPS4's own folder, ~/.local/share/shadPS4 (saves, settings, system modules), is never removed, nor are the
-# games; the Game Mode shortcuts stay in Steam (take them out in the app first).
+# games; the Steam shortcuts stay in Steam (take them out in the app first).
 # Installing also removes the standalone Bazzite pkgxtractor, absorbed into this app (Extract PKG…); its settings
 # folder stays, and the app adopts the last used folders from it.
 set -euo pipefail
@@ -178,12 +179,12 @@ Type=Application
 Version=1.0
 Name=$APP_NAME
 GenericName=PS4 emulator manager
-Comment=Install shadPS4, find your PS4 games and add them to Steam for Game Mode
+Comment=Install shadPS4, find your PS4 games and add them to Steam
 Exec=$LAUNCHER %f
 Icon=$APP_DIR/images/$APP_ID-128.png
 Terminal=false
 Categories=Game;Emulator;
-Keywords=BC-250;Bazzite;shadPS4;PS4;emulator;Game Mode;pkg;extract;
+Keywords=BC-250;Bazzite;shadPS4;PS4;emulator;Steam;pkg;extract;
 StartupNotify=true
 StartupWMClass=$APP_ID"
 

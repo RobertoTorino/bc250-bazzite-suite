@@ -133,10 +133,11 @@ tab.
 - **Emulation**: **Fast boot** (skips the PS2's start-up screen), **Cheats** (PCSX2's `.pnach` cheat files for a
   game) and **No-interlacing patches** (a progressive picture instead of an interlaced one, sharper and without
   shimmer, for the games PCSX2 has a patch for).
-- **Sound**: the **Volume**. Beside it stands **Bazzite's volume for PCSX2**, which is not PCSX2's: Bazzite's
-  sound settings remember a volume and a mute per application, also once it is closed, so a game plays without a
-  sound while PCSX2 is muted there. The app only reads it and says so, in red, when PCSX2 is muted or turned down
-  to nothing; change it in the sound applet (the speaker in the panel, under Applications) while a game plays.
+- **Sound**: the **Volume**. Beside it stands **Bazzite's volume for PCSX2**, which is not PCSX2's: Bazzite's sound
+  settings remember a volume and a mute per application, also once it is closed, so a game plays without a sound
+  while PCSX2 is muted there. The app says so, in red, when PCSX2 is muted or turned down to nothing. **Unmute**
+  beside it turns a muted PCSX2 on again, and Bazzite keeps it on from then on; a volume turned down is changed in
+  the sound applet (the speaker in the panel, under Applications) while a game plays.
 - **Controllers**: **Vibration**; **Player 2 on the second controller**: a second controller connected is
   player 2, with the same buttons as player 1; and **Quit a game with Select + Start**: the first controller's
   Select (Share, Create or View on other controllers) and Start (Options or Menu) pressed together end the game

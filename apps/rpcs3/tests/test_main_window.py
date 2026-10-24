@@ -13,7 +13,8 @@ import time
 from pathlib import Path
 
 import pytest
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QPoint, Qt
+from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QLabel, QMessageBox
 
 from conftest import make_disc_game, make_hdd_game, write_rpcs3_files
@@ -438,7 +439,10 @@ def test_game_folders_added_and_removed(qapp, folders, tmp_path):
     original = QMessageBox.question
     QMessageBox.question = staticmethod(lambda *a, **k: (asked.append(a[2]), QMessageBox.StandardButton.No)[1])
     try:
-        window.disc_state.linkActivated.emit("forget:0")                        # the folder's name, clicked
+        window.show()                                   # a real click: a state line's link once took none (owner,
+        QTest.mouseClick(window.disc_state, Qt.MouseButton.LeftButton,           # 24-10-2026)
+                         pos=QPoint(4, window.disc_state.height() // 2))
+        qapp.processEvents()
         assert window.folders == [tmp_path / "games"]                           # No: kept
         QMessageBox.question = staticmethod(lambda *a, **k: QMessageBox.StandardButton.Yes)
         window.disc_state.linkActivated.emit("forget:7")                        # no such folder: nothing
@@ -741,4 +745,50 @@ def test_the_settings_tab_is_not_squeezed_under_the_introduction(qapp, folders):
     page = window.settings_page
     assert page.widgets["volume"].height() >= page.widgets["volume"].sizeHint().height()
     assert page.widgets["audio"].height() >= page.widgets["audio"].sizeHint().height()
+    window.close()
+
+
+def test_unmute_bazzites_volume(qapp, folders, tmp_path):
+    """Unmute beside Bazzite's volume (owner, 24-10-2026): shown while RPCS3 is muted there only; a click runs
+    core's unmute off the window and the row follows what WirePlumber stored; a failure is said in red."""
+    state = tmp_path / "state" / "wireplumber" / "stream-properties"
+    state.parent.mkdir(parents=True)
+    state.write_text('[stream-properties]\nOutput/Audio:application.name:RPCS3={"volume":1.000000, "mute":true}\n')
+    window = _window(folders, sound_state=state)
+    page = window.settings_page
+    window.tabs.setCurrentIndex(1)
+    window.show()
+    qapp.processEvents()
+    assert page.sound_path == state and page.unmute_button.isVisible()
+    asked = []
+
+    def unmute(name, path):
+        asked.append((name, path))
+        path.write_text('[stream-properties]\nOutput/Audio:application.name:RPCS3={"volume":1.000000, "mute":false}\n')
+        return 1.0, False
+    page.unmute = unmute
+    page.unmute_button.click()
+    deadline = time.monotonic() + 10
+    while page.unmuting.running and time.monotonic() < deadline:
+        qapp.processEvents()
+        time.sleep(0.01)
+    qapp.processEvents()
+    assert asked == [("RPCS3", state)]
+    assert page.status.text() == "RPCS3's sound is on again in Bazzite's sound settings."
+    assert page.system_sound.text() == "100 %" and not page.unmute_button.isVisible()
+
+    def refused(name, path):
+        from bc250_core import sound
+        raise sound.SoundError("pactl is not installed: Unmute needs PipeWire's PulseAudio tools (pactl and paplay).")
+    state.write_text('[stream-properties]\nOutput/Audio:application.name:RPCS3={"volume":1.000000, "mute":true}\n')
+    window.refresh()
+    page.unmute = refused
+    page.unmute_button.click()
+    deadline = time.monotonic() + 10
+    while page.unmuting.running and time.monotonic() < deadline:
+        qapp.processEvents()
+        time.sleep(0.01)
+    qapp.processEvents()
+    assert page.status.text().startswith("pactl is not installed") and "c62828" in page.status.styleSheet()
+    assert page.unmute_button.isVisible() and page.unmute_button.isEnabled()
     window.close()

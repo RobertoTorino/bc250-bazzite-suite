@@ -6,8 +6,8 @@
 
 Plays **PS4 games** on the **AMD BC-250** with [shadPS4](https://github.com/shadps4-emu/shadPS4), an open-source
 PS4 emulator. The app installs the shadPS4 release it was tried with, finds the games in your game folders and adds
-them to Steam, so they start from **Game Mode** like any other game. It also unpacks package files (`.pkg`) into a
-game folder, with **Extract PKG**.
+them to Steam, so a game starts straight away like any other, on the desktop or from Steam's **Big Picture Mode**.
+It also unpacks package files (`.pkg`) into a game folder, with **Games Install** (Extract PKG).
 
 Whether a game runs, and how well, is up to shadPS4. Its
 [compatibility list](https://github.com/shadps4-emu/shadps4-game-compatibility/issues) shows what others found.
@@ -19,34 +19,48 @@ Whether a game runs, and how well, is up to shadPS4. Its
   downloads games.
 - **System modules** for some games: libraries of the PS4's firmware (`.sprx` files), from your own console. Many
   games run without them. The app cannot ship them; it shows which ones are there.
-- **Steam**, started at least once, for Game Mode.
+- **Steam**, started at least once.
 - About 35 MB for shadPS4 itself. Its saves, settings and shader cache go in `~/.local/share/shadPS4`.
 - **FUSE 2** (`libfuse.so.2`), which Bazzite has. shadPS4 comes as an AppImage, which mounts itself with it.
   Without it, it unpacks itself to a temporary folder on every start, which takes longer.
 
 ## Using it
 
-The window has four steps, then the list of games.
+The header shows the **shadPS4 version**, **Your games** (the games found), those **Available in Steam** and the
+**Play time**: the time spent in all your games together, as shadPS4 counts it, with each game's time and when it
+was last played in the tooltip. **Refresh** reads everything again. Beside the title, next to the app's state,
+stand shadNet's state (see [shadNet](#shadnet)) and the controller's: **Controller connected**, or **No
+controller** when none is, looked at again every few seconds. A game started from Steam reads the controller that
+is connected when it starts, so switch yours on, or press its PS button to wake it, before starting a game. When
+Steam starts a game without one, the app also says so in a desktop notification. Under the introduction, which
+links to **shadPS4's release notes** and to this wiki, a row of six pills does the setting up, each with what it is
+for on top and what it does under it: **shadPS4 Install** and **shadPS4 Uninstall**, **Modules Install**, **Games
+Install** and **Games Add folder**, and **shadNet Account**. Four lines below them say where each stands, short,
+with more in their tooltips, and then come three tabs: **Your games**, **Settings** and **Log**.
 
-1. **shadPS4**: **Install** downloads shadPS4 from its GitHub release (about 31 MB) and checks it against the
-   checksum this version of the app was tried with before unpacking it. **Remove** takes it out again; shadPS4's own
-   folder, with your saves and settings, stays. **Nightly builds** switches to shadPS4's nightly builds; see
-   [Nightly builds](#nightly-builds).
-2. **System modules**: how many of the modules that shadPS4 cannot do without are in its module folder. **Open
-   folder** opens it, so you can copy your modules in. Hold the pointer over the text to see which are missing.
-3. **Game folders**: the folders shadPS4 looks for games in. **Add folder…** adds one through shadPS4 itself, so its
-   own window lists the games too. A game may sit up to five folders deep. **Extract PKG…** unpacks a package file
-   into one of them: see [Extract PKG](#extract-pkg).
-4. **shadNet**: whether shadPS4 signs in to shadNet, its online service, and with which account. **Account…** sets
-   it up: see [shadNet](#shadnet).
+- **shadPS4**: the version installed (when this version of the app brings another one, the tooltip and the log say
+  so, and **Install** puts it in). **Install** downloads shadPS4 from its GitHub release (about 31 MB) and checks it
+  against the checksum this version of the app was tried with before unpacking it. **Uninstall** takes it out
+  again; shadPS4's own folder, with your saves, settings and system modules, stays.
+- **Sys modules**: **Ok** in green when every module that shadPS4 cannot do without is in its module folder,
+  **Missing sys modules** in red when one is not (how many there are, which are missing and the folder's path are in
+  the tooltip). Many games run without them. **Install** asks for the folder with the modules (`.sprx` files) you
+  copied from your own PS4's firmware and copies them into shadPS4's module folder.
+- **Game folders**: the folders shadPS4 looks for games in, by name (the paths and how many games were found are
+  in the tooltip). **Add folder** adds one through shadPS4 itself, so its own window lists the games too; clicking
+  a folder's name in the line stops looking in it, after a question (the games stay where they are). A game may sit
+  up to five folders deep. **Install** unpacks a package file into one of them: see [Extract PKG](#extract-pkg).
+- **shadNet**: the name of the account shadPS4 signs in with, **Off** while none is set up, **—** while shadPS4 has
+  not run yet (the server is in the tooltip). **Account** sets it up: see [shadNet](#shadnet).
 
-The table lists every game found: its title and ID (CUSA…) from the game's own files, its version and its folder.
-Updates and mods are not listed as games: see [Game updates and mods](#game-updates-and-mods).
+### Your games
 
-- **Play** (or a double-click) starts the chosen game on the desktop.
-- **shadPS4 settings** opens shadPS4's own window (Big Picture), with its settings and its game list.
+The table lists every game found: its title and **Id** (CUSA…) from the game's own files, its version and its
+**Folder** (the folder's name; the path is in the tooltip). Updates and mods are not listed as games: see
+[Game updates and mods](#game-updates-and-mods). A PS4 game draws its picture for a wide screen itself, so there is
+no screen setting per game as in the PS2 and PS3 managers.
 
-### Game updates and mods
+#### Game updates and mods
 
 Put a game's update in a folder of its own beside the game, named like the game's folder with `-UPDATE` added
 (`-patch` works too). shadPS4 finds it there and uses it when it starts the game: the update's files take the place
@@ -64,10 +78,96 @@ found beside its game (the same ID, CUSA…) is left out of the table whatever i
 from a PS4 that had its update installed already has the update in it: it needs no `-UPDATE` folder and is listed
 with the update's version.
 
+#### Steam
+
+Tick the games you want in Steam and press **Update Steam**. The app adds them to Steam as non-Steam games, with
+the game's own icon and background as their pictures and its icon (`sce_sys/icon0.png`) as the logo on the
+banner, and takes out the games you unticked and games it no longer finds. Steam keeps these files in memory, so it
+closes for the change and starts again in the background. A game added before the app set the logo gets it the
+next time you press **Update Steam**, which is on for it until then.
+
+In Steam each game's name starts with its system, for example **[PS4] Lumines**, so it stands apart from the same
+title on Steam or on another system in Steam's menus. A game added under its title alone is renamed the next time
+you press **Update Steam**, which is on for it until then. Steam sees the renamed game as a new one: its play time
+stays, but a controller layout or collection you set for it in Steam has to be set again.
+
+The games are in the library under **Non-Steam**, on the desktop and in Big Picture Mode alike. They start
+shadPS4 full screen. Steam's menu and **Exit game** work as for any game, and so does shadPS4's quit window (see
+[Quit a game](#quit-a-game)).
+
+Steam's overlay works over a game started from Steam, in Big Picture Mode and on the desktop: press **Shift+Tab**
+or the **PS button** for the game's page, its controller layout and its settings, without leaving the game. In Big
+Picture Mode the PS button opens Steam's menu over the game; pressed again there, it opens the power menu, with
+**Exit game** and the way out of Big Picture Mode. On the desktop the overlay needs **Enable the Steam Overlay while
+in-game** in Steam's settings (In Game).
+
+On a handheld image of Bazzite, whose Game Mode is a Steam session of its own, change Steam from Desktop Mode: in
+that session Steam cannot close for the change.
+
+##### Covers
+
+A PS4 game has no cover in the shape Steam's library uses, so the app draws one: the game's icon with its title on a
+dark background. With a SteamGridDB API key, entered under **Steam artwork…**, the app takes a cover from
+SteamGridDB for each game instead; the background and the logo on the game's page stay the game's own. See
+[Covers from SteamGridDB](covers.md) for the key, how a game is looked up and how to use a cover of your own.
+
+**Steam** in the line under the table is a link: it opens Steam's library (Steam starts when it does not run).
+**shadPS4 settings** beside it opens shadPS4's own window (Big Picture) for what the app does not set: the
+controller's buttons, a game's own settings and shadPS4's game list.
+
+#### Quit a game
+
+shadPS4's quit window asks whether to quit: **Cross** or **Enter** quits, **Circle** or **Esc** goes back to the game.
+Open it with:
+
+- **Share + Options** on a DualShock 4 or DualSense (Back + Start on other controllers: View + Menu on an Xbox
+  controller), pressed together;
+- **Ctrl+Shift+End** on the keyboard, also with the keypad's End (the 1 key with Num Lock off) on a keyboard without
+  an End key of its own.
+
+The app adds these to shadPS4's `input_config/global.ini` when it starts, and says so in the log; the rest of the
+file stays as it is. The controller works on the desktop as well, where the keyboard may stay with Big Picture after
+Steam started the game.
+
+A game started from Steam reads your controllers itself, a DualShock 4 or DualSense with its touchpad and motion
+sensors. [How it works](#how-it-works) explains both.
+
+### Settings
+
+shadPS4's settings that matter for playing, each written into shadPS4's own settings file (`config.json`) the
+moment you change it, while shadPS4 does not run (it writes its own settings back when it ends); shadPS4 reads them
+when a game starts, and a game's own settings in shadPS4 (made in its own window) come before them. They are the
+settings shadPS4's own window offers for every game; the tooltips say what each does.
+
+- **Picture**: VSync (Mailbox, shadPS4's default, shows the newest frame at each refresh without tearing; On waits
+  for each refresh; Off may tear), AMD's FidelityFX upscaling (FSR) with its sharpening (RCAS), HDR and a frame rate
+  counter.
+- **Sound**: the sound output library (SDL or OpenAL) and the volume (up to 500 %). Beside the volume stands
+  **Bazzite's volume for shadPS4**, which is not shadPS4's: Bazzite's sound settings remember a volume and a mute
+  per application, also once it is closed, so a game plays without a sound while shadPS4 is muted there. The app
+  says so, in red, when shadPS4 is muted or turned down to nothing. **Unmute** beside it turns a muted shadPS4 on
+  again, and Bazzite keeps it on from then on; a volume turned down is changed in the sound applet (the speaker in
+  the panel, under Applications) while a game plays.
+- **Controller and mouse**: the controller's motion sensors, and when the mouse pointer hides over the game.
+- **In a game**: the PS4's system language, in which a game that has it shows its text, the trophy message and the
+  game's splash screen.
+
+A value shadPS4 knows and the app does not is shown as it is. Everything else shadPS4 can set stays in its own
+window (**shadPS4 settings**).
+
+### Log
+
+Everything the app said and did, with the time: shadPS4 installed or removed, what the app set up in shadPS4, the
+system modules copied, the game folders added and taken out, the settings changed, shadNet saved, every change to
+Steam, and every error. Each game started from Steam is logged by its folder's name when it starts, with whether a
+controller was connected. The same lines are in `~/.local/share/bc250-shadps4-manager/bc250-shadps4-manager.log`,
+which turns over at 1 MB (the three older files are kept). The log holds what the app did, not your SteamGridDB key,
+your shadNet password or anything else personal.
+
 ### shadNet
 
 shadNet is shadPS4's online service: online trophies, friends and online play, in the games shadPS4 supports online.
-shadPS4 signs in by itself when a game starts, once it knows your account. **Account…** opens a window for it:
+shadPS4 signs in by itself when a game starts, once it knows your account. **shadNet Account** opens a window for it:
 
 - **Server**: the shadNet server, `srv.shadps4.net:31313` (shadPS4's own) unless you use another one.
 - **shadPS4 user**: which of shadPS4's users signs in. Games play as player 1, the first user.
@@ -94,58 +194,12 @@ While shadPS4 runs, the app reads shadPS4's log every few seconds to see whether
 shadPS4 keeps the password as it is in its `users.json`, and shadNet sends it over the network unencrypted. Use a
 password you use nowhere else.
 
-### Game Mode
-
-Tick the games you want in Game Mode and press **Update Game Mode**. The app adds them to Steam as non-Steam games,
-with the game's own icon and background as their pictures and its icon (`sce_sys/icon0.png`) as the logo on the
-banner, and takes out the games you unticked and games it no longer finds. Steam keeps these files in memory, so it
-closes for the change and starts again in the background. A game added before the app set the logo gets it the next
-time you press **Update Game Mode**, which is on for it until then.
-
-In Steam each game's name starts with its system, for example **[PS4] Lumines**, so it stands apart from the same
-title on Steam or on another system in Steam's menus. A game added under its title alone is renamed the next time you
-press **Update Game Mode**, which is on for it until then. Steam sees the renamed game as a new one: its play time
-stays, but a controller layout or collection you set for it in Steam has to be set again.
-
-In Game Mode the games are in the library under **Non-Steam**. They start shadPS4 full screen. Steam's menu and
-**Exit game** work as for any game.
-
-Steam's overlay works over a game started from Steam, in Game Mode and on the desktop: press **Shift+Tab** or the
-**PS button** for the game's page, its controller layout and its settings, without leaving the game. On the desktop
-it needs **Enable the Steam Overlay while in-game** in Steam's settings (In Game); Steam's FPS counter there is a
-setting of its own.
-
-#### Covers
-
-A PS4 game has no cover in the shape Steam's library uses, so the app draws one: the game's icon with its title on a
-dark background. With a SteamGridDB API key, the app takes a cover from SteamGridDB for each game instead; the
-background and the logo on the game's page stay the game's own. See [Covers from SteamGridDB](covers.md) for the
-key, how a game is looked up and how to use a cover of your own.
-
-### Quit a game
-
-shadPS4's quit window asks whether to quit: **Cross** or **Enter** quits, **Circle** or **Esc** goes back to the game.
-Open it with:
-
-- **Share + Options** on a DualShock 4 or DualSense (Back + Start on other controllers: View + Menu on an Xbox
-  controller), pressed together;
-- **Ctrl+Shift+End** on the keyboard, also with the keypad's End (the 1 key with Num Lock off) on a keyboard without
-  an End key of its own.
-
-The app adds these to shadPS4's `input_config/global.ini` when it starts; the rest of the file stays as it is. The
-controller works on the desktop as well, where the keyboard may stay with Big Picture after Steam started the game.
-
-A game started from Steam reads your controllers itself, a DualShock 4 or DualSense with its touchpad and motion
-sensors. [How it works](#how-it-works) explains both.
-
-Change Game Mode from Desktop Mode: in Game Mode Steam is the session itself and cannot close for the change.
-
 ## Extract PKG
 
-**Extract PKG…** in the third step (or a `.pkg` dropped on the window) opens a window that unpacks package files
+**Games Install** (or a `.pkg` dropped on the window) opens Extract PKG, a window that unpacks package files
 (`.pkg`: games, patches and add-on content) into the folder layout shadPS4 loads: a `TITLE_ID` folder (for example
 `CUSA41215`) with `sce_sys/` and the game's files. Extracted into one of the game folders, a game shows up in the
-list when the window closes, ready for **Play** and Game Mode. It needs no shadPS4 installed.
+list when the window closes, ready for Steam. It needs no shadPS4 installed.
 
 It can only open a package that shadPS4 can use: a fake-signed (re-encrypted) PKG. Retail packages that still carry
 their original encryption cannot be opened; the window says **Failed to find PFSC header** then. A game unpacks to
@@ -166,7 +220,7 @@ extracted.
   the content id alone. The window says so when the file already has that name or another file has it.
 - **Output:** the folder the `TITLE_ID` folder goes into: the one you used last, or else the first of shadPS4's game
   folders. The line below it says whether it is a game folder; a game extracted elsewhere shows up only once you add
-  that folder (**Add folder…**). The window refuses to extract into a `TITLE_ID` folder that already has something
+  that folder (**Games Add folder**). The window refuses to extract into a `TITLE_ID` folder that already has something
   in it, and lists what it found: each extraction or preview needs a fresh folder, so nothing is mixed with an
   earlier run.
 - **Updates:** an update (CATEGORY `gp`) for a game that is in the output folder goes into a folder beside it,
@@ -236,7 +290,7 @@ and inflates each file block by block. It is a port of the C++ tool
 
 ## From a terminal
 
-`bc250-shadps4-run` starts the installed shadPS4 with the options you give it. The Game Mode shortcuts use it, so
+`bc250-shadps4-run` starts the installed shadPS4 with the options you give it. The Steam shortcuts use it, so
 they keep working when a newer version of the app brings a newer shadPS4.
 
 ```bash
@@ -268,25 +322,14 @@ python -m shadps4_manager.pkgxtractor.compare_delta <before.json> <after.json> [
 
 Each version of the app installs one shadPS4 release, the one it was tried with. When the window opens, the app asks
 GitHub for shadPS4's newest release (its stable releases, not the daily development builds). When that one is newer,
-the first step says so, with a link to what is new; the app does not install it. A newer shadPS4 comes with a newer
-version of the app, once it has been tried, from the [portal](../portal.md): after updating the app, the first step
-says so, and **Install** brings it.
-
-## Nightly builds
-
-shadPS4 publishes a nightly build with its newest work, and those builds are mostly stable. Tick **Nightly builds**
-in the first step and **Install** downloads the newest nightly instead of the tested stable release, checked
-against the checksum GitHub publishes for that build. That checksum proves the download arrived whole; it does not
-make the build one this app was tried with, and the first step says so. When a newer nightly is out, the step says
-so and **Install** brings it.
-
-Untick the box and **Install** puts the tested stable release back. Your games, saves and the Game Mode shortcuts
-stay as they are either way: the shortcuts start whatever shadPS4 is installed.
+the shadPS4 line's tooltip and the log say so, with a link to what is new; the app does not install it. A newer
+shadPS4 comes with a newer version of the app, once it has been tried, from the [portal](../portal.md): after
+updating the app, the tooltip says so, and **Install** brings it.
 
 ## How it works
 
-The Game Mode shortcuts start `bc250-shadps4-run`, which starts shadPS4. Two things change when Steam is the one
-that starts it. Started with **Play**, from outside Steam, shadPS4 runs as it is.
+The Steam shortcuts start `bc250-shadps4-run`, which starts shadPS4. Two things change when Steam is the one that
+starts it. Started from a terminal, outside Steam, shadPS4 runs as it is.
 
 ### Controllers
 
@@ -311,8 +354,8 @@ game's page, controller layout or settings while it runs. Steam also cannot tell
 is why its desktop layout stays active (see above).
 
 So when Steam starts a game on the Wayland desktop, the run wrapper has shadPS4 open its window through XWayland
-(`SDL_VIDEO_DRIVER=x11`), and Steam's overlay works as in any other game. Game Mode runs every game through X11
-already.
+(`SDL_VIDEO_DRIVER=x11`), and Steam's overlay works as in any other game. A handheld's Game Mode runs every game
+through X11 already.
 
 ## What goes where
 
@@ -323,18 +366,21 @@ already.
 | shadPS4 | `~/.local/share/bc250-shadps4-manager/emulator` |
 | Extract PKG's log, and its crash marker and progress while it is open | `~/.local/share/bc250-shadps4-manager/pkgxtractor.log`, `.state`, `.progress` |
 | shadPS4's saves, settings, system modules | `~/.local/share/shadPS4` (shadPS4's own folder) |
+| shadPS4's settings (the Settings tab) | `~/.local/share/shadPS4/config.json`, shadPS4's own |
+| shadPS4's play time per game | `~/.local/share/shadPS4/play_time.txt`, shadPS4's own |
+| The app's log | `~/.local/share/bc250-shadps4-manager/bc250-shadps4-manager.log` |
 | Your shadNet account | `~/.local/share/shadPS4/users.json`, the server in its `config.json` |
 | The quit hotkeys | `~/.local/share/shadPS4/input_config/global.ini` |
 | The app's settings, with Extract PKG's last used folders | `~/.config/bc250-shadps4-manager` |
-| The Game Mode shortcuts | Steam's `shortcuts.vdf` and `grid` folder, per Steam user |
+| The Steam shortcuts | Steam's `shortcuts.vdf` and `grid` folder, per Steam user |
 | The covers found on SteamGridDB | `~/.local/share/bc250-shadps4-manager/covers` |
 | Launchers | `~/.local/bin/bc250-shadps4-manager`, `~/.local/bin/bc250-shadps4-run`, `~/.local/bin/bc250-shadps4-pkg-cli` |
 
 ## Install and remove
 
 Install the app from the [portal](../portal.md), where it is under Gaming. Removing it takes out the app and the shadPS4 it installed;
-shadPS4's own folder (your saves) and your games stay. The games in Game Mode then no longer start: take them out
-first by unticking them and pressing **Update Game Mode**.
+shadPS4's own folder (your saves) and your games stay. The games in Steam then no longer start: take them out
+first by unticking them and pressing **Update Steam**.
 
 Installing the app also removes the standalone Bazzite pkgxtractor, whose package extraction is in this app now
 (Extract PKG). Its settings stay: Extract PKG starts in the folders you last used there.
@@ -343,7 +389,7 @@ Installing the app also removes the standalone Bazzite pkgxtractor, whose packag
 ./install.sh                         # install or update
 ./install.sh --no-desktop-shortcut   # app menu entry only, no icon on the Desktop
 ./install.sh --uninstall             # remove the app and the shadPS4 it installed; keeps its settings and log
-./install.sh --uninstall --purge     # also remove its settings and log
+./install.sh --uninstall --purge     # also remove its settings, covers and logs
 ```
 
 ## Disclaimer

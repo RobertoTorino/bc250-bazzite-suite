@@ -9,10 +9,10 @@ import sys
 
 from PyQt6.QtCore import QTimer
 
-from bc250_core import __version__ as CORE_VERSION, instance
+from bc250_core import __version__ as CORE_VERSION, applog, instance
 from bc250_core.app import create_app, exec_app
 
-from . import APP_NAME, INFO, __version__
+from . import APP_ID, APP_NAME, INFO, __version__
 
 
 def main() -> int:
@@ -28,8 +28,10 @@ def main() -> int:
     # A second launch (opening a package with the app from the file manager) hands its package to the open window.
     if instance.already_running(INFO.app_id, [args.pkg_file] if args.pkg_file else []):
         return 0
+    log_path = applog.setup(APP_ID)
+    applog.logger(APP_ID).info("%s %s started (core %s)", APP_NAME, __version__, CORE_VERSION)
     from .main_window import MainWindow
-    window = MainWindow()
+    window = MainWindow(log_path=log_path)
     window.show()
     if args.pkg_file:
         QTimer.singleShot(0, lambda: window.open_extract(args.pkg_file))
