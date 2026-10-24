@@ -261,9 +261,34 @@ def page_header(title: str) -> tuple[QHBoxLayout, QLabel]:
     return header, label
 
 
-def hint_label(text: str) -> QLabel:
-    """Secondary, word-wrapped explanation text under a control."""
-    label = QLabel(text)
+class WrappedLabel(QLabel):
+    """A word-wrapped label whose minimum height follows its width. A wrapped QLabel tells its layout a minimum of
+    one line, whatever it wraps to, so a window at its minimum height takes the extra lines from the widget below
+    with the stretch (owner, 24-10-2026: RPCS3 Manager's Settings tab, its Sound box squeezed unreadable under the
+    three-line introduction). Here the minimum is the height the text needs at the label's width."""
+
+    def __init__(self, text: str = "", parent: QWidget | None = None):
+        super().__init__(text, parent)
+        self.setWordWrap(True)
+
+    def resizeEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        super().resizeEvent(event)
+        self._follow()
+
+    def setText(self, text: str) -> None:  # noqa: N802 (Qt override)
+        super().setText(text)
+        if self.width() > 0:
+            self._follow()
+
+    def _follow(self) -> None:
+        self.setMinimumHeight(0)                # QLabel measures no lower than the minimum it has: let go first
+        self.setMinimumHeight(max(0, self.heightForWidth(self.width())))
+
+
+def hint_label(text: str, follow_height: bool = False) -> QLabel:
+    """Secondary, word-wrapped explanation text under a control. *follow_height*: a WrappedLabel, whose minimum
+    height follows its width, for a text above a widget that must not be squeezed."""
+    label = WrappedLabel(text) if follow_height else QLabel(text)
     label.setWordWrap(True)
     label.setStyleSheet("color:palette(placeholder-text);")
     label.setOpenExternalLinks(True)

@@ -1,3 +1,19 @@
+Changelog: 24-10-2026 21:15:56
+
+Release 1.0.1.
+
+Changelog: 24-10-2026 20:46:27
+
+Fixed. The owner's two remarks after the release (24-10-2026). The RPCS3 version box showed the whole build
+(0.0.43-20133), too wide for the box: it shows the landmark alone (0.0.43), and the RPCS3 line the installed
+version alone; the advice that this version of the app brings another build went to the line's tooltip and the
+log, once. The Settings tab's Sound box was squeezed unreadable under Emulation: the introduction above the tabs
+wraps to three lines on the board, but a wrapped label tells its layout a minimum of one line, so the tabs, the
+widget with the stretch, lost those lines and the Sound box's rows went with them. The introduction and the state
+lines are core's WrappedLabel now, whose minimum height follows its width, as is the Settings tab's own
+introduction, so the tabs and the tab's boxes get their minimum. Tests:
+the line, box, tooltip and log with another build installed; the Settings tab's rows at the window's height.
+
 Changelog: 24-10-2026 19:49:22
 
 Release 1.0.0.

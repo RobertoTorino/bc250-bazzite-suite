@@ -1,3 +1,11 @@
+Changelog: 24-10-2026 20:46:27
+
+Fixed. widgets: WrappedLabel, a word-wrapped label whose minimum height follows its width, and
+hint_label(follow_height=True) for one. A wrapped QLabel tells its layout a minimum of one line whatever it wraps
+to, so a window at its minimum height took the extra lines from the widget with the stretch below: RPCS3 Manager's
+Settings tab, its Sound box squeezed unreadable under the three-line introduction on the board (owner,
+24-10-2026). Opt-in, nothing else changes. Test: the minimum follows the width and the text.
+
 Changelog: 24-10-2026 19:23:03
 
 Added. sound: the volume the desktop remembers per application (owner, 24-10-2026: every manager shows it; found

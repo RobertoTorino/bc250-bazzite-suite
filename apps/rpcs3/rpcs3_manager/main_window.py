@@ -35,7 +35,7 @@ from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import bin_home, xdg_open
 from bc250_core.settings import SettingsStore
 from bc250_core.updates import ReleaseInfo, UpdateChecker
-from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, hint_label
+from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, WrappedLabel, hint_label
 
 from . import APP_ID, APP_NAME, INFO, LOGO_PATH, ROOT, __version__, controllers, emulator, shortcuts, style, userdata
 from .games import Game, installed, scan
@@ -135,6 +135,7 @@ class MainWindow(QMainWindow):
         self.sound_state = sound_state or sound.stream_properties()
         self.sound: tuple[float, bool] | None = None    # (volume, muted) Bazzite remembers for RPCS3; None: unknown
         self._sound_said = False                        # said once while it stays off
+        self._pin_noted = False                         # another build installed than the app brings: logged once
         self.controllers: list[str] | None = None       # the controllers last seen; None before the first look
         self.log = applog.logger(APP_ID)
         self._newer_release = newer_release
@@ -189,7 +190,7 @@ class MainWindow(QMainWindow):
             "takes the PS3's firmware, finds your games and puts them in Steam, so a game starts straight away, also "
             "from Steam's Big Picture Mode. Games and the PS3's firmware come from you; the app never downloads "
             "them. " + style.link(self, emulator.RELEASE_PAGE, "RPCS3's release notes") + " · "
-            + style.link(self, MANUAL_URL, "Wiki"))
+            + style.link(self, MANUAL_URL, "Wiki"), follow_height=True)       # its lines count in the minimum
 
         # What there is to do, as pills the size of the header's, spread over the window's width (owner,
         # 24-10-2026): what it is for in large type (RPCS3, Firmware, Games), what the pill does under it (Install,
@@ -291,7 +292,7 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.settings_page, "Settings")
         self.tabs.addTab(log_page, "Log")
 
-        self.running = QLabel()
+        self.running = WrappedLabel()
         self.running.setStyleSheet("font-weight:600;")
         self.running.setWordWrap(True)
 
@@ -320,8 +321,7 @@ class MainWindow(QMainWindow):
 
     @staticmethod
     def _state_label() -> QLabel:
-        label = QLabel()
-        label.setWordWrap(True)
+        label = WrappedLabel()                  # its lines count in the window's minimum height
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         return label
 
@@ -447,10 +447,13 @@ class MainWindow(QMainWindow):
                                         "of the app was tried with, and checks it before installing it. The app "
                                         "says when a newer RPCS3 is out.")
             self.emulator_box.set_value("—")
-        elif self.version != pinned:
-            self.emulator_state.setText(f"RPCS3 {escape(self.version)} is installed; this version of the app "
-                                        f"brings {pinned}: <b>install it</b> to use it.")
-            self.emulator_box.set_value(self.version)
+        elif self.version != pinned:        # the version alone here too (owner, 24-10-2026), the advice in the
+            self.emulator_state.setText(f"<b>{escape(self.version)}</b>")    # tip and the log once
+            self.emulator_box.set_value(self.version.split("-")[0])         # the landmark: the box is not wide
+            if not self._pin_noted:                                          # enough for the build
+                self.note(f"RPCS3 {self.version} is installed; this version of the app brings {pinned}: Install "
+                          "puts it in.")
+                self._pin_noted = True
         elif self.replaced:
             self.emulator_state.setText("RPCS3 updated itself in its own window to a build this version of the app "
                                         f"was not tried with. <b>Install</b> puts back {pinned}.")
@@ -459,6 +462,8 @@ class MainWindow(QMainWindow):
             self.emulator_state.setText(f"<b>{emulator.LANDMARK}</b>")
             self.emulator_box.set_value(emulator.LANDMARK)
         tip = f"RPCS3 {pinned}, the build this version of the app was tried with"
+        if self.version and self.version != pinned and not self.replaced:
+            tip = f"RPCS3 {self.version} is installed; this version of the app brings {pinned}: Install puts it in."
         if self.newer is not None:              # in the tip and the log, so the line stays the version (owner)
             tip += (f"\nRPCS3 {self.newer.version} is out ({self.newer.published}). A later version of this app "
                     f"brings it, once it has been tried on the board: {self.newer.url}")

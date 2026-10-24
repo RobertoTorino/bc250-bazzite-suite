@@ -95,7 +95,8 @@ class SettingsPage(QWidget):
         lay.setContentsMargins(0, 8, 0, 0)
         lay.addWidget(hint_label("PCSX2's settings, written into PCSX2's own settings file the moment you change "
                                  "one, while PCSX2 does not run. A game's own settings in PCSX2 come before these. "
-                                 "How a game fills the screen is set per game, in the Your games tab."))
+                                 "How a game fills the screen is set per game, in the Your games tab.",
+                                 follow_height=True))        # its lines count in the page's minimum
         lay.addLayout(grid)
         lay.addStretch(1)
         lay.addWidget(self.status)

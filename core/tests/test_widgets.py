@@ -266,3 +266,23 @@ def test_app_header_title_lines_up_with_the_second_row(qapp, tmp_path):
     assert header.title.x() == second.x()
     assert abs(first_ink(header.title) - first_ink(second)) <= 3     # the glyphs' own side bearing only
     window.close()
+
+
+def test_a_wrapped_labels_minimum_height_follows_its_width(qapp):
+    """A plain wrapped QLabel reports one line as its minimum, whatever it wraps to; a WrappedLabel reports the
+    lines it needs at its width (owner, 24-10-2026: the Settings tab squeezed under a three-line introduction)."""
+    from bc250_core.widgets import WrappedLabel, hint_label
+    text = "A long explanation " * 30
+    plain, wrapped = hint_label(text), hint_label(text, follow_height=True)
+    assert isinstance(wrapped, WrappedLabel) and not isinstance(plain, WrappedLabel)
+    for label in (plain, wrapped):
+        label.resize(300, 10)
+        label.show()
+    qapp.processEvents()
+    one_line = plain.fontMetrics().height()
+    assert plain.minimumSizeHint().height() <= one_line + 4
+    assert wrapped.minimumHeight() == wrapped.heightForWidth(300) > 3 * one_line
+    wrapped.setText("Short.")
+    assert wrapped.minimumHeight() <= one_line + 4
+    plain.close()
+    wrapped.close()

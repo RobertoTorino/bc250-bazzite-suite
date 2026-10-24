@@ -1,3 +1,13 @@
+Changelog: 24-10-2026 21:15:56
+
+Release 1.1.1.
+
+Changelog: 24-10-2026 20:46:27
+
+Fixed. The introduction and the state lines are core's WrappedLabel, whose minimum height follows its width
+(owner, 24-10-2026, from RPCS3 Manager, where the Settings tab was squeezed under a three-line introduction), as
+is the Settings tab's own introduction: the tabs below and the tab's boxes get their minimum height. Test: the tabs at the window's height.
+
 Changelog: 24-10-2026 19:49:22
 
 Release 1.1.0.

@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QLabel, QMessageBox
 
 from conftest import make_disc_game, make_hdd_game, write_rpcs3_files
 
@@ -663,7 +663,7 @@ def test_the_log_tab(qapp, folders, tmp_path):
     assert lines[-2].endswith(" INFO games is a game folder now: 1 game(s) in it.")
     assert lines[-2][:19].count("-") == 2 and lines[-2][10] == " "               # DD-MM-YYYY HH:MM:SS
     assert lines[-1].endswith(" ERROR Steam was not changed: no Steam") and "c62828" in window.running.styleSheet()
-    assert str(folders["log_path"]) in window.tabs.widget(2).findChildren(type(window.running))[0].text()
+    assert str(folders["log_path"]) in window.tabs.widget(2).findChildren(QLabel)[0].text()
     window.close()
 
 
@@ -708,4 +708,37 @@ def test_covers_with_the_suites_key(qapp, folders, monkeypatch, tmp_path):
     grid = steam.user_folders(folders["steam_dir"])[0] / "grid"
     assert QImage(str(grid / f"{number}p.png")).pixelColor(300, 450).name() == "#0000ff"
     assert window.no_cover == set() and not window.steam_button.isEnabled()
+    window.close()
+
+
+def test_another_build_installed_than_the_app_brings(qapp, folders):
+    """The RPCS3 line and box show the version alone (owner, 24-10-2026: the box is not wide enough for the
+    build): the installed version in the line, its landmark in the box, the advice in the tooltip and the log."""
+    (folders["home"] / "0.0.43-20133").mkdir(parents=True)
+    (folders["home"] / "0.0.43-20133" / emulator.MEMBER).write_text("")
+    (folders["home"] / "current").symlink_to("0.0.43-20133")
+    window = _window(folders)
+    assert window.emulator_state.text() == "<b>0.0.43-20133</b>" and window.emulator_box.value.text() == "0.0.43"
+    assert window.emulator_state.toolTip() == (f"RPCS3 0.0.43-20133 is installed; this version of the app brings "
+                                               f"{emulator.VERSION}: Install puts it in.")
+    assert window.install_pill.isEnabled()
+    window.refresh()
+    assert window.output.toPlainText().count("Install puts it in") == 1                # once
+    window.close()
+
+
+def test_the_settings_tab_is_not_squeezed_under_the_introduction(qapp, folders):
+    """The introduction wraps to several lines and the state lines may too; their minimum heights count, so the
+    tabs below get their minimum and the Sound box's rows keep their height (owner, 24-10-2026: squeezed
+    unreadable on the board)."""
+    _install(folders["home"])
+    window = _window(folders)
+    window.tabs.setCurrentIndex(1)
+    window.show()
+    qapp.processEvents()
+    assert window.intro.minimumHeight() == window.intro.heightForWidth(window.intro.width()) > 0
+    assert window.tabs.height() >= window.tabs.minimumSizeHint().height()
+    page = window.settings_page
+    assert page.widgets["volume"].height() >= page.widgets["volume"].sizeHint().height()
+    assert page.widgets["audio"].height() >= page.widgets["audio"].sizeHint().height()
     window.close()

@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QLabel, QMessageBox
 
 from conftest import make_bios, make_disc
 
@@ -502,7 +502,7 @@ def test_the_log_tab(qapp, folders, tmp_path):
     lines = window.output.toPlainText().splitlines()
     assert lines[-2].endswith(" INFO games is a game folder now: 1 game(s) in it.")
     assert lines[-1].endswith(" ERROR Steam was not changed: no Steam") and "c62828" in window.running.styleSheet()
-    assert str(folders["log_path"]) in window.tabs.widget(3).findChildren(type(window.running))[0].text()
+    assert str(folders["log_path"]) in window.tabs.widget(3).findChildren(QLabel)[0].text()
     window.settings_page.widgets["fps"].setChecked(True)
     assert window.settings_page.status.text() == "Show FPS: on."
     assert pcsx2_settings.read_setting(folders["pcsx2_home"], _setting("fps")) == "true"
@@ -645,4 +645,16 @@ def test_bazzites_volume_for_pcsx2(qapp, folders, tmp_path):
     window.refresh()
     assert window.settings_page.system_sound.text() == "70 %" and window.settings_page.system_sound.styleSheet() == ""
     assert window.output.toPlainText().count("muted in Bazzite") == 1
+    window.close()
+
+
+def test_the_tabs_are_not_squeezed_under_the_introduction(qapp, folders):
+    """The introduction's lines count in the window's minimum height (core's WrappedLabel; owner, 24-10-2026,
+    from RPCS3 Manager), so the tabs below get their minimum."""
+    window = _window(folders)
+    window.tabs.setCurrentIndex(1)
+    window.show()
+    qapp.processEvents()
+    assert window.intro.minimumHeight() == window.intro.heightForWidth(window.intro.width()) > 0
+    assert window.tabs.height() >= window.tabs.minimumSizeHint().height()
     window.close()

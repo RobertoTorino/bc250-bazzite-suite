@@ -31,7 +31,7 @@ from bc250_core import __version__ as CORE_VERSION
 from bc250_core.platform import bin_home
 from bc250_core.settings import SettingsStore
 from bc250_core.updates import ReleaseInfo, UpdateChecker
-from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, hint_label
+from bc250_core.widgets import AppHeader, MetricBox, StatusText, Terminal, WrappedLabel, hint_label
 
 from . import APP_ID, APP_NAME, INFO, LOGO_PATH, __version__, catalogue, controllers, emulator, memcards
 from . import pcsx2_settings
@@ -140,7 +140,7 @@ class MainWindow(QMainWindow):
             "Big Picture Mode. Everything about PCSX2 is set here; PCSX2's own window is not needed. Games and the "
             "PS2's BIOS come from you; the app never downloads them. "
             + style.link(self, emulator.RELEASE_PAGE, "PCSX2's release notes") + " · "
-            + style.link(self, MANUAL_URL, "Wiki"))
+            + style.link(self, MANUAL_URL, "Wiki"), follow_height=True)       # its lines count in the minimum
 
         # What there is to do, as pills the size of the header's, spread over the window's width (owner,
         # 24-10-2026): what it is for in large type (PCSX2, BIOS, Games), what the pill does under it (Install,
@@ -237,7 +237,7 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.memcard_page, "Memory cards")
         self.tabs.addTab(log_page, "Log")
 
-        self.running = QLabel()
+        self.running = WrappedLabel()
         self.running.setStyleSheet("font-weight:600;")
         self.running.setWordWrap(True)
 
@@ -266,8 +266,7 @@ class MainWindow(QMainWindow):
 
     @staticmethod
     def _state_label() -> QLabel:
-        label = QLabel()
-        label.setWordWrap(True)
+        label = WrappedLabel()                  # its lines count in the window's minimum height
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         return label
 

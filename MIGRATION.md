@@ -743,9 +743,9 @@ kept and purged by the installer as PCSX2's; the Play button went. Verified from
 (gui_application.cpp, persistent_settings.cpp, settings.cpp): the play time is milliseconds per serial under
 [Playtime] in `~/.config/rpcs3/GuiConfigs/persistent_settings.dat` (an INI file), the last-played date under
 [LastPlayed] in ISO form (older RPCS3 wrote "October 24, 2026" and "October 24 2026", read too). Decided on the
-way, the owner to confirm: RPCS3 settings stays as a button under the games (RPCS3's own window is still where its
-settings, the pads and game updates are set; the manager does not own RPCS3's settings yet, unlike PCSX2's
-Settings tab), so there are five pills, not six (a Firmware Uninstall would delete dev_flash, a Games Install
+way, confirmed by the owner (24-10-2026, evening: "we keep it for now", until the Settings tab covers RPCN and
+the game patches): RPCS3 settings stays as a button under the games (RPCS3's own window is still where its other
+settings, the pads beyond player 2, RPCN and the patches are set; unlike PCSX2's, whose window never opens), so there are five pills, not six (a Firmware Uninstall would delete dev_flash, a Games Install
 package would run `--installpkg` in RPCS3's window: either is the owner's); controllers.py is a copy of PCSX2
 Manager's (shared code belongs in core; moving it there, with PCSX2's, is a core change for the owner's go-ahead);
 RPCS3's own log (RPCS3.log) is not read into the app's log as PCSX2's emulog.txt is, since no log from the board

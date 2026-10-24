@@ -42,8 +42,10 @@ pills does the setting up, each with what it is for on top and what it does unde
 where each stands, short, with more in their tooltips, and then come three tabs: **Your games**, **Settings**
 and **Log**.
 
-- **RPCS3**: the version installed (the build is in the tooltip). **Install** downloads RPCS3 from GitHub (about
-  80 MB): the build this version of the app was tried with, checked against its checksum before it is installed.
+- **RPCS3**: the version installed (the build is in the tooltip; when this version of the app brings another
+  build, the tooltip and the log say so, and **Install** puts it in). **Install** downloads RPCS3 from GitHub
+  (about 80 MB): the build this version of the app was tried with, checked against its checksum before it is
+  installed.
   **Uninstall** takes it out again; RPCS3's own folder, with the firmware, your saves, settings and installed
   games, stays.
 - **Firmware**: which version of the PS3's firmware RPCS3 has (the folder's path is in the tooltip). **Install**
